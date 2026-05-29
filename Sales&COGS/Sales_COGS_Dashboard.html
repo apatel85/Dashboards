@@ -418,39 +418,39 @@ footer{text-align:center;padding:20px;color:var(--text3);font-size:12px;border-t
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
 
         <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid var(--primary)">
-          <div style="font-size:13px;font-weight:700;margin-bottom:8px">💰 Gross Profit</div>
-          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">GP = Net Sales − COGS</code>
-          <p style="font-size:12px;color:var(--text2)">Net Sales is used as the revenue base (Gross Sales minus Discounts minus Returns). Falls back to Total Sales if Net Sales is not mapped in your CSV.</p>
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">💰 Total Revenue = Net Sales</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">Net Sales = Gross Sales − Discounts − Returns</code>
+          <p style="font-size:12px;color:var(--text2)"><strong>Net Sales is used as Total Revenue across all charts, KPIs, and calculations.</strong> It excludes sales tax, discounts, and refunds — it is the actual revenue earned. Falls back to Total Sales if Net Sales is not mapped in your CSV.</p>
         </div>
 
-        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid var(--success)">
-          <div style="font-size:13px;font-weight:700;margin-bottom:8px">📊 Gross Margin %</div>
-          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">Margin % = (GP / Net Sales) × 100</code>
-          <p style="font-size:12px;color:var(--text2)">Color coded: <span style="color:var(--success);font-weight:600">&gt;50% green</span>, <span style="color:var(--warning);font-weight:600">20–50% amber</span>, <span style="color:var(--danger);font-weight:600">&lt;20% red</span>. Negative margin rows are flagged.</p>
+        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #059669">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">📊 Gross Profit &amp; Gross Margin %</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">GP = Net Sales − COGS<br>Gross Margin % = (GP ÷ Net Sales) × 100</code>
+          <p style="font-size:12px;color:var(--text2)">Both calculated using Net Sales as the base — <em>not</em> Gross Sales. This ensures margin reflects actual revenue after discounts and returns. Color coded: <span style="color:var(--success);font-weight:600">&gt;50% green</span>, <span style="color:var(--warning);font-weight:600">20–50% amber</span>, <span style="color:var(--danger);font-weight:600">&lt;20% red</span>.</p>
         </div>
 
         <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #0d9488">
           <div style="font-size:13px;font-weight:700;margin-bottom:8px">🛒 Average Order Value (AOV)</div>
-          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">AOV = Total Net Sales / # Transactions</code>
-          <p style="font-size:12px;color:var(--text2)">Each row in the imported CSV is counted as one transaction. AOV is shown per Category and per Sub Category in the Margin Analysis tab.</p>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">AOV = Total Net Sales ÷ # Transactions</code>
+          <p style="font-size:12px;color:var(--text2)">Each row in the imported CSV is counted as one transaction. AOV uses Net Sales as the numerator. Shown per Category and per Sub Category in the Margin Analysis tab.</p>
         </div>
 
         <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #ea580c">
           <div style="font-size:13px;font-weight:700;margin-bottom:8px">📅 Year-over-Year (YoY)</div>
-          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">YoY Δ = (2025 − 2024) / 2024 × 100</code>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">YoY Δ = (2025 Net Sales − 2024 Net Sales) / 2024 Net Sales × 100</code>
           <p style="font-size:12px;color:var(--text2)">Shown as a percentage delta on KPI cards and in the Margin Analysis product table. Only shown when both years have data.</p>
         </div>
 
         <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #7c3aed">
           <div style="font-size:13px;font-weight:700;margin-bottom:8px">🎯 Scenario Planner — Projected GP</div>
-          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">Proj GP = Revenue × (Adj Margin% / 100)<br>       − COGS × (Adj COGS% / 100)</code>
-          <p style="font-size:12px;color:var(--text2)"><strong>Adj Margin%</strong>: target GP as % of revenue. <strong>Adj COGS%</strong>: cost adjustment — enter negative to model savings (e.g. −10 = 10% cost reduction). Adjustments are independent and additive.</p>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">Proj GP = Net Sales × (Adj Margin% / 100)<br>       − COGS × (Adj COGS% / 100)</code>
+          <p style="font-size:12px;color:var(--text2)"><strong>Adj Margin%</strong>: target GP as % of Net Sales. <strong>Adj COGS%</strong>: cost adjustment — enter negative to model savings (e.g. −10 = 10% cost reduction). Adjustments are independent and additive.</p>
         </div>
 
         <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #db2777">
           <div style="font-size:13px;font-weight:700;margin-bottom:8px">🎯 Scenario Planner — New Margin %</div>
-          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">New Margin % = Proj GP / Revenue × 100</code>
-          <p style="font-size:12px;color:var(--text2)">Shows the effective margin that results from your combined Adj Margin% and Adj COGS% inputs. Updates live as you type.</p>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">New Margin % = Proj GP ÷ Net Sales × 100</code>
+          <p style="font-size:12px;color:var(--text2)">Shows the effective gross margin that results from your combined Adj Margin% and Adj COGS% inputs. Updates live as you type. Same Net Sales base as all other margin calculations.</p>
         </div>
 
         <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #2563eb">
@@ -1327,7 +1327,7 @@ async function renderOverview(){
 }
 
 function renderKPIs(rows){
-  const totalRev=sumField(rows,'totalSales');
+  const totalRev=sumField(rows,'netSales');
   const totalQty=sumField(rows,'qty');
   const totalCogs=sumField(rows,'cogs');
   const grossProfit=sumField(rows,'grossProfit')||totalRev-totalCogs;
@@ -1340,13 +1340,13 @@ function renderKPIs(rows){
   if(State.yoy){
     const r24=rows.filter(r=>r.year===2024);
     const r25=rows.filter(r=>r.year===2025);
-    const rev24=sumField(r24,'totalSales'),rev25=sumField(r25,'totalSales');
+    const rev24=sumField(r24,'netSales'),rev25=sumField(r25,'netSales');
     const yoyDelta=rev24?((rev25-rev24)/rev24)*100:0;
     yoyHTML=fmtDelta(yoyDelta);
   }
 
   const cards=[
-    {icon:'💰',label:'Total Revenue',val:fmtCur(totalRev),bg:'linear-gradient(135deg,#e0e7ff,#c7d2fe)',col:'#4f46e5'},
+    {icon:'💰',label:'Net Sales (Revenue)',val:fmtCur(totalRev),bg:'linear-gradient(135deg,#e0e7ff,#c7d2fe)',col:'#4f46e5'},
     {icon:'📦',label:'Total Qty Sold',val:fmtNum(totalQty),bg:'linear-gradient(135deg,#ede9fe,#ddd6fe)',col:'#7c3aed'},
     {icon:'🏭',label:'Total COGS',val:fmtCur(totalCogs),bg:'linear-gradient(135deg,#fce7f3,#fbcfe8)',col:'#db2777'},
     {icon:'📈',label:'Gross Profit',val:fmtCur(grossProfit),bg:'linear-gradient(135deg,#dcfce7,#bbf7d0)',col:'#059669'},
@@ -1361,7 +1361,7 @@ function renderKPIs(rows){
       <div class="kpi-icon">${c.icon}</div>
       <div class="kpi-label">${c.label}</div>
       <div class="kpi-value" style="color:${c.col}">${c.val}</div>
-      ${State.yoy&&c.label==='Total Revenue'?`<div class="kpi-delta">${yoyHTML} vs prior year</div>`:''}
+      ${State.yoy&&c.label==='Net Sales (Revenue)'?`<div class="kpi-delta">${yoyHTML} vs prior year</div>`:''}
       <div class="kpi-bg">${c.icon}</div>
     </div>`).join('');
 }
@@ -1444,8 +1444,8 @@ function renderChartRow1(rows){
 
   // 1. Revenue by Brand donut
   const byBrand=groupBy(rows,'brand');
-  const brandLabels=Object.keys(byBrand).sort((a,b)=>sumField(byBrand[b],'totalSales')-sumField(byBrand[a],'totalSales'));
-  const brandVals=brandLabels.map(b=>sumField(byBrand[b],'totalSales'));
+  const brandLabels=Object.keys(byBrand).sort((a,b)=>sumField(byBrand[b],'netSales')-sumField(byBrand[a],'netSales'));
+  const brandVals=brandLabels.map(b=>sumField(byBrand[b],'netSales'));
   const totalRevBrand=brandVals.reduce((a,v)=>a+v,0);
   makeDonut('chart-brand', brandLabels, brandVals, totalRevBrand, 'brand',
     idx=>{
@@ -1458,8 +1458,8 @@ function renderChartRow1(rows){
 
   // 2. Revenue by Category donut
   const byCat=groupBy(rows,'category');
-  const catLabels=Object.keys(byCat).sort((a,b)=>sumField(byCat[b],'totalSales')-sumField(byCat[a],'totalSales'));
-  const catVals=catLabels.map(c=>sumField(byCat[c],'totalSales'));
+  const catLabels=Object.keys(byCat).sort((a,b)=>sumField(byCat[b],'netSales')-sumField(byCat[a],'netSales'));
+  const catVals=catLabels.map(c=>sumField(byCat[c],'netSales'));
   const totalRevCat=catVals.reduce((a,v)=>a+v,0);
   makeDonut('chart-cat', catLabels, catVals, totalRevCat, 'cat',
     idx=>{
@@ -1476,7 +1476,7 @@ function renderChartRow1(rows){
   makeDonut('chart-gm-brand', brandLabels, gpVals, totalGP, 'brand',
     idx=>{
       const b=brandLabels[idx];
-      const rev=sumField(byBrand[b],'totalSales');
+      const rev=sumField(byBrand[b],'netSales');
       const cogs=sumField(byBrand[b],'cogs');
       return [`Revenue: ${fmtCur(rev)}`, `Margin: ${fmtPct(marginPct(rev,cogs))}`];
     }
@@ -1485,7 +1485,7 @@ function renderChartRow1(rows){
   // Top 10 products bar (static canvas in HTML)
   const byProd=groupBy(rows,'productTitle');
   const prodEntries=Object.entries(byProd)
-    .map(([k,v])=>({name:k,rev:sumField(v,'totalSales')}))
+    .map(([k,v])=>({name:k,rev:sumField(v,'netSales')}))
     .sort((a,b)=>b.rev-a.rev).slice(0,10);
   destroyChart('chart-top10');
   charts['chart-top10']=new Chart(document.getElementById('chart-top10'),{
@@ -1509,7 +1509,7 @@ function renderMonthlyTrend(rows){
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const r24=rows.filter(r=>r.year===2024);
   const r25=rows.filter(r=>r.year===2025);
-  const byMonth=(arr)=>months.map((_,i)=>sumField(arr.filter(r=>r.month===i+1),'totalSales'));
+  const byMonth=(arr)=>months.map((_,i)=>sumField(arr.filter(r=>r.month===i+1),'netSales'));
   const vals24=byMonth(r24);
   const vals25=byMonth(r25);
 
@@ -1539,7 +1539,7 @@ function showMonthDrilldown(rows, month, monthName){
   const byProd=groupBy(mRows,'productTitle');
   const top=Object.entries(byProd).map(([k,v])=>({
     name:k,brand:v[0].brand,cat:v[0].category,subCat:v[0].subCategory,
-    qty:sumField(v,'qty'),rev:sumField(v,'totalSales'),cogs:sumField(v,'cogs'),gp:sumField(v,'grossProfit')
+    qty:sumField(v,'qty'),rev:sumField(v,'netSales'),cogs:sumField(v,'cogs'),gp:sumField(v,'grossProfit')
   })).sort((a,b)=>b.rev-a.rev).slice(0,10);
 
   document.getElementById('drilldown-title').textContent=`${monthName} — Top 10 Products`;
@@ -1554,8 +1554,8 @@ function renderAovTable(rows){
   const byCat=groupBy(rows,'category');
   const catData=Object.entries(byCat).map(([cat,catRows])=>{
     const bySubcat=groupBy(catRows,'subCategory');
-    const subcatRows=Object.entries(bySubcat).map(([sub,sr])=>({sub,aov:sr.length?sumField(sr,'totalSales')/sr.length:0,cnt:sr.length}));
-    return {cat,aov:catRows.length?sumField(catRows,'totalSales')/catRows.length:0,cnt:catRows.length,subcats:subcatRows};
+    const subcatRows=Object.entries(bySubcat).map(([sub,sr])=>({sub,aov:sr.length?sumField(sr,'netSales')/sr.length:0,cnt:sr.length}));
+    return {cat,aov:catRows.length?sumField(catRows,'netSales')/catRows.length:0,cnt:catRows.length,subcats:subcatRows};
   }).sort((a,b)=>b.aov-a.aov);
 
   let rows_html='';
@@ -1575,7 +1575,7 @@ function renderAovTable(rows){
 function renderSkuMarginChart(rows){
   const bySku=groupBy(rows,'sku');
   const skuData=Object.entries(bySku).map(([sku,r])=>{
-    const rev=sumField(r,'totalSales'),cogs=sumField(r,'cogs');
+    const rev=sumField(r,'netSales'),cogs=sumField(r,'cogs');
     return {sku,name:r[0].productTitle||sku,margin:marginPct(rev,cogs)};
   }).sort((a,b)=>b.margin-a.margin).slice(0,10);
 
@@ -1637,8 +1637,8 @@ async function renderTrends(){
       const byKey24=groupBy(r24.map(r=>({...r,_k:getKey(r).replace('2024','')})),'_k');
       const byKey25=groupBy(r25.map(r=>({...r,_k:getKey(r).replace('2025','')})),'_k');
       const keys=[...new Set([...Object.keys(byKey24),...Object.keys(byKey25)])].sort();
-      const vals24=keys.map(k=>sumField(byKey24[k]||[],'totalSales'));
-      const vals25=keys.map(k=>sumField(byKey25[k]||[],'totalSales'));
+      const vals24=keys.map(k=>sumField(byKey24[k]||[],'netSales'));
+      const vals25=keys.map(k=>sumField(byKey25[k]||[],'netSales'));
 
       destroyChart('chart-rev-time');
       charts['chart-rev-time']=new Chart(document.getElementById('chart-rev-time'),{
@@ -1652,7 +1652,7 @@ async function renderTrends(){
     } else {
       const byKey=groupBy(rows.map(r=>({...r,_k:getKey(r)})),'_k');
       const keys=Object.keys(byKey).sort();
-      const vals=keys.map(k=>sumField(byKey[k],'totalSales'));
+      const vals=keys.map(k=>sumField(byKey[k],'netSales'));
       const isLine=gran==='month'||gran==='quarter';
       destroyChart('chart-rev-time');
       charts['chart-rev-time']=new Chart(document.getElementById('chart-rev-time'),{
@@ -1679,7 +1679,7 @@ async function renderTrends(){
     {
       const byChan=groupBy(rows,'channel');
       const chanLabels=Object.keys(byChan);
-      const chanVals=chanLabels.map(c=>sumField(byChan[c],'totalSales'));
+      const chanVals=chanLabels.map(c=>sumField(byChan[c],'netSales'));
       const total=chanVals.reduce((a,v)=>a+v,0);
       destroyChart('chart-channel');
       charts['chart-channel']=new Chart(document.getElementById('chart-channel'),{
@@ -1704,7 +1704,7 @@ async function renderTrends(){
       const hasHour = rows.some(r=>r.hour>0);
       if(hasHour){
         const hourBuckets=Array.from({length:24},(_,i)=>({h:i,rev:0}));
-        rows.forEach(r=>{const h=Math.round(r.hour||0);if(h>=0&&h<24)hourBuckets[h].rev+=parseNum(r.totalSales);});
+        rows.forEach(r=>{const h=Math.round(r.hour||0);if(h>=0&&h<24)hourBuckets[h].rev+=parseNum(r.netSales);});
         destroyChart('chart-hour');
         charts['chart-hour']=new Chart(document.getElementById('chart-hour'),{
           type:'bar',
@@ -1725,14 +1725,14 @@ async function renderTrends(){
 function renderHeatmap(rows){
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const byProd=groupBy(rows,'productTitle');
-  const prods=Object.entries(byProd).map(([name,r])=>({name,total:sumField(r,'totalSales')})).sort((a,b)=>b.total-a.total).slice(0,15).map(p=>p.name);
+  const prods=Object.entries(byProd).map(([name,r])=>({name,total:sumField(r,'netSales')})).sort((a,b)=>b.total-a.total).slice(0,15).map(p=>p.name);
   if(!prods.length){document.getElementById('heatmap-wrap').innerHTML='<p style="color:var(--text3)">No data</p>';return;}
 
   // max per product for color scaling
   let html=`<table class="heatmap-table"><thead><tr><th style="font-size:11px">Product</th>${months.map(m=>`<th style="font-size:10px">${m}</th>`).join('')}</tr></thead><tbody>`;
   prods.forEach(name=>{
     const pRows=rows.filter(r=>r.productTitle===name);
-    const vals=months.map((_,i)=>sumField(pRows.filter(r=>r.month===i+1),'totalSales'));
+    const vals=months.map((_,i)=>sumField(pRows.filter(r=>r.month===i+1),'netSales'));
     const maxVal=Math.max(...vals,1);
     html+=`<tr><td style="font-size:11px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis">${esc(name)}</td>`;
     vals.forEach(v=>{
@@ -1759,7 +1759,7 @@ async function renderMarginAnalysis(){
     // Brand summary cards
     const byBrand=groupBy(rows,'brand');
     const brandSummary=Object.entries(byBrand).map(([b,r])=>({
-      brand:b,rev:sumField(r,'totalSales'),cogs:sumField(r,'cogs'),gp:sumField(r,'grossProfit')
+      brand:b,rev:sumField(r,'netSales'),cogs:sumField(r,'cogs'),gp:sumField(r,'grossProfit')
     })).sort((a,b)=>b.rev-a.rev);
     document.getElementById('brand-summary-cards').innerHTML=brandSummary.map((b,i)=>{
       const mg=marginPct(b.rev,b.cogs);
@@ -1783,12 +1783,12 @@ async function renderMarginAnalysis(){
 
     const byProd=groupBy(rows,'productTitle');
     let prodData=Object.entries(byProd).map(([name,r])=>{
-      const rev=sumField(r,'totalSales'),cogs=sumField(r,'cogs'),gp=sumField(r,'grossProfit');
+      const rev=sumField(r,'netSales'),cogs=sumField(r,'cogs'),gp=sumField(r,'grossProfit');
       const qty=sumField(r,'qty');
       const mg=marginPct(rev,cogs);
       // YoY
       const r24=r.filter(x=>x.year===2024),r25=r.filter(x=>x.year===2025);
-      const rev24=sumField(r24,'totalSales'),rev25=sumField(r25,'totalSales');
+      const rev24=sumField(r24,'netSales'),rev25=sumField(r25,'netSales');
       const yoyDelta=rev24?((rev25-rev24)/rev24)*100:null;
       return {name,brand:r[0].brand,cat:r[0].category,subCat:r[0].subCategory,qty,rev,cogs,gp,mg,yoyDelta};
     });
@@ -1825,13 +1825,13 @@ async function renderMarginAnalysis(){
 
     // AOV tables
     const byCat=groupBy(rows,'category');
-    const catAov=Object.entries(byCat).map(([c,r])=>({cat:c,aov:r.length?sumField(r,'totalSales')/r.length:0,mg:marginPct(sumField(r,'totalSales'),sumField(r,'cogs')),cnt:r.length})).sort((a,b)=>b.aov-a.aov);
+    const catAov=Object.entries(byCat).map(([c,r])=>({cat:c,aov:r.length?sumField(r,'netSales')/r.length:0,mg:marginPct(sumField(r,'netSales'),sumField(r,'cogs')),cnt:r.length})).sort((a,b)=>b.aov-a.aov);
     document.getElementById('aov-cat-wrap').innerHTML=`<table><thead><tr><th>Category</th><th>AOV</th><th>Avg Margin %</th><th>Transactions</th></tr></thead><tbody>
       ${catAov.map(r=>`<tr><td>${esc(r.cat)}</td><td>${fmtCur(r.aov)}</td><td>${fmtPct(r.mg)}</td><td>${fmtNum(r.cnt)}</td></tr>`).join('')}
     </tbody></table>`;
 
     const bySubcat=groupBy(rows,'subCategory');
-    const subcatAov=Object.entries(bySubcat).map(([s,r])=>({sub:s,aov:r.length?sumField(r,'totalSales')/r.length:0,mg:marginPct(sumField(r,'totalSales'),sumField(r,'cogs')),cnt:r.length})).sort((a,b)=>b.aov-a.aov);
+    const subcatAov=Object.entries(bySubcat).map(([s,r])=>({sub:s,aov:r.length?sumField(r,'netSales')/r.length:0,mg:marginPct(sumField(r,'netSales'),sumField(r,'cogs')),cnt:r.length})).sort((a,b)=>b.aov-a.aov);
     document.getElementById('aov-subcat-wrap').innerHTML=`<table><thead><tr><th>Sub Category</th><th>AOV</th><th>Avg Margin %</th><th>Transactions</th></tr></thead><tbody>
       ${subcatAov.map(r=>`<tr><td>${esc(r.sub)}</td><td>${fmtCur(r.aov)}</td><td>${fmtPct(r.mg)}</td><td>${fmtNum(r.cnt)}</td></tr>`).join('')}
     </tbody></table>`;
@@ -1868,7 +1868,7 @@ async function renderScenario(){
 
     const byGroup=groupBy(rows.map(r=>({...r,_grp:getGroupKey(r)})),'_grp');
     scenarioData=Object.entries(byGroup).map(([key,r])=>{
-      const rev=sumField(r,'totalSales'),cogs=sumField(r,'cogs');
+      const rev=sumField(r,'netSales'),cogs=sumField(r,'cogs');
       const curMg=marginPct(rev,cogs);
       return {key,rev,cogs,curMg,adjMg:parseFloat(curMg.toFixed(2)),adjCogsPct:0,
         cat:grp==='brandcat'?r[0].category:'',brand:grp==='brandcat'?r[0].brand:key};
@@ -1897,7 +1897,7 @@ function buildScenarioTable(){
 
   let html=`<table><thead><tr>
     ${grp==='brandcat'?'<th>Brand</th><th>Category</th>':'<th>Group</th>'}
-    <th>Total Sales</th><th>Total COGS</th><th>Current Margin %</th><th title="Adjust target margin %; overrides cost-side">Adj Margin %</th><th title="Adjust COGS by % (negative = cost savings)">Adj COGS %</th><th>Projected GP</th><th>New Margin %</th><th>Change vs Current</th>
+    <th>Net Sales</th><th>Total COGS</th><th>Current Margin %</th><th title="Adjust target margin %; overrides cost-side">Adj Margin %</th><th title="Adjust COGS by % (negative = cost savings)">Adj COGS %</th><th>Projected GP</th><th>New Margin %</th><th>Change vs Current</th>
   </tr></thead><tbody>`;
 
   rows.forEach((r,i)=>{
@@ -2094,7 +2094,7 @@ async function renderDetailGrid(){
     function getCellVal(arr, mo){
       const r=arr.filter(x=>x.month===mo);
       if(!r.length) return '';
-      const amt=sumField(r,'totalSales');
+      const amt=sumField(r,'netSales');
       const qty=sumField(r,'qty');
       if(metric==='amount') return amt>0?fmtCur(amt):'';
       if(metric==='qty') return qty>0?fmtNum(qty):'';
@@ -2108,19 +2108,19 @@ async function renderDetailGrid(){
 
     Object.keys(byBrand).sort().forEach(brand=>{
       const bRows=byBrand[brand];
-      const bTotals=months.map(mo=>sumField(bRows.filter(r=>r.month===mo),'totalSales'));
+      const bTotals=months.map(mo=>sumField(bRows.filter(r=>r.month===mo),'netSales'));
       const bTotal=bTotals.reduce((a,v)=>a+v,0);
 
       const byCat=groupBy(bRows,'category');
       Object.keys(byCat).sort().forEach(cat=>{
         const cRows=byCat[cat];
-        const cTotals=months.map(mo=>sumField(cRows.filter(r=>r.month===mo),'totalSales'));
+        const cTotals=months.map(mo=>sumField(cRows.filter(r=>r.month===mo),'netSales'));
         const cTotal=cTotals.reduce((a,v)=>a+v,0);
 
         const byProd=groupBy(cRows,'productTitle');
         Object.keys(byProd).sort().forEach(prod=>{
           const pRows=byProd[prod];
-          const pTotal=sumField(pRows,'totalSales');
+          const pTotal=sumField(pRows,'netSales');
           const subCat=pRows[0].subCategory||'';
           html+=`<tr><td>${esc(brand)}</td><td>${esc(cat)}</td><td>${esc(subCat)}</td><td>${esc(prod)}</td>`;
           months.forEach(mo=>{html+=`<td style="text-align:right">${getCellVal(pRows,mo)}</td>`;});
@@ -2193,7 +2193,7 @@ async function renderIssues(){
     // Unmapped SKUs
     const unmapped=allRows.filter(r=>!pmMap.has(r.sku));
     const byUnmapped=groupBy(unmapped,'sku');
-    const unmappedData=Object.entries(byUnmapped).map(([sku,r])=>({sku,rev:sumField(r,'totalSales'),qty:sumField(r,'qty'),vendor:r[0].vendor||'',type:''})).sort((a,b)=>b.rev-a.rev);
+    const unmappedData=Object.entries(byUnmapped).map(([sku,r])=>({sku,rev:sumField(r,'netSales'),qty:sumField(r,'qty'),vendor:r[0].vendor||'',type:''})).sort((a,b)=>b.rev-a.rev);
     document.getElementById('unmapped-table-wrap').innerHTML=unmappedData.length?`<table><thead><tr><th>SKU</th><th>Revenue</th><th>Qty</th><th>Vendor</th><th>Action</th></tr></thead><tbody>
       ${unmappedData.map(r=>`<tr><td>${esc(r.sku)}</td><td>${fmtCur(r.rev)}</td><td>${fmtNum(r.qty)}</td><td>${esc(r.vendor)}</td><td><button class="btn btn-sm btn-secondary" onclick="openAssignModal('${esc(r.sku)}')">🏷 Assign</button></td></tr>`).join('')}
     </tbody></table>`:'<p style="color:var(--success);padding:12px">✅ All SKUs mapped</p>';
@@ -2204,20 +2204,20 @@ async function renderIssues(){
       return p&&r.vendor&&p.brand&&r.vendor!==p.brand;
     }).slice(0,50);
     document.getElementById('brand-mismatch-wrap').innerHTML=mismatch.length?`<table><thead><tr><th>SKU</th><th>Sales Vendor</th><th>PM Brand</th><th>Revenue</th></tr></thead><tbody>
-      ${mismatch.map(r=>`<tr><td>${esc(r.sku)}</td><td>${esc(r.vendor)}</td><td>${esc(pmMap.get(r.sku).brand)}</td><td>${fmtCur(r.totalSales)}</td></tr>`).join('')}
+      ${mismatch.map(r=>`<tr><td>${esc(r.sku)}</td><td>${esc(r.vendor)}</td><td>${esc(pmMap.get(r.sku).brand)}</td><td>${fmtCur(r.netSales)}</td></tr>`).join('')}
     </tbody></table>`:'<p style="color:var(--success);padding:12px">✅ No brand mismatches</p>';
 
     // Negative/zero rows
-    const negRows=allRows.filter(r=>r.totalSales<=0||r.qty<=0).slice(0,50);
-    document.getElementById('neg-rows-wrap').innerHTML=negRows.length?`<table><thead><tr><th>SKU</th><th>Date</th><th>Qty</th><th>Total Sales</th><th>COGS</th></tr></thead><tbody>
-      ${negRows.map(r=>`<tr><td>${esc(r.sku)}</td><td>${esc(r.date)}</td><td>${fmtNum(r.qty)}</td><td>${fmtCur(r.totalSales)}</td><td>${fmtCur(r.cogs)}</td></tr>`).join('')}
+    const negRows=allRows.filter(r=>r.netSales<=0||r.qty<=0).slice(0,50);
+    document.getElementById('neg-rows-wrap').innerHTML=negRows.length?`<table><thead><tr><th>SKU</th><th>Date</th><th>Qty</th><th>Net Sales</th><th>COGS</th></tr></thead><tbody>
+      ${negRows.map(r=>`<tr><td>${esc(r.sku)}</td><td>${esc(r.date)}</td><td>${fmtNum(r.qty)}</td><td>${fmtCur(r.netSales)}</td><td>${fmtCur(r.cogs)}</td></tr>`).join('')}
     </tbody></table>`:'<p style="color:var(--success);padding:12px">✅ No negative/zero rows</p>';
 
     // Duplicates
     const seen=new Map(); const dups=[];
     allRows.forEach(r=>{const k=`${r.sku}|${r.date}`;if(seen.has(k))dups.push(r);else seen.set(k,true);});
     document.getElementById('dup-rows-wrap').innerHTML=dups.length?`<table><thead><tr><th>SKU</th><th>Date</th><th>Revenue</th></tr></thead><tbody>
-      ${dups.slice(0,50).map(r=>`<tr><td>${esc(r.sku)}</td><td>${esc(r.date)}</td><td>${fmtCur(r.totalSales)}</td></tr>`).join('')}
+      ${dups.slice(0,50).map(r=>`<tr><td>${esc(r.sku)}</td><td>${esc(r.date)}</td><td>${fmtCur(r.netSales)}</td></tr>`).join('')}
     </tbody></table>`:'<p style="color:var(--success);padding:12px">✅ No duplicates detected</p>';
 
     // Mapping info
