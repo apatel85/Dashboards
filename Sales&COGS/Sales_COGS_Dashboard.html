@@ -1895,7 +1895,7 @@ function toggleLock(idx){
     delete lockedAdjustments[grp][r.key];
     r.locked=false;
   } else {
-    lockedAdjustments[grp][r.key]={adjMg:r.adjMg,adjCogsPct:r.adjCogsPct||0};
+    lockedAdjustments[grp][r.key]={adjMg:r.adjMg,adjCogsPct:r.adjCogsPct||0,curMgAtLock:r.curMg};
     r.locked=true;
   }
   saveLocks();
@@ -1923,7 +1923,7 @@ async function renderScenario(){
       const curMg=marginPct(rev,cogs);
       const lk=getLocked(key,grp,r[0]);
       return {key,rev,cogs,curMg,
-        adjMg: lk ? lk.adjMg : curMg,          // exact — no rounding avoids false Δ
+        adjMg: lk ? (lk.curMgAtLock===undefined||Math.abs(lk.adjMg-lk.curMgAtLock)>0.001 ? lk.adjMg : curMg) : curMg,
         adjCogsPct: lk ? lk.adjCogsPct : 0,
         locked: !!lockedAdjustments[grp][key],  // only true for direct locks, not inherited
         cat:grp==='brandcat'?r[0].category:'',brand:grp==='brandcat'?r[0].brand:key};
@@ -2080,7 +2080,7 @@ async function confirmSaveScenario(){
     name,
     savedAt: new Date().toISOString(),
     group: State.scenarioGroup,
-    data: scenarioData.map(r=>({key:r.key,brand:r.brand,cat:r.cat,adjMg:r.adjMg,adjCogsPct:r.adjCogsPct||0}))
+    data: scenarioData.map(r=>({key:r.key,brand:r.brand,cat:r.cat,adjMg:r.adjMg,adjCogsPct:r.adjCogsPct||0,curMgAtSave:r.curMg}))
   };
   await idbPut('scenarios', entry);
   _activeScenarioId=entry.id;
@@ -2124,7 +2124,11 @@ async function applyScenario(id){
   const lookup=Object.fromEntries(entry.data.map(d=>[d.key,d]));
   scenarioData.forEach(r=>{
     const saved=lookup[r.key];
-    if(saved){r.adjMg=saved.adjMg;r.adjCogsPct=saved.adjCogsPct||0;}
+    if(saved){
+      const adjMgWasExplicit=saved.curMgAtSave===undefined||Math.abs(saved.adjMg-saved.curMgAtSave)>0.001;
+      r.adjMg=adjMgWasExplicit?saved.adjMg:r.curMg;
+      r.adjCogsPct=saved.adjCogsPct||0;
+    }
   });
   _activeScenarioId=id;
   buildScenarioTable();
