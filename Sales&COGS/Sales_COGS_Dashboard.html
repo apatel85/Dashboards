@@ -408,6 +408,78 @@ footer{text-align:center;padding:20px;color:var(--text3);font-size:12px;border-t
       <div id="mapping-panel"></div>
     </div>
   </div>
+
+  <!-- TAB 6: METHODOLOGY -->
+  <div class="panel" id="panel-6">
+    <div class="full-card">
+      <h3>📐 Calculation Methodology</h3>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:20px">Reference guide for every metric, formula, and logic used in this dashboard.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid var(--primary)">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">💰 Gross Profit</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">GP = Net Sales − COGS</code>
+          <p style="font-size:12px;color:var(--text2)">Net Sales is used as the revenue base (Gross Sales minus Discounts minus Returns). Falls back to Total Sales if Net Sales is not mapped in your CSV.</p>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid var(--success)">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">📊 Gross Margin %</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">Margin % = (GP / Net Sales) × 100</code>
+          <p style="font-size:12px;color:var(--text2)">Color coded: <span style="color:var(--success);font-weight:600">&gt;50% green</span>, <span style="color:var(--warning);font-weight:600">20–50% amber</span>, <span style="color:var(--danger);font-weight:600">&lt;20% red</span>. Negative margin rows are flagged.</p>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #0d9488">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">🛒 Average Order Value (AOV)</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">AOV = Total Net Sales / # Transactions</code>
+          <p style="font-size:12px;color:var(--text2)">Each row in the imported CSV is counted as one transaction. AOV is shown per Category and per Sub Category in the Margin Analysis tab.</p>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #ea580c">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">📅 Year-over-Year (YoY)</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">YoY Δ = (2025 − 2024) / 2024 × 100</code>
+          <p style="font-size:12px;color:var(--text2)">Shown as a percentage delta on KPI cards and in the Margin Analysis product table. Only shown when both years have data.</p>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #7c3aed">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">🎯 Scenario Planner — Projected GP</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">Proj GP = Revenue × (Adj Margin% / 100)<br>       − COGS × (Adj COGS% / 100)</code>
+          <p style="font-size:12px;color:var(--text2)"><strong>Adj Margin%</strong>: target GP as % of revenue. <strong>Adj COGS%</strong>: cost adjustment — enter negative to model savings (e.g. −10 = 10% cost reduction). Adjustments are independent and additive.</p>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #db2777">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">🎯 Scenario Planner — New Margin %</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">New Margin % = Proj GP / Revenue × 100</code>
+          <p style="font-size:12px;color:var(--text2)">Shows the effective margin that results from your combined Adj Margin% and Adj COGS% inputs. Updates live as you type.</p>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #2563eb">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">🔢 Data Deduplication</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">Key = SKU + Date</code>
+          <p style="font-size:12px;color:var(--text2)">If multiple CSV rows share the same (SKU, Date), all numeric fields (Qty, Net Sales, COGS, Gross Sales, Discounts, Returns) are summed into a single record before saving. Re-uploading the same file produces zero net change.</p>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #16a34a">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">🗺 Column Mapping</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">Auto-detect → Manual Override → Save</code>
+          <p style="font-size:12px;color:var(--text2)">Dashboard auto-detects your CSV column names using a list of known aliases. After upload, you can override any field mapping via dropdown before saving. Required fields (SKU, Date) must be mapped.</p>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #8b5cf6">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">🏷 Unmapped SKUs</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">Brand/Category = "Unknown"</code>
+          <p style="font-size:12px;color:var(--text2)">SKUs not found in the Product Master are labeled Unknown so revenue totals still reconcile. You can assign them manually in the Data Issues tab. Assignments persist and are re-applied on future uploads.</p>
+        </div>
+
+        <div style="background:var(--bg3);border-radius:10px;padding:16px;border-left:4px solid #d97706">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">📦 Backup &amp; Sharing</div>
+          <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:6px;font-size:12px;margin-bottom:8px">Export → JSON → Share → Import</code>
+          <p style="font-size:12px;color:var(--text2)">All data is stored in your browser's IndexedDB. Use Export Backup (in Upload Data modal) to create a shareable .json file. The recipient imports it to see identical data, filters, and saved scenarios.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- UPLOAD MODAL -->
