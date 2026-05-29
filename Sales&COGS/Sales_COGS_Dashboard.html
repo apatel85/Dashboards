@@ -287,7 +287,7 @@ footer{text-align:center;padding:20px;color:var(--text3);font-size:12px;border-t
 
   <!-- TAB 2: MARGIN ANALYSIS -->
   <div class="panel" id="panel-2">
-    <div id="brand-summary-cards" class="chart-grid-4" style="margin-bottom:20px"></div>
+    <div id="brand-summary-cards" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"></div>
     <div class="controls-row">
       <label>Sort:</label>
       <select id="margin-sort" onchange="renderMarginAnalysis()">
@@ -1132,7 +1132,6 @@ function renderChartRow1(rows){
           borderColor:'#fff'
         }]
       },
-      plugins:[ChartDataLabels],
       options:{
         responsive:true,
         maintainAspectRatio:false,
@@ -1154,6 +1153,7 @@ function renderChartRow1(rows){
             }
           },
           datalabels:{
+            display:(ctx)=>(ctx.dataset.data[ctx.dataIndex]/total*100)>=3,
             anchor:'center',
             align:'center',
             color:'#fff',
@@ -1418,12 +1418,18 @@ async function renderTrends(){
       destroyChart('chart-channel');
       charts['chart-channel']=new Chart(document.getElementById('chart-channel'),{
         type:'doughnut',
-        data:{labels:chanLabels,datasets:[{data:chanVals,backgroundColor:COLORS.slice(0,chanLabels.length)}]},
-        plugins:[ChartDataLabels],
-        options:{responsive:true,maintainAspectRatio:false,
-          plugins:{legend:{position:'bottom'},
-            datalabels:{anchor:'center',align:'center',color:'#fff',font:{size:10,weight:'bold'},
-              formatter:(v,ctx)=>{const pct=(v/total*100).toFixed(1);return pct>5?`${ctx.chart.data.labels[ctx.dataIndex]}\n${pct}%`:'';}}}}
+        data:{labels:chanLabels,datasets:[{data:chanVals,backgroundColor:COLORS.slice(0,chanLabels.length),hoverOffset:10,borderWidth:2,borderColor:'#fff'}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'52%',
+          plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:10,usePointStyle:true}},
+            tooltip:{callbacks:{label:(ctx)=>{const v=ctx.raw;const pct=(v/total*100).toFixed(1);return `${ctx.label}: ${fmtCur(v)} (${pct}%)`}}},
+            datalabels:{display:(ctx)=>(ctx.dataset.data[ctx.dataIndex]/total*100)>=3,anchor:'center',align:'center',color:'#fff',font:{size:9,weight:'bold'},textShadowBlur:3,textShadowColor:'rgba(0,0,0,0.4)',
+              formatter:(v,ctx)=>{
+                const pct=(v/total*100);
+                if(pct<3) return '';
+                const label=ctx.chart.data.labels[ctx.dataIndex];
+                const shortLabel=label.length>10?label.slice(0,9)+'…':label;
+                return `${shortLabel}\n${fmtCur(v)}\n${pct.toFixed(1)}%`;
+              }}}}
       });
     }
 
@@ -1489,15 +1495,19 @@ async function renderMarginAnalysis(){
     const brandSummary=Object.entries(byBrand).map(([b,r])=>({
       brand:b,rev:sumField(r,'totalSales'),cogs:sumField(r,'cogs'),gp:sumField(r,'grossProfit')
     })).sort((a,b)=>b.rev-a.rev);
-    document.getElementById('brand-summary-cards').innerHTML=brandSummary.map((b,i)=>`
-      <div class="chart-card">
-        <h3>${esc(b.brand)}</h3>
-        <div style="font-size:13px;margin-bottom:6px"><span style="color:var(--text2)">Revenue</span><br><strong>${fmtCur(b.rev)}</strong></div>
-        <div style="font-size:13px;margin-bottom:6px"><span style="color:var(--text2)">COGS</span><br><strong>${fmtCur(b.cogs)}</strong></div>
-        <div style="font-size:13px"><span style="color:var(--text2)">Margin</span><br>
-          <strong style="color:${marginPct(b.rev,b.cogs)>50?'var(--success)':marginPct(b.rev,b.cogs)>20?'var(--warning)':'var(--danger)'}">${fmtPct(marginPct(b.rev,b.cogs))}</strong>
+    document.getElementById('brand-summary-cards').innerHTML=brandSummary.map((b,i)=>{
+      const mg=marginPct(b.rev,b.cogs);
+      const mgCol=mg>50?'var(--success)':mg>20?'var(--warning)':'var(--danger)';
+      return `<div style="background:var(--bg2);border-radius:8px;padding:10px 14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="font-size:13px;font-weight:700;min-width:80px">${esc(b.brand)}</div>
+        <div style="display:flex;gap:20px;flex:1;flex-wrap:wrap">
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Revenue</div><div style="font-size:13px;font-weight:700">${fmtCur(b.rev)}</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">COGS</div><div style="font-size:13px;font-weight:700">${fmtCur(b.cogs)}</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Gross Profit</div><div style="font-size:13px;font-weight:700">${fmtCur(b.gp)}</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Margin %</div><div style="font-size:14px;font-weight:800;color:${mgCol}">${fmtPct(mg)}</div></div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     // Product table
     const searchQ=(document.getElementById('margin-search')||{}).value||'';
@@ -1593,7 +1603,7 @@ async function renderScenario(){
     scenarioData=Object.entries(byGroup).map(([key,r])=>{
       const rev=sumField(r,'totalSales'),cogs=sumField(r,'cogs');
       const curMg=marginPct(rev,cogs);
-      return {key,rev,cogs,curMg,adjMg:parseFloat(curMg.toFixed(2)),
+      return {key,rev,cogs,curMg,adjMg:parseFloat(curMg.toFixed(2)),adjCogsPct:0,
         cat:grp==='brandcat'?r[0].category:'',brand:grp==='brandcat'?r[0].brand:key};
     }).sort((a,b)=>b.rev-a.rev);
 
@@ -1604,6 +1614,13 @@ async function renderScenario(){
   }
 }
 
+function calcProjGP(r){
+  // adjMg drives revenue-side GP; adjCogsPct adjusts cost side (negative = savings)
+  const gpFromMargin = r.rev * (r.adjMg / 100);
+  const cogsAdjustment = r.cogs * ((r.adjCogsPct || 0) / 100);
+  return gpFromMargin - cogsAdjustment;
+}
+
 function buildScenarioTable(){
   const grp=State.scenarioGroup;
   const rows=scenarioData;
@@ -1612,12 +1629,12 @@ function buildScenarioTable(){
 
   let html=`<table><thead><tr>
     ${grp==='brandcat'?'<th>Brand</th><th>Category</th>':'<th>Group</th>'}
-    <th>Total Sales</th><th>Total COGS</th><th>Current Margin %</th><th>Adjusted Margin %</th><th>Projected GP</th><th>Change vs Current</th>
+    <th>Total Sales</th><th>Total COGS</th><th>Current Margin %</th><th title="Adjust target margin %; overrides cost-side">Adj Margin %</th><th title="Adjust COGS by % (negative = cost savings)">Adj COGS %</th><th>Projected GP</th><th>Change vs Current</th>
   </tr></thead><tbody>`;
 
   rows.forEach((r,i)=>{
     const curGP=r.rev*(r.curMg/100);
-    const projGP=r.rev*(r.adjMg/100);
+    const projGP=calcProjGP(r);
     const change=projGP-curGP;
     const mgCol=r.curMg>50?'var(--success)':r.curMg>20?'var(--warning)':'var(--danger)';
     const changeCol=change>=0?'var(--success)':'var(--danger)';
@@ -1625,19 +1642,20 @@ function buildScenarioTable(){
       ${grp==='brandcat'?`<td>${esc(r.brand)}</td><td>${esc(r.cat)}</td>`:`<td><strong>${esc(r.key)}</strong></td>`}
       <td>${fmtCur(r.rev)}</td><td>${fmtCur(r.cogs)}</td>
       <td><span style="color:${mgCol};font-weight:700">${fmtPct(r.curMg)}</span></td>
-      <td><input class="scenario-input" type="number" min="-100" max="100" step="0.1" value="${r.adjMg.toFixed(1)}" data-idx="${i}" oninput="onScenarioInput(${i},this.value)"></td>
+      <td><input class="scenario-input" type="number" min="-100" max="100" step="0.1" value="${r.adjMg.toFixed(1)}" oninput="onScenarioInput(${i},this.value)" title="Adjusted target margin %"></td>
+      <td><input class="scenario-input" type="number" min="-100" max="100" step="0.1" value="${(r.adjCogsPct||0).toFixed(1)}" oninput="onScenarioCogsPctInput(${i},this.value)" title="COGS adjustment % (negative = cost reduction)"></td>
       <td id="sc-proj-${i}">${fmtCur(projGP)}</td>
       <td id="sc-chg-${i}" style="color:${changeCol};font-weight:700">${change>=0?'+':''}${fmtCur(change)}</td>
     </tr>`;
   });
 
   // Summary row
-  const totalProjGP=rows.reduce((a,r)=>a+r.rev*(r.adjMg/100),0);
+  const totalProjGP=rows.reduce((a,r)=>a+calcProjGP(r),0);
   const totalChange=totalProjGP-totalCurGP;
   html+=`<tr class="total-row">
     ${grp==='brandcat'?'<td colspan="2"><strong>TOTAL</strong></td>':'<td><strong>TOTAL</strong></td>'}
     <td>${fmtCur(totalRev)}</td><td>—</td><td>${fmtPct(totalRev?totalCurGP/totalRev*100:0)}</td>
-    <td>—</td><td>${fmtCur(totalProjGP)}</td>
+    <td>—</td><td>—</td><td>${fmtCur(totalProjGP)}</td>
     <td style="color:${totalChange>=0?'var(--success)':'var(--danger)'}">${totalChange>=0?'+':''}${fmtCur(totalChange)}</td>
   </tr>`;
 
@@ -1647,9 +1665,18 @@ function buildScenarioTable(){
 
 function onScenarioInput(idx, val){
   scenarioData[idx].adjMg=parseFloat(val)||0;
+  updateScenarioRow(idx);
+}
+
+function onScenarioCogsPctInput(idx, val){
+  scenarioData[idx].adjCogsPct=parseFloat(val)||0;
+  updateScenarioRow(idx);
+}
+
+function updateScenarioRow(idx){
   const r=scenarioData[idx];
   const curGP=r.rev*(r.curMg/100);
-  const projGP=r.rev*(r.adjMg/100);
+  const projGP=calcProjGP(r);
   const change=projGP-curGP;
   const el1=document.getElementById(`sc-proj-${idx}`);
   const el2=document.getElementById(`sc-chg-${idx}`);
@@ -1663,7 +1690,7 @@ function onScenarioInput(idx, val){
 }
 
 function resetScenario(){
-  scenarioData.forEach(r=>r.adjMg=parseFloat(r.curMg.toFixed(2)));
+  scenarioData.forEach(r=>{r.adjMg=parseFloat(r.curMg.toFixed(2));r.adjCogsPct=0;});
   buildScenarioTable();
   updateScenarioChart();
 }
@@ -1677,7 +1704,7 @@ function updateScenarioChart(){
       labels:top.map(r=>r.key.length>20?r.key.slice(0,18)+'…':r.key),
       datasets:[
         {label:'Current GP',data:top.map(r=>r.rev*(r.curMg/100)),backgroundColor:'#bfdbfe',borderRadius:4},
-        {label:'Projected GP',data:top.map(r=>r.rev*(r.adjMg/100)),backgroundColor:'#4f46e5',borderRadius:4}
+        {label:'Projected GP',data:top.map(r=>calcProjGP(r)),backgroundColor:'#4f46e5',borderRadius:4}
       ]
     },
     options:{
