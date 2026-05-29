@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Dashboards</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f4f8;color:#1e293b;min-height:100vh}
+header{background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#fff;padding:48px 24px;text-align:center}
+header h1{font-size:32px;font-weight:800;letter-spacing:-0.5px;margin-bottom:10px}
+header p{font-size:16px;opacity:.85;max-width:520px;margin:0 auto}
+.badge{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;margin-top:14px}
+main{max-width:900px;margin:0 auto;padding:40px 24px}
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:20px;margin-bottom:48px}
+.card{background:#fff;border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);border:1px solid #e2e8f0;transition:transform .15s,box-shadow .15s;text-decoration:none;color:inherit;display:block}
+.card:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(79,70,229,.12),0 4px 10px rgba(0,0,0,.06);border-color:#c7d2fe}
+.card-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.icon-indigo{background:linear-gradient(135deg,#e0e7ff,#c7d2fe)}
+.card-title{font-size:17px;font-weight:700;color:#1e293b}
+.card-sub{font-size:12px;color:#94a3b8;margin-top:2px}
+.card-desc{font-size:13px;color:#64748b;line-height:1.6;margin-bottom:16px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.tag{background:#f1f5f9;color:#475569;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
+.card-link{display:inline-flex;align-items:center;gap:6px;background:#4f46e5;color:#fff;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:600;text-decoration:none;transition:background .15s}
+.card-link:hover{background:#4338ca}
+.coming-soon{background:#f8fafc;border:2px dashed #e2e8f0;opacity:.7;cursor:default}
+.coming-soon:hover{transform:none;box-shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);border-color:#e2e8f0}
+.cs-badge{display:inline-block;background:#fef9c3;color:#92400e;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700}
+footer{text-align:center;padding:32px 24px;color:#94a3b8;font-size:12px;border-top:1px solid #e2e8f0;margin-top:20px}
+@media(max-width:600px){header h1{font-size:24px}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 Business Dashboards</h1>
+  <p>Self-contained analytics tools — open in any browser, no login required. All data stays on your device.</p>
+  <div class="badge">🔒 Data never leaves your browser</div>
+</header>
+<main>
+  <div class="section-label">Available Dashboards</div>
+  <div class="cards">
+
+    <a class="card" href="./Sales%26COGS/Sales_COGS_Dashboard.html">
+      <div class="card-header">
+        <div class="card-icon icon-indigo">📊</div>
+        <div>
+          <div class="card-title">Sales &amp; COGS Analysis</div>
+          <div class="card-sub">Shopify-style sales &amp; cost of goods</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        Upload your sales CSV and Product Master to analyse revenue, margins, and product performance across brands, categories, and sub-categories.
+      </div>
+      <div class="tags">
+        <span class="tag">📈 6 Interactive Tabs</span>
+        <span class="tag">🎯 Margin Scenario Planner</span>
+        <span class="tag">🍩 Click-to-Filter Charts</span>
+        <span class="tag">📅 YoY Comparison</span>
+        <span class="tag">🛒 AOV by Category</span>
+        <span class="tag">⬇ Export CSV</span>
+      </div>
+      <span class="card-link">Open Dashboard →</span>
+    </a>
+
+    <div class="card coming-soon">
+      <div class="card-header">
+        <div class="card-icon" style="background:linear-gradient(135deg,#fef9c3,#fde68a)">💵</div>
+        <div>
+          <div class="card-title">P&amp;L Analyzer</div>
+          <div class="card-sub">Profit &amp; loss with expense tracking</div>
+        </div>
+      </div>
+      <div class="card-desc">
+        Full P&amp;L statement, waterfall chart, operating expense inputs, and loan/cashflow calculator.
+      </div>
+      <div class="tags">
+        <span class="tag">📋 P&amp;L Statement</span>
+        <span class="tag">🏦 Loan Calculator</span>
+        <span class="tag">📊 Waterfall Chart</span>
+      </div>
+      <span class="cs-badge">Coming Soon</span>
+    </div>
+
+  </div>
+
+  <div class="section-label">How it works</div>
+  <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid #e2e8f0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px">
+    <div style="text-align:center;padding:8px">
+      <div style="font-size:32px;margin-bottom:8px">📤</div>
+      <div style="font-weight:700;margin-bottom:4px">1. Upload CSV</div>
+      <div style="font-size:13px;color:#64748b">Drag &amp; drop your Shopify export and Product Master CSV files</div>
+    </div>
+    <div style="text-align:center;padding:8px">
+      <div style="font-size:32px;margin-bottom:8px">🔄</div>
+      <div style="font-weight:700;margin-bottom:4px">2. Auto-Mapped</div>
+      <div style="font-size:13px;color:#64748b">Columns are detected automatically — no manual configuration needed</div>
+    </div>
+    <div style="text-align:center;padding:8px">
+      <div style="font-size:32px;margin-bottom:8px">📊</div>
+      <div style="font-weight:700;margin-bottom:4px">3. Explore</div>
+      <div style="font-size:13px;color:#64748b">Click charts to filter, compare years, drill into products</div>
+    </div>
+    <div style="text-align:center;padding:8px">
+      <div style="font-size:32px;margin-bottom:8px">💾</div>
+      <div style="font-weight:700;margin-bottom:4px">4. Persists</div>
+      <div style="font-size:13px;color:#64748b">Data saved in your browser — reopen anytime without re-uploading</div>
+    </div>
+  </div>
+</main>
+<footer>Business Dashboards • Built with Chart.js &amp; PapaParse • Data stored locally in your browser</footer>
+</body>
+</html>
