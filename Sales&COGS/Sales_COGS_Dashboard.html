@@ -428,6 +428,15 @@ footer{text-align:center;padding:20px;color:var(--text3);font-size:12px;border-t
     </div>
     <div id="sales-mapping-info"></div>
     <hr style="margin:16px 0;border-color:var(--border)">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:8px">📦 Share / Backup</h3>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Export everything — sales data, product master, custom mappings, and saved scenarios — into a single file. Anyone can import it to see exactly what you see.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="btn btn-secondary" onclick="exportBackup()">⬇ Export Backup (.json)</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('import-backup-file').click()">⬆ Import Backup</button>
+      <input type="file" id="import-backup-file" accept=".json" style="display:none" onchange="importBackup(event)">
+    </div>
+    <div id="backup-status" style="font-size:13px;margin-bottom:12px"></div>
+    <hr style="margin:16px 0;border-color:var(--border)">
     <button class="btn btn-danger btn-sm" onclick="confirmClearAll()">🗑 Clear All Data</button>
     <p style="font-size:12px;color:var(--text3);margin-top:8px">This will remove all uploaded data and revert to demo data.</p>
   </div>
@@ -899,6 +908,7 @@ async function clearAllData(){
   await idbClear('sales');
   await idbClear('meta');
   await idbClear('custom_mappings');
+  await idbClear('scenarios');
   State.usingDemo=true;
   State.pmCache=null;
   State.salesCache=null;
@@ -906,6 +916,91 @@ async function clearAllData(){
   showUploadAlert('✅ All data cleared — showing demo data','success');
   await updateFilterOptions();
   renderAll();
+}
+
+// ============================================================
+// EXPORT / IMPORT BACKUP
+// ============================================================
+async function exportBackup(){
+  const btn=event.target;
+  btn.disabled=true;
+  btn.textContent='Exporting…';
+  try{
+    const [pm, sales, meta, mappings, scenarios] = await Promise.all([
+      idbGetAll('product_master'),
+      idbGetAll('sales'),
+      idbGetAll('meta'),
+      idbGetAll('custom_mappings'),
+      idbGetAll('scenarios'),
+    ]);
+    const payload = {
+      _format: 'SalesCOGS_backup',
+      _version: 1,
+      exportedAt: new Date().toISOString(),
+      rowCounts: {product_master:pm.length, sales:sales.length, scenarios:scenarios.length},
+      product_master: pm,
+      sales,
+      meta,
+      custom_mappings: mappings,
+      scenarios,
+    };
+    const blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dt = new Date().toISOString().slice(0,10);
+    a.href=url; a.download=`SalesCOGS_backup_${dt}.json`; a.click();
+    URL.revokeObjectURL(url);
+    const el=document.getElementById('backup-status');
+    if(el) el.innerHTML=`<span style="color:var(--success)">✅ Exported ${pm.length} products, ${sales.length} sales rows, ${scenarios.length} scenario(s)</span>`;
+  }catch(e){
+    const el=document.getElementById('backup-status');
+    if(el) el.innerHTML=`<span style="color:var(--danger)">❌ Export failed: ${esc(e.message)}</span>`;
+  }finally{
+    btn.disabled=false; btn.textContent='⬇ Export Backup (.json)';
+  }
+}
+
+async function importBackup(event){
+  const file=event.target.files[0];
+  event.target.value='';
+  if(!file) return;
+  const el=document.getElementById('backup-status');
+  if(el) el.innerHTML='<span style="color:var(--text2)">Reading file…</span>';
+  let payload;
+  try{
+    const text = await file.text();
+    payload = JSON.parse(text);
+  }catch(e){
+    if(el) el.innerHTML=`<span style="color:var(--danger)">❌ Invalid file — could not parse JSON</span>`;
+    return;
+  }
+  if(payload._format!=='SalesCOGS_backup'){
+    if(el) el.innerHTML=`<span style="color:var(--danger)">❌ This file does not appear to be a Sales & COGS backup</span>`;
+    return;
+  }
+  const {sales=[], product_master=[], meta=[], custom_mappings=[], scenarios=[]} = payload;
+  const msg=`This will replace ALL your current data with:\n• ${product_master.length} products\n• ${sales.length} sales rows\n• ${scenarios.length} saved scenario(s)\n\nContinue?`;
+  if(!confirm(msg)) return;
+  if(el) el.innerHTML='<span style="color:var(--text2)">Importing…</span>';
+  try{
+    await idbClear('product_master'); await idbBulkPut('product_master', product_master);
+    await idbClear('sales');          await idbBulkPut('sales', sales);
+    await idbClear('meta');           for(const r of meta) await idbPut('meta', r);
+    await idbClear('custom_mappings');await idbBulkPut('custom_mappings', custom_mappings);
+    await idbClear('scenarios');      for(const r of scenarios) await idbPut('scenarios', r);
+    State.usingDemo = sales.length===0;
+    State.pmCache=null; State.salesCache=null;
+    _activeScenarioId=null;
+    document.getElementById('demo-banner').classList.toggle('hidden', !State.usingDemo);
+    if(el) el.innerHTML=`<span style="color:var(--success)">✅ Imported ${product_master.length} products, ${sales.length} sales rows, ${scenarios.length} scenario(s) — reloading…</span>`;
+    setTimeout(async()=>{
+      await updateFilterOptions();
+      renderAll();
+      closeUploadModal();
+    }, 800);
+  }catch(e){
+    if(el) el.innerHTML=`<span style="color:var(--danger)">❌ Import failed: ${esc(e.message)}</span>`;
+  }
 }
 
 // ============================================================
