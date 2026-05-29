@@ -1893,11 +1893,15 @@ function buildScenarioTable(){
   const grp=State.scenarioGroup;
   const rows=scenarioData;
   const totalRev=rows.reduce((a,r)=>a+r.rev,0);
+  const totalCogs=rows.reduce((a,r)=>a+r.cogs,0);
   const totalCurGP=rows.reduce((a,r)=>a+r.rev*(r.curMg/100),0);
+  const totalProjGP=rows.reduce((a,r)=>a+calcProjGP(r),0);
+  const totalChange=totalProjGP-totalCurGP;
+  const totalNewMg=totalRev?totalProjGP/totalRev*100:0;
 
   let html=`<table><thead><tr>
     ${grp==='brandcat'?'<th>Brand</th><th>Category</th>':'<th>Group</th>'}
-    <th>Net Sales</th><th>Total COGS</th><th>Current Margin %</th><th title="Adjust target margin %; overrides cost-side">Adj Margin %</th><th title="Adjust COGS by % (negative = cost savings)">Adj COGS %</th><th>Projected GP</th><th>New Margin %</th><th>Change vs Current</th>
+    <th>Net Sales</th><th>Total COGS</th><th>Current GP</th><th>Current Margin %</th><th title="Adjust target margin %; overrides cost-side">Adj Margin %</th><th title="Adjust COGS by % (negative = cost savings)">Adj COGS %</th><th>Projected GP</th><th>New Margin %</th><th>Change vs Current</th>
   </tr></thead><tbody>`;
 
   rows.forEach((r,i)=>{
@@ -1910,7 +1914,7 @@ function buildScenarioTable(){
     const changeCol=change>=0?'var(--success)':'var(--danger)';
     html+=`<tr>
       ${grp==='brandcat'?`<td>${esc(r.brand)}</td><td>${esc(r.cat)}</td>`:`<td><strong>${esc(r.key)}</strong></td>`}
-      <td>${fmtCur(r.rev)}</td><td>${fmtCur(r.cogs)}</td>
+      <td>${fmtCur(r.rev)}</td><td>${fmtCur(r.cogs)}</td><td>${fmtCur(curGP)}</td>
       <td><span style="color:${mgCol};font-weight:700">${fmtPct(r.curMg)}</span></td>
       <td><input class="scenario-input" type="number" min="-100" max="100" step="0.1" value="${r.adjMg.toFixed(1)}" oninput="onScenarioInput(${i},this.value)" title="Adjusted target margin %"></td>
       <td><input class="scenario-input" type="number" min="-100" max="100" step="0.1" value="${(r.adjCogsPct||0).toFixed(1)}" oninput="onScenarioCogsPctInput(${i},this.value)" title="COGS adjustment % (negative = cost reduction)"></td>
@@ -1920,16 +1924,18 @@ function buildScenarioTable(){
     </tr>`;
   });
 
-  // Summary row
-  const totalProjGP=rows.reduce((a,r)=>a+calcProjGP(r),0);
-  const totalChange=totalProjGP-totalCurGP;
-  const totalNewMg=totalRev?totalProjGP/totalRev*100:0;
+  // Total row — dynamic cells have IDs so updateScenarioRow can refresh them
+  const totChgCol=totalChange>=0?'var(--success)':'var(--danger)';
   html+=`<tr class="total-row">
     ${grp==='brandcat'?'<td colspan="2"><strong>TOTAL</strong></td>':'<td><strong>TOTAL</strong></td>'}
-    <td>${fmtCur(totalRev)}</td><td>—</td><td>${fmtPct(totalRev?totalCurGP/totalRev*100:0)}</td>
-    <td>—</td><td>—</td><td>${fmtCur(totalProjGP)}</td>
-    <td style="font-weight:700">${fmtPct(totalNewMg)}</td>
-    <td style="color:${totalChange>=0?'var(--success)':'var(--danger)'}">${totalChange>=0?'+':''}${fmtCur(totalChange)}</td>
+    <td>${fmtCur(totalRev)}</td>
+    <td>${fmtCur(totalCogs)}</td>
+    <td>${fmtCur(totalCurGP)}</td>
+    <td>${fmtPct(totalRev?totalCurGP/totalRev*100:0)}</td>
+    <td>—</td><td>—</td>
+    <td id="sc-total-proj">${fmtCur(totalProjGP)}</td>
+    <td id="sc-total-newmg" style="font-weight:700">${fmtPct(totalNewMg)}</td>
+    <td id="sc-total-chg" style="color:${totChgCol}">${totalChange>=0?'+':''}${fmtCur(totalChange)}</td>
   </tr>`;
 
   html+='</tbody></table>';
@@ -1952,18 +1958,25 @@ function updateScenarioRow(idx){
   const projGP=calcProjGP(r);
   const newMg=r.rev?projGP/r.rev*100:0;
   const change=projGP-curGP;
+  // Update this row's cells
   const el1=document.getElementById(`sc-proj-${idx}`);
   const elMg=document.getElementById(`sc-newmg-${idx}`);
   const el2=document.getElementById(`sc-chg-${idx}`);
   if(el1) el1.textContent=fmtCur(projGP);
-  if(elMg){
-    elMg.textContent=fmtPct(newMg);
-    elMg.style.color=newMg>50?'var(--success)':newMg>20?'var(--warning)':'var(--danger)';
-  }
-  if(el2){
-    el2.textContent=(change>=0?'+':'')+fmtCur(change);
-    el2.style.color=change>=0?'var(--success)':'var(--danger)';
-  }
+  if(elMg){elMg.textContent=fmtPct(newMg);elMg.style.color=newMg>50?'var(--success)':newMg>20?'var(--warning)':'var(--danger)';}
+  if(el2){el2.textContent=(change>=0?'+':'')+fmtCur(change);el2.style.color=change>=0?'var(--success)':'var(--danger)';}
+  // Recompute and update total row
+  const totalRev=scenarioData.reduce((a,r)=>a+r.rev,0);
+  const totalCurGP=scenarioData.reduce((a,r)=>a+r.rev*(r.curMg/100),0);
+  const totalProjGP=scenarioData.reduce((a,r)=>a+calcProjGP(r),0);
+  const totalChange=totalProjGP-totalCurGP;
+  const totalNewMg=totalRev?totalProjGP/totalRev*100:0;
+  const elTP=document.getElementById('sc-total-proj');
+  const elTM=document.getElementById('sc-total-newmg');
+  const elTC=document.getElementById('sc-total-chg');
+  if(elTP) elTP.textContent=fmtCur(totalProjGP);
+  if(elTM) elTM.textContent=fmtPct(totalNewMg);
+  if(elTC){elTC.textContent=(totalChange>=0?'+':'')+fmtCur(totalChange);elTC.style.color=totalChange>=0?'var(--success)':'var(--danger)';}
   if(scenarioDebounce) clearTimeout(scenarioDebounce);
   scenarioDebounce=setTimeout(updateScenarioChart,300);
 }
