@@ -3,13 +3,256 @@
 
 ---
 
+## ⚠️ KNOWN ISSUES — READ FIRST BEFORE WRITING ANY CODE
+
+> These are real bugs encountered and fixed during production dashboard development. Each has a **root cause pattern** that recurs across dashboards. Reading this section before building will prevent repeating them. Cross-references point to the Implementation Rule that encodes the fix.
+
+---
+
+### BUG-1 — Global datalabels plugin silences all chart labels
+
+**Symptom:** Chart labels ($ values, % segments) set on individual charts never appear even though config looks correct.
+
+**Root cause:** `Chart.register(ChartDataLabels)` + `Chart.defaults.plugins.datalabels = {display: false}` globally disables labels on every chart. Individual chart configs that set `display: true` are still overridden if the override isn't in the right scope.
+
+**Fix pattern:**
+```js
+// At init — global OFF
+Chart.defaults.plugins.datalabels = { display: false };
+
+// Per donut/chart that needs labels — explicitly override display as a function
+plugins: {
+  datalabels: {
+    display: (ctx) => (ctx.dataset.data[ctx.dataIndex] / total * 100) >= 3,
+    formatter: (val) => `${fmt$(val)}\n${fmtPct(val/total*100)}`
+  }
+}
+```
+Never set `plugins: [ChartDataLabels]` in individual chart configs — it's already registered globally.
+
+**→ Rule:** IR-17, IR-18
+
+---
+
+### BUG-2 — False delta: Projected GP shows non-zero change before user edits anything
+
+**Symptom:** On initial load of scenario table, "Change vs Current" column shows non-zero values even though no adjustments have been made.
+
+**Root cause:** Storing `adjMg: parseFloat(curMg.toFixed(2))` rounds the float to 2 decimal places, while `curMg` remains the full-precision float. The difference between `42.857142...` and `42.86` is enough to produce a visible delta.
+
+**Fix pattern:**
+```js
+// WRONG
+adjMg: parseFloat(curMg.toFixed(2))   // rounding introduces false delta
+
+// CORRECT
+adjMg: curMg                           // store exact float; round only in display
+// In the input element:
+value="${r.adjMg.toFixed(1)}"          // display rounds, stored value stays exact
+```
+
+**→ Rule:** IR-26
+
+---
+
+### BUG-3 — Scenario total row does not update live when user edits a cell
+
+**Symptom:** Changing Adj Margin % or Adj COGS % updates the row correctly but the Total row at the bottom stays stale.
+
+**Root cause:** The total row cells had no DOM IDs, so `updateRow(idx)` could not locate them. Only the individual row cells were updated.
+
+**Fix pattern:**
+```html
+<!-- Give every total cell a stable ID at render time -->
+<td id="sc-total-proj">...</td>
+<td id="sc-total-newmg">...</td>
+<td id="sc-total-chg">...</td>
+```
+```js
+function updateRow(idx) {
+  // 1. update individual row cells
+  // 2. recalculate totals across ALL scenarioData rows
+  const totalProj = scenarioData.reduce((a,r) => a + calcProjGP(r), 0);
+  document.getElementById('sc-total-proj').textContent = fmt$(totalProj);
+  // repeat for other totals
+}
+```
+Every computed total cell needs an ID. `updateRow` must always recalculate **all** totals, not just the changed row.
+
+**→ Rule:** IR-29
+
+---
+
+### BUG-4 — Adj Margin % changes without user input when switching filters
+
+**Symptom:** User changes only Adj COGS % on a brand×category row. After switching year filter, Adj Margin % shows a value different from Current Margin % even though the user never touched it.
+
+**Root cause:** When a brand-level lock is created, `adjMg` is stored equal to `curMg` at that moment. After a year filter change, `curMg` is recalculated from the filtered data (different value), but the stored `adjMg` still holds the old value. Inherited locks propagate this stale `adjMg` to child rows, making them appear as if the margin was deliberately changed.
+
+**Fix pattern — store `curMgAtLock` when pinning:**
+```js
+// When locking a row
+lockedAdjustments[grp][key] = {
+  adjMg: r.adjMg,
+  adjCogsPct: r.adjCogsPct,
+  curMgAtLock: r.curMg        // ← record what curMg was at lock time
+};
+
+// When applying a lock during render
+const wasExplicit = lk.curMgAtLock === undefined          // old lock, treat as explicit
+                 || Math.abs(lk.adjMg - lk.curMgAtLock) > 0.001;  // user changed it
+
+adjMg: wasExplicit ? lk.adjMg : curMg   // if not explicit, follow current data
+```
+Apply the same pattern to saved scenarios: store `curMgAtSave: r.curMg` alongside `adjMg`, check on restore.
+
+**→ Rule:** IR-27, IR-28
+
+---
+
+### BUG-5 — Chart renders on top of previous chart (duplicate/ghost charts)
+
+**Symptom:** After a filter change or tab switch, a new chart draws over the old one. The canvas shows two overlapping datasets, tooltip fires twice, or chart.js throws `Canvas is already in use`.
+
+**Root cause:** `new Chart(canvas, config)` was called without destroying the previous instance attached to that canvas.
+
+**Fix pattern:**
+```js
+const charts = {};   // module-level registry
+
+function makeChart(id, config) {
+  if (charts[id]) { charts[id].destroy(); }
+  charts[id] = new Chart(document.getElementById(id), config);
+  return charts[id];
+}
+```
+Always use this wrapper instead of calling `new Chart()` directly.
+
+**→ Rule:** IR-19
+
+---
+
+### BUG-6 — IndexedDB store missing after adding a new store
+
+**Symptom:** App crashes with `DOMException: The operation failed because the requested database object could not be found` after a new store (e.g. `scenarios`) was added to the code.
+
+**Root cause:** IndexedDB only runs `onupgradeneeded` when the version number changes. Adding a new `db.createObjectStore()` call without bumping `DB_VER` means the store is never created in existing databases.
+
+**Fix pattern:**
+```js
+const DB_VER = 2;   // bump this every time you add/change a store
+
+request.onupgradeneeded = (e) => {
+  const db = e.target.result;
+  const oldV = e.oldVersion;
+  if (oldV < 1) {
+    db.createObjectStore('data_sales', { keyPath: 'id' });
+    db.createObjectStore('meta',       { keyPath: 'key' });
+  }
+  if (oldV < 2) {
+    // New store added in v2 — only runs for users upgrading from v1
+    db.createObjectStore('scenarios',  { keyPath: 'id' });
+  }
+};
+```
+Never recreate existing stores in upgrade blocks — wrap each batch in `if (oldV < N)`.
+
+**→ Rule:** IR-3
+
+---
+
+### BUG-7 — clearAllData leaves orphaned records in new stores
+
+**Symptom:** After "Clear All Data", old scenario chips or custom mappings reappear on next upload because those stores were not cleared.
+
+**Root cause:** `clearAllData()` was written when fewer stores existed. New stores added later were not included in the clear operation.
+
+**Fix pattern:** Maintain an explicit list of all stores and iterate:
+```js
+const ALL_STORES = ['data_sales', 'meta', 'custom_mappings', 'scenarios'];
+
+async function clearAllData() {
+  for (const store of ALL_STORES) {
+    await idbClear(store);
+  }
+}
+```
+Update `ALL_STORES` every time a new store is added to `DB_VER`.
+
+---
+
+### BUG-8 — Global find/replace for field names misses display strings
+
+**Symptom:** After renaming a computed field (e.g. `totalSales` → `netSales`) via find/replace, column headers and KPI tile labels still show the old name.
+
+**Root cause:** Code uses the field name in two contexts: (a) as a JS object key (`r.totalSales`, `sumField(x,'totalSales')`) and (b) as a display string (`'Total Sales'`, `'Total Revenue'`). Find/replace on the JS key pattern misses the display strings.
+
+**Fix pattern:** When renaming a field, search for both patterns separately:
+```
+1. JS key:      ,'totalSales')  →  ,'netSales')       (sumField calls)
+2. JS property: r.totalSales    →  r.netSales          (direct access)
+3. Display:     grep for 'Total Sales' and 'Total Revenue' separately — update by hand
+```
+Never rely on a single find/replace to catch both uses.
+
+---
+
+### BUG-9 — Two-step upload: data saves before user confirms field mapping
+
+**Symptom:** User uploads a file; data immediately appears in the dashboard with incorrect field assignments (e.g. discount column mapped to revenue).
+
+**Root cause:** Parse and save were combined in one step. The mapping editor was shown after data was already written to IndexedDB.
+
+**Fix pattern — strict two-step:**
+```
+Step 1 (on file drop/select):
+  → Parse file into memory only (_pendingData = rows)
+  → Show mapping editor with detected roles
+  → Do NOT touch IndexedDB
+
+Step 2 (on explicit Save button click):
+  → Read confirmed mapping from editor
+  → Apply mapping to _pendingData
+  → Write to IndexedDB
+  → Clear _pendingData
+  → Show success summary
+```
+The Save button must be the only code path that calls `idbPut` for uploaded data.
+
+**→ Rule:** IR-22, IR-23
+
+---
+
+### BUG-10 — Derived fields computed at parse time break when source fields change
+
+**Symptom:** After user remaps a field (e.g. corrects which column is "discount"), the derived `net_sales` values in the DB still reflect the old incorrect mapping.
+
+**Root cause:** `net_sales = gross − discount − returns` was computed during parse and stored. Changing the mapping required re-uploading the whole file.
+
+**Fix pattern:** Store only raw column values in IndexedDB. Compute all derived fields at render time from the current mapping:
+```js
+// Storage — raw only
+{ sku, date, col_A: 1200, col_B: 50, col_C: 30 }
+
+// Render — derive on the fly using confirmed mapping
+const rev     = r[mapping.revenue]  || 0;
+const disc    = r[mapping.discount] || 0;
+const ret     = r[mapping.returns]  || 0;
+const netSales = rev - disc - ret;
+```
+
+**→ Rule:** IR-7
+
+---
+
 ## HOW TO USE THIS BLUEPRINT
 
-1. Present each Phase as a **numbered menu** — user picks options or types custom input
-2. Collect all selections before writing any code
-3. Use the **Catalog** sections to populate analysis/tab content
-4. Apply **Phase 5 rules** throughout implementation — these are non-negotiable
-5. Confirm final spec with user before building
+1. **Read the Known Issues section above before writing any code**
+2. Present each Phase as a **numbered menu** — user picks options or types custom input
+3. Collect all selections before writing any code
+4. Use the **Catalog** sections to populate analysis/tab content
+5. Apply **Phase 5 rules** throughout implementation — these are non-negotiable
+6. Confirm final spec with user before building
 
 **Token strategy:** Read only the catalog rows matching user selections. Skip unselected industry/tab/feature rows entirely.
 
