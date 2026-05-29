@@ -120,6 +120,15 @@ tr:hover td{background:var(--bg3)}
 /* SCENARIO PLANNER */
 .scenario-input{width:80px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;text-align:right;font-size:13px}
 .scenario-input:focus{outline:none;border-color:var(--primary)}
+.scenario-chips{display:flex;flex-wrap:wrap;gap:8px;padding:10px 0 4px;align-items:center}
+.scenario-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);transition:all .15s;user-select:none}
+.scenario-chip:hover{border-color:var(--primary);color:var(--primary)}
+.scenario-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.scenario-chip .chip-del{background:none;border:none;cursor:pointer;font-size:14px;line-height:1;padding:0 0 0 2px;color:inherit;opacity:.7}
+.scenario-chip .chip-del:hover{opacity:1}
+.scenario-save-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--primary-light);border:1.5px solid var(--primary);border-radius:8px;margin-top:8px}
+.scenario-save-bar.hidden{display:none}
+.scenario-save-bar input{flex:1;padding:6px 10px;border:1px solid var(--primary);border-radius:6px;font-size:13px;outline:none;background:var(--bg2)}
 /* SECTION */
 .section-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;margin-top:20px;padding-bottom:8px;border-bottom:2px solid var(--border)}
 /* STATUS CARDS */
@@ -325,9 +334,18 @@ footer{text-align:center;padding:20px;color:var(--text3);font-size:12px;border-t
         <button class="btn btn-secondary" onclick="setScenarioGroup('brandcat',this)">Brand × Category</button>
       </div>
       <button class="btn btn-sm btn-secondary" onclick="resetScenario()">↺ Reset</button>
+      <button class="btn btn-sm btn-primary" onclick="promptSaveScenario()">💾 Save Scenario</button>
+    </div>
+    <div class="scenario-save-bar hidden" id="scenario-save-bar">
+      <span style="font-size:13px;font-weight:600;color:var(--primary);white-space:nowrap">Scenario name:</span>
+      <input type="text" id="scenario-name-input" placeholder="e.g. Q3 Optimistic, Base Case…" maxlength="60"
+        onkeydown="if(event.key==='Enter')confirmSaveScenario();if(event.key==='Escape')cancelSaveScenario()">
+      <button class="btn btn-sm btn-primary" onclick="confirmSaveScenario()">Save</button>
+      <button class="btn btn-sm btn-secondary" onclick="cancelSaveScenario()">Cancel</button>
     </div>
     <div class="full-card">
       <h3>🎯 Margin Scenario Planner</h3>
+      <div class="scenario-chips" id="scenario-chips"></div>
       <div class="tbl-wrap" id="scenario-table-wrap"></div>
     </div>
     <div class="full-card" style="margin-top:16px">
@@ -448,7 +466,7 @@ footer{text-align:center;padding:20px;color:var(--text3);font-size:12px;border-t
 // CONFIG & STATE
 // ============================================================
 const DB_NAME = 'SalesCOGS_v3';
-const DB_VER = 1;
+const DB_VER = 2;
 const debugMode = false;
 const COLORS = ['#4f46e5','#7c3aed','#0d9488','#ea580c','#db2777','#059669','#d97706','#2563eb','#16a34a','#8b5cf6'];
 
@@ -489,6 +507,7 @@ function openDB(){
       if(!db.objectStoreNames.contains('sales')) db.createObjectStore('sales',{keyPath:'id'});
       if(!db.objectStoreNames.contains('meta')) db.createObjectStore('meta',{keyPath:'key'});
       if(!db.objectStoreNames.contains('custom_mappings')) db.createObjectStore('custom_mappings',{keyPath:'sku'});
+      if(!db.objectStoreNames.contains('scenarios')) db.createObjectStore('scenarios',{keyPath:'id'});
     };
     req.onsuccess = e=>{_db=e.target.result;res(_db);};
     req.onerror = e=>rej(e.target.error);
@@ -525,6 +544,9 @@ function idbClear(store){
 }
 function idbCount(store){
   return idbTx(store).then(s=>new Promise((res,rej)=>{const r=s.count();r.onsuccess=()=>res(r.result);r.onerror=e=>rej(e);}));
+}
+function idbDelete(store, key){
+  return idbTx(store,'readwrite').then(s=>new Promise((res,rej)=>{const r=s.delete(key);r.onsuccess=()=>res();r.onerror=e=>rej(e);}));
 }
 
 // ============================================================
@@ -1610,6 +1632,7 @@ async function renderScenario(){
 
     buildScenarioTable();
     updateScenarioChart();
+    renderScenarioChips();
   }catch(e){
     document.getElementById('panel-3').innerHTML=`<div class="alert alert-danger">Scenario error: ${esc(e.message)}</div>`;
   }
@@ -1703,8 +1726,89 @@ function updateScenarioRow(idx){
 
 function resetScenario(){
   scenarioData.forEach(r=>{r.adjMg=parseFloat(r.curMg.toFixed(2));r.adjCogsPct=0;});
+  _activeScenarioId=null;
   buildScenarioTable();
   updateScenarioChart();
+  renderScenarioChips();
+}
+
+// ---- Saved Scenarios ----
+let _activeScenarioId = null;
+
+function promptSaveScenario(){
+  const bar=document.getElementById('scenario-save-bar');
+  bar.classList.remove('hidden');
+  const inp=document.getElementById('scenario-name-input');
+  inp.value='';
+  inp.focus();
+}
+function cancelSaveScenario(){
+  document.getElementById('scenario-save-bar').classList.add('hidden');
+}
+async function confirmSaveScenario(){
+  const name=(document.getElementById('scenario-name-input').value||'').trim();
+  if(!name){document.getElementById('scenario-name-input').focus();return;}
+  const entry={
+    id: Date.now().toString(),
+    name,
+    savedAt: new Date().toISOString(),
+    group: State.scenarioGroup,
+    data: scenarioData.map(r=>({key:r.key,brand:r.brand,cat:r.cat,adjMg:r.adjMg,adjCogsPct:r.adjCogsPct||0}))
+  };
+  await idbPut('scenarios', entry);
+  _activeScenarioId=entry.id;
+  cancelSaveScenario();
+  renderScenarioChips();
+}
+
+async function renderScenarioChips(){
+  const container=document.getElementById('scenario-chips');
+  if(!container) return;
+  let saved=[];
+  try{ saved=await idbGetAll('scenarios'); }catch(e){}
+  saved.sort((a,b)=>a.savedAt<b.savedAt?1:-1);
+  if(!saved.length){container.innerHTML='<span style="font-size:12px;color:var(--text3)">No saved scenarios — adjust the table then click 💾 Save Scenario</span>';return;}
+  container.innerHTML=`<span style="font-size:12px;font-weight:600;color:var(--text2);margin-right:4px">Saved:</span>`+
+    saved.map(s=>{
+      const active=s.id===_activeScenarioId;
+      const dt=new Date(s.savedAt).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+      return `<span class="scenario-chip${active?' active':''}" onclick="applyScenario('${s.id}')" title="Saved ${dt} · Group: ${s.group}">
+        ${esc(s.name)}
+        <button class="chip-del" onclick="event.stopPropagation();deleteScenario('${s.id}')" title="Delete">×</button>
+      </span>`;
+    }).join('');
+}
+
+async function applyScenario(id){
+  let saved=[];
+  try{ saved=await idbGetAll('scenarios'); }catch(e){}
+  const entry=saved.find(s=>s.id===id);
+  if(!entry) return;
+  // Switch group if needed
+  if(entry.group!==State.scenarioGroup){
+    State.scenarioGroup=entry.group;
+    document.querySelectorAll('#scenario-group-btns .btn').forEach(b=>{
+      b.classList.toggle('active', b.textContent.toLowerCase().replace(/\s.*$/,'')===entry.group||
+        (entry.group==='brandcat'&&b.textContent.includes('×')));
+    });
+    await renderScenario();
+  }
+  // Apply saved adjustments by key
+  const lookup=Object.fromEntries(entry.data.map(d=>[d.key,d]));
+  scenarioData.forEach(r=>{
+    const saved=lookup[r.key];
+    if(saved){r.adjMg=saved.adjMg;r.adjCogsPct=saved.adjCogsPct||0;}
+  });
+  _activeScenarioId=id;
+  buildScenarioTable();
+  updateScenarioChart();
+  renderScenarioChips();
+}
+
+async function deleteScenario(id){
+  await idbDelete('scenarios', id);
+  if(_activeScenarioId===id) _activeScenarioId=null;
+  renderScenarioChips();
 }
 
 function updateScenarioChart(){
