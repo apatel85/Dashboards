@@ -56,15 +56,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .panel.active{display:block}
 /* CARDS / GRID */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
-.kpi-card{background:var(--bg2);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
-.kpi-card .kpi-icon{font-size:24px;margin-bottom:8px}
-.kpi-card .kpi-label{font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.kpi-card .kpi-value{font-size:24px;font-weight:800;margin-top:4px}
-.kpi-card .kpi-delta{font-size:12px;font-weight:600;margin-top:6px}
-.kpi-card .kpi-bg{position:absolute;right:-10px;top:-10px;font-size:60px;opacity:.07}
+.kpi-card{background:var(--bg2);border-radius:var(--radius);padding:10px 14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi-card .kpi-icon{font-size:18px;margin-bottom:3px}
+.kpi-card .kpi-label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.kpi-card .kpi-value{font-size:19px;font-weight:800;margin-top:2px}
+.kpi-card .kpi-delta{font-size:11px;font-weight:600;margin-top:3px}
+.kpi-card .kpi-bg{position:absolute;right:-8px;top:-8px;font-size:44px;opacity:.07}
 .delta-up{color:var(--success)}
 .delta-down{color:var(--danger)}
 .chart-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.chart-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
 .chart-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px}
 .chart-card{background:var(--bg2);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
 .chart-card h3{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--text)}
@@ -141,17 +142,18 @@ footer{text-align:center;padding:20px;color:var(--text3);font-size:12px;border-t
 /* RESPONSIVE */
 @media(max-width:1024px){
   .chart-grid-4{grid-template-columns:repeat(2,1fr)}
-  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .chart-grid-3{grid-template-columns:repeat(2,1fr)}
+  .kpi-grid{grid-template-columns:repeat(4,1fr)}
 }
 @media(max-width:768px){
-  .chart-grid-4,.chart-grid-2{grid-template-columns:1fr}
+  .chart-grid-4,.chart-grid-3,.chart-grid-2{grid-template-columns:1fr}
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .status-grid{grid-template-columns:1fr}
   #filter-bar{gap:6px}
   #filter-bar select,#filter-bar input{font-size:12px;padding:5px 8px}
 }
 @media(max-width:480px){
-  .kpi-grid{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
   #panels{padding:12px}
   .header-top{padding:10px 12px}
 }
@@ -200,9 +202,22 @@ footer{text-align:center;padding:20px;color:var(--text3);font-size:12px;border-t
   <!-- TAB 0: OVERVIEW -->
   <div class="panel active" id="panel-0">
     <div id="kpi-row" class="kpi-grid"></div>
-    <div id="chart-row-1" class="chart-grid-4"></div>
+    <!-- Row 1: Three interactive donuts -->
+    <div id="chart-row-1" class="chart-grid-3"></div>
+    <!-- Row 2: Top products + margin SKUs -->
+    <div class="chart-grid-2" style="margin-bottom:20px">
+      <div class="chart-card">
+        <h3>📊 Top 10 Products by Revenue</h3>
+        <div class="chart-wrap" style="height:300px"><canvas id="chart-top10"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>🎯 Top 10 SKUs by Margin %</h3>
+        <div class="chart-wrap" style="height:300px"><canvas id="chart-sku-margin"></canvas></div>
+      </div>
+    </div>
+    <!-- Row 3: Monthly trend -->
     <div class="full-card" id="monthly-trend-card">
-      <h3>📅 Monthly Revenue Trend</h3>
+      <h3>📅 Monthly Revenue Trend <span style="font-size:11px;color:var(--text3);font-weight:400">(click a bar to drill into products)</span></h3>
       <div class="chart-wrap" style="height:280px"><canvas id="chart-monthly"></canvas></div>
       <div id="monthly-drilldown" style="display:none;margin-top:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -212,15 +227,10 @@ footer{text-align:center;padding:20px;color:var(--text3);font-size:12px;border-t
         <div class="tbl-wrap" id="drilldown-table-wrap"></div>
       </div>
     </div>
-    <div class="chart-grid-2">
-      <div class="full-card" style="margin-bottom:0">
-        <h3>🛒 AOV by Category</h3>
-        <div class="tbl-wrap" id="aov-table-wrap"></div>
-      </div>
-      <div class="full-card" style="margin-bottom:0">
-        <h3>📦 Top 10 SKUs by Margin %</h3>
-        <div class="chart-wrap" style="height:260px"><canvas id="chart-sku-margin"></canvas></div>
-      </div>
+    <!-- Row 4: AOV table -->
+    <div class="full-card">
+      <h3>🛒 AOV by Category &amp; Sub Category</h3>
+      <div class="tbl-wrap" id="aov-table-wrap"></div>
     </div>
   </div>
 
@@ -807,7 +817,7 @@ function handleSalesFile(file){
       State.lastMapping.sales=matched;
       document.getElementById('sales-mapping-info').innerHTML=mappingInfoHTML(matched,unmatched,'Sales');
       if(!matched.sku||!matched.date){showUploadAlert('Could not find sku/date columns in Sales CSV','warning');return;}
-      const rows=res.data.map(r=>{
+      const parsed=res.data.map(r=>{
         const sku=(r[matched.sku]||'').trim();
         if(!sku)return null;
         const dateRaw=matched.date?r[matched.date]:'';
@@ -820,7 +830,6 @@ function handleSalesFile(file){
           qty:parseNum(matched.qty?r[matched.qty]:0),
           totalSales:parseNum(matched.totalSales?r[matched.totalSales]:0),
           cogs:parseNum(matched.cogs?r[matched.cogs]:0),
-          grossProfit:parseNum(matched.grossProfit?r[matched.grossProfit]:0),
           grossSales:parseNum(matched.grossSales?r[matched.grossSales]:0),
           discounts:parseNum(matched.discounts?r[matched.discounts]:0),
           returns:parseNum(matched.returns?r[matched.returns]:0),
@@ -831,8 +840,21 @@ function handleSalesFile(file){
           hour:parseNum(matched.hour?r[matched.hour]:0)
         };
       }).filter(Boolean);
-      // fix grossProfit if missing
-      rows.forEach(r=>{ if(!r.grossProfit) r.grossProfit=r.totalSales-r.cogs; });
+      // Aggregate duplicate (sku, date) rows by summing numeric fields
+      const agg={};
+      parsed.forEach(r=>{
+        if(!agg[r.id]){
+          agg[r.id]={...r};
+        } else {
+          const e=agg[r.id];
+          e.qty+=r.qty; e.totalSales+=r.totalSales; e.cogs+=r.cogs;
+          e.grossSales+=r.grossSales; e.discounts+=r.discounts;
+          e.returns+=r.returns; e.netSales+=r.netSales;
+        }
+      });
+      const rows=Object.values(agg);
+      // Always derive grossProfit from totalSales − cogs for consistency
+      rows.forEach(r=>{ r.grossProfit=r.totalSales-r.cogs; });
       await idbBulkPut('sales',rows);
       await idbPut('meta',{key:'sales_count',value:rows.length});
       await idbPut('meta',{key:'sales_date',value:new Date().toISOString()});
@@ -1081,65 +1103,138 @@ function renderKPIs(rows){
 function renderChartRow1(rows){
   const el=document.getElementById('chart-row-1');
   el.innerHTML=`
-    <div class="chart-card"><h3>🏢 Revenue by Brand</h3><div class="chart-wrap" style="height:220px"><canvas id="chart-brand"></canvas></div></div>
-    <div class="chart-card"><h3>🗂 Revenue by Category</h3><div class="chart-wrap" style="height:220px"><canvas id="chart-cat"></canvas></div></div>
-    <div class="chart-card"><h3>📊 Top 10 Products</h3><div class="chart-wrap" style="height:220px"><canvas id="chart-top10"></canvas></div></div>
-    <div class="chart-card" style="display:none" id="sku-margin-overview-card"></div>
+    <div class="chart-card">
+      <h3>🏢 Revenue by Brand <span style="font-size:11px;color:var(--text3);font-weight:400">(click to filter)</span></h3>
+      <div class="chart-wrap" style="height:320px"><canvas id="chart-brand"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>🗂 Revenue by Category <span style="font-size:11px;color:var(--text3);font-weight:400">(click to filter)</span></h3>
+      <div class="chart-wrap" style="height:320px"><canvas id="chart-cat"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>💚 Gross Profit by Brand <span style="font-size:11px;color:var(--text3);font-weight:400">(click to filter)</span></h3>
+      <div class="chart-wrap" style="height:320px"><canvas id="chart-gm-brand"></canvas></div>
+    </div>
   `;
 
-  // Brand donut
+  // Shared donut config builder
+  function makeDonut(canvasId, labels, vals, total, onClickType, tooltipExtra){
+    destroyChart(canvasId);
+    charts[canvasId]=new Chart(document.getElementById(canvasId),{
+      type:'doughnut',
+      data:{
+        labels,
+        datasets:[{
+          data:vals,
+          backgroundColor:COLORS.slice(0,labels.length),
+          hoverOffset:10,
+          borderWidth:2,
+          borderColor:'#fff'
+        }]
+      },
+      plugins:[ChartDataLabels],
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        cutout:'52%',
+        plugins:{
+          legend:{
+            position:'bottom',
+            labels:{font:{size:11},padding:10,usePointStyle:true}
+          },
+          tooltip:{
+            callbacks:{
+              label:(ctx)=>{
+                const v=ctx.raw;
+                const pct=(v/total*100).toFixed(1);
+                const lines=[`${ctx.label}: ${fmtCur(v)} (${pct}%)`];
+                if(tooltipExtra) lines.push(...tooltipExtra(ctx.dataIndex));
+                return lines;
+              }
+            }
+          },
+          datalabels:{
+            anchor:'center',
+            align:'center',
+            color:'#fff',
+            font:{size:9,weight:'bold'},
+            textShadowBlur:3,
+            textShadowColor:'rgba(0,0,0,0.4)',
+            formatter:(v,ctx)=>{
+              const pct=(v/total*100);
+              if(pct<4) return '';
+              const label=ctx.chart.data.labels[ctx.dataIndex];
+              const shortLabel=label.length>10?label.slice(0,9)+'…':label;
+              return `${shortLabel}\n${fmtCur(v)}\n${pct.toFixed(1)}%`;
+            }
+          }
+        },
+        onClick:(e,els)=>{
+          if(els.length) filterByChartClick(onClickType, labels[els[0].index]);
+        }
+      }
+    });
+  }
+
+  // 1. Revenue by Brand donut
   const byBrand=groupBy(rows,'brand');
   const brandLabels=Object.keys(byBrand).sort((a,b)=>sumField(byBrand[b],'totalSales')-sumField(byBrand[a],'totalSales'));
   const brandVals=brandLabels.map(b=>sumField(byBrand[b],'totalSales'));
   const totalRevBrand=brandVals.reduce((a,v)=>a+v,0);
-  destroyChart('chart-brand');
-  charts['chart-brand']=new Chart(document.getElementById('chart-brand'),{
-    type:'doughnut',
-    data:{labels:brandLabels,datasets:[{data:brandVals,backgroundColor:COLORS.slice(0,brandLabels.length)}]},
-    plugins:[ChartDataLabels],
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{
-        legend:{position:'bottom',labels:{font:{size:11}}},
-        datalabels:{anchor:'center',align:'center',color:'#fff',font:{size:10,weight:'bold'},
-          formatter:(v,ctx)=>{const pct=(v/totalRevBrand*100).toFixed(1);return pct>5?`${ctx.chart.data.labels[ctx.dataIndex]}\n$${Math.round(v/1000)}k\n${pct}%`:'';}}
-      },
-      onClick:(e,els)=>{ if(els.length){const l=brandLabels[els[0].index];filterByChartClick('brand',l);} }
+  makeDonut('chart-brand', brandLabels, brandVals, totalRevBrand, 'brand',
+    idx=>{
+      const b=brandLabels[idx];
+      const cogs=sumField(byBrand[b],'cogs');
+      const gp=sumField(byBrand[b],'grossProfit');
+      return [`Gross Profit: ${fmtCur(gp)}`, `Margin: ${fmtPct(marginPct(brandVals[idx],cogs))}`];
     }
-  });
+  );
 
-  // Category donut
+  // 2. Revenue by Category donut
   const byCat=groupBy(rows,'category');
   const catLabels=Object.keys(byCat).sort((a,b)=>sumField(byCat[b],'totalSales')-sumField(byCat[a],'totalSales'));
   const catVals=catLabels.map(c=>sumField(byCat[c],'totalSales'));
   const totalRevCat=catVals.reduce((a,v)=>a+v,0);
-  destroyChart('chart-cat');
-  charts['chart-cat']=new Chart(document.getElementById('chart-cat'),{
-    type:'doughnut',
-    data:{labels:catLabels,datasets:[{data:catVals,backgroundColor:COLORS.slice(0,catLabels.length)}]},
-    plugins:[ChartDataLabels],
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{
-        legend:{position:'bottom',labels:{font:{size:11}}},
-        datalabels:{anchor:'center',align:'center',color:'#fff',font:{size:10,weight:'bold'},
-          formatter:(v,ctx)=>{const pct=(v/totalRevCat*100).toFixed(1);return pct>5?`${ctx.chart.data.labels[ctx.dataIndex]}\n$${Math.round(v/1000)}k\n${pct}%`:'';}}
-      },
-      onClick:(e,els)=>{ if(els.length){const l=catLabels[els[0].index];filterByChartClick('cat',l);} }
+  makeDonut('chart-cat', catLabels, catVals, totalRevCat, 'cat',
+    idx=>{
+      const c=catLabels[idx];
+      const cogs=sumField(byCat[c],'cogs');
+      const gp=sumField(byCat[c],'grossProfit');
+      return [`Gross Profit: ${fmtCur(gp)}`, `Margin: ${fmtPct(marginPct(catVals[idx],cogs))}`];
     }
-  });
+  );
 
-  // Top 10 products
+  // 3. Gross Profit by Brand donut
+  const gpVals=brandLabels.map(b=>Math.max(0,sumField(byBrand[b],'grossProfit')));
+  const totalGP=gpVals.reduce((a,v)=>a+v,0)||1;
+  makeDonut('chart-gm-brand', brandLabels, gpVals, totalGP, 'brand',
+    idx=>{
+      const b=brandLabels[idx];
+      const rev=sumField(byBrand[b],'totalSales');
+      const cogs=sumField(byBrand[b],'cogs');
+      return [`Revenue: ${fmtCur(rev)}`, `Margin: ${fmtPct(marginPct(rev,cogs))}`];
+    }
+  );
+
+  // Top 10 products bar (static canvas in HTML)
   const byProd=groupBy(rows,'productTitle');
-  const prodEntries=Object.entries(byProd).map(([k,v])=>({name:k,rev:sumField(v,'totalSales')})).sort((a,b)=>b.rev-a.rev).slice(0,10);
+  const prodEntries=Object.entries(byProd)
+    .map(([k,v])=>({name:k,rev:sumField(v,'totalSales')}))
+    .sort((a,b)=>b.rev-a.rev).slice(0,10);
   destroyChart('chart-top10');
   charts['chart-top10']=new Chart(document.getElementById('chart-top10'),{
     type:'bar',
-    data:{labels:prodEntries.map(p=>p.name.length>20?p.name.slice(0,18)+'…':p.name),datasets:[{data:prodEntries.map(p=>p.rev),backgroundColor:COLORS[0],borderRadius:4}]},
+    data:{
+      labels:prodEntries.map(p=>p.name.length>22?p.name.slice(0,20)+'…':p.name),
+      datasets:[{data:prodEntries.map(p=>p.rev),backgroundColor:COLORS[0],borderRadius:4,barThickness:18}]
+    },
     options:{
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},datalabels:{display:false}},
-      scales:{x:{ticks:{callback:v=>fmtCur(v)}},y:{ticks:{font:{size:10}}}}
+      scales:{
+        x:{ticks:{callback:v=>fmtCur(v)},grid:{color:'#f1f5f9'}},
+        y:{ticks:{font:{size:11}}}
+      }
     }
   });
 }
