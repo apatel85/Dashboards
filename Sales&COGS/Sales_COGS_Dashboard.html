@@ -120,6 +120,11 @@ tr:hover td{background:var(--bg3)}
 /* SCENARIO PLANNER */
 .scenario-input{width:80px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;text-align:right;font-size:13px}
 .scenario-input:focus{outline:none;border-color:var(--primary)}
+.sc-pin-btn{background:none;border:1px solid var(--border);cursor:pointer;font-size:13px;padding:2px 5px;border-radius:5px;transition:all .15s;line-height:1;color:var(--text3)}
+.sc-pin-btn:hover{border-color:var(--primary);color:var(--primary)}
+.sc-pin-btn.pinned{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+tr.sc-pinned-row td{background:#f0f4ff !important}
+tr.sc-pinned-row:hover td{background:#e8eeff !important}
 .scenario-chips{display:flex;flex-wrap:wrap;gap:8px;padding:10px 0 4px;align-items:center}
 .scenario-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);transition:all .15s;user-select:none}
 .scenario-chip:hover{border-color:var(--primary);color:var(--primary)}
@@ -1853,11 +1858,57 @@ function sortMargin(field){
 let scenarioData = [];
 let scenarioDebounce = null;
 
+// ---- Pin / Lock adjustments ----
+let lockedAdjustments = {brand:{}, category:{}, brandcat:{}};
+
+function getLocked(key, grp, row){
+  if(grp==='brand') return lockedAdjustments.brand[key]||null;
+  if(grp==='category') return lockedAdjustments.category[key]||null;
+  if(grp==='brandcat'){
+    // most-specific first: brandcat > brand > category
+    return lockedAdjustments.brandcat[key]
+      ||(row&&lockedAdjustments.brand[row.brand])
+      ||(row&&lockedAdjustments.category[row.category])
+      ||null;
+  }
+  return null;
+}
+
+async function saveLocks(){
+  try{ await idbPut('meta',{key:'locked_adj',value:JSON.stringify(lockedAdjustments)}); }catch(e){}
+}
+
+async function loadLocks(){
+  try{
+    const entry=await idbGet('meta','locked_adj');
+    if(entry&&entry.value){
+      const saved=JSON.parse(entry.value);
+      lockedAdjustments={brand:{},category:{},brandcat:{},...saved};
+    }
+  }catch(e){}
+}
+
+function toggleLock(idx){
+  const r=scenarioData[idx];
+  const grp=State.scenarioGroup;
+  if(r.locked&&lockedAdjustments[grp][r.key]){
+    delete lockedAdjustments[grp][r.key];
+    r.locked=false;
+  } else {
+    lockedAdjustments[grp][r.key]={adjMg:r.adjMg,adjCogsPct:r.adjCogsPct||0};
+    r.locked=true;
+  }
+  saveLocks();
+  buildScenarioTable();
+  updateScenarioChart();
+}
+
 async function renderScenario(){
   try{
     const rows = await getSales();
     if(!rows.length){document.getElementById('panel-3').innerHTML=emptyState();return;}
 
+    await loadLocks();
     const grp=State.scenarioGroup;
     function getGroupKey(r){
       if(grp==='brand') return r.brand;
@@ -1870,7 +1921,11 @@ async function renderScenario(){
     scenarioData=Object.entries(byGroup).map(([key,r])=>{
       const rev=sumField(r,'netSales'),cogs=sumField(r,'cogs');
       const curMg=marginPct(rev,cogs);
-      return {key,rev,cogs,curMg,adjMg:parseFloat(curMg.toFixed(2)),adjCogsPct:0,
+      const lk=getLocked(key,grp,r[0]);
+      return {key,rev,cogs,curMg,
+        adjMg: lk ? lk.adjMg : curMg,          // exact — no rounding avoids false Δ
+        adjCogsPct: lk ? lk.adjCogsPct : 0,
+        locked: !!lockedAdjustments[grp][key],  // only true for direct locks, not inherited
         cat:grp==='brandcat'?r[0].category:'',brand:grp==='brandcat'?r[0].brand:key};
     }).sort((a,b)=>b.rev-a.rev);
 
@@ -1901,7 +1956,10 @@ function buildScenarioTable(){
 
   let html=`<table><thead><tr>
     ${grp==='brandcat'?'<th>Brand</th><th>Category</th>':'<th>Group</th>'}
-    <th>Net Sales</th><th>Total COGS</th><th>Current GP</th><th>Current Margin %</th><th title="Adjust target margin %; overrides cost-side">Adj Margin %</th><th title="Adjust COGS by % (negative = cost savings)">Adj COGS %</th><th>Projected GP</th><th>New Margin %</th><th>Change vs Current</th>
+    <th>Net Sales</th><th>Total COGS</th><th>Current GP</th><th>Current Margin %</th>
+    <th style="width:36px" title="Pin adjustment — persists when switching groups or filters">📌</th>
+    <th title="Adjust target margin %">Adj Margin %</th><th title="Adjust COGS by % (negative = cost savings)">Adj COGS %</th>
+    <th>Projected GP</th><th>New Margin %</th><th>Change vs Current</th>
   </tr></thead><tbody>`;
 
   rows.forEach((r,i)=>{
@@ -1912,10 +1970,12 @@ function buildScenarioTable(){
     const mgCol=r.curMg>50?'var(--success)':r.curMg>20?'var(--warning)':'var(--danger)';
     const newMgCol=newMg>50?'var(--success)':newMg>20?'var(--warning)':'var(--danger)';
     const changeCol=change>=0?'var(--success)':'var(--danger)';
-    html+=`<tr>
+    const pinTitle=r.locked?'Unpin (adjustment will reset on next reload)':'Pin this adjustment so it persists across group/filter changes';
+    html+=`<tr class="${r.locked?'sc-pinned-row':''}">
       ${grp==='brandcat'?`<td>${esc(r.brand)}</td><td>${esc(r.cat)}</td>`:`<td><strong>${esc(r.key)}</strong></td>`}
       <td>${fmtCur(r.rev)}</td><td>${fmtCur(r.cogs)}</td><td>${fmtCur(curGP)}</td>
       <td><span style="color:${mgCol};font-weight:700">${fmtPct(r.curMg)}</span></td>
+      <td style="text-align:center"><button class="sc-pin-btn${r.locked?' pinned':''}" onclick="toggleLock(${i})" title="${pinTitle}">${r.locked?'📌':'📍'}</button></td>
       <td><input class="scenario-input" type="number" min="-100" max="100" step="0.1" value="${r.adjMg.toFixed(1)}" oninput="onScenarioInput(${i},this.value)" title="Adjusted target margin %"></td>
       <td><input class="scenario-input" type="number" min="-100" max="100" step="0.1" value="${(r.adjCogsPct||0).toFixed(1)}" oninput="onScenarioCogsPctInput(${i},this.value)" title="COGS adjustment % (negative = cost reduction)"></td>
       <td id="sc-proj-${i}">${fmtCur(projGP)}</td>
@@ -1924,7 +1984,7 @@ function buildScenarioTable(){
     </tr>`;
   });
 
-  // Total row — dynamic cells have IDs so updateScenarioRow can refresh them
+  // Total row
   const totChgCol=totalChange>=0?'var(--success)':'var(--danger)';
   html+=`<tr class="total-row">
     ${grp==='brandcat'?'<td colspan="2"><strong>TOTAL</strong></td>':'<td><strong>TOTAL</strong></td>'}
@@ -1932,7 +1992,7 @@ function buildScenarioTable(){
     <td>${fmtCur(totalCogs)}</td>
     <td>${fmtCur(totalCurGP)}</td>
     <td>${fmtPct(totalRev?totalCurGP/totalRev*100:0)}</td>
-    <td>—</td><td>—</td>
+    <td>—</td><td>—</td><td>—</td>
     <td id="sc-total-proj">${fmtCur(totalProjGP)}</td>
     <td id="sc-total-newmg" style="font-weight:700">${fmtPct(totalNewMg)}</td>
     <td id="sc-total-chg" style="color:${totChgCol}">${totalChange>=0?'+':''}${fmtCur(totalChange)}</td>
@@ -1944,11 +2004,19 @@ function buildScenarioTable(){
 
 function onScenarioInput(idx, val){
   scenarioData[idx].adjMg=parseFloat(val)||0;
+  if(scenarioData[idx].locked){
+    lockedAdjustments[State.scenarioGroup][scenarioData[idx].key].adjMg=scenarioData[idx].adjMg;
+    saveLocks();
+  }
   updateScenarioRow(idx);
 }
 
 function onScenarioCogsPctInput(idx, val){
   scenarioData[idx].adjCogsPct=parseFloat(val)||0;
+  if(scenarioData[idx].locked){
+    lockedAdjustments[State.scenarioGroup][scenarioData[idx].key].adjCogsPct=scenarioData[idx].adjCogsPct;
+    saveLocks();
+  }
   updateScenarioRow(idx);
 }
 
@@ -1982,7 +2050,9 @@ function updateScenarioRow(idx){
 }
 
 function resetScenario(){
-  scenarioData.forEach(r=>{r.adjMg=parseFloat(r.curMg.toFixed(2));r.adjCogsPct=0;});
+  lockedAdjustments={brand:{},category:{},brandcat:{}};
+  saveLocks();
+  scenarioData.forEach(r=>{r.adjMg=r.curMg;r.adjCogsPct=0;r.locked=false;});
   _activeScenarioId=null;
   buildScenarioTable();
   updateScenarioChart();
