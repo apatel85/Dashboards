@@ -129,6 +129,12 @@ tr:hover td{background:var(--bg3)}
 .scenario-save-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--primary-light);border:1.5px solid var(--primary);border-radius:8px;margin-top:8px}
 .scenario-save-bar.hidden{display:none}
 .scenario-save-bar input{flex:1;padding:6px 10px;border:1px solid var(--primary);border-radius:6px;font-size:13px;outline:none;background:var(--bg2)}
+.mapping-editor-table{width:100%;border-collapse:collapse;margin:10px 0}
+.mapping-editor-table th{background:var(--bg3);padding:5px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);border-bottom:2px solid var(--border)}
+.mapping-editor-table td{padding:5px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.mapping-editor-table select{width:100%;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg2)}
+.mapping-save-btn{margin-top:10px;display:none}
+.mapping-save-btn.visible{display:block}
 /* SECTION */
 .section-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;margin-top:20px;padding-bottom:8px;border-bottom:2px solid var(--border)}
 /* STATUS CARDS */
@@ -205,6 +211,7 @@ footer{text-align:center;padding:20px;color:var(--text3);font-size:12px;border-t
   <button class="tab-btn" onclick="showTab(3)">🎯 Scenario Planner</button>
   <button class="tab-btn" onclick="showTab(4)">🗂 Detail Grid</button>
   <button class="tab-btn" onclick="showTab(5)">⚠️ Data Issues</button>
+  <button class="tab-btn" onclick="showTab(6)">📐 Methodology</button>
 </div>
 
 <div id="panels">
@@ -417,16 +424,22 @@ footer{text-align:center;padding:20px;color:var(--text3);font-size:12px;border-t
       <p style="margin-top:4px">Required columns: sku_code, brand, product_type, product_title</p>
       <input type="file" id="pm-file" accept=".csv" onchange="handlePMFileInput(event)">
     </div>
-    <div id="pm-mapping-info"></div>
-    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px">2. Sales Data CSV</h3>
+    <div id="pm-mapping-editor"></div>
+    <div class="mapping-save-btn" id="pm-save-btn">
+      <button class="btn btn-primary" onclick="savePMData()">💾 Save Product Master</button>
+    </div>
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;margin-top:16px">2. Sales Data CSV</h3>
     <div class="upload-zone" id="sales-zone" onclick="document.getElementById('sales-file').click()"
          ondragover="onDragOver(event,'sales-zone')" ondragleave="onDragLeave('sales-zone')" ondrop="onDrop(event,'sales')">
       <div class="zone-icon">💰</div>
       <p><strong>Click or drag &amp; drop</strong> Sales CSV</p>
-      <p style="margin-top:4px">Required columns: sku, date, qty, total sales, cogs</p>
+      <p style="margin-top:4px">Required columns: sku, date, net sales or total sales, cogs</p>
       <input type="file" id="sales-file" accept=".csv" onchange="handleSalesFileInput(event)">
     </div>
-    <div id="sales-mapping-info"></div>
+    <div id="sales-mapping-editor"></div>
+    <div class="mapping-save-btn" id="sales-save-btn">
+      <button class="btn btn-primary" onclick="saveSalesData()">💾 Save Sales Data</button>
+    </div>
     <hr style="margin:16px 0;border-color:var(--border)">
     <h3 style="font-size:14px;font-weight:700;margin-bottom:8px">📦 Share / Backup</h3>
     <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Export everything — sales data, product master, custom mappings, and saved scenarios — into a single file. Anyone can import it to see exactly what you see.</p>
@@ -632,6 +645,31 @@ const SALES_ALIASES = {
   grossProfit:['gross profit','profit'],
   hour:['hour of day','hour']
 };
+const PM_FIELD_META={
+  sku_code:{label:'SKU Code',required:true},
+  brand:{label:'Brand / Vendor',required:true},
+  product_type:{label:'Product Type / Category',required:true},
+  sub_category:{label:'Sub Category',required:false},
+  product_title:{label:'Product Title',required:false},
+  variant_title:{label:'Variant Title',required:false},
+  Color:{label:'Color',required:false},
+  Size:{label:'Size',required:false}
+};
+const SALES_FIELD_META={
+  sku:{label:'SKU',required:true},
+  date:{label:'Date',required:true},
+  qty:{label:'Quantity Sold',required:false},
+  netSales:{label:'Net Sales (used for GP)',required:false},
+  totalSales:{label:'Total Sales (fallback)',required:false},
+  cogs:{label:'COGS',required:false},
+  grossSales:{label:'Gross Sales',required:false},
+  discounts:{label:'Discounts',required:false},
+  returns:{label:'Returns / Refunds',required:false},
+  productTitle:{label:'Product Title',required:false},
+  vendor:{label:'Vendor / Brand',required:false},
+  channel:{label:'Sales Channel',required:false},
+  hour:{label:'Hour of Day',required:false}
+};
 
 function autoDetectMapping(headers, aliases){
   const lc = headers.map(h=>h.toLowerCase().trim());
@@ -653,6 +691,29 @@ function mappingInfoHTML(matched, unmatched, type){
   }
   if(unmatched.length) h+=`<div style="color:var(--warning);margin-top:6px;font-size:11px">⚠ Not found: ${unmatched.join(', ')}</div>`;
   return h+'</div>';
+}
+
+function renderMappingEditor(containerId, headers, fieldMeta, autoMatched){
+  const noneOpt='<option value="">— not mapped —</option>';
+  let html=`<div style="font-size:12px;color:var(--text2);margin-bottom:8px">Auto-detected from your CSV headers. Adjust any field if needed, then click Save.</div>
+  <table class="mapping-editor-table">
+  <thead><tr><th>Dashboard Field</th><th style="width:70px">Required</th><th>Your CSV Column</th></tr></thead><tbody>`;
+  for(const [field,meta] of Object.entries(fieldMeta)){
+    const sel=autoMatched[field]||'';
+    const opts=noneOpt+headers.map(h=>`<option value="${h}"${h===sel?' selected':''}>${h}</option>`).join('');
+    const reqBadge=meta.required
+      ?`<span style="color:var(--danger);font-size:10px;font-weight:700">Required</span>`
+      :`<span style="color:var(--text3);font-size:10px">Optional</span>`;
+    html+=`<tr><td style="font-size:12px;font-weight:600">${meta.label}</td><td>${reqBadge}</td><td><select data-field="${field}">${opts}</select></td></tr>`;
+  }
+  html+='</tbody></table>';
+  document.getElementById(containerId).innerHTML=html;
+}
+
+function getEditorMapping(containerId){
+  const m={};
+  document.querySelectorAll(`#${containerId} select[data-field]`).forEach(s=>{if(s.value) m[s.dataset.field]=s.value;});
+  return m;
 }
 
 // ============================================================
@@ -795,6 +856,8 @@ function applyFilters(rows){
 // ============================================================
 // UPLOAD HANDLERS
 // ============================================================
+let _pendingPM=null;
+let _pendingSales=null;
 function openUploadModal(){ document.getElementById('upload-modal').classList.remove('hidden'); }
 function closeUploadModal(){ document.getElementById('upload-modal').classList.add('hidden'); }
 
@@ -812,91 +875,105 @@ function showUploadAlert(msg, type='success'){
 
 function handlePMFile(file){
   if(typeof Papa==='undefined'){showUploadAlert('PapaParse not loaded — check CDN','danger');return;}
-  Papa.parse(file,{header:true,skipEmptyLines:true,complete:async res=>{
+  Papa.parse(file,{header:true,skipEmptyLines:true,complete:res=>{
     try{
       const headers=res.meta.fields||[];
-      const {matched,unmatched}=autoDetectMapping(headers,PM_ALIASES);
-      State.lastMapping.pm=matched;
-      document.getElementById('pm-mapping-info').innerHTML=mappingInfoHTML(matched,unmatched,'Product Master');
-      if(!matched.sku_code){showUploadAlert('Could not find SKU column in Product Master CSV','warning');return;}
-      const rows=res.data.map(r=>{
-        const obj={};
-        for(const [field,col] of Object.entries(matched)) obj[field]=r[col]||'';
-        if(!obj.sku_code) return null;
-        return obj;
-      }).filter(Boolean);
-      await idbClear('product_master');
-      await idbBulkPut('product_master',rows);
-      await idbPut('meta',{key:'pm_count',value:rows.length});
-      await idbPut('meta',{key:'pm_date',value:new Date().toISOString()});
-      State.usingDemo=false;
-      document.getElementById('demo-banner').classList.add('hidden');
-      invalidateCache();
-      showUploadAlert(`✅ Product Master: ${rows.length} records loaded`);
-      await updateFilterOptions();
-      renderAll();
-    }catch(err){showUploadAlert('Error processing PM: '+err.message,'danger');}
+      const {matched}=autoDetectMapping(headers,PM_ALIASES);
+      _pendingPM={headers,rawData:res.data};
+      renderMappingEditor('pm-mapping-editor',headers,PM_FIELD_META,matched);
+      document.getElementById('pm-save-btn').classList.add('visible');
+    }catch(err){showUploadAlert('Error reading Product Master: '+err.message,'danger');}
   },error:err=>showUploadAlert('Parse error: '+err.message,'danger')});
+}
+async function savePMData(){
+  if(!_pendingPM){showUploadAlert('No Product Master file loaded yet','warning');return;}
+  try{
+    const matched=getEditorMapping('pm-mapping-editor');
+    if(!matched.sku_code){showUploadAlert('SKU Code column is required — please select it','warning');return;}
+    const rows=_pendingPM.rawData.map(r=>{
+      const obj={};
+      for(const [field,col] of Object.entries(matched)) obj[field]=r[col]||'';
+      if(!obj.sku_code) return null;
+      return obj;
+    }).filter(Boolean);
+    await idbClear('product_master');
+    await idbBulkPut('product_master',rows);
+    await idbPut('meta',{key:'pm_count',value:rows.length});
+    await idbPut('meta',{key:'pm_date',value:new Date().toISOString()});
+    State.usingDemo=false;
+    document.getElementById('demo-banner').classList.add('hidden');
+    State.pmCache=null;
+    showUploadAlert(`✅ Product Master: ${rows.length} products saved`,'success');
+    invalidateCache();
+    await updateFilterOptions();
+    renderAll();
+  }catch(err){showUploadAlert('Error saving Product Master: '+err.message,'danger');}
 }
 
 function handleSalesFile(file){
   if(typeof Papa==='undefined'){showUploadAlert('PapaParse not loaded — check CDN','danger');return;}
-  Papa.parse(file,{header:true,skipEmptyLines:true,complete:async res=>{
+  Papa.parse(file,{header:true,skipEmptyLines:true,complete:res=>{
     try{
       const headers=res.meta.fields||[];
-      const {matched,unmatched}=autoDetectMapping(headers,SALES_ALIASES);
-      State.lastMapping.sales=matched;
-      document.getElementById('sales-mapping-info').innerHTML=mappingInfoHTML(matched,unmatched,'Sales');
-      if(!matched.sku||!matched.date){showUploadAlert('Could not find sku/date columns in Sales CSV','warning');return;}
-      const parsed=res.data.map(r=>{
-        const sku=(r[matched.sku]||'').trim();
-        if(!sku)return null;
-        const dateRaw=matched.date?r[matched.date]:'';
-        const d=parseDateField(dateRaw);
-        if(!d)return null;
-        const isoDate=d.toISOString().slice(0,10);
-        return {
-          id:`${sku}|${isoDate}`,sku,date:isoDate,
-          year:d.getFullYear(),month:d.getMonth()+1,
-          qty:parseNum(matched.qty?r[matched.qty]:0),
-          totalSales:parseNum(matched.totalSales?r[matched.totalSales]:0),
-          cogs:parseNum(matched.cogs?r[matched.cogs]:0),
-          grossSales:parseNum(matched.grossSales?r[matched.grossSales]:0),
-          discounts:parseNum(matched.discounts?r[matched.discounts]:0),
-          returns:parseNum(matched.returns?r[matched.returns]:0),
-          netSales:parseNum(matched.netSales?r[matched.netSales]:0),
-          productTitle:matched.productTitle?r[matched.productTitle]:'',
-          vendor:matched.vendor?r[matched.vendor]:'',
-          channel:matched.channel?r[matched.channel]:'Online',
-          hour:parseNum(matched.hour?r[matched.hour]:0)
-        };
-      }).filter(Boolean);
-      // Aggregate duplicate (sku, date) rows by summing numeric fields
-      const agg={};
-      parsed.forEach(r=>{
-        if(!agg[r.id]){
-          agg[r.id]={...r};
-        } else {
-          const e=agg[r.id];
-          e.qty+=r.qty; e.totalSales+=r.totalSales; e.cogs+=r.cogs;
-          e.grossSales+=r.grossSales; e.discounts+=r.discounts;
-          e.returns+=r.returns; e.netSales+=r.netSales;
-        }
-      });
-      const rows=Object.values(agg);
-      // Always derive grossProfit from totalSales − cogs for consistency
-      rows.forEach(r=>{ r.grossProfit=r.totalSales-r.cogs; });
-      await idbBulkPut('sales',rows);
-      await idbPut('meta',{key:'sales_count',value:rows.length});
-      await idbPut('meta',{key:'sales_date',value:new Date().toISOString()});
-      State.usingDemo=false;
-      document.getElementById('demo-banner').classList.add('hidden');
-      invalidateCache();
-      showUploadAlert(`✅ Sales Data: ${rows.length} records loaded`);
-      await updateFilterOptions();
-      renderAll();
-    }catch(err){showUploadAlert('Error processing Sales: '+err.message,'danger');}
+      const {matched}=autoDetectMapping(headers,SALES_ALIASES);
+      _pendingSales={headers,rawData:res.data};
+      renderMappingEditor('sales-mapping-editor',headers,SALES_FIELD_META,matched);
+      document.getElementById('sales-save-btn').classList.add('visible');
+    }catch(err){showUploadAlert('Error reading Sales file: '+err.message,'danger');}
   },error:err=>showUploadAlert('Parse error: '+err.message,'danger')});
+}
+async function saveSalesData(){
+  if(!_pendingSales){showUploadAlert('No Sales file loaded yet','warning');return;}
+  try{
+    const matched=getEditorMapping('sales-mapping-editor');
+    if(!matched.sku||!matched.date){showUploadAlert('SKU and Date columns are required — please select them','warning');return;}
+    const parsed=_pendingSales.rawData.map(r=>{
+      const sku=(r[matched.sku]||'').trim();
+      if(!sku)return null;
+      const dateRaw=matched.date?r[matched.date]:'';
+      const d=parseDateField(dateRaw);
+      if(!d)return null;
+      const isoDate=d.toISOString().slice(0,10);
+      return {
+        id:`${sku}|${isoDate}`,sku,date:isoDate,
+        year:d.getFullYear(),month:d.getMonth()+1,
+        qty:parseNum(matched.qty?r[matched.qty]:0),
+        totalSales:parseNum(matched.totalSales?r[matched.totalSales]:0),
+        cogs:parseNum(matched.cogs?r[matched.cogs]:0),
+        grossSales:parseNum(matched.grossSales?r[matched.grossSales]:0),
+        discounts:parseNum(matched.discounts?r[matched.discounts]:0),
+        returns:parseNum(matched.returns?r[matched.returns]:0),
+        netSales:parseNum(matched.netSales?r[matched.netSales]:0),
+        productTitle:matched.productTitle?r[matched.productTitle]:'',
+        vendor:matched.vendor?r[matched.vendor]:'',
+        channel:matched.channel?r[matched.channel]:'Online',
+        hour:parseNum(matched.hour?r[matched.hour]:0)
+      };
+    }).filter(Boolean);
+    const agg={};
+    parsed.forEach(r=>{
+      if(!agg[r.id]){
+        agg[r.id]={...r};
+      } else {
+        const e=agg[r.id];
+        e.qty+=r.qty; e.totalSales+=r.totalSales; e.cogs+=r.cogs;
+        e.grossSales+=r.grossSales; e.discounts+=r.discounts;
+        e.returns+=r.returns; e.netSales+=r.netSales;
+      }
+    });
+    const rows=Object.values(agg);
+    // GP uses Net Sales (falls back to Total Sales if Net Sales not mapped)
+    rows.forEach(r=>{ r.grossProfit=(r.netSales||r.totalSales)-r.cogs; });
+    await idbBulkPut('sales',rows);
+    await idbPut('meta',{key:'sales_count',value:rows.length});
+    await idbPut('meta',{key:'sales_date',value:new Date().toISOString()});
+    State.usingDemo=false;
+    document.getElementById('demo-banner').classList.add('hidden');
+    invalidateCache();
+    showUploadAlert(`✅ Sales Data: ${rows.length} records saved`,'success');
+    await updateFilterOptions();
+    renderAll();
+  }catch(err){showUploadAlert('Error saving Sales: '+err.message,'danger');}
 }
 
 async function confirmClearAll(){
