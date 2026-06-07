@@ -152,6 +152,15 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .pin-inp.pinned{border-color:#f59e0b;background:#fffbeb;color:#92400e;}
 [data-theme="dark"] .pin-inp.pinned{background:#451a03;color:#fcd34d;}
 
+/* ── Channel editable cells ── */
+.chn-td{padding:2px 5px!important;vertical-align:top!important;}
+.chan-inp{width:100%;padding:2px 3px;border:1.5px solid transparent;border-radius:4px;font-size:.73rem;font-weight:600;text-align:right;background:transparent;color:var(--text);font-family:'Inter',system-ui,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;outline:none;transition:border .12s,background .12s;}
+.chan-inp:hover{border-color:var(--border);background:var(--surface2);}
+.chan-inp:focus{border-color:var(--primary)!important;background:var(--input-bg);cursor:text;}
+.chan-inp.pos{color:#047857;}[data-theme="dark"] .chan-inp.pos{color:#4ade80;}
+.chan-inp.neg{color:#b91c1c;}[data-theme="dark"] .chan-inp.neg{color:#fca5a5;}
+.chan-pct{display:block;font-size:.59rem;color:var(--text-faint);text-align:right;margin-top:1px;line-height:1;}
+
 /* ── Control Panel ── */
 .ctrl-panel{max-height:calc(100vh - 180px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
 .ctrl-panel::-webkit-scrollbar{width:5px;}
@@ -509,9 +518,21 @@ function buildPanelHTML(k){
         min="0" max="999" step="0.1" placeholder="—"
         oninput="onPinChange('${k}','${c}',this)"
         title="Pin as % of Scenario Net Revenue — auto-scales when revenue changes"></td>
-      <td class="td-retail" id="${k}_r_${cid}">—</td>
-      <td class="td-whl" id="${k}_w_${cid}">—</td>
-      <td class="td-inst" id="${k}_i_${cid}">—</td>
+      <td class="td-retail chn-td">
+        <input class="chan-inp" id="${k}_r_${cid}" type="text" value="—" onfocus="this.select()"
+          oninput="onChanInput('${k}','exp','${c}','retail',this)">
+        <span class="chan-pct" id="${k}_rp_${cid}">—</span>
+      </td>
+      <td class="td-whl chn-td">
+        <input class="chan-inp" id="${k}_w_${cid}" type="text" value="—" onfocus="this.select()"
+          oninput="onChanInput('${k}','exp','${c}','whl',this)">
+        <span class="chan-pct" id="${k}_wp_${cid}">—</span>
+      </td>
+      <td class="td-inst chn-td">
+        <input class="chan-inp" id="${k}_i_${cid}" type="text" value="—" onfocus="this.select()"
+          oninput="onChanInput('${k}','exp','${c}','inst',this)">
+        <span class="chan-pct" id="${k}_ip_${cid}">—</span>
+      </td>
       <td class="td-total" id="${k}_t_${cid}">—</td>
       <td class="pct" id="${k}_d_${cid}">—</td>
     </tr>`;
@@ -538,27 +559,60 @@ function buildPanelHTML(k){
         <tr>
           <td class="sc">Gross Revenue</td>
           <td>${fmt(d.gross_rev)}</td><td class="pct">—</td><td class="td-pin">—</td>
-          <td class="td-retail" id="${k}_rGross">—</td>
-          <td class="td-whl" id="${k}_wGross">—</td>
-          <td class="td-inst" id="${k}_iGross">—</td>
+          <td class="td-retail chn-td">
+            <input class="chan-inp" id="${k}_rGross" type="text" value="—" onfocus="this.select()"
+              oninput="onChanInput('${k}','gross',null,'retail',this)">
+            <span class="chan-pct" id="${k}_rGrossPct">—</span>
+          </td>
+          <td class="td-whl chn-td">
+            <input class="chan-inp" id="${k}_wGross" type="text" value="—" onfocus="this.select()"
+              oninput="onChanInput('${k}','gross',null,'whl',this)">
+            <span class="chan-pct" id="${k}_wGrossPct">—</span>
+          </td>
+          <td class="td-inst chn-td">
+            <input class="chan-inp" id="${k}_iGross" type="text" value="—" onfocus="this.select()"
+              oninput="onChanInput('${k}','gross',null,'inst',this)">
+            <span class="chan-pct" id="${k}_iGrossPct">—</span>
+          </td>
           <td class="td-total" id="${k}_tGross">—</td>
           <td class="pct" id="${k}_dGross">—</td>
         </tr>
         <tr>
           <td class="sc">Refunds / Returns</td>
           <td class="neg">${fmt(d.refunds)}</td><td class="pct">—</td><td class="td-pin">—</td>
-          <td class="td-retail neg" id="${k}_rRef">—</td>
-          <td class="td-whl neg" id="${k}_wRef">—</td>
-          <td class="td-inst neg" id="${k}_iRef">—</td>
+          <td class="td-retail chn-td">
+            <span class="neg" id="${k}_rRef">—</span>
+            <span class="chan-pct" id="${k}_rRefPct">—</span>
+          </td>
+          <td class="td-whl chn-td">
+            <span class="neg" id="${k}_wRef">—</span>
+            <span class="chan-pct" id="${k}_wRefPct">—</span>
+          </td>
+          <td class="td-inst chn-td">
+            <span class="neg" id="${k}_iRef">—</span>
+            <span class="chan-pct" id="${k}_iRefPct">—</span>
+          </td>
           <td class="td-total neg" id="${k}_tRef">—</td>
           <td class="pct" id="${k}_dRef">—</td>
         </tr>
         <tr class="subtotal">
           <td class="sc">Net Revenue</td>
           <td>${fmt(d.revenue)}</td><td class="pct">100%</td><td class="td-pin">—</td>
-          <td class="td-retail" id="${k}_rRev">—</td>
-          <td class="td-whl" id="${k}_wRev">—</td>
-          <td class="td-inst" id="${k}_iRev">—</td>
+          <td class="td-retail chn-td">
+            <input class="chan-inp" id="${k}_rRev" type="text" value="—" onfocus="this.select()"
+              oninput="onChanInput('${k}','rev',null,'retail',this)">
+            <span class="chan-pct" id="${k}_rRevPct">—</span>
+          </td>
+          <td class="td-whl chn-td">
+            <input class="chan-inp" id="${k}_wRev" type="text" value="—" onfocus="this.select()"
+              oninput="onChanInput('${k}','rev',null,'whl',this)">
+            <span class="chan-pct" id="${k}_wRevPct">—</span>
+          </td>
+          <td class="td-inst chn-td">
+            <input class="chan-inp" id="${k}_iRev" type="text" value="—" onfocus="this.select()"
+              oninput="onChanInput('${k}','rev',null,'inst',this)">
+            <span class="chan-pct" id="${k}_iRevPct">—</span>
+          </td>
           <td class="td-total" id="${k}_tRev">—</td>
           <td class="pct" id="${k}_dRev">—</td>
         </tr>
@@ -567,9 +621,18 @@ function buildPanelHTML(k){
         <tr class="subtotal">
           <td class="sc">Total Expenses</td>
           <td>${fmt(d.expenses)}</td><td class="pct">${d.revenue>0?(d.expenses/d.revenue*100).toFixed(1)+'%':'—'}</td><td class="td-pin">—</td>
-          <td class="td-retail" id="${k}_rExp">—</td>
-          <td class="td-whl" id="${k}_wExp">—</td>
-          <td class="td-inst" id="${k}_iExp">—</td>
+          <td class="td-retail chn-td">
+            <span id="${k}_rExp">—</span>
+            <span class="chan-pct" id="${k}_rExpPct">—</span>
+          </td>
+          <td class="td-whl chn-td">
+            <span id="${k}_wExp">—</span>
+            <span class="chan-pct" id="${k}_wExpPct">—</span>
+          </td>
+          <td class="td-inst chn-td">
+            <span id="${k}_iExp">—</span>
+            <span class="chan-pct" id="${k}_iExpPct">—</span>
+          </td>
           <td class="td-total" id="${k}_tExp">—</td>
           <td class="pct" id="${k}_dExp">—</td>
         </tr>
@@ -577,9 +640,18 @@ function buildPanelHTML(k){
           <td class="sc">Net Profit / Loss</td>
           <td class="${d.net>=0?'pos':'neg'}">${fmt(d.net)}</td>
           <td class="pct">${d.revenue>0?(d.net/d.revenue*100).toFixed(1)+'%':'—'}</td><td class="td-pin">—</td>
-          <td class="td-retail" id="${k}_rNet">—</td>
-          <td class="td-whl" id="${k}_wNet">—</td>
-          <td class="td-inst" id="${k}_iNet">—</td>
+          <td class="td-retail chn-td">
+            <span id="${k}_rNet">—</span>
+            <span class="chan-pct" id="${k}_rNetPct">—</span>
+          </td>
+          <td class="td-whl chn-td">
+            <span id="${k}_wNet">—</span>
+            <span class="chan-pct" id="${k}_wNetPct">—</span>
+          </td>
+          <td class="td-inst chn-td">
+            <span id="${k}_iNet">—</span>
+            <span class="chan-pct" id="${k}_iNetPct">—</span>
+          </td>
           <td class="td-total" id="${k}_tNet">—</td>
           <td class="pct" id="${k}_dNet">—</td>
         </tr>
@@ -715,6 +787,44 @@ function onPinChange(k,cat,inp){
   const v=parseFloat(inp.value)||0;
   pinnedPct[k][cat]=v;
   inp.className='pin-inp'+(v>0?' pinned':'');
+  update(k);
+}
+
+/* ── Channel cell direct input — back-calculates allocation % ── */
+function onChanInput(k,type,cat,ch,inp){
+  const raw=inp.value.replace(/[$,\s]/g,'');
+  const val=parseFloat(raw)||0;
+  const d=LOC_DATA[k];const s=state[k];
+  const sGross=d.gross_rev+(s.__rev_growth||0);
+  const sRef=Math.max(0,d.refunds-(s.__ref_recov||0));
+  const sRev=sGross-sRef;
+
+  if(type==='gross'){
+    if(sGross>0)chanState[k].rev[ch]=val/sGross*100;
+  } else if(type==='rev'){
+    if(sRev>0)chanState[k].rev[ch]=val/sRev*100;
+  } else {
+    const pin=pinnedPct[k]?.[cat]||0;
+    const totalCat=pin>0?Math.max(0,sRev*(pin/100)+(s[cat]||0)):Math.max(0,d.cats[cat]+(s[cat]||0));
+    if(totalCat>0){
+      if(!chanState[k].exp[cat])chanState[k].exp[cat]={retail:50,whl:30,inst:20};
+      chanState[k].exp[cat][ch]=val/totalCat*100;
+    }
+  }
+
+  /* Sync allocation panel inputs + sum badge */
+  if(type==='gross'||type==='rev'){
+    const aInp=el(`${k}_arev_${ch}`);if(aInp)aInp.value=chanState[k].rev[ch].toFixed(1);
+    const cs=chanState[k].rev;const sum=cs.retail+cs.whl+cs.inst;
+    const se=el(k+'_asum_rev');
+    if(se){se.textContent=sum.toFixed(0)+'%';se.className='alloc-sum '+(Math.abs(sum-100)<0.5?'ok':'warn');}
+  } else {
+    const aInp=el(`${k}_aexp_${esc(cat)}_${ch}`);
+    if(aInp)aInp.value=chanState[k].exp[cat][ch].toFixed(1);
+    const e=chanState[k].exp[cat];const sum=e.retail+e.whl+e.inst;
+    const se=el(k+'_asum_'+esc(cat));
+    if(se){se.textContent=sum.toFixed(0)+'%';se.className='alloc-sum '+(Math.abs(sum-100)<0.5?'ok':'warn');}
+  }
   update(k);
 }
 
@@ -879,7 +989,22 @@ function update(k){
   });
 
   /* Cell helpers */
-  function tc(pfx,val,cls){const e=el(k+'_'+pfx);if(e){e.textContent=val<0?'-'+fmt(Math.abs(val)):fmt(val);if(cls)e.className=cls;}}
+  function tc(pfx,val,cls){
+    const e=el(k+'_'+pfx);if(!e)return;
+    const v=val<0?'-'+fmt(Math.abs(val)):fmt(val);
+    const pn=cls?(cls.includes('pos')?'pos':cls.includes('neg')?'neg':''):'';
+    if(e.tagName==='INPUT'){
+      if(document.activeElement!==e)e.value=v;
+      e.className='chan-inp'+(pn?' '+pn:'');
+    } else if(e.tagName==='SPAN'){
+      e.textContent=v;
+      if(pn)e.className=pn;
+    } else {
+      e.textContent=v;
+      if(cls)e.className=cls;
+    }
+  }
+  function setPct(id,txt){const e=el(k+'_'+id);if(e)e.textContent=txt;}
   function dc(delta,goodIsPos){
     if(Math.abs(delta)<0.5)return'pct neu';
     return goodIsPos?(delta>0?'pct pos':'pct neg'):(delta>0?'pct neg':'pct pos');
@@ -890,12 +1015,19 @@ function update(k){
   }
 
   /* Revenue rows */
-  tc('rGross',ch.retail.gross,'td-retail');tc('wGross',ch.whl.gross,'td-whl');tc('iGross',ch.inst.gross,'td-inst');tc('tGross',sGross,'td-total');
-  setDelta('dGross',sGross-d.gross_rev,true);
-  tc('rRef',-ch.retail.ref,'td-retail neg');tc('wRef',-ch.whl.ref,'td-whl neg');tc('iRef',-ch.inst.ref,'td-inst neg');tc('tRef',-sRef,'td-total neg');
-  setDelta('dRef',sRef-d.refunds,false);
-  tc('rRev',ch.retail.rev,'td-retail');tc('wRev',ch.whl.rev,'td-whl');tc('iRev',ch.inst.rev,'td-inst');tc('tRev',sRev,'td-total');
-  setDelta('dRev',sRev-d.revenue,true);
+  const gPct=(v,t)=>t>0?(v/t*100).toFixed(1)+'%':'—';
+  tc('rGross',ch.retail.gross,'');setPct('rGrossPct',gPct(ch.retail.gross,sGross));
+  tc('wGross',ch.whl.gross,'');  setPct('wGrossPct',gPct(ch.whl.gross,sGross));
+  tc('iGross',ch.inst.gross,''); setPct('iGrossPct',gPct(ch.inst.gross,sGross));
+  tc('tGross',sGross,'td-total');setDelta('dGross',sGross-d.gross_rev,true);
+  tc('rRef',-ch.retail.ref,'neg');setPct('rRefPct',gPct(ch.retail.ref,sRef));
+  tc('wRef',-ch.whl.ref,'neg');   setPct('wRefPct',gPct(ch.whl.ref,sRef));
+  tc('iRef',-ch.inst.ref,'neg');  setPct('iRefPct',gPct(ch.inst.ref,sRef));
+  tc('tRef',-sRef,'td-total neg');setDelta('dRef',sRef-d.refunds,false);
+  tc('rRev',ch.retail.rev,'');setPct('rRevPct',gPct(ch.retail.rev,sRev));
+  tc('wRev',ch.whl.rev,'');   setPct('wRevPct',gPct(ch.whl.rev,sRev));
+  tc('iRev',ch.inst.rev,'');  setPct('iRevPct',gPct(ch.inst.rev,sRev));
+  tc('tRev',sRev,'td-total');setDelta('dRev',sRev-d.revenue,true);
 
   /* Expense rows */
   cats.forEach(c=>{
@@ -903,17 +1035,22 @@ function update(k){
     const rv=catV[c]*((cs.exp[c]?.retail||0)/100);
     const wv=catV[c]*((cs.exp[c]?.whl||0)/100);
     const iv=catV[c]*((cs.exp[c]?.inst||0)/100);
-    tc('r_'+cid,rv,'td-retail');tc('w_'+cid,wv,'td-whl');tc('i_'+cid,iv,'td-inst');
+    tc('r_'+cid,rv,'td-retail');setPct('rp_'+cid,gPct(rv,catV[c]));
+    tc('w_'+cid,wv,'td-whl');   setPct('wp_'+cid,gPct(wv,catV[c]));
+    tc('i_'+cid,iv,'td-inst');  setPct('ip_'+cid,gPct(iv,catV[c]));
     tc('t_'+cid,catV[c],'td-total');
     setDelta('d_'+cid,catV[c]-d.cats[c],false);
   });
 
   /* Expense + Net totals */
-  tc('rExp',ch.retail.exp,'td-retail');tc('wExp',ch.whl.exp,'td-whl');tc('iExp',ch.inst.exp,'td-inst');tc('tExp',sExp,'td-total');
+  tc('rExp',ch.retail.exp,'td-retail');setPct('rExpPct',gPct(ch.retail.exp,sExp));
+  tc('wExp',ch.whl.exp,'td-whl');      setPct('wExpPct',gPct(ch.whl.exp,sExp));
+  tc('iExp',ch.inst.exp,'td-inst');    setPct('iExpPct',gPct(ch.inst.exp,sExp));
+  tc('tExp',sExp,'td-total');
   setDelta('dExp',sExp-d.expenses,false);
-  tc('rNet',ch.retail.net,'td-retail '+(ch.retail.net>=0?'pos':'neg'));
-  tc('wNet',ch.whl.net,'td-whl '+(ch.whl.net>=0?'pos':'neg'));
-  tc('iNet',ch.inst.net,'td-inst '+(ch.inst.net>=0?'pos':'neg'));
+  tc('rNet',ch.retail.net,'td-retail '+(ch.retail.net>=0?'pos':'neg'));setPct('rNetPct',ch.retail.rev>0?(ch.retail.net/ch.retail.rev*100).toFixed(1)+'%':'—');
+  tc('wNet',ch.whl.net,'td-whl '+(ch.whl.net>=0?'pos':'neg'));        setPct('wNetPct',ch.whl.rev>0?(ch.whl.net/ch.whl.rev*100).toFixed(1)+'%':'—');
+  tc('iNet',ch.inst.net,'td-inst '+(ch.inst.net>=0?'pos':'neg'));      setPct('iNetPct',ch.inst.rev>0?(ch.inst.net/ch.inst.rev*100).toFixed(1)+'%':'—');
   tc('tNet',sNet,'td-total '+(sNet>=0?'pos':'neg'));
   setDelta('dNet',sNet-d.net,true);
   const pN=el(k+'_pNet');if(pN)pN.textContent=sRev>0?(sNet/sRev*100).toFixed(1)+'%':'—';
