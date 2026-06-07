@@ -43,7 +43,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 /* ── Layout ── */
 .hdr{background:var(--hdr);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:100;}
-.hdr-left h1{font-size:clamp(.85rem,2.5vw,1.05rem);font-weight:700;line-height:1.2;}
+.hdr-left h1{font-size:clamp(.82rem,2.4vw,1.05rem);font-weight:700;line-height:1.2;}
 .hdr-left p{font-size:.68rem;color:#94a3b8;margin-top:2px;}
 .hdr-right{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
 
@@ -80,8 +80,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .kpi.net-pos{border-left-color:var(--success);}
 .kpi.net-neg{border-left-color:var(--danger);}
 .kpi label{font-size:.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;}
-.kpi .val{font-size:1rem;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;}
-.kpi .delta{font-size:.65rem;margin-top:2px;}
+.kpi .val{font-size:.92rem;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums;}
+.kpi .delta{font-size:.62rem;margin-top:2px;}
 
 /* ── Channel KPI strip ── */
 .ch-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
@@ -96,8 +96,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .ch-card.retail .ch-label{color:var(--c-retail);}
 .ch-card.wholesale .ch-label{color:var(--c-whl);}
 .ch-card.inst .ch-label{color:var(--c-inst);}
-.ch-card .ch-net{font-size:.98rem;font-weight:700;font-variant-numeric:tabular-nums;}
-.ch-card .ch-detail{font-size:.64rem;color:var(--text-muted);margin-top:2px;}
+.ch-card .ch-net{font-size:.95rem;font-weight:700;font-variant-numeric:tabular-nums;}
+.ch-card .ch-detail{font-size:.62rem;color:var(--text-muted);margin-top:2px;}
 
 /* ── Scenario bar ── */
 .scenario-section{background:var(--surface);border-radius:var(--radius);padding:10px 14px;margin-bottom:10px;box-shadow:var(--shadow);}
@@ -117,45 +117,40 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .card{background:var(--surface);border-radius:var(--radius);padding:13px 15px;box-shadow:var(--shadow);margin-bottom:10px;}
 .card h3{font-size:.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid var(--border2);}
 
-/* ── Allocation card ── */
-.alloc-card{background:var(--surface);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);margin-bottom:10px;}
-.alloc-card h3{font-size:.67rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border2);}
-.alloc-tbl{width:100%;border-collapse:collapse;font-size:.75rem;}
-.alloc-tbl th{padding:4px 6px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);text-align:center;}
-.alloc-tbl th:first-child{text-align:left;}
-.alloc-tbl td{padding:3px 5px;border-top:1px solid var(--border2);vertical-align:middle;}
-.alloc-tbl td:not(:first-child){text-align:center;}
-.alloc-inp{width:50px;padding:3px 4px;border-radius:5px;border:1.5px solid var(--border);font-size:.71rem;font-weight:600;text-align:center;outline:none;background:var(--input-bg);color:var(--text);font-family:inherit;transition:border .15s;}
-.alloc-inp:focus{border-color:var(--input-focus);}
-.alloc-sum{font-size:.69rem;font-weight:700;padding:1px 5px;border-radius:4px;}
-.alloc-sum.ok{color:#047857;background:#f0fdf4;}
-.alloc-sum.warn{color:#b91c1c;background:#fef2f2;}
-[data-theme="dark"] .alloc-sum.ok{color:#34d399;background:#052e16;}
-[data-theme="dark"] .alloc-sum.warn{color:#f87171;background:#2d1515;}
-.alloc-actions{display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap;}
-
-/* ── Channel P&L table ── */
-.pl-wrap{overflow-x:auto;}
-.pl-table{width:100%;border-collapse:collapse;font-size:.77rem;}
-.pl-table th{padding:5px 6px;background:var(--surface2);color:var(--text-muted);font-size:.61rem;text-transform:uppercase;letter-spacing:.4px;text-align:right;white-space:nowrap;}
+/* ── P&L Table ── */
+.pl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.pl-table{width:100%;border-collapse:collapse;font-size:.74rem;min-width:720px;}
+.pl-table th{padding:5px 6px;background:var(--surface2);color:var(--text-muted);font-size:.59rem;text-transform:uppercase;letter-spacing:.4px;text-align:right;white-space:nowrap;}
 .pl-table th:first-child{text-align:left;}
 .pl-table th.th-retail{color:var(--c-retail);background:#eff6ff;}
 .pl-table th.th-whl{color:var(--c-whl);background:#f0fdf4;}
 .pl-table th.th-inst{color:var(--c-inst);background:#faf5ff;}
+.pl-table th.th-pin{color:#92400e;background:#fffbeb;cursor:help;}
 [data-theme="dark"] .pl-table th.th-retail{background:#1e3a5f;}
 [data-theme="dark"] .pl-table th.th-whl{background:#052e16;}
 [data-theme="dark"] .pl-table th.th-inst{background:#2e1065;}
-.pl-table td{padding:4px 6px;border-top:1px solid var(--border2);vertical-align:middle;text-align:right;}
+[data-theme="dark"] .pl-table th.th-pin{background:#451a03;color:#fcd34d;}
+.pl-table td{padding:4px 6px;border-top:1px solid var(--border2);vertical-align:middle;text-align:right;font-variant-numeric:tabular-nums;}
 .pl-table td:first-child{text-align:left;}
 .pl-table td.td-retail{border-left:2px solid #bfdbfe;}
 .pl-table td.td-whl{border-left:2px solid #86efac;}
 .pl-table td.td-inst{border-left:2px solid #ddd6fe;}
 .pl-table td.td-total{font-weight:700;background:var(--surface2);}
-.pl-table td.pct{color:var(--text-faint);font-size:.68rem;}
+.pl-table td.pct{color:var(--text-faint);font-size:.67rem;}
+.pl-table td.td-pin{text-align:center;padding:2px 4px;}
 .pl-table tr.sec-hd td{background:var(--surface2);font-size:.62rem;color:var(--text-muted);text-transform:uppercase;font-weight:700;padding:4px 6px;}
 .pl-table tr.subtotal td{border-top:2px solid var(--border);font-weight:700;background:var(--surface2);}
-.pl-table tr.total-row td{border-top:3px double var(--border);font-weight:700;font-size:.86rem;padding:7px 6px;}
+.pl-table tr.total-row td{border-top:3px double var(--border);font-weight:700;font-size:.84rem;padding:6px 6px;}
 .pl-table tr:hover:not(.sec-hd):not(.subtotal):not(.total-row) td{background:var(--surface2);}
+/* Sticky first column */
+.pl-table .sc{position:sticky;left:0;z-index:2;background:var(--surface);}
+.pl-table thead .sc,.pl-table tr.sec-hd .sc,.pl-table tr.subtotal .sc,.pl-table tr.total-row .sc{background:var(--surface2);}
+
+/* ── Pin % input ── */
+.pin-inp{width:44px;padding:2px 3px;border-radius:4px;border:1.5px solid var(--border);font-size:.68rem;font-weight:600;text-align:center;outline:none;background:var(--input-bg);color:var(--text);font-family:inherit;transition:border .15s;}
+.pin-inp:focus{border-color:#f59e0b;}
+.pin-inp.pinned{border-color:#f59e0b;background:#fffbeb;color:#92400e;}
+[data-theme="dark"] .pin-inp.pinned{background:#451a03;color:#fcd34d;}
 
 /* ── Control Panel ── */
 .ctrl-panel{max-height:calc(100vh - 180px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
@@ -169,7 +164,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .slider-wrap.rev:hover{background:#dbeafe;}
 [data-theme="dark"] .slider-wrap.rev:hover{background:#1e3a8a;}
 .sldr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
-.sldr-lbl{font-size:.75rem;font-weight:700;color:var(--text);}
+.sldr-lbl{font-size:.73rem;font-weight:700;color:var(--text);}
 .badge{font-size:.61rem;padding:2px 6px;border-radius:99px;font-weight:700;}
 .badge-cut{background:#dcfce7;color:#15803d;}
 .badge-inc{background:#fee2e2;color:#b91c1c;}
@@ -177,7 +172,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 [data-theme="dark"] .badge-cut{background:#14532d;color:#4ade80;}
 [data-theme="dark"] .badge-inc{background:#450a0a;color:#fca5a5;}
 .bidir-row{display:flex;align-items:center;gap:5px;}
-.amt-inp{width:70px;padding:3px 5px;border-radius:5px;border:1.5px solid var(--border);font-size:.71rem;font-weight:700;text-align:center;outline:none;transition:border .15s;background:var(--input-bg);color:var(--text);font-family:inherit;}
+.amt-inp{width:66px;padding:3px 5px;border-radius:5px;border:1.5px solid var(--border);font-size:.71rem;font-weight:700;text-align:center;outline:none;transition:border .15s;background:var(--input-bg);color:var(--text);font-family:inherit;}
 .amt-inp.red{color:#b91c1c;border-color:#fca5a5;background:#fff5f5;}
 .amt-inp.grn{color:#047857;border-color:#6ee7b7;background:#f0fdf4;}
 [data-theme="dark"] .amt-inp.red{background:#2d1515;color:#fca5a5;}
@@ -188,7 +183,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .bidir-slider::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--primary-dk);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);cursor:pointer;}
 .bidir-slider::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--primary-dk);border:2px solid #fff;cursor:pointer;}
 .sldr-hints{display:flex;justify-content:space-between;font-size:.59rem;color:var(--text-faint);margin-top:1px;}
-.ctrl-section-hd{font-size:.63rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:10px 0 5px;}
+.ctrl-section-hd{font-size:.63rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:10px 0 5px;display:flex;align-items:center;justify-content:space-between;}
+.ctrl-section-hd.clickable{cursor:pointer;user-select:none;padding:4px 6px;border-radius:6px;margin-left:-6px;margin-right:-6px;}
+.ctrl-section-hd.clickable:hover{background:var(--surface2);color:var(--primary);}
 .impact-banner{border-radius:var(--radius);padding:10px 13px;border:1.5px solid;margin-top:8px;}
 .impact-banner.green{background:var(--success-lt);border-color:var(--success-bd);}
 .impact-banner.red{background:var(--danger-lt);border-color:var(--danger-bd);}
@@ -197,8 +194,24 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .impact-banner.red h4{color:#b91c1c;}
 [data-theme="dark"] .impact-banner.green h4{color:#4ade80;}
 [data-theme="dark"] .impact-banner.red h4{color:#fca5a5;}
-.impact-banner .big{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;}
+.impact-banner .big{font-size:1.18rem;font-weight:700;font-variant-numeric:tabular-nums;}
 .impact-banner .sub{font-size:.68rem;color:var(--text-muted);margin-top:2px;}
+
+/* ── Allocation (inside ctrl panel) ── */
+.alloc-tbl{width:100%;border-collapse:collapse;font-size:.71rem;}
+.alloc-tbl th{padding:4px 4px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);text-align:center;}
+.alloc-tbl th:first-child{text-align:left;}
+.alloc-tbl td{padding:2px 3px;border-top:1px solid var(--border2);vertical-align:middle;}
+.alloc-tbl td:not(:first-child){text-align:center;}
+.alloc-tbl td:first-child{font-size:.68rem;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.alloc-inp{width:42px;padding:2px 3px;border-radius:4px;border:1.5px solid var(--border);font-size:.69rem;font-weight:600;text-align:center;outline:none;background:var(--input-bg);color:var(--text);font-family:inherit;transition:border .15s;}
+.alloc-inp:focus{border-color:var(--input-focus);}
+.alloc-sum{font-size:.67rem;font-weight:700;padding:1px 4px;border-radius:4px;}
+.alloc-sum.ok{color:#047857;background:#f0fdf4;}
+.alloc-sum.warn{color:#b91c1c;background:#fef2f2;}
+[data-theme="dark"] .alloc-sum.ok{color:#34d399;background:#052e16;}
+[data-theme="dark"] .alloc-sum.warn{color:#f87171;background:#2d1515;}
+.alloc-actions{display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap;}
 
 /* ── Cash Flow ── */
 .cf-table{width:100%;border-collapse:collapse;font-size:.78rem;}
@@ -212,7 +225,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 [data-theme="dark"] .cf-table tr.cf-section td{background:#1e3a5f;color:#93c5fd;}
 .cf-table tr.cf-sub td{font-weight:700;background:#f0f9ff;border-top:2px solid #bfdbfe;}
 [data-theme="dark"] .cf-table tr.cf-sub td{background:#1e3a8a;border-top-color:#1d4ed8;}
-.cf-table tr.cf-total td{border-top:3px double #1d4ed8;font-weight:700;font-size:.86rem;padding:7px 7px;background:#dbeafe;}
+.cf-table tr.cf-total td{border-top:3px double #1d4ed8;font-weight:700;font-size:.86rem;padding:7px;background:#dbeafe;}
 [data-theme="dark"] .cf-table tr.cf-total td{background:#1e40af;color:#fff;}
 
 /* ── Loan ── */
@@ -225,7 +238,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 [data-theme="dark"] .loan-kpi{background:#1e3a5f;}
 .loan-kpi label{font-size:.6rem;color:#1d4ed8;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
 [data-theme="dark"] .loan-kpi label{color:#93c5fd;}
-.loan-kpi .val{font-size:.92rem;font-weight:700;color:#1e40af;}
+.loan-kpi .val{font-size:.9rem;font-weight:700;color:#1e40af;}
 [data-theme="dark"] .loan-kpi .val{color:#93c5fd;}
 
 /* ── Charts ── */
@@ -264,15 +277,20 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 }
 @media(max-width:640px){
   .hdr{padding:10px 12px;}
+  .hdr-left h1{font-size:.8rem;}
   .location-panel{padding:10px 10px 24px;}
   .kpi-row{grid-template-columns:repeat(2,1fr);}
   .ch-strip{grid-template-columns:1fr;}
   .main-grid{grid-template-columns:1fr;}
-  .loan-grid{grid-template-columns:1fr;}
+  .loan-grid{grid-template-columns:1fr 1fr;}
   .loan-results{grid-template-columns:repeat(2,1fr);}
+  .bottom-row{grid-template-columns:1fr;}
   .bidir-row{flex-wrap:wrap;}
   .amt-inp{width:58px;}
-  .alloc-inp{width:42px;}
+}
+@media(max-width:420px){
+  .hdr-right .btn{padding:5px 8px;font-size:.71rem;}
+  .kpi-row{gap:6px;}
 }
 </style>
 </head>
@@ -285,7 +303,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   </div>
   <div class="hdr-right">
     <button class="btn btn-success" onclick="openSaveModal()">💾 Save Scenario</button>
-    <button class="btn btn-outline" onclick="exportData()">📤 Export JSON</button>
+    <button class="btn btn-outline" onclick="exportData()">📤 Export</button>
     <label class="btn btn-outline file-btn" title="Import a previously exported JSON">
       📥 Import
       <input type="file" accept=".json" onchange="importData(event)">
@@ -332,7 +350,6 @@ const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov",
 const CHS=['retail','whl','inst'];
 const CH_LABEL={retail:'Retail',whl:'Wholesale',inst:'Institutional'};
 const CH_COLOR={retail:'#2563eb',whl:'#059669',inst:'#7c3aed'};
-const CH_COLOR_DK={retail:'#60a5fa',whl:'#34d399',inst:'#a78bfa'};
 
 const LOC_DATA={
   cricmax:{
@@ -377,7 +394,8 @@ const MAX_PCT=60;
 
 /* ── State ── */
 const state={};
-const chanState={};   // {retail,whl,inst} splits for rev + each expense cat
+const chanState={};
+const pinnedPct={};
 const scenarios={};
 let activeTab='cricmax';
 let pendingSaveKey=null;
@@ -386,7 +404,9 @@ LOC_KEYS.forEach(k=>{
   const cats=Object.keys(LOC_DATA[k].cats);
   state[k]={__rev_growth:0,__ref_recov:0,__loan_amount:0,__loan_rate:6,__loan_term:60};
   cats.forEach(c=>state[k][c]=0);
-  scenarios[k]=[{id:'__original__',name:'Original',snap:JSON.parse(JSON.stringify(state[k])),chanSnap:null}];
+  pinnedPct[k]={};
+  cats.forEach(c=>pinnedPct[k][c]=0);
+  scenarios[k]=[{id:'__original__',name:'Original',snap:JSON.parse(JSON.stringify(state[k])),chanSnap:null,pinnedSnap:null}];
   chanState[k]={
     rev:{retail:50,whl:30,inst:20},
     exp:Object.fromEntries(cats.map(c=>[c,{retail:50,whl:30,inst:20}]))
@@ -417,28 +437,28 @@ function calcPMT(P,annualRate,termMonths){
   return{monthly:pmt,annual:pmt*12,totalInterest:pmt*termMonths-P,totalPaid:pmt*termMonths};
 }
 
-/* ── Build allocation table rows ── */
+/* ── Build allocation rows ── */
 function buildAllocRows(k){
   const d=LOC_DATA[k];const cs=chanState[k];
   const cats=Object.keys(d.cats);
   let html='';
-
   function sumCls(v){return Math.abs(v-100)<0.5?'ok':'warn';}
   function row(label,type,catKey,vals,bold){
     const rs=vals.retail+vals.whl+vals.inst;
     const sid=catKey?`${k}_asum_${esc(catKey)}`:`${k}_asum_rev`;
+    const bclr={retail:CH_COLOR.retail,whl:CH_COLOR.whl,inst:CH_COLOR.inst};
     const makeInp=(ch,w)=>`<input type="number" class="alloc-inp" id="${k}_a${type}_${catKey?esc(catKey)+'_':''}${ch}"
       min="0" max="100" step="1" value="${w}"
-      oninput="onAllocChange('${k}','${type}','${ch}',this${catKey?`,'${catKey}'`:''})" style="border-color:${CH_COLOR[ch]}">`;
+      oninput="onAllocChange('${k}','${type}','${ch}',this${catKey?`,'${catKey}'`:''})"
+      style="border-left:2px solid ${bclr[ch]}">`;
     return`<tr>
-      <td style="${bold?'font-weight:700;':''}">${label}</td>
+      <td title="${label}" style="${bold?'font-weight:700;':''}">${label}</td>
       <td>${makeInp('retail',vals.retail)}</td>
       <td>${makeInp('whl',vals.whl)}</td>
       <td>${makeInp('inst',vals.inst)}</td>
       <td><span class="alloc-sum ${sumCls(rs)}" id="${sid}">${rs.toFixed(0)}%</span></td>
     </tr>`;
   }
-
   html+=row('Revenue Split','rev',null,cs.rev,true);
   cats.forEach(c=>{html+=row(c,'exp',c,cs.exp[c]||{retail:50,whl:30,inst:20},false);});
   return html;
@@ -449,7 +469,7 @@ function buildPanelHTML(k){
   const d=LOC_DATA[k];
   const cats=Object.keys(d.cats);
 
-  /* Top KPI row */
+  /* KPI row */
   const kpi=`<div class="kpi-row">
     <div class="kpi rev-card"><label>Gross Revenue</label><div class="val" id="${k}_kGross">${fmt(d.gross_rev)}</div><div class="delta" id="${k}_kGrossDelta"></div></div>
     <div class="kpi"><label>Refunds</label><div class="val neg" id="${k}_kRef">${fmt(d.refunds)}</div><div class="delta" id="${k}_kRefDelta"></div></div>
@@ -459,9 +479,9 @@ function buildPanelHTML(k){
     <div class="kpi"><label>Net Margin</label><div class="val ${d.net>=0?'pos':'neg'}" id="${k}_kMargin">${(d.net/d.revenue*100).toFixed(1)}%</div><div class="delta" id="${k}_kMarginDelta"></div></div>
   </div>`;
 
-  /* Channel KPI strip */
+  /* Channel strip */
   const chStrip=`<div class="ch-strip">
-    ${CHS.map(ch=>`<div class="ch-card ${ch}">
+    ${CHS.map(ch=>`<div class="ch-card ${ch==='whl'?'wholesale':ch}">
       <div class="ch-label">${CH_LABEL[ch]}</div>
       <div class="ch-net" id="${k}_ch_${ch}_net">—</div>
       <div class="ch-detail" id="${k}_ch_${ch}_det">Rev — | Exp — | Margin —</div>
@@ -477,87 +497,101 @@ function buildPanelHTML(k){
     <div class="scenario-switcher" id="${k}_scenBar"></div>
   </div>`;
 
-  /* Allocation card */
-  const allocCard=`<div class="alloc-card">
-    <h3>Channel Allocation — Revenue &amp; Expense % split (each row must total 100%)</h3>
-    <div style="overflow-x:auto">
-    <table class="alloc-tbl">
-      <thead><tr>
-        <th style="min-width:120px">Line Item</th>
-        <th style="color:var(--c-retail);min-width:70px">Retail %</th>
-        <th style="color:var(--c-whl);min-width:70px">Wholesale %</th>
-        <th style="color:var(--c-inst);min-width:70px">Institutional %</th>
-        <th style="min-width:50px">Sum</th>
-      </tr></thead>
-      <tbody id="${k}_allocBody">${buildAllocRows(k)}</tbody>
-    </table>
-    </div>
-    <div class="alloc-actions">
-      <button class="btn btn-sm btn-outline" onclick="syncExpToRev('${k}')">↺ Sync Expenses to Revenue %</button>
-      <span style="font-size:.65rem;color:var(--text-faint)">Each row must sum to 100% for accurate channel P&L</span>
-    </div>
-  </div>`;
-
-  /* Channel P&L table — expense rows */
+  /* P&L expense rows — 9 cols: name | actual | %rev | 📌pin | retail | whl | inst | total | Δ */
   let expRows='';
   cats.forEach(c=>{
     const v=d.cats[c];const cid=esc(c);
     expRows+=`<tr>
-      <td>${c}</td>
+      <td class="sc">${c}</td>
+      <td class="pct">${fmt(v)}</td>
+      <td class="pct">${d.revenue>0?(v/d.revenue*100).toFixed(1)+'%':'—'}</td>
+      <td class="td-pin"><input type="number" class="pin-inp" id="${k}_pin_${cid}"
+        min="0" max="999" step="0.1" placeholder="—"
+        oninput="onPinChange('${k}','${c}',this)"
+        title="Pin as % of Scenario Net Revenue — auto-scales when revenue changes"></td>
       <td class="td-retail" id="${k}_r_${cid}">—</td>
       <td class="td-whl" id="${k}_w_${cid}">—</td>
       <td class="td-inst" id="${k}_i_${cid}">—</td>
       <td class="td-total" id="${k}_t_${cid}">—</td>
-      <td class="pct" id="${k}_p_${cid}">${(v/d.revenue*100).toFixed(1)}%</td>
+      <td class="pct" id="${k}_d_${cid}">—</td>
     </tr>`;
   });
 
-  /* Channel P&L table */
+  /* P&L table */
   const plTable=`<div class="card">
-    <h3>Channel P&L Statement — <span style="color:var(--text-faint);font-weight:400;text-transform:none">Retail · Wholesale · Institutional · Total</span></h3>
+    <h3>Channel P&L Statement</h3>
     <div class="pl-wrap">
     <table class="pl-table">
       <thead><tr>
-        <th style="min-width:130px">Line Item</th>
-        <th class="th-retail" style="min-width:88px">Retail</th>
-        <th class="th-whl" style="min-width:88px">Wholesale</th>
-        <th class="th-inst" style="min-width:100px">Institutional</th>
-        <th style="min-width:88px">Total</th>
-        <th style="min-width:55px">% Rev</th>
+        <th class="sc" style="min-width:110px">Line Item</th>
+        <th style="min-width:76px">Actual</th>
+        <th style="min-width:46px">% Rev</th>
+        <th class="th-pin" style="min-width:50px" title="📌 Pin as % of Scenario Revenue — expense auto-scales with revenue changes">📌 Pin%</th>
+        <th class="th-retail" style="min-width:76px">🔵 Retail</th>
+        <th class="th-whl" style="min-width:76px">🟢 Wholesale</th>
+        <th class="th-inst" style="min-width:82px">🟣 Inst.</th>
+        <th style="min-width:76px">Total</th>
+        <th style="min-width:64px">Δ Change</th>
       </tr></thead>
       <tbody>
-        <tr class="sec-hd"><td colspan="6">Revenue</td></tr>
+        <tr class="sec-hd"><td class="sc" colspan="9">Revenue</td></tr>
         <tr>
-          <td>Gross Revenue</td>
-          <td class="td-retail" id="${k}_rGross">—</td><td class="td-whl" id="${k}_wGross">—</td><td class="td-inst" id="${k}_iGross">—</td>
-          <td class="td-total" id="${k}_tGross">—</td><td class="pct">—</td>
+          <td class="sc">Gross Revenue</td>
+          <td>${fmt(d.gross_rev)}</td><td class="pct">—</td><td class="td-pin">—</td>
+          <td class="td-retail" id="${k}_rGross">—</td>
+          <td class="td-whl" id="${k}_wGross">—</td>
+          <td class="td-inst" id="${k}_iGross">—</td>
+          <td class="td-total" id="${k}_tGross">—</td>
+          <td class="pct" id="${k}_dGross">—</td>
         </tr>
         <tr>
-          <td>Refunds / Returns</td>
-          <td class="td-retail neg" id="${k}_rRef">—</td><td class="td-whl neg" id="${k}_wRef">—</td><td class="td-inst neg" id="${k}_iRef">—</td>
-          <td class="td-total neg" id="${k}_tRef">—</td><td class="pct">—</td>
+          <td class="sc">Refunds / Returns</td>
+          <td class="neg">${fmt(d.refunds)}</td><td class="pct">—</td><td class="td-pin">—</td>
+          <td class="td-retail neg" id="${k}_rRef">—</td>
+          <td class="td-whl neg" id="${k}_wRef">—</td>
+          <td class="td-inst neg" id="${k}_iRef">—</td>
+          <td class="td-total neg" id="${k}_tRef">—</td>
+          <td class="pct" id="${k}_dRef">—</td>
         </tr>
         <tr class="subtotal">
-          <td>Net Revenue</td>
-          <td class="td-retail" id="${k}_rRev">—</td><td class="td-whl" id="${k}_wRev">—</td><td class="td-inst" id="${k}_iRev">—</td>
-          <td class="td-total" id="${k}_tRev">—</td><td class="pct">100%</td>
+          <td class="sc">Net Revenue</td>
+          <td>${fmt(d.revenue)}</td><td class="pct">100%</td><td class="td-pin">—</td>
+          <td class="td-retail" id="${k}_rRev">—</td>
+          <td class="td-whl" id="${k}_wRev">—</td>
+          <td class="td-inst" id="${k}_iRev">—</td>
+          <td class="td-total" id="${k}_tRev">—</td>
+          <td class="pct" id="${k}_dRev">—</td>
         </tr>
-        <tr class="sec-hd"><td colspan="6">Expenses</td></tr>
+        <tr class="sec-hd"><td class="sc" colspan="9">Expenses</td></tr>
         ${expRows}
         <tr class="subtotal">
-          <td>Total Expenses</td>
-          <td class="td-retail" id="${k}_rExp">—</td><td class="td-whl" id="${k}_wExp">—</td><td class="td-inst" id="${k}_iExp">—</td>
-          <td class="td-total" id="${k}_tExp">—</td><td class="pct" id="${k}_pExp">—</td>
+          <td class="sc">Total Expenses</td>
+          <td>${fmt(d.expenses)}</td><td class="pct">${d.revenue>0?(d.expenses/d.revenue*100).toFixed(1)+'%':'—'}</td><td class="td-pin">—</td>
+          <td class="td-retail" id="${k}_rExp">—</td>
+          <td class="td-whl" id="${k}_wExp">—</td>
+          <td class="td-inst" id="${k}_iExp">—</td>
+          <td class="td-total" id="${k}_tExp">—</td>
+          <td class="pct" id="${k}_dExp">—</td>
         </tr>
         <tr class="total-row">
-          <td>Net Profit / Loss</td>
-          <td class="td-retail" id="${k}_rNet">—</td><td class="td-whl" id="${k}_wNet">—</td><td class="td-inst" id="${k}_iNet">—</td>
-          <td class="td-total" id="${k}_tNet">—</td><td class="pct" id="${k}_pNet">—</td>
+          <td class="sc">Net Profit / Loss</td>
+          <td class="${d.net>=0?'pos':'neg'}">${fmt(d.net)}</td>
+          <td class="pct">${d.revenue>0?(d.net/d.revenue*100).toFixed(1)+'%':'—'}</td><td class="td-pin">—</td>
+          <td class="td-retail" id="${k}_rNet">—</td>
+          <td class="td-whl" id="${k}_wNet">—</td>
+          <td class="td-inst" id="${k}_iNet">—</td>
+          <td class="td-total" id="${k}_tNet">—</td>
+          <td class="pct" id="${k}_dNet">—</td>
         </tr>
         <tr>
-          <td style="font-size:.7rem;color:var(--text-muted)">Net Margin %</td>
-          <td class="td-retail pct" id="${k}_rMar">—</td><td class="td-whl pct" id="${k}_wMar">—</td><td class="td-inst pct" id="${k}_iMar">—</td>
-          <td class="td-total pct" id="${k}_tMar">—</td><td></td>
+          <td class="sc" style="font-size:.69rem;color:var(--text-muted)">Net Margin %</td>
+          <td class="pct ${d.net>=0?'pos':'neg'}">${d.revenue>0?(d.net/d.revenue*100).toFixed(1)+'%':'—'}</td>
+          <td></td><td class="td-pin">—</td>
+          <td class="td-retail pct" id="${k}_rMar">—</td>
+          <td class="td-whl pct" id="${k}_wMar">—</td>
+          <td class="td-inst pct" id="${k}_iMar">—</td>
+          <td class="td-total pct" id="${k}_tMar">—</td>
+          <td></td>
         </tr>
       </tbody>
     </table>
@@ -620,21 +654,48 @@ function buildPanelHTML(k){
     </div>`;
   }
 
+  /* Allocation section — collapsible, inside ctrl panel */
+  const allocSec=`<div class="ctrl-section-hd clickable" onclick="toggleAlloc('${k}')">
+      <span>📊 Channel Allocation</span>
+      <span id="${k}_allocChev">▶</span>
+    </div>
+    <div id="${k}_allocWrap" style="display:none">
+      <div style="font-size:.62rem;color:var(--text-faint);margin-bottom:5px">Each row must total 100% for accurate channel P&L split</div>
+      <div style="overflow-x:auto">
+      <table class="alloc-tbl">
+        <thead><tr>
+          <th style="min-width:88px">Line Item</th>
+          <th style="color:var(--c-retail);min-width:48px">Retail</th>
+          <th style="color:var(--c-whl);min-width:48px">Whsl</th>
+          <th style="color:var(--c-inst);min-width:48px">Inst</th>
+          <th style="min-width:36px">Sum</th>
+        </tr></thead>
+        <tbody id="${k}_allocBody">${buildAllocRows(k)}</tbody>
+      </table>
+      </div>
+      <div class="alloc-actions">
+        <button class="btn btn-sm btn-outline" onclick="syncExpToRev('${k}')">↺ Sync Exp → Rev %</button>
+        <span style="font-size:.62rem;color:var(--text-faint)">Tip: pin % in table auto-scales with revenue</span>
+      </div>
+    </div>`;
+
+  /* Control panel */
   const ctrlPanel=`<div class="card ctrl-panel">
     <h3>Scenario Controls</h3>
     <div class="ctrl-section-hd" style="color:#2563eb">Revenue Levers</div>
     ${slider('__rev_growth',true,25,['−25%','+25%'])}
     ${slider('__ref_recov',true,75,['−75%','+75%'])}
-    <div class="ctrl-section-hd">Cost Levers (left = cut, right = increase)</div>
+    <div class="ctrl-section-hd">Cost Levers <span style="font-weight:400;text-transform:none;font-size:.59rem">(left=cut · right=increase)</span></div>
     ${cats.map(c=>slider(c,false,MAX_PCT)).join('')}
     <div class="impact-banner red" id="${k}_banner">
       <h4 id="${k}_bannerHd">Scenario Impact</h4>
       <div class="big" id="${k}_bannerBig">${fmt(d.net)}</div>
       <div class="sub" id="${k}_bannerSub">Adjust controls above to model scenarios</div>
     </div>
+    <div style="margin-top:10px">${allocSec}</div>
   </div>`;
 
-  return`${kpi}${chStrip}${scenBar}${allocCard}
+  return`${kpi}${chStrip}${scenBar}
   <div class="main-grid">
     <div>
       ${plTable}${loanCard}${cfCard}
@@ -647,6 +708,22 @@ function buildPanelHTML(k){
     </div>
     <div>${ctrlPanel}</div>
   </div>`;
+}
+
+/* ── Pin % handler ── */
+function onPinChange(k,cat,inp){
+  const v=parseFloat(inp.value)||0;
+  pinnedPct[k][cat]=v;
+  inp.className='pin-inp'+(v>0?' pinned':'');
+  update(k);
+}
+
+/* ── Allocation toggle ── */
+function toggleAlloc(k){
+  const w=el(k+'_allocWrap'),c=el(k+'_allocChev');if(!w)return;
+  const open=w.style.display!=='none';
+  w.style.display=open?'none':'block';
+  if(c)c.textContent=open?'▶':'▼';
 }
 
 /* ── Allocation handlers ── */
@@ -758,15 +835,23 @@ function update(k){
   const d=LOC_DATA[k];const s=state[k];const cs=chanState[k];
   const cats=Object.keys(d.cats);
 
-  /* Scenario totals */
+  /* Scenario revenue */
   const sGross=d.gross_rev+(s.__rev_growth||0);
   const sRef=Math.max(0,d.refunds-(s.__ref_recov||0));
   const sRev=sGross-sRef;
+
+  /* Expense: apply pin % if set, else actual + delta */
   let sExp=0;const catV={};
-  cats.forEach(c=>{catV[c]=Math.max(0,d.cats[c]+(s[c]||0));sExp+=catV[c];});
+  cats.forEach(c=>{
+    const pin=pinnedPct[k]?.[c]||0;
+    const cv=pin>0
+      ?Math.max(0,sRev*(pin/100)+(s[c]||0))  /* pinned: % of scenario revenue + slider delta */
+      :Math.max(0,d.cats[c]+(s[c]||0));       /* normal: actual + slider delta */
+    catV[c]=cv;sExp+=cv;
+  });
   const sNet=sRev-sExp;
 
-  /* Channel computations */
+  /* Channel breakdown */
   const ch={};
   CHS.forEach(ch2=>{
     const rp=(cs.rev[ch2]||0)/100;
@@ -775,7 +860,7 @@ function update(k){
     ch[ch2].net=ch[ch2].rev-ch[ch2].exp;
   });
 
-  /* KPIs */
+  /* Top KPIs */
   kpiSet(k,'kGross',sGross,d.gross_rev);
   kpiSet(k,'kRef',sRef,d.refunds,true);
   kpiSet(k,'kRev',sRev,d.revenue);
@@ -793,11 +878,24 @@ function update(k){
     if(de)de.textContent=`Rev: ${fmt(cd.rev)} | Exp: ${fmt(cd.exp)} | Margin: ${cd.rev>0?(cd.net/cd.rev*100).toFixed(1)+'%':'—'}`;
   });
 
-  /* P&L table — revenue rows */
+  /* Cell helpers */
   function tc(pfx,val,cls){const e=el(k+'_'+pfx);if(e){e.textContent=val<0?'-'+fmt(Math.abs(val)):fmt(val);if(cls)e.className=cls;}}
+  function dc(delta,goodIsPos){
+    if(Math.abs(delta)<0.5)return'pct neu';
+    return goodIsPos?(delta>0?'pct pos':'pct neg'):(delta>0?'pct neg':'pct pos');
+  }
+  function setDelta(id,delta,goodIsPos){
+    const e=el(k+'_'+id);
+    if(e){e.textContent=fmtD(delta);e.className=dc(delta,goodIsPos);}
+  }
+
+  /* Revenue rows */
   tc('rGross',ch.retail.gross,'td-retail');tc('wGross',ch.whl.gross,'td-whl');tc('iGross',ch.inst.gross,'td-inst');tc('tGross',sGross,'td-total');
+  setDelta('dGross',sGross-d.gross_rev,true);
   tc('rRef',-ch.retail.ref,'td-retail neg');tc('wRef',-ch.whl.ref,'td-whl neg');tc('iRef',-ch.inst.ref,'td-inst neg');tc('tRef',-sRef,'td-total neg');
+  setDelta('dRef',sRef-d.refunds,false);
   tc('rRev',ch.retail.rev,'td-retail');tc('wRev',ch.whl.rev,'td-whl');tc('iRev',ch.inst.rev,'td-inst');tc('tRev',sRev,'td-total');
+  setDelta('dRev',sRev-d.revenue,true);
 
   /* Expense rows */
   cats.forEach(c=>{
@@ -807,32 +905,27 @@ function update(k){
     const iv=catV[c]*((cs.exp[c]?.inst||0)/100);
     tc('r_'+cid,rv,'td-retail');tc('w_'+cid,wv,'td-whl');tc('i_'+cid,iv,'td-inst');
     tc('t_'+cid,catV[c],'td-total');
-    const pe=el(k+'_p_'+cid);if(pe)pe.textContent=sRev>0?(catV[c]/sRev*100).toFixed(1)+'%':'—';
+    setDelta('d_'+cid,catV[c]-d.cats[c],false);
   });
 
   /* Expense + Net totals */
   tc('rExp',ch.retail.exp,'td-retail');tc('wExp',ch.whl.exp,'td-whl');tc('iExp',ch.inst.exp,'td-inst');tc('tExp',sExp,'td-total');
-  const peE=el(k+'_pExp');if(peE)peE.textContent=sRev>0?(sExp/sRev*100).toFixed(1)+'%':'—';
-
-  function netCell(pfx,val,rev){
-    const e=el(k+'_'+pfx);if(e){e.textContent=fmt(val);e.className=e.className.replace(/ (pos|neg)/g,'')+(val>=0?' pos':' neg');}
-    const m=el(k+'_'+pfx.replace('Net','Mar').replace('Net','Mar'));
-    /* handled separately */
-  }
+  setDelta('dExp',sExp-d.expenses,false);
   tc('rNet',ch.retail.net,'td-retail '+(ch.retail.net>=0?'pos':'neg'));
   tc('wNet',ch.whl.net,'td-whl '+(ch.whl.net>=0?'pos':'neg'));
   tc('iNet',ch.inst.net,'td-inst '+(ch.inst.net>=0?'pos':'neg'));
   tc('tNet',sNet,'td-total '+(sNet>=0?'pos':'neg'));
+  setDelta('dNet',sNet-d.net,true);
   const pN=el(k+'_pNet');if(pN)pN.textContent=sRev>0?(sNet/sRev*100).toFixed(1)+'%':'—';
 
   /* Margin row */
-  function setMar(pfx,net,rev){const e=el(k+'_'+pfx);if(e){e.textContent=rev>0?(net/rev*100).toFixed(1)+'%':'—';e.className=e.className.replace(/ (pos|neg)/g,'')+(net>=0?' pos':' neg');}}
+  function setMar(pfx,net,rev){const e=el(k+'_'+pfx);if(e){e.textContent=rev>0?(net/rev*100).toFixed(1)+'%':'—';e.className=e.className.replace(/ ?(pos|neg)/g,'')+(net>=0?' pos':' neg');}}
   setMar('rMar',ch.retail.net,ch.retail.rev);
   setMar('wMar',ch.whl.net,ch.whl.rev);
   setMar('iMar',ch.inst.net,ch.inst.rev);
   setMar('tMar',sNet,sRev);
 
-  /* Banner */
+  /* Impact banner */
   const bn=el(k+'_banner'),bh=el(k+'_bannerHd'),bb=el(k+'_bannerBig'),bs=el(k+'_bannerSub');
   if(bn)bn.className='impact-banner '+(sNet>=0?'green':'red');
   if(bh)bh.textContent=sNet>=0?'✅ Profitable Scenario':'⚠️ Still a Loss';
@@ -853,7 +946,7 @@ function update(k){
   cfS('cfFm',fmt(freeM),cfC(freeM));cfS('cfFa',fmt(freeA),cfC(freeA));cfS('cfFd',fmtD(freeA-(baseOpA-lR.annual)),cfC(freeA-(baseOpA-lR.annual)));
   cfS('cfNm',fmt(freeM),cfC(freeM));cfS('cfNa',fmt(freeA),cfC(freeA));cfS('cfNd',fmtD(freeA-baseOpA),cfC(freeA-baseOpA));
 
-  /* Update channel chart live */
+  /* Refresh channel chart live */
   const chEl=el(k+'_chPlot');
   if(chEl&&chEl.children.length){
     const pc=plotColors();
@@ -875,13 +968,17 @@ function openSaveModal(){
   setTimeout(()=>el('scenarioNameInput').focus(),150);
 }
 function closeModal(){el('saveModal').classList.remove('open');pendingSaveKey=null;}
+el('saveModal').addEventListener('keydown',e=>{if(e.key==='Enter')confirmSave();if(e.key==='Escape')closeModal();});
+el('saveModal').addEventListener('click',e=>{if(e.target===el('saveModal'))closeModal();});
+
 function confirmSave(){
   const name=el('scenarioNameInput').value.trim();if(!name)return;
   const k=pendingSaveKey||activeTab;
   const snap=JSON.parse(JSON.stringify(state[k]));
   const chanSnap=JSON.parse(JSON.stringify(chanState[k]));
+  const pinnedSnap=JSON.parse(JSON.stringify(pinnedPct[k]));
   const id='sc_'+Date.now();
-  scenarios[k].push({id,name,snap,chanSnap});
+  scenarios[k].push({id,name,snap,chanSnap,pinnedSnap});
   renderScenBar(k);closeModal();
   persistStorage();showToast('Scenario saved: '+name);
   setTimeout(()=>activateChip(k,id),50);
@@ -914,7 +1011,20 @@ function loadScen(k,id){
   scenarios[k].forEach(s=>delete s._active);sc._active=true;
   Object.assign(state[k],JSON.parse(JSON.stringify(sc.snap)));
   if(sc.chanSnap)Object.assign(chanState[k],JSON.parse(JSON.stringify(sc.chanSnap)));
+
+  /* Restore pin % state and DOM inputs */
   const cats=Object.keys(LOC_DATA[k].cats);
+  if(sc.pinnedSnap){
+    Object.assign(pinnedPct[k],JSON.parse(JSON.stringify(sc.pinnedSnap)));
+  } else {
+    cats.forEach(c=>pinnedPct[k][c]=0);
+  }
+  cats.forEach(c=>{
+    const pinEl=el(k+'_pin_'+esc(c));
+    if(pinEl){const v=pinnedPct[k][c]||0;pinEl.value=v>0?v:'';pinEl.className='pin-inp'+(v>0?' pinned':'');}
+  });
+
+  /* Restore sliders */
   [...cats,'__rev_growth','__ref_recov'].forEach(cat=>{
     const delta=state[k][cat]||0;const base=getBase(k,cat);
     const maxP=cat==='__rev_growth'?25:cat==='__ref_recov'?75:MAX_PCT;
@@ -942,13 +1052,14 @@ function delScen(k,id){
 function resetCurrent(){
   const k=activeTab;const cats=Object.keys(LOC_DATA[k].cats);
   chanState[k]={rev:{retail:50,whl:30,inst:20},exp:Object.fromEntries(cats.map(c=>[c,{retail:50,whl:30,inst:20}]))};
+  cats.forEach(c=>pinnedPct[k][c]=0);
   loadScen(k,'__original__');
-  const ab=el(k+'_allocBody');if(ab)ab.innerHTML=buildAllocRows(k);
+  showToast('Reset to original');
 }
 
 /* ── Persist / Export / Import ── */
 function persistStorage(){
-  try{localStorage.setItem('plcso_v2',JSON.stringify({state,chanState,scenarios}));}catch(e){}
+  try{localStorage.setItem('plcso_v2',JSON.stringify({state,chanState,scenarios,pinnedPct}));}catch(e){}
 }
 function loadStorage(){
   try{
@@ -957,11 +1068,12 @@ function loadStorage(){
     if(d.state)LOC_KEYS.forEach(k=>{if(d.state[k])Object.assign(state[k],d.state[k]);});
     if(d.chanState)LOC_KEYS.forEach(k=>{if(d.chanState[k])Object.assign(chanState[k],d.chanState[k]);});
     if(d.scenarios)LOC_KEYS.forEach(k=>{if(d.scenarios[k])scenarios[k]=d.scenarios[k];});
+    if(d.pinnedPct)LOC_KEYS.forEach(k=>{if(d.pinnedPct[k])Object.assign(pinnedPct[k],d.pinnedPct[k]);});
   }catch(e){}
 }
 
 function exportData(){
-  const data={version:2,exported:new Date().toISOString(),state,chanState,scenarios};
+  const data={version:3,exported:new Date().toISOString(),state,chanState,scenarios,pinnedPct};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;
@@ -979,6 +1091,7 @@ function importData(e){
       if(d.state)LOC_KEYS.forEach(k=>{if(d.state[k])Object.assign(state[k],d.state[k]);});
       if(d.chanState)LOC_KEYS.forEach(k=>{if(d.chanState[k])Object.assign(chanState[k],d.chanState[k]);});
       if(d.scenarios)LOC_KEYS.forEach(k=>{if(d.scenarios[k])scenarios[k]=d.scenarios[k];});
+      if(d.pinnedPct)LOC_KEYS.forEach(k=>{if(d.pinnedPct[k])Object.assign(pinnedPct[k],d.pinnedPct[k]);});
       LOC_KEYS.forEach(k=>{
         renderScenBar(k);
         const activeId=scenarios[k].find(s=>s._active)?.id||'__original__';
@@ -1031,13 +1144,17 @@ function initCharts(k){
       marker:{color:d.monthly_rev.map((v,i)=>v-d.monthly_exp[i]>=0?'#22c55e':'#ef4444')}}
   ],{...lc,...axes,legend:{orientation:'h',y:1.15,x:.5,xanchor:'center'}},{responsive:true});
 
-  /* Channel chart — computed from current state */
+  /* Channel chart — from current scenario state */
   const s=state[k];const cs=chanState[k];
   const sGross=d.gross_rev+(s.__rev_growth||0);
   const sRef=Math.max(0,d.refunds-(s.__ref_recov||0));
   const sRev=sGross-sRef;
   let sExp=0;const catV={};
-  cats.forEach(c=>{catV[c]=Math.max(0,d.cats[c]+(s[c]||0));sExp+=catV[c];});
+  cats.forEach(c=>{
+    const pin=pinnedPct[k]?.[c]||0;
+    const cv=pin>0?Math.max(0,sRev*(pin/100)+(s[c]||0)):Math.max(0,d.cats[c]+(s[c]||0));
+    catV[c]=cv;sExp+=cv;
+  });
   const chd={};
   CHS.forEach(ch=>{
     const rp=(cs.rev[ch]||0)/100;
@@ -1045,7 +1162,6 @@ function initCharts(k){
     cats.forEach(c=>{chd[ch].exp+=catV[c]*((cs.exp[c]?.[ch]||0)/100);});
     chd[ch].net=chd[ch].rev-chd[ch].exp;
   });
-
   Plotly.newPlot(k+'_chPlot',[
     {x:CHS.map(c=>CH_LABEL[c]),y:CHS.map(c=>chd[c].rev),name:'Revenue',type:'bar',marker:{color:CHS.map(c=>CH_COLOR[c])},opacity:.85},
     {x:CHS.map(c=>CH_LABEL[c]),y:CHS.map(c=>chd[c].exp),name:'Expenses',type:'bar',marker:{color:'#94a3b8'},opacity:.7},
@@ -1074,6 +1190,11 @@ buildTabs();
 LOC_KEYS.forEach(k=>{
   renderScenBar(k);
   activateChip(k,'__original__',false);
+  /* Restore pin % inputs from persisted state */
+  Object.keys(LOC_DATA[k].cats).forEach(c=>{
+    const pinEl=el(k+'_pin_'+esc(c));
+    if(pinEl){const v=pinnedPct[k][c]||0;pinEl.value=v>0?v:'';pinEl.className='pin-inp'+(v>0?' pinned':'');}
+  });
   initCharts(k);
 });
 </script>
