@@ -130,7 +130,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 [data-theme="dark"] .pl-table th.th-whl{background:#052e16;}
 [data-theme="dark"] .pl-table th.th-inst{background:#2e1065;}
 [data-theme="dark"] .pl-table th.th-pin{background:#451a03;color:#fcd34d;}
-.pl-table td{padding:4px 6px;border-top:1px solid var(--border2);vertical-align:middle;text-align:right;font-variant-numeric:tabular-nums;}
+.pl-table td{padding:3px 4px;border-top:1px solid var(--border2);vertical-align:middle;text-align:right;font-variant-numeric:tabular-nums;}
 .pl-table td:first-child{text-align:left;}
 .pl-table td.td-retail{border-left:2px solid #bfdbfe;}
 .pl-table td.td-whl{border-left:2px solid #86efac;}
@@ -152,19 +152,19 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .pin-inp.pinned{border-color:#f59e0b;background:#fffbeb;color:#92400e;}
 [data-theme="dark"] .pin-inp.pinned{background:#451a03;color:#fcd34d;}
 
-/* ── Channel cells — % top, $ bottom (stacked) ── */
-.chn-td{padding:2px 4px!important;vertical-align:middle!important;}
-.chn-cell{display:flex;flex-direction:column;align-items:stretch;gap:0;}
-/* % row (top) */
-.pct-inp{width:100%;padding:1px 2px;border:1px solid transparent;border-radius:3px;font-size:.67rem;font-weight:500;text-align:right;background:transparent;color:var(--text-faint);font-family:'Inter',system-ui,sans-serif;cursor:pointer;outline:none;transition:border .1s,background .1s,color .1s;}
+/* ── Channel cells — % left, $ right (side by side) ── */
+.chn-td{padding:1px 3px!important;vertical-align:middle!important;}
+.chn-cell{display:flex;flex-direction:row;align-items:center;gap:2px;}
+/* % field (left, fixed narrow) */
+.pct-inp{width:36px;flex-shrink:0;padding:1px 2px;border:1px solid transparent;border-radius:3px;font-size:.60rem;font-weight:500;text-align:right;background:transparent;color:var(--text-faint);font-family:'Inter',system-ui,sans-serif;cursor:pointer;outline:none;transition:border .1s,background .1s,color .1s;}
 .pct-inp:hover{border-color:var(--border);background:var(--surface2);color:var(--text-muted);}
 .pct-inp:focus{border-color:var(--primary)!important;background:var(--input-bg);color:var(--primary);cursor:text;}
-.pct-val{display:block;width:100%;padding:1px 2px;font-size:.67rem;font-weight:500;text-align:right;color:var(--text-faint);}
-/* $ row (bottom) */
-.chan-inp{width:100%;padding:1px 2px;border:1px solid transparent;border-radius:3px;font-size:.82rem;font-weight:700;text-align:right;background:transparent;color:var(--text);font-family:'Inter',system-ui,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;outline:none;transition:border .1s,background .1s;}
+.pct-val{width:36px;flex-shrink:0;padding:1px 2px;font-size:.60rem;font-weight:500;text-align:right;color:var(--text-faint);}
+/* $ field (right, fills remaining) */
+.chan-inp{flex:1;min-width:44px;padding:1px 2px;border:1px solid transparent;border-radius:3px;font-size:.76rem;font-weight:700;text-align:right;background:transparent;color:var(--text);font-family:'Inter',system-ui,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;outline:none;transition:border .1s,background .1s;}
 .chan-inp:hover{border-color:var(--border);background:var(--surface2);}
 .chan-inp:focus{border-color:var(--primary)!important;background:var(--input-bg);cursor:text;}
-.chan-val{display:block;width:100%;padding:1px 2px;font-size:.82rem;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;color:var(--text);}
+.chan-val{flex:1;min-width:44px;padding:1px 2px;font-size:.76rem;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;color:var(--text);}
 /* color states */
 .chan-inp.pos,.chan-val.pos,.pct-inp.pos,.pct-val.pos{color:var(--success);}
 .chan-inp.neg,.chan-val.neg,.pct-inp.neg,.pct-val.neg{color:var(--danger);}
@@ -452,6 +452,8 @@ const fmtD=v=>(v>=0?'+':'-')+'$'+Math.abs(v).toLocaleString('en-US',{maximumFrac
 const fmtP=v=>(v>=0?'+':'')+v.toFixed(1)+'%';
 const esc=s=>s.replace(/[^a-zA-Z0-9]/g,'_');
 const el=id=>document.getElementById(id);
+/* Parse dollar values including K/M suffix (handles fmtK output) */
+const parseKM=s=>{const v=(s||'').replace(/[$,\s]/g,'').trim();if(!v)return 0;const m=v.match(/^(-?\d+\.?\d*)\s*([kmKM]?)$/);if(!m)return parseFloat(v)||0;const n=parseFloat(m[1]);return m[2].toLowerCase()==='k'?n*1e3:m[2].toLowerCase()==='m'?n*1e6:n;};
 const setTxt=(id,t,cls)=>{const e=el(id);if(e){e.textContent=t;if(cls)e.className=cls;}};
 const isDark=()=>document.documentElement.getAttribute('data-theme')==='dark';
 const plotColors=()=>({bg:isDark()?'#1e293b':'#fff',font:isDark()?'#94a3b8':'#64748b',grid:isDark()?'#334155':'#f0f4f8'});
@@ -586,14 +588,14 @@ function buildPanelHTML(k){
         <th style="min-width:40px">% Rev</th>
         <th class="th-pin" style="min-width:44px" title="📌 Pin as % of Scenario Revenue">📌 Pin%</th>
         <th class="th-pin" style="min-width:66px" title="📌 Scenario $ — syncs with Pin%">📌 Amt $</th>
-        <th class="th-retail" style="min-width:76px">🔵 Retail
+        <th class="th-retail" style="min-width:88px">🔵 Retail
           <button class="ch-tog on" id="${k}_tog_retail" onclick="toggleChan('${k}','retail',this)">ON</button></th>
-        <th class="th-whl" style="min-width:76px">🟢 Wholesale
+        <th class="th-whl" style="min-width:88px">🟢 Wholesale
           <button class="ch-tog on" id="${k}_tog_whl" onclick="toggleChan('${k}','whl',this)">ON</button></th>
-        <th class="th-inst" style="min-width:76px">🟣 Inst.
+        <th class="th-inst" style="min-width:88px">🟣 Inst.
           <button class="ch-tog on" id="${k}_tog_inst" onclick="toggleChan('${k}','inst',this)">ON</button></th>
-        <th style="min-width:68px">Total</th>
-        <th style="min-width:56px">Δ Change</th>
+        <th style="min-width:62px">Total</th>
+        <th style="min-width:50px">Δ Change</th>
       </tr></thead>
       <tbody>
         <tr class="sec-hd"><td class="sc" colspan="10">Revenue</td></tr>
@@ -896,8 +898,7 @@ function onPinChange(k,cat,inp){
 
 /* ── Amt override — bidirectional with Pin% ── */
 function onAmtOverride(k,cat,inp){
-  const raw=inp.value.replace(/[$,\s]/g,'');
-  const amt=parseFloat(raw)||0;
+  const amt=parseKM(inp.value);
   const d=LOC_DATA[k];const s=state[k];
   const sGross=d.gross_rev+(s.__rev_growth||0);
   const sRef=Math.max(0,d.refunds-(s.__ref_recov||0));
@@ -919,8 +920,7 @@ function onAmtOverride(k,cat,inp){
 
 /* ── Channel dollar input — BOTTOM-UP: new total = sum of all channels ── */
 function onChanInput(k,type,cat,ch,inp){
-  const raw=inp.value.replace(/[$,\s]/g,'');
-  const val=parseFloat(raw)||0;
+  const val=parseKM(inp.value);
   const d=LOC_DATA[k];const s=state[k];
   const cs=chanState[k];
   const sGross=d.gross_rev+(s.__rev_growth||0);
@@ -935,6 +935,14 @@ function onChanInput(k,type,cat,ch,inp){
     const newBase=Math.max(0,val+otherSum);
     if(type==='gross'){
       state[k].__rev_growth=newBase-d.gross_rev;
+      const maxP=25,delta=state[k].__rev_growth;
+      const pct=d.gross_rev>0?Math.max(-maxP,Math.min(maxP,delta/d.gross_rev*100)):0;
+      const sl=el(k+'_sl___rev_growth');if(sl){sl.value=pct;updateTrack(k,'__rev_growth',pct,maxP);}
+      updateBadge(k,'__rev_growth',delta,d.gross_rev,true);
+    } else {
+      /* Net rev edit → back-calculate gross rev needed */
+      const newGross=newBase+sRef;
+      state[k].__rev_growth=newGross-d.gross_rev;
       const maxP=25,delta=state[k].__rev_growth;
       const pct=d.gross_rev>0?Math.max(-maxP,Math.min(maxP,delta/d.gross_rev*100)):0;
       const sl=el(k+'_sl___rev_growth');if(sl){sl.value=pct;updateTrack(k,'__rev_growth',pct,maxP);}
