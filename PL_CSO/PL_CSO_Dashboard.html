@@ -153,23 +153,28 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 [data-theme="dark"] .pin-inp.pinned{background:#451a03;color:#fcd34d;}
 
 /* ── Channel cells — % left, $ right ── */
-.chn-td{padding:3px 5px!important;vertical-align:middle!important;}
-.chn-cell{display:flex;align-items:center;gap:3px;}
+.chn-td{padding:2px 4px!important;vertical-align:middle!important;}
+.chn-cell{display:flex;align-items:center;gap:2px;}
 /* Editable % input (left) */
-.pct-inp{width:40px;flex-shrink:0;padding:2px 3px;border:1.5px solid transparent;border-radius:4px;font-size:.72rem;font-weight:500;text-align:center;background:transparent;color:var(--text-faint);font-family:'Inter',system-ui,sans-serif;cursor:pointer;outline:none;transition:border .12s,background .12s,color .12s;}
+.pct-inp{width:36px;flex-shrink:0;padding:2px 2px;border:1.5px solid transparent;border-radius:4px;font-size:.73rem;font-weight:500;text-align:center;background:transparent;color:var(--text-faint);font-family:'Inter',system-ui,sans-serif;cursor:pointer;outline:none;transition:border .12s,background .12s,color .12s;}
 .pct-inp:hover{border-color:var(--border);background:var(--surface2);color:var(--text-muted);}
 .pct-inp:focus{border-color:var(--primary)!important;background:var(--input-bg);color:var(--primary);cursor:text;}
 /* Read-only % span */
-.pct-val{width:40px;flex-shrink:0;display:inline-block;padding:2px 3px;font-size:.72rem;font-weight:500;text-align:center;color:var(--text-faint);}
+.pct-val{width:36px;flex-shrink:0;display:inline-block;padding:2px 2px;font-size:.73rem;font-weight:500;text-align:center;color:var(--text-faint);}
 /* Editable $ input (right) */
-.chan-inp{flex:1;min-width:0;padding:2px 3px;border:1.5px solid transparent;border-radius:4px;font-size:.75rem;font-weight:600;text-align:right;background:transparent;color:var(--text);font-family:'Inter',system-ui,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;outline:none;transition:border .12s,background .12s;}
+.chan-inp{flex:1;min-width:0;padding:2px 2px;border:1.5px solid transparent;border-radius:4px;font-size:.8rem;font-weight:700;text-align:right;background:transparent;color:var(--text);font-family:'Inter',system-ui,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;outline:none;transition:border .12s,background .12s;}
 .chan-inp:hover{border-color:var(--border);background:var(--surface2);}
 .chan-inp:focus{border-color:var(--primary)!important;background:var(--input-bg);cursor:text;}
 /* Read-only $ span */
-.chan-val{flex:1;display:inline-block;padding:2px 3px;font-size:.75rem;font-weight:600;text-align:right;font-variant-numeric:tabular-nums;color:var(--text);}
+.chan-val{flex:1;display:inline-block;padding:2px 2px;font-size:.8rem;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;color:var(--text);}
 /* Color states — use CSS vars so they work in both themes */
 .chan-inp.pos,.chan-val.pos,.pct-inp.pos,.pct-val.pos{color:var(--success);}
 .chan-inp.neg,.chan-val.neg,.pct-inp.neg,.pct-val.neg{color:var(--danger);}
+/* Amt override input (same style as pin-inp but wider) */
+.amt-ovr{width:62px;padding:2px 3px;border-radius:4px;border:1.5px solid var(--border);font-size:.72rem;font-weight:600;text-align:right;outline:none;background:var(--input-bg);color:var(--text);font-family:inherit;font-variant-numeric:tabular-nums;transition:border .15s;}
+.amt-ovr:focus{border-color:var(--primary);}
+.amt-ovr.pinned{border-color:#f59e0b;background:#fffbeb;color:#92400e;}
+[data-theme="dark"] .amt-ovr.pinned{background:#451a03;color:#fcd34d;}
 
 /* ── Control Panel ── */
 .ctrl-panel{max-height:calc(100vh - 180px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
@@ -434,6 +439,7 @@ LOC_KEYS.forEach(k=>{
 
 /* ── Helpers ── */
 const fmt=v=>'$'+Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0});
+const fmtK=v=>{const a=Math.abs(v);return a>=1e6?'$'+(a/1e6).toFixed(1)+'M':a>=1e3?'$'+Math.round(a/1e3)+'K':'$'+Math.round(a);};
 const fmtD=v=>(v>=0?'+':'-')+'$'+Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0});
 const fmtP=v=>(v>=0?'+':'')+v.toFixed(1)+'%';
 const esc=s=>s.replace(/[^a-zA-Z0-9]/g,'_');
@@ -528,28 +534,32 @@ function buildPanelHTML(k){
         min="0" max="999" step="0.1" placeholder="—"
         oninput="onPinChange('${k}','${c}',this)"
         title="Pin as % of Scenario Net Revenue — auto-scales when revenue changes"></td>
+      <td class="td-pin"><input type="text" class="amt-ovr" id="${k}_pamt_${cid}"
+        placeholder="$—" onfocus="this.select()" onblur="update('${k}')"
+        oninput="onAmtOverride('${k}','${c}',this)"
+        title="Set scenario expense amount directly — syncs with Pin%"></td>
       <td class="td-retail chn-td">
         <div class="chn-cell">
           <input class="pct-inp" id="${k}_rp_${cid}" type="text" placeholder="%" onfocus="this.select()"
-            oninput="onPctInput('${k}','exp','${c}','retail',this)">
+            oninput="onPctInput('${k}','exp','${c}','retail',this)" onblur="update('${k}')">
           <input class="chan-inp" id="${k}_r_${cid}" type="text" value="—" onfocus="this.select()"
-            oninput="onChanInput('${k}','exp','${c}','retail',this)">
+            oninput="onChanInput('${k}','exp','${c}','retail',this)" onblur="update('${k}')">
         </div>
       </td>
       <td class="td-whl chn-td">
         <div class="chn-cell">
           <input class="pct-inp" id="${k}_wp_${cid}" type="text" placeholder="%" onfocus="this.select()"
-            oninput="onPctInput('${k}','exp','${c}','whl',this)">
+            oninput="onPctInput('${k}','exp','${c}','whl',this)" onblur="update('${k}')">
           <input class="chan-inp" id="${k}_w_${cid}" type="text" value="—" onfocus="this.select()"
-            oninput="onChanInput('${k}','exp','${c}','whl',this)">
+            oninput="onChanInput('${k}','exp','${c}','whl',this)" onblur="update('${k}')">
         </div>
       </td>
       <td class="td-inst chn-td">
         <div class="chn-cell">
           <input class="pct-inp" id="${k}_ip_${cid}" type="text" placeholder="%" onfocus="this.select()"
-            oninput="onPctInput('${k}','exp','${c}','inst',this)">
+            oninput="onPctInput('${k}','exp','${c}','inst',this)" onblur="update('${k}')">
           <input class="chan-inp" id="${k}_i_${cid}" type="text" value="—" onfocus="this.select()"
-            oninput="onChanInput('${k}','exp','${c}','inst',this)">
+            oninput="onChanInput('${k}','exp','${c}','inst',this)" onblur="update('${k}')">
         </div>
       </td>
       <td class="td-total" id="${k}_t_${cid}">—</td>
@@ -563,43 +573,44 @@ function buildPanelHTML(k){
     <div class="pl-wrap">
     <table class="pl-table">
       <thead><tr>
-        <th class="sc" style="min-width:110px">Line Item</th>
-        <th style="min-width:76px">Actual</th>
-        <th style="min-width:46px">% Rev</th>
-        <th class="th-pin" style="min-width:50px" title="📌 Pin as % of Scenario Revenue — expense auto-scales with revenue changes">📌 Pin%</th>
-        <th class="th-retail" style="min-width:76px">🔵 Retail</th>
-        <th class="th-whl" style="min-width:76px">🟢 Wholesale</th>
-        <th class="th-inst" style="min-width:82px">🟣 Inst.</th>
-        <th style="min-width:76px">Total</th>
-        <th style="min-width:64px">Δ Change</th>
+        <th class="sc" style="min-width:100px">Line Item</th>
+        <th style="min-width:70px">Actual</th>
+        <th style="min-width:42px">% Rev</th>
+        <th class="th-pin" style="min-width:46px" title="📌 Pin as % of Scenario Revenue — expense auto-scales with revenue changes">📌 Pin%</th>
+        <th class="th-pin" style="min-width:68px" title="📌 Scenario Amount — type a dollar figure to set expense directly; syncs with Pin%">📌 Amt $</th>
+        <th class="th-retail" style="min-width:84px">🔵 Retail</th>
+        <th class="th-whl" style="min-width:84px">🟢 Wholesale</th>
+        <th class="th-inst" style="min-width:84px">🟣 Inst.</th>
+        <th style="min-width:70px">Total</th>
+        <th style="min-width:58px">Δ Change</th>
       </tr></thead>
       <tbody>
-        <tr class="sec-hd"><td class="sc" colspan="9">Revenue</td></tr>
+        <tr class="sec-hd"><td class="sc" colspan="10">Revenue</td></tr>
         <tr>
           <td class="sc">Gross Revenue</td>
-          <td>${fmt(d.gross_rev)}</td><td class="pct">—</td><td class="td-pin">—</td>
+          <td>${fmt(d.gross_rev)}</td><td class="pct">—</td><td class="td-pin">—</td><td class="td-pin">—</td>
           <td class="td-retail chn-td">
             <div class="chn-cell">
               <input class="pct-inp" id="${k}_rGrossPct" type="text" placeholder="%" onfocus="this.select()"
-                oninput="onPctInput('${k}','gross',null,'retail',this)">
+                oninput="onPctInput('${k}','gross',null,'retail',this)" onblur="update('${k}')">
               <input class="chan-inp" id="${k}_rGross" type="text" value="—" onfocus="this.select()"
-                oninput="onChanInput('${k}','gross',null,'retail',this)">
+                oninput="onChanInput('${k}','gross',null,'retail',this)" onblur="update('${k}')">
             </div>
           </td>
           <td class="td-whl chn-td">
             <div class="chn-cell">
               <input class="pct-inp" id="${k}_wGrossPct" type="text" placeholder="%" onfocus="this.select()"
-                oninput="onPctInput('${k}','gross',null,'whl',this)">
+                oninput="onPctInput('${k}','gross',null,'whl',this)" onblur="update('${k}')">
               <input class="chan-inp" id="${k}_wGross" type="text" value="—" onfocus="this.select()"
-                oninput="onChanInput('${k}','gross',null,'whl',this)">
+                oninput="onChanInput('${k}','gross',null,'whl',this)" onblur="update('${k}')">
             </div>
           </td>
           <td class="td-inst chn-td">
             <div class="chn-cell">
               <input class="pct-inp" id="${k}_iGrossPct" type="text" placeholder="%" onfocus="this.select()"
-                oninput="onPctInput('${k}','gross',null,'inst',this)">
+                oninput="onPctInput('${k}','gross',null,'inst',this)" onblur="update('${k}')">
               <input class="chan-inp" id="${k}_iGross" type="text" value="—" onfocus="this.select()"
-                oninput="onChanInput('${k}','gross',null,'inst',this)">
+                oninput="onChanInput('${k}','gross',null,'inst',this)" onblur="update('${k}')">
             </div>
           </td>
           <td class="td-total" id="${k}_tGross">—</td>
@@ -607,7 +618,7 @@ function buildPanelHTML(k){
         </tr>
         <tr>
           <td class="sc">Refunds / Returns</td>
-          <td class="neg">${fmt(d.refunds)}</td><td class="pct">—</td><td class="td-pin">—</td>
+          <td class="neg">${fmt(d.refunds)}</td><td class="pct">—</td><td class="td-pin">—</td><td class="td-pin">—</td>
           <td class="td-retail chn-td">
             <div class="chn-cell">
               <span class="pct-val" id="${k}_rRefPct">—</span>
@@ -631,39 +642,39 @@ function buildPanelHTML(k){
         </tr>
         <tr class="subtotal">
           <td class="sc">Net Revenue</td>
-          <td>${fmt(d.revenue)}</td><td class="pct">100%</td><td class="td-pin">—</td>
+          <td>${fmt(d.revenue)}</td><td class="pct">100%</td><td class="td-pin">—</td><td class="td-pin">—</td>
           <td class="td-retail chn-td">
             <div class="chn-cell">
               <input class="pct-inp" id="${k}_rRevPct" type="text" placeholder="%" onfocus="this.select()"
-                oninput="onPctInput('${k}','rev',null,'retail',this)">
+                oninput="onPctInput('${k}','rev',null,'retail',this)" onblur="update('${k}')">
               <input class="chan-inp" id="${k}_rRev" type="text" value="—" onfocus="this.select()"
-                oninput="onChanInput('${k}','rev',null,'retail',this)">
+                oninput="onChanInput('${k}','rev',null,'retail',this)" onblur="update('${k}')">
             </div>
           </td>
           <td class="td-whl chn-td">
             <div class="chn-cell">
               <input class="pct-inp" id="${k}_wRevPct" type="text" placeholder="%" onfocus="this.select()"
-                oninput="onPctInput('${k}','rev',null,'whl',this)">
+                oninput="onPctInput('${k}','rev',null,'whl',this)" onblur="update('${k}')">
               <input class="chan-inp" id="${k}_wRev" type="text" value="—" onfocus="this.select()"
-                oninput="onChanInput('${k}','rev',null,'whl',this)">
+                oninput="onChanInput('${k}','rev',null,'whl',this)" onblur="update('${k}')">
             </div>
           </td>
           <td class="td-inst chn-td">
             <div class="chn-cell">
               <input class="pct-inp" id="${k}_iRevPct" type="text" placeholder="%" onfocus="this.select()"
-                oninput="onPctInput('${k}','rev',null,'inst',this)">
+                oninput="onPctInput('${k}','rev',null,'inst',this)" onblur="update('${k}')">
               <input class="chan-inp" id="${k}_iRev" type="text" value="—" onfocus="this.select()"
-                oninput="onChanInput('${k}','rev',null,'inst',this)">
+                oninput="onChanInput('${k}','rev',null,'inst',this)" onblur="update('${k}')">
             </div>
           </td>
           <td class="td-total" id="${k}_tRev">—</td>
           <td class="pct" id="${k}_dRev">—</td>
         </tr>
-        <tr class="sec-hd"><td class="sc" colspan="9">Expenses</td></tr>
+        <tr class="sec-hd"><td class="sc" colspan="10">Expenses</td></tr>
         ${expRows}
         <tr class="subtotal">
           <td class="sc">Total Expenses</td>
-          <td>${fmt(d.expenses)}</td><td class="pct">${d.revenue>0?(d.expenses/d.revenue*100).toFixed(1)+'%':'—'}</td><td class="td-pin">—</td>
+          <td>${fmt(d.expenses)}</td><td class="pct">${d.revenue>0?(d.expenses/d.revenue*100).toFixed(1)+'%':'—'}</td><td class="td-pin">—</td><td class="td-pin">—</td>
           <td class="td-retail chn-td">
             <div class="chn-cell">
               <span class="pct-val" id="${k}_rExpPct">—</span>
@@ -688,7 +699,7 @@ function buildPanelHTML(k){
         <tr class="total-row">
           <td class="sc">Net Profit / Loss</td>
           <td class="${d.net>=0?'pos':'neg'}">${fmt(d.net)}</td>
-          <td class="pct">${d.revenue>0?(d.net/d.revenue*100).toFixed(1)+'%':'—'}</td><td class="td-pin">—</td>
+          <td class="pct">${d.revenue>0?(d.net/d.revenue*100).toFixed(1)+'%':'—'}</td><td class="td-pin">—</td><td class="td-pin">—</td>
           <td class="td-retail chn-td">
             <div class="chn-cell">
               <span class="pct-val" id="${k}_rNetPct">—</span>
@@ -713,7 +724,7 @@ function buildPanelHTML(k){
         <tr>
           <td class="sc" style="font-size:.69rem;color:var(--text-muted)">Net Margin %</td>
           <td class="pct ${d.net>=0?'pos':'neg'}">${d.revenue>0?(d.net/d.revenue*100).toFixed(1)+'%':'—'}</td>
-          <td></td><td class="td-pin">—</td>
+          <td></td><td class="td-pin">—</td><td class="td-pin">—</td>
           <td class="td-retail pct" id="${k}_rMar">—</td>
           <td class="td-whl pct" id="${k}_wMar">—</td>
           <td class="td-inst pct" id="${k}_iMar">—</td>
@@ -842,6 +853,39 @@ function onPinChange(k,cat,inp){
   const v=parseFloat(inp.value)||0;
   pinnedPct[k][cat]=v;
   inp.className='pin-inp'+(v>0?' pinned':'');
+  /* Sync the Amt input */
+  const d=LOC_DATA[k];const s=state[k];
+  const sGross=d.gross_rev+(s.__rev_growth||0);
+  const sRef=Math.max(0,d.refunds-(s.__ref_recov||0));
+  const sRev=sGross-sRef;
+  const amtInp=el(k+'_pamt_'+esc(cat));
+  if(amtInp&&document.activeElement!==amtInp){
+    if(v>0&&sRev>0){amtInp.value='$'+Math.round(sRev*v/100).toLocaleString();amtInp.className='amt-ovr pinned';}
+    else{amtInp.value='';amtInp.className='amt-ovr';}
+  }
+  update(k);
+}
+
+/* ── Scenario amount override — bidirectional with Pin% ── */
+function onAmtOverride(k,cat,inp){
+  const raw=inp.value.replace(/[$,\s]/g,'');
+  const amt=parseFloat(raw)||0;
+  const d=LOC_DATA[k];const s=state[k];
+  const sGross=d.gross_rev+(s.__rev_growth||0);
+  const sRef=Math.max(0,d.refunds-(s.__ref_recov||0));
+  const sRev=sGross-sRef;
+  const cid=esc(cat);
+  if(amt>0&&sRev>0){
+    pinnedPct[k][cat]=amt/sRev*100;
+    const pinInp=el(k+'_pin_'+cid);
+    if(pinInp){pinInp.value=pinnedPct[k][cat].toFixed(1);pinInp.className='pin-inp pinned';}
+    inp.className='amt-ovr pinned';
+  } else {
+    pinnedPct[k][cat]=0;
+    const pinInp=el(k+'_pin_'+cid);
+    if(pinInp){pinInp.value='';pinInp.className='pin-inp';}
+    inp.className='amt-ovr';
+  }
   update(k);
 }
 
@@ -1058,6 +1102,16 @@ function update(k){
     ch[ch2].net=ch[ch2].rev-ch[ch2].exp;
   });
 
+  /* Sync Amt override inputs to reflect current catV when pin is active */
+  cats.forEach(c=>{
+    const pin=pinnedPct[k]?.[c]||0;
+    const amtInp=el(k+'_pamt_'+esc(c));
+    if(amtInp&&document.activeElement!==amtInp){
+      if(pin>0){amtInp.value='$'+Math.round(catV[c]).toLocaleString();amtInp.className='amt-ovr pinned';}
+      else if(!amtInp.value||amtInp.value==='$—'){amtInp.value='';amtInp.className='amt-ovr';}
+    }
+  });
+
   /* Top KPIs */
   kpiSet(k,'kGross',sGross,d.gross_rev);
   kpiSet(k,'kRef',sRef,d.refunds,true);
@@ -1076,10 +1130,12 @@ function update(k){
     if(de)de.textContent=`Rev: ${fmt(cd.rev)} | Exp: ${fmt(cd.exp)} | Margin: ${cd.rev>0?(cd.net/cd.rev*100).toFixed(1)+'%':'—'}`;
   });
 
-  /* Cell helpers */
+  /* Cell helpers — INPUT/SPAN use compact fmtK, TD uses full fmt */
   function tc(pfx,val,cls){
     const e=el(k+'_'+pfx);if(!e)return;
-    const v=val<0?'-'+fmt(Math.abs(val)):fmt(val);
+    const isEl=(e.tagName==='INPUT'||e.tagName==='SPAN');
+    const f=isEl?fmtK:fmt;
+    const v=val<0?'-'+f(Math.abs(val)):f(val);
     const pn=cls?(cls.includes('pos')?'pos':cls.includes('neg')?'neg':''):'';
     if(e.tagName==='INPUT'){
       if(document.activeElement!==e)e.value=v;
@@ -1255,6 +1311,8 @@ function loadScen(k,id){
   cats.forEach(c=>{
     const pinEl=el(k+'_pin_'+esc(c));
     if(pinEl){const v=pinnedPct[k][c]||0;pinEl.value=v>0?v:'';pinEl.className='pin-inp'+(v>0?' pinned':'');}
+    const amtInp=el(k+'_pamt_'+esc(c));
+    if(amtInp){amtInp.value='';amtInp.className='amt-ovr';}
   });
 
   /* Restore sliders */
