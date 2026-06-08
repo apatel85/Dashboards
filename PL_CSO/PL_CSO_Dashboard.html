@@ -152,26 +152,32 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .pin-inp.pinned{border-color:#f59e0b;background:#fffbeb;color:#92400e;}
 [data-theme="dark"] .pin-inp.pinned{background:#451a03;color:#fcd34d;}
 
-/* ── Channel cells — % left, $ right ── */
+/* ── Channel cells — % top, $ bottom (stacked) ── */
 .chn-td{padding:2px 4px!important;vertical-align:middle!important;}
-.chn-cell{display:flex;align-items:center;gap:2px;}
-/* Editable % input (left) */
-.pct-inp{width:36px;flex-shrink:0;padding:2px 2px;border:1.5px solid transparent;border-radius:4px;font-size:.73rem;font-weight:500;text-align:center;background:transparent;color:var(--text-faint);font-family:'Inter',system-ui,sans-serif;cursor:pointer;outline:none;transition:border .12s,background .12s,color .12s;}
+.chn-cell{display:flex;flex-direction:column;align-items:stretch;gap:0;}
+/* % row (top) */
+.pct-inp{width:100%;padding:1px 2px;border:1px solid transparent;border-radius:3px;font-size:.67rem;font-weight:500;text-align:right;background:transparent;color:var(--text-faint);font-family:'Inter',system-ui,sans-serif;cursor:pointer;outline:none;transition:border .1s,background .1s,color .1s;}
 .pct-inp:hover{border-color:var(--border);background:var(--surface2);color:var(--text-muted);}
 .pct-inp:focus{border-color:var(--primary)!important;background:var(--input-bg);color:var(--primary);cursor:text;}
-/* Read-only % span */
-.pct-val{width:36px;flex-shrink:0;display:inline-block;padding:2px 2px;font-size:.73rem;font-weight:500;text-align:center;color:var(--text-faint);}
-/* Editable $ input (right) */
-.chan-inp{flex:1;min-width:0;padding:2px 2px;border:1.5px solid transparent;border-radius:4px;font-size:.8rem;font-weight:700;text-align:right;background:transparent;color:var(--text);font-family:'Inter',system-ui,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;outline:none;transition:border .12s,background .12s;}
+.pct-val{display:block;width:100%;padding:1px 2px;font-size:.67rem;font-weight:500;text-align:right;color:var(--text-faint);}
+/* $ row (bottom) */
+.chan-inp{width:100%;padding:1px 2px;border:1px solid transparent;border-radius:3px;font-size:.82rem;font-weight:700;text-align:right;background:transparent;color:var(--text);font-family:'Inter',system-ui,sans-serif;font-variant-numeric:tabular-nums;cursor:pointer;outline:none;transition:border .1s,background .1s;}
 .chan-inp:hover{border-color:var(--border);background:var(--surface2);}
 .chan-inp:focus{border-color:var(--primary)!important;background:var(--input-bg);cursor:text;}
-/* Read-only $ span */
-.chan-val{flex:1;display:inline-block;padding:2px 2px;font-size:.8rem;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;color:var(--text);}
-/* Color states — use CSS vars so they work in both themes */
+.chan-val{display:block;width:100%;padding:1px 2px;font-size:.82rem;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;color:var(--text);}
+/* color states */
 .chan-inp.pos,.chan-val.pos,.pct-inp.pos,.pct-val.pos{color:var(--success);}
 .chan-inp.neg,.chan-val.neg,.pct-inp.neg,.pct-val.neg{color:var(--danger);}
-/* Amt override input (same style as pin-inp but wider) */
-.amt-ovr{width:62px;padding:2px 3px;border-radius:4px;border:1.5px solid var(--border);font-size:.72rem;font-weight:600;text-align:right;outline:none;background:var(--input-bg);color:var(--text);font-family:inherit;font-variant-numeric:tabular-nums;transition:border .15s;}
+/* channel disabled */
+.chn-disabled{opacity:.4;pointer-events:none;}
+.chn-disabled .chan-inp,.chn-disabled .chan-val{color:var(--text-faint)!important;}
+.chn-disabled .pct-inp,.chn-disabled .pct-val{}
+/* channel toggle button */
+.ch-tog{display:block;margin:3px auto 0;padding:1px 7px;border-radius:10px;font-size:.58rem;font-weight:700;cursor:pointer;border:1.5px solid;font-family:inherit;transition:all .15s;letter-spacing:.3px;}
+.ch-tog.on{background:var(--success);color:#fff;border-color:var(--success);}
+.ch-tog.off{background:transparent;color:var(--text-faint);border-color:var(--border);}
+/* Amt override */
+.amt-ovr{width:64px;padding:2px 3px;border-radius:4px;border:1.5px solid var(--border);font-size:.72rem;font-weight:600;text-align:right;outline:none;background:var(--input-bg);color:var(--text);font-family:inherit;font-variant-numeric:tabular-nums;transition:border .15s;}
 .amt-ovr:focus{border-color:var(--primary);}
 .amt-ovr.pinned{border-color:#f59e0b;background:#fffbeb;color:#92400e;}
 [data-theme="dark"] .amt-ovr.pinned{background:#451a03;color:#fcd34d;}
@@ -421,10 +427,12 @@ const state={};
 const chanState={};
 const pinnedPct={};
 const scenarios={};
+const chanEnabled={};   /* {retail:true,whl:true,inst:true} per location */
 let activeTab='cricmax';
 let pendingSaveKey=null;
 
 LOC_KEYS.forEach(k=>{
+  chanEnabled[k]={retail:true,whl:true,inst:true};
   const cats=Object.keys(LOC_DATA[k].cats);
   state[k]={__rev_growth:0,__ref_recov:0,__loan_amount:0,__loan_rate:6,__loan_term:60};
   cats.forEach(c=>state[k][c]=0);
@@ -574,15 +582,18 @@ function buildPanelHTML(k){
     <table class="pl-table">
       <thead><tr>
         <th class="sc" style="min-width:100px">Line Item</th>
-        <th style="min-width:70px">Actual</th>
-        <th style="min-width:42px">% Rev</th>
-        <th class="th-pin" style="min-width:46px" title="📌 Pin as % of Scenario Revenue — expense auto-scales with revenue changes">📌 Pin%</th>
-        <th class="th-pin" style="min-width:68px" title="📌 Scenario Amount — type a dollar figure to set expense directly; syncs with Pin%">📌 Amt $</th>
-        <th class="th-retail" style="min-width:84px">🔵 Retail</th>
-        <th class="th-whl" style="min-width:84px">🟢 Wholesale</th>
-        <th class="th-inst" style="min-width:84px">🟣 Inst.</th>
-        <th style="min-width:70px">Total</th>
-        <th style="min-width:58px">Δ Change</th>
+        <th style="min-width:68px">Actual</th>
+        <th style="min-width:40px">% Rev</th>
+        <th class="th-pin" style="min-width:44px" title="📌 Pin as % of Scenario Revenue">📌 Pin%</th>
+        <th class="th-pin" style="min-width:66px" title="📌 Scenario $ — syncs with Pin%">📌 Amt $</th>
+        <th class="th-retail" style="min-width:76px">🔵 Retail
+          <button class="ch-tog on" id="${k}_tog_retail" onclick="toggleChan('${k}','retail',this)">ON</button></th>
+        <th class="th-whl" style="min-width:76px">🟢 Wholesale
+          <button class="ch-tog on" id="${k}_tog_whl" onclick="toggleChan('${k}','whl',this)">ON</button></th>
+        <th class="th-inst" style="min-width:76px">🟣 Inst.
+          <button class="ch-tog on" id="${k}_tog_inst" onclick="toggleChan('${k}','inst',this)">ON</button></th>
+        <th style="min-width:68px">Total</th>
+        <th style="min-width:56px">Δ Change</th>
       </tr></thead>
       <tbody>
         <tr class="sec-hd"><td class="sc" colspan="10">Revenue</td></tr>
@@ -848,12 +859,29 @@ function buildPanelHTML(k){
   </div>`;
 }
 
-/* ── Pin % handler ── */
+/* ── Channel toggle — ON keeps allocation, OFF zeroes the channel ── */
+function toggleChan(k,ch,btn){
+  chanEnabled[k][ch]=!chanEnabled[k][ch];
+  const on=chanEnabled[k][ch];
+  btn.textContent=on?'ON':'OFF';btn.className='ch-tog '+(on?'on':'off');
+  update(k);
+}
+
+/* ── Shared helper: compute current catV for a category (mirrors update logic) ── */
+function getCatTotal(k,cat){
+  const d=LOC_DATA[k];const s=state[k];
+  const sGross=d.gross_rev+(s.__rev_growth||0);
+  const sRef=Math.max(0,d.refunds-(s.__ref_recov||0));
+  const sRev=sGross-sRef;
+  const pin=pinnedPct[k]?.[cat]||0;
+  return pin>0?Math.max(0,sRev*(pin/100)+(s[cat]||0)):Math.max(0,d.cats[cat]+(s[cat]||0));
+}
+
+/* ── Pin % handler — bidirectional with Amt field ── */
 function onPinChange(k,cat,inp){
   const v=parseFloat(inp.value)||0;
   pinnedPct[k][cat]=v;
   inp.className='pin-inp'+(v>0?' pinned':'');
-  /* Sync the Amt input */
   const d=LOC_DATA[k];const s=state[k];
   const sGross=d.gross_rev+(s.__rev_growth||0);
   const sRef=Math.max(0,d.refunds-(s.__ref_recov||0));
@@ -866,7 +894,7 @@ function onPinChange(k,cat,inp){
   update(k);
 }
 
-/* ── Scenario amount override — bidirectional with Pin% ── */
+/* ── Amt override — bidirectional with Pin% ── */
 function onAmtOverride(k,cat,inp){
   const raw=inp.value.replace(/[$,\s]/g,'');
   const amt=parseFloat(raw)||0;
@@ -889,73 +917,120 @@ function onAmtOverride(k,cat,inp){
   update(k);
 }
 
-/* ── Channel cell direct input — back-calculates allocation % ── */
+/* ── Channel dollar input — BOTTOM-UP: new total = sum of all channels ── */
 function onChanInput(k,type,cat,ch,inp){
   const raw=inp.value.replace(/[$,\s]/g,'');
   const val=parseFloat(raw)||0;
   const d=LOC_DATA[k];const s=state[k];
+  const cs=chanState[k];
   const sGross=d.gross_rev+(s.__rev_growth||0);
   const sRef=Math.max(0,d.refunds-(s.__ref_recov||0));
   const sRev=sGross-sRef;
 
-  if(type==='gross'){
-    if(sGross>0)chanState[k].rev[ch]=val/sGross*100;
-  } else if(type==='rev'){
-    if(sRev>0)chanState[k].rev[ch]=val/sRev*100;
-  } else {
-    const pin=pinnedPct[k]?.[cat]||0;
-    const totalCat=pin>0?Math.max(0,sRev*(pin/100)+(s[cat]||0)):Math.max(0,d.cats[cat]+(s[cat]||0));
-    if(totalCat>0){
-      if(!chanState[k].exp[cat])chanState[k].exp[cat]={retail:50,whl:30,inst:20};
-      chanState[k].exp[cat][ch]=val/totalCat*100;
-    }
-  }
-
-  /* Sync allocation panel inputs + sum badge */
   if(type==='gross'||type==='rev'){
-    const aInp=el(`${k}_arev_${ch}`);if(aInp)aInp.value=chanState[k].rev[ch].toFixed(1);
-    const cs=chanState[k].rev;const sum=cs.retail+cs.whl+cs.inst;
+    /* Revenue: keep other channels' dollar amounts, set new total = sum */
+    const base=type==='gross'?sGross:sRev;
+    const others=CHS.filter(c2=>c2!==ch);
+    const otherSum=others.reduce((s2,c2)=>s2+base*((cs.rev[c2]||0)/100),0);
+    const newBase=Math.max(0,val+otherSum);
+    if(type==='gross'){
+      state[k].__rev_growth=newBase-d.gross_rev;
+      const maxP=25,delta=state[k].__rev_growth;
+      const pct=d.gross_rev>0?Math.max(-maxP,Math.min(maxP,delta/d.gross_rev*100)):0;
+      const sl=el(k+'_sl___rev_growth');if(sl){sl.value=pct;updateTrack(k,'__rev_growth',pct,maxP);}
+      updateBadge(k,'__rev_growth',delta,d.gross_rev,true);
+    }
+    /* Recalculate allocation % from new amounts */
+    if(newBase>0){
+      cs.rev[ch]=val/newBase*100;
+      others.forEach(c2=>{cs.rev[c2]=(base*((cs.rev[c2]||0)/100))/newBase*100;});
+    }
+    const aInp=el(`${k}_arev_${ch}`);if(aInp)aInp.value=(cs.rev[ch]||0).toFixed(1);
+    const rSum=cs.rev.retail+cs.rev.whl+cs.rev.inst;
     const se=el(k+'_asum_rev');
-    if(se){se.textContent=sum.toFixed(0)+'%';se.className='alloc-sum '+(Math.abs(sum-100)<0.5?'ok':'warn');}
+    if(se){se.textContent=rSum.toFixed(0)+'%';se.className='alloc-sum '+(Math.abs(rSum-100)<0.5?'ok':'warn');}
   } else {
+    /* Expense: keep other channels' dollar amounts, set new category total = sum */
+    const currTotal=getCatTotal(k,cat);
+    const others=CHS.filter(c2=>c2!==ch);
+    const otherAmts={};
+    others.forEach(c2=>{otherAmts[c2]=currTotal*((cs.exp[cat]?.[c2]||0)/100);});
+    const otherSum=Object.values(otherAmts).reduce((a,b)=>a+b,0);
+    const newTotal=Math.max(0,val+otherSum);
+    /* Push the new total back into state */
+    const pin=pinnedPct[k]?.[cat]||0;
+    if(pin>0){
+      pinnedPct[k][cat]=sRev>0?newTotal/sRev*100:0;
+      const pinInp=el(k+'_pin_'+esc(cat));
+      if(pinInp){pinInp.value=pinnedPct[k][cat].toFixed(1);pinInp.className='pin-inp'+(newTotal>0?' pinned':'');}
+      const amtInp=el(k+'_pamt_'+esc(cat));
+      if(amtInp&&document.activeElement!==amtInp)amtInp.value='$'+Math.round(newTotal).toLocaleString();
+    } else {
+      state[k][cat]=newTotal-d.cats[cat];
+      const maxP=MAX_PCT,delta=state[k][cat];
+      const pct=d.cats[cat]>0?Math.max(-maxP,Math.min(maxP,delta/d.cats[cat]*100)):0;
+      const sl=el(k+'_sl_'+esc(cat));if(sl){sl.value=pct;updateTrack(k,cat,pct,maxP);}
+      updateBadge(k,cat,delta,d.cats[cat],false);
+    }
+    /* Update allocation % */
+    if(!cs.exp[cat])cs.exp[cat]={retail:50,whl:30,inst:20};
+    if(newTotal>0){
+      cs.exp[cat][ch]=val/newTotal*100;
+      others.forEach(c2=>{cs.exp[cat][c2]=otherAmts[c2]/newTotal*100;});
+    }
     const aInp=el(`${k}_aexp_${esc(cat)}_${ch}`);
-    if(aInp)aInp.value=chanState[k].exp[cat][ch].toFixed(1);
-    const e=chanState[k].exp[cat];const sum=e.retail+e.whl+e.inst;
+    if(aInp)aInp.value=(cs.exp[cat][ch]||0).toFixed(1);
+    const e=cs.exp[cat];const eSum=e.retail+e.whl+e.inst;
     const se=el(k+'_asum_'+esc(cat));
-    if(se){se.textContent=sum.toFixed(0)+'%';se.className='alloc-sum '+(Math.abs(sum-100)<0.5?'ok':'warn');}
+    if(se){se.textContent=eSum.toFixed(0)+'%';se.className='alloc-sum '+(Math.abs(eSum-100)<0.5?'ok':'warn');}
   }
   update(k);
 }
 
-/* ── Channel % direct input — edits allocation % or back-calcs from expense rate ── */
+/* ── Channel % input — % of revenue (expense rate) ── */
 function onPctInput(k,type,cat,ch,inp){
   const pct=parseFloat(inp.value.replace(/[%\s]/g,''))||0;
   const d=LOC_DATA[k];const s=state[k];
+  const cs=chanState[k];
   const sGross=d.gross_rev+(s.__rev_growth||0);
   const sRef=Math.max(0,d.refunds-(s.__ref_recov||0));
   const sRev=sGross-sRef;
 
   if(type==='gross'||type==='rev'){
-    chanState[k].rev[ch]=pct;
+    /* Revenue: pct IS allocation % — just update it directly */
+    cs.rev[ch]=pct;
     const aInp=el(`${k}_arev_${ch}`);if(aInp)aInp.value=pct.toFixed(1);
-    const cs=chanState[k].rev;const sum=cs.retail+cs.whl+cs.inst;
+    const rSum=cs.rev.retail+cs.rev.whl+cs.rev.inst;
     const se=el(k+'_asum_rev');
-    if(se){se.textContent=sum.toFixed(0)+'%';se.className='alloc-sum '+(Math.abs(sum-100)<0.5?'ok':'warn');}
+    if(se){se.textContent=rSum.toFixed(0)+'%';se.className='alloc-sum '+(Math.abs(rSum-100)<0.5?'ok':'warn');}
   } else {
-    /* expense %: pct = channel_exp / channel_net_rev — back-calc allocation */
-    const chRev=sRev*((chanState[k].rev[ch]||0)/100);
+    /* Expense: pct = channel_exp / channel_rev → compute dollar amt, then apply bottom-up */
+    const chRev=sRev*((cs.rev[ch]||0)/100);
+    const dollarAmt=pct/100*chRev;
+    const currTotal=getCatTotal(k,cat);
+    const others=CHS.filter(c2=>c2!==ch);
+    const otherAmts={};
+    others.forEach(c2=>{otherAmts[c2]=currTotal*((cs.exp[cat]?.[c2]||0)/100);});
+    const otherSum=Object.values(otherAmts).reduce((a,b)=>a+b,0);
+    const newTotal=Math.max(0,dollarAmt+otherSum);
     const pin=pinnedPct[k]?.[cat]||0;
-    const totalCat=pin>0?Math.max(0,sRev*(pin/100)+(s[cat]||0)):Math.max(0,d.cats[cat]+(s[cat]||0));
-    const newAmt=pct/100*chRev;
-    if(totalCat>0){
-      if(!chanState[k].exp[cat])chanState[k].exp[cat]={retail:50,whl:30,inst:20};
-      chanState[k].exp[cat][ch]=newAmt/totalCat*100;
-      const aInp=el(`${k}_aexp_${esc(cat)}_${ch}`);
-      if(aInp)aInp.value=chanState[k].exp[cat][ch].toFixed(1);
-      const e=chanState[k].exp[cat];const sum=e.retail+e.whl+e.inst;
-      const se=el(k+'_asum_'+esc(cat));
-      if(se){se.textContent=sum.toFixed(0)+'%';se.className='alloc-sum '+(Math.abs(sum-100)<0.5?'ok':'warn');}
+    if(pin>0){
+      pinnedPct[k][cat]=sRev>0?newTotal/sRev*100:0;
+      const pinInp=el(k+'_pin_'+esc(cat));
+      if(pinInp){pinInp.value=pinnedPct[k][cat].toFixed(1);pinInp.className='pin-inp'+(newTotal>0?' pinned':'');}
+    } else {
+      state[k][cat]=newTotal-d.cats[cat];
     }
+    if(!cs.exp[cat])cs.exp[cat]={retail:50,whl:30,inst:20};
+    if(newTotal>0){
+      cs.exp[cat][ch]=dollarAmt/newTotal*100;
+      others.forEach(c2=>{cs.exp[cat][c2]=otherAmts[c2]/newTotal*100;});
+    }
+    const aInp=el(`${k}_aexp_${esc(cat)}_${ch}`);
+    if(aInp)aInp.value=(cs.exp[cat][ch]||0).toFixed(1);
+    const e=cs.exp[cat];const eSum=e.retail+e.whl+e.inst;
+    const se=el(k+'_asum_'+esc(cat));
+    if(se){se.textContent=eSum.toFixed(0)+'%';se.className='alloc-sum '+(Math.abs(eSum-100)<0.5?'ok':'warn');}
   }
   update(k);
 }
@@ -1093,14 +1168,26 @@ function update(k){
   });
   const sNet=sRev-sExp;
 
-  /* Channel breakdown */
+  /* Channel breakdown — disabled channels contribute 0 */
   const ch={};
   CHS.forEach(ch2=>{
-    const rp=(cs.rev[ch2]||0)/100;
+    const enabled=chanEnabled[k]?.[ch2]!==false;
+    const rp=enabled?(cs.rev[ch2]||0)/100:0;
     ch[ch2]={gross:sGross*rp,ref:sRef*rp,rev:sRev*rp,exp:0};
-    cats.forEach(c=>{ch[ch2].exp+=catV[c]*((cs.exp[c]?.[ch2]||0)/100);});
+    if(enabled){cats.forEach(c=>{ch[ch2].exp+=catV[c]*((cs.exp[c]?.[ch2]||0)/100);});}
     ch[ch2].net=ch[ch2].rev-ch[ch2].exp;
   });
+  /* Apply visual disabled state to column cells */
+  const chMap={retail:'retail',whl:'whl',inst:'inst'};
+  const panel=el('panel_'+k);
+  if(panel){
+    Object.keys(chMap).forEach(ch2=>{
+      const on=chanEnabled[k]?.[ch2]!==false;
+      panel.querySelectorAll('.td-'+ch2).forEach(td=>{
+        td.classList.toggle('chn-disabled',!on);
+      });
+    });
+  }
 
   /* Sync Amt override inputs to reflect current catV when pin is active */
   cats.forEach(c=>{
@@ -1182,9 +1269,10 @@ function update(k){
   /* Expense rows — % = this channel's expense as % of that channel's net revenue */
   cats.forEach(c=>{
     const cid=esc(c);
-    const rv=catV[c]*((cs.exp[c]?.retail||0)/100);
-    const wv=catV[c]*((cs.exp[c]?.whl||0)/100);
-    const iv=catV[c]*((cs.exp[c]?.inst||0)/100);
+    const rEn=chanEnabled[k]?.retail!==false,wEn=chanEnabled[k]?.whl!==false,iEn=chanEnabled[k]?.inst!==false;
+    const rv=rEn?catV[c]*((cs.exp[c]?.retail||0)/100):0;
+    const wv=wEn?catV[c]*((cs.exp[c]?.whl||0)/100):0;
+    const iv=iEn?catV[c]*((cs.exp[c]?.inst||0)/100):0;
     tc('r_'+cid,rv,'td-retail');tp('rp_'+cid,ePct(rv,ch.retail.rev));
     tc('w_'+cid,wv,'td-whl');   tp('wp_'+cid,ePct(wv,ch.whl.rev));
     tc('i_'+cid,iv,'td-inst');  tp('ip_'+cid,ePct(iv,ch.inst.rev));
