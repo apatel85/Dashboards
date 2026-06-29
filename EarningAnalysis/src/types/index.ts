@@ -56,6 +56,28 @@ export interface ModelWeights {
   sentiment: number;
 }
 
+export interface OptionLeg {
+  action: 'Buy' | 'Sell';
+  type: 'Call' | 'Put';
+  strike: number;
+  note?: string;
+}
+
+export interface OptionRecommendation {
+  strategy: string;
+  bias: 'Bullish' | 'Bearish' | 'Neutral' | 'Skip';
+  legs: OptionLeg[];
+  expiry: string;
+  rationale: string;
+  maxProfit: string;
+  maxLoss: string;
+  breakevens: number[];
+  probProfit: number;
+  riskRating: 1 | 2 | 3 | 4 | 5;
+  skip?: boolean;
+  skipReason?: string;
+}
+
 export interface Company {
   ticker: string;
   name: string;
@@ -73,6 +95,7 @@ export interface Company {
   health: number;
   prob_up: number;
   verification: VerificationStatus;
+  current_price: number;
   // Deep dive data
   financials: FinancialMetric[];
   insider_trades: InsiderTrade[];
