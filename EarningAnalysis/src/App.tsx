@@ -972,9 +972,146 @@ jobs:
   )
 }
 
+// ── Meta type ─────────────────────────────────────────────────────────────────
+interface EarningsMeta {
+  lastUpdated: string
+  nextUpdate:  string
+  source:      string
+  companies:   number
+  window:      string
+}
+
+// ── Day Schedule View ─────────────────────────────────────────────────────────
+function DayScheduleView({
+  data, liveQuotes, onSelect, ranked,
+}: {
+  data: Company[], liveQuotes: Record<string, number>,
+  onSelect: (c: Company) => void, ranked: (Company & { _conviction: number })[],
+}) {
+  // Group companies by reporting_date
+  const byDate = useMemo(() => {
+    const map: Record<string, Company[]> = {}
+    for (const co of data) {
+      if (!map[co.reporting_date]) map[co.reporting_date] = []
+      map[co.reporting_date].push(co)
+    }
+    return map
+  }, [data])
+
+  const sortedDates = useMemo(() => Object.keys(byDate).sort(), [byDate])
+
+  // Split into week groups by 'week' field
+  const currentDates = sortedDates.filter(d => byDate[d].some(c => c.week === 'current'))
+  const nextDates    = sortedDates.filter(d => byDate[d].some(c => c.week === 'next'))
+
+  const fmtDateHeader = (iso: string) => {
+    const d = new Date(iso + 'T12:00:00Z')
+    const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+    const MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    return `${DAYS[d.getUTCDay()]}, ${MONS[d.getUTCMonth()]} ${d.getUTCDate()}`
+  }
+
+  const fmtWeekRange = (dates: string[]) => {
+    if (!dates.length) return ''
+    const MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const a = new Date(dates[0] + 'T12:00:00Z')
+    const b = new Date(dates[dates.length - 1] + 'T12:00:00Z')
+    if (a.getUTCMonth() === b.getUTCMonth())
+      return `${MONS[a.getUTCMonth()]} ${a.getUTCDate()}–${b.getUTCDate()}`
+    return `${MONS[a.getUTCMonth()]} ${a.getUTCDate()} – ${MONS[b.getUTCMonth()]} ${b.getUTCDate()}`
+  }
+
+  const convictionOf = (co: Company) => ranked.find(r => r.ticker === co.ticker)?._conviction ?? 0
+
+  const DayColumn = ({ date }: { date: string }) => {
+    const all = (byDate[date] || []).slice().sort((a, b) => convictionOf(b) - convictionOf(a))
+    const bmo = all.filter(c => c.time === 'BMO')
+    const amc = all.filter(c => c.time === 'AMC')
+
+    const CompanyRow = ({ co }: { co: Company }) => {
+      const score = convictionOf(co)
+      const price = liveQuotes[co.ticker] ?? co.current_price
+      const scoreCol = score >= 70 ? 'var(--green)' : score >= 45 ? 'var(--amber)' : 'var(--red)'
+      return (
+        <div className="day-company-row" onClick={() => onSelect(co)}>
+          <div className="day-co-left">
+            <span className="day-co-ticker">{co.ticker}</span>
+            <span className="day-co-name">{co.name.split(' ').slice(0, 2).join(' ')}</span>
+          </div>
+          <div className="day-co-right">
+            <span className="day-co-score" style={{ color: scoreCol }}>{score}</span>
+            <span className="day-co-eps">EPS ${co.eps_est.toFixed(2)}</span>
+            <span className="day-co-move">±{co.implied_move}%</span>
+            {price > 0 && <span className="day-co-price">${price < 10 ? price.toFixed(2) : price.toFixed(0)}</span>}
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="day-column">
+        <div className="day-column-header">
+          <span className="day-header-date">{fmtDateHeader(date)}</span>
+          <span className="day-header-count">{all.length} co.</span>
+        </div>
+        {bmo.length > 0 && (
+          <div className="day-timing-block">
+            <div className="day-timing-label bmo-label">☀ BMO</div>
+            {bmo.map(co => <CompanyRow key={co.ticker} co={co} />)}
+          </div>
+        )}
+        {amc.length > 0 && (
+          <div className="day-timing-block">
+            <div className="day-timing-label amc-label">🌙 AMC</div>
+            {amc.map(co => <CompanyRow key={co.ticker} co={co} />)}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const WeekGroup = ({ dates, label }: { dates: string[], label: string }) => {
+    if (!dates.length) return null
+    return (
+      <div className="day-week-group">
+        <div className="day-week-header">
+          <span className="day-week-title">{label}</span>
+          <span className="day-week-count">{dates.reduce((n, d) => n + (byDate[d]?.length ?? 0), 0)} companies</span>
+        </div>
+        <div className="day-columns-row">
+          {dates.map(d => <DayColumn key={d} date={d} />)}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="day-schedule-view">
+      <WeekGroup dates={currentDates} label={`📅 Current Week  ${fmtWeekRange(currentDates)}`} />
+      <WeekGroup dates={nextDates}    label={`📅 Next Week & Upcoming  ${fmtWeekRange(nextDates)}`} />
+      {data.length === 0 && <div className="empty" style={{ marginTop: 60 }}>No earnings data loaded.</div>}
+    </div>
+  )
+}
+
+// ── Dynamic section title helpers ─────────────────────────────────────────────
+function dateRangeLabel(companies: Company[]): string {
+  if (!companies.length) return ''
+  const MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const dates = companies.map(c => c.reporting_date).sort()
+  const a = new Date(dates[0] + 'T12:00:00Z')
+  const b = new Date(dates[dates.length - 1] + 'T12:00:00Z')
+  if (a.toDateString() === b.toDateString())
+    return `${MONS[a.getUTCMonth()]} ${a.getUTCDate()}`
+  if (a.getUTCMonth() === b.getUTCMonth())
+    return `${MONS[a.getUTCMonth()]} ${a.getUTCDate()}–${b.getUTCDate()}`
+  return `${MONS[a.getUTCMonth()]} ${a.getUTCDate()} – ${MONS[b.getUTCMonth()]} ${b.getUTCDate()}`
+}
+
 // ── Main App ───────────────────────────────────────────────────────────────────
 export default function App() {
   const [data, setData] = useState<Company[]>([])
+  const [meta, setMeta] = useState<EarningsMeta | null>(null)
   const [selected, setSelected] = useState<Company | null>(null)
   const [week, setWeek] = useState<"both" | "current" | "next">("both")
   const [sector, setSector] = useState("All")
@@ -983,6 +1120,7 @@ export default function App() {
   const [search, setSearch] = useState("")
   const [showAll, setShowAll] = useState(false)
   const [activeNav, setActiveNav] = useState("dashboard")
+  const [viewMode, setViewMode] = useState<"cards" | "by-day">("cards")
 
   const [finnhubKey, setFinnhubKey] = useState<string>(() => localStorage.getItem("finnhubKey") || "")
   const [liveMode, setLiveMode] = useState<boolean>(() => localStorage.getItem("liveMode") === "true")
@@ -992,6 +1130,7 @@ export default function App() {
 
   useEffect(() => {
     fetch(import.meta.env.BASE_URL + "data/earnings.json").then(r => r.json()).then(setData)
+    fetch(import.meta.env.BASE_URL + "data/meta.json").then(r => r.json()).then(setMeta).catch(() => {})
   }, [])
 
   const fetchLiveQuotes = useCallback(async () => {
@@ -1050,6 +1189,7 @@ export default function App() {
         <div className="nav-section">Views</div>
         {([
           ["dashboard", "📅", "Dashboard"],
+          ["by-day",    "🗓",  "By Day"],
           ["summary",   "📊", "Period Summary"],
           ["model",     "⚙️", "Model Studio"],
           ["backtest",  "🔬", "Backtesting"],
@@ -1077,6 +1217,24 @@ export default function App() {
             <div className="ds-row"><span>Companies</span><span>{data.length}</span></div>
             {liveMode && <div className="ds-row"><span>Quotes</span><span style={{ color: "var(--green)" }}>{liveCount} live</span></div>}
             {quoteFetchedAt && <div className="ds-row" style={{ fontSize: 10 }}><span>Updated</span><span>{quoteFetchedAt.toLocaleTimeString()}</span></div>}
+            {meta && (
+              <>
+                <div style={{ borderTop: "1px solid var(--border)", marginTop: 8, paddingTop: 8 }} />
+                <div className="ds-title" style={{ marginBottom: 4 }}>Auto-Refresh</div>
+                <div className="ds-row" style={{ fontSize: 10 }}>
+                  <span>Last fetch</span>
+                  <span title={meta.lastUpdated}>{new Date(meta.lastUpdated).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+                </div>
+                <div className="ds-row" style={{ fontSize: 10 }}>
+                  <span>Next Friday</span>
+                  <span style={{ color: "var(--accent)" }}>{new Date(meta.nextUpdate).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+                </div>
+                <div className="ds-row" style={{ fontSize: 10 }}>
+                  <span>Window</span>
+                  <span style={{ color: "var(--muted)" }}>{meta.window}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </aside>
@@ -1094,13 +1252,19 @@ export default function App() {
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <div className="week-toggle">
-                  {(["both","current","next"] as const).map(w => (
-                    <button key={w} className={`week-btn ${week === w ? "active" : ""}`} onClick={() => setWeek(w)}>
-                      {w === "both" ? "Both Weeks" : w === "current" ? "This Week" : "Next Week"}
-                    </button>
-                  ))}
+                  <button className={`week-btn ${viewMode === "cards" ? "active" : ""}`} onClick={() => setViewMode("cards")}>🃏 Cards</button>
+                  <button className={`week-btn ${viewMode === "by-day" ? "active" : ""}`} onClick={() => setViewMode("by-day")}>🗓 By Day</button>
                 </div>
-                {ranked.length > 20 && (
+                {viewMode === "cards" && (
+                  <div className="week-toggle">
+                    {(["both","current","next"] as const).map(w => (
+                      <button key={w} className={`week-btn ${week === w ? "active" : ""}`} onClick={() => setWeek(w)}>
+                        {w === "both" ? "Both" : w === "current" ? "This Week" : "Next Week"}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {viewMode === "cards" && ranked.length > 20 && (
                   <button className={`week-btn ${showAll ? "active" : ""}`} onClick={() => setShowAll(v => !v)}>
                     {showAll ? "Top 20 ▲" : "Show All ▼"}
                   </button>
@@ -1108,6 +1272,15 @@ export default function App() {
               </div>
             </div>
 
+            {viewMode === "by-day" ? (
+              <DayScheduleView
+                data={data}
+                liveQuotes={liveQuotes}
+                onSelect={setSelected}
+                ranked={ranked}
+              />
+            ) : (
+              <>
             <div className="filterbar">
               <span className="filter-label">Sector</span>
               <select className="filter-select" value={sector} onChange={e => setSector(e.target.value)}>
@@ -1128,11 +1301,11 @@ export default function App() {
             {(week === "current" || week === "both") && currentWeek.length > 0 && (
               <div className="week-section">
                 <div className="section-header">
-                  <span className="section-title">📅 Current Week (Jul 14–18)</span>
+                  <span className="section-title">📅 Current Week ({dateRangeLabel(currentWeek)})</span>
                   <span className="section-count">{currentWeek.length} companies</span>
                 </div>
                 <div className="card-grid">
-                  {currentWeek.map((c, i) => {
+                  {currentWeek.map((c) => {
                     const globalRank = ranked.findIndex(r => r.ticker === c.ticker) + 1
                     return <CompanyCard key={c.ticker} company={c} livePrice={liveQuotes[c.ticker]} rank={globalRank} onClick={() => setSelected(c)} />
                   })}
@@ -1143,7 +1316,7 @@ export default function App() {
             {(week === "next" || week === "both") && nextWeek.length > 0 && (
               <div className="week-section">
                 <div className="section-header">
-                  <span className="section-title">📅 Next Week & Upcoming (Jul 21 – Aug 26)</span>
+                  <span className="section-title">📅 Next Week & Upcoming ({dateRangeLabel(nextWeek)})</span>
                   <span className="section-count">{nextWeek.length} companies</span>
                 </div>
                 <div className="card-grid">
@@ -1158,6 +1331,31 @@ export default function App() {
             {displayed.length === 0 && (
               <div className="empty" style={{ marginTop: 60 }}>No companies match current filters.</div>
             )}
+              </>
+            )}
+          </>
+        )}
+
+        {activeNav === "by-day" && (
+          <>
+            <div className="topbar">
+              <div className="topbar-left">
+                <h1>By Day — Earnings Calendar</h1>
+                <p>{data.length} companies · reporting dates sorted chronologically · click any company to open analysis</p>
+              </div>
+              {meta && (
+                <div style={{ fontSize: 12, color: "var(--muted)", textAlign: "right" }}>
+                  <div>Data refreshed: <span style={{ color: "var(--text)" }}>{new Date(meta.lastUpdated).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span></div>
+                  <div>Next auto-fetch: <span style={{ color: "var(--accent)" }}>Friday {new Date(meta.nextUpdate).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></div>
+                </div>
+              )}
+            </div>
+            <DayScheduleView
+              data={data}
+              liveQuotes={liveQuotes}
+              onSelect={setSelected}
+              ranked={ranked}
+            />
           </>
         )}
 
