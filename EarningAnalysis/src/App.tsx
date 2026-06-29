@@ -1128,7 +1128,7 @@ export default function App() {
             {(week === "current" || week === "both") && currentWeek.length > 0 && (
               <div className="week-section">
                 <div className="section-header">
-                  <span className="section-title">📅 Week of Jul 14 (JPM, BAC, UNH, NFLX)</span>
+                  <span className="section-title">📅 Current Week (Jul 14–18)</span>
                   <span className="section-count">{currentWeek.length} companies</span>
                 </div>
                 <div className="card-grid">
@@ -1143,7 +1143,7 @@ export default function App() {
             {(week === "next" || week === "both") && nextWeek.length > 0 && (
               <div className="week-section">
                 <div className="section-header">
-                  <span className="section-title">📅 Late July – August (TSLA, MSFT, V, META, AMZN, AAPL, PFE, CAT, NVDA)</span>
+                  <span className="section-title">📅 Next Week & Upcoming (Jul 21 – Aug 26)</span>
                   <span className="section-count">{nextWeek.length} companies</span>
                 </div>
                 <div className="card-grid">
