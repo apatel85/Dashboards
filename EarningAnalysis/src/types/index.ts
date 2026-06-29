@@ -82,8 +82,11 @@ export interface Company {
   ticker: string;
   name: string;
   sector: string;
+  industry: string;
+  subsector: string;
   cap: CapTier;
   day: string;
+  reporting_date: string;
   week: 'current' | 'next';
   time: ReportTiming;
   eps_est: number;
