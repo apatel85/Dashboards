@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Company, ModelWeights, OptionLeg, OptionRecommendation } from "./types"
+import { Company, LastEarningsResult, ModelWeights, OptionLeg, OptionRecommendation, PoliticianTrade } from "./types"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function scoreColor(n: number) {
@@ -20,33 +20,37 @@ function roundToStrike(price: number): number {
 // Conviction score: how high-conviction (either direction) is this company?
 // Range 0–100. Used to rank and filter Top 20.
 function getConvictionScore(company: Company): number {
-  const directionStrength = Math.abs(company.prob_up - 50) / 50        // 0–1
-  const healthNorm        = company.health / 100                        // 0–1
+  const directionStrength = Math.abs(company.prob_up - 50) / 50
+  const healthNorm        = company.health / 100
   const verifiedScore     = company.verification === "verified"    ? 1
                           : company.verification === "sec-filed"   ? 0.8
                           : company.verification === "single-source"? 0.6
                           : company.verification === "stale"       ? 0.4 : 0.3
   const insiderScore      = (company.insider === "buy" || company.insider === "sell") ? 1 : 0.5
-  const ivScore           = Math.min(company.implied_move / 8, 1)       // 0–1
+  const politicalScore    = (company.political_signal === "buy" || company.political_signal === "sell") ? 1 : 0.5
+  const ivScore           = Math.min(company.implied_move / 8, 1)
 
   return Math.round(
-    directionStrength * 40 +
-    healthNorm        * 30 +
-    verifiedScore     * 15 +
-    insiderScore      * 10 +
+    directionStrength * 38 +
+    healthNorm        * 28 +
+    verifiedScore     * 14 +
+    insiderScore      *  8 +
+    politicalScore    *  7 +
     ivScore           *  5
   )
 }
 
 function getOptionStrategy(company: Company, livePrice?: number): OptionRecommendation {
   const price = livePrice ?? company.current_price
-  const { prob_up, implied_move, health, insider, eps_est_trend, day } = company
+  const { prob_up, implied_move, health, insider, eps_est_trend, day, political_signal } = company
 
   let bias = (prob_up - 50) / 50
-  if (insider === "buy")              bias += 0.15
-  else if (insider === "sell")        bias -= 0.15
-  if (eps_est_trend === "rising")     bias += 0.08
-  else if (eps_est_trend === "falling") bias -= 0.08
+  if (insider === "buy")                    bias += 0.15
+  else if (insider === "sell")              bias -= 0.15
+  if (eps_est_trend === "rising")           bias += 0.08
+  else if (eps_est_trend === "falling")     bias -= 0.08
+  if (political_signal === "buy")           bias += 0.08
+  else if (political_signal === "sell")     bias -= 0.08
   bias = Math.max(-1, Math.min(1, bias))
 
   const atm      = roundToStrike(price)
@@ -61,7 +65,7 @@ function getOptionStrategy(company: Company, livePrice?: number): OptionRecommen
     if (implied_move < 5) {
       return { strategy: "Long Call", bias: "Bullish",
         legs: [{ action: "Buy", type: "Call", strike: atm, note: "ATM" }], expiry,
-        rationale: `${prob_up}% prob ↑ with low IV (±${implied_move}%). Calls are cheap — ATM long call offers high delta exposure.${insider === "buy" ? " Insider buying adds conviction." : ""}`,
+        rationale: `${prob_up}% prob ↑ with low IV (±${implied_move}%). Calls are cheap — ATM long call offers high delta exposure.${insider === "buy" ? " Insider buying adds conviction." : ""}${political_signal === "buy" ? " Congressional buying supports the bullish thesis." : ""}`,
         maxProfit: "Unlimited above breakeven", maxLoss: `Premium paid (~${(price * 0.022).toFixed(0)}/share)`,
         breakevens: [atm], probProfit: Math.round(prob_up * 0.76), riskRating: 2 }
     }
@@ -113,7 +117,7 @@ function getOptionStrategy(company: Company, livePrice?: number): OptionRecommen
   if (implied_move < 5) {
     return { strategy: "Long Put", bias: "Bearish",
       legs: [{ action: "Buy", type: "Put", strike: atm, note: "ATM" }], expiry,
-      rationale: `Strong bearish signal (only ${prob_up}% prob ↑). Low IV keeps puts cheap. ATM long put delivers high delta downside exposure.${insider === "sell" ? " Insider selling reinforces the thesis." : ""}`,
+      rationale: `Strong bearish signal (only ${prob_up}% prob ↑). Low IV keeps puts cheap. ATM long put delivers high delta downside exposure.${insider === "sell" ? " Insider selling reinforces the thesis." : ""}${political_signal === "sell" ? " Congressional selling adds to bearish conviction." : ""}`,
       maxProfit: `Up to $${atm}/share`, maxLoss: `Premium paid (~${(price * 0.018).toFixed(0)}/share)`,
       breakevens: [atm], probProfit: Math.round((100 - prob_up) * 0.75), riskRating: 2 }
   }
@@ -131,6 +135,12 @@ function fmt(d: string) {
   return `${months[+parts[1]]} ${+parts[2]}`
 }
 
+function fmtBil(b: number): string {
+  if (b >= 1000) return `$${(b / 1000).toFixed(2)}T`
+  if (b >= 100)  return `$${b.toFixed(1)}B`
+  return `$${b.toFixed(2)}B`
+}
+
 function VBadge({ status }: { status: string }) {
   const map: Record<string, [string, string]> = {
     verified:        ["vbadge vbadge-verified", "✓ Verified"],
@@ -144,14 +154,16 @@ function VBadge({ status }: { status: string }) {
 }
 
 const DEFAULT_WEIGHTS: ModelWeights = {
-  earningsQuality: 20, estimateMomentum: 18, fundamentalHealth: 15, valuation: 12,
-  insiderActivity: 12, institutionalFlow: 10, technicalMomentum: 8, sentiment: 5,
+  earningsQuality: 18, estimateMomentum: 16, fundamentalHealth: 14, valuation: 11,
+  insiderActivity: 10, institutionalFlow: 9, technicalMomentum: 7, sentiment: 5,
+  politicalActivity: 10,
 }
 const WEIGHT_LABELS: Record<keyof ModelWeights, string> = {
   earningsQuality: "Earnings Quality", estimateMomentum: "Estimate Momentum",
   fundamentalHealth: "Fundamental Health", valuation: "Valuation",
   insiderActivity: "Insider Activity", institutionalFlow: "Institutional Flow",
   technicalMomentum: "Technical Momentum", sentiment: "News & Sentiment",
+  politicalActivity: "Congressional Trading (STOCK Act)",
 }
 const SECTOR_COLORS: Record<string, string> = {
   "IT": "#3b82f6", "Healthcare": "#10b981", "Financials": "#f59e0b",
@@ -232,7 +244,7 @@ function CompanyCard({ company, livePrice, rank, onClick }: {
         </div>
       </div>
 
-      {/* Streak + insider */}
+      {/* Streak + insider + political */}
       <div className="streak-row">
         <span className="streak-label">4Q streak</span>
         <div className="streak-dots">
@@ -240,9 +252,16 @@ function CompanyCard({ company, livePrice, rank, onClick }: {
             <div key={i} className="streak-dot" style={{ background: s.eps === "beat" ? "var(--green)" : s.eps === "miss" ? "var(--red)" : "var(--amber)" }} />
           ))}
         </div>
-        <span className={`insider-pill ${company.insider === "buy" ? "insider-buy" : company.insider === "sell" ? "insider-sell" : "insider-neutral"}`}>
-          {company.insider === "buy" ? "🟢 Ins. Buy" : company.insider === "sell" ? "🔴 Ins. Sell" : "⚪ Neutral"}
-        </span>
+        <div style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
+          <span className={`insider-pill ${company.insider === "buy" ? "insider-buy" : company.insider === "sell" ? "insider-sell" : "insider-neutral"}`} style={{ marginLeft: 0 }}>
+            {company.insider === "buy" ? "🟢 Ins." : company.insider === "sell" ? "🔴 Ins." : "⚪ Ins."}
+          </span>
+          {company.political_signal !== "neutral" && (
+            <span className={`political-pill ${company.political_signal === "buy" ? "political-buy" : "political-sell"}`}>
+              {company.political_signal === "buy" ? "🏛 Buy" : "🏛 Sell"}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Health bar + conviction */}
@@ -278,10 +297,57 @@ const TAB_LABELS: { key: TabKey; label: string }[] = [
 ]
 
 function EarningsHistoryTab({ company }: { company: Company }) {
+  const le: LastEarningsResult = company.last_earnings
+  const epsBeatPct  = ((le.eps_actual - le.eps_est) / Math.abs(le.eps_est)) * 100
+  const revBeatPct  = ((le.rev_actual_b - le.rev_est_b) / Math.abs(le.rev_est_b)) * 100
+  const epsColor    = epsBeatPct >= 0 ? "var(--green)" : "var(--red)"
+  const revColor    = revBeatPct >= 0 ? "var(--green)" : "var(--red)"
   return (
     <div>
-      <p className="section-sub">Last 4 quarters — EPS and revenue actuals vs. estimate.</p>
-      <div className="two-col">
+      {/* Most-recent actual results card */}
+      <div className="last-earnings-card">
+        <div className="last-earnings-header">
+          <span className="last-earnings-label">Last Reported: {le.quarter}</span>
+          <span className="last-earnings-date">{le.report_date}</span>
+        </div>
+        <div className="last-earnings-grid">
+          {/* EPS block */}
+          <div className="last-earnings-block">
+            <div className="le-metric-title">EPS</div>
+            <div className="le-row">
+              <span className="le-key">Actual</span>
+              <span className="le-actual">${le.eps_actual.toFixed(2)}</span>
+            </div>
+            <div className="le-row">
+              <span className="le-key">Consensus</span>
+              <span className="le-est">${le.eps_est.toFixed(2)}</span>
+            </div>
+            <div className="le-beat-pill" style={{ background: epsBeatPct >= 0 ? "rgba(34,197,94,.15)" : "rgba(239,68,68,.15)", color: epsColor, border: `1px solid ${epsBeatPct >= 0 ? "rgba(34,197,94,.3)" : "rgba(239,68,68,.3)"}` }}>
+              {epsBeatPct >= 0 ? "▲" : "▼"} {epsBeatPct >= 0 ? "+" : ""}{epsBeatPct.toFixed(1)}% vs est
+            </div>
+          </div>
+          {/* Revenue block */}
+          <div className="last-earnings-block">
+            <div className="le-metric-title">Revenue</div>
+            <div className="le-row">
+              <span className="le-key">Actual</span>
+              <span className="le-actual">{fmtBil(le.rev_actual_b)}</span>
+            </div>
+            <div className="le-row">
+              <span className="le-key">Consensus</span>
+              <span className="le-est">{fmtBil(le.rev_est_b)}</span>
+            </div>
+            <div className="le-beat-pill" style={{ background: revBeatPct >= 0 ? "rgba(34,197,94,.15)" : "rgba(239,68,68,.15)", color: revColor, border: `1px solid ${revBeatPct >= 0 ? "rgba(34,197,94,.3)" : "rgba(239,68,68,.3)"}` }}>
+              {revBeatPct >= 0 ? "▲" : "▼"} {revBeatPct >= 0 ? "+" : ""}{revBeatPct.toFixed(1)}% vs est
+            </div>
+          </div>
+        </div>
+        {le.note && (
+          <div className="le-note">ⓘ {le.note}</div>
+        )}
+      </div>
+
+      <div className="two-col" style={{ marginBottom: 16 }}>
         <div className="stat-box">
           <div className="stat-box-label">Earnings Quality Ratio</div>
           <div className="stat-box-val" style={{ color: company.earnings_quality_ratio >= 1 ? "var(--green)" : "var(--red)" }}>{company.earnings_quality_ratio.toFixed(2)}</div>
@@ -293,6 +359,8 @@ function EarningsHistoryTab({ company }: { company: Company }) {
           <div style={{ color: "var(--muted)", fontSize: 11, marginTop: 4 }}>% of quarters mgmt met / beat own guidance</div>
         </div>
       </div>
+
+      <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 13 }}>4-Quarter Trend</div>
       <table className="data-table">
         <thead><tr><th>Quarter</th><th>EPS Result</th><th>Revenue Result</th><th>EPS Surprise</th></tr></thead>
         <tbody>
@@ -380,6 +448,32 @@ function SmartMoneyTab({ company }: { company: Company }) {
         }
       </div>
       <div style={{ marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, marginBottom: 10 }}>Congressional Trading (STOCK Act Disclosures)</div>
+        {company.political_trades.length === 0
+          ? <div className="empty">No congressional trades disclosed in last 90 days</div>
+          : <>
+              <table className="data-table">
+                <thead><tr><th>Date</th><th>Chamber</th><th>Party</th><th>Committee</th><th>Type</th><th>Amount Range</th></tr></thead>
+                <tbody>
+                  {company.political_trades.map((t: PoliticianTrade, i: number) => (
+                    <tr key={i}>
+                      <td>{t.date}{t.filed_days_late ? <span style={{ color: "var(--amber)", fontSize: 10, marginLeft: 4 }}>+{t.filed_days_late}d late</span> : null}</td>
+                      <td style={{ color: "var(--muted)" }}>{t.chamber}</td>
+                      <td><span style={{ fontWeight: 700, color: t.party === "D" ? "#3b82f6" : t.party === "R" ? "#ef4444" : "var(--muted)" }}>{t.party === "D" ? "Dem." : t.party === "R" ? "Rep." : "Ind."}</span></td>
+                      <td style={{ fontSize: 11, color: "var(--muted)" }}>{t.committee ?? "—"}</td>
+                      <td style={{ color: t.type === "buy" ? "var(--green)" : "var(--red)", fontWeight: 700 }}>{t.type === "buy" ? "▲ Buy" : "▼ Sell"}</td>
+                      <td style={{ fontSize: 12 }}>{t.amount_range}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 6 }}>
+                Amounts are statutory disclosure ranges per STOCK Act (Periodic Transaction Reports). Filed within 45 days of trade. Member identities anonymized.
+              </div>
+            </>
+        }
+      </div>
+      <div style={{ marginBottom: 20 }}>
         <div style={{ fontWeight: 700, marginBottom: 10 }}>Institutional Holdings (13F)</div>
         {company.institutional.length === 0
           ? <div className="empty">No recent 13F changes</div>
@@ -420,7 +514,8 @@ function PredictiveModelTab({ company, weights, setWeights }: { company: Company
     ((company.guidance_accuracy / 10) * (weights.estimateMomentum / 100)) +
     (avgFinScore * (weights.valuation / 100)) +
     ((company.short_interest < 8 ? 8 : company.short_interest > 15 ? 3 : 5) * (weights.institutionalFlow / 100)) +
-    (5 * (weights.technicalMomentum / 100)) + (5 * (weights.sentiment / 100))
+    (5 * (weights.technicalMomentum / 100)) + (5 * (weights.sentiment / 100)) +
+    ((company.political_signal === "buy" ? 8 : company.political_signal === "sell" ? 3 : 5) * (weights.politicalActivity / 100))
   ) * (100 / totalWeight) * 10
   const adjustedProb = Math.round(Math.min(Math.max(1 / (1 + Math.exp(-0.8 * (rawScore - 5))) * 100, 10), 90))
   return (
@@ -550,6 +645,7 @@ function OptionsTab({ company, livePrice }: { company: Company; livePrice?: numb
             ["Implied Move", `±${company.implied_move}%`, "var(--amber)"],
             ["Health Score", `${company.health}/100`, scoreColor(company.health)],
             ["Insider", company.insider === "buy" ? "▲ Buy" : company.insider === "sell" ? "▼ Sell" : "Neutral", company.insider === "buy" ? "var(--green)" : company.insider === "sell" ? "var(--red)" : "var(--muted)"],
+            ["Political (Congress)", company.political_signal === "buy" ? "▲ Buy" : company.political_signal === "sell" ? "▼ Sell" : "Neutral", company.political_signal === "buy" ? "var(--green)" : company.political_signal === "sell" ? "var(--red)" : "var(--muted)"],
             ["EPS Trend", company.eps_est_trend === "rising" ? "↑ Rising" : company.eps_est_trend === "falling" ? "↓ Falling" : "→ Flat", "var(--text)"],
           ].map(([label, val, color]) => (
             <div key={label as string} className="opt-signal-row">
@@ -876,9 +972,146 @@ jobs:
   )
 }
 
+// ── Meta type ─────────────────────────────────────────────────────────────────
+interface EarningsMeta {
+  lastUpdated: string
+  nextUpdate:  string
+  source:      string
+  companies:   number
+  window:      string
+}
+
+// ── Day Schedule View ─────────────────────────────────────────────────────────
+function DayScheduleView({
+  data, liveQuotes, onSelect, ranked,
+}: {
+  data: Company[], liveQuotes: Record<string, number>,
+  onSelect: (c: Company) => void, ranked: (Company & { _conviction: number })[],
+}) {
+  // Group companies by reporting_date
+  const byDate = useMemo(() => {
+    const map: Record<string, Company[]> = {}
+    for (const co of data) {
+      if (!map[co.reporting_date]) map[co.reporting_date] = []
+      map[co.reporting_date].push(co)
+    }
+    return map
+  }, [data])
+
+  const sortedDates = useMemo(() => Object.keys(byDate).sort(), [byDate])
+
+  // Split into week groups by 'week' field
+  const currentDates = sortedDates.filter(d => byDate[d].some(c => c.week === 'current'))
+  const nextDates    = sortedDates.filter(d => byDate[d].some(c => c.week === 'next'))
+
+  const fmtDateHeader = (iso: string) => {
+    const d = new Date(iso + 'T12:00:00Z')
+    const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+    const MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    return `${DAYS[d.getUTCDay()]}, ${MONS[d.getUTCMonth()]} ${d.getUTCDate()}`
+  }
+
+  const fmtWeekRange = (dates: string[]) => {
+    if (!dates.length) return ''
+    const MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const a = new Date(dates[0] + 'T12:00:00Z')
+    const b = new Date(dates[dates.length - 1] + 'T12:00:00Z')
+    if (a.getUTCMonth() === b.getUTCMonth())
+      return `${MONS[a.getUTCMonth()]} ${a.getUTCDate()}–${b.getUTCDate()}`
+    return `${MONS[a.getUTCMonth()]} ${a.getUTCDate()} – ${MONS[b.getUTCMonth()]} ${b.getUTCDate()}`
+  }
+
+  const convictionOf = (co: Company) => ranked.find(r => r.ticker === co.ticker)?._conviction ?? 0
+
+  const DayColumn = ({ date }: { date: string }) => {
+    const all = (byDate[date] || []).slice().sort((a, b) => convictionOf(b) - convictionOf(a))
+    const bmo = all.filter(c => c.time === 'BMO')
+    const amc = all.filter(c => c.time === 'AMC')
+
+    const CompanyRow = ({ co }: { co: Company }) => {
+      const score = convictionOf(co)
+      const price = liveQuotes[co.ticker] ?? co.current_price
+      const scoreCol = score >= 70 ? 'var(--green)' : score >= 45 ? 'var(--amber)' : 'var(--red)'
+      return (
+        <div className="day-company-row" onClick={() => onSelect(co)}>
+          <div className="day-co-left">
+            <span className="day-co-ticker">{co.ticker}</span>
+            <span className="day-co-name">{co.name.split(' ').slice(0, 2).join(' ')}</span>
+          </div>
+          <div className="day-co-right">
+            <span className="day-co-score" style={{ color: scoreCol }}>{score}</span>
+            <span className="day-co-eps">EPS ${co.eps_est.toFixed(2)}</span>
+            <span className="day-co-move">±{co.implied_move}%</span>
+            {price > 0 && <span className="day-co-price">${price < 10 ? price.toFixed(2) : price.toFixed(0)}</span>}
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="day-column">
+        <div className="day-column-header">
+          <span className="day-header-date">{fmtDateHeader(date)}</span>
+          <span className="day-header-count">{all.length} co.</span>
+        </div>
+        {bmo.length > 0 && (
+          <div className="day-timing-block">
+            <div className="day-timing-label bmo-label">☀ BMO</div>
+            {bmo.map(co => <CompanyRow key={co.ticker} co={co} />)}
+          </div>
+        )}
+        {amc.length > 0 && (
+          <div className="day-timing-block">
+            <div className="day-timing-label amc-label">🌙 AMC</div>
+            {amc.map(co => <CompanyRow key={co.ticker} co={co} />)}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const WeekGroup = ({ dates, label }: { dates: string[], label: string }) => {
+    if (!dates.length) return null
+    return (
+      <div className="day-week-group">
+        <div className="day-week-header">
+          <span className="day-week-title">{label}</span>
+          <span className="day-week-count">{dates.reduce((n, d) => n + (byDate[d]?.length ?? 0), 0)} companies</span>
+        </div>
+        <div className="day-columns-row">
+          {dates.map(d => <DayColumn key={d} date={d} />)}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="day-schedule-view">
+      <WeekGroup dates={currentDates} label={`📅 Current Week  ${fmtWeekRange(currentDates)}`} />
+      <WeekGroup dates={nextDates}    label={`📅 Next Week & Upcoming  ${fmtWeekRange(nextDates)}`} />
+      {data.length === 0 && <div className="empty" style={{ marginTop: 60 }}>No earnings data loaded.</div>}
+    </div>
+  )
+}
+
+// ── Dynamic section title helpers ─────────────────────────────────────────────
+function dateRangeLabel(companies: Company[]): string {
+  if (!companies.length) return ''
+  const MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const dates = companies.map(c => c.reporting_date).sort()
+  const a = new Date(dates[0] + 'T12:00:00Z')
+  const b = new Date(dates[dates.length - 1] + 'T12:00:00Z')
+  if (a.toDateString() === b.toDateString())
+    return `${MONS[a.getUTCMonth()]} ${a.getUTCDate()}`
+  if (a.getUTCMonth() === b.getUTCMonth())
+    return `${MONS[a.getUTCMonth()]} ${a.getUTCDate()}–${b.getUTCDate()}`
+  return `${MONS[a.getUTCMonth()]} ${a.getUTCDate()} – ${MONS[b.getUTCMonth()]} ${b.getUTCDate()}`
+}
+
 // ── Main App ───────────────────────────────────────────────────────────────────
 export default function App() {
   const [data, setData] = useState<Company[]>([])
+  const [meta, setMeta] = useState<EarningsMeta | null>(null)
   const [selected, setSelected] = useState<Company | null>(null)
   const [week, setWeek] = useState<"both" | "current" | "next">("both")
   const [sector, setSector] = useState("All")
@@ -887,6 +1120,7 @@ export default function App() {
   const [search, setSearch] = useState("")
   const [showAll, setShowAll] = useState(false)
   const [activeNav, setActiveNav] = useState("dashboard")
+  const [viewMode, setViewMode] = useState<"cards" | "by-day">("cards")
 
   const [finnhubKey, setFinnhubKey] = useState<string>(() => localStorage.getItem("finnhubKey") || "")
   const [liveMode, setLiveMode] = useState<boolean>(() => localStorage.getItem("liveMode") === "true")
@@ -896,6 +1130,7 @@ export default function App() {
 
   useEffect(() => {
     fetch(import.meta.env.BASE_URL + "data/earnings.json").then(r => r.json()).then(setData)
+    fetch(import.meta.env.BASE_URL + "data/meta.json").then(r => r.json()).then(setMeta).catch(() => {})
   }, [])
 
   const fetchLiveQuotes = useCallback(async () => {
@@ -954,6 +1189,7 @@ export default function App() {
         <div className="nav-section">Views</div>
         {([
           ["dashboard", "📅", "Dashboard"],
+          ["by-day",    "🗓",  "By Day"],
           ["summary",   "📊", "Period Summary"],
           ["model",     "⚙️", "Model Studio"],
           ["backtest",  "🔬", "Backtesting"],
@@ -981,6 +1217,24 @@ export default function App() {
             <div className="ds-row"><span>Companies</span><span>{data.length}</span></div>
             {liveMode && <div className="ds-row"><span>Quotes</span><span style={{ color: "var(--green)" }}>{liveCount} live</span></div>}
             {quoteFetchedAt && <div className="ds-row" style={{ fontSize: 10 }}><span>Updated</span><span>{quoteFetchedAt.toLocaleTimeString()}</span></div>}
+            {meta && (
+              <>
+                <div style={{ borderTop: "1px solid var(--border)", marginTop: 8, paddingTop: 8 }} />
+                <div className="ds-title" style={{ marginBottom: 4 }}>Auto-Refresh</div>
+                <div className="ds-row" style={{ fontSize: 10 }}>
+                  <span>Last fetch</span>
+                  <span title={meta.lastUpdated}>{new Date(meta.lastUpdated).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+                </div>
+                <div className="ds-row" style={{ fontSize: 10 }}>
+                  <span>Next Friday</span>
+                  <span style={{ color: "var(--accent)" }}>{new Date(meta.nextUpdate).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+                </div>
+                <div className="ds-row" style={{ fontSize: 10 }}>
+                  <span>Window</span>
+                  <span style={{ color: "var(--muted)" }}>{meta.window}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </aside>
@@ -998,13 +1252,19 @@ export default function App() {
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <div className="week-toggle">
-                  {(["both","current","next"] as const).map(w => (
-                    <button key={w} className={`week-btn ${week === w ? "active" : ""}`} onClick={() => setWeek(w)}>
-                      {w === "both" ? "Both Weeks" : w === "current" ? "This Week" : "Next Week"}
-                    </button>
-                  ))}
+                  <button className={`week-btn ${viewMode === "cards" ? "active" : ""}`} onClick={() => setViewMode("cards")}>🃏 Cards</button>
+                  <button className={`week-btn ${viewMode === "by-day" ? "active" : ""}`} onClick={() => setViewMode("by-day")}>🗓 By Day</button>
                 </div>
-                {ranked.length > 20 && (
+                {viewMode === "cards" && (
+                  <div className="week-toggle">
+                    {(["both","current","next"] as const).map(w => (
+                      <button key={w} className={`week-btn ${week === w ? "active" : ""}`} onClick={() => setWeek(w)}>
+                        {w === "both" ? "Both" : w === "current" ? "This Week" : "Next Week"}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {viewMode === "cards" && ranked.length > 20 && (
                   <button className={`week-btn ${showAll ? "active" : ""}`} onClick={() => setShowAll(v => !v)}>
                     {showAll ? "Top 20 ▲" : "Show All ▼"}
                   </button>
@@ -1012,6 +1272,15 @@ export default function App() {
               </div>
             </div>
 
+            {viewMode === "by-day" ? (
+              <DayScheduleView
+                data={data}
+                liveQuotes={liveQuotes}
+                onSelect={setSelected}
+                ranked={ranked}
+              />
+            ) : (
+              <>
             <div className="filterbar">
               <span className="filter-label">Sector</span>
               <select className="filter-select" value={sector} onChange={e => setSector(e.target.value)}>
@@ -1032,11 +1301,11 @@ export default function App() {
             {(week === "current" || week === "both") && currentWeek.length > 0 && (
               <div className="week-section">
                 <div className="section-header">
-                  <span className="section-title">📅 This Week (Jun 30 – Jul 4)</span>
+                  <span className="section-title">📅 Current Week ({dateRangeLabel(currentWeek)})</span>
                   <span className="section-count">{currentWeek.length} companies</span>
                 </div>
                 <div className="card-grid">
-                  {currentWeek.map((c, i) => {
+                  {currentWeek.map((c) => {
                     const globalRank = ranked.findIndex(r => r.ticker === c.ticker) + 1
                     return <CompanyCard key={c.ticker} company={c} livePrice={liveQuotes[c.ticker]} rank={globalRank} onClick={() => setSelected(c)} />
                   })}
@@ -1047,7 +1316,7 @@ export default function App() {
             {(week === "next" || week === "both") && nextWeek.length > 0 && (
               <div className="week-section">
                 <div className="section-header">
-                  <span className="section-title">📅 Next Week (Jul 7 – Jul 11)</span>
+                  <span className="section-title">📅 Next Week & Upcoming ({dateRangeLabel(nextWeek)})</span>
                   <span className="section-count">{nextWeek.length} companies</span>
                 </div>
                 <div className="card-grid">
@@ -1062,6 +1331,31 @@ export default function App() {
             {displayed.length === 0 && (
               <div className="empty" style={{ marginTop: 60 }}>No companies match current filters.</div>
             )}
+              </>
+            )}
+          </>
+        )}
+
+        {activeNav === "by-day" && (
+          <>
+            <div className="topbar">
+              <div className="topbar-left">
+                <h1>By Day — Earnings Calendar</h1>
+                <p>{data.length} companies · reporting dates sorted chronologically · click any company to open analysis</p>
+              </div>
+              {meta && (
+                <div style={{ fontSize: 12, color: "var(--muted)", textAlign: "right" }}>
+                  <div>Data refreshed: <span style={{ color: "var(--text)" }}>{new Date(meta.lastUpdated).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span></div>
+                  <div>Next auto-fetch: <span style={{ color: "var(--accent)" }}>Friday {new Date(meta.nextUpdate).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span></div>
+                </div>
+              )}
+            </div>
+            <DayScheduleView
+              data={data}
+              liveQuotes={liveQuotes}
+              onSelect={setSelected}
+              ranked={ranked}
+            />
           </>
         )}
 
