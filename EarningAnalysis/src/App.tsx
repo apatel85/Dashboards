@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Company, ModelWeights, OptionLeg, OptionRecommendation } from "./types"
+import { Company, ModelWeights, OptionLeg, OptionRecommendation, PoliticianTrade } from "./types"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function scoreColor(n: number) {
@@ -20,33 +20,37 @@ function roundToStrike(price: number): number {
 // Conviction score: how high-conviction (either direction) is this company?
 // Range 0–100. Used to rank and filter Top 20.
 function getConvictionScore(company: Company): number {
-  const directionStrength = Math.abs(company.prob_up - 50) / 50        // 0–1
-  const healthNorm        = company.health / 100                        // 0–1
+  const directionStrength = Math.abs(company.prob_up - 50) / 50
+  const healthNorm        = company.health / 100
   const verifiedScore     = company.verification === "verified"    ? 1
                           : company.verification === "sec-filed"   ? 0.8
                           : company.verification === "single-source"? 0.6
                           : company.verification === "stale"       ? 0.4 : 0.3
   const insiderScore      = (company.insider === "buy" || company.insider === "sell") ? 1 : 0.5
-  const ivScore           = Math.min(company.implied_move / 8, 1)       // 0–1
+  const politicalScore    = (company.political_signal === "buy" || company.political_signal === "sell") ? 1 : 0.5
+  const ivScore           = Math.min(company.implied_move / 8, 1)
 
   return Math.round(
-    directionStrength * 40 +
-    healthNorm        * 30 +
-    verifiedScore     * 15 +
-    insiderScore      * 10 +
+    directionStrength * 38 +
+    healthNorm        * 28 +
+    verifiedScore     * 14 +
+    insiderScore      *  8 +
+    politicalScore    *  7 +
     ivScore           *  5
   )
 }
 
 function getOptionStrategy(company: Company, livePrice?: number): OptionRecommendation {
   const price = livePrice ?? company.current_price
-  const { prob_up, implied_move, health, insider, eps_est_trend, day } = company
+  const { prob_up, implied_move, health, insider, eps_est_trend, day, political_signal } = company
 
   let bias = (prob_up - 50) / 50
-  if (insider === "buy")              bias += 0.15
-  else if (insider === "sell")        bias -= 0.15
-  if (eps_est_trend === "rising")     bias += 0.08
-  else if (eps_est_trend === "falling") bias -= 0.08
+  if (insider === "buy")                    bias += 0.15
+  else if (insider === "sell")              bias -= 0.15
+  if (eps_est_trend === "rising")           bias += 0.08
+  else if (eps_est_trend === "falling")     bias -= 0.08
+  if (political_signal === "buy")           bias += 0.08
+  else if (political_signal === "sell")     bias -= 0.08
   bias = Math.max(-1, Math.min(1, bias))
 
   const atm      = roundToStrike(price)
@@ -61,7 +65,7 @@ function getOptionStrategy(company: Company, livePrice?: number): OptionRecommen
     if (implied_move < 5) {
       return { strategy: "Long Call", bias: "Bullish",
         legs: [{ action: "Buy", type: "Call", strike: atm, note: "ATM" }], expiry,
-        rationale: `${prob_up}% prob ↑ with low IV (±${implied_move}%). Calls are cheap — ATM long call offers high delta exposure.${insider === "buy" ? " Insider buying adds conviction." : ""}`,
+        rationale: `${prob_up}% prob ↑ with low IV (±${implied_move}%). Calls are cheap — ATM long call offers high delta exposure.${insider === "buy" ? " Insider buying adds conviction." : ""}${political_signal === "buy" ? " Congressional buying supports the bullish thesis." : ""}`,
         maxProfit: "Unlimited above breakeven", maxLoss: `Premium paid (~${(price * 0.022).toFixed(0)}/share)`,
         breakevens: [atm], probProfit: Math.round(prob_up * 0.76), riskRating: 2 }
     }
@@ -113,7 +117,7 @@ function getOptionStrategy(company: Company, livePrice?: number): OptionRecommen
   if (implied_move < 5) {
     return { strategy: "Long Put", bias: "Bearish",
       legs: [{ action: "Buy", type: "Put", strike: atm, note: "ATM" }], expiry,
-      rationale: `Strong bearish signal (only ${prob_up}% prob ↑). Low IV keeps puts cheap. ATM long put delivers high delta downside exposure.${insider === "sell" ? " Insider selling reinforces the thesis." : ""}`,
+      rationale: `Strong bearish signal (only ${prob_up}% prob ↑). Low IV keeps puts cheap. ATM long put delivers high delta downside exposure.${insider === "sell" ? " Insider selling reinforces the thesis." : ""}${political_signal === "sell" ? " Congressional selling adds to bearish conviction." : ""}`,
       maxProfit: `Up to $${atm}/share`, maxLoss: `Premium paid (~${(price * 0.018).toFixed(0)}/share)`,
       breakevens: [atm], probProfit: Math.round((100 - prob_up) * 0.75), riskRating: 2 }
   }
@@ -144,14 +148,16 @@ function VBadge({ status }: { status: string }) {
 }
 
 const DEFAULT_WEIGHTS: ModelWeights = {
-  earningsQuality: 20, estimateMomentum: 18, fundamentalHealth: 15, valuation: 12,
-  insiderActivity: 12, institutionalFlow: 10, technicalMomentum: 8, sentiment: 5,
+  earningsQuality: 18, estimateMomentum: 16, fundamentalHealth: 14, valuation: 11,
+  insiderActivity: 10, institutionalFlow: 9, technicalMomentum: 7, sentiment: 5,
+  politicalActivity: 10,
 }
 const WEIGHT_LABELS: Record<keyof ModelWeights, string> = {
   earningsQuality: "Earnings Quality", estimateMomentum: "Estimate Momentum",
   fundamentalHealth: "Fundamental Health", valuation: "Valuation",
   insiderActivity: "Insider Activity", institutionalFlow: "Institutional Flow",
   technicalMomentum: "Technical Momentum", sentiment: "News & Sentiment",
+  politicalActivity: "Congressional Trading (STOCK Act)",
 }
 const SECTOR_COLORS: Record<string, string> = {
   "IT": "#3b82f6", "Healthcare": "#10b981", "Financials": "#f59e0b",
@@ -232,7 +238,7 @@ function CompanyCard({ company, livePrice, rank, onClick }: {
         </div>
       </div>
 
-      {/* Streak + insider */}
+      {/* Streak + insider + political */}
       <div className="streak-row">
         <span className="streak-label">4Q streak</span>
         <div className="streak-dots">
@@ -240,9 +246,16 @@ function CompanyCard({ company, livePrice, rank, onClick }: {
             <div key={i} className="streak-dot" style={{ background: s.eps === "beat" ? "var(--green)" : s.eps === "miss" ? "var(--red)" : "var(--amber)" }} />
           ))}
         </div>
-        <span className={`insider-pill ${company.insider === "buy" ? "insider-buy" : company.insider === "sell" ? "insider-sell" : "insider-neutral"}`}>
-          {company.insider === "buy" ? "🟢 Ins. Buy" : company.insider === "sell" ? "🔴 Ins. Sell" : "⚪ Neutral"}
-        </span>
+        <div style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
+          <span className={`insider-pill ${company.insider === "buy" ? "insider-buy" : company.insider === "sell" ? "insider-sell" : "insider-neutral"}`} style={{ marginLeft: 0 }}>
+            {company.insider === "buy" ? "🟢 Ins." : company.insider === "sell" ? "🔴 Ins." : "⚪ Ins."}
+          </span>
+          {company.political_signal !== "neutral" && (
+            <span className={`political-pill ${company.political_signal === "buy" ? "political-buy" : "political-sell"}`}>
+              {company.political_signal === "buy" ? "🏛 Buy" : "🏛 Sell"}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Health bar + conviction */}
@@ -380,6 +393,32 @@ function SmartMoneyTab({ company }: { company: Company }) {
         }
       </div>
       <div style={{ marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, marginBottom: 10 }}>Congressional Trading (STOCK Act Disclosures)</div>
+        {company.political_trades.length === 0
+          ? <div className="empty">No congressional trades disclosed in last 90 days</div>
+          : <>
+              <table className="data-table">
+                <thead><tr><th>Date</th><th>Chamber</th><th>Party</th><th>Committee</th><th>Type</th><th>Amount Range</th></tr></thead>
+                <tbody>
+                  {company.political_trades.map((t: PoliticianTrade, i: number) => (
+                    <tr key={i}>
+                      <td>{t.date}{t.filed_days_late ? <span style={{ color: "var(--amber)", fontSize: 10, marginLeft: 4 }}>+{t.filed_days_late}d late</span> : null}</td>
+                      <td style={{ color: "var(--muted)" }}>{t.chamber}</td>
+                      <td><span style={{ fontWeight: 700, color: t.party === "D" ? "#3b82f6" : t.party === "R" ? "#ef4444" : "var(--muted)" }}>{t.party === "D" ? "Dem." : t.party === "R" ? "Rep." : "Ind."}</span></td>
+                      <td style={{ fontSize: 11, color: "var(--muted)" }}>{t.committee ?? "—"}</td>
+                      <td style={{ color: t.type === "buy" ? "var(--green)" : "var(--red)", fontWeight: 700 }}>{t.type === "buy" ? "▲ Buy" : "▼ Sell"}</td>
+                      <td style={{ fontSize: 12 }}>{t.amount_range}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 6 }}>
+                Amounts are statutory disclosure ranges per STOCK Act (Periodic Transaction Reports). Filed within 45 days of trade. Member identities anonymized.
+              </div>
+            </>
+        }
+      </div>
+      <div style={{ marginBottom: 20 }}>
         <div style={{ fontWeight: 700, marginBottom: 10 }}>Institutional Holdings (13F)</div>
         {company.institutional.length === 0
           ? <div className="empty">No recent 13F changes</div>
@@ -420,7 +459,8 @@ function PredictiveModelTab({ company, weights, setWeights }: { company: Company
     ((company.guidance_accuracy / 10) * (weights.estimateMomentum / 100)) +
     (avgFinScore * (weights.valuation / 100)) +
     ((company.short_interest < 8 ? 8 : company.short_interest > 15 ? 3 : 5) * (weights.institutionalFlow / 100)) +
-    (5 * (weights.technicalMomentum / 100)) + (5 * (weights.sentiment / 100))
+    (5 * (weights.technicalMomentum / 100)) + (5 * (weights.sentiment / 100)) +
+    ((company.political_signal === "buy" ? 8 : company.political_signal === "sell" ? 3 : 5) * (weights.politicalActivity / 100))
   ) * (100 / totalWeight) * 10
   const adjustedProb = Math.round(Math.min(Math.max(1 / (1 + Math.exp(-0.8 * (rawScore - 5))) * 100, 10), 90))
   return (
@@ -550,6 +590,7 @@ function OptionsTab({ company, livePrice }: { company: Company; livePrice?: numb
             ["Implied Move", `±${company.implied_move}%`, "var(--amber)"],
             ["Health Score", `${company.health}/100`, scoreColor(company.health)],
             ["Insider", company.insider === "buy" ? "▲ Buy" : company.insider === "sell" ? "▼ Sell" : "Neutral", company.insider === "buy" ? "var(--green)" : company.insider === "sell" ? "var(--red)" : "var(--muted)"],
+            ["Political (Congress)", company.political_signal === "buy" ? "▲ Buy" : company.political_signal === "sell" ? "▼ Sell" : "Neutral", company.political_signal === "buy" ? "var(--green)" : company.political_signal === "sell" ? "var(--red)" : "var(--muted)"],
             ["EPS Trend", company.eps_est_trend === "rising" ? "↑ Rising" : company.eps_est_trend === "falling" ? "↓ Falling" : "→ Flat", "var(--text)"],
           ].map(([label, val, color]) => (
             <div key={label as string} className="opt-signal-row">
@@ -1032,7 +1073,7 @@ export default function App() {
             {(week === "current" || week === "both") && currentWeek.length > 0 && (
               <div className="week-section">
                 <div className="section-header">
-                  <span className="section-title">📅 This Week (Jun 30 – Jul 4)</span>
+                  <span className="section-title">📅 This Week (Jun 29 – Jul 3)</span>
                   <span className="section-count">{currentWeek.length} companies</span>
                 </div>
                 <div className="card-grid">
@@ -1047,7 +1088,7 @@ export default function App() {
             {(week === "next" || week === "both") && nextWeek.length > 0 && (
               <div className="week-section">
                 <div className="section-header">
-                  <span className="section-title">📅 Next Week (Jul 7 – Jul 11)</span>
+                  <span className="section-title">📅 Next Week (Jul 6 – Jul 10)</span>
                   <span className="section-count">{nextWeek.length} companies</span>
                 </div>
                 <div className="card-grid">

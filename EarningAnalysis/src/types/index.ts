@@ -3,6 +3,8 @@ export type VerificationStatus = 'verified' | 'single-source' | 'conflict' | 'st
 export type InsiderSignal = 'buy' | 'sell' | 'neutral';
 export type ReportTiming = 'BMO' | 'AMC';
 export type CapTier = 'Mega' | 'Large' | 'Mid' | 'Small' | 'Micro';
+export type Party = 'D' | 'R' | 'I';
+export type Chamber = 'House' | 'Senate';
 
 export interface EarningsStreak {
   quarter: string;
@@ -27,6 +29,16 @@ export interface InsiderTrade {
   shares: number;
   value: number;
   is_10b5: boolean;
+}
+
+export interface PoliticianTrade {
+  date: string;
+  chamber: Chamber;
+  party: Party;
+  committee?: string;
+  type: 'buy' | 'sell';
+  amount_range: string;
+  filed_days_late?: number;
 }
 
 export interface InstitutionalChange {
@@ -54,6 +66,7 @@ export interface ModelWeights {
   institutionalFlow: number;
   technicalMomentum: number;
   sentiment: number;
+  politicalActivity: number;
 }
 
 export interface OptionLeg {
@@ -99,6 +112,8 @@ export interface Company {
   prob_up: number;
   verification: VerificationStatus;
   current_price: number;
+  political_signal: InsiderSignal;
+  political_trades: PoliticianTrade[];
   // Deep dive data
   financials: FinancialMetric[];
   insider_trades: InsiderTrade[];
