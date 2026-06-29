@@ -1,0 +1,86 @@
+export type VerificationStatus = 'verified' | 'single-source' | 'conflict' | 'stale' | 'sec-filed';
+
+export type InsiderSignal = 'buy' | 'sell' | 'neutral';
+export type ReportTiming = 'BMO' | 'AMC';
+export type CapTier = 'Mega' | 'Large' | 'Mid' | 'Small' | 'Micro';
+
+export interface EarningsStreak {
+  quarter: string;
+  eps: 'beat' | 'miss' | 'in-line';
+  revenue: 'beat' | 'miss' | 'in-line';
+  surprise_pct: number;
+}
+
+export interface NewsItem {
+  date: string;
+  headline: string;
+  source: string;
+  sentiment: 'bullish' | 'neutral' | 'bearish';
+  url?: string;
+}
+
+export interface InsiderTrade {
+  date: string;
+  name: string;
+  role: string;
+  type: 'buy' | 'sell' | 'option-exercise';
+  shares: number;
+  value: number;
+  is_10b5: boolean;
+}
+
+export interface InstitutionalChange {
+  institution: string;
+  change: 'new' | 'increased' | 'decreased' | 'closed';
+  shares: number;
+  value_m: number;
+}
+
+export interface FinancialMetric {
+  label: string;
+  value: string;
+  score: number;
+  category: string;
+  trend: 'up' | 'down' | 'flat';
+  weight?: number;
+}
+
+export interface ModelWeights {
+  earningsQuality: number;
+  estimateMomentum: number;
+  fundamentalHealth: number;
+  valuation: number;
+  insiderActivity: number;
+  institutionalFlow: number;
+  technicalMomentum: number;
+  sentiment: number;
+}
+
+export interface Company {
+  ticker: string;
+  name: string;
+  sector: string;
+  cap: CapTier;
+  day: string;
+  week: 'current' | 'next';
+  time: ReportTiming;
+  eps_est: number;
+  eps_est_trend: 'rising' | 'falling' | 'flat';
+  rev_est: string;
+  implied_move: number;
+  streak: EarningsStreak[];
+  insider: InsiderSignal;
+  health: number;
+  prob_up: number;
+  verification: VerificationStatus;
+  // Deep dive data
+  financials: FinancialMetric[];
+  insider_trades: InsiderTrade[];
+  institutional: InstitutionalChange[];
+  short_interest: number;
+  news: NewsItem[];
+  earnings_quality_ratio: number;
+  guidance_accuracy: number;
+  piotroski: number;
+  altman_z: number;
+}
