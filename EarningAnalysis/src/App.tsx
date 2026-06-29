@@ -1,11 +1,195 @@
-import { useEffect, useMemo, useState } from "react"
-import { Company, ModelWeights } from "./types"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Company, ModelWeights, OptionLeg, OptionRecommendation } from "./types"
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 function scoreColor(n: number) {
   if (n >= 70) return "var(--green)"
   if (n >= 40) return "var(--amber)"
   return "var(--red)"
+}
+
+function roundToStrike(price: number): number {
+  if (price < 10)   return Math.round(price * 2) / 2
+  if (price < 25)   return Math.round(price)
+  if (price < 100)  return Math.round(price / 2.5) * 2.5
+  if (price < 300)  return Math.round(price / 5) * 5
+  if (price < 1000) return Math.round(price / 10) * 10
+  return Math.round(price / 25) * 25
+}
+
+function getOptionStrategy(company: Company, livePrice?: number): OptionRecommendation {
+  const price = livePrice ?? company.current_price
+  const { prob_up, implied_move, health, insider, eps_est_trend, day } = company
+
+  // Composite direction bias: -1 (strong bear) to +1 (strong bull)
+  let bias = (prob_up - 50) / 50
+  if (insider === "buy")             bias += 0.15
+  else if (insider === "sell")       bias -= 0.15
+  if (eps_est_trend === "rising")    bias += 0.08
+  else if (eps_est_trend === "falling") bias -= 0.08
+  bias = Math.max(-1, Math.min(1, bias))
+
+  const atm       = roundToStrike(price)
+  const moveAmt   = price * implied_move / 100
+  const otmCall   = roundToStrike(price + moveAmt)
+  const otmPut    = roundToStrike(price - moveAmt)
+  const wideCall  = roundToStrike(price + moveAmt * 1.6)
+  const widePut   = roundToStrike(price - moveAmt * 1.6)
+  const expiry    = `${day} expiry (earnings week)`
+
+  // ── Strong Bullish (bias > 0.25, roughly prob_up > 62%) ──────────────────
+  if (bias > 0.25) {
+    if (implied_move < 5) {
+      return {
+        strategy: "Long Call",
+        bias: "Bullish",
+        legs: [{ action: "Buy", type: "Call", strike: atm, note: "ATM" }],
+        expiry,
+        rationale: `Probability ↑ is ${prob_up}% with a low implied move of ±${implied_move}%. Calls are relatively cheap — long ATM call offers high delta exposure to the expected beat.${insider === "buy" ? " Insider buying adds conviction." : ""}`,
+        maxProfit: "Unlimited above breakeven",
+        maxLoss: `Premium paid (est. ~${(price * 0.022).toFixed(0)}/share)`,
+        breakevens: [atm],
+        probProfit: Math.round(prob_up * 0.76),
+        riskRating: 2,
+      }
+    }
+    return {
+      strategy: "Bull Call Spread",
+      bias: "Bullish",
+      legs: [
+        { action: "Buy",  type: "Call", strike: atm,     note: "ATM (long leg)" },
+        { action: "Sell", type: "Call", strike: otmCall, note: `+${implied_move}% OTM (short leg)` },
+      ],
+      expiry,
+      rationale: `Probability ↑ is ${prob_up}% but implied move of ±${implied_move}% makes outright calls expensive. Selling the ${otmCall} call finances ~40% of the premium cost while preserving full participation through the expected move range.`,
+      maxProfit: `$${(otmCall - atm).toFixed(0)} spread – net debit`,
+      maxLoss: "Net debit paid",
+      breakevens: [atm],
+      probProfit: Math.round(prob_up * 0.78),
+      riskRating: 2,
+    }
+  }
+
+  // ── Moderate Bullish (0.08 < bias ≤ 0.25) ────────────────────────────────
+  if (bias > 0.08) {
+    if (health >= 70) {
+      return {
+        strategy: "Cash-Secured Put",
+        bias: "Bullish",
+        legs: [{ action: "Sell", type: "Put", strike: otmPut, note: `−${implied_move}% OTM` }],
+        expiry,
+        rationale: `Moderate bullish lean (${prob_up}% prob ↑). Selling an OTM put at $${otmPut} collects premium AND gives a discounted entry if the stock pulls back. Health score ${health}/100 makes ownership attractive.`,
+        maxProfit: "Premium collected (if above strike at expiry)",
+        maxLoss: `Strike minus premium (assignment risk at $${otmPut})`,
+        breakevens: [otmPut],
+        probProfit: Math.round(100 - prob_up * 0.38),
+        riskRating: 2,
+      }
+    }
+    return {
+      strategy: "Bull Call Spread",
+      bias: "Bullish",
+      legs: [
+        { action: "Buy",  type: "Call", strike: atm,     note: "ATM (long leg)" },
+        { action: "Sell", type: "Call", strike: otmCall, note: `+${implied_move}% OTM (short leg)` },
+      ],
+      expiry,
+      rationale: `Moderate bullish lean (${prob_up}% prob ↑). The spread structure caps max loss to the net debit — appropriate when conviction is directional but not high enough for a naked call.`,
+      maxProfit: `$${(otmCall - atm).toFixed(0)} spread – net debit`,
+      maxLoss: "Net debit paid",
+      breakevens: [atm],
+      probProfit: Math.round(prob_up * 0.72),
+      riskRating: 2,
+    }
+  }
+
+  // ── Neutral (−0.08 ≤ bias ≤ 0.08) ────────────────────────────────────────
+  if (bias >= -0.08) {
+    if (implied_move >= 5) {
+      return {
+        strategy: "Iron Condor",
+        bias: "Neutral",
+        legs: [
+          { action: "Sell", type: "Call", strike: otmCall, note: `+${implied_move}% OTM` },
+          { action: "Buy",  type: "Call", strike: wideCall, note: "+buffer (protection)" },
+          { action: "Sell", type: "Put",  strike: otmPut,  note: `−${implied_move}% OTM` },
+          { action: "Buy",  type: "Put",  strike: widePut,  note: "−buffer (protection)" },
+        ],
+        expiry,
+        rationale: `Near-neutral signal (${prob_up}% prob ↑) with elevated implied move (±${implied_move}%). Iron condor profits if the stock stays within $${otmPut}–$${otmCall} post-earnings. Collect premium from both sides of the range.`,
+        maxProfit: "Net credit collected",
+        maxLoss: "Spread width – net credit",
+        breakevens: [otmPut, otmCall],
+        probProfit: Math.round(65 + (0.08 - Math.abs(bias)) / 0.08 * 8),
+        riskRating: 3,
+      }
+    }
+    return {
+      strategy: "No Clear Edge",
+      bias: "Skip",
+      legs: [],
+      expiry,
+      rationale: `Signal is near 50/50 (${prob_up}% prob ↑) and implied move is low (±${implied_move}%). Expected premium is insufficient to justify an Iron Condor. Risk/reward does not favour a position here.`,
+      maxProfit: "N/A",
+      maxLoss: "N/A",
+      breakevens: [],
+      probProfit: 50,
+      riskRating: 1,
+      skip: true,
+      skipReason: "Insufficient edge — consider sitting this earnings event out.",
+    }
+  }
+
+  // ── Moderate Bearish (−0.25 ≤ bias < −0.08) ──────────────────────────────
+  if (bias >= -0.25) {
+    return {
+      strategy: "Bear Put Spread",
+      bias: "Bearish",
+      legs: [
+        { action: "Buy",  type: "Put", strike: atm,    note: "ATM (long leg)" },
+        { action: "Sell", type: "Put", strike: otmPut, note: `−${implied_move}% OTM (short leg)` },
+      ],
+      expiry,
+      rationale: `Moderate bearish lean (only ${prob_up}% prob ↑). Bear put spread captures the expected downside through the ±${implied_move}% implied range while capping the debit spent. Max gain if stock falls to $${otmPut} or below.`,
+      maxProfit: `$${(atm - otmPut).toFixed(0)} spread – net debit`,
+      maxLoss: "Net debit paid",
+      breakevens: [atm],
+      probProfit: Math.round((100 - prob_up) * 0.72),
+      riskRating: 2,
+    }
+  }
+
+  // ── Strong Bearish (bias < −0.25) ─────────────────────────────────────────
+  if (implied_move < 5) {
+    return {
+      strategy: "Long Put",
+      bias: "Bearish",
+      legs: [{ action: "Buy", type: "Put", strike: atm, note: "ATM" }],
+      expiry,
+      rationale: `Strong bearish signal (only ${prob_up}% prob ↑). Implied move is low (±${implied_move}%), keeping puts relatively cheap. ATM long put delivers high delta downside exposure.${insider === "sell" ? " Insider selling reinforces the thesis." : ""}`,
+      maxProfit: `Down to zero (max $${atm} per share)`,
+      maxLoss: `Premium paid (est. ~${(price * 0.018).toFixed(0)}/share)`,
+      breakevens: [atm],
+      probProfit: Math.round((100 - prob_up) * 0.75),
+      riskRating: 2,
+    }
+  }
+
+  return {
+    strategy: "Bear Put Spread",
+    bias: "Bearish",
+    legs: [
+      { action: "Buy",  type: "Put", strike: atm,    note: "ATM (long leg)" },
+      { action: "Sell", type: "Put", strike: otmPut, note: `−${implied_move}% OTM (short leg)` },
+    ],
+    expiry,
+    rationale: `Strong bearish signal (${prob_up}% prob ↑) with high implied move (±${implied_move}%). Bear put spread reduces the cost of expensive puts while keeping full participation through the expected down-move range.`,
+    maxProfit: `$${(atm - otmPut).toFixed(0)} spread – net debit`,
+    maxLoss: "Net debit paid",
+    breakevens: [atm],
+    probProfit: Math.round((100 - prob_up) * 0.76),
+    riskRating: 3,
+  }
 }
 
 function VBadge({ status }: { status: string }) {
@@ -50,10 +234,12 @@ const SECTOR_COLORS: Record<string, string> = {
   "Utilities": "#06b6d4", "Real Estate": "#ec4899",
 }
 
-// ── sub-components ────────────────────────────────────────────────────────────
-function CompanyCard({ company, onClick }: { company: Company; onClick: () => void }) {
+// ── CompanyCard ───────────────────────────────────────────────────────────────
+function CompanyCard({ company, livePrice, onClick }: { company: Company; livePrice?: number; onClick: () => void }) {
   const accentColor = SECTOR_COLORS[company.sector] ?? "#3b82f6"
   const probColor = company.prob_up >= 55 ? "var(--green)" : company.prob_up <= 45 ? "var(--red)" : "var(--amber)"
+  const price = livePrice ?? company.current_price
+  const rec = getOptionStrategy(company, livePrice)
 
   return (
     <div className="card" onClick={onClick}>
@@ -62,8 +248,15 @@ function CompanyCard({ company, onClick }: { company: Company; onClick: () => vo
         <div>
           <div className="ticker">{company.ticker}</div>
           <div className="co-name">{company.name}</div>
+          <div className="card-price">
+            ${price.toFixed(2)}
+            {livePrice && <span className="live-dot" title="Live price">●</span>}
+          </div>
         </div>
-        <span className={`timing-badge ${company.time === "BMO" ? "bmo" : "amc"}`}>{company.time}</span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+          <span className={`timing-badge ${company.time === "BMO" ? "bmo" : "amc"}`}>{company.time}</span>
+          <span className={`opt-badge opt-${rec.bias.toLowerCase()}`}>{rec.strategy}</span>
+        </div>
       </div>
 
       <div className="meta-row">
@@ -123,13 +316,14 @@ function CompanyCard({ company, onClick }: { company: Company; onClick: () => vo
 }
 
 // ── Drawer Tabs ───────────────────────────────────────────────────────────────
-type TabKey = "history" | "financials" | "smart" | "model" | "news"
+type TabKey = "history" | "financials" | "smart" | "model" | "news" | "options"
 const TAB_LABELS: { key: TabKey; label: string }[] = [
   { key: "history",    label: "Earnings History" },
   { key: "financials", label: "Financials" },
   { key: "smart",      label: "Smart Money" },
   { key: "model",      label: "Predictive Model" },
   { key: "news",       label: "News & Sentiment" },
+  { key: "options",    label: "Options Strategy" },
 ]
 
 function EarningsHistoryTab({ company }: { company: Company }) {
@@ -383,11 +577,152 @@ function NewsSentimentTab({ company }: { company: Company }) {
   )
 }
 
+// ── Options Strategy Tab ───────────────────────────────────────────────────────
+const RISK_LABELS = ["Very Low", "Low", "Moderate", "High", "Very High"]
+
+function OptionsTab({ company, livePrice }: { company: Company; livePrice?: number }) {
+  const price = livePrice ?? company.current_price
+  const rec = getOptionStrategy(company, livePrice)
+
+  const biasColor =
+    rec.bias === "Bullish" ? "var(--green)" :
+    rec.bias === "Bearish" ? "var(--red)" :
+    rec.bias === "Skip"    ? "var(--muted)" : "var(--amber)"
+
+  const biasIcon =
+    rec.bias === "Bullish" ? "↑" :
+    rec.bias === "Bearish" ? "↓" :
+    rec.bias === "Skip"    ? "—" : "↔"
+
+  return (
+    <div>
+      <p className="section-sub">
+        Optimal options strategy derived from the predictive model's probability score, implied volatility, and insider/fundamental signals.
+      </p>
+
+      {/* Strategy header */}
+      <div className="opt-strategy-box">
+        <div>
+          <div className="opt-strategy-name">{rec.strategy}</div>
+          <div className="opt-strategy-meta">
+            <span style={{ color: biasColor, fontWeight: 700 }}>{biasIcon} {rec.bias}</span>
+            <span style={{ color: "var(--muted)" }}>·</span>
+            <span style={{ color: "var(--muted)" }}>{rec.expiry}</span>
+          </div>
+        </div>
+        {!rec.skip && (
+          <div className="opt-prob-badge">
+            <div style={{ fontSize: 22, fontWeight: 900, color: biasColor }}>{rec.probProfit}%</div>
+            <div style={{ fontSize: 11, color: "var(--muted)" }}>Est. Prob Profit</div>
+          </div>
+        )}
+      </div>
+
+      {/* Current price */}
+      <div className="opt-price-row">
+        <span>Current Price</span>
+        <span style={{ fontWeight: 800, fontSize: 16 }}>
+          ${price.toFixed(2)}
+          {livePrice && <span className="live-dot" style={{ marginLeft: 6 }}>● Live</span>}
+        </span>
+      </div>
+
+      {rec.skip ? (
+        <div className="opt-skip-box">
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>No Trade Recommended</div>
+          <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.7 }}>{rec.skipReason}</div>
+          <div style={{ fontSize: 13, marginTop: 10 }}>{rec.rationale}</div>
+        </div>
+      ) : (
+        <>
+          {/* Legs */}
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 13 }}>Strategy Legs</div>
+            <div className="opt-legs-wrap">
+              {rec.legs.map((leg: OptionLeg, i: number) => (
+                <div key={i} className={`opt-leg opt-leg-${leg.action.toLowerCase()}`}>
+                  <span className={`opt-leg-action ${leg.action === "Buy" ? "opt-buy" : "opt-sell"}`}>{leg.action}</span>
+                  <span className="opt-leg-type">{leg.type}</span>
+                  <span className="opt-leg-strike">${leg.strike}</span>
+                  {leg.note && <span className="opt-leg-note">{leg.note}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* P&L */}
+          <div className="two-col" style={{ marginBottom: 14 }}>
+            <div className="stat-box">
+              <div className="stat-box-label">Max Profit</div>
+              <div style={{ color: "var(--green)", fontWeight: 700, fontSize: 13, marginTop: 4 }}>{rec.maxProfit}</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-box-label">Max Loss</div>
+              <div style={{ color: "var(--red)", fontWeight: 700, fontSize: 13, marginTop: 4 }}>{rec.maxLoss}</div>
+            </div>
+          </div>
+
+          {/* Breakevens */}
+          {rec.breakevens.length > 0 && (
+            <div className="stat-box" style={{ marginBottom: 14 }}>
+              <div className="stat-box-label">Breakeven{rec.breakevens.length > 1 ? "s at Expiry" : " at Expiry"}</div>
+              <div style={{ fontWeight: 700, marginTop: 4 }}>
+                {rec.breakevens.map(b => `$${b}`).join("  /  ")}
+              </div>
+              {rec.breakevens.length === 2 && (
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
+                  Profit zone: between ${rec.breakevens[0]} and ${rec.breakevens[1]}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Risk rating */}
+          <div className="stat-box" style={{ marginBottom: 14 }}>
+            <div className="stat-box-label">Risk Level</div>
+            <div className="opt-risk-row">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className={`opt-risk-dot ${i <= rec.riskRating ? "active" : ""}`}
+                  style={{ background: i <= rec.riskRating ? (rec.riskRating <= 2 ? "var(--green)" : rec.riskRating === 3 ? "var(--amber)" : "var(--red)") : "var(--panel3)" }} />
+              ))}
+              <span style={{ marginLeft: 8, fontWeight: 700 }}>{RISK_LABELS[rec.riskRating - 1]}</span>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Signal inputs summary */}
+      <div className="stat-box" style={{ marginBottom: 14 }}>
+        <div className="stat-box-label">Signal Inputs Used</div>
+        <div className="opt-signals">
+          <div className="opt-signal-row"><span>Prob Up</span><span style={{ color: company.prob_up >= 55 ? "var(--green)" : company.prob_up <= 45 ? "var(--red)" : "var(--amber)", fontWeight: 700 }}>{company.prob_up}%</span></div>
+          <div className="opt-signal-row"><span>Implied Move</span><span style={{ color: "var(--amber)", fontWeight: 700 }}>±{company.implied_move}%</span></div>
+          <div className="opt-signal-row"><span>Health Score</span><span style={{ color: scoreColor(company.health), fontWeight: 700 }}>{company.health}/100</span></div>
+          <div className="opt-signal-row"><span>Insider Signal</span><span style={{ color: company.insider === "buy" ? "var(--green)" : company.insider === "sell" ? "var(--red)" : "var(--muted)", fontWeight: 700 }}>{company.insider === "buy" ? "▲ Buy" : company.insider === "sell" ? "▼ Sell" : "Neutral"}</span></div>
+          <div className="opt-signal-row"><span>EPS Trend</span><span style={{ fontWeight: 700 }}>{company.eps_est_trend === "rising" ? "↑ Rising" : company.eps_est_trend === "falling" ? "↓ Falling" : "→ Flat"}</span></div>
+        </div>
+      </div>
+
+      {/* Rationale */}
+      <div className="stat-box" style={{ marginBottom: 14 }}>
+        <div className="stat-box-label">Why This Strategy</div>
+        <div style={{ fontSize: 13, lineHeight: 1.75, marginTop: 4 }}>{rec.rationale}</div>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="opt-disclaimer">
+        ⚠ Educational purposes only — not financial advice. Options involve significant risk including loss of entire premium. Always verify strikes and expiries with your broker before trading.
+      </div>
+    </div>
+  )
+}
+
 // ── Drawer ─────────────────────────────────────────────────────────────────────
-function CompanyDrawer({ company, onClose }: { company: Company; onClose: () => void }) {
+function CompanyDrawer({ company, livePrice, onClose }: { company: Company; livePrice?: number; onClose: () => void }) {
   const [tab, setTab] = useState<TabKey>("history")
   const [weights, setWeights] = useState<ModelWeights>(DEFAULT_WEIGHTS)
   const accentColor = SECTOR_COLORS[company.sector] ?? "#3b82f6"
+  const price = livePrice ?? company.current_price
 
   return (
     <>
@@ -398,6 +733,10 @@ function CompanyDrawer({ company, onClose }: { company: Company; onClose: () => 
             <div>
               <div className="drawer-ticker" style={{ color: accentColor }}>{company.ticker}</div>
               <div className="drawer-name">{company.name}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, margin: "4px 0 6px" }}>
+                ${price.toFixed(2)}
+                {livePrice && <span className="live-dot" style={{ fontSize: 12, marginLeft: 8 }}>● Live</span>}
+              </div>
               <div className="drawer-meta">
                 <span className="chip sector">{company.sector}</span>
                 <span className="chip">{company.cap}</span>
@@ -430,7 +769,7 @@ function CompanyDrawer({ company, onClose }: { company: Company; onClose: () => 
 
           <div className="tabs">
             {TAB_LABELS.map(t => (
-              <button key={t.key} className={`tab ${tab === t.key ? "active" : ""}`} onClick={() => setTab(t.key)}>{t.label}</button>
+              <button key={t.key} className={`tab ${tab === t.key ? "active" : ""}${t.key === "options" ? " tab-options" : ""}`} onClick={() => setTab(t.key)}>{t.label}</button>
             ))}
           </div>
         </div>
@@ -441,9 +780,226 @@ function CompanyDrawer({ company, onClose }: { company: Company; onClose: () => 
           {tab === "smart"      && <SmartMoneyTab company={company} />}
           {tab === "model"      && <PredictiveModelTab company={company} weights={weights} setWeights={setWeights} />}
           {tab === "news"       && <NewsSentimentTab company={company} />}
+          {tab === "options"    && <OptionsTab company={company} livePrice={livePrice} />}
         </div>
       </div>
     </>
+  )
+}
+
+// ── Go Live Instructions ───────────────────────────────────────────────────────
+function GoLivePage({
+  finnhubKey, setFinnhubKey,
+  liveMode, setLiveMode,
+  quoteCount, quoteFetchedAt, fetchLiveQuotes, fetching,
+}: {
+  finnhubKey: string; setFinnhubKey: (k: string) => void;
+  liveMode: boolean; setLiveMode: (v: boolean) => void;
+  quoteCount: number; quoteFetchedAt: Date | null; fetchLiveQuotes: () => void; fetching: boolean;
+}) {
+  const [showKey, setShowKey] = useState(false)
+  const [savedKey, setSavedKey] = useState(finnhubKey)
+
+  function saveKey() {
+    localStorage.setItem("finnhubKey", savedKey)
+    setFinnhubKey(savedKey)
+  }
+
+  function toggleLive() {
+    const next = !liveMode
+    localStorage.setItem("liveMode", String(next))
+    setLiveMode(next)
+  }
+
+  return (
+    <div>
+      <div className="topbar-left" style={{ marginBottom: 24 }}>
+        <h1>Go Live — Real Data Setup</h1>
+        <p>Switch from demo data to live market data in two ways: quick browser-based quotes, or the full Python pipeline.</p>
+      </div>
+
+      {/* ── Option 1: Browser live quotes ── */}
+      <div className="stat-box" style={{ marginBottom: 16, borderColor: liveMode ? "rgba(34,197,94,.4)" : "var(--border)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 15 }}>
+              Option 1 — Live Quotes (Browser, No Setup)
+              <span style={{ marginLeft: 8, fontSize: 11, background: "rgba(59,130,246,.15)", color: "var(--accent)", padding: "2px 8px", borderRadius: 999, fontWeight: 700 }}>Recommended</span>
+            </div>
+            <div style={{ color: "var(--muted)", fontSize: 12, marginTop: 3 }}>Fetches current stock prices from Finnhub directly in your browser. Refreshes every 5 minutes.</div>
+          </div>
+          <button
+            className={`live-toggle-btn ${liveMode ? "live-on" : "live-off"}`}
+            onClick={toggleLive}
+            disabled={liveMode && !finnhubKey}
+          >
+            {liveMode ? "● Live ON" : "○ Go Live"}
+          </button>
+        </div>
+
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 13 }}>Finnhub API Key</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              className="search-input"
+              style={{ flex: 1 }}
+              type={showKey ? "text" : "password"}
+              placeholder="Paste your Finnhub API key here…"
+              value={savedKey}
+              onChange={e => setSavedKey(e.target.value)}
+            />
+            <button className="week-btn" style={{ padding: "8px 12px" }} onClick={() => setShowKey(!showKey)}>{showKey ? "Hide" : "Show"}</button>
+            <button className="card-link-btn" onClick={saveKey} disabled={!savedKey}>Save</button>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 5 }}>
+            Key stored in browser localStorage only — never sent to any server.
+            Get a free key at <span style={{ color: "var(--accent)" }}>finnhub.io/dashboard</span> (free tier: 60 req/min).
+          </div>
+        </div>
+
+        {finnhubKey && (
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10 }}>
+            <button className="card-link-btn" onClick={fetchLiveQuotes} disabled={fetching}>
+              {fetching ? "Fetching…" : "Refresh Quotes Now"}
+            </button>
+            {quoteFetchedAt && (
+              <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                Last updated: {quoteFetchedAt.toLocaleTimeString()} · {quoteCount} quotes loaded
+              </span>
+            )}
+          </div>
+        )}
+
+        {liveMode && !finnhubKey && (
+          <div style={{ color: "var(--amber)", fontSize: 13, marginTop: 8 }}>⚠ Enter and save a Finnhub API key first.</div>
+        )}
+      </div>
+
+      {/* ── Option 2: Full Python pipeline ── */}
+      <div className="stat-box" style={{ marginBottom: 16 }}>
+        <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 4 }}>Option 2 — Full Data Pipeline (Python)</div>
+        <div style={{ color: "var(--muted)", fontSize: 12, marginBottom: 14 }}>
+          Populates the entire earnings.json with real earnings dates, estimates, financials, insider data, and news. Run weekly before earnings season.
+        </div>
+
+        {[
+          {
+            step: "1", title: "Get API Keys (5 min, all free tiers available)",
+            content: (
+              <div style={{ fontSize: 13, lineHeight: 1.8 }}>
+                <div>• <b>Finnhub</b> — earnings calendar, estimates, quotes: <span style={{ color: "var(--accent)" }}>finnhub.io</span> → Register → Dashboard</div>
+                <div>• <b>Financial Modeling Prep (FMP)</b> — financials, earnings history: <span style={{ color: "var(--accent)" }}>financialmodelingprep.com/developer</span></div>
+                <div>• <b>Alpha Vantage</b> — news sentiment: <span style={{ color: "var(--accent)" }}>alphavantage.co/support/#api-key</span></div>
+              </div>
+            )
+          },
+          {
+            step: "2", title: "Install Python dependencies",
+            content: (
+              <div>
+                <div className="code-block">pip install -r requirements.txt</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>Requires Python 3.9+. Installs: requests, python-dotenv, pandas.</div>
+              </div>
+            )
+          },
+          {
+            step: "3", title: "Configure API keys",
+            content: (
+              <div>
+                <div style={{ fontSize: 13, marginBottom: 6 }}>Copy <code style={{ background: "var(--panel3)", padding: "1px 5px", borderRadius: 4 }}>.env.example</code> to <code style={{ background: "var(--panel3)", padding: "1px 5px", borderRadius: 4 }}>.env</code> and fill in your keys:</div>
+                <div className="code-block">
+                  cp .env.example .env{"\n"}
+                  # Then edit .env:{"\n"}
+                  FINNHUB_API_KEY=your_key_here{"\n"}
+                  FMP_API_KEY=your_key_here{"\n"}
+                  ALPHAVANTAGE_KEY=your_key_here
+                </div>
+              </div>
+            )
+          },
+          {
+            step: "4", title: "Run the data pipeline",
+            content: (
+              <div>
+                <div className="code-block">python scripts/refresh_all.py</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
+                  Fetches earnings calendar → fundamentals → insider → news → normalizes to app format.
+                  Overwrites <code style={{ background: "var(--panel3)", padding: "1px 4px", borderRadius: 3 }}>public/data/earnings.json</code>. Takes ~2–3 min.
+                </div>
+              </div>
+            )
+          },
+          {
+            step: "5", title: "Rebuild and push (GitHub Pages)",
+            content: (
+              <div>
+                <div className="code-block">
+                  npm run build{"\n"}
+                  git add .{"\n"}
+                  git commit -m "refresh earnings data"{"\n"}
+                  git push
+                </div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
+                  GitHub Pages serves the updated data automatically within ~2 minutes of the push.
+                </div>
+              </div>
+            )
+          },
+        ].map(({ step, title, content }) => (
+          <div key={step} style={{ marginBottom: 16, borderLeft: "3px solid var(--accent)", paddingLeft: 14 }}>
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>
+              <span style={{ background: "var(--accent)", color: "#fff", borderRadius: "50%", width: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, marginRight: 8 }}>{step}</span>
+              {title}
+            </div>
+            {content}
+          </div>
+        ))}
+      </div>
+
+      {/* ── Option 3: GitHub Actions auto-refresh ── */}
+      <div className="stat-box" style={{ marginBottom: 16 }}>
+        <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 4 }}>Option 3 — GitHub Actions Auto-Refresh (Fully Automated)</div>
+        <div style={{ color: "var(--muted)", fontSize: 12, marginBottom: 10 }}>Schedule the pipeline to run every Monday morning automatically — no manual steps after setup.</div>
+        <div style={{ borderLeft: "3px solid var(--border)", paddingLeft: 14 }}>
+          <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 13 }}>Add API keys to GitHub Secrets</div>
+          <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.8 }}>
+            Repo → Settings → Secrets → Actions → New secret for each key:<br />
+            <code style={{ background: "var(--panel3)", padding: "1px 4px", borderRadius: 3 }}>FINNHUB_API_KEY</code>, <code style={{ background: "var(--panel3)", padding: "1px 4px", borderRadius: 3 }}>FMP_API_KEY</code>, <code style={{ background: "var(--panel3)", padding: "1px 4px", borderRadius: 3 }}>ALPHAVANTAGE_KEY</code>
+          </div>
+          <div style={{ fontWeight: 600, margin: "12px 0 6px", fontSize: 13 }}>Then create <code style={{ background: "var(--panel3)", padding: "1px 4px", borderRadius: 3 }}>.github/workflows/refresh-data.yml</code></div>
+          <div className="code-block" style={{ fontSize: 11, lineHeight: 1.7 }}>
+            {`name: Refresh Earnings Data
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday 6am UTC
+  workflow_dispatch:       # Also allow manual trigger
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: pip install -r EarningAnalysis/requirements.txt
+      - run: python EarningAnalysis/scripts/refresh_all.py
+        env:
+          FINNHUB_API_KEY: \${{ secrets.FINNHUB_API_KEY }}
+          FMP_API_KEY: \${{ secrets.FMP_API_KEY }}
+          ALPHAVANTAGE_KEY: \${{ secrets.ALPHAVANTAGE_KEY }}
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: cd EarningAnalysis && npm ci && npm run build
+      - run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add EarningAnalysis/
+          git commit -m "auto: refresh earnings data \$(date +%Y-%m-%d)" || exit 0
+          git push`}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -458,9 +1014,40 @@ export default function App() {
   const [search, setSearch] = useState("")
   const [activeNav, setActiveNav] = useState("dashboard")
 
+  // Live data state
+  const [finnhubKey, setFinnhubKey] = useState<string>(() => localStorage.getItem("finnhubKey") || "")
+  const [liveMode, setLiveMode] = useState<boolean>(() => localStorage.getItem("liveMode") === "true")
+  const [liveQuotes, setLiveQuotes] = useState<Record<string, number>>({})
+  const [quoteFetchedAt, setQuoteFetchedAt] = useState<Date | null>(null)
+  const [fetching, setFetching] = useState(false)
+
   useEffect(() => {
     fetch(import.meta.env.BASE_URL + "data/earnings.json").then(r => r.json()).then(setData)
   }, [])
+
+  const fetchLiveQuotes = useCallback(async () => {
+    if (!finnhubKey || !data.length) return
+    setFetching(true)
+    const quotes: Record<string, number> = {}
+    for (const company of data) {
+      try {
+        const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${company.ticker}&token=${finnhubKey}`)
+        const json = await res.json()
+        if (json.c && json.c > 0) quotes[company.ticker] = json.c
+      } catch { /* skip failed quote */ }
+      await new Promise(r => setTimeout(r, 120))
+    }
+    setLiveQuotes(quotes)
+    setQuoteFetchedAt(new Date())
+    setFetching(false)
+  }, [finnhubKey, data])
+
+  useEffect(() => {
+    if (!liveMode || !finnhubKey || !data.length) return
+    fetchLiveQuotes()
+    const id = setInterval(fetchLiveQuotes, 5 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [liveMode, finnhubKey, data, fetchLiveQuotes])
 
   const sectors = useMemo(() => ["All", ...Array.from(new Set(data.map(d => d.sector))).sort()], [data])
   const caps = useMemo(() => ["All", "Mega", "Large", "Mid", "Small", "Micro"], [])
@@ -476,6 +1063,7 @@ export default function App() {
 
   const currentWeek = filtered.filter(x => x.week === "current")
   const nextWeek    = filtered.filter(x => x.week === "next")
+  const liveCount   = Object.keys(liveQuotes).length
 
   return (
     <div className="app">
@@ -495,19 +1083,26 @@ export default function App() {
             <span>{icon}</span> {label}
           </button>
         ))}
-        <div className="nav-section">Settings</div>
+        <div className="nav-section">Data</div>
+        <button className={`nav-item ${activeNav === "golive" ? "active" : ""}`} onClick={() => setActiveNav("golive")}>
+          <span>{liveMode ? "🟢" : "⚪"}</span>
+          {liveMode ? "Live Mode ON" : "Go Live"}
+        </button>
         <button className={`nav-item ${activeNav === "sources" ? "active" : ""}`} onClick={() => setActiveNav("sources")}>
           <span>🔗</span> Data Sources
         </button>
+        <div className="nav-section">Settings</div>
         <button className={`nav-item ${activeNav === "settings" ? "active" : ""}`} onClick={() => setActiveNav("settings")}>
           <span>⚙</span> Settings
         </button>
         <div className="sidebar-footer">
           <div className="data-status">
             <div className="ds-title">Data Layer</div>
-            <div className="ds-row"><span>Mode</span><span className="ds-mock">Mock / Dev</span></div>
+            <div className="ds-row"><span>Mode</span><span className={liveMode ? "ds-live" : "ds-mock"}>{liveMode ? "🟢 Live" : "Mock / Dev"}</span></div>
             <div className="ds-row"><span>Earnings</span><span>{data.length} companies</span></div>
-            <div className="ds-row"><span>Verified</span><span>{data.filter(d => d.verification === "verified").length} / {data.length}</span></div>
+            {liveMode && <div className="ds-row"><span>Quotes</span><span style={{ color: "var(--green)" }}>{liveCount} live</span></div>}
+            {!liveMode && <div className="ds-row"><span>Verified</span><span>{data.filter(d => d.verification === "verified").length} / {data.length}</span></div>}
+            {quoteFetchedAt && <div className="ds-row" style={{ fontSize: 10 }}><span>Updated</span><span>{quoteFetchedAt.toLocaleTimeString()}</span></div>}
           </div>
         </div>
       </aside>
@@ -553,7 +1148,7 @@ export default function App() {
                   <span className="section-count">{currentWeek.length} companies</span>
                 </div>
                 <div className="card-grid">
-                  {currentWeek.map(c => <CompanyCard key={c.ticker} company={c} onClick={() => setSelected(c)} />)}
+                  {currentWeek.map(c => <CompanyCard key={c.ticker} company={c} livePrice={liveQuotes[c.ticker]} onClick={() => setSelected(c)} />)}
                 </div>
               </div>
             )}
@@ -565,7 +1160,7 @@ export default function App() {
                   <span className="section-count">{nextWeek.length} companies</span>
                 </div>
                 <div className="card-grid">
-                  {nextWeek.map(c => <CompanyCard key={c.ticker} company={c} onClick={() => setSelected(c)} />)}
+                  {nextWeek.map(c => <CompanyCard key={c.ticker} company={c} livePrice={liveQuotes[c.ticker]} onClick={() => setSelected(c)} />)}
                 </div>
               </div>
             )}
@@ -574,6 +1169,15 @@ export default function App() {
               <div className="empty" style={{ marginTop: 60 }}>No companies match current filters.</div>
             )}
           </>
+        )}
+
+        {activeNav === "golive" && (
+          <GoLivePage
+            finnhubKey={finnhubKey} setFinnhubKey={setFinnhubKey}
+            liveMode={liveMode} setLiveMode={setLiveMode}
+            quoteCount={liveCount} quoteFetchedAt={quoteFetchedAt}
+            fetchLiveQuotes={fetchLiveQuotes} fetching={fetching}
+          />
         )}
 
         {activeNav === "sources" && (
@@ -630,7 +1234,7 @@ export default function App() {
                   <span className="weight-val">{val}%</span>
                 </div>
               ))}
-              <div style={{ marginTop: 16, fontSize: 13, color: "var(--muted)" }}>Open any company card → Predictive Model tab to adjust weights per company and see live probability recalculation.</div>
+              <div style={{ marginTop: 16, fontSize: 13, color: "var(--muted)" }}>Open any company card → Options Strategy tab to see the recommended trade for each company.</div>
             </div>
           </div>
         )}
@@ -692,7 +1296,7 @@ export default function App() {
           <div>
             <div className="topbar-left" style={{ marginBottom: 24 }}>
               <h1>Settings</h1>
-              <p>Configure API keys, refresh schedules, and display preferences</p>
+              <p>API keys are stored in your browser only and used by the Python scripts.</p>
             </div>
             {[
               { key: "VITE_FMP_API_KEY", label: "Financial Modeling Prep API Key", placeholder: "Your FMP key (financialmodelingprep.com/developer)" },
@@ -705,11 +1309,15 @@ export default function App() {
                 <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>Set as <code style={{ background: "var(--panel3)", padding: "1px 4px", borderRadius: 3 }}>{s.key}</code> in your <code style={{ background: "var(--panel3)", padding: "1px 4px", borderRadius: 3 }}>.env</code> file for use in Python scripts</div>
               </div>
             ))}
+            <div className="stat-box" style={{ borderColor: "rgba(59,130,246,.3)", marginTop: 8 }}>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>Live Quotes</div>
+              <div style={{ fontSize: 13, color: "var(--muted)" }}>To enable live stock price quotes directly in the browser, go to <button className="inline-link" onClick={() => setActiveNav("golive")}>Go Live</button> and enter your Finnhub key.</div>
+            </div>
           </div>
         )}
       </main>
 
-      {selected && <CompanyDrawer company={selected} onClose={() => setSelected(null)} />}
+      {selected && <CompanyDrawer company={selected} livePrice={liveQuotes[selected.ticker]} onClose={() => setSelected(null)} />}
     </div>
   )
 }
