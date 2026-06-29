@@ -92,6 +92,21 @@ input, select { font-family: inherit; }
 .political-sell { background: rgba(167,139,250,.15); color: var(--purple); border: 1px solid rgba(167,139,250,.3); }
 .political-neutral { background: var(--panel3); color: var(--muted); border: 1px solid var(--border); }
 
+/* ── Last Earnings Card ─────────────────────────────────────────────────────── */
+.last-earnings-card { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; }
+.last-earnings-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.last-earnings-label { font-size: 13px; font-weight: 800; color: var(--text); }
+.last-earnings-date { font-size: 11px; color: var(--muted); background: var(--panel3); border: 1px solid var(--border); padding: 2px 8px; border-radius: 999px; }
+.last-earnings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.last-earnings-block { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.le-metric-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.le-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.le-key { font-size: 11px; color: var(--muted); }
+.le-actual { font-size: 18px; font-weight: 900; color: var(--text); }
+.le-est { font-size: 14px; font-weight: 700; color: var(--muted); }
+.le-beat-pill { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; }
+.le-note { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); line-height: 1.6; }
+
 /* Score bar */
 .score-section { margin-top: 12px; }
 .score-labels { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }

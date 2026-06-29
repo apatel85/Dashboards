@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Company, ModelWeights, OptionLeg, OptionRecommendation, PoliticianTrade } from "./types"
+import { Company, LastEarningsResult, ModelWeights, OptionLeg, OptionRecommendation, PoliticianTrade } from "./types"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function scoreColor(n: number) {
@@ -133,6 +133,12 @@ function fmt(d: string) {
   const parts = d.split("-")
   const months = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
   return `${months[+parts[1]]} ${+parts[2]}`
+}
+
+function fmtBil(b: number): string {
+  if (b >= 1000) return `$${(b / 1000).toFixed(2)}T`
+  if (b >= 100)  return `$${b.toFixed(1)}B`
+  return `$${b.toFixed(2)}B`
 }
 
 function VBadge({ status }: { status: string }) {
@@ -291,10 +297,57 @@ const TAB_LABELS: { key: TabKey; label: string }[] = [
 ]
 
 function EarningsHistoryTab({ company }: { company: Company }) {
+  const le: LastEarningsResult = company.last_earnings
+  const epsBeatPct  = ((le.eps_actual - le.eps_est) / Math.abs(le.eps_est)) * 100
+  const revBeatPct  = ((le.rev_actual_b - le.rev_est_b) / Math.abs(le.rev_est_b)) * 100
+  const epsColor    = epsBeatPct >= 0 ? "var(--green)" : "var(--red)"
+  const revColor    = revBeatPct >= 0 ? "var(--green)" : "var(--red)"
   return (
     <div>
-      <p className="section-sub">Last 4 quarters — EPS and revenue actuals vs. estimate.</p>
-      <div className="two-col">
+      {/* Most-recent actual results card */}
+      <div className="last-earnings-card">
+        <div className="last-earnings-header">
+          <span className="last-earnings-label">Last Reported: {le.quarter}</span>
+          <span className="last-earnings-date">{le.report_date}</span>
+        </div>
+        <div className="last-earnings-grid">
+          {/* EPS block */}
+          <div className="last-earnings-block">
+            <div className="le-metric-title">EPS</div>
+            <div className="le-row">
+              <span className="le-key">Actual</span>
+              <span className="le-actual">${le.eps_actual.toFixed(2)}</span>
+            </div>
+            <div className="le-row">
+              <span className="le-key">Consensus</span>
+              <span className="le-est">${le.eps_est.toFixed(2)}</span>
+            </div>
+            <div className="le-beat-pill" style={{ background: epsBeatPct >= 0 ? "rgba(34,197,94,.15)" : "rgba(239,68,68,.15)", color: epsColor, border: `1px solid ${epsBeatPct >= 0 ? "rgba(34,197,94,.3)" : "rgba(239,68,68,.3)"}` }}>
+              {epsBeatPct >= 0 ? "▲" : "▼"} {epsBeatPct >= 0 ? "+" : ""}{epsBeatPct.toFixed(1)}% vs est
+            </div>
+          </div>
+          {/* Revenue block */}
+          <div className="last-earnings-block">
+            <div className="le-metric-title">Revenue</div>
+            <div className="le-row">
+              <span className="le-key">Actual</span>
+              <span className="le-actual">{fmtBil(le.rev_actual_b)}</span>
+            </div>
+            <div className="le-row">
+              <span className="le-key">Consensus</span>
+              <span className="le-est">{fmtBil(le.rev_est_b)}</span>
+            </div>
+            <div className="le-beat-pill" style={{ background: revBeatPct >= 0 ? "rgba(34,197,94,.15)" : "rgba(239,68,68,.15)", color: revColor, border: `1px solid ${revBeatPct >= 0 ? "rgba(34,197,94,.3)" : "rgba(239,68,68,.3)"}` }}>
+              {revBeatPct >= 0 ? "▲" : "▼"} {revBeatPct >= 0 ? "+" : ""}{revBeatPct.toFixed(1)}% vs est
+            </div>
+          </div>
+        </div>
+        {le.note && (
+          <div className="le-note">ⓘ {le.note}</div>
+        )}
+      </div>
+
+      <div className="two-col" style={{ marginBottom: 16 }}>
         <div className="stat-box">
           <div className="stat-box-label">Earnings Quality Ratio</div>
           <div className="stat-box-val" style={{ color: company.earnings_quality_ratio >= 1 ? "var(--green)" : "var(--red)" }}>{company.earnings_quality_ratio.toFixed(2)}</div>
@@ -306,6 +359,8 @@ function EarningsHistoryTab({ company }: { company: Company }) {
           <div style={{ color: "var(--muted)", fontSize: 11, marginTop: 4 }}>% of quarters mgmt met / beat own guidance</div>
         </div>
       </div>
+
+      <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 13 }}>4-Quarter Trend</div>
       <table className="data-table">
         <thead><tr><th>Quarter</th><th>EPS Result</th><th>Revenue Result</th><th>EPS Surprise</th></tr></thead>
         <tbody>

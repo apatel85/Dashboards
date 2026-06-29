@@ -13,6 +13,16 @@ export interface EarningsStreak {
   surprise_pct: number;
 }
 
+export interface LastEarningsResult {
+  report_date: string;
+  quarter: string;
+  eps_actual: number;
+  eps_est: number;
+  rev_actual_b: number;
+  rev_est_b: number;
+  note?: string;
+}
+
 export interface NewsItem {
   date: string;
   headline: string;
@@ -107,6 +117,7 @@ export interface Company {
   rev_est: string;
   implied_move: number;
   streak: EarningsStreak[];
+  last_earnings: LastEarningsResult;
   insider: InsiderSignal;
   health: number;
   prob_up: number;
