@@ -2,18 +2,15 @@ name: ETL Refresh + Deploy
 
 on:
   schedule:
-    - cron: '0 */6 * * *'   # every 6 hours
+    - cron: '0 */6 * * *'
   push:
-    branches: [main]         # also runs on every push
-  workflow_dispatch:          # manual trigger
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
-  # ── Job 1: Run ETL and export JSON data ──────────────────────────────────
   etl:
     runs-on: ubuntu-latest
     steps:
@@ -24,11 +21,9 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          cd CongressTradeTracker
-          pip install flask requests pdfplumber beautifulsoup4 lxml apscheduler pandas
+        run: pip install flask requests beautifulsoup4 lxml pandas
 
-      - name: Init DB and run ETL
+      - name: Init DB
         run: |
           cd CongressTradeTracker
           mkdir -p output
@@ -40,10 +35,14 @@ conn.commit()
 conn.close()
 print('DB ready')
 "
-          python etl.py      || echo 'ETL scaffold - no live data yet'
-          python reconcile.py || echo 'Reconcile scaffold - no live data yet'
 
-      - name: Export data to JSON
+      - name: Run ETL (scaffold mode)
+        run: |
+          cd CongressTradeTracker
+          python etl.py      2>&1 || echo 'ETL in scaffold mode - no live data'
+          python reconcile.py 2>&1 || echo 'Reconcile in scaffold mode'
+
+      - name: Export JSON for web app
         run: |
           cd CongressTradeTracker
           python - <<'PYEOF'
@@ -75,37 +74,20 @@ with open('web/data/meta.json', 'w') as f:
     json.dump(meta, f, indent=2)
 
 conn.close()
-print(f'Exported {len(trades)} trades')
+print(f'Done: {len(trades)} trades exported')
 PYEOF
 
-      - name: Commit data files back to repo
+      - name: Copy web files to docs/ (GitHub Pages source)
+        run: |
+          mkdir -p docs
+          cp -r CongressTradeTracker/web/. docs/
+
+      - name: Commit results
         run: |
           git config user.name  'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add CongressTradeTracker/web/data/
-          git diff --staged --quiet || git commit -m "chore: auto-refresh trade data $(date -u +%Y-%m-%dT%H:%M)Z"
-          git push
-
-      - name: Prepare _site for Pages
-        run: |
-          mkdir -p _site
-          cp -r CongressTradeTracker/web/. _site/
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-  # ── Job 2: Deploy to GitHub Pages (only if Pages is enabled) ────────────
-  deploy:
-    needs: etl
-    runs-on: ubuntu-latest
-    # This job will be skipped gracefully if Pages is not configured
-    continue-on-error: true
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deploy
-        uses: actions/deploy-pages@v4
+          git add CongressTradeTracker/web/data/ docs/
+          git diff --staged --quiet && echo 'No changes' || (
+            git commit -m "chore: auto-refresh $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+          )
