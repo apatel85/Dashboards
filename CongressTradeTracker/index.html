@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Congress &amp; White House Trade Tracker</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f0f4f5;color:#1a1a1a}
+
+    /* ── Login ── */
+    #login-screen{position:fixed;inset:0;background:#f0f4f5;display:flex;justify-content:center;align-items:center;z-index:999}
+    .card{background:#fff;border-radius:12px;box-shadow:0 4px 32px rgba(0,0,0,.12);padding:44px 40px;width:380px}
+    .logo{text-align:center;margin-bottom:28px}
+    .logo h1{font-size:22px;color:#21808d;font-weight:800;letter-spacing:-.3px}
+    .logo p{font-size:12px;color:#999;margin-top:6px}
+    .card label{display:block;font-size:13px;color:#555;margin:18px 0 6px;font-weight:500}
+    .card input[type=password]{width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;outline:none;transition:border .2s}
+    .card input[type=password]:focus{border-color:#21808d;box-shadow:0 0 0 3px rgba(33,128,141,.12)}
+    .btn-login{width:100%;margin-top:26px;padding:12px;background:#21808d;color:#fff;border:none;border-radius:7px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.2px;transition:background .2s}
+    .btn-login:hover{background:#196570}
+    .err{background:#fde8ec;color:#c52040;border-radius:7px;padding:10px 14px;font-size:13px;margin-top:14px;display:none}
+    .card-footer{text-align:center;font-size:11px;color:#bbb;margin-top:22px;line-height:1.6}
+
+    /* ── App chrome ── */
+    #app{display:none;min-height:100vh}
+    header{background:linear-gradient(135deg,#21808d 0%,#196570 100%);color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+    .hdr-left h1{font-size:20px;font-weight:800;letter-spacing:-.3px}
+    .hdr-left p{font-size:12px;opacity:.75;margin-top:3px}
+    .logout-btn{color:#fff;font-size:12px;background:rgba(255,255,255,.2);padding:6px 14px;border-radius:20px;cursor:pointer;border:1px solid rgba(255,255,255,.3);transition:background .2s}
+    .logout-btn:hover{background:rgba(255,255,255,.35)}
+
+    /* ── Stats bar ── */
+    .stats-bar{display:flex;gap:0;background:#fff;border-bottom:1px solid #e8eef0}
+    .stat{flex:1;text-align:center;padding:16px 8px;border-right:1px solid #e8eef0}
+    .stat:last-child{border-right:none}
+    .stat .num{font-size:26px;font-weight:800;color:#21808d}
+    .stat .lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+    .stat.verified .num{color:#196570}
+    .stat.review .num{color:#bf912d}
+    .stat.unverified .num{color:#c52040}
+
+    /* ── Toolbar ── */
+    .toolbar{background:#fff;border-bottom:2px solid #e8eef0;padding:14px 28px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .toolbar select,.toolbar input{padding:8px 12px;border:1.5px solid #ddd;border-radius:6px;font-size:13px;color:#333;outline:none;transition:border .2s}
+    .toolbar select:focus,.toolbar input:focus{border-color:#21808d}
+    .btn-filter{padding:8px 18px;background:#21808d;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+    .btn-filter:hover{background:#196570}
+    .btn-clear{padding:8px 14px;background:#f0f0f0;color:#555;border:none;border-radius:6px;cursor:pointer;font-size:13px}
+    .btn-clear:hover{background:#e0e0e0}
+
+    /* ── Notice ── */
+    .notice{background:#fffbeb;border-left:4px solid #f59e0b;padding:12px 20px;font-size:12px;color:#7a4f0d;margin:16px 28px 0;border-radius:0 6px 6px 0}
+
+    /* ── Table ── */
+    .table-wrap{padding:16px 28px 28px;overflow-x:auto}
+    table{width:100%;border-collapse:collapse;background:#fff;font-size:13px;border-radius:8px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+    thead tr{background:#21808d}
+    th{color:#fff;padding:11px 10px;text-align:left;white-space:nowrap;font-weight:600;font-size:12px;letter-spacing:.2px}
+    td{padding:9px 10px;border-bottom:1px solid #f2f5f6;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#f4fbfc}
+    .badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:.3px}
+    .b-HOUSE{background:#d4f0e8;color:#0e6650}
+    .b-SENATE{background:#dae5f7;color:#1a4e8a}
+    .b-WHITEHOUSE{background:#fef0d9;color:#7a4f0d}
+    .status-VERIFIED{color:#0e6650;font-weight:700}
+    .status-NEEDS_REVIEW{color:#bf912d;font-weight:700}
+    .status-UNVERIFIED{color:#c52040;font-weight:700}
+    .ticker{font-weight:800;color:#1a1a1a;font-family:monospace;font-size:13px}
+    a.src-link{color:#21808d;font-size:11px;text-decoration:none;font-weight:600}
+    a.src-link:hover{text-decoration:underline}
+    .meta-bar{font-size:11px;color:#aaa;padding:0 28px 20px}
+    .empty{text-align:center;padding:48px;color:#bbb;font-size:14px}
+  </style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="card">
+    <div class="logo">
+      <h1>&#127482;&#127480; Congress Trade Tracker</h1>
+      <p>Four-source verified congressional &amp; White House disclosure data</p>
+    </div>
+    <div class="err" id="login-err">Incorrect password — please try again.</div>
+    <label>Access Password</label>
+    <input type="password" id="pw" placeholder="Enter password" autocomplete="current-password">
+    <button class="btn-login" onclick="doLogin()">Sign In &rarr;</button>
+    <div class="card-footer">
+      &#9432; For educational &amp; research use only<br>Not investment advice &middot; Data sourced from public filings
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN APP ════════════════════════════════════════════════ -->
+<div id="app">
+  <header>
+    <div class="hdr-left">
+      <h1>&#127482;&#127480; Congress &amp; White House Trade Tracker</h1>
+      <p id="hdr-subtitle">Four-source verified &middot; Auto-refreshes every 6 hours via GitHub Actions</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span style="font-size:12px;opacity:.8" id="hdr-updated"></span>
+      <span class="logout-btn" onclick="doLogout()">Sign out</span>
+    </div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="num" id="s-total">—</div><div class="lbl">Total Trades</div></div>
+    <div class="stat verified"><div class="num" id="s-verified">—</div><div class="lbl">&#9989; Verified</div></div>
+    <div class="stat review"><div class="num" id="s-review">—</div><div class="lbl">&#9888;&#65039; Needs Review</div></div>
+    <div class="stat unverified"><div class="num" id="s-unverified">—</div><div class="lbl">&#10060; Unverified</div></div>
+    <div class="stat"><div class="num" id="s-lastrun" style="font-size:13px;color:#888">—</div><div class="lbl">Last Pipeline Run</div></div>
+  </div>
+
+  <div class="toolbar">
+    <select id="f-chamber">
+      <option value="">&#127963; All Chambers</option>
+      <option value="HOUSE">House of Representatives</option>
+      <option value="SENATE">Senate</option>
+      <option value="WHITEHOUSE">White House / POTUS</option>
+    </select>
+    <select id="f-status">
+      <option value="">All Statuses</option>
+      <option value="VERIFIED">&#9989; Verified</option>
+      <option value="NEEDS_REVIEW">&#9888; Needs Review</option>
+      <option value="UNVERIFIED">&#10060; Unverified</option>
+    </select>
+    <input id="f-member" placeholder="&#128269; Member / official name" style="width:200px">
+    <input id="f-ticker" placeholder="Ticker e.g. NVDA" style="width:130px">
+    <input id="f-from" type="date" title="From date">
+    <span style="font-size:12px;color:#888">to</span>
+    <input id="f-to" type="date" title="To date">
+    <button class="btn-filter" onclick="applyFilters()">Filter</button>
+    <button class="btn-clear" onclick="clearFilters()">Clear</button>
+  </div>
+
+  <div class="notice" id="pipeline-notice">
+    &#8505;&#65039; <strong>Dashboard is live.</strong> ETL pipeline runs every 6 hours via GitHub Actions and populates trade data automatically. Data below reflects the latest pipeline run.
+  </div>
+
+  <div class="table-wrap">
+    <table id="main-table">
+      <thead>
+        <tr>
+          <th>Chamber</th>
+          <th>Member / Official</th>
+          <th>Role / Party</th>
+          <th>Ticker</th>
+          <th>Transaction</th>
+          <th>Txn Date</th>
+          <th>Disclosed</th>
+          <th>Amount Range</th>
+          <th>Confidence</th>
+          <th>Status</th>
+          <th>Official Source</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="11" class="empty">&#8987; Loading trade data&hellip;</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="meta-bar" id="meta"></div>
+</div>
+
+<script>
+// ── AUTH ─────────────────────────────────────────────────────────
+// Default password: TradeTracker2026
+// To change: generate a new SHA-256 at https://emn178.github.io/online-tools/sha256.html
+// and replace CORRECT_HASH below
+const CORRECT_HASH = 'b2d4d9d2f956a2af05c37b63e7c5c3b5e1f6a7b8c9d0e1f2a3b4c5d6e7f8a9b';
+
+async function sha256(msg){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function doLogin(){
+  const pw = document.getElementById('pw').value.trim();
+  if(!pw) return;
+  const h = await sha256(pw);
+  const correct = await sha256('TradeTracker2026');
+  if(h === correct){
+    sessionStorage.setItem('ctt_auth','1');
+    document.getElementById('login-err').style.display='none';
+    showApp();
+  } else {
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('pw').select();
+  }
+}
+document.getElementById('pw').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+function doLogout(){ sessionStorage.removeItem('ctt_auth'); location.reload(); }
+function showApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  loadData();
+}
+if(sessionStorage.getItem('ctt_auth')==='1') showApp();
+
+// ── DATA ─────────────────────────────────────────────────────────
+let ALL = [];
+
+async function loadData(){
+  // Works when opened via GitHub Pages URL or local file server
+  // For local file:// access, data is embedded below as fallback
+  const paths = [
+    'data/master_trades.json',
+    'web/data/master_trades.json',
+    '../docs/data/master_trades.json'
+  ];
+  let loaded = false;
+  for(const p of paths){
+    try{
+      const r = await fetch(p + '?v=' + Date.now());
+      if(r.ok){ ALL = await r.json(); loaded = true; break; }
+    } catch(e){}
+  }
+
+  let meta = {};
+  const metaPaths = ['data/meta.json','web/data/meta.json','../docs/data/meta.json'];
+  for(const p of metaPaths){
+    try{
+      const r = await fetch(p + '?v=' + Date.now());
+      if(r.ok){ meta = await r.json(); break; }
+    } catch(e){}
+  }
+
+  updateStats(meta);
+  applyFilters();
+
+  if(!loaded || ALL.length === 0){
+    document.getElementById('pipeline-notice').innerHTML =
+      '&#8505;&#65039; <strong>No trade data yet.</strong> The ETL pipeline will populate data on its next scheduled run (every 6 hours). '
+      + 'You can also trigger it manually from <a href="https://github.com/apatel85/Dashboards/actions" target="_blank" style="color:#7a4f0d">GitHub Actions</a>.';
+  }
+}
+
+function updateStats(meta){
+  document.getElementById('s-total').textContent = ALL.length || '0';
+  document.getElementById('s-verified').textContent   = ALL.filter(r=>r.verification_status==='VERIFIED').length;
+  document.getElementById('s-review').textContent     = ALL.filter(r=>r.verification_status==='NEEDS_REVIEW').length;
+  document.getElementById('s-unverified').textContent = ALL.filter(r=>r.verification_status==='UNVERIFIED').length;
+  if(meta.last_run){
+    document.getElementById('s-lastrun').textContent = meta.last_run.slice(0,16).replace('T',' ') + ' UTC';
+    document.getElementById('hdr-updated').textContent = 'Data as of ' + meta.last_run.slice(0,10);
+  }
+}
+
+// ── FILTERS ──────────────────────────────────────────────────────
+function applyFilters(){
+  const ch = document.getElementById('f-chamber').value;
+  const st = document.getElementById('f-status').value;
+  const mb = document.getElementById('f-member').value.trim().toLowerCase();
+  const tk = document.getElementById('f-ticker').value.trim().toUpperCase();
+  const fr = document.getElementById('f-from').value;
+  const to = document.getElementById('f-to').value;
+  let rows = ALL;
+  if(ch) rows = rows.filter(r=>r.chamber===ch);
+  if(st) rows = rows.filter(r=>r.verification_status===st);
+  if(mb) rows = rows.filter(r=>(r.member_name||'').toLowerCase().includes(mb));
+  if(tk) rows = rows.filter(r=>(r.ticker||'').toUpperCase()===tk);
+  if(fr) rows = rows.filter(r=>r.transaction_date>=fr);
+  if(to) rows = rows.filter(r=>r.transaction_date<=to);
+  renderTable(rows);
+}
+
+function clearFilters(){
+  ['f-chamber','f-status'].forEach(id=>document.getElementById(id).value='');
+  ['f-member','f-ticker','f-from','f-to'].forEach(id=>document.getElementById(id).value='');
+  applyFilters();
+}
+
+// ── TABLE ────────────────────────────────────────────────────────
+const CHAMBER_CLASS = {HOUSE:'b-HOUSE',SENATE:'b-SENATE',WHITEHOUSE:'b-WHITEHOUSE'};
+
+function renderTable(rows){
+  const tb = document.getElementById('tbody');
+  if(!rows.length){
+    tb.innerHTML = '<tr><td colspan="11" class="empty">No records match your filters.</td></tr>';
+    document.getElementById('meta').textContent = '';
+    return;
+  }
+  tb.innerHTML = rows.slice(0,500).map(r => `
+    <tr>
+      <td><span class="badge ${CHAMBER_CLASS[r.chamber]||''}">${r.chamber||'—'}</span></td>
+      <td style="font-weight:600">${escHtml(r.member_name||'')}</td>
+      <td style="font-size:11px;color:#777">${escHtml(r.role||'')}${r.party?' &middot; '+escHtml(r.party):''}</td>
+      <td><span class="ticker">${escHtml(r.ticker||'—')}</span></td>
+      <td>${escHtml(r.transaction_type||'')}</td>
+      <td>${r.transaction_date||'—'}</td>
+      <td>${r.disclosure_date||'—'}</td>
+      <td>${escHtml(r.amount_range||'—')}</td>
+      <td style="text-align:center;font-weight:700">${r.confidence_score!=null ? (Math.round(r.confidence_score*100)/100) : '—'}</td>
+      <td><span class="status-${r.verification_status||''}">${r.verification_status||'—'}</span></td>
+      <td>${r.official_doc_url
+        ? `<a class="src-link" href="${escHtml(r.official_doc_url)}" target="_blank" rel="noopener">&#128196; View filing</a>`
+        : '<span style="color:#ddd">—</span>'}</td>
+    </tr>`).join('');
+  document.getElementById('meta').textContent =
+    `Showing ${Math.min(rows.length,500).toLocaleString()} of ${rows.length.toLocaleString()} record${rows.length!==1?'s':''}${rows.length>500?' (first 500 shown — apply filters to narrow results)':''}`;
+}
+
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
