@@ -1,0 +1,64 @@
+name: Auto-Deploy Dashboard From Zip
+
+# Drop a zip file into the /_incoming folder (via GitHub web UI "Upload files"),
+# push/commit it, and this workflow automatically:
+#   1. Detects the new zip
+#   2. Extracts it into Dashboards/<FolderName>/ (folder name = zip filename, no extension)
+#   3. Deletes the zip
+#   4. Commits the extracted files back to the repo
+#   5 (optional). Updates root index.html with a new card — left as a manual step, see README
+
+on:
+  push:
+    paths:
+      - "_incoming/**.zip"
+  workflow_dispatch: {}
+
+jobs:
+  extract-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find and extract zip files in _incoming
+        run: |
+          set -e
+          shopt -s nullglob
+          found_any=false
+          for zipfile in _incoming/*.zip; do
+            [ -e "$zipfile" ] || continue
+            found_any=true
+            base_name=$(basename "$zipfile" .zip)
+            target_dir="$base_name"
+            echo "Extracting $zipfile -> $target_dir/"
+            mkdir -p "$target_dir"
+            unzip -o "$zipfile" -d "$target_dir"
+
+            # If the zip contained a single nested top-level folder with the same
+            # name (common zip-export behavior), flatten it up one level.
+            nested="$target_dir/$base_name"
+            if [ -d "$nested" ]; then
+              shopt -s dotglob
+              mv "$nested"/* "$target_dir"/ 2>/dev/null || true
+              shopt -u dotglob
+              rmdir "$nested" 2>/dev/null || true
+            fi
+
+            rm "$zipfile"
+          done
+          if [ "$found_any" = false ]; then
+            echo "No zip files found in _incoming/. Nothing to do."
+          fi
+
+      - name: Commit extracted dashboard
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Auto-deploy: extract dashboard zip from _incoming [skip ci]" || echo "No changes to commit"
+          git push

@@ -1,60 +1,29 @@
-# Dashboards
+# _incoming/ — Zip-and-Forget Dashboard Deployment
 
-A collection of self-contained, single-file HTML dashboards for business analysis.  
-Each dashboard opens in any modern browser — no server, no install, no build step required.
+## How it works
 
-> **Live site:** https://apatel85.github.io/Dashboards/
+1. Build your dashboard locally (or have it generated) as a self-contained folder,
+   e.g. `CapitolPulse/` with `index.html`, `assets/`, `data/`, etc.
+2. Zip the **contents** of that folder into a single file named exactly after the
+   folder you want created, e.g. `CapitolPulse.zip`.
+   - IMPORTANT: zip the *contents*, not the folder itself with an extra nesting level.
+     The workflow auto-flattens one level of nesting if your zip tool adds it anyway,
+     but flat zips are safest.
+3. On GitHub.com, go to this repo -> `_incoming/` folder -> "Add file" -> "Upload files"
+   -> drag in `CapitolPulse.zip` -> commit directly to `main`.
+4. GitHub Actions automatically detects the new zip, extracts it into a new top-level
+   folder `Dashboards/CapitolPulse/`, deletes the zip, and commits the result — no
+   local git commands needed.
+5. Within a minute or two, your dashboard is live at:
+   `https://apatel85.github.io/Dashboards/CapitolPulse/`
+6. Add a new card to the root `index.html` pointing to `./CapitolPulse/index.html`
+   (see ROOT_INDEX_CARD_SNIPPET.html in this kit for ready-to-paste markup).
 
----
+## Rules
 
-## Available Dashboards
-
-### 📊 [Sales & COGS Analysis](./Sales%26COGS/Sales_COGS_Dashboard.html)
-**Path:** `Sales&COGS/Sales_COGS_Dashboard.html`
-
-Interactive sales and cost-of-goods analysis dashboard for Shopify-style exports.
-
-**Features:**
-- Upload Sales CSV + Product Master CSV (data stored in browser IndexedDB)
-- 6 tabs: Overview, Sales Trends, Margin Analysis, Scenario Planner, Detail Grid, Data Issues
-- Interactive donut charts (Brand & Category) with \$ amounts and % labels inside segments
-- Click-to-filter on all charts — click a brand/category to filter the whole dashboard
-- AOV (Average Order Value) by Category and Sub Category
-- Monthly seasonality heatmap — see which products peak in which months
-- **Margin Scenario Planner**: type a target margin %, instantly see projected gross profit
-- YoY comparison (2024 vs 2025) toggle on all charts
-- Sub Category support (new field in Product Master)
-- Export Detail Grid to CSV
-- Mobile responsive (works on phone/tablet)
-
-**How to use:**
-1. Open the dashboard URL
-2. Click **📤 Upload Data** and drop your CSV files
-3. Data is stored locally — no data leaves your device
-4. Re-open anytime; data persists in browser storage
-
----
-
-## Repo Structure
-
-```
-Dashboards/
-├── index.html             ← GitHub Pages landing page
-├── README.md              ← This file
-├── Sales&COGS/
-│   └── Sales_COGS_Dashboard.html
-└── [future dashboards here]
-```
-
-## Adding a New Dashboard
-Create a new folder for each dashboard:
-```
-Dashboards/
-└── YourDashboardName/
-    └── YourDashboard.html
-```
-Then add a card for it in `index.html`.
-
----
-
-*Built with Chart.js, chartjs-plugin-datalabels, and PapaParse. No backend required.*
+- One zip = one new dashboard folder. Zip filename (minus `.zip`) becomes the folder name.
+- Do not re-upload a zip with the same name as an existing dashboard folder unless you
+  intend to overwrite/update it — the workflow will merge/overwrite files in place.
+- Very large zips (>25MB) should be uploaded via `git push` locally instead of the
+  GitHub web UI, since the web uploader has a per-file size limit.
+- Check the "Actions" tab after uploading to confirm the extraction workflow succeeded.
