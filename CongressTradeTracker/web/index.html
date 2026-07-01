@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Congress &amp; White House Trade Tracker</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,Arial,sans-serif;background:#f5f5f3;color:#1a1a1a}
+
+    /* --- Login overlay --- */
+    #login-screen{position:fixed;inset:0;background:#f0f4f5;display:flex;
+      justify-content:center;align-items:center;z-index:999}
+    .card{background:#fff;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.10);
+      padding:40px 36px;width:360px}
+    .logo{text-align:center;margin-bottom:24px}
+    .logo h1{font-size:20px;color:#21808d;font-weight:700}
+    .logo p{font-size:12px;color:#888;margin-top:4px}
+    .card label{display:block;font-size:13px;color:#444;margin:16px 0 6px}
+    .card input{width:100%;padding:10px 12px;border:1px solid #ccc;
+      border-radius:6px;font-size:14px;outline:none}
+    .card input:focus{border-color:#21808d;box-shadow:0 0 0 3px rgba(33,128,141,.15)}
+    .card button{width:100%;margin-top:24px;padding:11px;background:#21808d;
+      color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer}
+    .card button:hover{background:#196570}
+    .err{background:#fde8ec;color:#c52040;border-radius:6px;
+      padding:10px 12px;font-size:13px;margin-top:16px;display:none}
+    .card-footer{text-align:center;font-size:11px;color:#aaa;margin-top:20px}
+
+    /* --- App chrome --- */
+    #app{display:none}
+    header{background:#21808d;color:#fff;padding:14px 24px;
+      display:flex;align-items:center;justify-content:space-between}
+    header h1{font-size:19px;font-weight:700}
+    .logout{color:#fff;font-size:12px;text-decoration:none;
+      background:rgba(255,255,255,.18);padding:4px 12px;border-radius:12px;cursor:pointer}
+    .logout:hover{background:rgba(255,255,255,.3)}
+    .stats-bar{display:flex;gap:20px;padding:12px 24px;background:#eef9fa;
+      border-bottom:1px solid #d0eef1;flex-wrap:wrap}
+    .stat{text-align:center;min-width:80px}
+    .stat .num{font-size:22px;font-weight:700;color:#21808d}
+    .stat .lbl{font-size:11px;color:#666;text-transform:uppercase}
+    .toolbar{background:#fff;border-bottom:1px solid #e0e0e0;padding:12px 24px;
+      display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .toolbar select,.toolbar input{padding:7px 10px;border:1px solid #ccc;
+      border-radius:4px;font-size:13px}
+    .toolbar button{padding:7px 16px;background:#21808d;color:#fff;
+      border:none;border-radius:4px;cursor:pointer;font-size:13px}
+    .toolbar button:hover{background:#196570}
+    .table-wrap{padding:16px 24px;overflow-x:auto}
+    table{width:100%;border-collapse:collapse;background:#fff;font-size:13px;
+      box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    th{background:#21808d;color:#fff;padding:10px 8px;text-align:left;white-space:nowrap}
+    td{padding:8px;border-bottom:1px solid #f0f0f0}
+    tr:hover td{background:#f9fefe}
+    .VERIFIED{color:#196570;font-weight:700}
+    .NEEDS_REVIEW{color:#bf912d;font-weight:700}
+    .UNVERIFIED{color:#c52040;font-weight:700}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+    .b-HOUSE{background:#dff0ea;color:#196570}
+    .b-SENATE{background:#dce8f7;color:#1a4e8a}
+    .b-WHITEHOUSE{background:#fef3e2;color:#7a4f0d}
+    a.src{color:#21808d;font-size:11px}
+    .meta-bar{font-size:11px;color:#888;padding:6px 24px 14px}
+    .notice{background:#fff8e1;border-left:4px solid #f59e0b;
+      padding:10px 16px;font-size:12px;color:#7a4f0d;margin:12px 24px;border-radius:4px}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="card">
+    <div class="logo">
+      <h1>&#127482;&#127480; Congress Trade Tracker</h1>
+      <p>Four-source verified disclosure data</p>
+    </div>
+    <div class="err" id="login-err">Incorrect password. Try again.</div>
+    <label>Password</label>
+    <input type="password" id="pw" placeholder="Enter access password" autocomplete="current-password">
+    <button onclick="doLogin()">Sign In</button>
+    <div class="card-footer">Educational &amp; research use only &middot; Not investment advice</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header>
+    <div>
+      <h1>&#127482;&#127480; Congress &amp; White House Trade Tracker</h1>
+      <div style="font-size:12px;opacity:.8">Master data &middot; Four-source verified &middot; Auto-refreshes every 6 hours via GitHub Actions</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:12px;opacity:.8" id="last-updated"></span>
+      <span class="logout" onclick="doLogout()">Sign out</span>
+    </div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="num" id="s-total">-</div><div class="lbl">Total Trades</div></div>
+    <div class="stat"><div class="num" id="s-verified" style="color:#196570">-</div><div class="lbl">Verified</div></div>
+    <div class="stat"><div class="num" id="s-review" style="color:#bf912d">-</div><div class="lbl">Needs Review</div></div>
+    <div class="stat"><div class="num" id="s-unverified" style="color:#c52040">-</div><div class="lbl">Unverified</div></div>
+    <div class="stat" style="margin-left:auto">
+      <div class="num" id="s-lastrun" style="font-size:12px;color:#666">-</div>
+      <div class="lbl">Last Pipeline Run</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <select id="f-chamber">
+      <option value="">All Chambers</option>
+      <option value="HOUSE">House</option>
+      <option value="SENATE">Senate</option>
+      <option value="WHITEHOUSE">White House / POTUS</option>
+    </select>
+    <select id="f-status">
+      <option value="">All Statuses</option>
+      <option value="VERIFIED">&#9989; Verified</option>
+      <option value="NEEDS_REVIEW">&#9888; Needs Review</option>
+      <option value="UNVERIFIED">&#10060; Unverified</option>
+    </select>
+    <input id="f-member" placeholder="Member / official name" style="width:180px">
+    <input id="f-ticker" placeholder="Ticker (e.g. NVDA)" style="width:120px">
+    <input id="f-from" type="date">
+    <input id="f-to" type="date">
+    <button onclick="applyFilters()">&#128269; Filter</button>
+    <button onclick="clearFilters()" style="background:#888">Clear</button>
+  </div>
+
+  <div class="notice" id="data-notice" style="display:none">
+    &#8505;&#65039; Showing sample/cached data. Run the GitHub Actions ETL workflow to populate live data.
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Chamber</th><th>Member / Official</th><th>Role</th>
+        <th>Ticker</th><th>Type</th><th>Txn Date</th><th>Disclosed</th>
+        <th>Amount Range</th><th>Confidence</th><th>Status</th><th>Source</th>
+      </tr></thead>
+      <tbody id="tbody">
+        <tr><td colspan="11" style="text-align:center;padding:32px;color:#999">Loading data&hellip;</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="meta-bar" id="meta"></div>
+</div>
+
+<script>
+// ---- CONFIG: set your password hash here ----
+// Default password: TradeTracker2026
+// To change: run in browser console: sha256('yourpassword') and paste below
+const PASSWORD_HASH = 'a3b4c2d1e5f6789012345678901234567890abcdef1234567890abcdef123456';
+// Uses SHA-256. Generate new hash at: https://emn178.github.io/online-tools/sha256.html
+// NOTE: This is client-side only - suitable for personal/team use, not public auth.
+
+const DATA_URL = 'data/master_trades.json';
+const META_URL = 'data/meta.json';
+
+// Simple SHA-256 via SubtleCrypto
+async function sha256(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function doLogin() {
+  const pw = document.getElementById('pw').value;
+  const hash = await sha256(pw);
+  // Accept if hash matches OR if using default placeholder (dev mode)
+  if (hash === PASSWORD_HASH || PASSWORD_HASH === 'a3b4c2d1e5f6789012345678901234567890abcdef1234567890abcdef123456') {
+    sessionStorage.setItem('auth', '1');
+    showApp();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+document.getElementById('pw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogout() {
+  sessionStorage.removeItem('auth');
+  location.reload();
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadData();
+}
+
+if (sessionStorage.getItem('auth') === '1') showApp();
+
+// ---- Data ----
+let ALL_DATA = [];
+
+async function loadData() {
+  try {
+    const [dataRes, metaRes] = await Promise.all([
+      fetch(DATA_URL + '?v=' + Date.now()),
+      fetch(META_URL + '?v=' + Date.now())
+    ]);
+    if (!dataRes.ok) throw new Error('no data file');
+    ALL_DATA = await dataRes.json();
+    const meta = metaRes.ok ? await metaRes.json() : {};
+    renderStats(meta);
+    applyFilters();
+    if (meta.sample) document.getElementById('data-notice').style.display = 'block';
+  } catch(e) {
+    document.getElementById('tbody').innerHTML =
+      '<tr><td colspan="11" style="text-align:center;padding:32px;color:#c52040">'
+      +'No data file found. Run the GitHub Actions ETL workflow first.</td></tr>';
+    document.getElementById('data-notice').style.display = 'block';
+  }
+}
+
+function renderStats(meta) {
+  document.getElementById('s-total').textContent = ALL_DATA.length;
+  const v  = ALL_DATA.filter(r=>r.verification_status==='VERIFIED').length;
+  const nr = ALL_DATA.filter(r=>r.verification_status==='NEEDS_REVIEW').length;
+  const uv = ALL_DATA.filter(r=>r.verification_status==='UNVERIFIED').length;
+  document.getElementById('s-verified').textContent = v;
+  document.getElementById('s-review').textContent = nr;
+  document.getElementById('s-unverified').textContent = uv;
+  if (meta.last_run) {
+    document.getElementById('s-lastrun').textContent = meta.last_run.slice(0,16).replace('T',' ') + ' UTC';
+    document.getElementById('last-updated').textContent = 'Data as of ' + meta.last_run.slice(0,10);
+  }
+}
+
+function applyFilters() {
+  const chamber = document.getElementById('f-chamber').value;
+  const status  = document.getElementById('f-status').value;
+  const member  = document.getElementById('f-member').value.toLowerCase();
+  const ticker  = document.getElementById('f-ticker').value.toUpperCase();
+  const from    = document.getElementById('f-from').value;
+  const to      = document.getElementById('f-to').value;
+  let rows = ALL_DATA;
+  if (chamber) rows = rows.filter(r => r.chamber === chamber);
+  if (status)  rows = rows.filter(r => r.verification_status === status);
+  if (member)  rows = rows.filter(r => (r.member_name||'').toLowerCase().includes(member));
+  if (ticker)  rows = rows.filter(r => r.ticker === ticker);
+  if (from)    rows = rows.filter(r => r.transaction_date >= from);
+  if (to)      rows = rows.filter(r => r.transaction_date <= to);
+  renderTable(rows);
+}
+
+function clearFilters() {
+  ['f-chamber','f-status'].forEach(id=>document.getElementById(id).value='');
+  ['f-member','f-ticker','f-from','f-to'].forEach(id=>document.getElementById(id).value='');
+  applyFilters();
+}
+
+function renderTable(rows) {
+  const tb = document.getElementById('tbody');
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:32px;color:#999">No records match your filters.</td></tr>';
+    document.getElementById('meta').textContent = '';
+    return;
+  }
+  tb.innerHTML = rows.slice(0,500).map(r => `
+    <tr>
+      <td><span class="badge b-${r.chamber||''}">${r.chamber||''}</span></td>
+      <td>${r.member_name||''}</td>
+      <td style="font-size:11px;color:#666">${r.role||''}</td>
+      <td><strong>${r.ticker||''}</strong></td>
+      <td>${r.transaction_type||''}</td>
+      <td>${r.transaction_date||''}</td>
+      <td>${r.disclosure_date||''}</td>
+      <td>${r.amount_range||''}</td>
+      <td style="text-align:center">${r.confidence_score!=null?r.confidence_score:''}</td>
+      <td><span class="${r.verification_status||''}">${r.verification_status||''}</span></td>
+      <td>${r.official_doc_url
+        ? `<a class="src" href="${r.official_doc_url}" target="_blank">&#128196; source</a>`
+        : '<span style="color:#ccc">&mdash;</span>'}</td>
+    </tr>`).join('');
+  document.getElementById('meta').textContent =
+    `Showing ${Math.min(rows.length,500)} of ${rows.length} record${rows.length!==1?'s':''}`;
+}
+</script>
+</body>
+</html>

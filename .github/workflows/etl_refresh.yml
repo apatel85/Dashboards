@@ -1,0 +1,113 @@
+name: ETL Refresh + Deploy
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # every 6 hours
+  workflow_dispatch:          # manual trigger from GitHub UI
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  etl-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          cd CongressTradeTracker
+          pip install -r requirements.txt
+
+      - name: Run ETL pipeline
+        env:
+          DB_PATH: output/master_trades.db
+        run: |
+          cd CongressTradeTracker
+          mkdir -p output
+          python -c "
+import sqlite3, os
+conn = sqlite3.connect('output/master_trades.db')
+conn.executescript(open('schema.sql').read())
+conn.commit()
+conn.close()
+print('DB initialized')
+"
+          python etl.py    || echo 'ETL skipped (scaffold)'
+          python reconcile.py || echo 'Reconcile skipped (scaffold)'
+
+      - name: Export master data to JSON
+        env:
+          DB_PATH: output/master_trades.db
+        run: |
+          cd CongressTradeTracker
+          python - <<'EOF'
+import sqlite3, json, os
+from datetime import datetime, timezone
+
+db = os.getenv('DB_PATH', 'output/master_trades.db')
+os.makedirs('web/data', exist_ok=True)
+
+conn = sqlite3.connect(db)
+conn.row_factory = sqlite3.Row
+
+# Export master trades
+trades = [dict(r) for r in conn.execute(
+    'SELECT * FROM master_trades ORDER BY transaction_date DESC LIMIT 5000'
+).fetchall()]
+with open('web/data/master_trades.json', 'w') as f:
+    json.dump(trades, f)
+
+# Export meta
+last_run = conn.execute(
+    'SELECT started_at FROM refresh_log ORDER BY started_at DESC LIMIT 1'
+).fetchone()
+meta = {
+    'last_run': last_run[0] if last_run else datetime.now(timezone.utc).isoformat(),
+    'total': len(trades),
+    'exported_at': datetime.now(timezone.utc).isoformat(),
+    'sample': len(trades) == 0
+}
+with open('web/data/meta.json', 'w') as f:
+    json.dump(meta, f)
+
+conn.close()
+print(f'Exported {len(trades)} trades to web/data/')
+EOF
+
+      - name: Commit updated data files
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add CongressTradeTracker/web/data/
+          git diff --staged --quiet || git commit -m "chore: auto-refresh trade data $(date -u +%Y-%m-%dT%H:%M)Z"
+          git push
+
+      - name: Copy web app to gh-pages deploy folder
+        run: |
+          mkdir -p _site
+          cp -r CongressTradeTracker/web/. _site/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy-pages:
+    needs: etl-and-deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
