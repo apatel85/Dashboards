@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CapitolPulse — Live Congress Trading Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f4f8;color:#1e293b}
+header{background:linear-gradient(135deg,#166534 0%,#15803d 100%);color:#fff;padding:36px 24px;text-align:center}
+header h1{font-size:28px;font-weight:800;letter-spacing:-.5px}
+header p{opacity:.85;margin-top:6px;font-size:14px}
+.badge{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:600;margin-top:12px}
+main{max-width:1100px;margin:0 auto;padding:28px 20px}
+.status-bar{display:flex;gap:16px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:24px;font-size:13px;color:#475569}
+.status-bar b{color:#166534}
+.filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.filters select,.filters button{padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;background:#fff;cursor:pointer}
+.filters button{background:#166534;color:#fff;border:none;font-weight:600}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.metric{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px}
+.metric .label{font-size:11px;color:#94a3b8;text-transform:uppercase;font-weight:700;letter-spacing:.5px}
+.metric .value{font-size:24px;font-weight:800;color:#166534;margin-top:4px}
+.tabs{display:flex;gap:4px;border-bottom:2px solid #e2e8f0;margin-bottom:20px}
+.tab-btn{padding:10px 18px;background:none;border:none;font-size:13px;font-weight:600;color:#64748b;cursor:pointer;border-bottom:2px solid transparent}
+.tab-btn.active{color:#166534;border-bottom-color:#166534}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.chart-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:20px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #f1f5f9}
+th{color:#94a3b8;text-transform:uppercase;font-size:10px;letter-spacing:.5px}
+tr:hover{background:#f8fafc}
+.pill{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
+.pill.buy{background:#dcfce7;color:#166534}
+.pill.sell{background:#fee2e2;color:#991b1b}
+#loading{text-align:center;padding:60px;color:#94a3b8}
+footer{text-align:center;padding:28px;color:#94a3b8;font-size:11px;border-top:1px solid #e2e8f0;margin-top:20px}
+.dl-btn{display:inline-block;margin-top:10px;font-size:12px;background:#f1f5f9;padding:6px 12px;border-radius:8px;color:#475569;text-decoration:none;cursor:pointer;border:1px solid #e2e8f0}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏛️ CapitolPulse</h1>
+  <p>Live tracker of US Congress members' disclosed stock trades — House &amp; Senate, STOCK Act filings</p>
+  <div class="badge" id="refresh-badge">⏱️ Loading latest data…</div>
+</header>
+<main>
+  <div id="loading">Fetching live congressional trade data…</div>
+  <div id="app" style="display:none">
+
+    <div class="status-bar">
+      <div>Source: <b>CongressInvests API</b> (free, public)</div>
+      <div>Total trades loaded: <b id="stat-total">–</b></div>
+      <div>Last source refresh: <b id="stat-refresh">–</b></div>
+      <div>Avg disclosure lag: <b id="stat-lag">–</b></div>
+    </div>
+
+    <div class="filters">
+      <select id="f-window">
+        <option value="30">Last 30 days</option>
+        <option value="90" selected>Last 90 days</option>
+        <option value="180">Last 180 days</option>
+        <option value="365">Last 365 days</option>
+      </select>
+      <select id="f-chamber">
+        <option value="all" selected>All chambers</option>
+        <option value="House">House only</option>
+        <option value="Senate">Senate only</option>
+      </select>
+      <select id="f-type">
+        <option value="all" selected>Buy + Sell</option>
+        <option value="buy">Buy only</option>
+        <option value="sell">Sell only</option>
+      </select>
+      <button onclick="refreshData(true)">🔄 Force refresh now</button>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="label">Trades in window</div><div class="value" id="m-count">–</div></div>
+      <div class="metric"><div class="label">$ Volume (mid-est)</div><div class="value" id="m-volume">–</div></div>
+      <div class="metric"><div class="label">Unique tickers</div><div class="value" id="m-tickers">–</div></div>
+      <div class="metric"><div class="label">Net buy/sell</div><div class="value" id="m-net">–</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tickers">Top Tickers</button>
+      <button class="tab-btn" data-tab="members">Most Active Members</button>
+      <button class="tab-btn" data-tab="trend">Monthly Trend</button>
+      <button class="tab-btn" data-tab="raw">Raw Data / Late Filers</button>
+    </div>
+
+    <div class="tab-content active" id="tab-tickers">
+      <div class="chart-card"><canvas id="chart-tickers" height="110"></canvas></div>
+    </div>
+    <div class="tab-content" id="tab-members">
+      <div class="chart-card"><canvas id="chart-members" height="110"></canvas></div>
+    </div>
+    <div class="tab-content" id="tab-trend">
+      <div class="chart-card"><canvas id="chart-trend" height="110"></canvas></div>
+    </div>
+    <div class="tab-content" id="tab-raw">
+      <div class="chart-card">
+        <h3 style="margin-bottom:10px;font-size:14px">Worst average disclosure lag (potential stale-signal flags)</h3>
+        <table id="table-late"><thead><tr><th>Member</th><th>Avg Lag (days)</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="chart-card">
+        <h3 style="margin-bottom:10px;font-size:14px">Filtered trades <a class="dl-btn" id="dl-csv">⬇ Download CSV</a></h3>
+        <div style="max-height:420px;overflow:auto">
+          <table id="table-raw"><thead><tr><th>Member</th><th>Chamber</th><th>Ticker</th><th>Type</th><th>Amount</th><th>Tx Date</th><th>Disclosed</th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+<footer>
+  CapitolPulse • Data: CongressInvests API (House Clerk + Senate eFD filings under the STOCK Act) • Educational use only, not investment advice • Amounts are disclosed as ranges (midpoint estimates shown)
+</footer>
+<script src="assets/app.js"></script>
+</body>
+</html>
