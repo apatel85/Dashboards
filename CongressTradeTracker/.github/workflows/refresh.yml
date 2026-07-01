@@ -1,0 +1,56 @@
+# GitHub Actions: runs the ETL + reconcile pipeline every 6 hours
+# Also triggers manually via workflow_dispatch
+
+name: Trade Data Refresh
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 00:00, 06:00, 12:00, 18:00 UTC
+  workflow_dispatch:         # allow manual trigger from GitHub UI
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CongressTradeTracker
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create output directory
+        run: mkdir -p output
+
+      - name: Initialize database schema
+        run: |
+          python - <<'EOF'
+          import sqlite3
+          with open('schema.sql') as f:
+              sql = f.read()
+          conn = sqlite3.connect('output/master_trades.db')
+          conn.executescript(sql)
+          conn.commit()
+          conn.close()
+          print('Schema initialized')
+          EOF
+
+      - name: Run ETL pipeline (single pass)
+        run: python scheduler.py --once
+        env:
+          DB_PATH: output/master_trades.db
+
+      - name: Upload master_trades.db as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: master-trades-db
+          path: CongressTradeTracker/output/master_trades.db
+          retention-days: 7
