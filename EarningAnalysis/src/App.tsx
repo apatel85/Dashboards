@@ -141,6 +141,34 @@ function fmtBil(b: number): string {
   return `$${b.toFixed(2)}B`
 }
 
+function extractYoY(note: string): string | null {
+  const m = note.match(/([+-]\d+(?:\.\d+)?%)\s*YoY/i)
+  return m ? m[1] : null
+}
+
+// Compute Mon–Fri range string for the calendar week containing isoDate
+function calendarWeekRange(isoDate: string): string {
+  const MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const d   = new Date(isoDate + 'T12:00:00Z')
+  const dow = d.getUTCDay()
+  const mon = new Date(d); mon.setUTCDate(d.getUTCDate() - (dow === 0 ? 6 : dow - 1))
+  const fri = new Date(mon); fri.setUTCDate(mon.getUTCDate() + 4)
+  if (mon.getUTCMonth() === fri.getUTCMonth())
+    return `${MONS[mon.getUTCMonth()]} ${mon.getUTCDate()}–${fri.getUTCDate()}`
+  return `${MONS[mon.getUTCMonth()]} ${mon.getUTCDate()} – ${MONS[fri.getUTCMonth()]} ${fri.getUTCDate()}`
+}
+
+// Returns [monday ISO, friday ISO] for the calendar week containing isoDate
+function getCalendarWeekBounds(isoDate: string): [string, string] {
+  const d = new Date(isoDate + 'T12:00:00Z')
+  const dow = d.getUTCDay()
+  const mon = new Date(d)
+  mon.setUTCDate(d.getUTCDate() - (dow === 0 ? 6 : dow - 1))
+  const fri = new Date(mon)
+  fri.setUTCDate(mon.getUTCDate() + 4)
+  return [mon.toISOString().slice(0, 10), fri.toISOString().slice(0, 10)]
+}
+
 function VBadge({ status }: { status: string }) {
   const map: Record<string, [string, string]> = {
     verified:        ["vbadge vbadge-verified", "✓ Verified"],
@@ -222,27 +250,50 @@ function CompanyCard({ company, livePrice, rank, onClick }: {
         <span className="chip">{company.cap}</span>
       </div>
 
-      {/* Conviction + metrics */}
-      <div className="metrics">
-        <div className="metric">
-          <div className="metric-label">EPS Est</div>
-          <div className="metric-value">${company.eps_est}</div>
-        </div>
-        <div className="metric">
-          <div className="metric-label">Rev Est</div>
-          <div className="metric-value">{company.rev_est}</div>
-        </div>
-        <div className="metric">
-          <div className="metric-label">Implied Move</div>
-          <div className="metric-value" style={{ color: "var(--amber)" }}>±{company.implied_move}%</div>
-        </div>
-        <div className="metric">
-          <div className="metric-label">EPS Trend</div>
-          <div className="metric-value" style={{ color: company.eps_est_trend === "rising" ? "var(--green)" : company.eps_est_trend === "falling" ? "var(--red)" : "var(--muted)" }}>
-            {company.eps_est_trend === "rising" ? "↑ Rising" : company.eps_est_trend === "falling" ? "↓ Falling" : "→ Flat"}
+      {/* Key estimates row */}
+      <div className="est-row">
+        <div className="est-block">
+          <div className="est-label">EPS Est</div>
+          <div className="est-value">
+            ${company.eps_est.toFixed(2)}
+            <span style={{ fontSize: 11, fontWeight: 700, marginLeft: 3, color: company.eps_est_trend === "rising" ? "var(--green)" : company.eps_est_trend === "falling" ? "var(--red)" : "var(--muted)" }}>
+              {company.eps_est_trend === "rising" ? " ▲" : company.eps_est_trend === "falling" ? " ▼" : " —"}
+            </span>
           </div>
         </div>
+        <div className="est-block">
+          <div className="est-label">Rev Est</div>
+          <div className="est-value">{company.rev_est}</div>
+        </div>
+        <div className="est-block">
+          <div className="est-label">Implied Move</div>
+          <div className="est-value" style={{ color: "var(--amber)" }}>±{company.implied_move}%</div>
+        </div>
       </div>
+
+      {/* Prior quarter actuals – EPS & Revenue vs consensus + YoY */}
+      {company.last_earnings && (() => {
+        const le = company.last_earnings
+        const epsBeat = le.eps_actual >= le.eps_est * 0.999
+        const revBeat = le.rev_actual_b >= le.rev_est_b * 0.999
+        const epsPct  = le.eps_est ? (le.eps_actual - le.eps_est) / Math.abs(le.eps_est) * 100 : 0
+        const revPct  = le.rev_est_b ? (le.rev_actual_b - le.rev_est_b) / Math.abs(le.rev_est_b) * 100 : 0
+        const yoy     = le.note ? extractYoY(le.note) : null
+        return (
+          <div className="prior-q-row">
+            <div className="prior-q-header">
+              <span className="prior-q-label">Last Q · {le.quarter}</span>
+              {yoy && <span className="yoy-badge" style={{ color: yoy.startsWith('+') ? "var(--green)" : "var(--red)" }}>{yoy} YoY</span>}
+            </div>
+            <div className="prior-q-grid">
+              <span className="pq-item">EPS <b>${le.eps_actual.toFixed(2)}</b> <span className="pq-vs">vs ${le.eps_est.toFixed(2)}</span></span>
+              <span className={`pq-beat ${epsBeat ? "pq-beat-pos" : "pq-beat-neg"}`}>{epsPct >= 0 ? "+" : ""}{epsPct.toFixed(1)}%</span>
+              <span className="pq-item">Rev <b>{fmtBil(le.rev_actual_b)}</b> <span className="pq-vs">vs {fmtBil(le.rev_est_b)}</span></span>
+              <span className={`pq-beat ${revBeat ? "pq-beat-pos" : "pq-beat-neg"}`}>{revPct >= 0 ? "+" : ""}{revPct.toFixed(1)}%</span>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Streak + insider + political */}
       <div className="streak-row">
@@ -1157,11 +1208,26 @@ export default function App() {
     return () => clearInterval(id)
   }, [liveMode, finnhubKey, data, fetchLiveQuotes])
 
-  const sectors = useMemo(() => ["All", ...Array.from(new Set(data.map(d => d.sector))).sort()], [data])
+  // Dynamically classify each company's week based on today's calendar date,
+  // overriding whatever week field the JSON has hardcoded.
+  const classifiedData = useMemo(() => {
+    if (!data.length) return data
+    const today = new Date().toISOString().slice(0, 10)
+    const allDates = [...new Set(data.map(c => c.reporting_date))].sort()
+    const upcoming = allDates.filter(d => d >= today)
+    const firstDate = upcoming[0] ?? allDates[0]
+    const [monStr, friStr] = getCalendarWeekBounds(firstDate)
+    return data.map(c => ({
+      ...c,
+      week: (c.reporting_date >= monStr && c.reporting_date <= friStr ? 'current' : 'next') as 'current' | 'next'
+    }))
+  }, [data])
+
+  const sectors = useMemo(() => ["All", ...Array.from(new Set(classifiedData.map(d => d.sector))).sort()], [classifiedData])
 
   // Filter, then sort by conviction score, then rank
   const ranked = useMemo(() => {
-    const filtered = data.filter(item => {
+    const filtered = classifiedData.filter(item => {
       const wMatch = week === "both" ? true : item.week === week
       const sMatch = sector === "All" || item.sector === sector
       const cMatch = cap === "All" || item.cap === cap
@@ -1172,7 +1238,7 @@ export default function App() {
     return filtered
       .map(co => ({ ...co, _conviction: getConvictionScore(co) }))
       .sort((a, b) => b._conviction - a._conviction)
-  }, [data, week, sector, cap, timing, search])
+  }, [classifiedData, week, sector, cap, timing, search])
 
   const displayed = showAll ? ranked : ranked.slice(0, 20)
   const currentWeek = displayed.filter(x => x.week === "current")
@@ -1274,7 +1340,7 @@ export default function App() {
 
             {viewMode === "by-day" ? (
               <DayScheduleView
-                data={data}
+                data={classifiedData}
                 liveQuotes={liveQuotes}
                 onSelect={setSelected}
                 ranked={ranked}
@@ -1301,7 +1367,7 @@ export default function App() {
             {(week === "current" || week === "both") && currentWeek.length > 0 && (
               <div className="week-section">
                 <div className="section-header">
-                  <span className="section-title">📅 Current Week ({dateRangeLabel(currentWeek)})</span>
+                  <span className="section-title">📅 Current Week ({currentWeek[0] ? calendarWeekRange(currentWeek[0].reporting_date) : ''})</span>
                   <span className="section-count">{currentWeek.length} companies</span>
                 </div>
                 <div className="card-grid">
@@ -1351,7 +1417,7 @@ export default function App() {
               )}
             </div>
             <DayScheduleView
-              data={data}
+              data={classifiedData}
               liveQuotes={liveQuotes}
               onSelect={setSelected}
               ranked={ranked}
@@ -1359,7 +1425,7 @@ export default function App() {
           </>
         )}
 
-        {activeNav === "summary" && <SummaryPage data={data} />}
+        {activeNav === "summary" && <SummaryPage data={classifiedData} />}
 
         {activeNav === "golive" && (
           <GoLivePage finnhubKey={finnhubKey} setFinnhubKey={setFinnhubKey} liveMode={liveMode} setLiveMode={setLiveMode}

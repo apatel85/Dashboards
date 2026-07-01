@@ -343,6 +343,24 @@ input, select { font-family: inherit; }
 .day-co-move   { font-size: 10px; color: var(--amber); white-space: nowrap; }
 .day-co-price  { font-size: 10px; color: var(--muted); white-space: nowrap; }
 
+/* ── Company Card — Estimates & Prior Quarter ───────────────────────────────── */
+.est-row { display: flex; gap: 8px; margin-top: 10px; }
+.est-block { flex: 1; background: var(--panel3); border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; min-width: 0; }
+.est-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.est-value { font-size: 13px; font-weight: 800; margin-top: 2px; white-space: nowrap; }
+
+.prior-q-row { margin-top: 10px; background: var(--panel3); border: 1px solid var(--border); border-radius: 9px; padding: 9px 10px; }
+.prior-q-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.prior-q-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.yoy-badge { font-size: 11px; font-weight: 800; }
+.prior-q-grid { display: grid; grid-template-columns: 1fr auto; gap: 3px 8px; align-items: center; }
+.pq-item { font-size: 11px; color: var(--muted); }
+.pq-item b { color: var(--text); font-weight: 800; }
+.pq-vs { color: var(--muted); font-size: 10px; }
+.pq-beat { font-size: 11px; font-weight: 800; text-align: right; white-space: nowrap; }
+.pq-beat-pos { color: var(--green); }
+.pq-beat-neg { color: var(--red); }
+
 @media (max-width: 900px) {
   .app { flex-direction: column; }
   .sidebar { display: none; }
