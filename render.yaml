@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: congress-trade-tracker
+    runtime: python
+    rootDir: CongressTradeTracker
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 2 --bind 0.0.0.0:$PORT --timeout 120
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DB_PATH
+        value: output/master_trades.db
+    disk:
+      name: tradedb
+      mountPath: /opt/render/project/src/CongressTradeTracker/output
+      sizeGB: 1
+    healthCheckPath: /login
