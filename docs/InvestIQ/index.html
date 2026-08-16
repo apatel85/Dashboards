@@ -64,6 +64,14 @@ body{font-family:'Inter',sans-serif;background:#07070C;color:#F0F0FF;min-height:
 .content{padding:24px;flex:1}
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3)}
+/* ── ALERT BANNER ── */
+.alert-banner{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-radius:10px;margin-bottom:20px;font-size:12px;line-height:1.6}
+.alert-warn{background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.35);color:var(--warn)}
+.alert-info{background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.25);color:var(--accent)}
+.alert-ok{background:var(--live-soft);border:1px solid rgba(16,185,129,.2);color:var(--live)}
+.alert-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.alert-body strong{display:block;font-weight:700;margin-bottom:3px}
+/* ── STATS ── */
 .stats-band{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
 .stat-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px;transition:all .2s}
 .stat-card:hover{border-color:var(--border-b);transform:translateY(-1px)}
@@ -102,6 +110,7 @@ body{font-family:'Inter',sans-serif;background:#07070C;color:#F0F0FF;min-height:
 .chart-title{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px}
 .chart-sub{font-size:11px;color:var(--t3);margin-bottom:16px;font-family:var(--mono)}
 .chart-wrap{position:relative;height:220px}
+/* ── API GRID 3-col ── */
 .api-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
 .api-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden}
 .api-card::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);background-size:20px 20px;opacity:.4;pointer-events:none}
@@ -112,6 +121,7 @@ body{font-family:'Inter',sans-serif;background:#07070C;color:#F0F0FF;min-height:
 .status-connected{background:var(--live-soft);color:var(--live);border:1px solid rgba(16,185,129,.2)}
 .status-free{background:var(--accent-soft);color:var(--accent);border:1px solid rgba(99,102,241,.2)}
 .status-needs-key{background:rgba(245,158,11,.06);color:var(--warn);border:1px solid rgba(245,158,11,.2)}
+.status-error{background:rgba(239,68,68,.06);color:var(--neg);border:1px solid rgba(239,68,68,.25)}
 .api-desc{font-size:11px;color:var(--t2);line-height:1.5;margin-bottom:12px}
 .api-input-row{display:flex;gap:6px}
 .api-key-input{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-family:var(--mono);font-size:10px;color:var(--t1);outline:none}
@@ -214,8 +224,12 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
     </div>
   </div>
   <div class="content">
+
+    <!-- ══ DASHBOARD ══ -->
     <div class="view active" id="view-dashboard">
       <div class="section-header"><span class="section-title">Portfolio Overview</span><span class="rentcast-badge">&#9679; RentCast Live via Supabase</span></div>
+      <!-- Global API error banner -->
+      <div id="apiBanner" style="display:none"></div>
       <div id="syncSummaryBox" class="sync-summary-box"></div>
       <div class="stats-band">
         <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg Rent Estimate (LTR)</div><div class="stat-value" id="s-rent">—</div><div class="stat-delta" id="s-rent-delta">&nbsp;</div><div class="stat-sub">Source: RentCast AVM via Supabase</div></div>
@@ -239,6 +253,8 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
         <div class="three-col" id="propCards"></div>
       </div>
     </div>
+
+    <!-- ══ LIVE LISTINGS ══ -->
     <div class="view" id="view-search">
       <div class="section-header"><span class="section-title">Live Listings</span><span class="rentcast-badge">&#9679; RentCast &bull; Supabase</span></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;padding:16px;background:var(--s1);border:1px solid var(--border);border-radius:12px">
@@ -252,6 +268,8 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
         <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Address</th><th>City</th><th>Type</th><th class="num">Beds/Bath</th><th class="num">Sqft</th><th class="num">List Price</th><th class="num">LTR Rent/mo</th><th class="num">STR Rent/mo</th><th class="num">Cap Rate</th><th class="num">STR Occ</th><th class="num">DOM</th><th>Source</th></tr></thead><tbody id="searchTableBody"><tr><td colspan="12" style="text-align:center;padding:40px;color:var(--t3)">Sync 25 Markets to see live listings.</td></tr></tbody></table></div>
       </div>
     </div>
+
+    <!-- ══ MARKET INSIGHTS ══ -->
     <div class="view" id="view-insights">
       <div class="section-header"><span class="section-title">Market Insights</span><span class="rentcast-badge">&#9679; 79 Markets Scored</span></div>
       <div class="city-selector" id="citySelector"></div>
@@ -262,6 +280,8 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
       <div class="section-header"><span class="section-title">FMR 2BR Rent by Market</span></div>
       <div class="chart-panel" style="margin-bottom:28px"><div class="chart-wrap" style="height:240px"><canvas id="censusChart"></canvas></div></div>
     </div>
+
+    <!-- ══ STR vs LTR ══ -->
     <div class="view" id="view-compare">
       <div class="section-header"><span class="section-title">STR vs LTR Analysis</span></div>
       <div class="two-col">
@@ -281,8 +301,24 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
         </div>
       </div>
     </div>
+
+    <!-- ══ API SETUP ══ -->
     <div class="view" id="view-apisetup">
       <div class="section-header"><span class="section-title">Connected Data Sources</span><span class="rentcast-badge">&#9679; Supabase Live</span></div>
+
+      <!-- 403 / quota warning banner -->
+      <div id="apiSetupBanner" class="alert-banner alert-warn">
+        <span class="alert-icon">&#9888;</span>
+        <div class="alert-body">
+          <strong>HTTP 403 — RentCast API Forbidden / Quota Exceeded</strong>
+          Your API key is recognised but the request was rejected. Common causes:
+          <br>&bull; <strong>Plan limit reached</strong> — free tier allows 50 calls/month. Check <a href="https://app.rentcast.io/app" target="_blank" style="color:var(--warn)">app.rentcast.io &#8599;</a>
+          <br>&bull; <strong>Wrong endpoint access</strong> — your plan may not include the <code style="color:var(--t1)">/listings/sale</code> endpoint. Upgrade to a paid plan.
+          <br>&bull; <strong>IP restriction</strong> — some keys are locked to specific IPs. Verify in RentCast dashboard.
+          <br><span style="color:var(--t3);font-size:10px;margin-top:4px;display:block">Until resolved, the sync engine returns MODEL data (generated estimates). Values shown are statistically plausible but NOT live market prices.</span>
+        </div>
+      </div>
+
       <div class="api-grid" id="apiGrid"></div>
       <div class="section-header"><span class="section-title">Data Pipeline</span></div>
       <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px;font-size:12px;color:var(--t2);line-height:1.8">
@@ -293,6 +329,7 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
         </div>
       </div>
     </div>
+
   </div>
 </div>
 </div>
@@ -302,28 +339,52 @@ var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 var EDGE_BASE=SUPABASE_URL+'/functions/v1';
 var sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 var PROPERTIES=[];var CITY_SCORES=[];var currentMode='all';var selectedCity='';var charts={};var syncRunning=false;
+var LAST_SYNC_STATUS=null; // 'ok' | '401' | '403' | 'model'
+
 document.addEventListener('DOMContentLoaded',function(){loadAllData();renderApiGrid();calcBreakeven();});
+
+/* ─────────────── Banner helpers ─────────────── */
+function showApiBanner(code){
+  var b=document.getElementById('apiBanner');
+  if(!b)return;
+  var msgs={
+    '403':'<div class="alert-banner alert-warn"><span class="alert-icon">&#9888;</span><div class="alert-body"><strong>HTTP 403 — RentCast Plan Limit / Forbidden</strong> Your key is valid but the request was blocked. Check your <a href="https://app.rentcast.io/app" target="_blank" style="color:var(--warn)">RentCast plan &amp; quota &#8599;</a>. Data shown below is MODEL (generated estimates).</div></div>',
+    '401':'<div class="alert-banner alert-warn"><span class="alert-icon">&#9888;</span><div class="alert-body"><strong>HTTP 401 — RentCast API Key Missing or Invalid</strong> Add your key in Supabase → Edge Functions → Secrets as <code>RENTCAST_API_KEY</code>. <a href="https://app.rentcast.io/app" target="_blank" style="color:var(--warn)">Get key &#8599;</a></div></div>',
+    'model':'<div class="alert-banner alert-info"><span class="alert-icon">&#9432;</span><div class="alert-body"><strong>&#9675; MODEL Data Active</strong> Listings are statistically generated. Sync with a valid RentCast key to pull live market data.</div></div>'
+  };
+  if(msgs[code]){b.innerHTML=msgs[code];b.style.display='block';}else{b.style.display='none';}
+}
+
 async function loadAllData(){
   document.getElementById('activeSourceCount').textContent='Loading...';
   await Promise.all([loadProperties(),loadCityScores()]);
   if(PROPERTIES.length>0){showDashboardContent();buildCharts();renderPropCards();buildCompareChart();updateKPIs();}else{showEmptyState();}
   renderSearchTable();renderInsights();
   var liveCount=PROPERTIES.filter(function(p){return p.source==='rentcast_live';}).length;
+  var modelCount=PROPERTIES.filter(function(p){return p.source==='generated'||p.source==='model';}).length;
   var now=new Date();
   document.getElementById('activeSourceCount').textContent=liveCount>0?liveCount+' live listings \u2022 '+now.toLocaleTimeString():'No data yet — click Sync';
+  if(LAST_SYNC_STATUS==='403')showApiBanner('403');
+  else if(LAST_SYNC_STATUS==='401')showApiBanner('401');
+  else if(modelCount>0&&liveCount===0)showApiBanner('model');
+  else showApiBanner(null);
 }
+
 function showEmptyState(){document.getElementById('emptyDashboard').style.display='block';document.getElementById('dashboardContent').style.display='none';}
 function showDashboardContent(){document.getElementById('emptyDashboard').style.display='none';document.getElementById('dashboardContent').style.display='block';}
+
 async function loadProperties(){
-  var res=await sb.from('property_leads').select('id,address,city,state_code,zipcode,property_type,bedrooms,bathrooms,sqft,list_price,estimated_rent_ltr,estimated_rent_str,estimated_cap_rate,estimated_str_occ,reno_score,condition_grade,days_on_market,zillow_url,mls_number,source,fetched_at').not('source','in','("demo","generated","sample")').order('estimated_cap_rate',{ascending:false}).limit(500);
+  var res=await sb.from('property_leads').select('id,address,city,state_code,zipcode,property_type,bedrooms,bathrooms,sqft,list_price,estimated_rent_ltr,estimated_rent_str,estimated_cap_rate,estimated_str_occ,reno_score,condition_grade,days_on_market,zillow_url,mls_number,source,fetched_at').order('estimated_cap_rate',{ascending:false}).limit(500);
   if(res.error){console.error('property_leads error',res.error);return;}
   PROPERTIES=res.data||[];
 }
+
 async function loadCityScores(){
   var res=await sb.from('city_scores').select('metro_name,state_code,rent_yield_score,affordability_score,str_demand_score,composite_score,score_tier,trend,raw_fmr_2br,raw_median_price,raw_str_occ').order('composite_score',{ascending:false}).limit(79);
   if(res.error){console.error('city_scores error',res.error);return;}
   CITY_SCORES=res.data||[];renderCitySelector();
 }
+
 async function triggerFullSync(){
   if(syncRunning)return;
   syncRunning=true;
@@ -333,7 +394,12 @@ async function triggerFullSync(){
   try{
     var resp=await fetch(EDGE_BASE+'/sync-rentcast-listings',{method:'GET',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY}});
     var data=await resp.json();
-    if(data.total_inserted>=0){
+    /* detect HTTP error codes bubbled up in the response body */
+    var httpErr=data.http_status||data.status||null;
+    if(httpErr===403||String(data.error||'').includes('403')){LAST_SYNC_STATUS='403';prog.innerHTML='<span style="color:var(--neg)">&#9888; HTTP 403 — Plan limit/Forbidden. Check RentCast quota.</span>';lbl.textContent='Sync 25 Markets';}
+    else if(httpErr===401||String(data.error||'').includes('401')){LAST_SYNC_STATUS='401';prog.innerHTML='<span style="color:var(--neg)">&#9888; HTTP 401 — Invalid or missing RENTCAST_API_KEY.</span>';lbl.textContent='Sync 25 Markets';}
+    else if(data.total_inserted>=0){
+      LAST_SYNC_STATUS='ok';
       prog.innerHTML='\u2713 Sync complete \u2022 '+data.total_inserted+' listings across '+data.markets_processed+' markets';
       lbl.textContent='Sync 25 Markets';
       showSyncSummary(data);
@@ -342,13 +408,20 @@ async function triggerFullSync(){
   }catch(e){prog.textContent='Error: '+String(e);}
   finally{btn.disabled=false;icon.style.animation='';syncRunning=false;}
 }
+
 function showSyncSummary(data){
   var box=document.getElementById('syncSummaryBox');
   if(!data.summary||!data.summary.length){box.style.display='none';return;}
-  var rows=data.summary.map(function(s){var sc=s.inserted>0?'green':'gold';var note=s.error?'<span style="color:var(--neg)">'+s.error+'</span>':(s.note||'OK');return '<tr><td>'+s.city+', '+s.state+'</td><td class="'+sc+'">'+s.inserted+'</td><td class="gold">'+(s.avg_cap_rate||'\u2014')+'%</td><td class="gold">'+(s.top_cap_rate||'\u2014')+'%</td><td>'+s.fetched+'</td><td>'+note+'</td></tr>';}).join('');
+  var rows=data.summary.map(function(s){
+    var sc=s.inserted>0?'green':'gold';
+    var srcLabel=s.fetched==='generated'?'<span class="source-model">&#9675; MODEL</span>':'<span class="source-live">&#9679; LIVE</span>';
+    var note=s.error?'<span style="color:var(--neg)">'+s.error+'</span>':(s.note||'OK');
+    return '<tr><td>'+s.city+', '+s.state+'</td><td class="'+sc+'">'+s.inserted+'</td><td class="gold">'+(s.avg_cap_rate||'\u2014')+'%</td><td class="gold">'+(s.top_cap_rate||'\u2014')+'%</td><td>'+srcLabel+'</td><td>'+note+'</td></tr>';
+  }).join('');
   box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:var(--live)">\u2713 RentCast Sync Complete \u2014 '+data.total_inserted+' listings inserted</span><span style="font-family:var(--mono);font-size:10px;color:var(--t3)">'+new Date(data.synced_at).toLocaleString()+'</span></div><table><thead><tr><th>Market</th><th>Inserted</th><th>Avg Cap</th><th>Top Cap</th><th>Source</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>';
   box.style.display='block';
 }
+
 function updateKPIs(){
   if(!PROPERTIES.length)return;
   var avgRent=Math.round(PROPERTIES.reduce(function(s,p){return s+parseFloat(p.estimated_rent_ltr||0);},0)/PROPERTIES.length);
@@ -373,6 +446,7 @@ function updateKPIs(){
   document.getElementById('calcLTR').value=avgRent;
   calcBreakeven();
 }
+
 function renderPropCards(){
   var c=document.getElementById('propCards');
   if(!PROPERTIES.length){c.innerHTML='';return;}
@@ -384,18 +458,21 @@ function renderPropCards(){
     var ltrRent=parseFloat(p.estimated_rent_ltr||0);var strRent=parseFloat(p.estimated_rent_str||0);var cap=parseFloat(p.estimated_cap_rate||0);var occ=parseFloat(p.estimated_str_occ||0);var price=parseFloat(p.list_price||0);
     var capClass=cap>=8?'delta-pos':cap>=6?'gold':'delta-neg';
     var z=p.zillow_url||'https://www.zillow.com/homes/'+encodeURIComponent((p.address||'')+' '+(p.city||'')+' '+(p.state_code||''))+'_rb/';
-    var srcBadge=p.source==='rentcast_live'?'<span class="source-live">&#9679; LIVE</span>':'<span class="source-model">&#9675; MODEL</span>';
+    var isLive=p.source==='rentcast_live';
+    var srcBadge=isLive?'<span class="source-live">&#9679; LIVE</span>':'<span class="source-model">&#9675; MODEL</span>';
     return '<div class="property-card"><div class="prop-header"><div><div class="prop-address">'+p.address+'</div><div class="prop-city">'+p.city+', '+p.state_code+(p.zipcode?' '+p.zipcode:'')+' &bull; '+p.property_type+'</div></div>'+srcBadge+'</div><div class="prop-price-row"><span class="prop-price">$'+Number(price).toLocaleString()+'</span><span class="prop-delta delta-pos">&#9650; Cap '+cap+'%</span></div><div class="prop-metrics"><div class="metric-chip"><div class="metric-val">$'+Number(ltrRent).toLocaleString()+'</div><div class="metric-lbl">LTR/mo</div></div><div class="metric-chip"><div class="metric-val '+capClass+'">'+cap+'%</div><div class="metric-lbl">Cap Rate</div></div><div class="metric-chip live-chip"><div class="metric-val">'+occ+'%</div><div class="metric-lbl">STR Occ</div></div></div><div class="prop-footer"><div class="prop-links"><a class="prop-link primary" href="'+z+'" target="_blank">Zillow &#8599;</a><span style="font-family:var(--mono);font-size:10px;color:var(--live)">STR $'+Number(strRent).toLocaleString()+'/mo</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px"><span style="font-family:var(--mono);font-size:10px;color:var(--t3)">'+p.bedrooms+'BR/'+p.bathrooms+'BA &bull; '+Number(p.sqft||0).toLocaleString()+' sqft</span></div></div></div>';
   }).join('');
 }
+
 function setMode(mode,btn){currentMode=mode;document.querySelectorAll('.mode-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderPropCards();}
+
 function renderSearchTable(data){
   var body=document.getElementById('searchTableBody');
   var rows=data!==undefined?data:PROPERTIES;
   document.getElementById('tableCount').textContent=rows.length+' listings';
   var liveRows=rows.filter(function(p){return p.source==='rentcast_live';});
   var lbadge=document.getElementById('liveCountBadge');
-  if(liveRows.length>0){lbadge.textContent='&#9679; '+liveRows.length+' LIVE';lbadge.style.display='inline-flex';}else{lbadge.style.display='none';}
+  if(liveRows.length>0){lbadge.innerHTML='&#9679; '+liveRows.length+' LIVE';lbadge.style.display='inline-flex';}else{lbadge.style.display='none';}
   if(!rows.length){body.innerHTML='<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--t3)">No listings. Click Sync 25 Markets in the sidebar.</td></tr>';return;}
   body.innerHTML=rows.map(function(p){
     var cap=parseFloat(p.estimated_cap_rate||0);var cc=cap>=8?'pos':cap>=6?'gold':'neg';
@@ -403,6 +480,7 @@ function renderSearchTable(data){
     return '<tr><td class="addr">'+p.address+'</td><td style="font-family:var(--mono);font-size:11px;white-space:nowrap">'+p.city+', '+p.state_code+'</td><td>'+p.property_type+'</td><td class="num">'+p.bedrooms+'BR/'+p.bathrooms+'BA</td><td class="num">'+Number(p.sqft||0).toLocaleString()+'</td><td class="gold">$'+Number(p.list_price).toLocaleString()+'</td><td class="gold">$'+Number(p.estimated_rent_ltr).toLocaleString()+'</td><td style="color:var(--live);font-family:var(--mono);font-size:11px;text-align:right">$'+Number(p.estimated_rent_str||0).toLocaleString()+'</td><td class="'+cc+'">'+cap+'%</td><td class="num" style="color:var(--live)">'+p.estimated_str_occ+'%</td><td class="num">'+(p.days_on_market||0)+'d</td><td>'+srcCell+'</td></tr>';
   }).join('');
 }
+
 function filterTable(){
   var city=document.getElementById('filterCity').value.toLowerCase();
   var type=document.getElementById('filterType').value;
@@ -413,6 +491,7 @@ function filterTable(){
   if(beds){var b=parseInt(beds);rows=rows.filter(function(p){return b>=4?parseInt(p.bedrooms)>=4:parseInt(p.bedrooms)===b;});}
   renderSearchTable(rows);
 }
+
 function globalSearchHandler(){
   var v=document.getElementById('globalSearch').value.toLowerCase();
   if(!v)return;
@@ -420,13 +499,16 @@ function globalSearchHandler(){
   document.getElementById('filterCity').value=v;
   filterTable();
 }
+
 function renderCitySelector(){
   var div=document.getElementById('citySelector');
   var cities=CITY_SCORES.slice(0,10).map(function(c){return c.metro_name+', '+c.state_code;});
   if(!selectedCity&&cities.length)selectedCity=cities[0];
-  div.innerHTML=cities.map(function(c){return '<button class="city-btn'+(c===selectedCity?' active':'')+'"\ onclick="selectCity(\'' +c.replace(/'/g,"\\'")+ '\',this)">'+c+'</button>';}).join('');
+  div.innerHTML=cities.map(function(c){return '<button class="city-btn'+(c===selectedCity?' active':'')+'" onclick="selectCity(\''+c.replace(/'/g,"\\'")+ '\',this)">'+c+'</button>';}).join('');
 }
+
 function selectCity(city,btn){selectedCity=city;document.querySelectorAll('.city-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderInsights();}
+
 function renderInsights(){
   var top5=CITY_SCORES.slice(0,5);
   document.getElementById('nbhdList').innerHTML=top5.length?top5.map(function(n,i){var trend=n.trend||'\u2014';var tc=trend==='rising'?'var(--pos)':trend==='cooling'?'var(--neg)':'var(--t3)';return '<div class="nbhd-row"><span class="nbhd-rank">'+(i+1)+'</span><span class="nbhd-name">'+n.metro_name+', '+n.state_code+'</span><span class="nbhd-rate">'+parseFloat(n.composite_score||0).toFixed(1)+'</span><span class="nbhd-badge" style="color:'+tc+';border-color:'+tc+'">'+n.score_tier+' '+trend+'</span></div>';}).join(''):'<div style="color:var(--t3);font-size:12px;padding:16px">No market scores yet.</div>';
@@ -439,6 +521,7 @@ function renderInsights(){
   var fmr=CITY_SCORES.slice(0,10).map(function(c){return parseFloat(c.raw_fmr_2br||0);});
   if(cl.length)charts.census=new Chart(document.getElementById('censusChart').getContext('2d'),{type:'bar',data:{labels:cl,datasets:[{label:'FMR 2BR ($)',data:fmr,backgroundColor:'rgba(245,158,11,.5)',borderColor:'#F59E0B',borderWidth:1}]},options:Object.assign(cd(),{indexAxis:'y',scales:{x:ys('$','bottom',800,2100)}})});
 }
+
 function buildCharts(){
   if(charts.rent)charts.rent.destroy();if(charts.type)charts.type.destroy();
   var types=['Single Family','Condo','Multi Family','Townhouse'];
@@ -448,6 +531,7 @@ function buildCharts(){
   var typeCounts=types.map(function(t){return PROPERTIES.filter(function(p){return p.property_type===t;}).length;});
   charts.type=new Chart(document.getElementById('typeChart').getContext('2d'),{type:'doughnut',data:{labels:types,datasets:[{data:typeCounts,backgroundColor:['#6366F1','#10B981','#F59E0B','#8B5CF6'],borderColor:'#0F0F1A',borderWidth:3,hoverOffset:6}]},options:Object.assign(cd(),{cutout:'65%'})});
 }
+
 function buildCompareChart(){
   if(charts.compare)charts.compare.destroy();
   var types=['Single Family','Condo','Multi Family','Townhouse'];
@@ -455,11 +539,39 @@ function buildCompareChart(){
   var str=types.map(function(t){var ps=PROPERTIES.filter(function(p){return p.property_type===t;});return ps.length?Math.round(ps.reduce(function(s,p){return s+parseFloat(p.estimated_rent_str||0);},0)/ps.length*12):0;});
   charts.compare=new Chart(document.getElementById('compareChart').getContext('2d'),{type:'bar',data:{labels:types,datasets:[{label:'STR Annual Revenue',data:str,backgroundColor:'rgba(16,185,129,.5)',borderColor:'#10B981',borderWidth:1},{label:'LTR Annual Revenue',data:ltr,backgroundColor:'rgba(99,102,241,.3)',borderColor:'#6366F1',borderWidth:1}]},options:Object.assign(cd(),{scales:{y:ys('$','left',0,60000)}})});
 }
+
 function calcBreakeven(){var ltr=parseFloat(document.getElementById('calcLTR').value)||1800;var adr=parseFloat(document.getElementById('calcADR').value)||120;document.getElementById('breakeven').textContent=(ltr/(adr*365/12)*100).toFixed(1)+'%';}
+
 function showView(id,el){document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});document.getElementById('view-'+id).classList.add('active');document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});if(el)el.classList.add('active');var titles={dashboard:'Dashboard',search:'Live Listings',insights:'Market Insights',compare:'STR vs LTR',apisetup:'API Setup'};document.getElementById('pageTitle').textContent=titles[id]||id;if(id==='insights')renderInsights();if(id==='compare')buildCompareChart();}
-var API_SOURCES=[{name:'Supabase',desc:'Live backend. property_leads, city_scores.',quota:'Active',key:'supabase',status:'connected',placeholder:'Connected'},{name:'RentCast API',desc:'Live sale listings + rent AVM.',quota:'Managed via Supabase',key:'rentcast',status:'connected',placeholder:'Managed via Supabase'},{name:'HUD FMR',desc:'Federal Fair Market Rents by metro.',quota:'Free - Register',key:'hud_fmr_key',status:'needs-key',placeholder:'Paste HUD API token...',link:'https://www.huduser.gov/hudapi/public/register'}];
-function renderApiGrid(){var grid=document.getElementById('apiGrid');var sm={'connected':'status-connected','free':'status-free','needs-key':'status-needs-key'};var sl={'connected':'&#9679; CONNECTED','free':'&#9679; FREE','needs-key':'&#9675; NEEDS KEY'};grid.innerHTML=API_SOURCES.map(function(s){var stored=localStorage.getItem('iq_'+s.key)||'';return '<div class="api-card"><div class="api-card-inner"><div class="api-card-header"><span class="api-name">'+s.name+'</span><span class="api-status-badge '+sm[s.status]+'" id="badge-'+s.key+'">'+sl[s.status]+'</span></div><div class="api-desc">'+s.desc+'</div><div class="api-input-row"><input class="api-key-input" id="input-'+s.key+'" placeholder="'+s.placeholder+'" value="'+stored+'"'+(s.status==='connected'||s.status==='free'?' readonly':'')+'>  <button class="api-test-btn" onclick="testConnection(\'' +s.key+ '\')" >Test</button></div><div class="api-quota">'+s.quota+(s.link?' &bull; <a href="'+s.link+'" target="_blank" style="color:var(--accent)">Register &rarr;</a>':'')+'</div></div></div>';}).join('');}
-function testConnection(key){var badge=document.getElementById('badge-'+key);badge.textContent='TESTING...';badge.className='api-status-badge status-needs-key';setTimeout(function(){var ok=key==='supabase'||key==='rentcast'||key==='census_key'||key==='airdna_key';badge.innerHTML=ok?'&#9679; CONNECTED':'&#9675; NEEDS KEY';badge.className='api-status-badge '+(ok?'status-connected':'status-needs-key');},800);}
+
+/* ── 6 API cards ── */
+var API_SOURCES=[
+  {name:'Supabase',desc:'Live backend. Tables: property_leads, city_scores, sync logs.',quota:'Active — kootfwwyhfstyunydcso',key:'supabase',status:'connected',placeholder:'Connected'},
+  {name:'RentCast API',desc:'Live sale listings, rent AVM, STR occupancy. Key stored as Supabase secret.',quota:'Managed via Supabase Edge Secrets',key:'rentcast',status:'connected',placeholder:'Managed via Supabase'},
+  {name:'HUD FMR',desc:'Federal Fair Market Rents by metro area. Free with registration.',quota:'Free — Register at HUD',key:'hud_fmr_key',status:'needs-key',placeholder:'Paste HUD API token...',link:'https://www.huduser.gov/hudapi/public/register'},
+  {name:'Walk Score',desc:'Walkability, transit, and bike scores per address.',quota:'Free tier: 5,000 calls/day',key:'walkscore_key',status:'needs-key',placeholder:'Paste Walk Score API key...',link:'https://www.walkscore.com/professional/api.php'},
+  {name:'Zillow / MLS',desc:'Supplemental listing data and Zestimate price estimates.',quota:'Via RapidAPI — paid plan required',key:'zillow_key',status:'needs-key',placeholder:'Paste RapidAPI Zillow key...',link:'https://rapidapi.com/apimaker/api/zillow-com1'},
+  {name:'AirDNA',desc:'STR analytics: ADR, occupancy, RevPAR by market.',quota:'Paid plan — contact AirDNA',key:'airdna_key',status:'needs-key',placeholder:'Paste AirDNA API key...',link:'https://www.airdna.co/'}
+];
+
+function renderApiGrid(){
+  var grid=document.getElementById('apiGrid');
+  var sm={'connected':'status-connected','free':'status-free','needs-key':'status-needs-key','error':'status-error'};
+  var sl={'connected':'&#9679; CONNECTED','free':'&#9679; FREE','needs-key':'&#9675; NEEDS KEY','error':'&#9888; 403 ERROR'};
+  /* mark rentcast as 403 if last sync hit it */
+  var sources=API_SOURCES.map(function(s){
+    if(s.key==='rentcast'&&LAST_SYNC_STATUS==='403')return Object.assign({},s,{status:'error'});
+    if(s.key==='rentcast'&&LAST_SYNC_STATUS==='401')return Object.assign({},s,{status:'needs-key'});
+    return s;
+  });
+  grid.innerHTML=sources.map(function(s){
+    var stored=localStorage.getItem('iq_'+s.key)||'';
+    return '<div class="api-card"><div class="api-card-inner"><div class="api-card-header"><span class="api-name">'+s.name+'</span><span class="api-status-badge '+sm[s.status]+'" id="badge-'+s.key+'">'+sl[s.status]+'</span></div><div class="api-desc">'+s.desc+'</div><div class="api-input-row"><input class="api-key-input" id="input-'+s.key+'" placeholder="'+s.placeholder+'" value="'+stored+'"'+(s.status==='connected'?' readonly':'')+'>  <button class="api-test-btn" onclick="testConnection(\''+s.key+'\')">Test</button></div><div class="api-quota">'+s.quota+(s.link?' &bull; <a href="'+s.link+'" target="_blank" style="color:var(--accent)">Register &rarr;</a>':'')+'</div></div></div>';
+  }).join('');
+}
+
+function testConnection(key){var badge=document.getElementById('badge-'+key);badge.textContent='TESTING...';badge.className='api-status-badge status-needs-key';setTimeout(function(){var ok=key==='supabase'||key==='rentcast';badge.innerHTML=ok?'&#9679; CONNECTED':'&#9675; NEEDS KEY';badge.className='api-status-badge '+(ok?'status-connected':'status-needs-key');},800);}
+
 var CC={gold:'#F59E0B',accent:'#6366F1',live:'#10B981',t3:'#606080',border:'#1E1E30',bg:'#0F0F1A'};
 function cd(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:CC.t3,font:{size:10,family:'JetBrains Mono'},boxWidth:10,padding:12}},tooltip:{backgroundColor:CC.bg,titleColor:'#F0F0FF',bodyColor:CC.t3,borderColor:CC.border,borderWidth:1}},animation:{duration:600,easing:'easeOutQuart'}};}
 function ys(p,pos,mn,mx){return{position:pos,grid:{color:'rgba(30,30,48,.6)'},ticks:{color:CC.t3,font:{size:9,family:'JetBrains Mono'},callback:function(v){return p==='$'?'$'+v:v+p;}},min:mn,max:mx};}
