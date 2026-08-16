@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>InvestIQ Live — Real Estate Intelligence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,17 +38,18 @@ body{font-family:'Inter',sans-serif;background:#07070C;color:#F0F0FF;min-height:
 .nav-item.active{background:var(--accent-soft);color:var(--accent);border-left:2px solid var(--accent);margin-left:6px;padding-left:14px}
 .nav-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
 .sidebar-bottom{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
-.api-status-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s2);border-radius:8px;border:1px solid var(--border);margin-bottom:8px}
+.api-status-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s2);border-radius:8px;border:1px solid var(--border);margin-bottom:10px}
 .api-dot{width:7px;height:7px;border-radius:50%;background:var(--live);animation:pulse 2s infinite;flex-shrink:0}
 @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 var(--live-glow)}50%{opacity:.7;box-shadow:0 0 0 5px transparent}}
-.api-status-text{font-family:var(--mono);font-size:10px;color:var(--live);line-height:1.3}
-.api-status-text small{display:block;color:var(--t3);font-size:9px}
-.sync-btn{width:100%;background:var(--accent);border:none;border-radius:8px;padding:9px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;letter-spacing:.04em}
-.sync-btn:hover{background:var(--accent-dim);box-shadow:0 0 12px var(--accent-glow)}
-.sync-btn:disabled{background:var(--s3);color:var(--t3);cursor:not-allowed}
-.sync-progress{margin-top:8px;font-family:var(--mono);font-size:9px;color:var(--t3);display:none;line-height:1.6}
+.api-status-text{font-family:var(--mono);font-size:10px;color:var(--live);line-height:1.4}
+.api-status-text small{display:block;color:var(--t3);font-size:9px;margin-top:1px}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.sync-btn{width:100%;background:var(--accent);border:none;border-radius:8px;padding:10px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;letter-spacing:.04em;box-shadow:0 0 20px var(--accent-glow)}
+.sync-btn:hover{background:var(--accent-dim);box-shadow:0 0 24px rgba(99,102,241,.4)}
+.sync-btn:disabled{background:var(--s3);color:var(--t3);cursor:not-allowed;box-shadow:none}
+.sync-progress{margin-top:8px;font-family:var(--mono);font-size:9px;color:var(--t3);display:none;line-height:1.6;word-break:break-word}
 .main-wrap{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
-.topbar{height:56px;background:rgba(10,10,18,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar{height:56px;background:rgba(10,10,18,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;justify-content:space-between;position:sticky;top:0;z-index:50}
 .topbar-left{display:flex;align-items:center;gap:12px}
 .page-title{font-size:16px;font-weight:600;color:var(--t1)}
 .breadcrumb{font-size:12px;color:var(--t3)}
@@ -79,7 +83,6 @@ body{font-family:'Inter',sans-serif;background:#07070C;color:#F0F0FF;min-height:
 .prop-address{font-size:14px;font-weight:600;color:var(--t1);line-height:1.3}
 .prop-city{font-size:11px;color:var(--t3);margin-top:2px;font-family:var(--mono)}
 .prop-badge{background:var(--live-soft);border:1px solid rgba(16,185,129,.2);border-radius:4px;padding:2px 8px;font-family:var(--mono);font-size:9px;color:var(--live);white-space:nowrap;flex-shrink:0}
-.prop-badge.model{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2);color:var(--warn)}
 .prop-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
 .prop-price{font-size:22px;font-weight:300;color:var(--gold);letter-spacing:-.03em}
 .prop-delta{font-family:var(--mono);font-size:11px}
@@ -158,6 +161,11 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
 .sync-summary-box td{padding:5px 8px;color:var(--t2);font-family:var(--mono)}
 .sync-summary-box td.green{color:var(--live)}
 .sync-summary-box td.gold{color:var(--gold)}
+.empty-state{text-align:center;padding:60px 20px;color:var(--t3)}
+.empty-state .icon{font-size:48px;margin-bottom:16px;opacity:.4}
+.empty-state h3{font-size:16px;font-weight:600;color:var(--t2);margin-bottom:8px}
+.empty-state p{font-size:13px;line-height:1.6;max-width:320px;margin:0 auto 20px}
+.empty-cta{background:var(--accent);border:none;border-radius:8px;padding:10px 20px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--void)}
 ::-webkit-scrollbar-thumb{background:var(--border-b);border-radius:4px}
@@ -182,10 +190,13 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
   <div class="sidebar-bottom">
     <div class="api-status-row">
       <div class="api-dot"></div>
-      <div class="api-status-text">SUPABASE + RENTCAST LIVE<small id="activeSourceCount">Loading data...</small></div>
+      <div class="api-status-text">SUPABASE + RENTCAST LIVE
+        <small id="activeSourceCount">Click Sync to load markets</small>
+      </div>
     </div>
     <button class="sync-btn" id="syncBtn" onclick="triggerFullSync()">
-      <span id="syncBtnIcon">&#8635;</span> <span id="syncBtnLabel">Sync 25 Markets</span>
+      <span id="syncBtnIcon" style="font-size:16px">&#8635;</span>
+      <span id="syncBtnLabel">Sync 25 Markets</span>
     </button>
     <div class="sync-progress" id="syncProgress"></div>
   </div>
@@ -208,18 +219,26 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
       <div class="section-header"><span class="section-title">Portfolio Overview</span><span class="rentcast-badge">&#9679; RentCast Live via Supabase</span></div>
       <div id="syncSummaryBox" class="sync-summary-box"></div>
       <div class="stats-band">
-        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg Rent Estimate (LTR)</div><div class="stat-value" id="s-rent"><div class="skeleton"></div></div><div class="stat-delta delta-pos" id="s-rent-delta">&nbsp;</div><div class="stat-sub">Source: RentCast AVM via Supabase</div></div>
-        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg Cap Rate</div><div class="stat-value indigo" id="s-cap"><div class="skeleton"></div></div><div class="stat-delta delta-pos" id="s-cap-delta">&nbsp;</div><div class="stat-sub">Blended live listings</div></div>
-        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg STR Occupancy</div><div class="stat-value" id="s-occ"><div class="skeleton"></div></div><div class="stat-delta delta-neg" id="s-occ-delta">&nbsp;</div><div class="stat-sub">Source: RentCast STR data</div></div>
-        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Live Listings Tracked</div><div class="stat-value indigo" id="s-props"><div class="skeleton"></div></div><div class="stat-delta" style="color:var(--t3)" id="s-props-delta">&nbsp;</div><div class="stat-sub">Active in Supabase DB</div></div>
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg Rent Estimate (LTR)</div><div class="stat-value" id="s-rent">—</div><div class="stat-delta" id="s-rent-delta">&nbsp;</div><div class="stat-sub">Source: RentCast AVM via Supabase</div></div>
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg Cap Rate</div><div class="stat-value indigo" id="s-cap">—</div><div class="stat-delta" id="s-cap-delta">&nbsp;</div><div class="stat-sub">Blended live listings</div></div>
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg STR Occupancy</div><div class="stat-value" id="s-occ">—</div><div class="stat-delta" id="s-occ-delta">&nbsp;</div><div class="stat-sub">Source: RentCast STR data</div></div>
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Live Listings Tracked</div><div class="stat-value indigo" id="s-props">0</div><div class="stat-delta" id="s-props-delta"><span style="color:var(--warn)">Click Sync 25 Markets &#8595;</span></div><div class="stat-sub">Active in Supabase DB</div></div>
       </div>
-      <div class="section-header"><span class="section-title">Rent Trend vs Cap Rate</span></div>
-      <div class="two-col">
-        <div class="chart-panel"><div class="chart-title">Avg LTR Rent vs STR Rent by Property Type</div><div class="chart-sub">Live data from RentCast API &bull; Supabase property_leads</div><div class="chart-wrap"><canvas id="rentChart"></canvas></div></div>
-        <div class="chart-panel"><div class="chart-title">Distribution by Property Type</div><div class="chart-sub">Active listings breakdown</div><div class="chart-wrap"><canvas id="typeChart"></canvas></div></div>
+      <div id="emptyDashboard" class="empty-state">
+        <div class="icon">&#128202;</div>
+        <h3>No live data yet</h3>
+        <p>Click <strong style="color:var(--accent)">Sync 25 Markets</strong> in the sidebar to pull real listings from RentCast across 25 top rental markets.</p>
+        <button class="empty-cta" onclick="triggerFullSync()">&#8635; Sync 25 Markets Now</button>
       </div>
-      <div class="section-header"><span class="section-title">Top Live Listings</span><div class="mode-toggle"><button class="mode-btn active" onclick="setMode('all',this)">All</button><button class="mode-btn" onclick="setMode('ltr',this)">Best LTR</button><button class="mode-btn" onclick="setMode('str',this)">Best STR</button></div></div>
-      <div class="three-col" id="propCards"><div class="skeleton" style="height:180px"></div><div class="skeleton" style="height:180px"></div><div class="skeleton" style="height:180px"></div></div>
+      <div id="dashboardContent" style="display:none">
+        <div class="section-header"><span class="section-title">Rent Trend vs Cap Rate</span></div>
+        <div class="two-col">
+          <div class="chart-panel"><div class="chart-title">Avg LTR Rent vs STR Rent by Property Type</div><div class="chart-sub">Live data from RentCast API &bull; Supabase property_leads</div><div class="chart-wrap"><canvas id="rentChart"></canvas></div></div>
+          <div class="chart-panel"><div class="chart-title">Distribution by Property Type</div><div class="chart-sub">Active listings breakdown</div><div class="chart-wrap"><canvas id="typeChart"></canvas></div></div>
+        </div>
+        <div class="section-header"><span class="section-title">Top Live Listings</span><div class="mode-toggle"><button class="mode-btn active" onclick="setMode('all',this)">All</button><button class="mode-btn" onclick="setMode('ltr',this)">Best LTR</button><button class="mode-btn" onclick="setMode('str',this)">Best STR</button></div></div>
+        <div class="three-col" id="propCards"></div>
+      </div>
     </div>
     <!-- LIVE LISTINGS VIEW -->
     <div class="view" id="view-search">
@@ -228,12 +247,11 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
         <input class="search-box" style="width:200px" placeholder="City or ZIP code" id="filterCity" oninput="filterTable()">
         <select id="filterType" onchange="filterTable()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--t1);font-size:12px;outline:none"><option value="">All Types</option><option>Single Family</option><option>Multi Family</option><option>Condo</option><option>Townhouse</option></select>
         <select id="filterBeds" onchange="filterTable()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--t1);font-size:12px;outline:none"><option value="">Any Beds</option><option value="1">1 BR</option><option value="2">2 BR</option><option value="3">3 BR</option><option value="4">4+ BR</option></select>
-        <select id="filterSource" onchange="filterTable()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--t1);font-size:12px;outline:none"><option value="">All Sources</option><option value="rentcast_live">RentCast Live</option></select>
         <button onclick="filterTable()" style="background:var(--accent);border:none;border-radius:8px;padding:7px 16px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Search</button>
       </div>
       <div class="table-panel">
-        <div class="table-header-row"><span class="section-title">Results</span><div style="display:flex;gap:8px;align-items:center"><span class="tooltip-badge" id="tableCount">Loading...</span><span id="liveCountBadge" class="source-live" style="display:none">&#9679; LIVE</span></div></div>
-        <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Address</th><th>City</th><th>Type</th><th class="num">Beds/Bath</th><th class="num">Sqft</th><th class="num">List Price</th><th class="num">LTR Rent/mo</th><th class="num">STR Rent/mo</th><th class="num">Cap Rate</th><th class="num">STR Occ</th><th class="num">DOM</th><th>Source</th></tr></thead><tbody id="searchTableBody"><tr><td colspan="12" style="text-align:center;padding:24px;color:var(--t3)">Loading live data from Supabase...</td></tr></tbody></table></div>
+        <div class="table-header-row"><span class="section-title">Results</span><div style="display:flex;gap:8px;align-items:center"><span class="tooltip-badge" id="tableCount">0 listings</span><span id="liveCountBadge" class="source-live" style="display:none">&#9679; LIVE</span></div></div>
+        <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Address</th><th>City</th><th>Type</th><th class="num">Beds/Bath</th><th class="num">Sqft</th><th class="num">List Price</th><th class="num">LTR Rent/mo</th><th class="num">STR Rent/mo</th><th class="num">Cap Rate</th><th class="num">STR Occ</th><th class="num">DOM</th><th>Source</th></tr></thead><tbody id="searchTableBody"><tr><td colspan="12" style="text-align:center;padding:40px;color:var(--t3)">Sync 25 Markets to see live listings.</td></tr></tbody></table></div>
       </div>
     </div>
     <!-- MARKET INSIGHTS VIEW -->
@@ -253,15 +271,15 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
       <div class="two-col">
         <div class="chart-panel"><div class="chart-title">STR vs LTR Revenue — Live Portfolio</div><div class="chart-sub">From RentCast data via Supabase</div><div class="chart-wrap"><canvas id="compareChart"></canvas></div></div>
         <div style="display:flex;flex-direction:column;gap:16px">
-          <div class="stat-card"><div class="stat-label">Avg STR Annual Revenue</div><div class="stat-value" id="str-annual">—</div><div class="stat-sub" id="str-annual-sub">Loading...</div></div>
-          <div class="stat-card"><div class="stat-label">Avg LTR Annual Revenue</div><div class="stat-value indigo" id="ltr-annual">—</div><div class="stat-sub" id="ltr-annual-sub">Loading...</div></div>
+          <div class="stat-card"><div class="stat-label">Avg STR Annual Revenue</div><div class="stat-value" id="str-annual">—</div><div class="stat-sub" id="str-annual-sub">Sync markets to populate</div></div>
+          <div class="stat-card"><div class="stat-label">Avg LTR Annual Revenue</div><div class="stat-value indigo" id="ltr-annual">—</div><div class="stat-sub" id="ltr-annual-sub">Sync markets to populate</div></div>
           <div class="stat-card" style="border-color:rgba(16,185,129,.3)"><div class="stat-label"><div class="stat-source-dot"></div>STR Premium</div><div class="stat-value" style="color:var(--live)" id="str-premium">—</div><div class="stat-sub">STR yields more when occ &gt; break-even</div></div>
         </div>
       </div>
       <div class="section-header" style="margin-top:8px"><span class="section-title">Break-even Occupancy Calculator</span></div>
       <div class="chart-panel">
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
-          <div><div class="stat-label" style="margin-bottom:8px">Monthly LTR Rent</div><input id="calcLTR" type="number" value="1802" oninput="calcBreakeven()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--gold);font-family:var(--mono);font-size:14px;width:100%;outline:none"></div>
+          <div><div class="stat-label" style="margin-bottom:8px">Monthly LTR Rent</div><input id="calcLTR" type="number" value="1800" oninput="calcBreakeven()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--gold);font-family:var(--mono);font-size:14px;width:100%;outline:none"></div>
           <div><div class="stat-label" style="margin-bottom:8px">STR Nightly Rate (ADR)</div><input id="calcADR" type="number" value="120" oninput="calcBreakeven()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--gold);font-family:var(--mono);font-size:14px;width:100%;outline:none"></div>
           <div><div class="stat-label" style="margin-bottom:8px">Break-even Occupancy</div><div class="stat-value" id="breakeven" style="font-size:28px;padding-top:6px">—</div></div>
         </div>
@@ -276,7 +294,7 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px">
           <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">1. RentCast API</div>Live sale listings, rent AVM estimates, STR occupancy via RentCast. Stored in Supabase <code style="color:var(--live)">property_leads</code>. Source field = <code style="color:var(--live)">rentcast_live</code>.</div>
           <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">2. Supabase Backend</div>Project: InvestIQ (<code style="color:var(--live)">kootfwwyhfstyunydcso</code>). Tables: property_leads, city_scores, market_snapshots, consumer_trends.</div>
-          <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">3. Sync Engine</div><code style="color:var(--live)">sync-rentcast-listings</code> edge function fetches top 25 rental/AirBnB markets from RentCast, enriches with Rent AVM, upserts real listings to DB.</div>
+          <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">3. Sync Engine</div><code style="color:var(--live)">sync-rentcast-listings</code> edge function fetches top 25 rental markets, enriches with Rent AVM, upserts to DB. Falls back to structured generated data if no RentCast key.</div>
           <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">4. City Scoring Engine</div>79 markets scored on rent yield, affordability, STR demand, inventory, population &amp; job market.</div>
           <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">5. HUD FMR</div>Register free at <a href="https://www.huduser.gov/hudapi/public/register" target="_blank" style="color:var(--live)">huduser.gov</a>.</div>
           <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">6. AirDNA</div>Free city-level STR explorer for occupancy benchmarks.</div>
@@ -287,13 +305,10 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
 </div>
 </div>
 <script>
-// ─── Supabase Config ───────────────────────────────────────────────────────────
 var SUPABASE_URL = 'https://kootfwwyhfstyunydcso.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtvb3Rmd3d5aGZzdHl1bnlkY3NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4OTU1MzUsImV4cCI6MjEwMjQ3MTUzNX0.GirGj1DPypNWceGOOG6FgD2PwYNzhBxsdRYR1zK9fsw';
 var EDGE_BASE = SUPABASE_URL + '/functions/v1';
-var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ─── App State ─────────────────────────────────────────────────────────────────
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 var PROPERTIES = [];
 var CITY_SCORES = [];
 var currentMode = 'all';
@@ -301,7 +316,6 @@ var selectedCity = '';
 var charts = {};
 var syncRunning = false;
 
-// ─── Boot ───────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function(){
   loadAllData();
   renderApiGrid();
@@ -309,32 +323,45 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 async function loadAllData(){
-  document.getElementById('activeSourceCount').textContent = 'Syncing...';
+  document.getElementById('activeSourceCount').textContent = 'Loading...';
   await Promise.all([loadProperties(), loadCityScores()]);
-  buildCharts();
-  renderPropCards();
+  if(PROPERTIES.length > 0){
+    showDashboardContent();
+    buildCharts();
+    renderPropCards();
+    buildCompareChart();
+    updateKPIs();
+  } else {
+    showEmptyState();
+  }
   renderSearchTable();
   renderInsights();
-  updateKPIs();
-  buildCompareChart();
-  var now = new Date();
   var liveCount = PROPERTIES.filter(function(p){return p.source==='rentcast_live';}).length;
-  document.getElementById('activeSourceCount').textContent = liveCount+' live listings &bull; '+now.toLocaleTimeString();
+  var now = new Date();
+  document.getElementById('activeSourceCount').textContent = liveCount > 0 ? liveCount+' live listings \u2022 '+now.toLocaleTimeString() : 'No data yet — click Sync';
+}
+
+function showEmptyState(){
+  document.getElementById('emptyDashboard').style.display='block';
+  document.getElementById('dashboardContent').style.display='none';
+}
+function showDashboardContent(){
+  document.getElementById('emptyDashboard').style.display='none';
+  document.getElementById('dashboardContent').style.display='block';
 }
 
 async function loadProperties(){
-  var res = await supabase
-    .from('property_leads')
+  var res = await sb.from('property_leads')
     .select('id,address,city,state_code,zipcode,property_type,bedrooms,bathrooms,sqft,list_price,estimated_rent_ltr,estimated_rent_str,estimated_cap_rate,estimated_str_occ,reno_score,condition_grade,days_on_market,zillow_url,mls_number,source,fetched_at')
+    .not('source','in','("demo","generated","sample")')
     .order('estimated_cap_rate',{ascending:false})
     .limit(500);
   if(res.error){ console.error('property_leads error',res.error); return; }
-  PROPERTIES = (res.data||[]).filter(function(p){return p.source!=='demo' && p.source!=='generated';});
+  PROPERTIES = res.data || [];
 }
 
 async function loadCityScores(){
-  var res = await supabase
-    .from('city_scores')
+  var res = await sb.from('city_scores')
     .select('metro_name,state_code,rent_yield_score,affordability_score,str_demand_score,composite_score,score_tier,trend,raw_fmr_2br,raw_median_price,raw_str_occ')
     .order('composite_score',{ascending:false})
     .limit(79);
@@ -343,7 +370,6 @@ async function loadCityScores(){
   renderCitySelector();
 }
 
-// ─── Live Sync: Trigger sync-rentcast-listings for all 25 markets ──────────────
 async function triggerFullSync(){
   if(syncRunning) return;
   syncRunning = true;
@@ -353,33 +379,23 @@ async function triggerFullSync(){
   var prog = document.getElementById('syncProgress');
   btn.disabled = true;
   icon.style.animation = 'spin 1s linear infinite';
-  if(!document.getElementById('spinStyle')){
-    var st=document.createElement('style');
-    st.id='spinStyle';
-    st.textContent='@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
-    document.head.appendChild(st);
-  }
-  lbl.textContent = 'Syncing RentCast...';
+  lbl.textContent = 'Syncing...';
   prog.style.display = 'block';
-  prog.textContent = 'Connecting to Supabase Edge Function...';
-
+  prog.textContent = '\u23F3 Connecting to Supabase Edge Function...';
   try {
-    prog.textContent = 'Fetching live listings for 25 markets from RentCast API...';
+    prog.textContent = '\u23F3 Fetching listings for 25 markets from RentCast...';
     var resp = await fetch(EDGE_BASE+'/sync-rentcast-listings', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY }
     });
     var data = await resp.json();
-
     if(data.total_inserted >= 0){
-      prog.innerHTML = '&#10003; Sync complete &bull; '+data.total_inserted+' listings inserted across '+data.markets_processed+' markets';
+      prog.innerHTML = '\u2713 Sync complete \u2022 '+data.total_inserted+' listings across '+data.markets_processed+' markets';
       lbl.textContent = 'Sync 25 Markets';
-      // Show summary box
       showSyncSummary(data);
-      // Reload dashboard data
       await loadAllData();
     } else {
-      prog.textContent = 'Sync error: '+(data.error||'Unknown error');
+      prog.textContent = 'Error: '+(data.error||JSON.stringify(data));
     }
   } catch(e){
     prog.textContent = 'Error: '+String(e);
@@ -392,122 +408,103 @@ async function triggerFullSync(){
 
 function showSyncSummary(data){
   var box = document.getElementById('syncSummaryBox');
-  if(!data.summary || !data.summary.length){ box.style.display='none'; return; }
+  if(!data.summary||!data.summary.length){box.style.display='none';return;}
   var rows = data.summary.map(function(s){
-    var statusColor = (s.inserted>0)?'green':'gold';
-    var note = s.error ? '<span style="color:var(--neg)">'+s.error+'</span>' : (s.note||'OK');
-    return '<tr><td>'+s.city+', '+s.state+'</td><td class="'+statusColor+'">'+s.inserted+'</td><td class="gold">'+(s.avg_cap_rate||'—')+'%</td><td class="gold">'+(s.top_cap_rate||'—')+'%</td><td>'+s.fetched+'</td><td>'+note+'</td></tr>';
+    var sc = s.inserted>0?'green':'gold';
+    var note = s.error?'<span style="color:var(--neg)">'+s.error+'</span>':(s.note||'OK');
+    return '<tr><td>'+s.city+', '+s.state+'</td><td class="'+sc+'">'+s.inserted+'</td><td class="gold">'+(s.avg_cap_rate||'\u2014')+'%</td><td class="gold">'+(s.top_cap_rate||'\u2014')+'%</td><td>'+s.fetched+'</td><td>'+note+'</td></tr>';
   }).join('');
-  box.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:var(--live)">&#10003; RentCast Sync Complete — '+data.total_inserted+' real listings inserted</span><span style="font-family:var(--mono);font-size:10px;color:var(--t3)">'+new Date(data.synced_at).toLocaleString()+'</span></div><table><thead><tr><th>Market</th><th>Inserted</th><th>Avg Cap</th><th>Top Cap</th><th>Fetched</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>';
-  box.style.display = 'block';
+  box.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:11px;font-weight:700;color:var(--live)">\u2713 RentCast Sync Complete \u2014 '+data.total_inserted+' listings inserted</span><span style="font-family:var(--mono);font-size:10px;color:var(--t3)">'+new Date(data.synced_at).toLocaleString()+'</span></div><table><thead><tr><th>Market</th><th>Inserted</th><th>Avg Cap</th><th>Top Cap</th><th>Source</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  box.style.display='block';
 }
 
-// ─── KPIs ───────────────────────────────────────────────────────────────────────
 function updateKPIs(){
-  if(!PROPERTIES.length){
-    document.getElementById('s-rent').textContent='—';
-    document.getElementById('s-cap').textContent='—';
-    document.getElementById('s-occ').textContent='—';
-    document.getElementById('s-props').textContent='0';
-    document.getElementById('s-props-delta').innerHTML='<span style="color:var(--warn)">No live data — click Sync 25 Markets</span>';
-    return;
-  }
-  var avgRent = Math.round(PROPERTIES.reduce(function(s,p){return s+parseFloat(p.estimated_rent_ltr||0);},0)/PROPERTIES.length);
-  var avgCap  = (PROPERTIES.reduce(function(s,p){return s+parseFloat(p.estimated_cap_rate||0);},0)/PROPERTIES.length).toFixed(2);
-  var avgOcc  = Math.round(PROPERTIES.reduce(function(s,p){return s+parseFloat(p.estimated_str_occ||0);},0)/PROPERTIES.length);
-  var liveCount = PROPERTIES.filter(function(p){return p.source==='rentcast_live';}).length;
-  document.getElementById('s-rent').textContent = '$'+avgRent.toLocaleString();
-  document.getElementById('s-rent-delta').innerHTML = '<span class="delta-pos">&#9650; Live RentCast AVM</span>';
-  document.getElementById('s-cap').textContent = avgCap+'%';
-  document.getElementById('s-cap-delta').innerHTML = '<span class="delta-pos">&#9650; Blended '+PROPERTIES.length+' listings</span>';
-  document.getElementById('s-occ').textContent = avgOcc+'%';
-  document.getElementById('s-occ-delta').innerHTML = '<span style="color:var(--t3)">&#9675; STR avg occupancy</span>';
-  document.getElementById('s-props').textContent = PROPERTIES.length;
-  document.getElementById('s-props-delta').innerHTML = '<span style="color:var(--live)">&#9679; '+liveCount+' RentCast live</span>';
-  // Compare view
-  var avgSTRmo = Math.round(PROPERTIES.reduce(function(s,p){return s+parseFloat(p.estimated_rent_str||0);},0)/PROPERTIES.length);
-  document.getElementById('str-annual').textContent = '$'+(avgSTRmo*12).toLocaleString();
-  document.getElementById('str-annual-sub').textContent = '$'+avgSTRmo.toLocaleString()+'/mo avg STR x 12';
-  document.getElementById('ltr-annual').textContent = '$'+(avgRent*12).toLocaleString();
-  document.getElementById('ltr-annual-sub').textContent = '$'+avgRent.toLocaleString()+'/mo LTR x 12';
-  var pct = avgRent>0?((avgSTRmo-avgRent)/avgRent*100).toFixed(1):'—';
-  document.getElementById('str-premium').textContent = (pct>0?'+':'')+pct+'%';
-  document.getElementById('calcLTR').value = avgRent;
+  if(!PROPERTIES.length) return;
+  var avgRent=Math.round(PROPERTIES.reduce(function(s,p){return s+parseFloat(p.estimated_rent_ltr||0);},0)/PROPERTIES.length);
+  var avgCap=(PROPERTIES.reduce(function(s,p){return s+parseFloat(p.estimated_cap_rate||0);},0)/PROPERTIES.length).toFixed(2);
+  var avgOcc=Math.round(PROPERTIES.reduce(function(s,p){return s+parseFloat(p.estimated_str_occ||0);},0)/PROPERTIES.length);
+  var liveCount=PROPERTIES.filter(function(p){return p.source==='rentcast_live';}).length;
+  document.getElementById('s-rent').textContent='$'+avgRent.toLocaleString();
+  document.getElementById('s-rent-delta').innerHTML='<span class="delta-pos">&#9650; Live RentCast AVM</span>';
+  document.getElementById('s-cap').textContent=avgCap+'%';
+  document.getElementById('s-cap-delta').innerHTML='<span class="delta-pos">&#9650; Blended '+PROPERTIES.length+' listings</span>';
+  document.getElementById('s-occ').textContent=avgOcc+'%';
+  document.getElementById('s-occ-delta').innerHTML='<span style="color:var(--t3)">&#9675; STR avg occupancy</span>';
+  document.getElementById('s-props').textContent=PROPERTIES.length;
+  document.getElementById('s-props-delta').innerHTML='<span style="color:var(--live)">&#9679; '+liveCount+' RentCast live</span>';
+  var avgSTRmo=Math.round(PROPERTIES.reduce(function(s,p){return s+parseFloat(p.estimated_rent_str||0);},0)/PROPERTIES.length);
+  document.getElementById('str-annual').textContent='$'+(avgSTRmo*12).toLocaleString();
+  document.getElementById('str-annual-sub').textContent='$'+avgSTRmo.toLocaleString()+'/mo avg STR x 12';
+  document.getElementById('ltr-annual').textContent='$'+(avgRent*12).toLocaleString();
+  document.getElementById('ltr-annual-sub').textContent='$'+avgRent.toLocaleString()+'/mo LTR x 12';
+  var pct=avgRent>0?((avgSTRmo-avgRent)/avgRent*100).toFixed(1):'\u2014';
+  document.getElementById('str-premium').textContent=(pct>0?'+':'')+pct+'%';
+  document.getElementById('calcLTR').value=avgRent;
   calcBreakeven();
 }
 
-// ─── Property Cards ─────────────────────────────────────────────────────────────
 function renderPropCards(){
-  var c = document.getElementById('propCards');
-  if(!PROPERTIES.length){
-    c.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--t3);font-size:13px">No live listings yet. Click <b style="color:var(--accent)">Sync 25 Markets</b> in the sidebar to load real RentCast data.</div>';
-    return;
-  }
-  var f = PROPERTIES.slice();
+  var c=document.getElementById('propCards');
+  if(!PROPERTIES.length){c.innerHTML='';return;}
+  var f=PROPERTIES.slice();
   if(currentMode==='ltr') f.sort(function(a,b){return parseFloat(b.estimated_cap_rate)-parseFloat(a.estimated_cap_rate);});
   if(currentMode==='str') f.sort(function(a,b){return parseFloat(b.estimated_str_occ)-parseFloat(a.estimated_str_occ);});
-  f = f.slice(0,6);
-  c.innerHTML = f.map(function(p){
-    var ltrRent = parseFloat(p.estimated_rent_ltr||0);
-    var strRent = parseFloat(p.estimated_rent_str||0);
-    var cap = parseFloat(p.estimated_cap_rate||0);
-    var occ = parseFloat(p.estimated_str_occ||0);
-    var price = parseFloat(p.list_price||0);
-    var capClass = cap>=8?'delta-pos':cap>=6?'gold':'delta-neg';
-    var z = p.zillow_url || 'https://www.zillow.com/homes/'+encodeURIComponent((p.address||'')+' '+(p.city||'')+' '+(p.state_code||''))+'_rb/';
-    var srcBadge = p.source==='rentcast_live' ? '<span class="source-live">&#9679; LIVE</span>' : '<span class="source-model">&#9675; MODEL</span>';
-    var condBadge = p.condition_grade ? '<span style="font-family:var(--mono);font-size:9px;color:var(--t3)">'+p.condition_grade+'</span>' : '';
-    var mlsBadge = p.mls_number ? '<span style="font-family:var(--mono);font-size:9px;color:var(--t3)">MLS#'+p.mls_number+'</span>' : '';
+  f=f.slice(0,6);
+  c.innerHTML=f.map(function(p){
+    var ltrRent=parseFloat(p.estimated_rent_ltr||0);
+    var strRent=parseFloat(p.estimated_rent_str||0);
+    var cap=parseFloat(p.estimated_cap_rate||0);
+    var occ=parseFloat(p.estimated_str_occ||0);
+    var price=parseFloat(p.list_price||0);
+    var capClass=cap>=8?'delta-pos':cap>=6?'gold':'delta-neg';
+    var z=p.zillow_url||'https://www.zillow.com/homes/'+encodeURIComponent((p.address||'')+' '+(p.city||'')+' '+(p.state_code||''))+'_rb/';
+    var srcBadge=p.source==='rentcast_live'?'<span class="source-live">&#9679; LIVE</span>':'<span class="source-model">&#9675; MODEL</span>';
+    var condBadge=p.condition_grade?'<span style="font-family:var(--mono);font-size:9px;color:var(--t3)">'+p.condition_grade+'</span>':'';
+    var mlsBadge=p.mls_number?'<span style="font-family:var(--mono);font-size:9px;color:var(--t3)">MLS#'+p.mls_number+'</span>':'';
     return '<div class="property-card"><div class="prop-header"><div><div class="prop-address">'+p.address+'</div><div class="prop-city">'+p.city+', '+p.state_code+(p.zipcode?' '+p.zipcode:'')+' &bull; '+p.property_type+'</div></div>'+srcBadge+'</div><div class="prop-price-row"><span class="prop-price">$'+Number(price).toLocaleString()+'</span><span class="prop-delta delta-pos">&#9650; Cap '+cap+'%</span></div><div class="prop-metrics"><div class="metric-chip"><div class="metric-val">$'+Number(ltrRent).toLocaleString()+'</div><div class="metric-lbl">LTR/mo</div></div><div class="metric-chip"><div class="metric-val '+capClass+'">'+cap+'%</div><div class="metric-lbl">Cap Rate</div></div><div class="metric-chip live-chip"><div class="metric-val">'+occ+'%</div><div class="metric-lbl">STR Occ</div></div></div><div class="prop-footer"><div class="prop-links"><a class="prop-link primary" href="'+z+'" target="_blank">Zillow &#8599;</a><span style="font-family:var(--mono);font-size:10px;color:var(--live)">STR $'+Number(strRent).toLocaleString()+'/mo</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">'+condBadge+mlsBadge+'<span style="font-family:var(--mono);font-size:10px;color:var(--t3)">'+p.bedrooms+'BR/'+p.bathrooms+'BA &bull; '+Number(p.sqft||0).toLocaleString()+' sqft</span></div></div></div>';
   }).join('');
 }
 function setMode(mode,btn){currentMode=mode;document.querySelectorAll('.mode-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderPropCards();}
 
-// ─── Search Table ───────────────────────────────────────────────────────────────
 function renderSearchTable(data){
-  var body = document.getElementById('searchTableBody');
-  var rows = data!==undefined ? data : PROPERTIES;
-  document.getElementById('tableCount').textContent = rows.length+' listings';
-  var liveRows = rows.filter(function(p){return p.source==='rentcast_live';});
-  var lbadge = document.getElementById('liveCountBadge');
+  var body=document.getElementById('searchTableBody');
+  var rows=data!==undefined?data:PROPERTIES;
+  document.getElementById('tableCount').textContent=rows.length+' listings';
+  var liveRows=rows.filter(function(p){return p.source==='rentcast_live';});
+  var lbadge=document.getElementById('liveCountBadge');
   if(liveRows.length>0){lbadge.textContent='&#9679; '+liveRows.length+' LIVE';lbadge.style.display='inline-flex';}else{lbadge.style.display='none';}
-  if(!rows.length){ body.innerHTML='<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--t3)">No listings found. Try syncing via the sidebar button.</td></tr>'; return; }
-  body.innerHTML = rows.map(function(p){
-    var cap = parseFloat(p.estimated_cap_rate||0);
-    var cc = cap>=8?'pos':cap>=6?'gold':'neg';
-    var srcCell = p.source==='rentcast_live'
-      ? '<span class="source-live">&#9679; LIVE</span>'
-      : '<span class="source-model">&#9675; MODEL</span>';
+  if(!rows.length){body.innerHTML='<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--t3)">No listings. Click Sync 25 Markets in the sidebar.</td></tr>';return;}
+  body.innerHTML=rows.map(function(p){
+    var cap=parseFloat(p.estimated_cap_rate||0);
+    var cc=cap>=8?'pos':cap>=6?'gold':'neg';
+    var srcCell=p.source==='rentcast_live'?'<span class="source-live">&#9679; LIVE</span>':'<span class="source-model">&#9675; MODEL</span>';
     return '<tr><td class="addr">'+p.address+(p.mls_number?'<div style="font-size:9px;color:var(--t3);font-family:var(--mono)">MLS#'+p.mls_number+'</div>':'')+'</td><td style="font-family:var(--mono);font-size:11px;white-space:nowrap">'+p.city+', '+p.state_code+'</td><td>'+p.property_type+'</td><td class="num">'+p.bedrooms+'BR/'+p.bathrooms+'BA</td><td class="num">'+Number(p.sqft||0).toLocaleString()+'</td><td class="gold">$'+Number(p.list_price).toLocaleString()+'</td><td class="gold">$'+Number(p.estimated_rent_ltr).toLocaleString()+'</td><td style="color:var(--live);font-family:var(--mono);font-size:11px;text-align:right">$'+Number(p.estimated_rent_str||0).toLocaleString()+'</td><td class="'+cc+'">'+cap+'%</td><td class="num" style="color:var(--live)">'+p.estimated_str_occ+'%</td><td class="num">'+(p.days_on_market||0)+'d</td><td>'+srcCell+'</td></tr>';
   }).join('');
 }
 function filterTable(){
-  var city = document.getElementById('filterCity').value.toLowerCase();
-  var type = document.getElementById('filterType').value;
-  var beds = document.getElementById('filterBeds').value;
-  var src  = document.getElementById('filterSource').value;
-  var rows = PROPERTIES;
+  var city=document.getElementById('filterCity').value.toLowerCase();
+  var type=document.getElementById('filterType').value;
+  var beds=document.getElementById('filterBeds').value;
+  var rows=PROPERTIES;
   if(city) rows=rows.filter(function(p){return (p.city||'').toLowerCase().includes(city)||(p.zipcode||'').includes(city)||(p.address||'').toLowerCase().includes(city);});
   if(type) rows=rows.filter(function(p){return p.property_type===type;});
-  if(beds){ var b=parseInt(beds); rows=rows.filter(function(p){return b>=4?parseInt(p.bedrooms)>=4:parseInt(p.bedrooms)===b;}); }
-  if(src)  rows=rows.filter(function(p){return p.source===src;});
+  if(beds){var b=parseInt(beds);rows=rows.filter(function(p){return b>=4?parseInt(p.bedrooms)>=4:parseInt(p.bedrooms)===b;});}
   renderSearchTable(rows);
 }
 function globalSearchHandler(){
-  var v = document.getElementById('globalSearch').value.toLowerCase();
+  var v=document.getElementById('globalSearch').value.toLowerCase();
   if(!v) return;
   showView('search',document.querySelectorAll('.nav-item')[1]);
-  document.getElementById('filterCity').value = v;
+  document.getElementById('filterCity').value=v;
   filterTable();
 }
 
-// ─── City Selector ──────────────────────────────────────────────────────────────
 function renderCitySelector(){
-  var div = document.getElementById('citySelector');
-  var cities = CITY_SCORES.slice(0,10).map(function(c){return c.metro_name+', '+c.state_code;});
-  if(!selectedCity && cities.length) selectedCity = cities[0];
-  div.innerHTML = cities.map(function(c){
-    return '<button class="city-btn'+(c===selectedCity?' active':'')+' " onclick="selectCity(\'' +c.replace(/'/g,"\\'")+ '\',this)">'+c+'</button>';
+  var div=document.getElementById('citySelector');
+  var cities=CITY_SCORES.slice(0,10).map(function(c){return c.metro_name+', '+c.state_code;});
+  if(!selectedCity&&cities.length) selectedCity=cities[0];
+  div.innerHTML=cities.map(function(c){
+    return '<button class="city-btn'+(c===selectedCity?' active':'')+'" onclick="selectCity(\'' +c.replace(/'/g,"\\'")+ '\',this)">'+c+'</button>';
   }).join('');
 }
 function selectCity(city,btn){
@@ -517,52 +514,47 @@ function selectCity(city,btn){
   renderInsights();
 }
 
-// ─── Insights ───────────────────────────────────────────────────────────────────
 function renderInsights(){
-  var top5 = CITY_SCORES.slice(0,5);
-  document.getElementById('nbhdList').innerHTML = top5.length ? top5.map(function(n,i){
-    var tier = n.score_tier||'—';
-    var trend = n.trend||'—';
-    var trendColor = trend==='rising'?'var(--pos)':trend==='cooling'?'var(--neg)':'var(--t3)';
-    return '<div class="nbhd-row"><span class="nbhd-rank">'+(i+1)+'</span><span class="nbhd-name">'+n.metro_name+', '+n.state_code+'</span><span class="nbhd-rate">'+parseFloat(n.composite_score||0).toFixed(1)+'</span><span class="nbhd-badge" style="color:'+trendColor+';border-color:'+trendColor+'">'+tier+' '+trend+'</span></div>';
-  }).join('') : '<div style="color:var(--t3);font-size:12px;padding:16px">Market scores not loaded. Sync data first.</div>';
+  var top5=CITY_SCORES.slice(0,5);
+  document.getElementById('nbhdList').innerHTML=top5.length?top5.map(function(n,i){
+    var trend=n.trend||'\u2014';
+    var tc=trend==='rising'?'var(--pos)':trend==='cooling'?'var(--neg)':'var(--t3)';
+    return '<div class="nbhd-row"><span class="nbhd-rank">'+(i+1)+'</span><span class="nbhd-name">'+n.metro_name+', '+n.state_code+'</span><span class="nbhd-rate">'+parseFloat(n.composite_score||0).toFixed(1)+'</span><span class="nbhd-badge" style="color:'+tc+';border-color:'+tc+'">'+n.score_tier+' '+trend+'</span></div>';
+  }).join(''):'<div style="color:var(--t3);font-size:12px;padding:16px">No market scores yet.</div>';
   if(charts.adr) charts.adr.destroy();
-  var labels = CITY_SCORES.slice(0,8).map(function(c){return c.metro_name;});
-  var scores = CITY_SCORES.slice(0,8).map(function(c){return parseFloat(c.composite_score||0);});
-  charts.adr = new Chart(document.getElementById('adrChart').getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{label:'Composite Score',data:scores,backgroundColor:'rgba(99,102,241,.55)',borderColor:'#6366F1',borderWidth:1}]},options:Object.assign(cd(),{scales:{y:ys('','left',55,75)}})});
+  var labels=CITY_SCORES.slice(0,8).map(function(c){return c.metro_name;});
+  var scores=CITY_SCORES.slice(0,8).map(function(c){return parseFloat(c.composite_score||0);});
+  if(labels.length) charts.adr=new Chart(document.getElementById('adrChart').getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{label:'Composite Score',data:scores,backgroundColor:'rgba(99,102,241,.55)',borderColor:'#6366F1',borderWidth:1}]},options:Object.assign(cd(),{scales:{y:ys('','left',55,75)}})});
   if(charts.census) charts.census.destroy();
-  var cl = CITY_SCORES.slice(0,10).map(function(c){return c.metro_name+', '+c.state_code;});
-  var fmr = CITY_SCORES.slice(0,10).map(function(c){return parseFloat(c.raw_fmr_2br||0);});
-  charts.census = new Chart(document.getElementById('censusChart').getContext('2d'),{type:'bar',data:{labels:cl,datasets:[{label:'FMR 2BR ($)',data:fmr,backgroundColor:'rgba(245,158,11,.5)',borderColor:'#F59E0B',borderWidth:1}]},options:Object.assign(cd(),{indexAxis:'y',scales:{x:ys('$','bottom',800,2100)}})});
+  var cl=CITY_SCORES.slice(0,10).map(function(c){return c.metro_name+', '+c.state_code;});
+  var fmr=CITY_SCORES.slice(0,10).map(function(c){return parseFloat(c.raw_fmr_2br||0);});
+  if(cl.length) charts.census=new Chart(document.getElementById('censusChart').getContext('2d'),{type:'bar',data:{labels:cl,datasets:[{label:'FMR 2BR ($)',data:fmr,backgroundColor:'rgba(245,158,11,.5)',borderColor:'#F59E0B',borderWidth:1}]},options:Object.assign(cd(),{indexAxis:'y',scales:{x:ys('$','bottom',800,2100)}})});
 }
 
-// ─── Charts ─────────────────────────────────────────────────────────────────────
 function buildCharts(){
   if(charts.rent) charts.rent.destroy();
   if(charts.type) charts.type.destroy();
-  var types = ['Single Family','Condo','Multi Family','Townhouse'];
-  var ltrByType = types.map(function(t){ var ps=PROPERTIES.filter(function(p){return p.property_type===t;}); return ps.length?Math.round(ps.reduce(function(s,p){return s+parseFloat(p.estimated_rent_ltr||0);},0)/ps.length):0; });
-  var strByType = types.map(function(t){ var ps=PROPERTIES.filter(function(p){return p.property_type===t;}); return ps.length?Math.round(ps.reduce(function(s,p){return s+parseFloat(p.estimated_rent_str||0);},0)/ps.length):0; });
-  charts.rent = new Chart(document.getElementById('rentChart').getContext('2d'),{type:'bar',data:{labels:types,datasets:[{label:'Avg LTR Rent',data:ltrByType,backgroundColor:'rgba(99,102,241,.5)',borderColor:'#6366F1',borderWidth:1},{label:'Avg STR Rent',data:strByType,backgroundColor:'rgba(16,185,129,.45)',borderColor:'#10B981',borderWidth:1}]},options:Object.assign(cd(),{scales:{y:ys('$','left',0,4500)}})});
-  var typeCounts = types.map(function(t){return PROPERTIES.filter(function(p){return p.property_type===t;}).length;});
-  charts.type = new Chart(document.getElementById('typeChart').getContext('2d'),{type:'doughnut',data:{labels:types,datasets:[{data:typeCounts,backgroundColor:['#6366F1','#10B981','#F59E0B','#8B5CF6'],borderColor:'#0F0F1A',borderWidth:3,hoverOffset:6}]},options:Object.assign(cd(),{cutout:'65%'})});
+  var types=['Single Family','Condo','Multi Family','Townhouse'];
+  var ltrByType=types.map(function(t){var ps=PROPERTIES.filter(function(p){return p.property_type===t;});return ps.length?Math.round(ps.reduce(function(s,p){return s+parseFloat(p.estimated_rent_ltr||0);},0)/ps.length):0;});
+  var strByType=types.map(function(t){var ps=PROPERTIES.filter(function(p){return p.property_type===t;});return ps.length?Math.round(ps.reduce(function(s,p){return s+parseFloat(p.estimated_rent_str||0);},0)/ps.length):0;});
+  charts.rent=new Chart(document.getElementById('rentChart').getContext('2d'),{type:'bar',data:{labels:types,datasets:[{label:'Avg LTR Rent',data:ltrByType,backgroundColor:'rgba(99,102,241,.5)',borderColor:'#6366F1',borderWidth:1},{label:'Avg STR Rent',data:strByType,backgroundColor:'rgba(16,185,129,.45)',borderColor:'#10B981',borderWidth:1}]},options:Object.assign(cd(),{scales:{y:ys('$','left',0,4500)}})});
+  var typeCounts=types.map(function(t){return PROPERTIES.filter(function(p){return p.property_type===t;}).length;});
+  charts.type=new Chart(document.getElementById('typeChart').getContext('2d'),{type:'doughnut',data:{labels:types,datasets:[{data:typeCounts,backgroundColor:['#6366F1','#10B981','#F59E0B','#8B5CF6'],borderColor:'#0F0F1A',borderWidth:3,hoverOffset:6}]},options:Object.assign(cd(),{cutout:'65%'})});
 }
 function buildCompareChart(){
   if(charts.compare) charts.compare.destroy();
-  var types = ['Single Family','Condo','Multi Family','Townhouse'];
-  var ltr = types.map(function(t){var ps=PROPERTIES.filter(function(p){return p.property_type===t;});return ps.length?Math.round(ps.reduce(function(s,p){return s+parseFloat(p.estimated_rent_ltr||0);},0)/ps.length*12):0;});
-  var str = types.map(function(t){var ps=PROPERTIES.filter(function(p){return p.property_type===t;});return ps.length?Math.round(ps.reduce(function(s,p){return s+parseFloat(p.estimated_rent_str||0);},0)/ps.length*12):0;});
-  charts.compare = new Chart(document.getElementById('compareChart').getContext('2d'),{type:'bar',data:{labels:types,datasets:[{label:'STR Annual Revenue',data:str,backgroundColor:'rgba(16,185,129,.5)',borderColor:'#10B981',borderWidth:1},{label:'LTR Annual Revenue',data:ltr,backgroundColor:'rgba(99,102,241,.3)',borderColor:'#6366F1',borderWidth:1}]},options:Object.assign(cd(),{scales:{y:ys('$','left',0,60000)}})});
+  var types=['Single Family','Condo','Multi Family','Townhouse'];
+  var ltr=types.map(function(t){var ps=PROPERTIES.filter(function(p){return p.property_type===t;});return ps.length?Math.round(ps.reduce(function(s,p){return s+parseFloat(p.estimated_rent_ltr||0);},0)/ps.length*12):0;});
+  var str=types.map(function(t){var ps=PROPERTIES.filter(function(p){return p.property_type===t;});return ps.length?Math.round(ps.reduce(function(s,p){return s+parseFloat(p.estimated_rent_str||0);},0)/ps.length*12):0;});
+  charts.compare=new Chart(document.getElementById('compareChart').getContext('2d'),{type:'bar',data:{labels:types,datasets:[{label:'STR Annual Revenue',data:str,backgroundColor:'rgba(16,185,129,.5)',borderColor:'#10B981',borderWidth:1},{label:'LTR Annual Revenue',data:ltr,backgroundColor:'rgba(99,102,241,.3)',borderColor:'#6366F1',borderWidth:1}]},options:Object.assign(cd(),{scales:{y:ys('$','left',0,60000)}})});
 }
 
-// ─── Calc ───────────────────────────────────────────────────────────────────────
 function calcBreakeven(){
-  var ltr=parseFloat(document.getElementById('calcLTR').value)||1802;
+  var ltr=parseFloat(document.getElementById('calcLTR').value)||1800;
   var adr=parseFloat(document.getElementById('calcADR').value)||120;
   document.getElementById('breakeven').textContent=(ltr/(adr*365/12)*100).toFixed(1)+'%';
 }
 
-// ─── Navigation ─────────────────────────────────────────────────────────────────
 function showView(id,el){
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
   document.getElementById('view-'+id).classList.add('active');
@@ -574,14 +566,13 @@ function showView(id,el){
   if(id==='compare') buildCompareChart();
 }
 
-// ─── API Setup Panel ─────────────────────────────────────────────────────────────
 var API_SOURCES=[
   {name:'Supabase',desc:'Live backend — InvestIQ project. property_leads, city_scores, market_snapshots, consumer_trends.',quota:'Active',key:'supabase',status:'connected',placeholder:'Connected'},
-  {name:'RentCast API',desc:'Live sale listings + rent AVM. Powers property_leads via sync-rentcast-listings Edge Function. source=rentcast_live.',quota:'Managed via Supabase',key:'rentcast',status:'connected',placeholder:'Managed via Supabase'},
-  {name:'Census ACS',desc:'Median rent, housing stock, population by county/tract. DEMO_KEY active.',quota:'Free forever',key:'census_key',status:'free',placeholder:'DEMO_KEY (active)',link:'https://api.census.gov/data/key_signup.html'},
-  {name:'HUD FMR',desc:'Federal Fair Market Rents by metro. Most accurate rent benchmark in the US.',quota:'Free - Unlimited',key:'hud_fmr_key',status:'needs-key',placeholder:'Paste HUD API token...',link:'https://www.huduser.gov/hudapi/public/register'},
-  {name:'AirDNA',desc:'STR occupancy and ADR by city. Free explorer, no account needed.',quota:'Free city explorer',key:'airdna_key',status:'free',placeholder:'No key needed'},
-  {name:'OpenWebNinja',desc:'Real-time Redfin data - price drops, days on market.',quota:'Free tier available',key:'owninj_key',status:'needs-key',placeholder:'Paste OpenWebNinja key...',link:'https://www.openwebninja.com'}
+  {name:'RentCast API',desc:'Live sale listings + rent AVM. Powers property_leads via sync-rentcast-listings Edge Function.',quota:'Managed via Supabase',key:'rentcast',status:'connected',placeholder:'Managed via Supabase'},
+  {name:'Census ACS',desc:'Median rent, housing stock, population by county/tract.',quota:'Free forever',key:'census_key',status:'free',placeholder:'DEMO_KEY (active)'},
+  {name:'HUD FMR',desc:'Federal Fair Market Rents by metro.',quota:'Free - Unlimited',key:'hud_fmr_key',status:'needs-key',placeholder:'Paste HUD API token...',link:'https://www.huduser.gov/hudapi/public/register'},
+  {name:'AirDNA',desc:'STR occupancy and ADR by city. Free explorer.',quota:'Free city explorer',key:'airdna_key',status:'free',placeholder:'No key needed'},
+  {name:'OpenWebNinja',desc:'Real-time Redfin data — price drops, days on market.',quota:'Free tier available',key:'owninj_key',status:'needs-key',placeholder:'Paste OpenWebNinja key...',link:'https://www.openwebninja.com'}
 ];
 function renderApiGrid(){
   var grid=document.getElementById('apiGrid');
@@ -602,7 +593,6 @@ function testConnection(key){
   },800);
 }
 
-// ─── Chart Helpers ───────────────────────────────────────────────────────────────
 var CC={gold:'#F59E0B',accent:'#6366F1',live:'#10B981',t3:'#606080',border:'#1E1E30',bg:'#0F0F1A'};
 function cd(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:CC.t3,font:{size:10,family:'JetBrains Mono'},boxWidth:10,padding:12}},tooltip:{backgroundColor:CC.bg,titleColor:'#F0F0FF',bodyColor:CC.t3,borderColor:CC.border,borderWidth:1}},animation:{duration:600,easing:'easeOutQuart'}};}
 function ys(p,pos,mn,mx){return{position:pos,grid:{color:'rgba(30,30,48,.6)'},ticks:{color:CC.t3,font:{size:9,family:'JetBrains Mono'},callback:function(v){return p==='$'?'$'+v:v+p;}},min:mn,max:mx};}
