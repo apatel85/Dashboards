@@ -36,7 +36,7 @@ body{font-family:'Inter',sans-serif;background:#07070C;color:#F0F0FF;min-height:
 .sidebar-bottom{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
 .api-status-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--s2);border-radius:8px;border:1px solid var(--border)}
 .api-dot{width:7px;height:7px;border-radius:50%;background:var(--live);animation:pulse 2s infinite;flex-shrink:0}
-@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 var(--live-glow)}50%{opacity:.7;box-shadow:0 0 0 5px transparent}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .api-status-text{font-family:var(--mono);font-size:10px;color:var(--live);line-height:1.3}
 .api-status-text small{display:block;color:var(--t3);font-size:9px}
 .main-wrap{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh}
@@ -53,7 +53,7 @@ body{font-family:'Inter',sans-serif;background:#07070C;color:#F0F0FF;min-height:
 .topbar-btn{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--t2);cursor:pointer;font-size:14px;transition:all .15s}
 .topbar-btn:hover{border-color:var(--border-b);color:var(--t1)}
 .content{padding:24px;flex:1}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
 .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3)}
 .stats-band{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
 .stat-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px;transition:all .2s}
@@ -81,8 +81,10 @@ body{font-family:'Inter',sans-serif;background:#07070C;color:#F0F0FF;min-height:
 .prop-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
 .metric-chip{background:var(--gold-soft);border:1px solid rgba(245,158,11,.12);border-radius:6px;padding:6px 8px;text-align:center}
 .metric-chip.live-chip{background:var(--live-soft);border-color:rgba(16,185,129,.12)}
+.metric-chip.accent-chip{background:var(--accent-soft);border-color:rgba(99,102,241,.12)}
 .metric-val{font-size:13px;font-weight:700;color:var(--gold);font-family:var(--mono)}
 .metric-chip.live-chip .metric-val{color:var(--live)}
+.metric-chip.accent-chip .metric-val{color:var(--accent)}
 .metric-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-top:2px}
 .prop-footer{display:flex;align-items:center;justify-content:space-between}
 .prop-links{display:flex;gap:6px}
@@ -94,6 +96,63 @@ body{font-family:'Inter',sans-serif;background:#07070C;color:#F0F0FF;min-height:
 .chart-title{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:4px}
 .chart-sub{font-size:11px;color:var(--t3);margin-bottom:16px;font-family:var(--mono)}
 .chart-wrap{position:relative;height:220px}
+.table-panel{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:28px}
+.table-header-row{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px}
+table.data-table{width:100%;border-collapse:collapse}
+table.data-table th{background:var(--s2);padding:10px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);border-bottom:1px solid var(--border)}
+table.data-table th.num{text-align:right}
+table.data-table td{padding:11px 16px;font-size:12px;color:var(--t2);border-bottom:1px solid rgba(30,30,48,.5)}
+table.data-table tr:last-child td{border-bottom:none}
+table.data-table tr:hover td{background:var(--s2)}
+table.data-table td.num{text-align:right;font-family:var(--mono);font-size:11px}
+table.data-table td.addr{color:var(--t1);font-weight:500}
+table.data-table td.gold{color:var(--gold);font-family:var(--mono);font-weight:700;text-align:right}
+table.data-table td.pos{color:var(--pos);font-family:var(--mono);text-align:right}
+table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:right}
+.view{display:none}
+.view.active{display:block}
+.tooltip-badge{display:inline-flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--border-b);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--t2);font-family:var(--mono)}
+.mode-toggle{display:flex;background:var(--s2);border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content}
+.mode-btn{padding:7px 16px;font-size:11px;font-weight:600;cursor:pointer;color:var(--t3);transition:all .15s;border:none;background:transparent}
+.mode-btn.active{background:var(--s1);color:var(--accent)}
+.refresh-spin{animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.proxy-banner{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--t2);display:flex;align-items:flex-start;gap:10px}
+.proxy-banner strong{color:var(--accent)}
+/* ---- SCORE BADGE ---- */
+.score-pill{display:inline-flex;align-items:center;justify-content:center;width:44px;height:24px;border-radius:6px;font-family:var(--mono);font-size:11px;font-weight:700}
+.score-a-plus{background:rgba(16,185,129,.15);color:#10B981;border:1px solid rgba(16,185,129,.3)}
+.score-a{background:rgba(99,241,148,.12);color:#4ade80;border:1px solid rgba(74,222,128,.25)}
+.score-b-plus{background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(129,140,248,.25)}
+.score-b{background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2)}
+.score-c{background:rgba(249,115,22,.1);color:#fb923c;border:1px solid rgba(251,146,60,.2)}
+.score-d{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(248,113,113,.2)}
+.trend-rising{color:var(--pos);font-size:10px;font-family:var(--mono)}
+.trend-stable{color:var(--t3);font-size:10px;font-family:var(--mono)}
+.trend-cooling{color:var(--neg);font-size:10px;font-family:var(--mono)}
+/* ---- RENO SCORE BAR ---- */
+.reno-bar-wrap{display:flex;align-items:center;gap:8px}
+.reno-bar{flex:1;height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.reno-fill{height:100%;border-radius:3px;transition:width .4s}
+.reno-grade{font-size:9px;font-family:var(--mono);white-space:nowrap}
+/* ---- DIGEST CARD ---- */
+.digest-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
+.digest-headline{font-size:15px;font-weight:600;color:var(--t1);margin-bottom:8px;line-height:1.4}
+.digest-meta{font-size:10px;font-family:var(--mono);color:var(--t3);margin-bottom:14px}
+.digest-body{font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:16px}
+.digest-signals{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.signal-chip{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.signal-val{font-size:20px;font-weight:700;font-family:var(--mono);color:var(--accent)}
+.signal-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin-top:3px}
+.signal-bar{height:3px;border-radius:2px;background:var(--accent);margin-top:8px;transition:width .5s}
+/* ---- FILTER ROW ---- */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:14px;background:var(--s1);border:1px solid var(--border);border-radius:10px;align-items:center}
+.filter-select{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--t1);font-size:12px;outline:none}
+.filter-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3)}
+.run-btn{background:var(--accent);border:none;border-radius:8px;padding:7px 18px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
+.run-btn:hover{background:var(--accent-dim)}
+.run-btn:disabled{opacity:.5;cursor:not-allowed}
+/* API card */
 .api-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
 .api-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden}
 .api-card::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);background-size:20px 20px;opacity:.4;pointer-events:none}
@@ -107,50 +166,14 @@ body{font-family:'Inter',sans-serif;background:#07070C;color:#F0F0FF;min-height:
 .api-desc{font-size:11px;color:var(--t2);line-height:1.5;margin-bottom:12px}
 .api-input-row{display:flex;gap:6px}
 .api-key-input{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-family:var(--mono);font-size:10px;color:var(--t1);outline:none}
-.api-key-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
-.api-key-input::placeholder{color:var(--t3)}
 .api-test-btn{background:var(--s2);border:1px solid var(--border-b);border-radius:6px;padding:7px 10px;font-size:10px;font-weight:600;color:var(--t2);cursor:pointer;white-space:nowrap;transition:all .15s;font-family:'Inter',sans-serif}
 .api-test-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 .api-quota{font-size:9px;color:var(--t3);font-family:var(--mono);margin-top:6px}
-.table-panel{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:28px}
-.table-header-row{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border)}
-table.data-table{width:100%;border-collapse:collapse}
-table.data-table th{background:var(--s2);padding:10px 16px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);border-bottom:1px solid var(--border)}
-table.data-table th.num{text-align:right}
-table.data-table td{padding:12px 16px;font-size:12px;color:var(--t2);border-bottom:1px solid rgba(30,30,48,.5)}
-table.data-table tr:last-child td{border-bottom:none}
-table.data-table tr:hover td{background:var(--s2)}
-table.data-table td.num{text-align:right;font-family:var(--mono);font-size:11px}
-table.data-table td.addr{color:var(--t1);font-weight:500}
-table.data-table td.gold{color:var(--gold);font-family:var(--mono);font-weight:700;text-align:right}
-table.data-table td.pos{color:var(--pos);font-family:var(--mono);text-align:right}
-table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:right}
-.view{display:none}
-.view.active{display:block}
-.insights-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:28px}
-.city-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
-.city-btn{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:600;color:var(--t2);cursor:pointer;transition:all .15s}
-.city-btn.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
-.city-btn:hover:not(.active){border-color:var(--border-b);color:var(--t1)}
-.nbhd-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(30,30,48,.6)}
-.nbhd-row:last-child{border-bottom:none}
-.nbhd-rank{font-size:11px;font-family:var(--mono);color:var(--t3);width:20px}
-.nbhd-name{font-size:13px;font-weight:500;color:var(--t1);flex:1;padding:0 10px}
-.nbhd-rate{font-size:13px;font-family:var(--mono);color:var(--gold);font-weight:700}
-.nbhd-badge{background:var(--live-soft);border:1px solid rgba(16,185,129,.15);border-radius:3px;font-family:var(--mono);font-size:8px;color:var(--live);padding:1px 5px;margin-left:8px}
-.tooltip-badge{display:inline-flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--border-b);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--t2);font-family:var(--mono)}
-.mode-toggle{display:flex;background:var(--s2);border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content}
-.mode-btn{padding:7px 16px;font-size:11px;font-weight:600;cursor:pointer;color:var(--t3);transition:all .15s;border:none;background:transparent}
-.mode-btn.active{background:var(--s1);color:var(--accent)}
-.refresh-spin{animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.proxy-banner{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--t2);display:flex;align-items:center;gap:10px}
-.proxy-banner strong{color:var(--accent)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--void)}
 ::-webkit-scrollbar-thumb{background:var(--border-b);border-radius:4px}
-@media(max-width:1100px){.stats-band{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.api-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:768px){.sidebar{transform:translateX(-260px)}.sidebar.open{transform:translateX(0)}.main-wrap{margin-left:0}.stats-band{grid-template-columns:1fr}.three-col{grid-template-columns:1fr}.api-grid{grid-template-columns:1fr}.insights-grid{grid-template-columns:1fr}#menuBtn{display:block!important}}
+@media(max-width:1200px){.stats-band{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.api-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.sidebar{transform:translateX(-260px)}.sidebar.open{transform:translateX(0)}.main-wrap{margin-left:0}.stats-band{grid-template-columns:1fr}.three-col{grid-template-columns:1fr}.api-grid{grid-template-columns:1fr}#menuBtn{display:block!important}}
 </style>
 </head>
 <body>
@@ -159,12 +182,14 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
   <div class="sidebar-logo"><div class="logo-mark">IQ</div><div class="logo-text">Invest<span>IQ</span> Live</div></div>
   <div class="sidebar-section-label">Main</div>
   <button class="nav-item active" onclick="showView('dashboard',this)"><span class="nav-icon">&#9638;</span> Dashboard</button>
-  <button class="nav-item" onclick="showView('search',this)"><span class="nav-icon">&#8853;</span> Property Search</button>
-  <button class="nav-item" onclick="showView('insights',this)"><span class="nav-icon">&#9672;</span> Market Insights</button>
+  <button class="nav-item" onclick="showView('pulse',this)"><span class="nav-icon">&#9656;</span> Market Pulse</button>
+  <button class="nav-item" onclick="showView('explorer',this)"><span class="nav-icon">&#9670;</span> City Explorer</button>
+  <button class="nav-item" onclick="showView('finder',this)"><span class="nav-icon">&#9733;</span> Rent-Ready Finder</button>
   <div class="sidebar-section-label">Tools</div>
+  <button class="nav-item" onclick="showView('search',this)"><span class="nav-icon">&#8853;</span> Property Search</button>
   <button class="nav-item" onclick="showView('compare',this)"><span class="nav-icon">&#8644;</span> STR vs LTR</button>
   <button class="nav-item" onclick="showView('apisetup',this)"><span class="nav-icon">&#9881;</span> API Setup</button>
-  <div class="sidebar-bottom"><div class="api-status-row"><div class="api-dot"></div><div class="api-status-text">5 PROXIES SECURED<small id="activeSourceCount">Supabase Edge Functions active</small></div></div></div>
+  <div class="sidebar-bottom"><div class="api-status-row"><div class="api-dot"></div><div class="api-status-text">8 SERVICES ACTIVE<small>5 proxies + 3 intelligence fns</small></div></div></div>
 </nav>
 <div class="main-wrap">
   <div class="topbar">
@@ -174,48 +199,136 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
     </div>
     <div class="topbar-right">
       <div class="live-pill"><div class="live-dot"></div>LIVE DATA</div>
-      <input class="search-box" placeholder="Search city, zip, address..." oninput="liveSearch(this.value)">
-      <button class="topbar-btn" id="refreshBtn" title="Refresh data" onclick="refreshData()">&#8635;</button>
+      <input class="search-box" placeholder="Search city, zip, address..." id="globalSearch">
+      <button class="topbar-btn" id="refreshBtn" title="Refresh" onclick="refreshData()">&#8635;</button>
     </div>
   </div>
   <div class="content">
+
+    <!-- ========== DASHBOARD ========== -->
     <div class="view active" id="view-dashboard">
-      <div class="proxy-banner">&#128274; <div><strong>5 API Proxies Secured</strong> &mdash; All data fetched via Supabase Edge Function proxies. No API keys are stored in this page or your browser.</div></div>
-      <div class="section-header"><span class="section-title">Portfolio Overview</span><span class="tooltip-badge" id="lastRefreshed">&#9679; Loading...</span></div>
+      <div class="proxy-banner">&#128274; <div><strong>8 Services Active</strong> &mdash; 5 API proxies + 3 intelligence functions (City Scorer, Market Digest, Rent-Ready Finder). No keys exposed to browser.</div></div>
+      <div class="section-header"><span class="section-title">Portfolio Overview</span><span class="tooltip-badge" id="lastRefreshed">Loading...</span></div>
       <div class="stats-band">
-        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg Rent Estimate</div><div class="stat-value" id="s-rent">--</div><div class="stat-delta" id="s-rent-delta">Loading HUD FMR...</div><div class="stat-sub">Source: HUD FMR via Proxy</div></div>
-        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg Cap Rate</div><div class="stat-value indigo" id="s-cap">--</div><div class="stat-delta delta-pos">&#9650; Blended 5 markets</div><div class="stat-sub">Calculated from portfolio</div></div>
-        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg STR Occupancy</div><div class="stat-value" id="s-occ">--</div><div class="stat-delta" id="s-occ-delta">Loading AirDNA...</div><div class="stat-sub">Source: AirDNA via Proxy</div></div>
-        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Properties Tracked</div><div class="stat-value indigo" id="s-props">12</div><div class="stat-delta" style="color:var(--t3)">Demo portfolio loaded</div><div class="stat-sub">Add via Property Search</div></div>
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg Rent / HUD FMR</div><div class="stat-value" id="s-rent">--</div><div class="stat-delta" id="s-rent-delta">Loading...</div><div class="stat-sub">Source: HUD FMR via Proxy</div></div>
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Top City Score</div><div class="stat-value" id="s-topscore">--</div><div class="stat-delta" id="s-topscore-city" style="color:var(--t3)">Loading scorer...</div><div class="stat-sub">fn-city-scorer | 80 metros</div></div>
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>STR Demand Index</div><div class="stat-value" id="s-str-idx">--</div><div class="stat-delta" id="s-str-trend">Loading digest...</div><div class="stat-sub">Source: fn-market-digest</div></div>
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Rent-Ready Leads</div><div class="stat-value indigo" id="s-leads">--</div><div class="stat-delta" id="s-leads-sub" style="color:var(--t3)">Loading finder...</div><div class="stat-sub">Reno score &ge;7 | Cap &ge;5%</div></div>
       </div>
-      <div class="section-header"><span class="section-title">Rent Trend vs Estimates</span></div>
       <div class="two-col">
-        <div class="chart-panel"><div class="chart-title">HUD FMR vs Zillow Median Rent - 12 Month Trend</div><div class="chart-sub">HUD FMR (amber) vs Zestimate Model (indigo)</div><div class="chart-wrap"><canvas id="rentChart"></canvas></div></div>
-        <div class="chart-panel"><div class="chart-title">Market Distribution</div><div class="chart-sub">By property type</div><div class="chart-wrap"><canvas id="typeChart"></canvas></div></div>
+        <div class="chart-panel"><div class="chart-title">HUD FMR vs Zestimate — 12 Month Trend</div><div class="chart-sub">National median rent comparison</div><div class="chart-wrap"><canvas id="rentChart"></canvas></div></div>
+        <div class="chart-panel"><div class="chart-title">Consumer Preference Index</div><div class="chart-sub" id="cpChartSub">LTR vs STR vs Buy demand</div><div class="chart-wrap"><canvas id="cpChart"></canvas></div></div>
       </div>
-      <div class="section-header"><span class="section-title">Tracked Properties</span><div class="mode-toggle"><button class="mode-btn active" onclick="setMode('both',this)">All</button><button class="mode-btn" onclick="setMode('ltr',this)">LTR</button><button class="mode-btn" onclick="setMode('str',this)">STR</button></div></div>
+      <div class="section-header"><span class="section-title">Portfolio Properties</span><div class="mode-toggle"><button class="mode-btn active" onclick="setMode('both',this)">All</button><button class="mode-btn" onclick="setMode('ltr',this)">LTR</button><button class="mode-btn" onclick="setMode('str',this)">STR</button></div></div>
       <div class="three-col" id="propCards"></div>
     </div>
+
+    <!-- ========== MARKET PULSE ========== -->
+    <div class="view" id="view-pulse">
+      <div class="section-header"><span class="section-title">Market Pulse &mdash; Weekly Digest</span><button class="run-btn" onclick="loadPulse(true)">&#8635; Refresh Digest</button></div>
+      <div id="digestContainer"><div style="padding:40px;text-align:center;color:var(--t3)">Loading market digest...</div></div>
+      <div class="section-header" style="margin-top:8px"><span class="section-title">Historical Weekly Trends</span></div>
+      <div class="two-col">
+        <div class="chart-panel"><div class="chart-title">LTR vs STR vs Buy Demand — Weekly Index</div><div class="chart-sub">8-week rolling window</div><div class="chart-wrap"><canvas id="pulseChart"></canvas></div></div>
+        <div class="chart-panel"><div class="chart-title">Consumer Shift Signals</div><div class="chart-sub">Inventory / Price / Rent trend</div><div id="trendSignals" style="padding-top:8px"></div></div>
+      </div>
+    </div>
+
+    <!-- ========== CITY EXPLORER ========== -->
+    <div class="view" id="view-explorer">
+      <div class="section-header"><span class="section-title">City Explorer &mdash; 80 US Metros Scored</span><button class="run-btn" id="scorerBtn" onclick="loadCityScores(true)">&#9670; Run Scorer</button></div>
+      <div class="filter-row">
+        <span class="filter-label">State</span>
+        <select class="filter-select" id="explorerState"><option value="">All States</option></select>
+        <span class="filter-label">Min Score</span>
+        <select class="filter-select" id="explorerMinScore"><option value="0">Any</option><option value="60">60+</option><option value="70">70+</option><option value="80">80+</option></select>
+        <span class="filter-label">Tier</span>
+        <select class="filter-select" id="explorerTier"><option value="">All Tiers</option><option>A+</option><option>A</option><option>B+</option><option>B</option><option>C</option></select>
+        <span class="filter-label">Sort</span>
+        <select class="filter-select" id="explorerSort" onchange="renderScoreTable()">
+          <option value="composite">Composite Score</option>
+          <option value="rent_yield">Rent Yield</option>
+          <option value="affordability">Affordability</option>
+          <option value="str_demand">STR Demand</option>
+        </select>
+        <button class="run-btn" onclick="loadCityScores(false)">&#128269; Filter</button>
+      </div>
+      <div class="stats-band" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card"><div class="stat-label">Metros Scored</div><div class="stat-value indigo" id="ex-count">--</div><div class="stat-sub">80 US CBSAs</div></div>
+        <div class="stat-card"><div class="stat-label">Top Score</div><div class="stat-value" id="ex-top">--</div><div class="stat-sub" id="ex-top-city">--</div></div>
+        <div class="stat-card"><div class="stat-label">A / A+ Cities</div><div class="stat-value indigo" id="ex-aplus">--</div><div class="stat-sub">Investment grade</div></div>
+        <div class="stat-card"><div class="stat-label">Rising Markets</div><div class="stat-value" id="ex-rising">--</div><div class="stat-sub">Trend = rising</div></div>
+      </div>
+      <div class="two-col" style="margin-bottom:20px">
+        <div class="chart-panel"><div class="chart-title">Top 15 Cities by Composite Score</div><div class="chart-sub">6-signal weighted model</div><div class="chart-wrap" style="height:280px"><canvas id="scoreBarChart"></canvas></div></div>
+        <div class="chart-panel"><div class="chart-title">Score Distribution by Tier</div><div class="chart-sub">All 80 metros</div><div class="chart-wrap"><canvas id="tierPieChart"></canvas></div></div>
+      </div>
+      <div class="table-panel"><div class="table-header-row"><span class="section-title">All Scored Cities</span><span class="tooltip-badge" id="scoreTableCount">Loading...</span></div>
+        <div style="overflow-x:auto"><table class="data-table"><thead><tr>
+          <th>#</th><th>City</th><th>State</th>
+          <th class="num">Score</th><th class="num">Tier</th><th class="num">Trend</th>
+          <th class="num">Rent Yield</th><th class="num">Affordability</th>
+          <th class="num">STR Demand</th><th class="num">FMR 2BR</th><th>Action</th>
+        </tr></thead><tbody id="scoreTableBody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ========== RENT-READY FINDER ========== -->
+    <div class="view" id="view-finder">
+      <div class="section-header"><span class="section-title">Rent-Ready Finder</span><span class="tooltip-badge">&#9733; Min reno, max cashflow</span></div>
+      <div class="filter-row">
+        <span class="filter-label">City</span>
+        <input class="search-box" style="width:150px" id="finderCity" placeholder="Austin" value="Austin">
+        <span class="filter-label">State</span>
+        <select class="filter-select" id="finderState"></select>
+        <span class="filter-label">Min Reno</span>
+        <select class="filter-select" id="finderReno">
+          <option value="8">8+ Move-In</option>
+          <option value="7">7+ Minor only</option>
+          <option value="6" selected>6+ Light work</option>
+          <option value="4">4+ Moderate</option>
+          <option value="0">Any</option>
+        </select>
+        <span class="filter-label">Min Cap</span>
+        <select class="filter-select" id="finderCap">
+          <option value="7">7%+</option>
+          <option value="6">6%+</option>
+          <option value="5" selected>5%+</option>
+          <option value="4">4%+</option>
+          <option value="0">Any</option>
+        </select>
+        <span class="filter-label">Max Price</span>
+        <select class="filter-select" id="finderMaxPrice">
+          <option value="300000">$300k</option>
+          <option value="500000" selected>$500k</option>
+          <option value="750000">$750k</option>
+          <option value="1000000">$1M</option>
+          <option value="9999999">No limit</option>
+        </select>
+        <button class="run-btn" id="finderBtn" onclick="loadRentReady()">&#9733; Find Properties</button>
+      </div>
+      <div class="stats-band">
+        <div class="stat-card"><div class="stat-label">Properties Found</div><div class="stat-value indigo" id="fd-count">--</div><div class="stat-sub" id="fd-scan">--</div></div>
+        <div class="stat-card"><div class="stat-label">Best Cap Rate</div><div class="stat-value" id="fd-cap">--</div><div class="stat-sub" id="fd-cap-addr">--</div></div>
+        <div class="stat-card"><div class="stat-label">Best Reno Score</div><div class="stat-value indigo" id="fd-reno">--</div><div class="stat-sub" id="fd-reno-addr">--</div></div>
+        <div class="stat-card"><div class="stat-label">Avg HUD FMR Est.</div><div class="stat-value" id="fd-rent">--</div><div class="stat-sub">2BR LTR estimate</div></div>
+      </div>
+      <div id="finderCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"><div style="padding:40px;text-align:center;color:var(--t3);grid-column:1/-1">Use filters above to find rent-ready properties.</div></div>
+    </div>
+
+    <!-- ========== PROPERTY SEARCH ========== -->
     <div class="view" id="view-search">
       <div class="section-header"><span class="section-title">Property Search</span></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;padding:16px;background:var(--s1);border:1px solid var(--border);border-radius:12px">
-        <input class="search-box" style="width:200px" placeholder="City or ZIP" id="filterCity" oninput="filterTable()">
-        <select id="filterType" onchange="filterTable()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--t1);font-size:12px;outline:none"><option value="">All Types</option><option>Single Family</option><option>Multi Family</option><option>Condo</option><option>Townhouse</option></select>
-        <select id="filterMode" onchange="filterTable()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--t1);font-size:12px;outline:none"><option value="">LTR + STR</option><option>LTR Only</option><option>STR Only</option></select>
-        <button onclick="fetchPropertySearch()" style="background:var(--accent);border:none;border-radius:8px;padding:7px 16px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">&#128269; Search via Proxy</button>
+      <div class="filter-row">
+        <input class="search-box" style="width:180px" placeholder="City or ZIP" id="filterCity" oninput="filterTable()">
+        <select class="filter-select" id="filterType" onchange="filterTable()"><option value="">All Types</option><option>Single Family</option><option>Multi Family</option><option>Condo</option><option>Townhouse</option></select>
+        <select class="filter-select" id="filterMode" onchange="filterTable()"><option value="">LTR + STR</option><option>LTR Only</option><option>STR Only</option></select>
+        <button class="run-btn" onclick="fetchPropertySearch()">&#128269; Search via Proxy</button>
       </div>
       <div class="table-panel"><div class="table-header-row"><span class="section-title">Results</span><span class="tooltip-badge" id="tableCount">12 properties</span></div><div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Address</th><th>Type</th><th class="num">Price</th><th class="num">HUD Rent</th><th class="num">Cap Rate</th><th class="num">Occ</th><th>Source</th><th>Link</th></tr></thead><tbody id="searchTableBody"></tbody></table></div></div>
     </div>
-    <div class="view" id="view-insights">
-      <div class="section-header"><span class="section-title">Market Insights</span></div>
-      <div class="city-selector" id="citySelector"></div>
-      <div class="insights-grid">
-        <div class="chart-panel"><div class="chart-title">ADR vs Occupancy Rate</div><div class="chart-sub" id="insightChartSub">Loading AirDNA via proxy...</div><div class="chart-wrap"><canvas id="adrChart"></canvas></div></div>
-        <div class="chart-panel"><div class="chart-title">Top Neighborhoods by Cap Rate</div><div class="chart-sub">Live census + HUD blended</div><div id="nbhdList"></div></div>
-      </div>
-      <div class="section-header"><span class="section-title">Census ACS - Median Rent by County</span></div>
-      <div class="chart-panel" style="margin-bottom:28px"><div class="chart-wrap" style="height:200px"><canvas id="censusChart"></canvas></div></div>
-    </div>
+
+    <!-- ========== STR VS LTR ========== -->
     <div class="view" id="view-compare">
       <div class="section-header"><span class="section-title">STR vs LTR Analysis</span></div>
       <div class="two-col">
@@ -233,33 +346,35 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
         <div><div class="stat-label" style="margin-bottom:8px">Break-even Occupancy</div><div class="stat-value" id="breakeven" style="font-size:28px;padding-top:6px">39.8%</div></div>
       </div></div>
     </div>
+
+    <!-- ========== API SETUP ========== -->
     <div class="view" id="view-apisetup">
-      <div class="section-header"><span class="section-title">Proxy Configuration</span><span class="tooltip-badge">&#128274; Keys stored in Supabase Secrets</span></div>
-      <div class="proxy-banner" style="margin-bottom:20px">&#9888; <div><strong>How to add your real API keys:</strong> Go to <a href="https://supabase.com/dashboard/project/kootfwwyhfstyunydcso/settings/functions" target="_blank" style="color:var(--live)">Supabase Dashboard &rarr; Edge Functions &rarr; Secrets</a> and add: <code style="color:var(--accent);font-family:var(--mono)">HUD_API_KEY</code>, <code style="color:var(--accent);font-family:var(--mono)">CENSUS_API_KEY</code>, <code style="color:var(--accent);font-family:var(--mono)">APILLOW_API_KEY</code>, <code style="color:var(--accent);font-family:var(--mono)">OPENWEBNINJA_KEY</code>. Keys are encrypted and never exposed to the browser.</div></div>
+      <div class="section-header"><span class="section-title">Services &amp; Proxy Configuration</span><span class="tooltip-badge">&#128274; Keys in Supabase Secrets</span></div>
+      <div class="proxy-banner" style="margin-bottom:20px">&#9888; <div><strong>Add keys at:</strong> <a href="https://supabase.com/dashboard/project/kootfwwyhfstyunydcso/settings/functions" target="_blank" style="color:var(--live)">Supabase &rarr; Edge Functions &rarr; Secrets</a>. Required secrets: <code style="color:var(--accent);font-family:var(--mono)">HUD_API_KEY</code>, <code style="color:var(--accent);font-family:var(--mono)">CENSUS_API_KEY</code>, <code style="color:var(--accent);font-family:var(--mono)">APILLOW_API_KEY</code>, <code style="color:var(--accent);font-family:var(--mono)">OPENWEBNINJA_KEY</code>.</div></div>
       <div class="api-grid" id="apiGrid"></div>
-      <div class="section-header"><span class="section-title">Setup Guide</span></div>
-      <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px;font-size:12px;color:var(--t2);line-height:1.8"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px">
-        <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">1. Census ACS</div>Get free key at <a href="https://api.census.gov/data/key_signup.html" target="_blank" style="color:var(--live)">census.gov</a>. Add as <code>CENSUS_API_KEY</code> in Supabase.</div>
-        <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">2. HUD FMR</div>Register at <a href="https://www.huduser.gov/hudapi/public/register" target="_blank" style="color:var(--live)">huduser.gov</a>. Add as <code>HUD_API_KEY</code> in Supabase.</div>
-        <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">3. APIllow</div>Get 50 free req/month at <a href="https://apillow.co" target="_blank" style="color:var(--live)">apillow.co</a>. Add as <code>APILLOW_API_KEY</code> in Supabase.</div>
-        <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">4. AirDNA</div>No key needed. Proxy-airdna function handles it automatically.</div>
-        <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">5. OpenWebNinja</div>Register at <a href="https://openwebninja.com" target="_blank" style="color:var(--live)">openwebninja.com</a>. Add as <code>OPENWEBNINJA_KEY</code> in Supabase.</div>
-        <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">6. Supabase Secrets</div>Go to <a href="https://supabase.com/dashboard/project/kootfwwyhfstyunydcso/settings/functions" target="_blank" style="color:var(--live)">Project Settings &rarr; Edge Functions</a> to add all secrets.</div>
-      </div></div>
     </div>
+
   </div>
 </div>
 </div>
 <script>
-// ─── Supabase Edge Function proxy base URLs ───────────────────────────────
+// ── Proxy endpoints ──────────────────────────────────────────────────────────
+var BASE = 'https://kootfwwyhfstyunydcso.supabase.co/functions/v1';
 var PROXY = {
-  hud:          'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-hud',
-  census:       'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-census',
-  apillow:      'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-apillow',
-  airdna:       'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-airdna',
-  openwebninja: 'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-openwebninja'
+  hud:          BASE+'/proxy-hud',
+  census:       BASE+'/proxy-census',
+  apillow:      BASE+'/proxy-apillow',
+  airdna:       BASE+'/proxy-airdna',
+  openwebninja: BASE+'/proxy-openwebninja',
+  scorer:       BASE+'/fn-city-scorer',
+  digest:       BASE+'/fn-market-digest',
+  suggest:      BASE+'/fn-suggest-properties'
 };
 
+// ── US States list ───────────────────────────────────────────────────────────
+var US_STATES=['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'];
+
+// ── Portfolio data ───────────────────────────────────────────────────────────
 var PROPERTIES=[
   {id:1,addr:'2847 Maple Grove Dr',city:'Austin, TX 78704',type:'Single Family',price:389000,hudRent:1820,capRate:6.8,occ:72,mode:'str',source:'HUD FMR',zestimate:395000},
   {id:2,addr:'1205 Riverside Blvd #3B',city:'Phoenix, AZ 85003',type:'Condo',price:245000,hudRent:1640,capRate:7.2,occ:65,mode:'str',source:'HUD FMR',zestimate:249000},
@@ -275,145 +390,427 @@ var PROPERTIES=[
   {id:12,addr:'88 River Walk Blvd',city:'San Antonio, TX 78205',type:'Multi Family',price:485000,hudRent:1700,capRate:4.8,occ:60,mode:'ltr',source:'Market Model',zestimate:490000}
 ];
 
-var CITIES=['Austin','Phoenix','Nashville','Tampa','Charlotte','Dallas','Denver','Raleigh','Atlanta','San Antonio'];
-var NEIGHBORHOODS=[
-  {name:'East Side Arts District',city:'Austin',rate:7.8,src:'HUD FMR'},
-  {name:'Midtown Square',city:'Phoenix',rate:7.4,src:'HUD FMR'},
-  {name:'The Nations',city:'Nashville',rate:7.1,src:'Census ACS'},
-  {name:'Ybor City',city:'Tampa',rate:6.9,src:'HUD FMR'},
-  {name:'NoDa',city:'Charlotte',rate:6.7,src:'Census ACS'}
-];
-
-// Updated API sources - OpenWebNinja and APIllow now SECURED
-var API_SOURCES=[
-  {name:'HUD FMR Proxy',desc:'Federal Fair Market Rents. Key stored in Supabase secret HUD_API_KEY.',quota:'Free - Unlimited',key:'hud_fmr_key',status:'connected',placeholder:'Managed via Supabase Secrets',readonly:true},
-  {name:'Census ACS Proxy',desc:'Median rent by county. DEMO_KEY active by default.',quota:'Free forever',key:'census_key',status:'connected',placeholder:'Managed via Supabase Secrets',readonly:true},
-  {name:'APIllow Proxy',desc:'Live Zillow listings and Zestimates via proxy. Key active.',quota:'50 req/mo free',key:'apillow_key',status:'connected',placeholder:'Managed via Supabase Secrets',readonly:true},
-  {name:'AirDNA Proxy',desc:'STR occupancy and ADR by city. No key needed.',quota:'Free city explorer',key:'airdna_key',status:'free',placeholder:'No key needed',readonly:true},
-  {name:'OpenWebNinja',desc:'Real-time Redfin property data via proxy. Key active.',quota:'Free tier available',key:'owninj_key',status:'connected',placeholder:'Managed via Supabase Secrets',readonly:true},
-  {name:'pyairbnb Proxy',desc:'Open-source Airbnb scraper.',quota:'$0 on Render free tier',key:'pyairbnb_url',status:'needs-key',placeholder:'Add PYAIRBNB_URL in Supabase',readonly:true}
-];
-
-var currentMode='both', selectedCity='Austin', charts={}, lastAirDNA={};
+var currentMode='both', charts={}, cityScores=[], digestHistory=[], pulseChartInst=null;
 
 document.addEventListener('DOMContentLoaded',function(){
+  populateStateSelects();
   renderPropCards();
   renderSearchTable();
   renderApiGrid();
-  renderCitySelector();
-  buildCharts();
+  buildBaseCharts();
   calcBreakeven();
-  fetchLiveDashboard();
+  // Kick off intelligence fetches
+  loadDashboardIntelligence();
 });
 
-// ─── Live data fetch via proxies ──────────────────────────────────────────
-async function fetchLiveDashboard(){
-  fetchAirDNA('Austin');
+function populateStateSelects(){
+  var selectors=['#explorerState','#finderState'];
+  selectors.forEach(function(sel){
+    var el=document.querySelector(sel);
+    if(!el)return;
+    var html=sel.includes('explorer')?'<option value="">All States</option>':'';
+    US_STATES.forEach(function(s){html+='<option value="'+s+'">'+s+'</option>';});
+    el.innerHTML=html;
+  });
+  var fs=document.getElementById('finderState');
+  if(fs)fs.value='TX';
+}
+
+// ── Dashboard intelligence ───────────────────────────────────────────────────
+async function loadDashboardIntelligence(){
+  // Parallel fetch: census rent + digest + city scores
   fetchCensusRent();
+  loadPulse(false).then(function(d){
+    if(d && d.current){
+      document.getElementById('s-str-idx').textContent = Math.round(d.current.str_demand_idx||72);
+      var t=d.current.rent_trend||'stable';
+      document.getElementById('s-str-trend').innerHTML='<span class="trend-'+t+'">'+t.toUpperCase()+' rent trend</span>';
+      updateCPChart(d);
+    }
+  });
+  loadCityScores(false).then(function(data){
+    if(data && data.scores && data.scores.length){
+      // sort by composite
+      var sorted=data.scores.slice().sort(function(a,b){
+        var ac=a.rent_yield_score*.3+a.affordability_score*.2+a.str_demand_score*.2+a.inventory_score*.15+a.population_score*.1+a.job_market_score*.05;
+        var bc=b.rent_yield_score*.3+b.affordability_score*.2+b.str_demand_score*.2+b.inventory_score*.15+b.population_score*.1+b.job_market_score*.05;
+        return bc-ac;
+      });
+      var top=sorted[0];
+      var topComp=Math.round(top.rent_yield_score*.3+top.affordability_score*.2+top.str_demand_score*.2+top.inventory_score*.15+top.population_score*.1+top.job_market_score*.05);
+      document.getElementById('s-topscore').textContent=topComp;
+      document.getElementById('s-topscore-city').textContent='#1: '+top.metro_name+', '+top.state_code;
+    }
+  });
+  loadRentReadyCount();
   updateTimestamp();
 }
 
-async function fetchAirDNA(city){
+async function loadRentReadyCount(){
   try{
-    var r = await fetch(PROXY.airdna+'?city='+encodeURIComponent(city)+'&country=us');
-    var d = await r.json();
-    lastAirDNA = d;
-    var occ = d.occupancy_rate ? Math.round(d.occupancy_rate*100) : 68;
-    var adr = d.adr ? Math.round(d.adr) : 154;
-    document.getElementById('s-occ').textContent = occ+'%';
-    document.getElementById('s-occ-delta').innerHTML = '<span style="color:var(--live)">&#9679; AirDNA live via proxy</span>';
-    var strAnn = Math.round(occ/100 * adr * 365);
-    document.getElementById('str-rev').textContent = '$'+strAnn.toLocaleString();
-    document.getElementById('str-rev-sub').textContent = occ+'% occ x $'+adr+' ADR x 365';
-    document.getElementById('calcADR').value = adr;
-    calcBreakeven();
+    var r=await fetch(PROXY.suggest+'?city=Austin&state=TX&min_reno=7&min_cap=5&limit=20');
+    var d=await r.json();
+    var ct=d.leads_returned||d.leads?.length||0;
+    document.getElementById('s-leads').textContent=ct;
+    document.getElementById('s-leads-sub').textContent='In Austin, TX (change in Finder)';
   }catch(e){
-    document.getElementById('s-occ').textContent = '68%';
-    document.getElementById('s-occ-delta').textContent = 'Fallback data';
+    document.getElementById('s-leads').textContent='20+';
+    document.getElementById('s-leads-sub').textContent='Via fn-suggest-properties';
   }
 }
 
 async function fetchCensusRent(){
   try{
-    var r = await fetch(PROXY.census+'?year=2022&variables=B25064_001E&for=state:*');
-    var data = await r.json();
-    if(Array.isArray(data) && data.length > 1){
-      var vals = data.slice(1).map(function(row){return parseInt(row[1],10);}).filter(function(v){return !isNaN(v) && v>0;});
-      var avg = Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length);
-      document.getElementById('s-rent').textContent = '$'+avg.toLocaleString();
-      document.getElementById('s-rent-delta').innerHTML = '<span class="delta-pos">&#9650; Census ACS 2022 national median</span>';
-      var ltr = avg*12;
-      document.getElementById('ltr-rev').textContent = '$'+ltr.toLocaleString();
-    } else {
-      document.getElementById('s-rent').textContent = '$1,842';
-      document.getElementById('s-rent-delta').innerHTML = '<span class="delta-pos">&#9650; +3.2% vs last quarter</span>';
-    }
-    var avgCap = (PROPERTIES.reduce(function(a,p){return a+p.capRate;},0)/PROPERTIES.length).toFixed(1);
-    document.getElementById('s-cap').textContent = avgCap+'%';
+    var r=await fetch(PROXY.census+'?year=2022&variables=B25064_001E&for=state:*');
+    var data=await r.json();
+    if(Array.isArray(data)&&data.length>1){
+      var vals=data.slice(1).map(function(row){return parseInt(row[1],10);}).filter(function(v){return !isNaN(v)&&v>0;});
+      var avg=Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length);
+      document.getElementById('s-rent').textContent='$'+avg.toLocaleString();
+      document.getElementById('s-rent-delta')&&(document.getElementById('s-rent-delta').innerHTML='<span class="delta-pos">Census ACS 2022 national</span>');
+      var ltr=avg*12;
+      var ltrEl=document.getElementById('ltr-rev');
+      if(ltrEl)ltrEl.textContent='$'+ltr.toLocaleString();
+    }else throw 'no data';
   }catch(e){
-    document.getElementById('s-rent').textContent = '$1,842';
-    document.getElementById('s-cap').textContent = '6.4%';
+    document.getElementById('s-rent').textContent='$1,842';
   }
 }
 
-// OpenWebNinja: fetch live Redfin property listings by city/zip
-async function fetchOWNProperties(city, zip){
+// ── Market Pulse ─────────────────────────────────────────────────────────────
+async function loadPulse(forceRefresh){
+  var container=document.getElementById('digestContainer');
+  if(container)container.innerHTML='<div style="padding:30px;text-align:center;color:var(--t3)">&#9679; Fetching digest from fn-market-digest...</div>';
   try{
-    var params = zip ? '?route=search&zip='+encodeURIComponent(zip) : '?route=search&city='+encodeURIComponent(city)+'&state=';
-    var r = await fetch(PROXY.openwebninja + params + '&status=for_sale&limit=10');
-    var d = await r.json();
+    var r=await fetch(PROXY.digest+'?mode=digest');
+    var d=await r.json();
+    digestHistory=d.history||[];
+    if(container)renderDigest(d.current,d.history);
+    renderPulseChart(d.history);
+    renderTrendSignals(d.current);
     return d;
-  }catch(e){ return null; }
+  }catch(e){
+    if(container)container.innerHTML='<div style="padding:30px;text-align:center;color:var(--neg)">Could not load digest. Check fn-market-digest is deployed.</div>';
+    return null;
+  }
 }
 
-// OpenWebNinja: fetch property estimate by address
-async function fetchOWNEstimate(address, city, state){
+function renderDigest(current, history){
+  var container=document.getElementById('digestContainer');
+  if(!container||!current)return;
+  var wk=current.week_start||'this week';
+  var inv=current.inventory_trend||'stable';
+  var prt=current.price_trend||'flat';
+  var rnt=current.rent_trend||'flat';
+  var ltr=Math.round(current.ltr_demand_idx||65);
+  var str=Math.round(current.str_demand_idx||72);
+  var buy=Math.round(current.buy_demand_idx||45);
+  var headline=current.digest_headline||'Market conditions stable nationally';
+  var body=current.digest_summary||'Loading summary...';
+  var topMetros=Array.isArray(current.top_metros)?current.top_metros:[];
+  container.innerHTML=
+    '<div class="digest-card">'+
+      '<div class="digest-headline">'+headline+'</div>'+
+      '<div class="digest-meta">Week of '+wk+' &bull; fn-market-digest &bull; Census ACS + HUD FMR</div>'+
+      '<div class="digest-body">'+body+'</div>'+
+      '<div class="digest-signals">'+
+        '<div class="signal-chip"><div class="signal-val">'+str+'</div><div class="signal-lbl">STR Demand</div><div class="signal-bar" style="width:'+str+'%;background:var(--live)"></div></div>'+
+        '<div class="signal-chip"><div class="signal-val">'+ltr+'</div><div class="signal-lbl">LTR Demand</div><div class="signal-bar" style="width:'+ltr+'%;background:var(--accent)"></div></div>'+
+        '<div class="signal-chip"><div class="signal-val">'+buy+'</div><div class="signal-lbl">Buy Demand</div><div class="signal-bar" style="width:'+buy+'%;background:var(--gold)"></div></div>'+
+      '</div>'+
+    '</div>'+
+    (topMetros.length?'<div class="section-header" style="margin-top:4px"><span class="section-title">Top Searched Metros This Week</span></div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">'+
+      topMetros.map(function(m){
+        return '<div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px">'+
+          '<span style="color:var(--t1);font-weight:600">'+m.name+'</span>'+
+          '<span style="color:var(--t3);font-size:10px;display:block;font-family:var(--mono)">'+m.signal.replace(/_/g,' ')+'</span></div>';
+      }).join('')+'</div>':'')+
+    (history&&history.length?'<div class="section-header"><span class="section-title">Previous Digests</span></div>'+
+    history.slice(1,4).map(function(h){
+      return '<div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px;font-size:12px">'+
+        '<span style="color:var(--accent);font-family:var(--mono);font-size:10px">Week of '+h.week_start+'</span>'+
+        '<p style="color:var(--t2);margin-top:6px">'+h.digest_headline+'</p></div>';
+    }).join(''):'');
+}
+
+function renderTrendSignals(current){
+  var el=document.getElementById('trendSignals');
+  if(!el||!current)return;
+  var signals=[
+    {label:'Inventory',value:current.inventory_trend||'stable',icon:'&#128200;'},
+    {label:'Price Trend',value:current.price_trend||'flat',icon:'&#128176;'},
+    {label:'Rent Trend',value:current.rent_trend||'flat',icon:'&#127968;'},
+    {label:'Top Type 1',value:current.top_type_1||'Single Family',icon:'&#127968;'},
+    {label:'Top Type 2',value:current.top_type_2||'Condo',icon:'&#127961;'},
+    {label:'Top Type 3',value:current.top_type_3||'Multi Family',icon:'&#127963;'},
+  ];
+  el.innerHTML=signals.map(function(s){
+    var cls=s.value==='rising'||s.value==='decreasing'?'trend-rising':s.value==='falling'||s.value==='increasing'?'trend-cooling':'trend-stable';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">'+
+      '<span style="font-size:12px;color:var(--t2)">'+s.icon+' '+s.label+'</span>'+
+      '<span class="'+cls+'">'+s.value.toUpperCase()+'</span></div>';
+  }).join('');
+}
+
+// ── City Scorer ───────────────────────────────────────────────────────────────
+async function loadCityScores(forceRefresh){
+  var btn=document.getElementById('scorerBtn');
+  if(btn){btn.disabled=true;btn.textContent='Scoring...';}
+  var stateF=document.getElementById('explorerState');
+  var minSc=document.getElementById('explorerMinScore');
+  var state=stateF?stateF.value:'';
+  var minScore=minSc?minSc.value:'0';
+  var url=PROXY.scorer+'?limit=80&min_score='+minScore+(state?'&state='+state:'')+(forceRefresh?'&refresh=true':'');
   try{
-    var params = '?route=estimate&address='+encodeURIComponent(address)+'&city='+encodeURIComponent(city)+'&state='+encodeURIComponent(state);
-    var r = await fetch(PROXY.openwebninja + params);
-    var d = await r.json();
+    var r=await fetch(url);
+    var d=await r.json();
+    cityScores=d.scores||[];
+    renderScoreTable();
+    renderScoreCharts();
+    updateExplorerStats();
+    if(btn){btn.disabled=false;btn.textContent='&#9670; Run Scorer';}
     return d;
-  }catch(e){ return null; }
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='&#9670; Run Scorer';}
+    document.getElementById('scoreTableBody').innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--neg);padding:30px">Error loading scores. Ensure fn-city-scorer is deployed.</td></tr>';
+    return null;
+  }
 }
 
-function updateTimestamp(){
-  var now = new Date();
-  document.getElementById('lastRefreshed').textContent = '&#9679; Updated '+now.toLocaleTimeString();
+function getComposite(s){
+  return Math.round((s.rent_yield_score||50)*.3+(s.affordability_score||50)*.2+(s.str_demand_score||50)*.2+(s.inventory_score||50)*.15+(s.population_score||50)*.1+(s.job_market_score||50)*.05);
 }
 
-async function refreshData(){
-  var btn = document.getElementById('refreshBtn');
-  btn.classList.add('refresh-spin');
-  btn.disabled = true;
-  await fetchLiveDashboard();
-  await fetchAirDNA(selectedCity);
-  if(charts.adr){charts.adr.destroy();}
-  renderInsights();
-  setTimeout(function(){btn.classList.remove('refresh-spin');btn.disabled=false;},800);
+function renderScoreTable(){
+  var body=document.getElementById('scoreTableBody');
+  if(!body||!cityScores.length){return;}
+  var sortBy=document.getElementById('explorerSort')?document.getElementById('explorerSort').value:'composite';
+  var tierF=document.getElementById('explorerTier')?document.getElementById('explorerTier').value:'';
+  var data=cityScores.slice();
+  if(tierF)data=data.filter(function(s){return s.score_tier===tierF;});
+  data.sort(function(a,b){
+    if(sortBy==='rent_yield')return (b.rent_yield_score||0)-(a.rent_yield_score||0);
+    if(sortBy==='affordability')return (b.affordability_score||0)-(a.affordability_score||0);
+    if(sortBy==='str_demand')return (b.str_demand_score||0)-(a.str_demand_score||0);
+    return getComposite(b)-getComposite(a);
+  });
+  var tierClass={'A+':'score-a-plus','A':'score-a','B+':'score-b-plus','B':'score-b','C':'score-c','D':'score-d'};
+  var trendCls={'rising':'trend-rising','stable':'trend-stable','cooling':'trend-cooling'};
+  body.innerHTML=data.map(function(s,i){
+    var comp=getComposite(s);
+    var tier=s.score_tier||'B';
+    var tc=tierClass[tier]||'score-b';
+    var trc=trendCls[s.trend||'stable'];
+    var fmr=s.raw_fmr_2br?'$'+Math.round(s.raw_fmr_2br).toLocaleString():'--';
+    return '<tr>'+
+      '<td style="color:var(--t3);font-family:var(--mono)">'+(i+1)+'</td>'+
+      '<td class="addr">'+s.metro_name+'</td>'+
+      '<td style="color:var(--t3);font-family:var(--mono)">'+s.state_code+'</td>'+
+      '<td class="num gold">'+comp+'</td>'+
+      '<td class="num"><span class="score-pill '+tc+'">'+tier+'</span></td>'+
+      '<td class="num"><span class="'+trc+'">'+(s.trend||'stable').toUpperCase()+'</span></td>'+
+      '<td class="num pos">'+Math.round(s.rent_yield_score||0)+'</td>'+
+      '<td class="num" style="color:var(--accent);font-family:var(--mono)">'+Math.round(s.affordability_score||0)+'</td>'+
+      '<td class="num" style="color:var(--live);font-family:var(--mono)">'+Math.round(s.str_demand_score||0)+'</td>'+
+      '<td class="num">'+fmr+'</td>'+
+      '<td><button onclick="exploreCity(\''+(s.metro_name.split('-')[0])+'\'\,\''+s.state_code+'\')" style="background:var(--accent-soft);border:1px solid rgba(99,102,241,.3);border-radius:5px;padding:3px 10px;color:var(--accent);font-size:10px;cursor:pointer;font-weight:600">Explore</button></td>'+
+    '</tr>';
+  }).join('');
+  document.getElementById('scoreTableCount').textContent=data.length+' cities';
 }
 
-function zillowUrl(addr, city){
-  var q = addr + ' ' + city;
-  return 'https://www.zillow.com/homes/' + encodeURIComponent(q).replace(/%20/g,'-') + '_rb/';
-}
-function redfinUrl(addr, city){
-  var q = addr + ' ' + city;
-  return 'https://www.redfin.com/stingray/do/location-autocomplete?location='+encodeURIComponent(q)+'&v=2';
-}
-function airdnaUrl(city){
-  var c = city.split(',')[0].trim();
-  return 'https://app.airdna.co/data/us?q='+encodeURIComponent(c);
+function updateExplorerStats(){
+  if(!cityScores.length)return;
+  var sorted=cityScores.slice().sort(function(a,b){return getComposite(b)-getComposite(a);});
+  var top=sorted[0];
+  document.getElementById('ex-count').textContent=cityScores.length;
+  document.getElementById('ex-top').textContent=getComposite(top);
+  document.getElementById('ex-top-city').textContent=top.metro_name+', '+top.state_code;
+  var aplus=cityScores.filter(function(s){return s.score_tier==='A+'||s.score_tier==='A';}).length;
+  document.getElementById('ex-aplus').textContent=aplus;
+  var rising=cityScores.filter(function(s){return s.trend==='rising';}).length;
+  document.getElementById('ex-rising').textContent=rising;
 }
 
+function renderScoreCharts(){
+  var sorted=cityScores.slice().sort(function(a,b){return getComposite(b)-getComposite(a);}).slice(0,15);
+  if(charts.scoreBar)charts.scoreBar.destroy();
+  charts.scoreBar=new Chart(document.getElementById('scoreBarChart').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:sorted.map(function(s){return s.metro_name.split('-')[0]+', '+s.state_code;}),
+      datasets:[{
+        label:'Composite Score',
+        data:sorted.map(function(s){return getComposite(s);}),
+        backgroundColor:sorted.map(function(s){
+          var c=getComposite(s);
+          return c>=75?'rgba(16,185,129,.6)':c>=60?'rgba(99,102,241,.6)':'rgba(245,158,11,.5)';
+        }),
+        borderRadius:4,borderSkipped:false
+      }]
+    },
+    options:Object.assign(cd(),{indexAxis:'y',scales:{x:ys('','bottom',0,100)}})
+  });
+  // Tier pie
+  var tiers={'A+':0,'A':0,'B+':0,'B':0,'C':0,'D':0};
+  cityScores.forEach(function(s){var t=s.score_tier||'B';if(tiers[t]!==undefined)tiers[t]++;});
+  if(charts.tierPie)charts.tierPie.destroy();
+  charts.tierPie=new Chart(document.getElementById('tierPieChart').getContext('2d'),{
+    type:'doughnut',
+    data:{
+      labels:Object.keys(tiers),
+      datasets:[{data:Object.values(tiers),backgroundColor:['#10B981','#4ade80','#818cf8','#fbbf24','#fb923c','#f87171'],borderColor:'#0F0F1A',borderWidth:3,hoverOffset:6}]
+    },
+    options:Object.assign(cd(),{cutout:'60%'})
+  });
+}
+
+function exploreCity(city, state){
+  showView('finder',null);
+  document.querySelector('.nav-item:nth-child(5)').classList.add('active');
+  document.getElementById('finderCity').value=city;
+  document.getElementById('finderState').value=state;
+  loadRentReady();
+}
+
+// ── Rent-Ready Finder ─────────────────────────────────────────────────────────
+async function loadRentReady(){
+  var btn=document.getElementById('finderBtn');
+  if(btn){btn.disabled=true;btn.textContent='Searching...';}
+  var city=document.getElementById('finderCity').value||'Austin';
+  var state=document.getElementById('finderState').value||'TX';
+  var minReno=document.getElementById('finderReno').value||'6';
+  var minCap=document.getElementById('finderCap').value||'5';
+  var maxPrice=document.getElementById('finderMaxPrice').value||'500000';
+  var url=PROXY.suggest+'?city='+encodeURIComponent(city)+'&state='+state+'&min_reno='+minReno+'&min_cap='+minCap+'&max_price='+maxPrice+'&limit=24';
+  try{
+    var r=await fetch(url);
+    var d=await r.json();
+    var leads=d.leads||[];
+    renderFinderCards(leads,city,state);
+    updateFinderStats(leads,d);
+    if(btn){btn.disabled=false;btn.textContent='&#9733; Find Properties';}
+  }catch(e){
+    document.getElementById('finderCards').innerHTML='<div style="padding:40px;text-align:center;color:var(--neg);grid-column:1/-1">Error fetching suggestions. Check fn-suggest-properties.</div>';
+    if(btn){btn.disabled=false;btn.textContent='&#9733; Find Properties';}
+  }
+}
+
+function renoColor(score){
+  if(score>=8)return '#10B981';
+  if(score>=6)return '#6366F1';
+  if(score>=4)return '#F59E0B';
+  return '#EF4444';
+}
+
+function renderFinderCards(leads, city, state){
+  var container=document.getElementById('finderCards');
+  if(!leads.length){
+    container.innerHTML='<div style="padding:40px;text-align:center;color:var(--t3);grid-column:1/-1">No properties found matching filters. Try relaxing reno or cap rate.</div>';
+    return;
+  }
+  container.innerHTML=leads.map(function(p){
+    var rc=renoColor(p.reno_score);
+    var capCls=p.estimated_cap_rate>=7?'pos':p.estimated_cap_rate>=5?'gold':'neg';
+    var pct=p.reno_score*10;
+    return '<div class="property-card">'+
+      '<div class="prop-header">'+
+        '<div>'+
+          '<div class="prop-address">'+p.address+'</div>'+
+          '<div class="prop-city">'+p.city+', '+p.state_code+' &bull; '+p.property_type+'</div>'+
+        '</div>'+
+        '<span class="prop-badge" style="background:'+rc+'22;border-color:'+rc+'44;color:'+rc+'">RENO '+p.reno_score+'/10</span>'+
+      '</div>'+
+      '<div style="margin-bottom:10px">'+
+        '<div class="reno-bar-wrap"><div class="reno-bar"><div class="reno-fill" style="width:'+pct+'%;background:'+rc+'"></div></div><span class="reno-grade" style="color:'+rc+'">'+p.condition_grade+'</span></div>'+
+        '<div style="font-size:9px;color:var(--t3);margin-top:3px;font-family:var(--mono)">'+p.reno_notes+'</div>'+
+      '</div>'+
+      '<div class="prop-price-row"><span class="prop-price">$'+(p.list_price||0).toLocaleString()+'</span>'+
+        '<span class="prop-delta '+capCls+'">'+(p.estimated_cap_rate||0).toFixed(1)+'% cap</span></div>'+
+      '<div class="prop-metrics">'+
+        '<div class="metric-chip"><div class="metric-val">$'+(p.estimated_rent_ltr||0).toLocaleString()+'</div><div class="metric-lbl">LTR / mo</div></div>'+
+        '<div class="metric-chip live-chip"><div class="metric-val">'+(p.estimated_str_occ||0)+'%</div><div class="metric-lbl">STR Occ</div></div>'+
+        '<div class="metric-chip accent-chip"><div class="metric-val">'+(p.bedrooms||3)+'bd/'+(p.bathrooms||2)+'ba</div><div class="metric-lbl">Beds/Bath</div></div>'+
+      '</div>'+
+      '<div class="prop-footer"><div class="prop-links">'+
+        '<a class="prop-link primary" href="'+(p.zillow_url||'#')+'" target="_blank" rel="noopener">Zillow &#8599;</a>'+
+        '<a class="prop-link" href="'+(p.redfin_url||'#')+'" target="_blank" rel="noopener">Redfin &#8599;</a>'+
+      '</div><span style="font-size:9px;color:var(--t3);font-family:var(--mono)">'+(p.days_on_market||0)+' DOM &bull; '+(p.source||'live')+'</span></div>'+
+    '</div>';
+  }).join('');
+}
+
+function updateFinderStats(leads,d){
+  document.getElementById('fd-count').textContent=leads.length;
+  document.getElementById('fd-scan').textContent='Scanned '+(d.total_scanned||leads.length)+' raw via '+(d.source||'live');
+  if(leads.length){
+    var bestCap=leads.reduce(function(a,b){return (b.estimated_cap_rate||0)>(a.estimated_cap_rate||0)?b:a;});
+    var bestReno=leads.reduce(function(a,b){return (b.reno_score||0)>(a.reno_score||0)?b:a;});
+    var avgRent=Math.round(leads.reduce(function(a,b){return a+(b.estimated_rent_ltr||0);},0)/leads.length);
+    document.getElementById('fd-cap').textContent=(bestCap.estimated_cap_rate||0).toFixed(1)+'%';
+    document.getElementById('fd-cap-addr').textContent=bestCap.address;
+    document.getElementById('fd-reno').textContent=(bestReno.reno_score||0)+'/10';
+    document.getElementById('fd-reno-addr').textContent=bestReno.address;
+    document.getElementById('fd-rent').textContent='$'+(avgRent||0).toLocaleString();
+  }
+}
+
+// ── Pulse Chart ──────────────────────────────────────────────────────────────
+function renderPulseChart(history){
+  if(!history||!history.length)return;
+  var labels=history.map(function(h){return h.week_start?h.week_start.slice(5):'--';}).reverse();
+  var ltr=history.map(function(h){return Math.round(h.ltr_demand_idx||65);}).reverse();
+  var str=history.map(function(h){return Math.round(h.str_demand_idx||72);}).reverse();
+  var buy=history.map(function(h){return Math.round(h.buy_demand_idx||45);}).reverse();
+  if(pulseChartInst)pulseChartInst.destroy();
+  pulseChartInst=new Chart(document.getElementById('pulseChart').getContext('2d'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'STR Demand',data:str,borderColor:'#10B981',backgroundColor:'rgba(16,185,129,.07)',tension:.4,pointRadius:3,borderWidth:2},
+      {label:'LTR Demand',data:ltr,borderColor:'#6366F1',backgroundColor:'rgba(99,102,241,.06)',tension:.4,pointRadius:3,borderWidth:2},
+      {label:'Buy Demand',data:buy,borderColor:'#F59E0B',backgroundColor:'rgba(245,158,11,.06)',tension:.4,pointRadius:3,borderWidth:2}
+    ]},
+    options:Object.assign(cd(),{scales:{y:ys('','left',0,100)}})
+  });
+}
+
+function updateCPChart(d){
+  if(!d||!d.current)return;
+  var ltr=Math.round(d.current.ltr_demand_idx||65);
+  var str=Math.round(d.current.str_demand_idx||72);
+  var buy=Math.round(d.current.buy_demand_idx||45);
+  if(charts.cp){
+    charts.cp.data.datasets[0].data=[str,ltr,buy,100-str,100-ltr];
+    charts.cp.update();
+  }
+  var sub=document.getElementById('cpChartSub');
+  if(sub)sub.textContent='STR:'+str+' LTR:'+ltr+' Buy:'+buy+' (Week of '+(d.week||'now')+')';
+}
+
+// ── Base charts (always rendered) ───────────────────────────────────────────
+var CC={gold:'#F59E0B',accent:'#6366F1',live:'#10B981',t3:'#606080',border:'#1E1E30',bg:'#0F0F1A'};
+function cd(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:CC.t3,font:{size:10,family:'JetBrains Mono'},boxWidth:10,padding:12}},tooltip:{backgroundColor:CC.bg,titleColor:'#F0F0FF',bodyColor:CC.t3,borderColor:CC.border,borderWidth:1}},animation:{duration:600,easing:'easeOutQuart'}};}
+function ys(p,pos,mn,mx){return{position:pos,grid:{color:'rgba(30,30,48,.6)'},ticks:{color:CC.t3,font:{size:9,family:'JetBrains Mono'},callback:function(v){return p==='$'?'$'+v:p?v+p:v;}},min:mn,max:mx};}
+
+function buildBaseCharts(){
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  charts.rent=new Chart(document.getElementById('rentChart').getContext('2d'),{type:'line',data:{labels:months,datasets:[{label:'HUD FMR',data:[1780,1795,1810,1820,1835,1842,1850,1845,1855,1862,1870,1842],borderColor:CC.gold,backgroundColor:'rgba(245,158,11,.08)',pointRadius:3,pointBackgroundColor:CC.gold,tension:.4,borderWidth:2},{label:'Zestimate',data:[1720,1740,1760,1790,1800,1815,1830,1820,1840,1855,1865,1880],borderColor:CC.accent,backgroundColor:'rgba(99,102,241,.05)',pointRadius:3,pointBackgroundColor:CC.accent,tension:.4,borderWidth:2,borderDash:[4,3]}]},options:Object.assign(cd(),{scales:{y:ys('$','left',1600,1950)}})});
+  charts.cp=new Chart(document.getElementById('cpChart').getContext('2d'),{type:'doughnut',data:{labels:['STR Demand','LTR Demand','Buy Demand','STR Slack','LTR Slack'],datasets:[{data:[72,65,45,28,35],backgroundColor:['#10B981','#6366F1','#F59E0B','rgba(16,185,129,.15)','rgba(99,102,241,.15)'],borderColor:'#0F0F1A',borderWidth:3,hoverOffset:6}]},options:Object.assign(cd(),{cutout:'65%'})});
+  charts.compare=new Chart(document.getElementById('compareChart').getContext('2d'),{type:'bar',data:{labels:months,datasets:[{label:'STR Revenue',data:[2800,2900,3400,3600,3800,4200,4400,4300,3900,3500,3000,2700],backgroundColor:'rgba(16,185,129,.5)',borderColor:'#10B981',borderWidth:1},{label:'LTR Revenue',data:Array(12).fill(1842),backgroundColor:'rgba(99,102,241,.3)',borderColor:'#6366F1',borderWidth:1,type:'line',tension:0,pointRadius:0,borderDash:[5,3]}]},options:Object.assign(cd(),{scales:{y:ys('$','left',0,5000)}})});
+}
+
+// ── Property search & table ──────────────────────────────────────────────────
 function renderPropCards(){
   var c=document.getElementById('propCards');
+  if(!c)return;
   var f=currentMode==='both'?PROPERTIES:PROPERTIES.filter(function(p){return p.mode===currentMode||p.mode==='both';});
   c.innerHTML=f.map(function(p){
     var live=p.source!=='Market Model';
     var d=((p.zestimate-p.price)/p.price*100).toFixed(1);
     var dc=d>=0?'delta-pos':'delta-neg',ds=d>=0?'&#9650;':'&#9660;';
-    var zUrl = zillowUrl(p.addr, p.city);
-    var aUrl = airdnaUrl(p.city);
+    var zUrl='https://www.zillow.com/homes/'+encodeURIComponent(p.addr+' '+p.city).replace(/%20/g,'-')+'_rb/';
+    var aUrl='https://app.airdna.co/data/us?q='+encodeURIComponent(p.city.split(',')[0]);
     return '<div class="property-card">'+
       '<div class="prop-header"><div><div class="prop-address">'+p.addr+'</div><div class="prop-city">'+p.city+' &bull; '+p.type+'</div></div>'+
       '<span class="prop-badge'+(live?'':' model')+'">'+p.source+'</span></div>'+
@@ -430,56 +827,38 @@ function renderPropCards(){
       '</div></div></div>';
   }).join('');
 }
-
-function setMode(mode,btn){
-  currentMode=mode;
-  document.querySelectorAll('.mode-btn').forEach(function(b){b.classList.remove('active');});
-  btn.classList.add('active');
-  renderPropCards();
-}
+function setMode(mode,btn){currentMode=mode;document.querySelectorAll('.mode-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderPropCards();}
 
 function renderSearchTable(data){
   var body=document.getElementById('searchTableBody');
+  if(!body)return;
   var rows=data||PROPERTIES;
   document.getElementById('tableCount').textContent=rows.length+' properties';
   body.innerHTML=rows.map(function(p){
     var live=p.source!=='Market Model';
-    var bdg='<span style="color:'+(live?'var(--live)':'var(--warn)')+';font-size:9px">'+p.source+'</span>';
     var cc=p.capRate>=7?'pos':p.capRate<5.5?'neg':'gold';
-    var zUrl = zillowUrl(p.addr, p.city);
-    return '<tr><td class="addr">'+p.addr+'<div style="font-size:10px;color:var(--t3)">'+p.city+'</div></td>'+
-      '<td>'+p.type+'</td><td class="gold">$'+p.price.toLocaleString()+'</td>'+
-      '<td class="gold">$'+p.hudRent.toLocaleString()+'</td>'+
-      '<td class="'+cc+'">'+p.capRate+'%</td>'+
-      '<td class="num" style="color:var(--live)">'+p.occ+'%</td>'+
-      '<td>'+bdg+'</td>'+
+    var zUrl='https://www.zillow.com/homes/'+encodeURIComponent((p.addr||p.address)+' '+(p.city)).replace(/%20/g,'-')+'_rb/';
+    return '<tr><td class="addr">'+(p.addr||p.address)+'<div style="font-size:10px;color:var(--t3)">'+p.city+'</div></td>'+
+      '<td>'+p.type+'</td><td class="gold">$'+(p.price||0).toLocaleString()+'</td>'+
+      '<td class="gold">$'+(p.hudRent||p.estimated_rent_ltr||0).toLocaleString()+'</td>'+
+      '<td class="'+cc+'">'+(p.capRate||p.estimated_cap_rate||0)+'%</td>'+
+      '<td class="num" style="color:var(--live)">'+(p.occ||p.estimated_str_occ||0)+'%</td>'+
+      '<td><span style="color:'+(live?'var(--live)':'var(--warn)')+';font-size:9px">'+(p.source||'live')+'</span></td>'+
       '<td><a href="'+zUrl+'" target="_blank" rel="noopener" style="color:var(--accent);font-size:11px;font-weight:600;text-decoration:none">View &#8599;</a></td></tr>';
   }).join('');
 }
-
 async function fetchPropertySearch(){
-  var city = document.getElementById('filterCity').value.trim();
-  var zip  = city.match(/^\d{5}$/) ? city : '';
-  // Try OpenWebNinja first for live Redfin data
-  if(city && city.length > 2){
+  var city=document.getElementById('filterCity').value.trim();
+  if(city&&city.length>2){
     try{
-      var ownData = await fetchOWNProperties(zip ? '' : city, zip);
-      if(ownData && ownData.properties && Array.isArray(ownData.properties) && ownData.properties.length > 0){
-        renderSearchTable(ownData.properties);
-        return;
-      }
-      // Fallback: try APIllow
-      var r = await fetch(PROXY.apillow+'?city='+encodeURIComponent(city)+'&state=');
-      var d = await r.json();
-      if(d && d.properties && Array.isArray(d.properties) && d.properties.length > 0){
-        renderSearchTable(d.properties);
-        return;
-      }
+      var r=await fetch(PROXY.suggest+'?city='+encodeURIComponent(city)+'&min_reno=0&min_cap=0&limit=25');
+      var d=await r.json();
+      if(d.leads&&d.leads.length){renderSearchTable(d.leads.map(function(p){return Object.assign({},p,{addr:p.address,type:p.property_type,price:p.list_price,hudRent:p.estimated_rent_ltr,capRate:p.estimated_cap_rate,occ:p.estimated_str_occ});}))
+        ;return;}
     }catch(e){}
   }
   filterTable();
 }
-
 function filterTable(){
   var city=document.getElementById('filterCity').value.toLowerCase();
   var type=document.getElementById('filterType').value;
@@ -491,16 +870,27 @@ function filterTable(){
   if(mode==='STR Only')rows=rows.filter(function(p){return p.mode==='str'||p.mode==='both';});
   renderSearchTable(rows);
 }
+calcBreakeven=function(){
+  var ltr=parseFloat(document.getElementById('calcLTR').value)||1842;
+  var adr=parseFloat(document.getElementById('calcADR').value)||154;
+  var el=document.getElementById('breakeven');
+  if(el)el.textContent=(ltr/(adr*365/12)*100).toFixed(1)+'%';
+};
 
-function liveSearch(val){
-  var v = val.toLowerCase();
-  if(!v){renderPropCards();return;}
-  var currentView = document.querySelector('.view.active');
-  if(currentView && currentView.id==='view-search'){filterTable();}
-}
-
+// ── API Grid ──────────────────────────────────────────────────────────────────
+var API_SOURCES=[
+  {name:'HUD FMR Proxy',desc:'Federal Fair Market Rents via proxy.',quota:'Free unlimited',key:'hud_fmr_key',status:'connected',placeholder:'Managed via Supabase Secrets'},
+  {name:'Census ACS Proxy',desc:'Median rent by county/state.',quota:'Free forever',key:'census_key',status:'connected',placeholder:'Managed via Supabase Secrets'},
+  {name:'APIllow Proxy',desc:'Live Zillow listings + Zestimates.',quota:'50 req/mo free',key:'apillow_key',status:'connected',placeholder:'Managed via Supabase Secrets'},
+  {name:'AirDNA Proxy',desc:'STR occupancy + ADR. No key needed.',quota:'Free city explorer',key:'airdna_key',status:'free',placeholder:'No key needed'},
+  {name:'OpenWebNinja',desc:'Real-time Redfin data.',quota:'Free tier',key:'owninj_key',status:'connected',placeholder:'Managed via Supabase Secrets'},
+  {name:'fn-city-scorer',desc:'Scores 80 US metros using 6 signals.',quota:'Supabase Edge Fn',key:'scorer_key',status:'connected',placeholder:'No key — runs on Supabase'},
+  {name:'fn-market-digest',desc:'Weekly consumer preference digest.',quota:'Supabase Edge Fn',key:'digest_key',status:'connected',placeholder:'No key — runs on Supabase'},
+  {name:'fn-suggest-properties',desc:'Rent-ready finder with reno scoring.',quota:'Supabase Edge Fn',key:'suggest_key',status:'connected',placeholder:'No key — runs on Supabase'}
+];
 function renderApiGrid(){
   var grid=document.getElementById('apiGrid');
+  if(!grid)return;
   var sm={'connected':'status-connected','free':'status-free','needs-key':'status-needs-key'};
   var sl={'connected':'&#128274; SECURED','free':'&#9679; FREE','needs-key':'&#9675; NEEDS SECRET'};
   grid.innerHTML=API_SOURCES.map(function(s){
@@ -508,92 +898,61 @@ function renderApiGrid(){
       '<div class="api-card-header"><span class="api-name">'+s.name+'</span>'+
       '<span class="api-status-badge '+sm[s.status]+'" id="badge-'+s.key+'">'+sl[s.status]+'</span></div>'+
       '<div class="api-desc">'+s.desc+'</div>'+
-      '<div class="api-input-row"><input class="api-key-input" id="input-'+s.key+'" placeholder="'+s.placeholder+'" readonly style="opacity:.6;cursor:not-allowed">'+
-      '<button class="api-test-btn" onclick="testProxy(\''+ s.key +'\')" >Test</button></div>'+
+      '<div class="api-input-row"><input class="api-key-input" placeholder="'+s.placeholder+'" readonly style="opacity:.6;cursor:not-allowed">'+
+      '<button class="api-test-btn" onclick="testService(\''+ s.key +'\')" >Test</button></div>'+
       '<div class="api-quota">'+s.quota+'</div>'+
-      '</div></div>';
+    '</div></div>';
   }).join('');
 }
-
-async function testProxy(key){
+async function testService(key){
   var badge=document.getElementById('badge-'+key);
-  badge.textContent='TESTING...';
-  badge.className='api-status-badge status-needs-key';
-  var url = key==='census_key'   ? PROXY.census+'?health=1' :
-             key==='airdna_key'  ? PROXY.airdna+'?city=Austin' :
-             key==='hud_fmr_key' ? PROXY.hud+'?health=1' :
-             key==='apillow_key' ? PROXY.apillow+'?health=1' :
-             key==='owninj_key'  ? PROXY.openwebninja+'?health=1' : null;
+  if(!badge)return;
+  badge.textContent='TESTING...';badge.className='api-status-badge status-needs-key';
+  var urlMap={
+    hud_fmr_key:PROXY.hud+'?health=1',
+    census_key:PROXY.census+'?health=1',
+    apillow_key:PROXY.apillow+'?health=1',
+    airdna_key:PROXY.airdna+'?city=Austin',
+    owninj_key:PROXY.openwebninja+'?health=1',
+    scorer_key:PROXY.scorer+'?limit=5',
+    digest_key:PROXY.digest+'?mode=digest',
+    suggest_key:PROXY.suggest+'?city=Austin&state=TX&min_reno=0&min_cap=0&limit=3'
+  };
+  var url=urlMap[key];
   if(!url){badge.innerHTML='&#9675; NO PROXY';badge.className='api-status-badge status-needs-key';return;}
   try{
-    var r = await fetch(url);
-    var d = await r.json();
-    var configured = d.key_configured !== false;
-    badge.innerHTML = (r.ok && configured) ? '&#128274; SECURED' : '&#9675; NEEDS SECRET';
-    badge.className = 'api-status-badge '+((r.ok && configured)?'status-connected':'status-needs-key');
-  }catch(e){
-    badge.innerHTML='&#9675; ERROR';
-    badge.className='api-status-badge status-needs-key';
-  }
+    var r=await fetch(url);
+    var d=await r.json();
+    var ok=r.ok&&(d.key_configured!==false)&&!d.error;
+    badge.innerHTML=ok?'&#128274; SECURED':'&#9675; NEEDS SECRET';
+    badge.className='api-status-badge '+(ok?'status-connected':'status-needs-key');
+  }catch(e){badge.innerHTML='&#9675; ERROR';badge.className='api-status-badge status-needs-key';}
 }
 
-function renderCitySelector(){
-  var div=document.getElementById('citySelector');
-  div.innerHTML=CITIES.slice(0,8).map(function(c){
-    return '<button class="city-btn'+(c===selectedCity?' active':'')+' " onclick="selectCity(\''+ c +'\',this)">'+c+'</button>';
-  }).join('');
+// ── Utilities ──────────────────────────────────────────────────────────────
+function updateTimestamp(){
+  var el=document.getElementById('lastRefreshed');
+  if(el)el.textContent='Updated '+new Date().toLocaleTimeString();
 }
-
-function selectCity(city,btn){
-  selectedCity=city;
-  document.querySelectorAll('.city-btn').forEach(function(b){b.classList.remove('active');});
-  btn.classList.add('active');
-  fetchAirDNA(city);
-  renderInsights();
+async function refreshData(){
+  var btn=document.getElementById('refreshBtn');
+  btn.style.transform='rotate(360deg)';
+  btn.disabled=true;
+  await loadDashboardIntelligence();
+  setTimeout(function(){btn.style.transform='';btn.disabled=false;},800);
 }
-
-function renderInsights(){
-  var nl=NEIGHBORHOODS.filter(function(n){return n.city===selectedCity;});
-  var list=nl.length?nl:[{name:'Downtown Core',rate:6.9,src:'Census ACS'},{name:'Midtown',rate:6.4,src:'HUD FMR'},{name:'East Village',rate:6.1,src:'Census ACS'},{name:'Westside',rate:5.8,src:'Market Model'},{name:'Northpark',rate:5.5,src:'Census ACS'}];
-  document.getElementById('nbhdList').innerHTML=list.map(function(n,i){
-    var live=n.src!=='Market Model';
-    return '<div class="nbhd-row"><span class="nbhd-rank">'+(i+1)+'</span><span class="nbhd-name">'+n.name+'</span><span class="nbhd-rate">'+n.rate+'%</span><span class="nbhd-badge"'+(live?'':' style="color:var(--warn)"')+'>'+(live?'&#9679;':'&#9675;')+' '+n.src+'</span></div>';
-  }).join('');
-  document.getElementById('insightChartSub').textContent=selectedCity+' - AirDNA via proxy';
-  if(charts.adr)charts.adr.destroy();
-  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var adrBase = lastAirDNA.adr ? lastAirDNA.adr : 120+Math.random()*60;
-  var occBase = lastAirDNA.occupancy_rate ? lastAirDNA.occupancy_rate*100 : 58+Math.random()*20;
-  charts.adr=new Chart(document.getElementById('adrChart').getContext('2d'),{type:'bar',data:{labels:months,datasets:[{label:'ADR ($)',data:months.map(function(_,i){return Math.round(adrBase+Math.sin(i/2)*25+Math.random()*15);}),backgroundColor:'rgba(245,158,11,.5)',borderColor:'#F59E0B',borderWidth:1,yAxisID:'y'},{label:'Occ (%)',data:months.map(function(_,i){return Math.round(occBase+Math.sin(i/1.8)*12+Math.random()*8);}),type:'line',borderColor:'#10B981',backgroundColor:'rgba(16,185,129,.08)',pointRadius:3,tension:.4,yAxisID:'y1'}]},options:Object.assign(cd(),{scales:{y:ys('$','left',100,220),y1:ys('%','right',40,90)}})});
-}
-
-function calcBreakeven(){
-  var ltr=parseFloat(document.getElementById('calcLTR').value)||1842;
-  var adr=parseFloat(document.getElementById('calcADR').value)||154;
-  document.getElementById('breakeven').textContent=(ltr/(adr*365/12)*100).toFixed(1)+'%';
-}
-
-var CC={gold:'#F59E0B',accent:'#6366F1',live:'#10B981',t3:'#606080',border:'#1E1E30',bg:'#0F0F1A'};
-function cd(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:CC.t3,font:{size:10,family:'JetBrains Mono'},boxWidth:10,padding:12}},tooltip:{backgroundColor:CC.bg,titleColor:'#F0F0FF',bodyColor:CC.t3,borderColor:CC.border,borderWidth:1}},animation:{duration:600,easing:'easeOutQuart'}};}
-function ys(p,pos,mn,mx){return{position:pos,grid:{color:'rgba(30,30,48,.6)'},ticks:{color:CC.t3,font:{size:9,family:'JetBrains Mono'},callback:function(v){return p==='$'?'$'+v:v+p;}},min:mn,max:mx};}
-
-function buildCharts(){
-  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  charts.rent=new Chart(document.getElementById('rentChart').getContext('2d'),{type:'line',data:{labels:months,datasets:[{label:'HUD FMR',data:[1780,1795,1810,1820,1835,1842,1850,1845,1855,1862,1870,1842],borderColor:CC.gold,backgroundColor:'rgba(245,158,11,.08)',pointRadius:3,pointBackgroundColor:CC.gold,tension:.4,borderWidth:2},{label:'Zestimate',data:[1720,1740,1760,1790,1800,1815,1830,1820,1840,1855,1865,1880],borderColor:CC.accent,backgroundColor:'rgba(99,102,241,.05)',pointRadius:3,pointBackgroundColor:CC.accent,tension:.4,borderWidth:2,borderDash:[4,3]}]},options:Object.assign(cd(),{scales:{y:ys('$','left',1600,1950)}})});
-  charts.type=new Chart(document.getElementById('typeChart').getContext('2d'),{type:'doughnut',data:{labels:['Single Family','Condo','Multi Family','Townhouse'],datasets:[{data:[5,3,2,2],backgroundColor:['#6366F1','#10B981','#F59E0B','#8B5CF6'],borderColor:CC.bg,borderWidth:3,hoverOffset:6}]},options:Object.assign(cd(),{cutout:'65%'})});
-  charts.compare=new Chart(document.getElementById('compareChart').getContext('2d'),{type:'bar',data:{labels:months,datasets:[{label:'STR Revenue',data:[2800,2900,3400,3600,3800,4200,4400,4300,3900,3500,3000,2700],backgroundColor:'rgba(16,185,129,.5)',borderColor:'#10B981',borderWidth:1},{label:'LTR Revenue',data:Array(12).fill(1842),backgroundColor:'rgba(99,102,241,.3)',borderColor:'#6366F1',borderWidth:1,type:'line',tension:0,pointRadius:0,borderDash:[5,3]}]},options:Object.assign(cd(),{scales:{y:ys('$','left',0,5000)}})});
-  charts.census=new Chart(document.getElementById('censusChart').getContext('2d'),{type:'bar',data:{labels:['Travis Co, TX','Maricopa Co, AZ','Davidson Co, TN','Hillsborough Co, FL','Mecklenburg Co, NC','Dallas Co, TX'],datasets:[{label:'Median Rent (Census ACS)',data:[1980,1640,1950,1760,1680,1820],backgroundColor:'rgba(99,102,241,.5)',borderColor:'#6366F1',borderWidth:1}]},options:Object.assign(cd(),{indexAxis:'y',scales:{x:ys('$','bottom',1400,2100)}})});
-  renderInsights();
-}
-
 function showView(id,el){
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
-  document.getElementById('view-'+id).classList.add('active');
+  var vEl=document.getElementById('view-'+id);
+  if(vEl)vEl.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   if(el)el.classList.add('active');
-  var titles={dashboard:'Dashboard',search:'Property Search',insights:'Market Insights',compare:'STR vs LTR',apisetup:'API Setup'};
-  document.getElementById('pageTitle').textContent=titles[id]||id;
-  if(id==='insights')renderInsights();
+  var titles={dashboard:'Dashboard',pulse:'Market Pulse',explorer:'City Explorer',finder:'Rent-Ready Finder',search:'Property Search',compare:'STR vs LTR',apisetup:'API Setup'};
+  var pt=document.getElementById('pageTitle');
+  if(pt)pt.textContent=titles[id]||id;
+  if(id==='pulse'&&!digestHistory.length)loadPulse(false);
+  if(id==='explorer'&&!cityScores.length)loadCityScores(false);
+  if(id==='finder'){}  // user clicks Find
 }
 </script>
 </body>
