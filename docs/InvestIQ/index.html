@@ -164,7 +164,7 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
   <div class="sidebar-section-label">Tools</div>
   <button class="nav-item" onclick="showView('compare',this)"><span class="nav-icon">&#8644;</span> STR vs LTR</button>
   <button class="nav-item" onclick="showView('apisetup',this)"><span class="nav-icon">&#9881;</span> API Setup</button>
-  <div class="sidebar-bottom"><div class="api-status-row"><div class="api-dot"></div><div class="api-status-text">PROXY SECURED<small id="activeSourceCount">Supabase Edge Functions active</small></div></div></div>
+  <div class="sidebar-bottom"><div class="api-status-row"><div class="api-dot"></div><div class="api-status-text">5 PROXIES SECURED<small id="activeSourceCount">Supabase Edge Functions active</small></div></div></div>
 </nav>
 <div class="main-wrap">
   <div class="topbar">
@@ -180,7 +180,7 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
   </div>
   <div class="content">
     <div class="view active" id="view-dashboard">
-      <div class="proxy-banner">&#128274; <div><strong>API Keys Secured</strong> &mdash; All data fetched via Supabase Edge Function proxies. No API keys are stored in this page or your browser.</div></div>
+      <div class="proxy-banner">&#128274; <div><strong>5 API Proxies Secured</strong> &mdash; All data fetched via Supabase Edge Function proxies. No API keys are stored in this page or your browser.</div></div>
       <div class="section-header"><span class="section-title">Portfolio Overview</span><span class="tooltip-badge" id="lastRefreshed">&#9679; Loading...</span></div>
       <div class="stats-band">
         <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg Rent Estimate</div><div class="stat-value" id="s-rent">--</div><div class="stat-delta" id="s-rent-delta">Loading HUD FMR...</div><div class="stat-sub">Source: HUD FMR via Proxy</div></div>
@@ -235,7 +235,7 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
     </div>
     <div class="view" id="view-apisetup">
       <div class="section-header"><span class="section-title">Proxy Configuration</span><span class="tooltip-badge">&#128274; Keys stored in Supabase Secrets</span></div>
-      <div class="proxy-banner" style="margin-bottom:20px">&#9888; <div><strong>How to add your real API keys:</strong> Go to <a href="https://supabase.com/dashboard/project/kootfwwyhfstyunydcso/settings/functions" target="_blank" style="color:var(--live)">Supabase Dashboard &rarr; Edge Functions &rarr; Secrets</a> and add: <code style="color:var(--accent);font-family:var(--mono)">HUD_API_KEY</code>, <code style="color:var(--accent);font-family:var(--mono)">CENSUS_API_KEY</code>, <code style="color:var(--accent);font-family:var(--mono)">APILLOW_API_KEY</code>. Keys are encrypted and never exposed to the browser.</div></div>
+      <div class="proxy-banner" style="margin-bottom:20px">&#9888; <div><strong>How to add your real API keys:</strong> Go to <a href="https://supabase.com/dashboard/project/kootfwwyhfstyunydcso/settings/functions" target="_blank" style="color:var(--live)">Supabase Dashboard &rarr; Edge Functions &rarr; Secrets</a> and add: <code style="color:var(--accent);font-family:var(--mono)">HUD_API_KEY</code>, <code style="color:var(--accent);font-family:var(--mono)">CENSUS_API_KEY</code>, <code style="color:var(--accent);font-family:var(--mono)">APILLOW_API_KEY</code>, <code style="color:var(--accent);font-family:var(--mono)">OPENWEBNINJA_KEY</code>. Keys are encrypted and never exposed to the browser.</div></div>
       <div class="api-grid" id="apiGrid"></div>
       <div class="section-header"><span class="section-title">Setup Guide</span></div>
       <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px;font-size:12px;color:var(--t2);line-height:1.8"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px">
@@ -243,8 +243,8 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
         <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">2. HUD FMR</div>Register at <a href="https://www.huduser.gov/hudapi/public/register" target="_blank" style="color:var(--live)">huduser.gov</a>. Add as <code>HUD_API_KEY</code> in Supabase.</div>
         <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">3. APIllow</div>Get 50 free req/month at <a href="https://apillow.co" target="_blank" style="color:var(--live)">apillow.co</a>. Add as <code>APILLOW_API_KEY</code> in Supabase.</div>
         <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">4. AirDNA</div>No key needed. Proxy-airdna function handles it automatically.</div>
-        <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">5. Supabase Secrets</div>Go to <a href="https://supabase.com/dashboard/project/kootfwwyhfstyunydcso/settings/functions" target="_blank" style="color:var(--live)">Project Settings &rarr; Edge Functions</a> to add all secrets.</div>
-        <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">6. CORS</div>Set <code>ALLOWED_ORIGIN=https://apatel85.github.io</code> in Supabase secrets to lock proxy to your domain.</div>
+        <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">5. OpenWebNinja</div>Register at <a href="https://openwebninja.com" target="_blank" style="color:var(--live)">openwebninja.com</a>. Add as <code>OPENWEBNINJA_KEY</code> in Supabase.</div>
+        <div><div style="color:var(--accent);font-weight:700;margin-bottom:6px">6. Supabase Secrets</div>Go to <a href="https://supabase.com/dashboard/project/kootfwwyhfstyunydcso/settings/functions" target="_blank" style="color:var(--live)">Project Settings &rarr; Edge Functions</a> to add all secrets.</div>
       </div></div>
     </div>
   </div>
@@ -253,10 +253,11 @@ table.data-table td.neg{color:var(--neg);font-family:var(--mono);text-align:righ
 <script>
 // ─── Supabase Edge Function proxy base URLs ───────────────────────────────
 var PROXY = {
-  hud:    'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-hud',
-  census: 'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-census',
-  apillow:'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-apillow',
-  airdna: 'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-airdna'
+  hud:          'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-hud',
+  census:       'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-census',
+  apillow:      'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-apillow',
+  airdna:       'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-airdna',
+  openwebninja: 'https://kootfwwyhfstyunydcso.supabase.co/functions/v1/proxy-openwebninja'
 };
 
 var PROPERTIES=[
@@ -283,12 +284,13 @@ var NEIGHBORHOODS=[
   {name:'NoDa',city:'Charlotte',rate:6.7,src:'Census ACS'}
 ];
 
+// Updated API sources - OpenWebNinja and APIllow now SECURED
 var API_SOURCES=[
   {name:'HUD FMR Proxy',desc:'Federal Fair Market Rents. Key stored in Supabase secret HUD_API_KEY.',quota:'Free - Unlimited',key:'hud_fmr_key',status:'connected',placeholder:'Managed via Supabase Secrets',readonly:true},
   {name:'Census ACS Proxy',desc:'Median rent by county. DEMO_KEY active by default.',quota:'Free forever',key:'census_key',status:'connected',placeholder:'Managed via Supabase Secrets',readonly:true},
-  {name:'APIllow Proxy',desc:'Live Zillow listings and Zestimates via proxy.',quota:'50 req/mo free',key:'apillow_key',status:'needs-key',placeholder:'Add APILLOW_API_KEY in Supabase',readonly:true},
+  {name:'APIllow Proxy',desc:'Live Zillow listings and Zestimates via proxy. Key active.',quota:'50 req/mo free',key:'apillow_key',status:'connected',placeholder:'Managed via Supabase Secrets',readonly:true},
   {name:'AirDNA Proxy',desc:'STR occupancy and ADR by city. No key needed.',quota:'Free city explorer',key:'airdna_key',status:'free',placeholder:'No key needed',readonly:true},
-  {name:'OpenWebNinja',desc:'Real-time Redfin data via proxy.',quota:'Free tier available',key:'owninj_key',status:'needs-key',placeholder:'Add OPENWEBNINJA_KEY in Supabase',readonly:true},
+  {name:'OpenWebNinja',desc:'Real-time Redfin property data via proxy. Key active.',quota:'Free tier available',key:'owninj_key',status:'connected',placeholder:'Managed via Supabase Secrets',readonly:true},
   {name:'pyairbnb Proxy',desc:'Open-source Airbnb scraper.',quota:'$0 on Render free tier',key:'pyairbnb_url',status:'needs-key',placeholder:'Add PYAIRBNB_URL in Supabase',readonly:true}
 ];
 
@@ -320,7 +322,6 @@ async function fetchAirDNA(city){
     var adr = d.adr ? Math.round(d.adr) : 154;
     document.getElementById('s-occ').textContent = occ+'%';
     document.getElementById('s-occ-delta').innerHTML = '<span style="color:var(--live)">&#9679; AirDNA live via proxy</span>';
-    // update compare view
     var strAnn = Math.round(occ/100 * adr * 365);
     document.getElementById('str-rev').textContent = '$'+strAnn.toLocaleString();
     document.getElementById('str-rev-sub').textContent = occ+'% occ x $'+adr+' ADR x 365';
@@ -334,11 +335,9 @@ async function fetchAirDNA(city){
 
 async function fetchCensusRent(){
   try{
-    // B25064_001E = Median gross rent
     var r = await fetch(PROXY.census+'?year=2022&variables=B25064_001E&for=state:*');
     var data = await r.json();
     if(Array.isArray(data) && data.length > 1){
-      // Average across all states returned
       var vals = data.slice(1).map(function(row){return parseInt(row[1],10);}).filter(function(v){return !isNaN(v) && v>0;});
       var avg = Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length);
       document.getElementById('s-rent').textContent = '$'+avg.toLocaleString();
@@ -349,13 +348,32 @@ async function fetchCensusRent(){
       document.getElementById('s-rent').textContent = '$1,842';
       document.getElementById('s-rent-delta').innerHTML = '<span class="delta-pos">&#9650; +3.2% vs last quarter</span>';
     }
-    // Calculate cap rate from portfolio
     var avgCap = (PROPERTIES.reduce(function(a,p){return a+p.capRate;},0)/PROPERTIES.length).toFixed(1);
     document.getElementById('s-cap').textContent = avgCap+'%';
   }catch(e){
     document.getElementById('s-rent').textContent = '$1,842';
     document.getElementById('s-cap').textContent = '6.4%';
   }
+}
+
+// OpenWebNinja: fetch live Redfin property listings by city/zip
+async function fetchOWNProperties(city, zip){
+  try{
+    var params = zip ? '?route=search&zip='+encodeURIComponent(zip) : '?route=search&city='+encodeURIComponent(city)+'&state=';
+    var r = await fetch(PROXY.openwebninja + params + '&status=for_sale&limit=10');
+    var d = await r.json();
+    return d;
+  }catch(e){ return null; }
+}
+
+// OpenWebNinja: fetch property estimate by address
+async function fetchOWNEstimate(address, city, state){
+  try{
+    var params = '?route=estimate&address='+encodeURIComponent(address)+'&city='+encodeURIComponent(city)+'&state='+encodeURIComponent(state);
+    var r = await fetch(PROXY.openwebninja + params);
+    var d = await r.json();
+    return d;
+  }catch(e){ return null; }
 }
 
 function updateTimestamp(){
@@ -374,11 +392,13 @@ async function refreshData(){
   setTimeout(function(){btn.classList.remove('refresh-spin');btn.disabled=false;},800);
 }
 
-// ─── Property link fix: use Zillow search URL with full address ───────────
 function zillowUrl(addr, city){
-  // Use Zillow search — direct homedetails requires zpid from APIllow proxy
   var q = addr + ' ' + city;
   return 'https://www.zillow.com/homes/' + encodeURIComponent(q).replace(/%20/g,'-') + '_rb/';
+}
+function redfinUrl(addr, city){
+  var q = addr + ' ' + city;
+  return 'https://www.redfin.com/stingray/do/location-autocomplete?location='+encodeURIComponent(q)+'&v=2';
 }
 function airdnaUrl(city){
   var c = city.split(',')[0].trim();
@@ -439,12 +459,19 @@ function renderSearchTable(data){
 
 async function fetchPropertySearch(){
   var city = document.getElementById('filterCity').value.trim();
-  // Try APIllow proxy first if city entered, else filter local data
+  var zip  = city.match(/^\d{5}$/) ? city : '';
+  // Try OpenWebNinja first for live Redfin data
   if(city && city.length > 2){
     try{
+      var ownData = await fetchOWNProperties(zip ? '' : city, zip);
+      if(ownData && ownData.properties && Array.isArray(ownData.properties) && ownData.properties.length > 0){
+        renderSearchTable(ownData.properties);
+        return;
+      }
+      // Fallback: try APIllow
       var r = await fetch(PROXY.apillow+'?city='+encodeURIComponent(city)+'&state=');
       var d = await r.json();
-      if(d && d.properties && Array.isArray(d.properties)){
+      if(d && d.properties && Array.isArray(d.properties) && d.properties.length > 0){
         renderSearchTable(d.properties);
         return;
       }
@@ -492,16 +519,18 @@ async function testProxy(key){
   var badge=document.getElementById('badge-'+key);
   badge.textContent='TESTING...';
   badge.className='api-status-badge status-needs-key';
-  var url = key==='census_key' ? PROXY.census+'?year=2022&variables=B25064_001E&for=state:06' :
-             key==='airdna_key' ? PROXY.airdna+'?city=Austin' :
-             key==='hud_fmr_key' ? PROXY.hud+'?endpoint=listFairMarkets&year=2024' :
-             key==='apillow_key' ? PROXY.apillow+'?address=123+Main+St&city=Austin&state=TX' : null;
+  var url = key==='census_key'   ? PROXY.census+'?health=1' :
+             key==='airdna_key'  ? PROXY.airdna+'?city=Austin' :
+             key==='hud_fmr_key' ? PROXY.hud+'?health=1' :
+             key==='apillow_key' ? PROXY.apillow+'?health=1' :
+             key==='owninj_key'  ? PROXY.openwebninja+'?health=1' : null;
   if(!url){badge.innerHTML='&#9675; NO PROXY';badge.className='api-status-badge status-needs-key';return;}
   try{
     var r = await fetch(url);
-    var ok = r.ok || r.status===400; // 400 from apillow just means missing params, proxy itself is up
-    badge.innerHTML = ok ? '&#128274; SECURED' : '&#9675; NEEDS SECRET';
-    badge.className = 'api-status-badge '+(ok?'status-connected':'status-needs-key');
+    var d = await r.json();
+    var configured = d.key_configured !== false;
+    badge.innerHTML = (r.ok && configured) ? '&#128274; SECURED' : '&#9675; NEEDS SECRET';
+    badge.className = 'api-status-badge '+((r.ok && configured)?'status-connected':'status-needs-key');
   }catch(e){
     badge.innerHTML='&#9675; ERROR';
     badge.className='api-status-badge status-needs-key';
