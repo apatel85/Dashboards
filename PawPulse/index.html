@@ -1,1 +1,304 @@
-FULL_72KB_HTML_CONTENT
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PawPulse - Cavapoo Care Tracker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<style>
+:root{--primary:#7c3aed;--primary-light:#ede9fe;--primary-dark:#5b21b6;--accent:#f59e0b;--accent-light:#fef3c7;--success:#16a34a;--danger:#dc2626;--warning:#d97706;--info:#0284c7;--bg:#f5f3ff;--card:#ffffff;--border:#e5e7eb;--text1:#1e1b4b;--text2:#4b5563;--text3:#9ca3af;--radius:12px;--shadow:0 2px 8px rgba(124,58,237,.10);--font:'Segoe UI',system-ui,sans-serif}
+[data-theme="dark"]{--bg:#0f0a1e;--card:#1a1035;--border:#2d2060;--text1:#f0ecff;--text2:#a89fd4;--text3:#6b5fa0;--primary-light:#2d1f6e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);min-height:100vh}
+header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.logo{font-size:1.5rem;font-weight:700}.logo span{opacity:.8;font-size:1rem;font-weight:400}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:.85rem;font-weight:600}
+.btn-ghost{background:rgba(255,255,255,.15);color:#fff}.btn-primary{background:var(--primary);color:#fff}
+.btn-sm{padding:5px 10px;font-size:.78rem}
+nav{background:var(--card);border-bottom:2px solid var(--border);padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+.nav-tab{padding:12px 16px;cursor:pointer;border:none;background:none;font-size:.86rem;font-weight:600;color:var(--text2);border-bottom:3px solid transparent}
+.nav-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+main{padding:24px;max-width:1400px;margin:0 auto}
+.panel{display:none}.panel.active{display:block}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:20px;margin-bottom:24px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px}
+.card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.kpi{text-align:center}.kpi-icon{font-size:2rem;margin-bottom:8px}.kpi-val{font-size:1.8rem;font-weight:700;color:var(--primary)}
+.kpi-label{font-size:.8rem;color:var(--text3);margin-top:4px;text-transform:uppercase}.kpi-sub{font-size:.82rem;color:var(--text2);margin-top:6px}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+.badge-green{background:#dcfce7;color:#166534}.badge-yellow{background:#fef9c3;color:#854d0e}.badge-red{background:#fee2e2;color:#991b1b}.badge-blue{background:#dbeafe;color:#1e40af}.badge-purple{background:var(--primary-light);color:var(--primary-dark)}
+.section-title{display:block;font-size:1.1rem;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--primary-light)}
+table{width:100%;border-collapse:collapse;font-size:.86rem}th{background:var(--primary-light);color:var(--primary-dark);padding:10px 12px;text-align:left;font-weight:700}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+.timeline{list-style:none}.timeline li{position:relative;padding:12px 12px 12px 36px;border-left:2px solid var(--primary-light);margin-left:12px}
+.timeline li:before{content:attr(data-icon);position:absolute;left:-14px;top:10px;background:var(--card);border:2px solid var(--primary);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.alert-banner{background:var(--accent-light);border:1px solid var(--accent);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;gap:12px}
+.checklist{list-style:none}.checklist li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.checklist input[type=checkbox]{width:18px;height:18px;cursor:pointer;margin-top:2px}
+.checklist input:checked+label{text-decoration:line-through;color:var(--text3)}
+.meal-card{background:var(--primary-light);border-radius:var(--radius);padding:16px}.meal-time{font-size:1.3rem;font-weight:700;color:var(--primary)}
+.tip-card{background:var(--card);border-left:4px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.tip-card .tip-title{font-weight:700;font-size:.9rem;margin-bottom:4px}.tip-card .tip-body{font-size:.85rem;color:var(--text2)}
+canvas{max-width:100%}
+.alert-item{display:flex;gap:10px;padding:10px;border-radius:8px;margin-bottom:8px;border:1px solid}
+.alert-urgent{background:#fee2e2;border-color:#fca5a5}.alert-soon{background:#fef9c3;border-color:#fde68a}.alert-ok{background:#dcfce7;border-color:#86efac}
+.supply-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.supply-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}.supply-status{font-size:.75rem;color:var(--text2);margin-top:4px}
+footer{text-align:center;padding:20px;color:var(--text3);font-size:.8rem;border-top:1px solid var(--border);margin-top:40px}
+.toggle-switch{position:relative;display:inline-block;width:46px;height:24px}.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;top:0;left:0;right:0;bottom:0;background:#ccc;border-radius:24px}.toggle-slider:before{position:absolute;content:'';height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%}
+input:checked+.toggle-slider{background:var(--primary)}input:checked+.toggle-slider:before{transform:translateX(22px)}
+.vet-card{border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--card)}.vet-name{font-weight:700;color:var(--primary-dark)}.vet-rating{color:var(--accent);font-weight:600}
+a{color:var(--primary);text-decoration:none}
+</style>
+</head>
+<body>
+<header><div class="logo">PawPulse <span>Cavapoo Care Tracker</span></div>
+<div class="header-actions"><span id="dog-name-display">Puppy (TBD)</span>
+<button class="btn btn-ghost btn-sm" onclick="toggleTheme()">Theme</button>
+<button class="btn btn-ghost btn-sm" onclick="showSettings()">Settings</button>
+<button class="btn btn-ghost btn-sm" onclick="exportData()">Export</button>
+<button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()">Import</button>
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)"></div></header>
+<nav>
+<button class="nav-tab active" onclick="switchTab('dashboard')">Dashboard</button>
+<button class="nav-tab" onclick="switchTab('health')">Health & Vaccines</button>
+<button class="nav-tab" onclick="switchTab('vets')">Vet & Insurance</button>
+<button class="nav-tab" onclick="switchTab('meals')">Meals & Nutrition</button>
+<button class="nav-tab" onclick="switchTab('training')">Training</button>
+<button class="nav-tab" onclick="switchTab('grooming')">Grooming</button>
+<button class="nav-tab" onclick="switchTab('supplies')">Supplies</button>
+<button class="nav-tab" onclick="switchTab('food-prices')">Food & Prices</button>
+<button class="nav-tab" onclick="switchTab('timeline')">Timeline</button>
+<button class="nav-tab" onclick="switchTab('checklist')">Checklists</button>
+<button class="nav-tab" onclick="switchTab('notifications')">Alerts Setup</button>
+</nav>
+<main>
+<div class="panel active" id="panel-dashboard">
+<div class="grid-4">
+<div class="card kpi"><div class="kpi-icon">Age</div><div class="kpi-val" id="kpi-age">TBD</div><div class="kpi-label">Age</div><div class="kpi-sub" id="kpi-dob">Set DOB in Settings</div></div>
+<div class="card kpi"><div class="kpi-val" id="kpi-vacc">1/5</div><div class="kpi-label">Vaccines Done</div></div>
+<div class="card kpi"><div class="kpi-val">3x</div><div class="kpi-label">Meals Today</div><div class="kpi-sub">8am 12pm 7pm</div></div>
+<div class="card kpi"><div class="kpi-val" id="kpi-training">0%</div><div class="kpi-label">Training Progress</div></div>
+</div>
+<div class="grid-2"><div class="card"><span class="section-title">Upcoming Reminders</span><div id="upcoming-reminders"></div></div>
+<div class="card"><span class="section-title">Weight Log</span><canvas id="weightChart" height="160"></canvas></div></div>
+<div class="grid-2"><div class="card"><span class="section-title">Supplement Tracker</span><table>
+<tr><th>Supplement</th><th>Frequency</th><th>Last Given</th><th>Action</th></tr>
+<tr><td>Goat Milk</td><td>1x daily</td><td id="last-goatmilk">-</td><td><button class="btn btn-primary btn-sm" onclick="logSupplement('goatmilk')">Log</button></td></tr>
+<tr><td>Salmon Oil</td><td>1x daily</td><td id="last-salmonoil">-</td><td><button class="btn btn-primary btn-sm" onclick="logSupplement('salmonoil')">Log</button></td></tr>
+<tr><td>Collagen Chew</td><td>1x daily</td><td id="last-collagen">-</td><td><button class="btn btn-primary btn-sm" onclick="logSupplement('collagen')">Log</button></td></tr>
+</table></div>
+<div class="card"><span class="section-title">Today's Activities</span><ul class="checklist" id="daily-checklist"></ul></div></div>
+</div>
+<div class="panel" id="panel-health">
+<div class="grid-2"><div class="card"><span class="section-title">Vaccine Schedule</span><table>
+<tr><th>Age</th><th>Vaccine</th><th>Status</th><th>Action</th></tr>
+<tr><td>6-8 wks</td><td>DHPP #1 + Bordetella</td><td><span class="badge badge-green">Complete</span></td><td>-</td></tr>
+<tr><td>10-12 wks</td><td>DHPP #2 + Leptospirosis</td><td><span class="badge badge-yellow" id="vacc2-status">Upcoming</span></td><td><button class="btn btn-primary btn-sm" onclick="markVaccine(2)">Mark Done</button></td></tr>
+<tr><td>14-16 wks</td><td>DHPP #3 + Rabies</td><td><span class="badge badge-yellow" id="vacc3-status">Upcoming</span></td><td><button class="btn btn-primary btn-sm" onclick="markVaccine(3)">Mark Done</button></td></tr>
+<tr><td>12-16 mo</td><td>Annual boosters</td><td><span class="badge badge-yellow">Future</span></td><td>-</td></tr>
+</table></div>
+<div class="card"><span class="section-title">Vet Visit Log</span><button class="btn btn-primary btn-sm" onclick="addVetVisit()">+ Add Visit</button><div id="vet-visit-log"></div></div></div>
+<div class="grid-3"><div class="card"><span class="section-title">Weight & Growth Log</span><button class="btn btn-primary btn-sm" onclick="logWeight()">+ Log Weight</button><canvas id="weightChart2" height="180"></canvas></div>
+<div class="card"><span class="section-title">Parasite Prevention</span><table><tr><th>Treatment</th><th>Next Due</th><th>Action</th></tr>
+<tr><td>Heartworm</td><td id="hw-due">Set date</td><td><button class="btn btn-primary btn-sm" onclick="logParasite('hw')">Log</button></td></tr>
+<tr><td>Flea/Tick</td><td id="ft-due">Set date</td><td><button class="btn btn-primary btn-sm" onclick="logParasite('ft')">Log</button></td></tr></table></div>
+<div class="card"><span class="section-title">Crate Placement</span><div class="tip-card"><div class="tip-title">Bedroom at night</div><div class="tip-body">Keep crate next to your bed at night; common area OK for daytime naps while supervised.</div></div></div></div>
+</div>
+<div class="panel" id="panel-vets">
+<div class="alert-banner">Vet options near East Windsor NJ. Book within 48-72 hrs of arrival.</div>
+<div class="grid-3">
+<div class="vet-card"><div class="vet-name">Twin Rivers Animal Hospital (VCA)</div><div class="vet-rating">Highly rated VCA network</div><div>650 Route 33, East Windsor NJ 08520. (609) 426-9625. Mon-Thu 8am-7pm, Fri 8am-4pm.</div></div>
+<div class="vet-card"><div class="vet-name">East Windsor Animal Hospital</div><div class="vet-rating">Praised for compassionate care</div><div>East Windsor NJ. (609) 443-7500.</div></div>
+<div class="vet-card"><div class="vet-name">Edinburg Animal Hospital</div><div class="vet-rating">Long hours, multiple vets</div><div>1676 Old Trenton Rd, West Windsor NJ 08550. (609) 443-1212. Mon-Thu 7:30am-8pm, Sat 7:30am-12pm.</div></div>
+</div>
+<div class="card"><span class="section-title">Pet Insurance Comparison</span><table>
+<tr><th>Provider</th><th>Cost</th><th>Best For</th></tr>
+<tr><td>Pumpkin</td><td>$21-35/mo + $20.95 wellness</td><td><span class="badge badge-green">Best Budget Combo</span></td></tr>
+<tr><td>Spot</td><td>Market average</td><td><span class="badge badge-purple">Best Overall Value</span></td></tr>
+<tr><td>Embrace</td><td>Wellness Rewards up to $700/yr</td><td><span class="badge badge-blue">Best Long-Term Value</span></td></tr>
+<tr><td>Lemonade</td><td>Cheapest available</td><td><span class="badge badge-yellow">Cheapest Entry</span></td></tr>
+</table><div class="tip-card"><div class="tip-title">Recommendation</div><div class="tip-body">Pumpkin wellness add-on covers vaccines/dental/exams; combined with accident&illness plan expect $40-55/month total. Enroll before any diagnosis.</div></div></div>
+</div>
+<div class="panel" id="panel-meals">
+<div class="alert-banner">Current plan: 3x daily 8am/12pm/7pm with goat milk, salmon oil, collagen chews. This is ideal for a 3-month Cavapoo.</div>
+<div class="grid-3">
+<div class="meal-card"><div class="meal-time">8:00 AM</div><div>Kibble + Goat milk</div></div>
+<div class="meal-card"><div class="meal-time">12:00 PM</div><div>Kibble + Collagen chew after</div></div>
+<div class="meal-card"><div class="meal-time">7:00 PM</div><div>Kibble + Salmon oil</div></div>
+</div>
+<div class="grid-2"><div class="card"><span class="section-title">Recommended Foods</span><table>
+<tr><th>Brand</th><th>Price</th></tr><tr><td>Hill's Science Diet Small Bites</td><td>$21-35</td></tr>
+<tr><td>Royal Canin Small Puppy</td><td>$28-42</td></tr><tr><td>Purina Pro Plan Small Breed</td><td>$22-38</td></tr>
+<tr><td>Purina One Smart Puppy</td><td>$18-26</td></tr></table></div>
+<div class="card"><span class="section-title">Assessment</span><div class="tip-card"><div class="tip-title">Plan is excellent</div><div class="tip-body">Keep as-is. Transition to 2 meals/day around 5-6 months.</div></div></div></div>
+<div class="card"><span class="section-title">Meal Log</span><button class="btn btn-primary btn-sm" onclick="logMeal()">+ Log Meal</button><div id="meal-log"></div></div>
+</div>
+<div class="panel" id="panel-training">
+<div class="card"><span class="section-title">Training Plan</span><table>
+<tr><th>Skill</th><th>Start</th><th>Duration</th><th>Explanation</th></tr>
+<tr><td>Crate Training</td><td>Day 1</td><td>2-4 weeks</td><td>Den not punishment; feed meals inside.</td></tr>
+<tr><td>Potty Training</td><td>Day 1</td><td>4-8 weeks</td><td>Out every 1-2hrs plus after meals/naps/play.</td></tr>
+<tr><td>Sit</td><td>Week 1-2</td><td>1 week</td><td>Lure with treat, mark, reward.</td></tr>
+<tr><td>Stay</td><td>Week 2-3</td><td>2-3 weeks</td><td>Build duration gradually.</td></tr>
+<tr><td>Come</td><td>Week 2-3</td><td>3-4 weeks</td><td>Excited voice, reward big every time.</td></tr>
+<tr><td>Leash Walking</td><td>After vaccines ~16wk</td><td>3-6 weeks</td><td>Stop when tight, go when loose.</td></tr>
+<tr><td>Socialization</td><td>8-16 weeks</td><td>Ongoing</td><td>Positive exposure to new things.</td></tr>
+</table><div>Reference: Zak George's Dog Training Revolution on YouTube - free, positive reinforcement based.</div></div>
+<div class="grid-2"><div class="card"><span class="section-title">Milestone Tracker</span><table>
+<tr><td>Crate Training</td><td><span class="badge badge-yellow" id="t-crate">Not Started</span></td><td><button class="btn btn-sm btn-primary" onclick="updateTraining('t-crate','In Progress')">Start</button></td></tr>
+<tr><td>Potty Training</td><td><span class="badge badge-yellow" id="t-potty">Not Started</span></td><td><button class="btn btn-sm btn-primary" onclick="updateTraining('t-potty','In Progress')">Start</button></td></tr>
+<tr><td>Sit</td><td><span class="badge badge-yellow" id="t-sit">Not Started</span></td><td><button class="btn btn-sm btn-primary" onclick="updateTraining('t-sit','In Progress')">Start</button></td></tr>
+<tr><td>Stay</td><td><span class="badge badge-yellow" id="t-stay">Not Started</span></td><td><button class="btn btn-sm btn-primary" onclick="updateTraining('t-stay','In Progress')">Start</button></td></tr>
+<tr><td>Come</td><td><span class="badge badge-yellow" id="t-come">Not Started</span></td><td><button class="btn btn-sm btn-primary" onclick="updateTraining('t-come','In Progress')">Start</button></td></tr>
+</table></div>
+<div class="card"><span class="section-title">Crate Training Guide</span><ul class="timeline">
+<li data-icon="1">Day 1-3: Crate in bedroom, door open, treats inside.</li>
+<li data-icon="2">Day 3-7: Feed meals inside, close door during meal.</li>
+<li data-icon="3">Week 2: Close door 10-30 min while home.</li>
+<li data-icon="4">Week 3: Extend to 1-2 hrs, begin nighttime crating.</li>
+<li data-icon="5">Month 2: Full overnight crating.</li>
+</ul></div></div>
+</div>
+<div class="panel" id="panel-grooming">
+<div class="alert-banner">Cavapoo coat mats easily - consistent grooming prevents costly de-matting.</div>
+<div class="grid-2"><div class="card"><span class="section-title">Frequency Guide</span><table>
+<tr><th>Task</th><th>Frequency</th><th>Action</th></tr>
+<tr><td>Brushing</td><td>3x/week min</td><td><button class="btn btn-primary btn-sm" onclick="logGroom('brush')">Log</button></td></tr>
+<tr><td>Bath</td><td>Every 2-4 weeks</td><td><button class="btn btn-primary btn-sm" onclick="logGroom('bath')">Log</button></td></tr>
+<tr><td>Nail trim</td><td>Every 3-4 weeks</td><td><button class="btn btn-primary btn-sm" onclick="logGroom('nails')">Log</button></td></tr>
+<tr><td>Ear cleaning</td><td>Weekly</td><td><button class="btn btn-primary btn-sm" onclick="logGroom('ears')">Log</button></td></tr>
+<tr><td>Pro groom</td><td>Every 6-8 weeks</td><td><button class="btn btn-primary btn-sm" onclick="logGroom('cut')">Log</button></td></tr>
+</table></div>
+<div class="card"><span class="section-title">Shampoo</span><div class="tip-card"><div class="tip-title">Use pH-balanced dog shampoo</div><div class="tip-body">Oatmeal-based, hypoallergenic (Earthbath, Burt's Bees). Never human shampoo.</div></div></div></div>
+<div class="card"><span class="section-title">Grooming Steps</span><ul class="timeline">
+<li data-icon="1">Brush before bathing to remove mats.</li>
+<li data-icon="2">Wet, shampoo, massage 2-3 min, rinse thoroughly.</li>
+<li data-icon="3">Towel dry then blow dry cool while brushing.</li>
+<li data-icon="4">Check ears weekly for redness/odor.</li>
+<li data-icon="5">Trim nail tips every 3-4 weeks.</li>
+</ul></div>
+</div>
+<div class="panel" id="panel-supplies">
+<div class="grid-2"><div class="card"><span class="section-title">Must Have Before Arrival</span><div class="supply-grid">
+<div class="supply-item">Crate 24-30in with divider</div><div class="supply-item">Crate bedding</div>
+<div class="supply-item">X-pen</div><div class="supply-item">Food/water bowls</div>
+<div class="supply-item">pH-balanced shampoo</div><div class="supply-item">Slicker brush + comb</div>
+<div class="supply-item">Collar + ID tag</div><div class="supply-item">Toys</div>
+<div class="supply-item">Training treats</div><div class="supply-item">Enzyme cleaner</div>
+<div class="supply-item">Pee pads</div><div class="supply-item">Puppy food</div>
+</div></div>
+<div class="card"><span class="section-title">Get Soon</span><div class="supply-grid">
+<div class="supply-item">Heartbeat toy</div><div class="supply-item">Carrier</div>
+<div class="supply-item">Baby gates</div><div class="supply-item">Harness</div>
+</div></div></div>
+<div class="card"><span class="section-title">Potty & Pee Pad Training</span><ul class="timeline">
+<li data-icon="1">Pick one fixed spot away from food/water/sleep area.</li>
+<li data-icon="2">Let puppy sniff and explore the pad.</li>
+<li data-icon="3">Take to pad hourly plus after wake/eat/drink/play.</li>
+<li data-icon="4">Watch for sniffing/circling signs, act fast.</li>
+<li data-icon="5">Reward instantly when they finish.</li>
+<li data-icon="6">Never punish accidents; clean with enzyme cleaner.</li>
+<li data-icon="7">Optionally move pad toward door then outside over time.</li>
+</ul></div>
+<div class="card"><span class="section-title">Supply Checklist</span><ul class="checklist" id="supply-checklist"></ul></div>
+</div>
+<div class="panel" id="panel-food-prices">
+<div class="alert-banner">Chewy AutoShip 35% off first order + 5% recurring. Amazon S&S 5-15% off.</div>
+<div class="grid-2"><div class="card"><span class="section-title">Price Tracker</span><table>
+<tr><th>Product</th><th>Price</th><th>Target</th></tr>
+<tr><td>Hill's Science Diet 15.5lb</td><td>$34.99</td><td>$28.00</td></tr>
+<tr><td>Royal Canin 13lb</td><td>$41.99</td><td>$35.00</td></tr>
+<tr><td>Goat Milk Primal</td><td>$19.99</td><td>$15.00</td></tr>
+<tr><td>Salmon Oil</td><td>$14.99</td><td>$11.00</td></tr>
+</table></div>
+<div class="card"><span class="section-title">Coupons</span><table>
+<tr><th>Store</th><th>Deal</th></tr><tr><td>Chewy</td><td>35% off first AutoShip</td></tr>
+<tr><td>Amazon</td><td>5-15% off Subscribe&Save</td></tr>
+<tr><td>PetSmart</td><td>Treats loyalty points</td></tr>
+<tr><td>Petco</td><td>Vital Care $19.99/mo</td></tr></table>
+<div class="tip-card"><div class="tip-title">CamelCamelCamel.com</div><div class="tip-body">Free Amazon price alerts.</div></div></div></div>
+</div>
+<div class="panel" id="panel-timeline">
+<div class="grid-2"><div class="card"><span class="section-title">Pre-Arrival</span><ul class="timeline">
+<li data-icon="1">Order supplies, puppy-proof zone, crate setup.</li>
+<li data-icon="2">Call vets, book appointment within 48-72hrs.</li>
+<li data-icon="3">Buy same food shelter uses.</li></ul></div>
+<div class="card"><span class="section-title">Arrival Day Aug 31/Sep 1</span><ul class="timeline">
+<li data-icon="1">Potty spot first before entering house.</li>
+<li data-icon="2">Crate intro with door open.</li>
+<li data-icon="3">Feed in crate, bedtime with heartbeat toy.</li></ul></div></div>
+<div class="grid-3"><div class="card"><span class="section-title">Week 1</span><ul class="timeline">
+<li data-icon="1">Vet visit within 48-72hrs.</li><li data-icon="2">Crate training, potty routine.</li>
+<li data-icon="3">Get pet insurance quotes.</li></ul></div>
+<div class="card"><span class="section-title">Month 1</span><ul class="timeline">
+<li data-icon="1">Sit/Stay/Come commands.</li><li data-icon="2">DHPP #2 vaccine.</li>
+<li data-icon="3">Start heartworm/flea prevention.</li></ul></div>
+<div class="card"><span class="section-title">Months 2-3</span><ul class="timeline">
+<li data-icon="1">DHPP #3 + Rabies.</li><li data-icon="2">Full outdoor socialization.</li>
+<li data-icon="3">First grooming trial visit.</li></ul></div></div>
+</div>
+<div class="panel" id="panel-checklist">
+<div class="grid-2"><div class="card"><span class="section-title">Daily</span><ul class="checklist" id="daily-full-checklist"></ul></div>
+<div class="card"><span class="section-title">Weekly</span><ul class="checklist" id="weekly-checklist"></ul></div></div>
+<div class="grid-2"><div class="card"><span class="section-title">Monthly</span><ul class="checklist" id="monthly-checklist"></ul></div>
+<div class="card"><span class="section-title">Arrival</span><ul class="checklist" id="arrival-checklist"></ul></div></div>
+</div>
+<div class="panel" id="panel-notifications">
+<div class="card"><span class="section-title">Push Notifications Setup</span><table>
+<tr><th>Alert</th><th>Toggle</th></tr>
+<tr><td>Meal reminders</td><td><label class="toggle-switch"><input type="checkbox" id="notif-meals" onchange="saveNotifPref()"><span class="toggle-slider"></span></label></td></tr>
+<tr><td>Vaccine alerts</td><td><label class="toggle-switch"><input type="checkbox" id="notif-vaccine" onchange="saveNotifPref()"><span class="toggle-slider"></span></label></td></tr>
+<tr><td>Supplement reminders</td><td><label class="toggle-switch"><input type="checkbox" id="notif-supplements" onchange="saveNotifPref()"><span class="toggle-slider"></span></label></td></tr>
+<tr><td>Grooming reminders</td><td><label class="toggle-switch"><input type="checkbox" id="notif-grooming" onchange="saveNotifPref()"><span class="toggle-slider"></span></label></td></tr>
+<tr><td>Price alerts</td><td><label class="toggle-switch"><input type="checkbox" id="notif-price" onchange="saveNotifPref()"><span class="toggle-slider"></span></label></td></tr>
+</table><button class="btn btn-primary" onclick="requestNotifPermission()">Enable Browser Notifications</button><div id="notif-status"></div></div>
+<div class="card"><span class="section-title">Install as Mobile App</span><p>iPhone: Share then Add to Home Screen. Android: menu then Add to Home Screen.</p></div>
+<div class="card"><span class="section-title">Multi-User Family Sync</span><p>Data stored locally per device. Use Export button to download JSON backup, share with family, they click Import to sync.</p></div>
+</div>
+</main>
+<footer>PawPulse Cavapoo Care Tracker - apatel85/Dashboards</footer>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const STATE={activeTab:'dashboard',dogName:null,dobDate:null,arrivalDate:'2026-08-31',vaccines:{v2:false,v3:false},supplements:{goatmilk:null,salmonoil:null,collagen:null},training:{},weights:[],vetVisits:[],mealLog:[],grooming:{},parasites:{},checks:{},dailyChecks:{},notifPrefs:{meals:false,vaccine:false,supplements:false,grooming:false,price:false}};
+function switchTab(tab){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));document.getElementById('panel-'+tab).classList.add('active');STATE.activeTab=tab;const tabs=['dashboard','health','vets','meals','training','grooming','supplies','food-prices','timeline','checklist','notifications'];document.querySelectorAll('.nav-tab')[tabs.indexOf(tab)]?.classList.add('active');if(tab==='dashboard')renderDashboard();if(tab==='checklist')renderAllChecklists();}
+function toggleTheme(){const h=document.documentElement;h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';}
+function today(){return new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function todayISO(){return new Date().toISOString().split('T')[0];}
+function fmtDate(d){if(!d)return '-';return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function getAge(dob){if(!dob)return 'TBD';const diff=Date.now()-new Date(dob).getTime();const weeks=Math.floor(diff/(7*24*60*60*1000));const months=Math.floor(weeks/4.33);if(months<4)return weeks+' weeks';return months+' months';}
+function renderDashboard(){document.getElementById('kpi-age').textContent=STATE.dobDate?getAge(STATE.dobDate):'TBD';document.getElementById('kpi-dob').textContent=STATE.dobDate?'Born: '+fmtDate(STATE.dobDate):'Set DOB in Settings';const done=Object.values(STATE.training).filter(s=>s==='Mastered').length;document.getElementById('kpi-training').textContent=Math.round((done/10)*100)+'%';['goatmilk','salmonoil','collagen'].forEach(s=>{const el=document.getElementById('last-'+s);if(el)el.textContent=STATE.supplements[s]?fmtDate(STATE.supplements[s]):'-';});renderReminders();renderDailyChecklist();renderWeightChart('weightChart');}
+function renderReminders(){const el=document.getElementById('upcoming-reminders');const r=[{t:'DHPP #2 due at 10-12 weeks',u:'soon'},{t:'Schedule vet visit within 48-72hrs',u:'urgent'},{t:'Get pet insurance quotes now',u:'urgent'},{t:'Heartworm prevention - ask vet',u:'soon'},{t:'Brushing routine 3x/week',u:'ok'}];el.innerHTML=r.map(x=>`<div class="alert-item alert-${x.u==='urgent'?'urgent':x.u==='soon'?'soon':'ok'}">${x.t}</div>`).join('');}
+function renderDailyChecklist(){const el=document.getElementById('daily-checklist');const tasks=['Morning potty','Breakfast 8am','Training #1','Midday potty','Lunch 12pm','Collagen chew','Afternoon potty','Dinner 7pm salmon oil','Evening training','Final potty','Bedtime crate'];el.innerHTML=tasks.map((t,i)=>{const c=(STATE.dailyChecks||{})[todayISO()+'_'+i]?'checked':'';return `<li><input type="checkbox" id="dc_${i}" ${c} onchange="toggleDailyCheck(${i},this.checked)"><label for="dc_${i}">${t}</label></li>`;}).join('');}
+function toggleDailyCheck(i,v){if(!STATE.dailyChecks)STATE.dailyChecks={};STATE.dailyChecks[todayISO()+'_'+i]=v;saveState();}
+const charts={};
+function renderWeightChart(id){const w=STATE.weights;const labels=w.map(x=>fmtDate(x.date));const data=w.map(x=>x.weight);if(charts[id])charts[id].destroy();const ctx=document.getElementById(id);if(!ctx)return;charts[id]=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Weight',data,borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.1)',tension:.4,pointRadius:5,fill:true}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:false}}}});}
+function logSupplement(t){STATE.supplements[t]=todayISO();saveState();document.getElementById('last-'+t).textContent=today();}
+function markVaccine(n){STATE.vaccines['v'+n]=true;saveState();const el=document.getElementById('vacc'+n+'-status');if(el){el.textContent='Complete';el.className='badge badge-green';}}
+function addVetVisit(){const d=prompt('Date YYYY-MM-DD:');const r=prompt('Reason:');if(!d)return;if(!STATE.vetVisits)STATE.vetVisits=[];STATE.vetVisits.push({date:d,reason:r});saveState();renderVetLog();}
+function renderVetLog(){const el=document.getElementById('vet-visit-log');if(!el)return;if(!STATE.vetVisits?.length){el.innerHTML='<em>No visits logged yet.</em>';return;}el.innerHTML='<table><tr><th>Date</th><th>Reason</th></tr>'+STATE.vetVisits.map(v=>`<tr><td>${fmtDate(v.date)}</td><td>${v.reason||'-'}</td></tr>`).join('')+'</table>';}
+function logWeight(){const d=prompt('Date YYYY-MM-DD:',todayISO());const w=prompt('Weight lbs:');if(!d||!w)return;STATE.weights.push({date:d,weight:parseFloat(w)});saveState();renderWeightChart('weightChart2');}
+function logGroom(t){if(!STATE.grooming)STATE.grooming={};STATE.grooming[t]=todayISO();saveState();}
+function logParasite(t){if(!STATE.parasites)STATE.parasites={};STATE.parasites[t]=todayISO();saveState();}
+function updateTraining(id,s){STATE.training[id]=s;saveState();const el=document.getElementById(id);if(el){el.textContent=s;el.className=s==='Mastered'?'badge badge-green':s==='In Progress'?'badge badge-blue':'badge badge-yellow';}const done=Object.values(STATE.training).filter(x=>x==='Mastered').length;const k=document.getElementById('kpi-training');if(k)k.textContent=Math.round((done/10)*100)+'%';}
+function logMeal(){const t=prompt('Meal time:');const f=prompt('Food:');if(!t)return;if(!STATE.mealLog)STATE.mealLog=[];STATE.mealLog.unshift({date:todayISO(),time:t,food:f});saveState();const el=document.getElementById('meal-log');if(el)el.innerHTML=STATE.mealLog.slice(0,10).map(m=>`<div>${fmtDate(m.date)} ${m.time} - ${m.food||''}</div>`).join('');}
+function renderAllChecklists(){const daily=['Morning potty','Breakfast 8am with goat milk','Post-breakfast potty','Training #1','Morning nap','Midday potty','Lunch 12pm with collagen chew','Post-lunch potty','Afternoon nap','Training #2','Potty + outdoor time','Evening training','Dinner 7pm with salmon oil','Post-dinner potty','Wind-down play','Final potty 9pm','Crate bedtime','Weekly weight log'];const weekly=['Thorough brush 3x','Clean bowls','Check/clean ears','Weigh puppy','Review training','Wash crate bedding','Restock supplies','Check price alerts'];const monthly=['Heartworm medication','Flea/tick treatment','Nail trim','Bath','Vet check-in','Review vaccine schedule','Check autoship dates','Review insurance'];const arrival=['Crate set up in bedroom','Puppy-proof zone ready','Food bowls placed','Heartbeat toy ready','Enzyme cleaner stocked','Pee pads placed','Baby gates installed','Kong stuffed frozen','Vet appointment booked','Puppy food ready','ID tag engraved','Training treats ready','Brush + comb ready','White noise ready','Emergency vet number saved','Records filed','Insurance quote requested'];renderChecklist('daily-full-checklist',daily,'daily');renderChecklist('weekly-checklist',weekly,'weekly');renderChecklist('monthly-checklist',monthly,'monthly');renderChecklist('arrival-checklist',arrival,'arrival');renderChecklist('supply-checklist',['Crate with divider','Crate bedding','X-pen','Food/water bowls','Heartbeat toy','Enzyme cleaner','Pee pads','Slicker brush + comb','Collar + ID tag','Leash','Harness','Baby gates','Kong toy','Training treats','pH shampoo','Nail clippers','Toothbrush','Carrier','Puppy food','Goat milk','Salmon oil','Collagen chews'],'supply');}
+function renderChecklist(id,items,prefix){const el=document.getElementById(id);if(!el)return;el.innerHTML=items.map((it,i)=>{const key=prefix+'_'+i;const c=(STATE.checks||{})[key]?'checked':'';return `<li><input type="checkbox" id="cl_${prefix}_${i}" ${c} onchange="toggleCheck('${key}',this.checked)"><label for="cl_${prefix}_${i}">${it}</label></li>`;}).join('');}
+function toggleCheck(k,v){if(!STATE.checks)STATE.checks={};STATE.checks[k]=v;saveState();}
+function showSettings(){const n=prompt('Puppy name (blank if TBD):',STATE.dogName||'');if(n!==null){STATE.dogName=n||null;document.getElementById('dog-name-display').textContent=STATE.dogName?STATE.dogName:'Puppy (TBD)';}const d=prompt('DOB YYYY-MM-DD (blank if TBD):',STATE.dobDate||'');if(d!==null)STATE.dobDate=d||null;const a=prompt('Arrival date:',STATE.arrivalDate||'2026-08-31');if(a)STATE.arrivalDate=a;saveState();renderDashboard();}
+function requestNotifPermission(){if(!('Notification' in window)){document.getElementById('notif-status').textContent='Not supported.';return;}Notification.requestPermission().then(p=>{const el=document.getElementById('notif-status');if(p==='granted'){el.textContent='Enabled!';new Notification('PawPulse',{body:'Notifications enabled!'});}else{el.textContent='Blocked.';}});}
+function saveNotifPref(){STATE.notifPrefs={meals:document.getElementById('notif-meals').checked,vaccine:document.getElementById('notif-vaccine').checked,supplements:document.getElementById('notif-supplements').checked,grooming:document.getElementById('notif-grooming').checked,price:document.getElementById('notif-price').checked};saveState();}
+function checkScheduledNotifications(){if(Notification.permission!=='granted')return;const now=new Date();const hh=now.getHours(),mm=now.getMinutes();if(STATE.notifPrefs?.meals){[[8,0],[12,0],[19,0]].forEach(([h,m])=>{if(hh===h&&mm===m)new Notification('Meal Time!',{body:'Time to feed the puppy.'});});}}
+setInterval(checkScheduledNotifications,60000);
+function exportData(){const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),version:1,state:STATE},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='pawpulse_backup_'+todayISO()+'.json';a.click();URL.revokeObjectURL(url);}
+function importData(evt){const file=evt.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const data=JSON.parse(e.target.result);if(data.state){Object.assign(STATE,data.state);saveState();location.reload();}}catch(err){alert('Invalid file.');}};reader.readAsText(file);}
+function saveState(){localStorage.setItem('pawpulse_state',JSON.stringify(STATE));}
+function loadState(){const s=localStorage.getItem('pawpulse_state');if(s)Object.assign(STATE,JSON.parse(s));}
+(function init(){loadState();document.getElementById('dog-name-display').textContent=STATE.dogName?STATE.dogName:'Puppy (TBD)';renderDashboard();renderVetLog();Object.entries(STATE.training||{}).forEach(([id,s])=>{const el=document.getElementById(id);if(el){el.textContent=s;el.className=s==='Mastered'?'badge badge-green':s==='In Progress'?'badge badge-blue':'badge badge-yellow';}});setTimeout(()=>renderWeightChart('weightChart2'),300);if('serviceWorker' in navigator){navigator.serviceWorker.register('service-worker.js').catch(()=>{});}})();
+</script>
+</body>
+</html>
