@@ -1,0 +1,126 @@
+
+:root {
+  --green: #2f7a5f;
+  --green-light: #e5f3ec;
+  --amber: #d98c2b;
+  --amber-light: #fbeedd;
+  --gray: #6b7280;
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --text: #1f2937;
+  --border: #e2e5e9;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+.topbar {
+  background: var(--green);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.paw { font-size: 28px; }
+.brand h1 { margin: 0; font-size: 20px; }
+.brand .sub { margin: 0; font-size: 12px; opacity: 0.85; }
+.topActions { display: flex; align-items: center; gap: 10px; }
+.syncStatus { font-size: 11px; background: rgba(255,255,255,0.15); padding: 4px 8px; border-radius: 10px; }
+.iconBtn { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 16px; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+
+main { max-width: 900px; margin: 0 auto; padding: 14px; padding-bottom: 60px; }
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.panel h2 { margin: 0 0 10px 0; font-size: 16px; }
+
+.todayGrid { display: flex; flex-direction: column; gap: 8px; }
+.todayCard {
+  border-left: 4px solid var(--green);
+  background: var(--green-light);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.todayCard.next { border-left-color: var(--amber); background: var(--amber-light); }
+.todayCard .label { font-weight: 600; font-size: 14px; }
+.todayCard .window { font-size: 12px; color: var(--gray); }
+.todayCard .exList { font-size: 13px; margin-top: 4px; }
+
+.progressRow { display: flex; align-items: center; gap: 10px; }
+.progressBarOuter { flex: 1; background: #eee; border-radius: 8px; height: 14px; overflow: hidden; }
+.progressBarInner { height: 100%; background: var(--green); width: 0%; transition: width 0.3s; }
+#overallPct { font-weight: 600; width: 42px; text-align: right; }
+
+.statRow { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.statCard { flex: 1; min-width: 80px; background: var(--bg); border-radius: 10px; padding: 10px; text-align: center; }
+.statCard span { display: block; font-size: 20px; font-weight: 700; color: var(--green); }
+.statCard label { font-size: 11px; color: var(--gray); }
+
+.timeGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.timeCard { background: var(--bg); border-radius: 10px; padding: 10px; }
+.timeCard .label { font-weight: 600; font-size: 13px; }
+.timeCard .window { font-size: 12px; color: var(--amber); font-weight: 600; }
+.timeCard .bestFor { font-size: 12px; margin-top: 4px; color: var(--text); }
+.timeCard .why { font-size: 11px; color: var(--gray); margin-top: 4px; }
+.tipsTitle { font-weight: 600; margin-top: 14px; margin-bottom: 4px; font-size: 13px; }
+.tipsList { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text); }
+
+.weekHeaderRow { display: flex; justify-content: space-between; align-items: center; }
+.weekSelectLabel { font-size: 13px; }
+.weekSelectLabel select { margin-left: 6px; padding: 4px; border-radius: 6px; border: 1px solid var(--border); }
+
+.weekCard { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.weekCardHeader {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 14px; background: var(--bg); cursor: pointer;
+}
+.weekCardHeader .title { font-weight: 600; font-size: 14px; }
+.weekCardHeader .meta { font-size: 12px; color: var(--gray); }
+.weekBarOuter { background: #e2e5e9; height: 6px; border-radius: 4px; width: 100px; overflow: hidden; }
+.weekBarInner { background: var(--green); height: 100%; width: 0%; }
+.weekCardBody { display: none; padding: 10px 14px 14px; }
+.weekCardBody.open { display: block; }
+
+.exRow { border-top: 1px solid var(--border); padding: 10px 0; }
+.exRow:first-child { border-top: none; }
+.exName { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+.exGoal { font-size: 12px; color: var(--gray); margin-bottom: 6px; }
+.exDetail { font-size: 12px; margin: 3px 0; }
+.exDetail b { color: var(--green); }
+.exControls { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.statusSelect { padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; }
+.logBtn { background: var(--green); color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+.exMeta { font-size: 11px; color: var(--gray); }
+.notesInput { width: 100%; margin-top: 6px; font-size: 12px; padding: 5px; border-radius: 6px; border: 1px solid var(--border); }
+
+.status-not_started { color: var(--gray); }
+.status-practicing { color: var(--amber); font-weight: 600; }
+.status-consistent { color: var(--green); font-weight: 600; }
+
+.modalOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100;
+}
+.modalOverlay.hidden { display: none; }
+.modal { background: white; border-radius: 14px; padding: 20px; max-width: 420px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.modal h2 { margin-top: 0; font-size: 16px; }
+.modalHint { font-size: 12px; color: var(--gray); }
+.modal label { display: block; font-size: 12px; margin-top: 10px; font-weight: 600; }
+.modal input { width: 100%; padding: 7px; border-radius: 6px; border: 1px solid var(--border); margin-top: 4px; font-size: 13px; }
+.modalActions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.primaryBtn { background: var(--green); color: white; border: none; border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; }
+.secondaryBtn { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; }
+.closeBtn { margin-top: 14px; background: none; border: none; color: var(--gray); text-decoration: underline; cursor: pointer; font-size: 12px; }
+.lastSynced { font-size: 11px; color: var(--gray); margin-top: 10px; }

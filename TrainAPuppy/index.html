@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrainAPuppy — Simba's Training Dashboard</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f7a5f">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="paw">🐾</span>
+    <div>
+      <h1>TrainAPuppy</h1>
+      <p class="sub">Simba's 8-Week Evidence-Based Training Tracker</p>
+    </div>
+  </div>
+  <div class="topActions">
+    <span id="syncStatus" class="syncStatus">Local only</span>
+    <button id="settingsBtn" class="iconBtn" title="Cloud Sync Settings">⚙️</button>
+  </div>
+</header>
+
+<main>
+  <section class="panel today" id="todayPanel">
+    <h2>Today's Recommended Session</h2>
+    <div id="todayContent" class="todayGrid"></div>
+  </section>
+
+  <section class="panel overview">
+    <h2>Overall Progress</h2>
+    <div class="progressRow">
+      <div class="progressBarOuter"><div id="overallBar" class="progressBarInner"></div></div>
+      <span id="overallPct">0%</span>
+    </div>
+    <div class="statRow">
+      <div class="statCard"><span id="streakCount">0</span><label>Day Streak</label></div>
+      <div class="statCard"><span id="consistentCount">0</span><label>Consistent Skills</label></div>
+      <div class="statCard"><span id="practicingCount">0</span><label>Practicing</label></div>
+      <div class="statCard"><span id="notStartedCount">0</span><label>Not Started</label></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Ideal Training Times</h2>
+    <div id="idealTimes" class="timeGrid"></div>
+    <p class="tipsTitle">General Tips</p>
+    <ul id="generalTips" class="tipsList"></ul>
+  </section>
+
+  <section class="panel">
+    <div class="weekHeaderRow">
+      <h2>Weekly Curriculum</h2>
+      <label class="weekSelectLabel">Current Week:
+        <select id="currentWeekSelect"></select>
+      </label>
+    </div>
+    <div id="weeksContainer"></div>
+  </section>
+</main>
+
+<div id="settingsModal" class="modalOverlay hidden">
+  <div class="modal">
+    <h2>Cloud Sync (GitHub)</h2>
+    <p class="modalHint">Progress is saved on this device automatically. To sync across all your devices, connect this dashboard to your GitHub repo using a Personal Access Token (classic, "repo" scope). The token stays only in this browser's local storage — it is never sent anywhere except directly to GitHub's API.</p>
+    <label>Owner<input id="ghOwner" value="apatel85"></label>
+    <label>Repo<input id="ghRepo" value="Dashboards"></label>
+    <label>Path<input id="ghPath" value="TrainAPuppy/progress.json"></label>
+    <label>Branch<input id="ghBranch" value="main"></label>
+    <label>Personal Access Token<input id="ghToken" type="password" placeholder="ghp_..."></label>
+    <div class="modalActions">
+      <button id="saveTokenBtn" class="primaryBtn">Save & Connect</button>
+      <button id="pullBtn" class="secondaryBtn">Pull From Cloud</button>
+      <button id="pushBtn" class="secondaryBtn">Push To Cloud</button>
+    </div>
+    <p id="lastSyncedText" class="lastSynced"></p>
+    <button id="closeModalBtn" class="closeBtn">Close</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
