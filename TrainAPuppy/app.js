@@ -1,4 +1,3 @@
-
 // TrainAPuppy Dashboard Logic
 const LS_PROGRESS = 'tap_progress_v1';
 const LS_GH = 'tap_gh_settings_v1';
@@ -114,14 +113,6 @@ async function ghPush() {
 
 function setSyncStatus(text) {
   document.getElementById('syncStatus').textContent = text;
-}
-
-function findExercise(id) {
-  for (const w of curriculum.weeks) {
-    const ex = w.exercises.find(e => e.id === id);
-    if (ex) return { ex, week: w };
-  }
-  return null;
 }
 
 function logPractice(id, success) {
@@ -246,7 +237,7 @@ function renderWeekSelect() {
   sel.value = progress.currentWeek;
 }
 
-let openWeeks = new Set([progress ? progress.currentWeek : 1]);
+let openWeeks = new Set([1]);
 
 function weekStats(week) {
   const ids = week.exercises.map(e => e.id);
@@ -357,6 +348,7 @@ function initSettingsModal() {
 async function init() {
   await loadCurriculum();
   progress = loadLocalProgress();
+  openWeeks = new Set([progress.currentWeek]);
   document.getElementById('currentWeekSelect').addEventListener('change', (e) => {
     progress.currentWeek = parseInt(e.target.value);
     saveLocalProgress();
