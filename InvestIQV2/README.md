@@ -44,8 +44,30 @@ A rebuild of the original `InvestIQ` app. Same dark UI language, but this time
 | ZIP rents (0–4 BR) | **HUD FY2027 Small Area FMRs**, eff. 2026-10-01 | Baked into `data/markets.json`, extracted 2026-09-28 from the official 4.4 MB `FY27_safmrs.xlsx` |
 | Home values, income, renter %, vacancy | **ACS 2024 5-year** via Census Reporter API | Fetched **live in the browser** on each visit (batched, 7-day localStorage cache) |
 
-Verified 2026-09-28: all 29 ZIPs return complete Census payloads; all 29 present in
-the HUD file. Derived: gross yield, price-to-rent, rent burden, composite score (documented weights).
+Verified 2026-09-28: all 29 ZIPs return Census payloads and all 29 are present in
+the HUD file. One ZIP (75207, Dallas) has a Census-suppressed median-home estimate,
+so gross yield is available for 28 of 29 ZIPs. Derived: gross yield, price-to-rent,
+rent burden, composite score (documented weights).
+
+## Live listings (optional free key)
+
+The **Live Listings** tab pulls real for-sale inventory from **Realtor.com** via the
+*Realty in US* API on RapidAPI. Each listing is scored against the same model as the
+ZIP rankings:
+
+> **implied gross yield = (HUD FY2027 2BR rent × 12) ÷ list price**
+
+Listings are filtered by your criteria (min yield, max price, min beds, type,
+hide pending/contingent) and ranked by implied yield.
+
+Setup (one time, ~2 minutes):
+1. Create a free RapidAPI account and subscribe to **Realty in US**
+   (https://rapidapi.com/apidojo/api/realty-in-us) — Basic plan ≈ 500 calls/month, no card.
+2. Open the Live Listings tab, paste the key, press **Connect** (the app verifies it with one call).
+3. Choose a scope (one metro, or all 29 ZIPs ≈ 29 calls) and press **Scan listings**.
+
+The key is stored only in your browser's localStorage and sent only to RapidAPI.
+Listings are cached for 24 hours so re-scans don't burn quota.
 
 ## Why no Supabase / login?
 
