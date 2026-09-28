@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrainAPuppy V2 — Simba's Training Dashboard</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f7a5f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="paw">🐾</span>
+    <div>
+      <h1>TrainAPuppy <span class="vtag">V2</span></h1>
+      <p class="sub">Simba's 8-Week Evidence-Based Training Tracker</p>
+    </div>
+  </div>
+  <div class="topActions">
+    <span id="syncStatus" class="syncStatus">Local only</span>
+    <button id="settingsBtn" class="iconBtn" title="Cloud Sync Settings">⚙️</button>
+  </div>
+</header>
+
+<main>
+  <section class="panel today" id="todayPanel">
+    <h2>Today's Recommended Session</h2>
+    <div id="todayContent" class="todayGrid"></div>
+    <div class="timerCard">
+      <div class="timerTop">
+        <span class="timerTitle">Session Timer</span>
+        <span id="timerDisplay" class="timerDisplay">05:00</span>
+      </div>
+      <div class="timerControls">
+        <button id="timerStartBtn" class="timerBtn">Start</button>
+        <button id="timerPauseBtn" class="timerBtn" disabled>Pause</button>
+        <button id="timerResetBtn" class="timerBtn">Reset</button>
+        <select id="timerLength" class="timerSelect" title="Session length">
+          <option value="300">5 min</option>
+          <option value="600" selected>10 min</option>
+          <option value="900">15 min</option>
+        </select>
+      </div>
+      <p id="timerDone" class="timerDone hidden">Session complete — end on a success! 🎉</p>
+    </div>
+  </section>
+
+  <section class="panel overview">
+    <h2>Overall Progress</h2>
+    <div class="progressRow">
+      <div class="progressBarOuter"><div id="overallBar" class="progressBarInner"></div></div>
+      <span id="overallPct">0%</span>
+    </div>
+    <div class="statRow">
+      <div class="statCard"><span id="streakCount">0</span><label>Training-Day Streak</label></div>
+      <div class="statCard"><span id="consistentCount">0</span><label>Consistent Skills</label></div>
+      <div class="statCard"><span id="practicingCount">0</span><label>Practicing</label></div>
+      <div class="statCard"><span id="notStartedCount">0</span><label>Not Started</label></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Ideal Training Times</h2>
+    <div id="idealTimes" class="timeGrid"></div>
+    <p class="tipsTitle">General Tips</p>
+    <ul id="generalTips" class="tipsList"></ul>
+  </section>
+
+  <section class="panel">
+    <div class="weekHeaderRow">
+      <h2>Weekly Curriculum</h2>
+      <label class="weekSelectLabel">Current Week:
+        <select id="currentWeekSelect"></select>
+      </label>
+    </div>
+    <div id="weeksContainer"></div>
+  </section>
+</main>
+
+<div id="settingsModal" class="modalOverlay hidden">
+  <div class="modal">
+    <h2>Cloud Sync (GitHub)</h2>
+    <p class="modalHint">Progress saves on this device automatically. For cross-device sync, use a
+      <b>fine-grained</b> Personal Access Token scoped to <b>this repo only</b> with
+      <b>Contents: read &amp; write</b> — never a classic token with full "repo" scope.
+      The token stays only in this browser's local storage and goes directly to GitHub's API.
+      With a token saved, the app auto-pulls on load and auto-pushes a few seconds after each change.</p>
+    <label>Owner<input id="ghOwner" value="apatel85"></label>
+    <label>Repo<input id="ghRepo" value="Dashboards"></label>
+    <label>Path<input id="ghPath" value="TrainAPuppyV2/progress.json"></label>
+    <label>Branch<input id="ghBranch" value="main"></label>
+    <label>Personal Access Token (fine-grained)<input id="ghToken" type="password" placeholder="github_pat_..."></label>
+    <div class="modalActions">
+      <button id="saveTokenBtn" class="primaryBtn">Save &amp; Connect</button>
+      <button id="pullBtn" class="secondaryBtn">Pull From Cloud</button>
+      <button id="pushBtn" class="secondaryBtn">Push To Cloud</button>
+    </div>
+    <p class="modalHint">Auto-sync: <b id="autoSyncState">off</b> — turn on by saving a token above.</p>
+    <p id="lastSyncedText" class="lastSynced"></p>
+    <button id="closeModalBtn" class="closeBtn">Close</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
