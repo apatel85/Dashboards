@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvestIQ V2 — Real Estate Intelligence (Live Data)</title>
+<meta name="description" content="Investment market intelligence from real HUD and Census data. No estimates, no fake sync.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+<nav class="sidebar" id="sidebar" aria-label="Main navigation">
+  <div class="sidebar-logo">
+    <div class="logo-mark">IQ</div>
+    <div class="logo-text">Invest<span>IQ</span> <span class="vtag">V2</span></div>
+  </div>
+  <div class="sidebar-section-label">Main</div>
+  <button class="nav-item active" data-view="dashboard"><span class="nav-icon">▨</span> Dashboard</button>
+  <button class="nav-item" data-view="markets"><span class="nav-icon">⊕</span> Markets</button>
+  <button class="nav-item" data-view="compare"><span class="nav-icon">⇄</span> STR vs LTR</button>
+  <div class="sidebar-section-label">Info</div>
+  <button class="nav-item" data-view="methodology"><span class="nav-icon">ⓘ</span> Data &amp; Methodology</button>
+  <div class="sidebar-bottom">
+    <div class="api-status-row" id="dataStatusRow">
+      <div class="api-dot" id="dataStatusDot"></div>
+      <div class="api-status-text"><span id="dataStatusTitle">LOADING DATA</span>
+        <small id="dataStatusSub">Fetching live Census data…</small>
+      </div>
+    </div>
+    <button class="sync-btn" id="refreshBtn">
+      <span style="font-size:16px">↻</span><span id="refreshLabel">Refresh live data</span>
+    </button>
+    <div class="sync-progress" id="loadProgress"></div>
+  </div>
+</nav>
+<div class="main-wrap">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="topbar-btn" id="menuBtn" aria-label="Toggle menu">☰</button>
+      <div><div class="page-title" id="pageTitle">Dashboard</div>
+      <div class="breadcrumb">InvestIQ V2 • HUD FY2027 SAFMR + ACS 2024 5-yr via Census Reporter</div></div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-pill" id="livePill"><div class="live-dot"></div><span id="livePillText">LOADING</span></div>
+      <input class="search-box" placeholder="Search ZIP or metro…" id="globalSearch" aria-label="Search markets">
+    </div>
+  </div>
+  <div class="content">
+    <!-- DASHBOARD -->
+    <section class="view active" id="view-dashboard" aria-label="Dashboard">
+      <div class="section-header"><span class="section-title">Portfolio Overview</span><span class="rentcast-badge" id="dashSourceBadge">● loading…</span></div>
+      <div class="stats-band">
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg Gross Yield</div><div class="stat-value" id="s-yield">—</div><div class="stat-delta" id="s-yield-delta">&nbsp;</div><div class="stat-sub">HUD FY2027 2BR rent ÷ Census median home</div></div>
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Median Home Value</div><div class="stat-value indigo" id="s-home">—</div><div class="stat-delta" id="s-home-delta">&nbsp;</div><div class="stat-sub">ACS 2024 5-yr, across markets</div></div>
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Avg Renter %</div><div class="stat-value" id="s-renter">—</div><div class="stat-delta" id="s-renter-delta">&nbsp;</div><div class="stat-sub">Share of renter-occupied units</div></div>
+        <div class="stat-card"><div class="stat-label"><div class="stat-source-dot"></div>Markets Live</div><div class="stat-value indigo" id="s-markets">0</div><div class="stat-delta" id="s-markets-delta">&nbsp;</div><div class="stat-sub" id="s-markets-sub">of 29 tracked ZIPs</div></div>
+      </div>
+      <div id="emptyDashboard" class="empty-state">
+        <div class="icon">📊</div>
+        <h3>Loading live market data</h3>
+        <p>Pulling real HUD Fair Market Rents and Census ACS data. This takes a few seconds on first load — afterwards it's cached for 7 days.</p>
+      </div>
+      <div id="loadError" class="empty-state" style="display:none">
+        <div class="icon">⚠️</div>
+        <h3>Couldn't reach live data</h3>
+        <p id="loadErrorMsg">The Census data service didn't respond.</p>
+        <button class="empty-cta" id="retryBtn">↻ Try again</button>
+      </div>
+      <div id="dashboardContent" style="display:none">
+        <div class="section-header"><span class="section-title">Top Markets by Gross Yield</span><span class="tooltip-badge">HUD FY2027 2BR ÷ median home</span></div>
+        <div class="two-col">
+          <div class="chart-panel"><div class="chart-title">Gross Rental Yield — Top 10 ZIPs</div><div class="chart-sub">Annualized (FMR 2BR × 12) ÷ Census median home value</div><div class="chart-wrap"><canvas id="yieldChart"></canvas></div></div>
+          <div class="chart-panel"><div class="chart-title">Investment Ranking</div><div class="chart-sub">Composite score: yield 40% · renter demand 20% · vacancy 15% · affordability 15% · income 10%</div><div id="rankList"></div></div>
+        </div>
+        <div class="section-header"><span class="section-title">Top Opportunities</span><div class="mode-toggle" id="dashModeToggle" role="tablist">
+          <button class="mode-btn active" data-mode="yield">Highest yield</button>
+          <button class="mode-btn" data-mode="score">Best score</button>
+          <button class="mode-btn" data-mode="value">Lowest price</button>
+        </div></div>
+        <div class="three-col" id="oppCards"></div>
+      </div>
+    </section>
+
+    <!-- MARKETS TABLE -->
+    <section class="view" id="view-markets" aria-label="Markets">
+      <div class="section-header"><span class="section-title">All Markets — Live Comparison</span>
+        <button class="export-btn" id="exportCsvBtn">⬇ Export CSV</button>
+      </div>
+      <div class="table-panel">
+        <div class="table-header-row"><span class="section-title">29 tracked ZIPs</span>
+          <div style="display:flex;gap:8px;align-items:center"><span class="tooltip-badge" id="tableCount">loading…</span><span id="liveCountBadge" class="source-live" style="display:none">● LIVE</span></div>
+        </div>
+        <div style="overflow-x:auto"><table class="data-table" id="marketsTable">
+          <thead><tr>
+            <th data-sort="zip">ZIP <span class="sort-arrow"></span></th>
+            <th data-sort="metro">Metro <span class="sort-arrow"></span></th>
+            <th class="num" data-sort="fmr_2br">FMR 2BR <span class="sort-arrow"></span></th>
+            <th class="num" data-sort="median_home">Median Home <span class="sort-arrow"></span></th>
+            <th class="num" data-sort="gross_yield">Gross Yield <span class="sort-arrow"></span></th>
+            <th class="num" data-sort="pr_ratio">P/R Ratio <span class="sort-arrow"></span></th>
+            <th class="num" data-sort="renter_pct">Renter % <span class="sort-arrow"></span></th>
+            <th class="num" data-sort="vacancy_pct">Vacancy <span class="sort-arrow"></span></th>
+            <th data-sort="grade">Grade <span class="sort-arrow"></span></th>
+          </tr></thead>
+          <tbody id="marketsTableBody"><tr><td colspan="9" style="text-align:center;padding:40px;color:var(--t3)">Loading live data…</td></tr></tbody>
+        </table></div>
+      </div>
+      <p class="table-footnote">FMR = HUD FY2027 Small Area Fair Market Rent (effective Oct 1, 2026). Home values, renter % and vacancy = ACS 2024 5-year via Census Reporter, fetched live. “—” means the Census Bureau suppressed that estimate for the ZIP.</p>
+    </section>
+
+    <!-- MARKET DETAIL -->
+    <section class="view" id="view-detail" aria-label="Market detail">
+      <div class="section-header"><span class="section-title">Market Detail</span>
+        <button class="export-btn" id="backToMarkets">← All markets</button>
+      </div>
+      <div id="detailContent"></div>
+    </section>
+
+    <!-- STR VS LTR -->
+    <section class="view" id="view-compare" aria-label="STR versus LTR">
+      <div class="section-header"><span class="section-title">STR vs LTR — Scenario Model</span><span class="source-model">◐ SCENARIO — not live data</span></div>
+      <div class="insights-data-banner">
+        <div class="idb-icon">🏠</div>
+        <div>
+          <div class="idb-title">No free API publishes live STR revenue by ZIP — so this is a transparent calculator, not a data feed</div>
+          <div class="idb-sub">LTR side uses <strong>real HUD FY2027 2BR rents</strong>. STR side is a scenario you control: set nightly rate, occupancy and costs. Adjust the assumptions and see which strategy wins per market. Nothing here is presented as measured STR performance.</div>
+        </div>
+      </div>
+      <div class="scenario-controls">
+        <label>Nightly rate <input type="number" id="sc-nightly" value="145" min="20" max="2000"></label>
+        <label>Occupancy % <input type="number" id="sc-occ" value="62" min="5" max="100"></label>
+        <label>Monthly STR costs <input type="number" id="sc-costs" value="650" min="0" max="10000"></label>
+        <label>Monthly LTR costs <input type="number" id="sc-ltrcosts" value="250" min="0" max="10000"></label>
+        <button class="export-btn" id="sc-apply">Apply</button>
+      </div>
+      <div class="table-panel">
+        <div style="overflow-x:auto"><table class="data-table">
+          <thead><tr><th>ZIP</th><th>Metro</th><th class="num">LTR rent (HUD)</th><th class="num">LTR net/mo</th><th class="num">STR gross/mo</th><th class="num">STR net/mo</th><th class="num">Winner</th><th class="num">Edge</th></tr></thead>
+          <tbody id="compareBody"><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--t3)">Loading…</td></tr></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- METHODOLOGY -->
+    <section class="view" id="view-methodology" aria-label="Data and methodology">
+      <div class="section-header"><span class="section-title">Data &amp; Methodology</span></div>
+      <div class="method-grid">
+        <div class="method-card">
+          <div class="method-title">🏛️ HUD Fair Market Rents — FY2027</div>
+          <p>ZIP-level Small Area FMRs published by the U.S. Department of Housing and Urban Development. Extracted <strong>2026-09-28</strong> from the official file:</p>
+          <p class="mono-link"><a href="https://www.huduser.gov/portal/datasets/fmr/fmr2027/FY27_safmrs.xlsx" target="_blank" rel="noopener">FY27_safmrs.xlsx</a> (4.4 MB)</p>
+          <p>Effective <strong>October 1, 2026</strong>. FMRs are gross rent estimates (shelter rent + utilities) set at the 40th percentile of standard-quality rental units.</p>
+        </div>
+        <div class="method-card">
+          <div class="method-title">🏘️ Census ACS — 2024 5-Year</div>
+          <p>Median home value, household income, tenure and vacancy from the American Community Survey 5-year estimates (2020–2024), fetched <strong>live in your browser</strong> from the Census Reporter API — no key required:</p>
+          <p class="mono-link"><a href="https://api.censusreporter.org" target="_blank" rel="noopener">api.censusreporter.org</a></p>
+          <p>Tables: B25077 (home value) · B19013 (income) · B25003 (tenure) · B25002 (vacancy). Cached 7 days in your browser; a “CACHED” badge shows when you're viewing stored data.</p>
+        </div>
+        <div class="method-card">
+          <div class="method-title">🧮 Derived metrics</div>
+          <ul>
+            <li><strong>Gross yield</strong> = (FMR 2BR × 12) ÷ median home value</li>
+            <li><strong>Price-to-rent</strong> = median home value ÷ (FMR 2BR × 12)</li>
+            <li><strong>Affordability</strong> = (FMR 2BR × 12) ÷ median household income</li>
+            <li><strong>Renter %</strong> = renter-occupied ÷ total occupied units</li>
+            <li><strong>Vacancy %</strong> = vacant ÷ total housing units</li>
+          </ul>
+        </div>
+        <div class="method-card">
+          <div class="method-title">🏆 Composite score (0–100)</div>
+          <p>Each metric is min-max normalized across the 29 markets, then weighted:</p>
+          <ul>
+            <li>Gross yield — <strong>40%</strong></li>
+            <li>Renter demand — <strong>20%</strong></li>
+            <li>Low vacancy — <strong>15%</strong></li>
+            <li>Affordability (low rent burden) — <strong>15%</strong></li>
+            <li>Median income — <strong>10%</strong></li>
+          </ul>
+          <p>Grades: A ≥ 75 · B ≥ 60 · C ≥ 45 · D &lt; 45. ZIPs missing a Census estimate are scored on available metrics only, flagged with “—”.</p>
+        </div>
+        <div class="method-card">
+          <div class="method-title">⚠️ Honest limits</div>
+          <ul>
+            <li>FMR is a <em>benchmark</em>, not a guarantee of achievable rent.</li>
+            <li>ACS 5-year data lags the market by 1–2 years by design.</li>
+            <li>STR figures are <em>scenarios you set</em> — no free source publishes verified STR revenue by ZIP.</li>
+            <li>This is research tooling, not financial advice.</li>
+          </ul>
+        </div>
+        <div class="method-card">
+          <div class="method-title">🔌 Why no Supabase / API keys?</div>
+          <p>Every number here comes from free public sources that need no key and no backend. Adding accounts, logins and a database would add friction without making any number more real. If you later want watchlists, alerts or saved comparisons, that's when a Supabase <span class="mono">invest_iq</span> schema earns its place.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
