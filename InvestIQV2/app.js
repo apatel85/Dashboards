@@ -154,6 +154,7 @@ async function loadData(forceRefresh=false) {
       (fromCache ? 'cached ' : 'live · ') + new Date(dt).toLocaleString());
     $('loadProgress').style.display = 'none';
     renderAll();
+    populateListingScope();
   } catch (err) {
     console.error(err);
     setStatus('error', String(err.message || err));
@@ -169,7 +170,7 @@ async function loadData(forceRefresh=false) {
 }
 
 /* ---------------- navigation ---------------- */
-const VIEW_TITLES = { dashboard: 'Dashboard', markets: 'Markets', detail: 'Market Detail', compare: 'STR vs LTR', methodology: 'Data & Methodology' };
+const VIEW_TITLES = { dashboard: 'Dashboard', markets: 'Markets', detail: 'Market Detail', listings: 'Live Listings', compare: 'STR vs LTR', methodology: 'Data & Methodology' };
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   $('view-' + name).classList.add('active');
@@ -386,6 +387,301 @@ function renderAll() {
   renderCompare();
 }
 
+/* ================================================================
+   LIVE LISTINGS — real for-sale inventory via Realtor.com (RapidAPI).
+   Key stays in the user's browser localStorage. Each listing gets an
+   implied gross yield from the ZIP's HUD FY2027 2BR rent:
+     implied_yield = fmr_2br * 12 / list_price
+   directly comparable to ZIP-level gross yields in the model.
+================================================================ */
+const RAPID_HOST = 'realty-in-us.p.rapidapi.com';
+const LISTINGS_URL = `https://${RAPID_HOST}/properties/v3/list`;
+const RAPID_KEY_STORE = 'investiq_v2_rapidapi_key';
+const LISTINGS_CACHE_KEY = 'investiq_v2_listings_v1';
+const LISTINGS_CACHE_TTL_MS = 24 * 3600 * 1000;
+const LISTINGS_PER_ZIP = 50;
+
+const listings = {
+  key: null,
+  callsThisSession: 0,
+  scanning: false,
+  results: [],
+};
+
+function getRapidKey() {
+  if (!listings.key) { try { listings.key = localStorage.getItem(RAPID_KEY_STORE); } catch (e) {} }
+  return listings.key;
+}
+function setRapidKey(k) {
+  listings.key = k;
+  try { if (k) localStorage.setItem(RAPID_KEY_STORE, k); else localStorage.removeItem(RAPID_KEY_STORE); } catch (e) {}
+}
+
+function getListingsCache() {
+  try { return JSON.parse(localStorage.getItem(LISTINGS_CACHE_KEY) || '{}'); } catch (e) { return {}; }
+}
+function saveListingsCache(c) {
+  try { localStorage.setItem(LISTINGS_CACHE_KEY, JSON.stringify(c)); } catch (e) {}
+}
+
+/* Raw API shape → flat listing record (fields per Realty-in-US v3 docs) */
+function flattenListing(home) {
+  const loc = home.location || {}, addr = loc.address || {}, coord = addr.coordinate || {};
+  const desc = home.description || {}, photo = home.primary_photo || {};
+  const flags = home.flags || {};
+  return {
+    property_id: home.property_id || home.listing_id || null,
+    listing_href: home.href || null,
+    status: home.status || null,
+    list_price: typeof home.list_price === 'number' ? home.list_price : null,
+    list_date: home.list_date || null,
+    beds: desc.beds ?? null,
+    baths: desc.baths ?? null,
+    sqft: desc.sqft ?? null,
+    lot_sqft: desc.lot_sqft ?? null,
+    year_built: desc.year_built ?? null,
+    type: desc.type || null,
+    sub_type: desc.sub_type || null,
+    address_line: addr.line || null,
+    city: addr.city || null,
+    state: addr.state_code || null,
+    postal_code: addr.postal_code || null,
+    lat: coord.lat ?? null,
+    lon: coord.lon ?? null,
+    photo: photo.href || null,
+    is_pending: !!(flags.is_pending || flags.is_contingent),
+    days_on: home.days_on_realtor ?? null,
+  };
+}
+
+async function realtyListForZip(apiKey, zip, limit, offset) {
+  const res = await fetch(LISTINGS_URL, {
+    method: 'POST',
+    headers: {
+      'X-RapidAPI-Key': apiKey,
+      'X-RapidAPI-Host': RAPID_HOST,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      limit, offset,
+      postal_code: zip,
+      status: ['for_sale'],
+      sort: { direction: 'desc', field: 'list_date' },
+    }),
+  });
+  listings.callsThisSession++;
+  updateQuotaBadge();
+  if (res.status === 401 || res.status === 403) throw Object.assign(new Error('bad_key'), { code: 'bad_key' });
+  if (res.status === 429) throw Object.assign(new Error('rate_limited'), { code: 'rate_limited' });
+  if (!res.ok) throw Object.assign(new Error('http_' + res.status), { code: 'http', status: res.status });
+  const json = await res.json().catch(() => ({}));
+  const hs = (json.data && json.data.home_search) || {};
+  return (hs.results || []).map(flattenListing);
+}
+
+function updateQuotaBadge() {
+  const b = $('quotaBadge');
+  if (b) b.textContent = listings.callsThisSession + ' API call' + (listings.callsThisSession === 1 ? '' : 's');
+}
+
+function criteriaFromUI() {
+  return {
+    minYield: parseFloat($('lc-minYield').value) || 0,
+    maxPrice: parseFloat($('lc-maxPrice').value) || Infinity,
+    minBeds: parseInt($('lc-minBeds').value, 10) || 0,
+    type: $('lc-type').value || null,
+    hidePending: $('lc-hidePending').checked,
+  };
+}
+
+/* Score + filter a flat listing against the ranking model */
+function scoreListing(l, zipRow, crit) {
+  l.zip = l.postal_code || '';
+  l.fmr_2br = zipRow ? zipRow.fmr_2br : null;
+  l.zipGrade = zipRow ? zipRow.grade : null;
+  l.zipScore = zipRow ? zipRow.score : null;
+  l.implied_yield = (l.list_price && zipRow && zipRow.fmr_2br)
+    ? +(100 * zipRow.fmr_2br * 12 / l.list_price).toFixed(2)
+    : null;
+  l.passes = true; l.failReason = null;
+  if (l.implied_yield == null || l.implied_yield < crit.minYield) { l.passes = false; l.failReason = 'yield'; }
+  else if (l.list_price > crit.maxPrice) { l.passes = false; l.failReason = 'price'; }
+  else if (l.beds != null && l.beds < crit.minBeds) { l.passes = false; l.failReason = 'beds'; }
+  else if (crit.type && l.type !== crit.type) { l.passes = false; l.failReason = 'type'; }
+  else if (crit.hidePending && l.is_pending) { l.passes = false; l.failReason = 'pending'; }
+  else if (!l.list_price) { l.passes = false; l.failReason = 'no_price'; }
+  return l;
+}
+
+function renderListingCards() {
+  const wrap = $('listingCards');
+  const empty = $('listingEmpty');
+  const matched = listings.results.filter(l => l.passes);
+  $('listingCount').textContent = matched.length + ' match' + (matched.length === 1 ? '' : 'es') +
+    ' · ' + listings.results.length + ' scanned';
+  if (!matched.length) {
+    wrap.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  wrap.innerHTML = matched.map(l => {
+    const hot = l.implied_yield >= 10;
+    const photoHtml = l.photo
+      ? `<img class="listing-photo" src="${esc(l.photo)}" alt="Property photo" loading="lazy" onerror="this.outerHTML='<div class=\\'listing-photo fallback\\'>🏠</div>'">`
+      : `<div class="listing-photo fallback">🏠</div>`;
+    return `<div class="listing-card">
+      ${photoHtml}
+      <div class="listing-body">
+        <div class="listing-price-row">
+          <span class="listing-price">${fmt$(l.list_price)}</span>
+          <span class="yield-badge ${hot ? 'hot' : 'warm'}">${l.implied_yield != null ? l.implied_yield.toFixed(1) + '% yield' : '—'}</span>
+        </div>
+        <div>
+          <div class="listing-addr">${esc(l.address_line || 'Address not listed')}</div>
+          <div class="listing-locale">${esc([l.city, l.state, l.postal_code].filter(Boolean).join(', '))}</div>
+        </div>
+        <div class="listing-facts">
+          <span>${l.beds != null ? l.beds + ' bd' : '— bd'}</span>
+          <span>${l.baths != null ? l.baths + ' ba' : '— ba'}</span>
+          <span>${l.sqft ? l.sqft.toLocaleString() + ' sqft' : ''}</span>
+          <span>${esc(l.type || '').replace(/_/g, ' ')}</span>
+        </div>
+        <div class="listing-model">
+          <span>ZIP <strong>${esc(l.zip)}</strong></span>
+          ${l.zipGrade ? `<span class="grade-badge grade-${l.zipGrade.toLowerCase()}">${l.zipGrade}</span>` : ''}
+          <span>FMR $${l.fmr_2br ? l.fmr_2br.toLocaleString() : '—'}/mo</span>
+        </div>
+        <div class="listing-cta">
+          ${l.listing_href ? `<a class="listing-link" href="${esc(l.listing_href)}" target="_blank" rel="noopener">View on Realtor.com ↗</a>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function scanListings() {
+  if (listings.scanning) return;
+  const key = getRapidKey();
+  if (!key) { $('keyStatus').textContent = 'Paste your RapidAPI key above first.'; $('keyStatus').className = 'key-status err'; return; }
+  const crit = criteriaFromUI();
+  const scope = $('lc-scope').value;
+  const zips = scope === 'all' ? ROWS.map(r => r.zip) : ROWS.filter(r => r.metro === scope).map(r => r.zip);
+  if (!zips.length) return;
+
+  listings.scanning = true;
+  $('scanBtn').disabled = true;
+  const prog = $('scanProgress');
+  prog.textContent = 'Starting scan…';
+  prog.classList.add('visible');
+
+  const cache = getListingsCache();
+  const now = Date.now();
+  const fresh = [], toFetch = [];
+  zips.forEach(z => {
+    const c = cache[z];
+    if (c && now - c.ts < LISTINGS_CACHE_TTL_MS) fresh.push(...c.items);
+    else toFetch.push(z);
+  });
+
+  listings.results = [];
+  const zipMap = Object.fromEntries(ROWS.map(r => [r.zip, r]));
+  fresh.forEach(l => listings.results.push(scoreListing(l, zipMap[l.postal_code], crit)));
+
+  let failed = 0, badKey = false;
+  for (let i = 0; i < toFetch.length; i++) {
+    const z = toFetch[i];
+    prog.textContent = `Fetching ${z} (${i + 1}/${toFetch.length})…`;
+    try {
+      const items = await realtyListForZip(key, z, LISTINGS_PER_ZIP, 0);
+      cache[z] = { ts: now, items };
+      items.forEach(l => listings.results.push(scoreListing(l, zipMap[l.postal_code] || zipMap[z], crit)));
+    } catch (e) {
+      failed++;
+      if (e.code === 'bad_key') { badKey = true; break; }
+      if (e.code === 'rate_limited') { prog.textContent = 'Rate limited by RapidAPI — wait a minute and try again.'; break; }
+    }
+  }
+  saveListingsCache(cache);
+  listings.scanning = false;
+  $('scanBtn').disabled = false;
+
+  // highest implied yield first — same ranking logic as the ZIP table
+  listings.results.sort((a, b) => (b.implied_yield || 0) - (a.implied_yield || 0));
+  renderListingCards();
+
+  if (badKey) {
+    $('keyStatus').textContent = 'Key rejected (401/403). Check the key or your RapidAPI subscription.';
+    $('keyStatus').className = 'key-status err';
+    $('keyBanner').style.display = 'flex';
+    $('listingsMain').style.display = 'none';
+  }
+  prog.textContent = `Scan complete: ${listings.results.length} listings from ${zips.length} ZIPs` +
+    (failed ? ` · ${failed} ZIP${failed === 1 ? '' : 's'} failed` : '') +
+    (toFetch.length === 0 ? ' · all from 24h cache' : '') + '.';
+  $('listingsSourceBadge').style.display = 'inline-block';
+}
+
+function initListings() {
+  populateListingScope();
+
+  const hasKey = !!getRapidKey();
+  $('keyBanner').style.display = hasKey ? 'none' : 'flex';
+  $('listingsMain').style.display = hasKey ? 'block' : 'none';
+  if (hasKey) $('clearKeyBtn').style.display = 'inline-block';
+
+  $('saveKeyBtn').addEventListener('click', async () => {
+    const k = $('rapidKeyInput').value.trim();
+    if (!k) { $('keyStatus').textContent = 'Paste a key first.'; $('keyStatus').className = 'key-status err'; return; }
+    $('keyStatus').textContent = 'Verifying key…';
+    $('keyStatus').className = 'key-status';
+    try {
+      // 1-call verification against a known ZIP
+      await realtyListForZip(k, ROWS[0].zip, 1, 0);
+      setRapidKey(k);
+      $('keyStatus').textContent = '✓ Key verified — live listings unlocked.';
+      $('keyStatus').className = 'key-status ok';
+      $('clearKeyBtn').style.display = 'inline-block';
+      setTimeout(() => { $('keyBanner').style.display = 'none'; $('listingsMain').style.display = 'block'; }, 800);
+    } catch (e) {
+      $('keyStatus').textContent = e.code === 'bad_key'
+        ? 'Key rejected. Make sure you subscribed to "Realty in US" on RapidAPI and copied the key.'
+        : 'Verification failed (' + (e.message || 'network') + '). Try again.';
+      $('keyStatus').className = 'key-status err';
+    }
+  });
+  $('clearKeyBtn').addEventListener('click', () => {
+    setRapidKey(null);
+    $('rapidKeyInput').value = '';
+    $('clearKeyBtn').style.display = 'none';
+    $('keyBanner').style.display = 'flex';
+    $('listingsMain').style.display = 'none';
+  });
+  $('scanBtn').addEventListener('click', scanListings);
+  // re-filter instantly when criteria change after a scan
+  ['lc-minYield', 'lc-maxPrice', 'lc-minBeds', 'lc-type', 'lc-hidePending'].forEach(id =>
+    $(id).addEventListener('change', () => {
+      if (listings.results.length) {
+        const crit = criteriaFromUI();
+        const zipMap = Object.fromEntries(ROWS.map(r => [r.zip, r]));
+        listings.results.forEach(l => scoreListing(l, zipMap[l.postal_code] || zipMap[l.zip], crit));
+        listings.results.sort((a, b) => (b.implied_yield || 0) - (a.implied_yield || 0));
+        renderListingCards();
+      }
+    }));
+}
+
+function populateListingScope() {
+  // re-render scope select once ROWS is loaded (metros + counts)
+  const sel = $('lc-scope');
+  if (!sel || !ROWS.length) return;
+  const cur = sel.value || 'all';
+  sel.innerHTML = `<option value="all">All ${ROWS.length} ZIPs (~${ROWS.length} calls)</option>` +
+    [...new Set(ROWS.map(r => r.metro))].sort()
+      .map(m => `<option value="${esc(m)}">${esc(m)} (${ROWS.filter(r => r.metro === m).length} ZIPs)</option>`).join('');
+  sel.value = cur;
+}
+
 /* ---------------- events ---------------- */
 function init() {
   document.querySelectorAll('.nav-item').forEach(b =>
@@ -412,6 +708,7 @@ function init() {
       renderOppCards();
     }));
   $('exportCsvBtn').addEventListener('click', exportCSV);
+  initListings();
   $('backToMarkets').addEventListener('click', () => showView('markets'));
   $('sc-apply').addEventListener('click', renderCompare);
   ['sc-nightly','sc-occ','sc-costs','sc-ltrcosts'].forEach(id =>
