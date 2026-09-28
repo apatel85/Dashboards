@@ -21,6 +21,7 @@
   <div class="sidebar-section-label">Main</div>
   <button class="nav-item active" data-view="dashboard"><span class="nav-icon">▨</span> Dashboard</button>
   <button class="nav-item" data-view="markets"><span class="nav-icon">⊕</span> Markets</button>
+  <button class="nav-item" data-view="listings"><span class="nav-icon">🏷</span> Live Listings</button>
   <button class="nav-item" data-view="compare"><span class="nav-icon">⇄</span> STR vs LTR</button>
   <div class="sidebar-section-label">Info</div>
   <button class="nav-item" data-view="methodology"><span class="nav-icon">ⓘ</span> Data &amp; Methodology</button>
@@ -110,6 +111,73 @@
         </table></div>
       </div>
       <p class="table-footnote">FMR = HUD FY2027 Small Area Fair Market Rent (effective Oct 1, 2026). Home values, renter % and vacancy = ACS 2024 5-year via Census Reporter, fetched live. “—” means the Census Bureau suppressed that estimate for the ZIP.</p>
+    </section>
+
+    <!-- LIVE LISTINGS VIEW -->
+    <section class="view" id="view-listings" aria-label="Live listings">
+      <div class="section-header"><span class="section-title">Live Listings — For Sale</span><span class="source-live" id="listingsSourceBadge" style="display:none">● REALTOR.COM VIA RAPIDAPI</span></div>
+
+      <div class="key-banner" id="keyBanner">
+        <div class="idb-icon">🔑</div>
+        <div style="flex:1">
+          <div class="idb-title">Connect a free RapidAPI key to pull live for-sale listings</div>
+          <div class="idb-sub">Listings come from Realtor.com via the <strong>Realty in US</strong> API — free tier ≈ 500 calls/month, no credit card.
+          <a href="https://rapidapi.com/apidojo/api/realty-in-us" target="_blank" rel="noopener">Subscribe free on RapidAPI</a>,
+          paste your key below. It stays in <em>your</em> browser (localStorage) — never sent anywhere except RapidAPI.</div>
+          <div class="key-row">
+            <input type="password" id="rapidKeyInput" class="search-box" style="width:280px" placeholder="Paste RapidAPI key…" autocomplete="off">
+            <button class="export-btn" id="saveKeyBtn">Connect</button>
+            <button class="export-btn" id="clearKeyBtn" style="display:none">Disconnect</button>
+          </div>
+          <div class="key-status" id="keyStatus"></div>
+        </div>
+      </div>
+
+      <div id="listingsMain" style="display:none">
+        <div class="insights-data-banner">
+          <div class="idb-icon">🏷️</div>
+          <div style="flex:1">
+            <div class="idb-title">Each listing is scored against the same model as the ZIP rankings</div>
+            <div class="idb-sub">Implied gross yield = <strong>(HUD FY2027 2BR rent × 12) ÷ list price</strong> — directly comparable to the ZIP-level yields on the dashboard. Set your criteria, scan, and the best fits rise to the top.</div>
+          </div>
+          <div class="tooltip-badge" id="quotaBadge" title="Free tier ≈ 500 calls/month">0 API calls</div>
+        </div>
+
+        <div class="scenario-controls" id="listingCriteria">
+          <label>Scope
+            <select id="lc-scope"></select>
+          </label>
+          <label>Min yield %
+            <input type="number" id="lc-minYield" value="8" min="0" max="40" step="0.5">
+          </label>
+          <label>Max price $
+            <input type="number" id="lc-maxPrice" value="" min="0" placeholder="no cap">
+          </label>
+          <label>Min beds
+            <input type="number" id="lc-minBeds" value="0" min="0" max="10">
+          </label>
+          <label>Type
+            <select id="lc-type">
+              <option value="">Any</option>
+              <option value="single_family">Single family</option>
+              <option value="multi_family">Multi-family</option>
+              <option value="condos">Condo</option>
+              <option value="townhomes">Townhouse</option>
+            </select>
+          </label>
+          <label class="check-label"><input type="checkbox" id="lc-hidePending" checked> Hide pending/contingent</label>
+          <button class="sync-btn" id="scanBtn" style="width:auto;padding:10px 22px"><span style="font-size:16px">🔍</span><span>Scan listings</span></button>
+        </div>
+        <div class="sync-progress" id="scanProgress"></div>
+
+        <div class="section-header"><span class="section-title">Matching properties</span><span class="tooltip-badge" id="listingCount">no scan yet</span></div>
+        <div class="three-col" id="listingCards"></div>
+        <div id="listingEmpty" class="empty-state" style="display:none">
+          <div class="icon">🏚️</div>
+          <h3>No listings matched</h3>
+          <p id="listingEmptyMsg">Try widening the criteria — lower the min yield or raise the price cap.</p>
+        </div>
+      </div>
     </section>
 
     <!-- MARKET DETAIL -->
