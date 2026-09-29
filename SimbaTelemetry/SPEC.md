@@ -81,23 +81,78 @@ One schema `simba_telemetry`: `subjects` (id, owner_id, name, breed, dob, sex,
 weight_kg, target hold, clean streak) and `telemetry_events` (id, auto
 `LOG-0001…` codes via trigger, subject/owner ids, timestamps, ingestion metrics,
 elimination metrics, crate metrics, behavioral flags, computed state snapshots,
-clinical audit fields). Full DDL in `supabase/schema.sql` — run once in the
-Supabase SQL editor.
+clinical audit fields, optional `walk_id`). Full DDL in `supabase/schema.sql` —
+run once in the Supabase SQL editor.
+
+**v2.0 additions** (DDL in `supabase/migration_v2.sql` — run after the base
+schema): `household_members` (subject_id, user_id, email, role — invite by
+email, claimed on first sign-in via JWT-email match); `medications`
+(name, dose, frequency, time_of_day, next_due_at) + `med_logs` (per-dose log);
+`vaccinations` (vaccine, given_at, next_due_at, vet); `walks`
+(started_at, ended_at, distance_m, duration_mins, route JSON polyline).
+RLS widened via `simba_telemetry.is_household(subject_id)`: the subject owner
+*or* any claimed household member can read/write that subject's events, care
+rows, and walks. Owner-only: managing household memberships.
 
 ## 7. Screens
 
 Cockpit HUD · Voice/text log · Timeline · Trends · Insights · Ask/audit ·
-Knowledge viewer · Export (CSV / Markdown / multi-sheet XLSX) · Setup & login.
+Knowledge viewer · Meds & vaccines · Vet report (print/PDF) · Household
+sharing · Export (CSV / Markdown / multi-sheet XLSX) · Setup & login.
+
+### v2.0 feature notes
+
+- **24-hour clockface dial** (Trends hero): SVG radial dial of pee/poop density
+  per hour over the trailing 90 days; repeated times render as thickened green
+  bands; filterable All/Pee/Poop. Peak hours labeled at the dial center.
+- **Confidence & quiet start:** every learned window carries `confidence` =
+  `round(prob × 100 × min(1, dataDays/14))`, shown on nudges and schedule
+  cards. Nudges fire only when **prob ≥ 80% AND ≥14 days of data AND the
+  cluster spans ≥3 separate days** (`shouldNudge`). Below 14 days a
+  "🧠 Learning mode — N/14 days" banner shows on Cockpit and Insights; windows
+  are displayed but no nudges fire.
+- **Back-dated entries:** every manual log sheet has a log-time picker
+  (default now); the Log screen has a "Log a past event" form (event +
+  datetime + note). Voice/text parsing already honors explicit times in text.
+- **Vet report:** printable pet summary + weight curve + vaccinations +
+  medications + 30-day totals + accident count; print stylesheet renders
+  report-only on white for Save-as-PDF.
+- **Meds & vaccines:** recurring meds with next-due computation and "dose
+  given" logging; due/overdue meds surface as Cockpit countdowns (✓ marks
+  given); vaccinations with next-due dates. Local-storage fallback when the
+  v2 tables aren't migrated yet or offline.
+- **GPS walks:** start/stop on Cockpit; `watchPosition` with 3 m jitter guard;
+  live km + duration; route drawn as a polyline on a plain canvas (no map
+  tiles — $0, works offline); saved to `walks` (+ a summary Walk event;
+  timeline items are tappable to re-view the route).
+- **Multi-pet:** pet switcher in the subject card + "＋ Pet" (name, breed, DOB,
+  sex, weight); per-pet dashboards via `st_active_pet`; household members see
+  shared pets automatically.
+- **Streaks & success (Cockpit):** accident-free day streak (consecutive logged
+  days, anchored today/yesterday — an unlogged day conservatively breaks the
+  counted streak), 7-day outdoor success %, 7-day poop-quota compliance %.
 
 ## 8. Open items
 
 - Knowledge documents pending from the research track → drop into `knowledge/`.
 - iOS: PWA countdown alerts are reliable only while the app is open; Android is
   fully capable. The Muse scheduled check-in covers the forget-case on both.
+- **Background push when the app is closed is not possible for a PWA** (no
+  push server at $0); the Muse morning/evening check-in backstop is the
+  designed solution — not a gap to fix in-app.
+- Native-only features (lock-screen widgets, Apple Watch complications) are
+  deliberately out of scope for the PWA.
 - Household Day-1 definition and the 3-3-4 feeding framework section still open
   in the bio file; fold in when Ankit provides them.
 
 ## Changelog
 
+- **2026-09-29** — v2.0: 24-hour clockface pattern dial; household multi-user
+  logging (`migration_v2.sql`); confidence scores + quiet-start gating (≥80%,
+  ≥14d data, ≥3d clusters) with Learning-mode banner; back-dated entries;
+  printable vet report; medication + vaccination tracking with due reminders;
+  GPS walk tracking (offline canvas routes); multi-pet profiles with switcher;
+  Cockpit streaks & success rates. 56/56 engine tests green
+  (`tests/run-tests.js`).
 - **2026-09-28** — v1.0 built: PWA shell, 8 screens, JS engines, parser, learned
   schedule, trends, audit builder, Supabase schema, GitHub Pages deploy.
