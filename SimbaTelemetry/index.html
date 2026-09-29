@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d5c46">
+<title>Simba Telemetry</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ TOP BAR ============ -->
+<header id="topbar">
+  <div class="brand">🐾 Simba Telemetry</div>
+  <div id="syncState" class="sync-state" title="Connection state">○ offline</div>
+</header>
+
+<!-- ============ SCREENS ============ -->
+<main id="screens">
+
+  <!-- COCKPIT -->
+  <section class="screen active" id="screen-cockpit">
+    <div class="card subject-card">
+      <div class="subject-name">SIMBA</div>
+      <div class="subject-meta" id="subjectMeta">— weeks · — lbs · streak —</div>
+    </div>
+
+    <div class="card risk-card" id="riskCard">
+      <div class="risk-label">ACCIDENT RISK</div>
+      <div class="risk-value" id="riskValue">—</div>
+      <div class="risk-sub" id="riskSub">waiting for data…</div>
+    </div>
+
+    <div class="grid2">
+      <div class="card stat">
+        <div class="stat-label">Awake bladder hold</div>
+        <div class="stat-value" id="holdTimer">—</div>
+        <div class="stat-sub" id="holdSub">last pee —</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-label">Caloric bank</div>
+        <div class="stat-value"><span id="kcalNow">0</span><span class="unit"> / 330 kcal</span></div>
+        <div class="stat-sub" id="kcalSub">— tbsp kibble</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-label">Fluid intake</div>
+        <div class="stat-value"><span id="fluidNow">0</span><span class="unit"> mL</span></div>
+        <div class="stat-sub" id="fluidSub">absorption —</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-label">Poops today</div>
+        <div class="stat-value"><span id="poopNow">0</span><span class="unit"> / 2 quota</span></div>
+        <div class="stat-sub" id="poopSub">—</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Visceral status</div>
+      <div class="pills">
+        <span class="pill" id="pillBladder">Bladder: —</span>
+        <span class="pill" id="pillColon">Colon: —</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Active countdowns</div>
+      <div id="countdowns"><div class="muted">No active countdowns.</div></div>
+    </div>
+
+    <div class="card" id="alertCard" hidden>
+      <div class="card-title">⚠ Alerts</div>
+      <div id="alertList"></div>
+    </div>
+
+    <div class="card dock-card">
+      <div class="card-title">Quick-log dock <span class="hint">one tap = saved</span></div>
+      <div class="dock">
+        <button class="dock-btn" data-log="Pee">💧<span>Pee</span></button>
+        <button class="dock-btn" data-log="Poop">💩<span>Poop</span></button>
+        <button class="dock-btn" data-log="Food">🥩<span>Food</span></button>
+        <button class="dock-btn" data-log="Water">🚰<span>Water</span></button>
+        <button class="dock-btn" data-log="Nap">💤<span>Nap</span></button>
+        <button class="dock-btn" data-log="Training">🎯<span>Train</span></button>
+        <button class="dock-btn small" data-log="Weight">⚖️<span>Weight</span></button>
+        <button class="dock-btn small" data-log="Note">📝<span>Note</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOG (voice + text) -->
+  <section class="screen" id="screen-log">
+    <div class="card center">
+      <button id="micBtn" class="mic-btn" aria-label="Tap to speak telemetry">🎙️</button>
+      <div class="mic-label" id="micLabel">TAP TO SPEAK TELEMETRY</div>
+      <div class="mic-status muted" id="micStatus"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Or type it</div>
+      <textarea id="logText" rows="4" placeholder='e.g. "Took him out at 7:50 as he was by the door, peed at 7:52, 3 to 4 second squat…"'></textarea>
+      <button id="parseBtn" class="btn primary block">Parse telemetry</button>
+    </div>
+    <div class="card" id="parseCard" hidden>
+      <div class="card-title">Parsed telemetry — confirm</div>
+      <div id="parsePreview" class="parse-preview"></div>
+      <div class="row">
+        <button id="saveParsedBtn" class="btn primary">✓ Save event</button>
+        <button id="discardParsedBtn" class="btn">Discard</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section class="screen" id="screen-timeline">
+    <div class="card">
+      <div class="card-title">Today's timeline <span class="hint" id="timelineDate"></span></div>
+      <div id="timelineList"><div class="muted">No events logged today yet.</div></div>
+    </div>
+  </section>
+
+  <!-- TRENDS -->
+  <section class="screen" id="screen-trends">
+    <div class="card">
+      <div class="card-title">Range</div>
+      <div class="seg" id="trendRange">
+        <button data-range="7" class="active">7d</button>
+        <button data-range="30">30d</button>
+        <button data-range="90">90d</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Pee probability by hour of day</div>
+      <canvas id="chPee" height="150"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Daily kcal vs target (300–330)</div>
+      <canvas id="chKcal" height="150"></canvas>
+    </div>
+    <div class="grid2">
+      <div class="card stat"><div class="stat-label">Avg awake hold</div><div class="stat-value" id="trHold">—</div></div>
+      <div class="card stat"><div class="stat-label">Accidents</div><div class="stat-value" id="trAcc">—</div></div>
+      <div class="card stat"><div class="stat-label">Avg poops/day</div><div class="stat-value" id="trPoop">—</div></div>
+      <div class="card stat"><div class="stat-label">Avg kcal/day</div><div class="stat-value" id="trKcal">—</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Weight curve</div>
+      <canvas id="chWeight" height="130"></canvas>
+      <div class="muted" id="weightNote">Log weight via the ⚖️ button.</div>
+    </div>
+  </section>
+
+  <!-- INSIGHTS -->
+  <section class="screen" id="screen-insights">
+    <div class="card">
+      <div class="card-title">What to expect right now</div>
+      <div id="expectNow"><div class="muted">Log events to generate live insight.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Learned schedule <span class="hint">last 90 days · ≥80% windows</span></div>
+      <div id="scheduleWindows"><div class="muted">Not enough history yet.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Upcoming nudges</div>
+      <div id="nudgeList"><div class="muted">No upcoming high-probability windows.</div></div>
+    </div>
+  </section>
+
+  <!-- MORE -->
+  <section class="screen" id="screen-more">
+    <div class="card menu">
+      <button class="menu-btn" data-goto="ask">🧠 Ask / Clinical audit →</button>
+      <button class="menu-btn" data-goto="knowledge">📚 Knowledge base →</button>
+      <button class="menu-btn" data-goto="export">📤 Export data →</button>
+      <button class="menu-btn" data-goto="setup">⚙️ Setup & login →</button>
+    </div>
+    <div class="card">
+      <div class="card-title">About</div>
+      <p class="muted small">Simba Telemetry v1.0 — PWA. Deterministic physiological engines run on-device. Data syncs to your Supabase project. AI clinical reasoning happens with Muse (your agent) or your own Gemini key — nothing is sent anywhere without your action.</p>
+    </div>
+  </section>
+
+  <!-- ASK -->
+  <section class="screen" id="screen-ask">
+    <div class="card">
+      <div class="card-title">Clinical audit generator</div>
+      <p class="muted small">Assembles the event + live physiological state + knowledge excerpts into the clinical audit prompt (spec §6.2). Copy it into your chat with Muse, or generate in-app with your own Gemini key.</p>
+      <label class="lbl">Event to audit</label>
+      <select id="auditEvent"></select>
+      <button id="buildPromptBtn" class="btn primary block">Build audit prompt</button>
+    </div>
+    <div class="card" id="promptCard" hidden>
+      <div class="card-title">Audit prompt <button id="copyPromptBtn" class="btn small">Copy</button></div>
+      <textarea id="auditPrompt" rows="14" readonly></textarea>
+    </div>
+    <div class="card">
+      <div class="card-title">In-app generation (optional)</div>
+      <label class="lbl">Gemini API key <span class="hint">stored on this device only</span></label>
+      <input type="password" id="geminiKey" placeholder="AIza…" autocomplete="off">
+      <div class="row">
+        <button id="saveGeminiBtn" class="btn">Save key</button>
+        <button id="genGeminiBtn" class="btn primary">Generate with Gemini</button>
+      </div>
+      <div id="geminiOut" class="gemini-out muted">No audit generated yet.</div>
+    </div>
+  </section>
+
+  <!-- KNOWLEDGE -->
+  <section class="screen" id="screen-knowledge">
+    <div class="card">
+      <div class="card-title">Knowledge base</div>
+      <div class="seg" id="kbTabs">
+        <button data-kb="specialized" class="active">Cavapoo specialized</button>
+        <button data-kb="general">General canine</button>
+      </div>
+      <div id="kbBody" class="kb-body muted">Loading…</div>
+      <div class="muted small" id="kbMeta"></div>
+    </div>
+  </section>
+
+  <!-- EXPORT -->
+  <section class="screen" id="screen-export">
+    <div class="card">
+      <div class="card-title">Export data</div>
+      <div class="row col">
+        <button id="expCsv" class="btn block">⬇ Events CSV (all history)</button>
+        <button id="expMd" class="btn block">⬇ Daily summary Markdown</button>
+        <button id="expXlsx" class="btn block">⬇ Master workbook XLSX (multi-sheet)</button>
+      </div>
+      <p class="muted small">XLSX uses the SheetJS CDN; if offline it falls back to CSV automatically.</p>
+      <div class="muted small" id="expStatus"></div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section class="screen" id="screen-setup">
+    <div class="card">
+      <div class="card-title">Supabase connection</div>
+      <label class="lbl">Project URL</label>
+      <input id="sbUrl" placeholder="https://xyz.supabase.co" autocomplete="off">
+      <label class="lbl">Anon (public) key</label>
+      <input type="password" id="sbKey" placeholder="sb_publishable_… / eyJ…" autocomplete="off">
+      <div class="row">
+        <button id="sbTest" class="btn">Test connection</button>
+        <button id="sbSave" class="btn primary">Save</button>
+      </div>
+      <div class="muted small" id="sbStatus">Keys are stored in this device's localStorage only — never in the repo.</div>
+      <div class="row" style="margin-top:8px">
+        <button id="offlineBtn" class="btn">Use offline mode (this device only)</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Sign in</div>
+      <div id="authBox">
+        <label class="lbl">Email</label>
+        <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        <label class="lbl">Password</label>
+        <input id="authPass" type="password" placeholder="••••••••" autocomplete="current-password">
+        <div class="row">
+          <button id="signInBtn" class="btn primary">Sign in</button>
+          <button id="signUpBtn" class="btn">Create account</button>
+          <button id="signOutBtn" class="btn" hidden>Sign out</button>
+        </div>
+        <div class="muted small" id="authStatus">Not signed in.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Subject & household rules</div>
+      <label class="lbl">Log Day 1 date <span class="hint">(Day N = date − Day 1 + 1)</span></label>
+      <input id="cfgDayOne" type="date" value="2026-09-01">
+      <label class="lbl">Target bedtime (den lockdown)</label>
+      <input id="cfgBedtime" type="time" value="21:45">
+      <label class="lbl">Daily kcal target</label>
+      <div class="row"><input id="cfgKcalMin" type="number" value="300" style="width:80px"> <span>–</span> <input id="cfgKcalMax" type="number" value="330" style="width:80px"></div>
+      <button id="cfgSave" class="btn primary" style="margin-top:8px">Save settings</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ DETAIL SHEET (modal) ============ -->
+<div id="sheet" class="sheet-backdrop" hidden>
+  <div class="sheet">
+    <div class="sheet-title" id="sheetTitle">Log</div>
+    <div id="sheetBody"></div>
+    <div class="row">
+      <button id="sheetSave" class="btn primary">Save</button>
+      <button id="sheetCancel" class="btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BOTTOM NAV ============ -->
+<nav id="tabbar">
+  <button data-screen="cockpit" class="active">🏠<span>Home</span></button>
+  <button data-screen="log">🎙️<span>Log</span></button>
+  <button data-screen="timeline">🕘<span>Today</span></button>
+  <button data-screen="trends">📈<span>Trends</span></button>
+  <button data-screen="insights">💡<span>Insights</span></button>
+  <button data-screen="more">⋯<span>More</span></button>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+// Register service worker (offline PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW failed', e));
+  });
+}
+</script>
+</body>
+</html>
