@@ -1,5 +1,5 @@
 /* Simba Telemetry service worker — cache-first offline PWA */
-const CACHE = 'simba-telemetry-v1';
+const CACHE = 'simba-telemetry-v2';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js',
   './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
