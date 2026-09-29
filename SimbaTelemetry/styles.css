@@ -183,3 +183,47 @@ canvas { width: 100%; background: #0e1a14; border-radius: 10px; }
   border: 1px solid #2a4636; color: var(--ink); border-radius: 10px;
   padding: 14px; margin-bottom: 8px; font-size: 15px; cursor: pointer;
 }
+
+/* ============ v2.0 additions ============ */
+
+/* 24-hour clockface dial (Trends hero) */
+.dial-wrap { display: flex; justify-content: center; padding: 6px 0; }
+.dial { width: 100%; max-width: 340px; height: auto; }
+
+/* Streak stats: 3-up grid */
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.grid3 .stat .stat-value { font-size: 20px; }
+
+/* Learning-mode banner */
+.learn-banner {
+  background: #12202a; border: 1px solid var(--info);
+  border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px;
+  font-size: 14px;
+}
+.learn-banner[hidden] { display: none; }
+
+/* Pet switcher */
+.pet-switch { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+.pet-switch[hidden] { display: none; }
+.pet-switch select { flex: 1; margin: 0; }
+.pet-switch .btn { white-space: nowrap; }
+
+/* Vet report */
+.vet-head h2 { margin: 0 0 6px; font-size: 19px; }
+.vet-table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 8px 0 4px; }
+.vet-table th, .vet-table td { text-align: left; padding: 7px 8px; border-bottom: 1px solid #223a2e; }
+.vet-table th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+#screen-report h3 { font-size: 15px; margin: 18px 0 4px; }
+
+/* Print: vet report only, clean light theme for paper/PDF */
+@media print {
+  #topbar, #tabbar, .no-print, .sheet-backdrop, .app-toast { display: none !important; }
+  body { background: #fff; color: #111; max-width: none; padding: 0; font-size: 12px; }
+  body.printing-report .screen { display: none !important; }
+  body.printing-report #screen-report { display: block !important; }
+  body.printing-report .card { background: #fff; border: 1px solid #ccc; color: #111; }
+  body.printing-report .muted, body.printing-report .hint { color: #555; }
+  body.printing-report .vet-table th, body.printing-report .vet-table td { border-bottom: 1px solid #ddd; }
+  body.printing-report canvas { background: #fff; border: 1px solid #ddd; }
+  body.printing-report h3 { color: #111; }
+}
