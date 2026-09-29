@@ -23,8 +23,29 @@
   <!-- COCKPIT -->
   <section class="screen active" id="screen-cockpit">
     <div class="card subject-card">
-      <div class="subject-name">SIMBA</div>
+      <div class="subject-name" id="subjectName">SIMBA</div>
       <div class="subject-meta" id="subjectMeta">— weeks · — lbs · streak —</div>
+      <div id="petSwitch" class="pet-switch" hidden>
+        <select id="subjectPick" aria-label="Switch pet"></select>
+        <button id="addPetBtn" class="btn small">＋ Pet</button>
+      </div>
+    </div>
+
+    <div class="card learn-banner" id="learnBannerCockpit" hidden></div>
+
+    <div class="card">
+      <div class="card-title">Streaks & success</div>
+      <div class="grid3" id="streakRow"></div>
+    </div>
+
+    <div class="card" id="walkCard">
+      <div class="card-title">GPS walk <span class="hint">offline OK · no map data needed</span></div>
+      <div id="walkLive"><span class="muted">Track distance, time &amp; route — works offline.</span></div>
+      <canvas id="walkRoute" height="140" style="margin:8px 0"></canvas>
+      <div class="row">
+        <button id="walkStartBtn" class="btn primary">🚶 Start walk</button>
+        <button id="walkStopBtn" class="btn primary" hidden>⏹ Stop &amp; save</button>
+      </div>
     </div>
 
     <div class="card risk-card" id="riskCard">
@@ -100,6 +121,7 @@
       <div class="card-title">Or type it</div>
       <textarea id="logText" rows="4" placeholder='e.g. "Took him out at 7:50 as he was by the door, peed at 7:52, 3 to 4 second squat…"'></textarea>
       <button id="parseBtn" class="btn primary block">Parse telemetry</button>
+      <button id="backdateBtn" class="btn block">🕘 Log a past event (back-date)</button>
     </div>
     <div class="card" id="parseCard" hidden>
       <div class="card-title">Parsed telemetry — confirm</div>
@@ -121,6 +143,16 @@
 
   <!-- TRENDS -->
   <section class="screen" id="screen-trends">
+    <div class="card">
+      <div class="card-title">24-hour pattern dial <span class="hint">trailing 90 days</span></div>
+      <div class="seg" id="dialSeg">
+        <button data-dial="All" class="active">All</button>
+        <button data-dial="Pee">Pee</button>
+        <button data-dial="Poop">Poop</button>
+      </div>
+      <div id="clockDial" class="dial-wrap"></div>
+      <div class="muted small" id="dialNote"></div>
+    </div>
     <div class="card">
       <div class="card-title">Range</div>
       <div class="seg" id="trendRange">
@@ -157,7 +189,8 @@
       <div id="expectNow"><div class="muted">Log events to generate live insight.</div></div>
     </div>
     <div class="card">
-      <div class="card-title">Learned schedule <span class="hint">last 90 days · ≥80% windows</span></div>
+      <div class="card-title">Learned schedule <span class="hint">last 90 days · gated nudges</span></div>
+      <div class="learn-banner" id="learnBanner" hidden></div>
       <div id="scheduleWindows"><div class="muted">Not enough history yet.</div></div>
     </div>
     <div class="card">
@@ -171,12 +204,89 @@
     <div class="card menu">
       <button class="menu-btn" data-goto="ask">🧠 Ask / Clinical audit →</button>
       <button class="menu-btn" data-goto="knowledge">📚 Knowledge base →</button>
+      <button class="menu-btn" data-goto="meds">💊 Meds &amp; vaccines →</button>
+      <button class="menu-btn" data-goto="report">🖨️ Vet report →</button>
+      <button class="menu-btn" data-goto="household">🏠 Household sharing →</button>
       <button class="menu-btn" data-goto="export">📤 Export data →</button>
-      <button class="menu-btn" data-goto="setup">⚙️ Setup & login →</button>
+      <button class="menu-btn" data-goto="setup">⚙️ Setup &amp; login →</button>
     </div>
     <div class="card">
       <div class="card-title">About</div>
-      <p class="muted small">Simba Telemetry v1.0 — PWA. Deterministic physiological engines run on-device. Data syncs to your Supabase project. AI clinical reasoning happens with Muse (your agent) or your own Gemini key — nothing is sent anywhere without your action.</p>
+      <p class="muted small">Simba Telemetry v2.0 — PWA. Deterministic physiological engines run on-device. Data syncs to your Supabase project. AI clinical reasoning happens with Muse (your agent) or your own Gemini key — nothing is sent anywhere without your action.</p>
+    </div>
+  </section>
+
+  <!-- MEDS & VACCINES (v2.0) -->
+  <section class="screen" id="screen-meds">
+    <div class="card">
+      <div class="card-title">Medications</div>
+      <div id="medList"><div class="muted">No medications tracked.</div></div>
+      <button id="medAddBtn" class="btn block">＋ Add medication</button>
+      <div id="medForm" hidden>
+        <label class="lbl">Name</label>
+        <input id="medName" placeholder="e.g. Simparica Trio" autocomplete="off">
+        <label class="lbl">Dose</label>
+        <input id="medDose" placeholder="e.g. 1 chew" autocomplete="off">
+        <div class="grid2">
+          <div><label class="lbl">Frequency</label>
+            <select id="medFreq">
+              <option value="once">Once</option>
+              <option value="daily" selected>Daily</option>
+              <option value="twice_daily">Twice daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="as_needed">As needed</option>
+            </select></div>
+          <div><label class="lbl">Time of day</label><input id="medTime" type="time" value="08:00"></div>
+        </div>
+        <label class="lbl">Notes</label>
+        <input id="medNote" placeholder="optional" autocomplete="off">
+        <button id="medSaveBtn" class="btn primary block">Save medication</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Vaccinations &amp; vet visits</div>
+      <div id="vaxList"><div class="muted">No vaccinations recorded.</div></div>
+      <button id="vaxAddBtn" class="btn block">＋ Add vaccination / visit</button>
+      <div id="vaxForm" hidden>
+        <label class="lbl">Vaccine / visit</label>
+        <input id="vaxName" placeholder="e.g. DHPP #3" autocomplete="off">
+        <div class="grid2">
+          <div><label class="lbl">Date given</label><input id="vaxGiven" type="date"></div>
+          <div><label class="lbl">Next due</label><input id="vaxDue" type="date"></div>
+        </div>
+        <label class="lbl">Vet</label>
+        <input id="vaxVet" placeholder="clinic name" autocomplete="off">
+        <label class="lbl">Note</label>
+        <input id="vaxNote" placeholder="optional" autocomplete="off">
+        <button id="vaxSaveBtn" class="btn primary block">Save record</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- VET REPORT (v2.0) -->
+  <section class="screen" id="screen-report">
+    <div class="card no-print">
+      <div class="card-title">Vet-ready report</div>
+      <p class="muted small">Printable summary: pet profile, weight curve, vaccinations, medications, 30-day event totals. Use your browser's <b>Print → Save as PDF</b>.</p>
+      <button id="printReportBtn" class="btn primary block">🖨️ Print / Save as PDF</button>
+    </div>
+    <div class="card" id="vetReport"><div class="muted">Loading report…</div></div>
+  </section>
+
+  <!-- HOUSEHOLD (v2.0) -->
+  <section class="screen" id="screen-household">
+    <div class="card">
+      <div class="card-title">Household sharing <span class="hint" id="hhSubjectName"></span></div>
+      <p class="muted small">Invite family by email. Everyone signs in on their own device and logs into the <b>same</b> pet record — the pattern model uses everyone's data. Requires <b>migration_v2.sql</b> run in the Supabase SQL editor.</p>
+      <div id="hhList"><div class="muted">Loading…</div></div>
+      <div id="hhAddRow" hidden>
+        <label class="lbl">Invite by email</label>
+        <div class="row">
+          <input id="hhEmail" type="email" placeholder="family@example.com" style="flex:1" autocomplete="off">
+          <button id="hhAddBtn" class="btn primary">Invite</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -226,6 +336,7 @@
         <button id="expCsv" class="btn block">⬇ Events CSV (all history)</button>
         <button id="expMd" class="btn block">⬇ Daily summary Markdown</button>
         <button id="expXlsx" class="btn block">⬇ Master workbook XLSX (multi-sheet)</button>
+        <button id="expReportBtn" class="btn block">🖨️ Vet report (print / PDF)</button>
       </div>
       <p class="muted small">XLSX uses the SheetJS CDN; if offline it falls back to CSV automatically.</p>
       <div class="muted small" id="expStatus"></div>
