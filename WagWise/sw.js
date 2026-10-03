@@ -1,5 +1,5 @@
 /* WagWise service worker — cache-first offline PWA (v2.2) */
-const CACHE = 'wagwise-v2.7';
+const CACHE = 'wagwise-v2.8';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js',
   './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
