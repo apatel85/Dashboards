@@ -144,25 +144,6 @@ function goOffline() {
   toast('Offline mode — events stay on this device.');
 }
 
-/* Ensure the Simba subject row exists and is claimed by this user */
-async function ensureSubject() {
-  // 1) try to find a row owned by me
-  let { data } = await S.sb.from('subjects').select('*').eq('owner_id', S.user.id).limit(1);
-  if (data && data.length) { S.subject = data[0]; return; }
-  // 2) try to claim the unclaimed seed row
-  const { data: claimed, error: cErr } = await S.sb.from('subjects')
-    .update({ owner_id: S.user.id }).is('owner_id', null).select();
-  if (!cErr && claimed && claimed.length) { S.subject = claimed[0]; return; }
-  // 3) create fresh
-  const { data: created, error } = await S.sb.from('subjects').insert({
-    owner_id: S.user.id, name: 'Simba', breed: 'Cavapoo (Cavalier King Charles Spaniel × Poodle)',
-    date_of_birth: '2026-05-31', sex: 'male', current_weight_kg: 3.40,
-    target_awake_hold_mins: 80, clean_overnight_streak_days: 27,
-  }).select();
-  if (error) { console.warn('subject create failed', error); return; }
-  S.subject = created[0];
-}
-
 /* v2.0 — Household: an invited email claims its membership row on first sign-in */
 async function claimHousehold() {
   if (!sbReady() || !S.user?.email) return;
@@ -176,6 +157,10 @@ async function claimHousehold() {
 
 /* v2.0 — Multi-pet: load every subject visible to this user (own + household-shared).
    Falls back to the v1 single-subject flow when nothing is visible. */
+/** Pure: should this user claim unclaimed subject rows? Tested. */
+function needsClaim(subjects, isMember) {
+  return !isMember && (subjects || []).some(s => !s.owner_id);
+}
 async function loadSubjects() {
   S.subjects = []; S.subject = null;
   if (!sbReady()) return;
@@ -184,14 +169,24 @@ async function loadSubjects() {
     if (error) throw error;
     S.subjects = data || [];
   } catch (e) { console.warn('subjects load failed', e); return; }
+  let isMember = false;
+  try {
+    const { data: mem } = await S.sb.from('household_members').select('id').eq('user_id', S.user.id).limit(1);
+    isMember = !!(mem && mem.length);
+  } catch (e) { /* table missing pre-migration */ }
+  // v2.8 — claim unclaimed (NULL-owner) rows so profile updates pass RLS.
+  // (v2.0 dropped the v1 claim step; without it every subjects UPDATE fails
+  // "new row violates row-level security policy". Household members never claim.)
+  if (needsClaim(S.subjects, isMember)) {
+    const { error } = await S.sb.from('subjects').update({ owner_id: S.user.id }).is('owner_id', null);
+    if (!error) {
+      const { data } = await S.sb.from('subjects').select('*').order('created_at');
+      S.subjects = data || [];
+    } else console.warn('subject claim failed', error);
+  }
   if (!S.subjects.length) {
     // v2.1 — no silent auto-create: first-run users complete the onboarding
     // profile screen instead. Household members never onboard (they share).
-    let isMember = false;
-    try {
-      const { data: mem } = await S.sb.from('household_members').select('id').eq('user_id', S.user.id).limit(1);
-      isMember = !!(mem && mem.length);
-    } catch (e) { /* table missing pre-migration */ }
     if (!isMember) S._needsOnboard = true;
   }
   const saved = localStorage.getItem('st_active_pet');
