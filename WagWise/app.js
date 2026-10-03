@@ -57,7 +57,7 @@ const $ = id => document.getElementById(id);
 const todayStr = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmtTime = d => { d = new Date(d); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+const fmtTime = d => { d = new Date(d); let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`; };
 const fmtDur = mins => mins < 60 ? `${Math.round(mins)}m` : `${Math.floor(mins/60)}h ${Math.round(mins%60)}m`;
 function toast(msg) {
   let t = document.querySelector('.app-toast');
@@ -429,7 +429,27 @@ function negatedGroups(t) {
   }
   return neg;
 }
-function parseTelemetry(raw) {
+/* Resolve a spoken time. Explicit am/pm always wins. Otherwise assume the half
+   of the day you're in (afternoon → PM, morning → AM). If the result would be
+   in the future, fall back to the latest past occurrence. */
+function resolveTime(h, m, ap, now) {
+  const build = mer => {
+    const d = new Date(now);
+    d.setHours((h % 12) + (mer === 'pm' ? 12 : 0), m, 0, 0);
+    return d;
+  };
+  if (ap) {
+    const d = build(ap);
+    if (d > now) d.setDate(d.getDate() - 1);
+    return d;
+  }
+  const assumed = now.getHours() >= 12 ? 'pm' : 'am';
+  let d = build(assumed);
+  if (d > now) d = build(assumed === 'pm' ? 'am' : 'pm');
+  if (d > now) d.setDate(d.getDate() - 1);
+  return d;
+}
+function parseTelemetry(raw, now = new Date()) {
   let t = wordsToNum(raw);
   t = t.replace(/\bpoop bags?\b/g, ' ').replace(/\bpee pads?\b|\bpotty pads?\b/g, ' '); // supplies, not telemetry
   const notes = [];
@@ -489,15 +509,15 @@ function parseTelemetry(raw) {
   const fsMatch = t.match(/(?:fecal|stool|purina)?\s*score\s*(\d)/);
   if (fsMatch) ev.fecal_score = Math.min(7, Math.max(1, +fsMatch[1]));
 
-  // --- explicit time: use the LAST time mentioned ("out at 7:50 … peed at 7:52" → 7:52)
-  const timeMatches = [...raw.matchAll(/\b(?:at\s+)?(\d{1,2}):(\d{2})\s*(am|pm)?/gi)];
+  // --- explicit time: LAST time mentioned wins ("out at 7:50 … peed at 7:52" → 7:52).
+  // Bare times assume the current half of the day (afternoon → PM, morning → AM);
+  // explicit am/pm always wins. "4 o'clock" works too.
+  const rawT = raw.replace(/(\d{1,2})\s*o'clock/gi, '$1:00');
+  const timeMatches = [...rawT.matchAll(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/gi)]
+    .filter(m => m[2] !== undefined || m[3] !== undefined);
   if (timeMatches.length) {
-    const timeMatch = timeMatches[timeMatches.length - 1];
-    let h = +timeMatch[1]; const ap = (timeMatch[3] || '').toLowerCase();
-    if (ap === 'pm' && h < 12) h += 12; if (ap === 'am' && h === 12) h = 0;
-    const d = new Date(); d.setHours(h, +timeMatch[2], 0, 0);
-    if (!ap) { while (d > new Date()) d.setHours(d.getHours() - 12); } // no marker → latest past time
-    else if (d > new Date()) d.setDate(d.getDate() - 1);
+    const tm = timeMatches[timeMatches.length - 1];
+    const d = resolveTime(+tm[1], +(tm[2] || 0), (tm[3] || '').toLowerCase(), now);
     ev.logged_at = d.toISOString(); notes.push('Timestamp taken from text: ' + fmtTime(d));
   }
   if (!ev.event_kcal) ev.event_kcal = 0;
@@ -818,7 +838,8 @@ function renderTimeline() {
   const list = $('timelineList');
   if (!S.events.length) { list.innerHTML = '<div class="muted">No events logged today yet.</div>'; return; }
   list.innerHTML = '';
-  [...S.events].reverse().forEach(ev => {
+  const rows = [...S.events].sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at)); // newest first, always chronological
+  rows.forEach(ev => {
     const div = document.createElement('div'); div.className = 'tl-item';
     const cat = ev.elimination_type || ev.category;
     div.innerHTML = `<div class="tl-time">${fmtTime(ev.logged_at)}</div>
