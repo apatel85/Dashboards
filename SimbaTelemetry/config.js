@@ -17,5 +17,5 @@ window.ST_CONFIG = {
   // Filled at build time from the Supabase dashboard (Project Settings → API
   // → "anon public" key). Placeholder until then — the app falls back to a
   // one-time manual key entry in Setup.
-  SUPABASE_ANON_KEY: '__PASTE_ANON_KEY__',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrbmZ2ZGRuZXZ1ZHBqdHl4a2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzMwNzQsImV4cCI6MjA5MjkwOTA3NH0.Ry5ggZ5kH9lfGFpv5zfkJoZeITvneukMRV7H0yUMtwE',
 };
