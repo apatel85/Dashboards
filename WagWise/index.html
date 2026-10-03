@@ -51,6 +51,17 @@
       <button id="offlineBtn2" class="btn block">Use offline mode (this device only)</button>
       <p class="muted small">Offline keeps everything on this device. Sign in anytime to sync.</p>
     </div>
+    <div class="card" id="installCard" hidden>
+      <div class="install-card">
+        <div class="install-icon">📲</div>
+        <div class="install-text"><b>Install WagWise</b><span>Add it to your home screen for one-tap logging.</span></div>
+        <button id="installBtn" class="btn primary small">Install</button>
+        <button id="installDismiss" class="install-x" aria-label="Dismiss">✕</button>
+      </div>
+      <div class="muted small" id="installManual" hidden style="margin-top:10px">
+        <b>Install manually:</b><br>• iPhone / iPad: tap <b>Share</b> → <b>Add to Home Screen</b>.<br>• Android / Chrome: tap <b>⋮</b> → <b>Install app</b> (or Add to Home screen).
+      </div>
+    </div>
   </section>
 
   <!-- COCKPIT -->
@@ -243,6 +254,7 @@
   <section class="screen" id="screen-more">
     <div class="card menu">
       <button class="menu-btn" data-goto="onboard">🐾 Pet profile →</button>
+      <button class="menu-btn" id="installMenuBtn" hidden>📲 Install WagWise →</button>
       <button class="menu-btn" data-goto="ask">🧠 Ask / Clinical audit →</button>
       <button class="menu-btn" data-goto="knowledge">📚 Knowledge base →</button>
       <button class="menu-btn" data-goto="meds">💊 Meds &amp; vaccines →</button>
@@ -358,6 +370,15 @@
 
   <!-- ASK -->
   <section class="screen" id="screen-ask">
+    <div class="card">
+      <div class="card-title">Daily digest <span class="hint">AI-ready summary</span></div>
+      <p class="muted small">A short, structured summary of today — highlights, current status, flags, recent events. Copy it into any AI chat for questions, or keep it as a daily snapshot.</p>
+      <button id="buildDigestBtn" class="btn primary block">Build today's digest</button>
+    </div>
+    <div class="card" id="digestCard" hidden>
+      <div class="card-title">Digest <button id="copyDigestBtn" class="btn small">Copy</button></div>
+      <textarea id="digestOut" rows="18" readonly></textarea>
+    </div>
     <div class="card">
       <div class="card-title">Clinical audit generator</div>
       <p class="muted small">Assembles the event + live physiological state + knowledge excerpts into the clinical audit prompt (spec §6.2). Copy it into your chat with Muse, or generate in-app with your own Gemini key.</p>
