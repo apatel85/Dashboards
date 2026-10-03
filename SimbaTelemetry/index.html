@@ -13,12 +13,42 @@
 
 <!-- ============ TOP BAR ============ -->
 <header id="topbar">
-  <div class="brand">🐾 Simba Telemetry</div>
+<div class="brand"><span id="brandName">Simba Telemetry</span></div>
   <div id="syncState" class="sync-state" title="Connection state">○ offline</div>
 </header>
 
 <!-- ============ SCREENS ============ -->
 <main id="screens">
+
+  <!-- LANDING (v2.2) — first screen when signed out -->
+  <section class="screen" id="screen-landing">
+    <div class="onboard-hero">
+      <div class="onboard-paw">🐾</div>
+      <h1 id="landingTitle">Simba Telemetry</h1>
+      <p class="muted">Puppy telemetry that learns — log in seconds, see patterns in days, walk into vet visits with data.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Sign in to sync</div>
+      <div id="authBox">
+        <button id="googleBtn" class="btn primary block">Continue with Google</button>
+        <div class="or-divider"><span>or</span></div>
+        <label class="lbl">Email</label>
+        <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        <label class="lbl">Password</label>
+        <input id="authPass" type="password" placeholder="••••••••" autocomplete="current-password">
+        <div class="row">
+          <button id="signInBtn" class="btn primary">Sign in</button>
+          <button id="signUpBtn" class="btn">Create account</button>
+          <button id="signOutBtn" class="btn" hidden>Sign out</button>
+        </div>
+        <div class="muted small" id="authStatus">Not signed in.</div>
+      </div>
+    </div>
+    <div class="card center">
+      <button id="offlineBtn2" class="btn block">Use offline mode (this device only)</button>
+      <p class="muted small">Offline keeps everything on this device. Sign in anytime to sync.</p>
+    </div>
+  </section>
 
   <!-- COCKPIT -->
   <section class="screen active" id="screen-cockpit">
@@ -31,21 +61,25 @@
       </div>
     </div>
 
+    <div class="card dock-card">
+      <div class="card-title">Quick-log dock <span class="hint">one tap = saved</span></div>
+      <div class="dock">
+        <button class="dock-btn" data-log="Pee">💧<span>Pee</span></button>
+        <button class="dock-btn" data-log="Poop">💩<span>Poop</span></button>
+        <button class="dock-btn" data-log="Food">🥩<span>Food</span></button>
+        <button class="dock-btn" data-log="Water">🚰<span>Water</span></button>
+        <button class="dock-btn" data-log="Nap">💤<span>Nap</span></button>
+        <button class="dock-btn" data-log="Training">🎯<span>Train</span></button>
+        <button class="dock-btn small" data-log="Weight">⚖️<span>Weight</span></button>
+        <button class="dock-btn small" data-log="Note">📝<span>Note</span></button>
+      </div>
+    </div>
+
     <div class="card learn-banner" id="learnBannerCockpit" hidden></div>
 
     <div class="card">
       <div class="card-title">Streaks & success</div>
       <div class="grid3" id="streakRow"></div>
-    </div>
-
-    <div class="card" id="walkCard">
-      <div class="card-title">GPS walk <span class="hint">offline OK · no map data needed</span></div>
-      <div id="walkLive"><span class="muted">Track distance, time &amp; route — works offline.</span></div>
-      <canvas id="walkRoute" height="140" style="margin:8px 0"></canvas>
-      <div class="row">
-        <button id="walkStartBtn" class="btn primary">🚶 Start walk</button>
-        <button id="walkStopBtn" class="btn primary" hidden>⏹ Stop &amp; save</button>
-      </div>
     </div>
 
     <div class="card risk-card" id="riskCard">
@@ -94,19 +128,22 @@
       <div class="card-title">⚠ Alerts</div>
       <div id="alertList"></div>
     </div>
+  </section>
 
-    <div class="card dock-card">
-      <div class="card-title">Quick-log dock <span class="hint">one tap = saved</span></div>
-      <div class="dock">
-        <button class="dock-btn" data-log="Pee">💧<span>Pee</span></button>
-        <button class="dock-btn" data-log="Poop">💩<span>Poop</span></button>
-        <button class="dock-btn" data-log="Food">🥩<span>Food</span></button>
-        <button class="dock-btn" data-log="Water">🚰<span>Water</span></button>
-        <button class="dock-btn" data-log="Nap">💤<span>Nap</span></button>
-        <button class="dock-btn" data-log="Training">🎯<span>Train</span></button>
-        <button class="dock-btn small" data-log="Weight">⚖️<span>Weight</span></button>
-        <button class="dock-btn small" data-log="Note">📝<span>Note</span></button>
+  <!-- WALK -->
+  <section class="screen" id="screen-walk">
+    <div class="card" id="walkCard">
+      <div class="card-title">GPS walk <span class="hint">offline OK · no map data needed</span></div>
+      <div id="walkLive"><span class="muted">Track distance, time &amp; route — works offline.</span></div>
+      <canvas id="walkRoute" height="140" style="margin:8px 0"></canvas>
+      <div class="row">
+        <button id="walkStartBtn" class="btn primary">🚶 Start walk</button>
+        <button id="walkStopBtn" class="btn primary" hidden>⏹ Stop &amp; save</button>
       </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Past walks</div>
+      <div id="walkHistory"><div class="muted">No walks yet.</div></div>
     </div>
   </section>
 
@@ -209,6 +246,7 @@
       <button class="menu-btn" data-goto="report">🖨️ Vet report →</button>
       <button class="menu-btn" data-goto="household">🏠 Household sharing →</button>
       <button class="menu-btn" data-goto="export">📤 Export data →</button>
+      <button class="menu-btn" data-goto="import">📥 Import data →</button>
       <button class="menu-btn" data-goto="setup">⚙️ Setup &amp; login →</button>
     </div>
     <div class="card">
@@ -368,6 +406,26 @@
     </div>
   </section>
 
+  <!-- IMPORT (v2.2) -->
+  <section class="screen" id="screen-import">
+    <div class="card">
+      <div class="card-title">📥 Import data</div>
+      <p class="muted small">Bring history from another app or spreadsheet. Upload a <b>CSV</b> or <b>Excel</b> file, map its columns to Simba Telemetry fields, preview, then import.</p>
+      <label class="lbl">File</label>
+      <input id="impFile" type="file" accept=".csv,.xlsx,.xls">
+      <div id="impMap" hidden>
+        <div class="card-title" style="margin-top:10px">Map your columns</div>
+        <div id="impFields"></div>
+        <div class="card-title" style="margin-top:6px">Preview <span class="hint">first 5 mapped rows</span></div>
+        <div id="impPreview" class="kb-body" style="max-height:32vh"></div>
+        <div class="row" style="margin-top:10px">
+          <button id="impGo" class="btn primary block">Import rows</button>
+        </div>
+        <div class="muted small" id="impStatus"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- SETUP -->
   <section class="screen" id="screen-setup">
     <div class="card">
@@ -378,23 +436,6 @@
         <button id="offlineBtn" class="btn">Use offline mode (this device only)</button>
       </div>
       <div class="muted small" id="sbStatus" style="margin-top:8px">The app connects automatically with its built-in key — nothing to paste. Your rows are protected by your login: nobody else can see them.</div>
-    </div>
-    <div class="card">
-      <div class="card-title">Sign in</div>
-      <div id="authBox">
-        <button id="googleBtn" class="btn primary block">Continue with Google</button>
-        <div class="or-divider"><span>or</span></div>
-        <label class="lbl">Email</label>
-        <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email">
-        <label class="lbl">Password</label>
-        <input id="authPass" type="password" placeholder="••••••••" autocomplete="current-password">
-        <div class="row">
-          <button id="signInBtn" class="btn primary">Sign in</button>
-          <button id="signUpBtn" class="btn">Create account</button>
-          <button id="signOutBtn" class="btn" hidden>Sign out</button>
-        </div>
-        <div class="muted small" id="authStatus">Not signed in.</div>
-      </div>
     </div>
     <div class="card">
       <div class="card-title">Subject & household rules</div>
@@ -422,10 +463,14 @@
   </div>
 </div>
 
+<!-- ============ VOICE FAB (v2.2) — global mic on every screen ============ -->
+<button id="micFab" class="mic-fab" aria-label="Voice log">🎙️</button>
+
 <!-- ============ BOTTOM NAV ============ -->
 <nav id="tabbar">
   <button data-screen="cockpit" class="active">🏠<span>Home</span></button>
   <button data-screen="log">🎙️<span>Log</span></button>
+  <button data-screen="walk">🚶<span>Walk</span></button>
   <button data-screen="timeline">🕘<span>Today</span></button>
   <button data-screen="trends">📈<span>Trends</span></button>
   <button data-screen="insights">💡<span>Insights</span></button>
