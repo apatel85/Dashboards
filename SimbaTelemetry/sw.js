@@ -1,9 +1,12 @@
-/* Simba Telemetry service worker — cache-first offline PWA */
-const CACHE = 'simba-telemetry-v2.1';
+/* Simba Telemetry service worker — cache-first offline PWA (v2.2) */
+const CACHE = 'simba-telemetry-v2.2';
 const ASSETS = [
-  './', './index.html', './styles.css', './app.js', './config.js',
+  './', './index.html', './styles.css', './app.js',
   './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
 ];
+// NOTE: config.js is intentionally NOT cached — it holds the anon key and is
+// baked at build time, so it must always be fetched fresh (a cached copy
+// would pin a stale/placeholder key forever).
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
@@ -13,8 +16,9 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
-  // Never cache Supabase / Gemini API traffic — always network.
+  // Never cache API traffic or the build-time config — always network.
   if (/supabase\.co|googleapis\.com/.test(url.hostname)) return;
+  if (url.pathname.endsWith('config.js')) return;
   e.respondWith(
     caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
       const copy = res.clone();
