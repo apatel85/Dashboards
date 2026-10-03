@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0d5c46">
+<meta name="theme-color" content="#0e7c5b">
 <title>Simba Telemetry</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -202,6 +202,7 @@
   <!-- MORE -->
   <section class="screen" id="screen-more">
     <div class="card menu">
+      <button class="menu-btn" data-goto="onboard">🐾 Pet profile →</button>
       <button class="menu-btn" data-goto="ask">🧠 Ask / Clinical audit →</button>
       <button class="menu-btn" data-goto="knowledge">📚 Knowledge base →</button>
       <button class="menu-btn" data-goto="meds">💊 Meds &amp; vaccines →</button>
@@ -212,7 +213,31 @@
     </div>
     <div class="card">
       <div class="card-title">About</div>
-      <p class="muted small">Simba Telemetry v2.0 — PWA. Deterministic physiological engines run on-device. Data syncs to your Supabase project. AI clinical reasoning happens with Muse (your agent) or your own Gemini key — nothing is sent anywhere without your action.</p>
+      <p class="muted small">Simba Telemetry v2.1 — PWA. Deterministic physiological engines run on-device. Data syncs to your Supabase project. AI clinical reasoning happens with Muse (your agent) or your own Gemini key — nothing is sent anywhere without your action.</p>
+    </div>
+  </section>
+
+  <!-- ONBOARDING / PET PROFILE (v2.1) -->
+  <section class="screen" id="screen-onboard">
+    <div class="onboard-hero">
+      <div class="onboard-paw">🐾</div>
+      <h1 id="obTitle">Welcome to Simba Telemetry</h1>
+      <p class="muted" id="obSub">Tell us about your dog — this builds their profile and tunes every prediction to them.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🐶 Dog profile</div>
+      <label class="lbl">Name</label>
+      <input id="obName" placeholder="e.g. Simba" autocomplete="off">
+      <label class="lbl">Breed</label>
+      <input id="obBreed" placeholder="e.g. Cavapoo" autocomplete="off">
+      <div class="grid2">
+        <div><label class="lbl">Date of birth</label><input id="obDob" type="date"></div>
+        <div><label class="lbl">Sex</label><select id="obSex"><option value="male">Male</option><option value="female">Female</option></select></div>
+      </div>
+      <label class="lbl">Current weight (lbs)</label>
+      <input id="obWeight" type="number" step="0.1" min="0" placeholder="e.g. 7.5">
+      <button id="obSave" class="btn primary block">Save &amp; continue →</button>
+      <div class="muted small" id="obStatus" style="margin-top:6px"></div>
     </div>
   </section>
 
@@ -347,22 +372,18 @@
   <section class="screen" id="screen-setup">
     <div class="card">
       <div class="card-title">Supabase connection</div>
-      <label class="lbl">Project URL</label>
-      <input id="sbUrl" placeholder="https://xyz.supabase.co" autocomplete="off">
-      <label class="lbl">Anon (public) key</label>
-      <input type="password" id="sbKey" placeholder="sb_publishable_… / eyJ…" autocomplete="off">
-      <div class="row">
-        <button id="sbTest" class="btn">Test connection</button>
-        <button id="sbSave" class="btn primary">Save</button>
-      </div>
-      <div class="muted small" id="sbStatus">Keys are stored in this device's localStorage only — never in the repo.</div>
+      <div id="connStatus" class="conn-status"><span class="muted">Checking connection…</span></div>
       <div class="row" style="margin-top:8px">
+        <button id="sbTest" class="btn">Test connection</button>
         <button id="offlineBtn" class="btn">Use offline mode (this device only)</button>
       </div>
+      <div class="muted small" id="sbStatus" style="margin-top:8px">The app connects automatically with its built-in key — nothing to paste. Your rows are protected by your login: nobody else can see them.</div>
     </div>
     <div class="card">
       <div class="card-title">Sign in</div>
       <div id="authBox">
+        <button id="googleBtn" class="btn primary block">Continue with Google</button>
+        <div class="or-divider"><span>or</span></div>
         <label class="lbl">Email</label>
         <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email">
         <label class="lbl">Password</label>
@@ -412,6 +433,7 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <script src="app.js"></script>
 <script>
 // Register service worker (offline PWA)
