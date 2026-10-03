@@ -432,15 +432,28 @@ function negatedGroups(t) {
 /* Resolve a spoken time. Explicit am/pm always wins. Otherwise assume the half
    of the day you're in (afternoon → PM, morning → AM). If the result would be
    in the future, fall back to the latest past occurrence. */
-function resolveTime(h, m, ap, now) {
+/* Daypart words ("evening", "this morning") pin the meridiem when no am/pm is said. */
+function daypartOf(clause) {
+  const c = ' ' + String(clause).toLowerCase() + ' ';
+  if (/\btonight\b/.test(c)) return { mer: 'pm', today: true };
+  if (/\bthis morning\b/.test(c)) return { mer: 'am', today: true };
+  if (/\bthis afternoon\b/.test(c)) return { mer: 'pm', today: true };
+  if (/\bthis evening\b/.test(c)) return { mer: 'pm', today: true };
+  if (/\bmorning\b/.test(c)) return { mer: 'am', today: false };
+  if (/\bafternoon\b|\bevening\b/.test(c)) return { mer: 'pm', today: false };
+  if (/\bnight\b/.test(c)) return { mer: 'pm', today: false };
+  return null;
+}
+function resolveTime(h, m, ap, now, dp) {
   const build = mer => {
     const d = new Date(now);
     d.setHours((h % 12) + (mer === 'pm' ? 12 : 0), m, 0, 0);
     return d;
   };
-  if (ap) {
-    const d = build(ap);
-    if (d > now) d.setDate(d.getDate() - 1);
+  if (ap) { const d = build(ap); if (d > now) d.setDate(d.getDate() - 1); return d; }
+  if (dp) {
+    const d = build(dp.mer);
+    if (d > now && !dp.today) d.setDate(d.getDate() - 1);
     return d;
   }
   const assumed = now.getHours() >= 12 ? 'pm' : 'am';
@@ -514,10 +527,11 @@ function parseTelemetry(raw, now = new Date()) {
   // explicit am/pm always wins. "4 o'clock" works too.
   const rawT = raw.replace(/(\d{1,2})\s*o'clock/gi, '$1:00');
   const timeMatches = [...rawT.matchAll(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/gi)]
-    .filter(m => m[2] !== undefined || m[3] !== undefined);
+    // v2.7: keep times with minutes, am/pm, or an explicit "at" ("at 4" is a time; "3 tbsp" is not)
+    .filter(m => m[2] !== undefined || m[3] !== undefined || /^at\s+/i.test(m[0]));
   if (timeMatches.length) {
     const tm = timeMatches[timeMatches.length - 1];
-    const d = resolveTime(+tm[1], +(tm[2] || 0), (tm[3] || '').toLowerCase(), now);
+    const d = resolveTime(+tm[1], +(tm[2] || 0), (tm[3] || '').toLowerCase(), now, daypartOf(t));
     ev.logged_at = d.toISOString(); notes.push('Timestamp taken from text: ' + fmtTime(d));
   }
   if (!ev.event_kcal) ev.event_kcal = 0;
@@ -720,6 +734,43 @@ function openSheet(kind, existing = null) {
       <select id="pSex"><option>male</option><option>female</option></select>
       <label class="lbl">Weight (kg)</label>
       <input id="pKg" type="number" step="0.05" placeholder="3.40">`;
+  } else if (kind === 'Edit') {
+    // v2.7 — edit ANY event: time, category, type, location, numerics, notes
+    const ev = existing;
+    $('sheetTitle').textContent = 'Edit event';
+    const cats = ['Elimination', 'Food', 'Water', 'Nap', 'Training', 'Weight', 'Note'];
+    b.innerHTML = `
+      <label class="lbl">Time</label>
+      <input id="eAt" type="datetime-local" value="${nowLocalInput(new Date(ev.logged_at))}">
+      <label class="lbl">Category</label>
+      <select id="eCat">${cats.map(c => `<option${c === ev.category ? ' selected' : ''}>${c}</option>`).join('')}</select>
+      <div id="eTypeWrap"><label class="lbl">Type</label><select id="eType"></select></div>
+      <label class="lbl">Location</label>
+      <input id="eLoc" value="${esc(ev.location_substrate || '')}" placeholder="e.g. Lawn Grass">
+      <div data-enums="Food" hidden>
+        <label class="lbl">kcal</label><input id="eKcal" type="number" step="1" value="${ev.event_kcal || 0}">
+        <label class="lbl">Kibble (tbsp)</label><input id="eTbsp" type="number" step="0.25" value="${ev.kibble_consumed_tbsp || 0}">
+      </div>
+      <div data-enums="Water" hidden>
+        <label class="lbl">Water (tsp)</label><input id="eTsp" type="number" step="0.5" value="${ev.water_consumed_tsp || 0}">
+      </div>
+      <div data-enums="Elimination" hidden>
+        <label class="lbl">Fecal score (1–7, poop only)</label><input id="eFecal" type="number" min="1" max="7" value="${ev.fecal_score || ''}">
+      </div>
+      <label class="lbl">Notes</label>
+      <textarea id="eNotes" rows="3">${esc(ev.raw_input || '')}</textarea>`;
+    const fillEditTypes = () => {
+      const c = $('eCat').value, sel = $('eType');
+      const opts = c === 'Elimination'
+        ? ['Pee', 'Poop', 'Pee_Poop', 'Micro_Pee', 'Dry_Check', 'Accident_Pee', 'Accident_Poop']
+        : c === 'Nap' ? ['Crate_Entry', 'Crate_Exit'] : [];
+      $('eTypeWrap').style.display = opts.length ? '' : 'none';
+      const cur = c === 'Elimination' ? ev.elimination_type : c === 'Nap' ? ev.crate_action : '';
+      sel.innerHTML = opts.map(o => `<option${o === cur ? ' selected' : ''}>${o}</option>`).join('');
+      document.querySelectorAll('[data-enums]').forEach(d => d.hidden = d.dataset.enums !== c);
+    };
+    $('eCat').onchange = fillEditTypes;
+    fillEditTypes();
   } else if (kind === 'Backdate') {
     // v2.0 — "found the puddle an hour later" case
     $('sheetTitle').textContent = 'Log past event';
@@ -750,6 +801,56 @@ function openSheet(kind, existing = null) {
     if (kind === 'Water') { $('wTsp').value = existing.water_consumed_tsp || 0; }
   }
   $('sheet').hidden = false;
+}
+/** Pure: one-line human summary for an edited event. Tested. */
+function summarizeEdit(p) {
+  const bits = [];
+  const tp = (p.elimination_type || p.crate_action || '').replace(/_/g, ' ');
+  if (tp) bits.push(tp);
+  if (p.category === 'Food' && p.event_kcal) bits.push(p.event_kcal + ' kcal');
+  if (p.category === 'Water' && p.water_consumed_tsp) bits.push(p.water_consumed_tsp + ' tsp water');
+  if (p.fecal_score) bits.push('score ' + p.fecal_score);
+  if (p.location_substrate) bits.push('@ ' + p.location_substrate);
+  const note = (p.raw_input || '').slice(0, 80);
+  if (note) bits.push('— ' + note);
+  return bits.join(' ') || p.category;
+}
+/** Pure: build the update patch for the generic event editor. Tested. */
+function buildEditPatch(prev, f) {
+  const patch = {
+    category: f.cat,
+    logged_at: f.atISO || prev.logged_at,
+    location_substrate: (f.loc || '').trim(),
+    raw_input: (f.notes || '').trim(),
+  };
+  patch.day_number = dayNumber(patch.logged_at);
+  if (f.cat === 'Elimination') { patch.elimination_type = f.type || null; patch.crate_action = null; }
+  else if (f.cat === 'Nap') { patch.crate_action = f.type || null; patch.elimination_type = null; }
+  else { patch.elimination_type = null; patch.crate_action = null; }
+  if (f.cat === 'Food') { patch.event_kcal = +f.kcal || 0; patch.kibble_consumed_tbsp = +f.tbsp || 0; }
+  if (f.cat === 'Water') { patch.water_consumed_tsp = +f.tsp || 0; }
+  if (f.cat === 'Elimination') { const fs = +f.fecal; patch.fecal_score = fs >= 1 && fs <= 7 ? fs : null; }
+  patch.status_outcome = summarizeEdit(patch);
+  return patch;
+}
+/* Update one event by id — Supabase when synced, local queue/caches when offline. */
+async function updateEvent(id, patch) {
+  const { id: _drop, ...clean } = patch;
+  if (sbReady() && !String(id).startsWith('local-')) {
+    const { error } = await S.sb.from('telemetry_events').update(clean).eq('id', id);
+    if (error) { toast('Update failed: ' + error.message); return false; }
+    return true;
+  }
+  const orig = S.events.find(e => String(e.id) === String(id)) || S.history.find(e => String(e.id) === String(id));
+  const sameOrig = e => orig && e.logged_at === orig.logged_at && e.category === orig.category && (e.raw_input || '') === (orig.raw_input || '');
+  const q = JSON.parse(localStorage.getItem('st_queue') || '[]')
+    .map(e => (String(e.id) === String(id) || sameOrig(e)) ? { ...e, ...clean } : e);
+  localStorage.setItem('st_queue', JSON.stringify(q));
+  for (const arr of [S.events, S.history]) {
+    const i = arr.findIndex(e => String(e.id) === String(id));
+    if (i >= 0) arr[i] = { ...arr[i], ...clean };
+  }
+  return true;
 }
 function closeSheet() {
   $('sheet').hidden = true; S.sheetCtx = null;
@@ -809,6 +910,20 @@ async function saveSheet() {
       date_of_birth: $('pDob').value || null, sex: $('pSex').value,
       current_weight_kg: +$('pKg').value || null });
     return;
+  } else if (kind === 'Edit') {
+    // v2.7 — generic event editor: apply patch built from the form
+    const f = {
+      cat: $('eCat').value,
+      atISO: $('eAt').value ? backdateISO($('eAt').value) : '',
+      loc: $('eLoc').value, notes: $('eNotes').value,
+      type: $('eType') ? $('eType').value : '',
+      kcal: $('eKcal').value, tbsp: $('eTbsp').value, tsp: $('eTsp').value, fecal: $('eFecal').value,
+    };
+    const patch = buildEditPatch(existing, f);
+    closeSheet();
+    if (await updateEvent(existing.id, patch)) toast('Event updated ✓');
+    await loadData(); renderCockpit(); checkNudges();
+    return;
   } else if (kind === 'Backdate') {
     // v2.0 — "found the puddle an hour later" case
     ev = backdateEvent($('bCat').value, $('bNote').value.trim());
@@ -822,10 +937,9 @@ async function saveSheet() {
   // v2.0 — apply the back-date picker when present
   const logAtEl = document.getElementById('logAt');
   if (logAtEl && logAtEl.value) { ev.logged_at = backdateISO(logAtEl.value); ev.day_number = dayNumber(ev.logged_at); }
-  if (existing && sbReady() && !String(existing.id).startsWith('local-')) {
-    const { id, ...patch } = ev;
-    const { error } = await S.sb.from('telemetry_events').update(patch).eq('id', id);
-    if (error) toast('Update failed: ' + error.message); else toast('Updated ✓');
+  if (existing) {
+    // v2.7 — update in place (Supabase when synced, local queue/caches when offline)
+    if (await updateEvent(existing.id, ev)) toast('Updated ✓');
   } else {
     const r = await saveEvent(ev);
     if (r) toast(kind + ' logged ✓');
@@ -849,8 +963,8 @@ function renderTimeline() {
       <div class="tl-actions"><button data-act="edit" title="Edit">✏️</button><button data-act="del" title="Delete">🗑</button></div>`;
     div.querySelector('[data-act=del]').onclick = () => { if (confirm('Delete this event?')) deleteEvent(ev.id); };
     div.querySelector('[data-act=edit]').onclick = () => {
-      const kind = ev.category === 'Food' ? 'Food' : ev.category === 'Water' ? 'Water' : null;
-      if (kind) openSheet(kind, ev); else toast('Editing is supported for Food/Water entries.');
+      // v2.7 — Food/Water keep their dedicated sheets; everything else uses the generic editor
+      openSheet(ev.category === 'Food' ? 'Food' : ev.category === 'Water' ? 'Water' : 'Edit', ev);
     };
     if (ev.category === 'Walk') { // v2.0 — tap to view the GPS route
       const body = div.querySelector('.tl-body');
@@ -1366,9 +1480,9 @@ function startVoice(btn, labelEl, statusEl, goToLog) {
     if (labelEl) labelEl.textContent = 'TAP TO SPEAK TELEMETRY';
     listening = false;
     if (final.trim()) {
-      $('logText').value = final.trim();
+      $('logText').value = punctuate(cleanVoiceText(final.trim())); // v2.7 — cleaned, punctuated transcript
       if (goToLog) show('log');
-      $('micStatus').textContent = 'Heard ✓ — review and Parse.';
+      $('micStatus').textContent = 'Heard ✓ — cleaned up, review and Parse.';
       parseAndPreview();
     }
     else setStatus('Did not catch that — try again.');
@@ -1445,6 +1559,33 @@ function splitClauses(t) {
   }
   return out;
 }
+/* Merge adjacent same-type events close in time ("took him out to pee" @5:15
+   followed by "he peed at 5:16" is ONE pee, not two). Keeps the later
+   timestamp (the actual event) and folds context/notes together. */
+function mergeNearDupes(list) {
+  const out = [];
+  const sig = e => (e.event.elimination_type || e.event.category);
+  for (const cur of list) {
+    const prev = out[out.length - 1];
+    const pt = prev && prev.event.logged_at, ct = cur.event.logged_at;
+    const mins = pt && ct ? Math.abs(new Date(ct) - new Date(pt)) / 60000 : null;
+    const again = /\bagain\b/i.test(cur.event.raw_input || '') || (prev && /\bagain\b/i.test(prev.event.raw_input || ''));
+    if (prev && sig(prev) === sig(cur) && !again && (mins === null || mins <= 15)) {
+      const later = ct && pt ? (new Date(ct) >= new Date(pt) ? cur : prev) : cur;
+      const earlier = later === cur ? prev : cur;
+      later.event.raw_input = (earlier.event.raw_input + ' ' + later.event.raw_input).trim();
+      later.notes.push(...earlier.notes.filter(n => !later.notes.includes(n)));
+      for (const k of Object.keys(earlier.event)) {
+        const lv = later.event[k], evv = earlier.event[k];
+        if ((lv === undefined || lv === '' || lv === 0) && evv !== undefined && evv !== '' && evv !== 0) later.event[k] = evv;
+      }
+      out[out.length - 1] = later; // the merged object must replace the previous slot
+      continue;
+    }
+    out.push(cur);
+  }
+  return out;
+}
 function parseTelemetryMulti(raw, now = new Date()) {
   const t = wordsToNum(raw); // normalize number words BEFORE splitting ("two and a half" → 2.5)
   const events = [];
@@ -1462,7 +1603,34 @@ function parseTelemetryMulti(raw, now = new Date()) {
       events.push({ event, notes });
     }
   }
-  return { events };
+  return { events: mergeNearDupes(events) };
+}
+/* ---------- v2.7: voice transcript cleanup ----------
+   Fillers removed, self-corrections resolved ("at 5:15, actually no at 5:20"
+   → "at 5:20"), common ASR typos fixed, light punctuation restored. */
+function cleanVoiceText(raw) {
+  let t = ' ' + String(raw).trim() + ' ';
+  t = t.replace(/\bitook\b/gi, 'i took').replace(/\bbrough\b/gi, 'brought').replace(/\bcrat\b/gi, 'crate');
+  t = t.replace(/\b(um+|uh+|uhm+|er+|ah+|hmm+)\b/gi, ' ');
+  t = t.replace(/\byou know\b/gi, ' ');
+  // self-correction: time
+  t = t.replace(/\bat (\d{1,2}(?::\d{2})?(?: ?[ap]m)?)\s*,?\s*(?:actually no|no wait|i mean|sorry|no)\b[\s,]*\bat (\d{1,2}(?::\d{2})?(?: ?[ap]m)?)/gi, ' at $2');
+  // self-correction: event word ("he pooped, no wait he peed" → "he peed")
+  t = t.replace(/\b(peed|pooped)\b\s*,?\s*(?:actually no|no wait|i mean|sorry)\s+(?:he\s+|she\s+)?(peed|pooped)\b/gi, '$2');
+  return t.replace(/\s+/g, ' ').trim();
+}
+function punctuate(text) {
+  const parts = String(text).split(/[.!?;]+|\band then\b|\bthen\b|\bafter that\b|\balso\b/i)
+    .map(s => s.trim()).filter(s => s.length > 1);
+  const rich = x => /\b(pee|peed|poop|pooped|ate|eat|food|kibble|meal|breakfast|lunch|dinner|drank|water|train|nap|sleep|crate|walk|weigh)\b/i.test(x);
+  const hasNumAnd = /\b(one|two|three|four|five|six|seven|eight|nine|ten|half|quarter)\s+and\b/i;
+  const out = [];
+  for (const p of parts) {
+    const sides = p.split(/\band\b/i).map(x => x.trim()).filter(x => x.length > 1);
+    out.push(...(sides.length > 1 && !hasNumAnd.test(p) && sides.filter(rich).length >= 2 ? sides : [p]));
+  }
+  return out.map(s => s.replace(/\bi\b/g, 'I'))
+    .map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('. ') + '.';
 }
 /* ---------- v2.6: AI-ready daily digest ----------
    Short, structured, unambiguous — framed so any LLM can parse it:
