@@ -1,5 +1,5 @@
-/* Simba Telemetry service worker — cache-first offline PWA (v2.2) */
-const CACHE = 'simba-telemetry-v2.2';
+/* WagWise service worker — cache-first offline PWA (v2.2) */
+const CACHE = 'wagwise-v2.3';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js',
   './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
