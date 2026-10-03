@@ -1,5 +1,5 @@
 /* =====================================================================
-   Simba Telemetry PWA — app.js
+   WagWise PWA — app.js
    Single-file application logic. No build step. All deterministic
    physiological engines run on-device (ported from spec section 5).
    Supabase (Postgres + Auth + RLS) is the only backend.
@@ -1149,7 +1149,7 @@ async function exportCSV() {
 async function exportMD() {
   const rows = await allHistory();
   const days = dayBuckets(rows);
-  let md = `# Simba Telemetry — Daily Summary\n\nExported ${new Date().toLocaleString()}\n\n`;
+  let md = `# WagWise — Daily Summary\n\nExported ${new Date().toLocaleString()}\n\n`;
   Object.keys(days).sort().forEach(d => {
     const evs = days[d];
     const kcal = evs.reduce((a, e) => a + (+e.event_kcal || 0), 0);
@@ -1229,7 +1229,7 @@ async function signInWithGoogle() {
 function openOnboard(edit = false) {
   S._obEdit = edit;
   const s = edit ? S.subject : null;
-  $('obTitle').textContent = edit ? 'Pet profile' : 'Welcome to Simba Telemetry';
+  $('obTitle').textContent = edit ? 'Pet profile' : 'Welcome to WagWise';
   $('obSub').textContent = edit
     ? 'Update your dog\u2019s details \u2014 predictions, targets and reports use this.'
     : 'Tell us about your dog \u2014 this builds their profile and tunes every prediction to them.';
@@ -1429,14 +1429,14 @@ async function init() {
 }
 /* ---------- v2.2: white-label brand + walk history ---------- */
 function applyBrand() {
-  const name = (window.ST_CONFIG && ST_CONFIG.APP_NAME) || 'Simba Telemetry';
+  const name = (window.ST_CONFIG && ST_CONFIG.APP_NAME) || 'WagWise';
   const lt = $('landingTitle'); if (lt) lt.textContent = name;
   document.title = name;
   renderGreeting();
 }
 /* v2.2 — once signed in with a pet profile, the top bar greets the pet */
 function greetingFor(petName, hour) {
-  if (!petName) return (window.ST_CONFIG && ST_CONFIG.APP_NAME) || 'Simba Telemetry';
+  if (!petName) return (window.ST_CONFIG && ST_CONFIG.APP_NAME) || 'WagWise';
   const tod = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   return `${tod}, ${petName} 🐾`;
 }
@@ -2041,7 +2041,7 @@ async function renderVetReport() {
     <div class="vet-head">
       <h2>🐾 ${esc(s.name || 'Simba')} — Veterinary Summary</h2>
       <div class="muted">${esc(s.breed || 'Cavapoo')} · ${s.sex || 'male'} · DOB ${esc(s.date_of_birth || '2026-05-31')} (${wks} weeks) · ${(kg * 2.20462).toFixed(2)} lbs (${kg} kg)</div>
-      <div class="muted small">Generated ${new Date().toLocaleString()} · trailing 30 days · Simba Telemetry v2.1</div>
+      <div class="muted small">Generated ${new Date().toLocaleString()} · trailing 30 days · WagWise v2.2</div>
     </div>
     <h3>Weight</h3>
     <canvas id="chVetWeight" height="110"></canvas>
