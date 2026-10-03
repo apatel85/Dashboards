@@ -7,6 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
+const APP_VERSION = '2.9'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -509,7 +510,7 @@ function parseTelemetry(raw, now = new Date()) {
   else if (has('tile', 'kitchen')) ev.location_substrate = 'Kitchen Tile';
 
   // --- door tell ---
-  if (/\bby the door\b/.test(t) || has('waiting at', 'hovering', 'went to the door')) { ev.door_tell_observed = true; notes.push('Door tell detected'); }
+  if (/\bby the door\b/.test(t) || /\bat the door\b/.test(t) || has('waiting at', 'hovering', 'went to the door')) { ev.door_tell_observed = true; notes.push('Door tell detected'); }
 
   // --- stream duration "3 to 4 second" ---
   const sMatch = t.match(/(\d+(?:\.\d+)?)\s*(?:to|-)\s*(\d+(?:\.\d+)?)\s*second/);
@@ -521,9 +522,7 @@ function parseTelemetry(raw, now = new Date()) {
   // Bare times assume the current half of the day (afternoon → PM, morning → AM);
   // explicit am/pm always wins. "4 o'clock" works too.
   const rawT = raw.replace(/(\d{1,2})\s*o'clock/gi, '$1:00');
-  const timeMatches = [...rawT.matchAll(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/gi)]
-    // v2.7: keep times with minutes, am/pm, or an explicit "at" ("at 4" is a time; "3 tbsp" is not)
-    .filter(m => m[2] !== undefined || m[3] !== undefined || /^at\s+/i.test(m[0]));
+  const timeMatches = findTimeMatches(rawT); // v2.9: shared finder (minutes, am/pm, or explicit "at")
   if (timeMatches.length) {
     const tm = timeMatches[timeMatches.length - 1];
     const d = resolveTime(+tm[1], +(tm[2] || 0), (tm[3] || '').toLowerCase(), now, daypartOf(t));
@@ -1585,20 +1584,55 @@ function parseTelemetryMulti(raw, now = new Date()) {
   const t = wordsToNum(raw); // normalize number words BEFORE splitting ("two and a half" → 2.5)
   const events = [];
   for (const part of splitClauses(t)) {
-    const { event, notes } = parseTelemetry(part, now);
-    const meaningful = event.category !== 'Note'
-      || notes.some(n => n.includes('Negation noted'))
-      || event.logged_at !== undefined;
-    if (!meaningful && events.length) {
-      // fragment (e.g. "3 seconds") — fold into the previous event's context
-      const prev = events[events.length - 1];
-      prev.event.raw_input = (prev.event.raw_input + ' ' + part).trim();
-      prev.notes.push(...notes);
-    } else {
-      events.push({ event, notes });
+    for (const seg of splitOnTimes(part)) { // v2.9: one clause, several timestamps → several events
+      const { event, notes } = parseTelemetry(seg, now);
+      const meaningful = event.category !== 'Note'
+        || notes.some(n => n.includes('Negation noted'))
+        || event.logged_at !== undefined;
+      if (!meaningful && events.length) {
+        // fragment (e.g. "3 seconds") — fold into the previous event's context
+        const prev = events[events.length - 1];
+        prev.event.raw_input = (prev.event.raw_input + ' ' + seg).trim();
+        prev.notes.push(...notes);
+      } else {
+        events.push({ event, notes });
+      }
     }
   }
   return { events: mergeNearDupes(events) };
+}
+/** Shared time-expression finder (same filter the parser uses). Tested. */
+function findTimeMatches(text) {
+  return [...String(text).matchAll(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/gi)]
+    .filter(m => m[2] !== undefined || m[3] !== undefined || /^at\s+/i.test(m[0]));
+}
+/** Shared: does this text mention a loggable event or a negated one? Tested. */
+function hasEventSignal(s) {
+  return /\b(pee|peed|poop|pooped|ate|eat|food|kibble|meal|breakfast|lunch|dinner|drank|drink|water|train|nap|sleep|crate|walk|weigh|accident|did not|didn['’]t|never)\b/i.test(s);
+}
+/* Split a clause at time boundaries when the following segment carries its own
+   event signal ("peed at 5:16 ... nap at 5:33" → separate events). The time
+   expression overlaps into the previous segment so each keeps its timestamp.
+   A bare time ("took out at 7:50, peed at 7:52") does NOT split — refinement. */
+function splitOnTimes(clause) {
+  const ms = findTimeMatches(clause);
+  if (ms.length < 2) return [clause];
+  const points = [0]; // indexes into ms where new segments start
+  for (let i = 1; i < ms.length; i++) {
+    const seg = clause.slice(ms[i].index, i + 1 < ms.length ? ms[i + 1].index : clause.length);
+    if (hasEventSignal(seg)) points.push(i);
+  }
+  if (points.length < 2) return [clause];
+  const out = [];
+  for (let p = 0; p < points.length; p++) {
+    const mi = points[p];
+    const segStart = mi === 0 ? 0 : ms[mi].index;
+    const nextMi = p + 1 < points.length ? points[p + 1] : ms.length;
+    const segEnd = nextMi < ms.length ? ms[nextMi].index + ms[nextMi][0].length : clause.length;
+    const seg = clause.slice(segStart, segEnd).trim();
+    if (seg.length > 1) out.push(seg);
+  }
+  return out.length ? out : [clause];
 }
 /* ---------- v2.7: voice transcript cleanup ----------
    Fillers removed, self-corrections resolved ("at 5:15, actually no at 5:20"
@@ -1606,6 +1640,7 @@ function parseTelemetryMulti(raw, now = new Date()) {
 function cleanVoiceText(raw) {
   let t = ' ' + String(raw).trim() + ' ';
   t = t.replace(/\bitook\b/gi, 'i took').replace(/\bbrough\b/gi, 'brought').replace(/\bcrat\b/gi, 'crate');
+  t = t.replace(/\bhis grade\b/gi, 'his crate'); // ASR often hears "crate" as "grade"
   t = t.replace(/\b(um+|uh+|uhm+|er+|ah+|hmm+)\b/gi, ' ');
   t = t.replace(/\byou know\b/gi, ' ');
   // self-correction: time
@@ -1802,6 +1837,9 @@ async function init() {
   $('cfgBedtime').value = CFG.BEDTIME; $('cfgDayOne').value = CFG.DAY_ONE;
   wire();
   renderConnStatus(null);
+  maybeShowInstall(); // v2.9 — surface the install option for signed-in users too (not just landing)
+  const av = $('appVersion'); if (av) av.textContent = 'v' + APP_VERSION; // v2.9 — visible version
+  const avl = $('appVersionLanding'); if (avl) avl.textContent = 'v' + APP_VERSION;
   if (localStorage.getItem(CFG.LS.OFFLINE)) { setSync(false); renderAll(); renderConnStatus(false); }
   else if (initSupabase()) {
     renderConnStatus(true);
