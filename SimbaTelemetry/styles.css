@@ -118,7 +118,7 @@ body {
 .countdown .t { color: var(--honey); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---------- Quick-log dock ---------- */
-.dock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.dock { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 10px; }
 .dock-btn {
   background: var(--card); border: 1.5px solid var(--line); color: var(--ink);
   border-radius: 16px; padding: 13px 4px; font-size: 25px;
@@ -284,6 +284,29 @@ canvas { width: 100%; background: var(--bg); border: 1px solid var(--line); bord
 /* ---------- Toast ---------- */
 .app-toast { box-shadow: 0 8px 24px rgba(36, 53, 44, .25); font-weight: 600; }
 
+/* ============ v2.2: global voice FAB, landing, import, density ============ */
+.mic-fab { position: fixed; right: 16px; bottom: calc(var(--tabbar-h) + 18px); width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 26px; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: 0 10px 26px rgba(16,122,87,.35); cursor: pointer; z-index: 60; display: flex; align-items: center; justify-content: center; transition: transform .15s; }
+.mic-fab:active { transform: scale(.92); }
+.mic-fab.listening { animation: micpulse 1.1s infinite; background: linear-gradient(135deg, #dc2626, #f59e0b); }
+body.on-landing .mic-fab { display: none; }
+body.on-landing #tabbar { display: none; }
+body.on-landing #screens { padding-bottom: 24px; }
+#screen-landing .onboard-hero { margin-top: 10px; }
+.imp-row { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; margin-bottom: 6px; }
+.imp-row .lbl { margin: 0; }
+.center { text-align: center; }
+/* Compact + readable on phones */
+@media (max-width: 699px) {
+  .card { padding: 13px; }
+  .stat-value { font-size: 21px; }
+  .stat-label { font-size: 10.5px; }
+  .dock-btn { min-height: 70px; font-size: 23px; }
+  .dock-btn span { font-size: 10px; }
+  #tabbar button { font-size: 17px; }
+  #tabbar button span { font-size: 9.5px; }
+  .subject-name { font-size: 26px; }
+}
+
 /* ---------- Print: vet report only ---------- */
 @media print {
   #topbar, #tabbar, .no-print, .sheet-backdrop, .app-toast { display: none !important; }
@@ -315,19 +338,18 @@ canvas { width: 100%; background: var(--bg); border: 1px solid var(--line); bord
   #topbar, #tabbar { max-width: 1140px; }
   #screens { padding: 22px 28px 40px; }
 
-  /* Cockpit: hero + dock span full width; the rest flows in two columns */
-  #screen-cockpit.active { display: grid; grid-template-columns: 1.55fr 1fr; gap: 0 16px; align-items: start; }
-  #screen-cockpit.active > .card { margin-bottom: 16px; }
+  /* Cockpit (v2.2): masonry columns — cards flow and fill, no awkward gaps */
+  #screen-cockpit.active { display: block; columns: 2; column-gap: 16px; }
+  #screen-cockpit.active > .card,
+  #screen-cockpit.active > .grid2 { break-inside: avoid; margin-bottom: 16px; }
   #screen-cockpit.active > .subject-card,
-  #screen-cockpit.active > .dock-card { grid-column: 1 / -1; }
-  #screen-cockpit.active > .grid2 { grid-column: auto; margin-bottom: 16px; }
+  #screen-cockpit.active > .dock-card { column-span: all; }
 
   /* Trends: charts pair up; 4-up stat row */
   #screen-trends.active .grid2 { grid-template-columns: repeat(4, 1fr); }
 
-  /* Dock breathes on wide screens */
-  .dock { grid-template-columns: repeat(8, 1fr); }
-  .dock-btn { min-height: 92px; }
+  /* Dock: two tidy rows of four on wide screens */
+  .dock { grid-template-columns: repeat(4, 1fr); }
 
   /* Floating tab bar on desktop */
   #tabbar {
