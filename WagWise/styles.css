@@ -320,6 +320,16 @@ body.on-landing #screens { padding-bottom: 24px; }
 #screen-landing .onboard-hero { margin-top: 10px; }
 .imp-row { display: grid; grid-template-columns: 120px 1fr; gap: 8px; align-items: center; margin-bottom: 6px; }
 .imp-row .lbl { margin: 0; }
+/* ---------- v2.5: install card + multi-event preview ---------- */
+.install-card { display: flex; gap: 12px; align-items: center; text-align: left; }
+.install-icon { font-size: 30px; }
+.install-text { flex: 1; }
+.install-text b { font-family: var(--font-display); font-size: 16.5px; display: block; }
+.install-text span { font-size: 13px; color: var(--muted); }
+.install-x { background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 8px; }
+.parse-one { border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 10px; }
+.parse-one:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+.parse-one .k { margin-bottom: 4px; }
 
 /* ---------- Print: vet report only ---------- */
 @media print {
