@@ -493,7 +493,7 @@ function show(name) {
   window.scrollTo(0, 0);
 }
 
-function renderAll() { renderCockpit(); renderTimeline(); }
+function renderAll() { renderGreeting(); renderCockpit(); renderTimeline(); }
 
 /* ---------- Cockpit ---------- */
 function renderCockpit() {
@@ -1430,9 +1430,19 @@ async function init() {
 /* ---------- v2.2: white-label brand + walk history ---------- */
 function applyBrand() {
   const name = (window.ST_CONFIG && ST_CONFIG.APP_NAME) || 'Simba Telemetry';
-  const b = $('brandName'); if (b) b.textContent = name;
   const lt = $('landingTitle'); if (lt) lt.textContent = name;
   document.title = name;
+  renderGreeting();
+}
+/* v2.2 — once signed in with a pet profile, the top bar greets the pet */
+function greetingFor(petName, hour) {
+  if (!petName) return (window.ST_CONFIG && ST_CONFIG.APP_NAME) || 'Simba Telemetry';
+  const tod = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  return `${tod}, ${petName} 🐾`;
+}
+function renderGreeting() {
+  const el = $('brandName'); if (!el) return;
+  el.textContent = greetingFor(S.subject && S.subject.name, new Date().getHours());
 }
 /* v2.2 — past walks list on the Walk tab */
 async function renderWalkHistory() {
