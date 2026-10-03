@@ -542,6 +542,7 @@ function show(name) {
   if (name === 'report') renderVetReport();
   if (name === 'household') renderHousehold();
   if (name === 'walk') { renderWalkCard(); renderWalkHistory(); } // v2.2 — walk is its own tab
+  if (name === 'landing') maybeShowInstall(); // v2.5 — surface the install prompt
   window.scrollTo(0, 0);
 }
 
@@ -1380,14 +1381,175 @@ function toggleMicFab() { startVoice($('micFab'), null, null, true); }
 function parseAndPreview() {
   const raw = $('logText').value.trim();
   if (!raw) { toast('Enter or dictate something first.'); return; }
-  const { event, notes } = parseTelemetry(raw);
-  S.parsed = event;
-  const rows = Object.entries(event).filter(([, v]) => v !== undefined && v !== '' && v !== 0 && v !== null)
-    .map(([k, v]) => `<div><span class="k">${esc(k)}:</span> ${esc(v)}</div>`).join('');
-  $('parsePreview').innerHTML = rows + (notes.length ? `<div class="muted">${notes.map(esc).join(' · ')}</div>` : '');
+  const { events } = parseTelemetryMulti(raw); // v2.5 — one recording can hold several events
+  S.parsedMulti = events;
+  $('parsePreview').innerHTML = events.map((e, i) => {
+    const rows = Object.entries(e.event).filter(([, v]) => v !== undefined && v !== '' && v !== 0 && v !== null)
+      .map(([k, v]) => `<div><span class="k">${esc(k)}:</span> ${esc(v)}</div>`).join('');
+    const head = events.length > 1 ? `<div class="k">Event ${i + 1} of ${events.length}</div>` : '';
+    return `<div class="parse-one">${head}${rows}${e.notes.length ? `<div class="muted">${e.notes.map(esc).join(' · ')}</div>` : ''}</div>`;
+  }).join('');
   $('parseCard').hidden = false;
 }
 
+/* ---------- v2.5 PWA install prompt ---------- */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  maybeShowInstall();
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  localStorage.setItem('st_installed', '1');
+  const c = $('installCard'); if (c) c.hidden = true;
+  const mb = $('installMenuBtn'); if (mb) mb.hidden = true;
+  toast('WagWise installed ✓');
+});
+function maybeShowInstall() {
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (standalone || localStorage.getItem('st_installed')) return;
+  const mb = $('installMenuBtn'); if (mb) mb.hidden = false;
+  if (localStorage.getItem('st_install_dismissed')) return;
+  if (deferredInstallPrompt || /iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    const c = $('installCard'); if (c) c.hidden = false;
+  }
+}
+async function runInstallFlow() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    if (outcome === 'accepted') { const c = $('installCard'); if (c) c.hidden = true; }
+  } else {
+    const c = $('installCard'); if (c) c.hidden = false;
+    const man = $('installManual'); if (man) man.hidden = false;
+    else toast('iPhone: Share → Add to Home Screen · Android: ⋮ → Install app.');
+  }
+}
+/* ---------- v2.5: multi-event voice parsing ----------
+   "he peed at 4:02 and pooped at 4:30" → two separately timestamped events. */
+function splitClauses(t) {
+  // Protect decimal points first ("2.50" must not split into sentences)
+  const prot = t.replace(/(\d)\.(\d)/g, '$1<DEC>$2');
+  const strong = prot.split(/[.!?;]+|\band then\b|\bthen\b|\bafter that\b|\balso\b/i)
+    .map(s => s.trim()).filter(s => s.length > 1)
+    .map(s => s.replace(/<DEC>/g, '.'));
+  const out = [];
+  const rich = x => /(\d{1,2}:\d{2})/.test(x) ||
+    /\b(pee|peed|poop|pooped|ate|eat|food|kibble|meal|breakfast|lunch|dinner|fed|drank|drink|water|train|training|nap|sleep|crate|weigh|walk)\b/.test(x);
+  for (const s of strong) {
+    const sides = s.split(/\band\b/i).map(x => x.trim()).filter(x => x.length > 1);
+    if (sides.length > 1 && sides.filter(rich).length >= 2) out.push(...sides);
+    else out.push(s);
+  }
+  return out;
+}
+function parseTelemetryMulti(raw, now = new Date()) {
+  const t = wordsToNum(raw); // normalize number words BEFORE splitting ("two and a half" → 2.5)
+  const events = [];
+  for (const part of splitClauses(t)) {
+    const { event, notes } = parseTelemetry(part, now);
+    const meaningful = event.category !== 'Note'
+      || notes.some(n => n.includes('Negation noted'))
+      || event.logged_at !== undefined;
+    if (!meaningful && events.length) {
+      // fragment (e.g. "3 seconds") — fold into the previous event's context
+      const prev = events[events.length - 1];
+      prev.event.raw_input = (prev.event.raw_input + ' ' + part).trim();
+      prev.notes.push(...notes);
+    } else {
+      events.push({ event, notes });
+    }
+  }
+  return { events };
+}
+/* ---------- v2.6: AI-ready daily digest ----------
+   Short, structured, unambiguous — framed so any LLM can parse it:
+   UPPER section headers, one "key: value" fact per line, explicit units,
+   device-local AM/PM times, newest-first recent list. */
+function buildDailyDigest({ petName, breed, ageWeeks, weightLbs, dateISO, now, events, walks, kcalMin, kcalMax, bladder }) {
+  const L = [];
+  const t = d => fmtTime(d);
+  L.push(`WAGWISE DIGEST | ${petName} | ${dateISO} | generated ${t(now)}`);
+  L.push('format: wagwise-digest-v1 | sections are UPPER headers | lines are "key: value" | times are device-local AM/PM');
+  L.push(`pet: ${breed}, ${ageWeeks} weeks, ${weightLbs} lbs`);
+  L.push('');
+  const evs = [...events].sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
+  const PEE = ['Pee', 'Pee_Poop', 'Micro_Pee', 'Dry_Check', 'Accident_Pee'];
+  const POOP = ['Poop', 'Pee_Poop', 'Accident_Poop'];
+  const isAcc = e => /Accident/.test(e.elimination_type || '');
+  const pees = evs.filter(e => PEE.includes(e.elimination_type));
+  const poops = evs.filter(e => POOP.includes(e.elimination_type));
+  const accs = evs.filter(isAcc);
+  const meals = evs.filter(e => e.category === 'Food');
+  const kcal = Math.round(meals.reduce((s, e) => s + (+e.event_kcal || 0), 0));
+  const cups = (meals.reduce((s, e) => s + (+e.kibble_consumed_tbsp || 0), 0) / 16).toFixed(2);
+  const waterTsp = Math.round(evs.filter(e => e.category === 'Water').reduce((s, e) => s + (+e.water_consumed_tsp || 0), 0));
+  const scores = poops.map(e => e.fecal_score).filter(s => s >= 1 && s <= 7);
+  const walkKm = (walks.reduce((s, w) => s + (+w.distance_m || 0), 0) / 1000).toFixed(2);
+  const walkMin = Math.round(walks.reduce((s, w) => s + (+w.duration_mins || 0), 0));
+  const naps = evs.filter(e => e.category === 'Nap' || e.category === 'Crate').length;
+  const trains = evs.filter(e => e.category === 'Training').length;
+  L.push('TODAY');
+  L.push(`pee: ${pees.length} total (outdoor ${pees.filter(e => !isAcc(e)).length}, accidents ${accs.filter(a => /Pee/.test(a.elimination_type || '')).length})`);
+  L.push(`poop: ${poops.length} total${scores.length ? ` (scores ${scores.join(',')})` : ''}`);
+  L.push(`food: ${meals.length} meals, ${cups} cup, ${kcal} kcal (target ${kcalMin}-${kcalMax} kcal)`);
+  L.push(`water: ${waterTsp} tsp`);
+  L.push(`walk: ${walks.length} (${walkKm} km, ${walkMin} min)`);
+  L.push(`nap: ${naps} | training: ${trains}`);
+  L.push('');
+  L.push('NOW');
+  L.push(`bladder_hold_min: ${bladder.elapsedMins} | est_vol_ml: ${Math.round(bladder.estimatedVolumeMl)} | risk: ${bladder.accidentRisk}`);
+  L.push(`kcal_so_far: ${kcal} (target ${kcalMin}-${kcalMax})`);
+  const lastPee = pees[pees.length - 1], lastPoop = poops[poops.length - 1];
+  L.push(`last_pee: ${lastPee ? `${t(lastPee.logged_at)} ${isAcc(lastPee) ? 'indoors (accident)' : 'outdoor'}` : 'none today'}`);
+  L.push(`last_poop: ${lastPoop ? t(lastPoop.logged_at) : 'none today'}`);
+  L.push('');
+  L.push('FLAGS');
+  const flags = [];
+  accs.forEach(a => flags.push(`accident: ${/Poop/.test(a.elimination_type || '') ? 'poop' : 'pee'} indoors ${t(a.logged_at)}`));
+  if (kcal > kcalMax) flags.push(`kcal_over_target: ${kcal} > ${kcalMax}`);
+  if (poops.length < 2) flags.push(`poop_below_quota: ${poops.length}/2`);
+  if (!evs.some(e => e.category === 'Water')) flags.push('no_water_logged');
+  if (!flags.length) flags.push('none');
+  flags.forEach(f => L.push(`- ${f}`));
+  L.push('');
+  L.push('RECENT (newest first, max 8)');
+  [...evs].reverse().slice(0, 8).forEach(e => {
+    const label = e.elimination_type || e.category;
+    L.push(`${t(e.logged_at)} | ${label} | ${(e.status_outcome || e.raw_input || '').slice(0, 70)}`);
+  });
+  return L.join('\n');
+}
+async function todaysWalks() {
+  const t = todayStr();
+  let rows = [];
+  if (sbReady() && S.subject) {
+    try {
+      const { data } = await S.sb.from('walks').select('started_at,distance_m,duration_mins')
+        .eq('subject_id', S.subject.id).gte('started_at', t + 'T00:00:00');
+      rows = data || [];
+    } catch (e) { /* pre-migration */ }
+  }
+  const local = JSON.parse(localStorage.getItem('st_walks') || '[]').filter(w => String(w.started_at).slice(0, 10) === t);
+  return rows.concat(local);
+}
+async function buildDigestUI() {
+  if (!S.subject) { toast('Finish onboarding first.'); return; }
+  const now = new Date();
+  const st = liveState();
+  const walks = await todaysWalks();
+  const kg = S.subject.current_weight_kg || 3.4;
+  $('digestOut').value = buildDailyDigest({
+    petName: S.subject.name || 'Simba', breed: S.subject.breed || 'Cavapoo',
+    ageWeeks: ageWeeks(S.subject.date_of_birth), weightLbs: (kg * 2.20462).toFixed(2),
+    dateISO: todayStr(), now, events: S.events, walks,
+    kcalMin: CFG.KCAL_MIN, kcalMax: CFG.KCAL_MAX, bladder: st.bladder,
+  });
+  $('digestCard').hidden = false;
+  toast('Digest built ✓');
+}
 /* ---------- Wiring + init ---------- */
 function wire() {
   document.querySelectorAll('#tabbar button').forEach(b => b.onclick = () => show(b.dataset.screen));
@@ -1399,17 +1561,21 @@ function wire() {
   $('sheet').addEventListener('click', e => { if (e.target === $('sheet')) closeSheet(); });
   $('micBtn').onclick = toggleMic;
   $('parseBtn').onclick = parseAndPreview;
-  $('discardParsedBtn').onclick = () => { S.parsed = null; $('parseCard').hidden = true; };
+  $('discardParsedBtn').onclick = () => { S.parsedMulti = null; $('parseCard').hidden = true; };
   $('saveParsedBtn').onclick = async () => {
-    if (!S.parsed) return;
-    const r = await saveEvent(S.parsed);
-    if (r) { toast('Event saved ✓'); $('parseCard').hidden = true; $('logText').value = ''; S.parsed = null; await loadData(); checkNudges(); }
+    const list = S.parsedMulti; // v2.5 — save every event the recording contained
+    if (!list || !list.length) return;
+    let n = 0;
+    for (const { event } of list) { const r = await saveEvent(event); if (r) n++; }
+    if (n) { toast(n === 1 ? 'Event saved ✓' : `${n} events saved ✓`); $('parseCard').hidden = true; $('logText').value = ''; S.parsedMulti = null; await loadData(); checkNudges(); }
   };
   document.querySelectorAll('#trendRange button').forEach(b => b.onclick = () => {
     document.querySelectorAll('#trendRange button').forEach(x => x.classList.remove('active'));
     b.classList.add('active'); S.trendRange = +b.dataset.range; renderTrends();
   });
   document.querySelectorAll('#kbTabs button').forEach(b => b.onclick = () => loadKnowledge(b.dataset.kb));
+  $('buildDigestBtn').onclick = buildDigestUI;
+  $('copyDigestBtn').onclick = () => { $('digestOut').select(); document.execCommand('copy'); toast('Digest copied ✓'); };
   $('buildPromptBtn').onclick = buildAuditPrompt;
   $('copyPromptBtn').onclick = () => { $('auditPrompt').select(); document.execCommand('copy'); toast('Prompt copied ✓'); };
   $('saveGeminiBtn').onclick = () => { localStorage.setItem(CFG.LS.GEMINI, $('geminiKey').value.trim()); toast('Gemini key saved on this device.'); };
@@ -1435,6 +1601,9 @@ function wire() {
   $('offlineBtn').onclick = goOffline;
   const ob2 = $('offlineBtn2'); if (ob2) ob2.onclick = goOffline;
   $('micFab').onclick = toggleMicFab; // v2.2 — global voice button
+  $('installBtn').onclick = runInstallFlow;
+  const idis = $('installDismiss'); if (idis) idis.onclick = () => { $('installCard').hidden = true; localStorage.setItem('st_install_dismissed', '1'); };
+  const imb = $('installMenuBtn'); if (imb) imb.onclick = runInstallFlow;
   $('signInBtn').onclick = signIn; $('signUpBtn').onclick = signUp;
   $('signOutBtn').onclick = async () => { await S.sb.auth.signOut(); S.user = null; S.events = []; renderAuth(); renderAll(); setSync(false); show('landing'); };
   $('cfgSave').onclick = () => {
