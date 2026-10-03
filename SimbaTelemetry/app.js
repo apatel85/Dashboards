@@ -131,8 +131,17 @@ async function refreshSession() {
 function setSync(on) {
   S.online = on;
   const el = $('syncState');
-  el.textContent = on ? '● synced' : '○ offline';
-  el.classList.toggle('on', on);
+  // v2.2 — three honest states: synced / connected-but-signed-out / offline
+  if (on && S.user) { el.textContent = '● synced'; el.classList.add('on'); }
+  else if (S.sb && !localStorage.getItem(CFG.LS.OFFLINE)) { el.textContent = '○ not signed in'; el.classList.remove('on'); }
+  else { el.textContent = '○ offline'; el.classList.remove('on'); }
+}
+/* v2.2 — offline mode that can be undone via Test & reconnect */
+function goOffline() {
+  localStorage.setItem(CFG.LS.OFFLINE, '1');
+  S.sb = null; S.user = null;
+  setSync(false); renderConnStatus(false); renderAll(); show('cockpit');
+  toast('Offline mode — events stay on this device.');
 }
 
 /* Ensure the Simba subject row exists and is claimed by this user */
@@ -470,6 +479,7 @@ function show(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = $('screen-' + name);
   if (el) el.classList.add('active');
+  document.body.classList.toggle('on-landing', name === 'landing'); // v2.2 — chromeless landing
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('active', b.dataset.screen === name));
   if (name === 'trends') renderTrends();
   if (name === 'insights') renderInsights();
@@ -479,6 +489,7 @@ function show(name) {
   if (name === 'meds') renderMeds();
   if (name === 'report') renderVetReport();
   if (name === 'household') renderHousehold();
+  if (name === 'walk') { renderWalkCard(); renderWalkHistory(); } // v2.2 — walk is its own tab
   window.scrollTo(0, 0);
 }
 
@@ -496,7 +507,6 @@ function renderCockpit() {
   renderSubjectSwitcher();   // v2.0 multi-pet
   renderLearnBannerCockpit();// v2.0 confidence / quiet start
   renderStreaks();           // v2.0 streaks & success rates
-  renderWalkCard();          // v2.0 GPS walk tracking
 
   const st = liveState();
   // Risk gauge
@@ -1281,28 +1291,39 @@ function maybeWeightPrompt() {
 
 /* ---------- Voice input (Web Speech API — free, no key) ---------- */
 let recog = null, listening = false;
-function toggleMic() {
+/* v2.2 — generalized voice engine: works from the Log tab mic and the global FAB */
+function startVoice(btn, labelEl, statusEl, goToLog) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { $('micStatus').textContent = 'Voice not supported in this browser — type instead.'; return; }
-  if (listening) { recog.stop(); return; }
+  const setStatus = t => { if (statusEl) statusEl.textContent = t; };
+  if (!SR) { setStatus('Voice not supported in this browser — type instead.'); if (goToLog) toast('Voice not supported here — use the Log tab.'); return; }
+  if (listening) { if (recog) recog.stop(); return; }
   recog = new SR(); recog.lang = 'en-US'; recog.interimResults = true;
-  $('micBtn').classList.add('listening'); $('micLabel').textContent = 'LISTENING… TAP TO STOP';
+  if (btn) btn.classList.add('listening');
+  if (labelEl) labelEl.textContent = 'LISTENING… TAP TO STOP';
   listening = true;
   let final = '';
   recog.onresult = ev => {
     let interim = '';
     for (const r of ev.results) { if (r.isFinal) final += r[0].transcript; else interim += r[0].transcript; }
-    $('micStatus').textContent = (final + interim).slice(-120);
+    setStatus((final + interim).slice(-120));
   };
   recog.onend = () => {
-    $('micBtn').classList.remove('listening'); $('micLabel').textContent = 'TAP TO SPEAK TELEMETRY';
+    if (btn) btn.classList.remove('listening');
+    if (labelEl) labelEl.textContent = 'TAP TO SPEAK TELEMETRY';
     listening = false;
-    if (final.trim()) { $('logText').value = final.trim(); $('micStatus').textContent = 'Heard ✓ — review and Parse.'; parseAndPreview(); }
-    else $('micStatus').textContent = 'Did not catch that — try again.';
+    if (final.trim()) {
+      $('logText').value = final.trim();
+      if (goToLog) show('log');
+      $('micStatus').textContent = 'Heard ✓ — review and Parse.';
+      parseAndPreview();
+    }
+    else setStatus('Did not catch that — try again.');
   };
-  recog.onerror = e => { $('micStatus').textContent = 'Mic error: ' + e.error; };
+  recog.onerror = e => { setStatus('Mic error: ' + e.error); };
   recog.start();
 }
+function toggleMic() { startVoice($('micBtn'), $('micLabel'), $('micStatus'), false); }
+function toggleMicFab() { startVoice($('micFab'), null, null, true); }
 function parseAndPreview() {
   const raw = $('logText').value.trim();
   if (!raw) { toast('Enter or dictate something first.'); return; }
@@ -1341,12 +1362,28 @@ function wire() {
   $('saveGeminiBtn').onclick = () => { localStorage.setItem(CFG.LS.GEMINI, $('geminiKey').value.trim()); toast('Gemini key saved on this device.'); };
   $('genGeminiBtn').onclick = generateWithGemini;
   $('expCsv').onclick = exportCSV; $('expMd').onclick = exportMD; $('expXlsx').onclick = exportXLSX;
-  $('sbTest').onclick = testConnection;
+  $('impFile').onchange = handleImportFile; $('impGo').onclick = runImport; // v2.2 — CSV/Excel import
+  $('sbTest').onclick = async () => {
+    // v2.2 — Test doubles as Reconnect: clears any offline flag and retries everything
+    localStorage.removeItem(CFG.LS.OFFLINE);
+    S.sb = null; S.user = null;
+    if (initSupabase()) {
+      await refreshSession();
+      renderConnStatus(true);
+      if (S.user) { toast('Reconnected ✓'); show('cockpit'); }
+      else { toast('Connected — please sign in.'); show('landing'); }
+    } else {
+      renderConnStatus(false);
+      $('sbStatus').textContent = 'Could not reach Supabase — check connection and reload.';
+    }
+  };
   $('googleBtn').onclick = signInWithGoogle;
   $('obSave').onclick = saveOnboard;
-  $('offlineBtn').onclick = () => { localStorage.setItem(CFG.LS.OFFLINE, '1'); setSync(false); toast('Offline mode — events stay on this device.'); show('cockpit'); };
+  $('offlineBtn').onclick = goOffline;
+  const ob2 = $('offlineBtn2'); if (ob2) ob2.onclick = goOffline;
+  $('micFab').onclick = toggleMicFab; // v2.2 — global voice button
   $('signInBtn').onclick = signIn; $('signUpBtn').onclick = signUp;
-  $('signOutBtn').onclick = async () => { await S.sb.auth.signOut(); S.user = null; S.events = []; renderAuth(); renderAll(); setSync(false); };
+  $('signOutBtn').onclick = async () => { await S.sb.auth.signOut(); S.user = null; S.events = []; renderAuth(); renderAll(); setSync(false); show('landing'); };
   $('cfgSave').onclick = () => {
     CFG.KCAL_MIN = +$('cfgKcalMin').value || 300; CFG.KCAL_MAX = +$('cfgKcalMax').value || 330;
     CFG.BEDTIME = $('cfgBedtime').value || '21:45'; CFG.DAY_ONE = $('cfgDayOne').value || '2026-09-01';
@@ -1374,16 +1411,184 @@ function wire() {
 
 async function init() {
   loadCfg();
+  applyBrand(); // v2.2 — white-label: brand name from config.js
   $('geminiKey').value = localStorage.getItem(CFG.LS.GEMINI) || '';
   $('cfgKcalMin').value = CFG.KCAL_MIN; $('cfgKcalMax').value = CFG.KCAL_MAX;
   $('cfgBedtime').value = CFG.BEDTIME; $('cfgDayOne').value = CFG.DAY_ONE;
   wire();
   renderConnStatus(null);
   if (localStorage.getItem(CFG.LS.OFFLINE)) { setSync(false); renderAll(); renderConnStatus(false); }
-  else if (initSupabase()) { renderConnStatus(true); await refreshSession(); }
-  else { setSync(false); renderAll(); renderConnStatus(false); show('setup'); toast('Welcome — connect Supabase or use offline mode.'); }
+  else if (initSupabase()) {
+    renderConnStatus(true);
+    await refreshSession();
+    if (!S.user) show('landing'); // v2.2 — landing page with login prompt
+  }
+  else { setSync(false); renderAll(); renderConnStatus(false); show('setup'); }
   // 60-second deterministic engine tick (spec section 5)
   S.tickTimer = setInterval(() => { renderCockpit(); checkNudges(); }, 60000);
+}
+/* ---------- v2.2: white-label brand + walk history ---------- */
+function applyBrand() {
+  const name = (window.ST_CONFIG && ST_CONFIG.APP_NAME) || 'Simba Telemetry';
+  const b = $('brandName'); if (b) b.textContent = name;
+  const lt = $('landingTitle'); if (lt) lt.textContent = name;
+  document.title = name;
+}
+/* v2.2 — past walks list on the Walk tab */
+async function renderWalkHistory() {
+  const box = $('walkHistory'); if (!box) return;
+  let rows = [];
+  if (sbReady() && S.subject) {
+    try {
+      const { data, error } = await S.sb.from('walks')
+        .select('id,started_at,distance_m,duration_mins').eq('subject_id', S.subject.id)
+        .order('started_at', { ascending: false }).limit(20);
+      if (!error) rows = data || [];
+    } catch (e) { /* pre-migration — local only */ }
+  }
+  const local = JSON.parse(localStorage.getItem('st_walks') || '[]');
+  const seen = new Set(rows.map(r => String(r.id)));
+  local.forEach(w => { if (!seen.has(String(w.id))) rows.push(w); });
+  rows.sort((a, b) => new Date(b.started_at) - new Date(a.started_at));
+  rows = rows.slice(0, 20);
+  if (!rows.length) { box.innerHTML = '<div class="muted">No walks yet.</div>'; return; }
+  box.innerHTML = '';
+  rows.forEach(w => {
+    const div = document.createElement('div'); div.className = 'tl-item';
+    div.innerHTML = `<div class="tl-time">${new Date(w.started_at).toLocaleDateString()}<br>${fmtTime(w.started_at)}</div>
+      <div class="tl-body" style="cursor:pointer"><span class="tl-cat">🚶 ${(w.distance_m / 1000).toFixed(2)} km</span><br><span class="muted">${Math.round(w.duration_mins)} min · tap to view route</span></div>`;
+    div.querySelector('.tl-body').onclick = () => viewWalk({
+      walk_id: w.id, raw_input: 'GPS walk #' + w.id,
+      status_outcome: `${(w.distance_m / 1000).toFixed(2)} km in ${Math.round(w.duration_mins)}m`
+    });
+    box.appendChild(div);
+  });
+}
+/* ---------- v2.2: CSV / Excel import with field mapping ---------- */
+const IMPORT_FIELDS = [
+  { key: 'logged_at', label: 'Date / time', required: true, aliases: ['date', 'time', 'datetime', 'timestamp', 'when', 'logged_at', 'created'] },
+  { key: 'event', label: 'Event type', required: true, aliases: ['event', 'type', 'category', 'activity', 'elimination_type', 'action'] },
+  { key: 'notes', label: 'Notes', aliases: ['notes', 'note', 'details', 'description', 'raw_input', 'comments', 'remark'] },
+  { key: 'kcal', label: 'Kcal', aliases: ['kcal', 'calories', 'event_kcal', 'energy'] },
+  { key: 'weight_lbs', label: 'Weight (lbs)', aliases: ['weight', 'weight_lbs', 'lbs', 'body_weight'] },
+  { key: 'fecal_score', label: 'Fecal score (1–7)', aliases: ['fecal_score', 'stool_score', 'score', 'stool'] },
+];
+let IMP = { headers: [], rows: [], map: {}, _ok: [] };
+function ensureXLSX() {
+  return new Promise((res, rej) => {
+    if (window.XLSX) return res();
+    const s = document.createElement('script');
+    s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+    s.onload = res; s.onerror = () => rej(new Error('Spreadsheet library failed to load — are you online?'));
+    document.head.appendChild(s);
+  });
+}
+function autoMapColumn(headers, aliases) {
+  const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+  for (const a of aliases) { const i = headers.findIndex(h => norm(h) === norm(a)); if (i >= 0) return i; }
+  for (const a of aliases) { const i = headers.findIndex(h => norm(h).includes(norm(a)) || norm(a).includes(norm(h))); if (i >= 0) return i; }
+  return -1;
+}
+async function handleImportFile(e) {
+  const file = e.target.files[0];
+  const mapBox = $('impMap'), status = $('impStatus');
+  if (!file) return;
+  status.textContent = 'Reading…'; mapBox.hidden = true;
+  try {
+    await ensureXLSX();
+    const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' }); // handles .xlsx AND .csv
+    const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '', raw: true });
+    if (!aoa.length) throw new Error('That file looks empty.');
+    const headers = aoa[0].map(h => String(h).trim());
+    const rows = aoa.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
+    if (!rows.length) throw new Error('No data rows found.');
+    IMP = { headers, rows, map: {}, _ok: [] };
+    IMPORT_FIELDS.forEach(f => { IMP.map[f.key] = autoMapColumn(headers, f.aliases); });
+    renderImportFields(); renderImportPreview();
+    mapBox.hidden = false;
+    status.textContent = `${rows.length} rows detected. Check the mapping, glance at the preview, then import.`;
+  } catch (err) { status.textContent = '✗ ' + err.message; }
+}
+function renderImportFields() {
+  const box = $('impFields');
+  box.innerHTML = IMPORT_FIELDS.map(f => `
+    <div class="imp-row">
+      <label class="lbl">${esc(f.label)}${f.required ? ' *' : ''}</label>
+      <select data-imp="${f.key}">
+        <option value="-1">— ignore —</option>
+        ${IMP.headers.map((h, i) => `<option value="${i}"${IMP.map[f.key] === i ? ' selected' : ''}>${esc(h || '(column ' + (i + 1) + ')')}</option>`).join('')}
+      </select>
+    </div>`).join('');
+  box.querySelectorAll('[data-imp]').forEach(s => s.onchange = () => { IMP.map[s.dataset.imp] = +s.value; renderImportPreview(); });
+}
+function normalizeImportEvent(v) {
+  const t = String(v || '').toLowerCase().trim();
+  if (/pee|urine/.test(t)) return { category: 'Elimination', elimination_type: 'Pee' };
+  if (/poop|stool|poo/.test(t)) return { category: 'Elimination', elimination_type: 'Poop' };
+  if (/food|meal|kibble|fed|breakfast|lunch|dinner|\beat\b/.test(t)) return { category: 'Food' };
+  if (/water|drink/.test(t)) return { category: 'Water' };
+  if (/weigh/.test(t)) return { category: 'Weight' };
+  if (/walk/.test(t)) return { category: 'Walk' };
+  if (/train/.test(t)) return { category: 'Training' };
+  if (/nap|sleep|crate/.test(t)) return { category: 'Nap' };
+  return { category: 'Note' };
+}
+function parseImportDate(v) {
+  if (v === '' || v == null) return null;
+  if (typeof v === 'number' && isFinite(v)) { // Excel serial date
+    const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+    return isNaN(d) ? null : d;
+  }
+  const d = new Date(String(v).trim());
+  return isNaN(d) ? null : d;
+}
+function mapImportRow(r) {
+  const col = k => { const i = IMP.map[k]; return i >= 0 ? r[i] : ''; };
+  const d = parseImportDate(col('logged_at'));
+  if (!d) return null;
+  const { category, elimination_type } = normalizeImportEvent(col('event'));
+  const notes = String(col('notes') || '').trim();
+  const w = parseFloat(col('weight_lbs'));
+  const ev = {
+    category, logged_at: d.toISOString(), day_number: dayNumber(d.toISOString()),
+    raw_input: notes || String(col('event') || ''),
+    status_outcome: notes.slice(0, 140) || null,
+  };
+  if (elimination_type) ev.elimination_type = elimination_type;
+  const kcal = parseFloat(col('kcal')); if (isFinite(kcal)) ev.event_kcal = kcal;
+  const fs = parseInt(col('fecal_score')); if (fs >= 1 && fs <= 7) ev.fecal_score = fs;
+  if (isFinite(w) && w > 0) ev.status_outcome = `Weight: ${w} lbs`;
+  return ev;
+}
+function renderImportPreview() {
+  const ok = IMP.rows.map(mapImportRow).filter(Boolean);
+  IMP._ok = ok;
+  $('impPreview').textContent = ok.slice(0, 5).map(ev =>
+    `${ev.logged_at.slice(0, 16).replace('T', ' ')} · ${ev.elimination_type || ev.category}` +
+    (ev.event_kcal ? ` · ${ev.event_kcal} kcal` : '') +
+    (ev.status_outcome ? ` · ${ev.status_outcome.slice(0, 60)}` : '')
+  ).join('\n') || '(no rows map cleanly — check the Date and Event columns)';
+  $('impGo').textContent = `Import ${ok.length} rows`;
+}
+async function runImport() {
+  const ok = IMP._ok || [];
+  const status = $('impStatus');
+  if (!ok.length) { status.textContent = 'Nothing to import.'; return; }
+  if (!S.subject) { status.textContent = 'Sign in and finish onboarding first.'; return; }
+  status.textContent = `Importing ${ok.length}…`;
+  const rows = ok.map(ev => ({ ...ev, subject_id: S.subject.id, owner_id: S.user ? S.user.id : null }));
+  if (sbReady()) {
+    for (let i = 0; i < rows.length; i += 200) {
+      const { error } = await S.sb.from('telemetry_events').insert(rows.slice(i, i + 200));
+      if (error) { status.textContent = '✗ Import failed: ' + error.message; return; }
+      status.textContent = `Importing… ${Math.min(rows.length, i + 200)}/${rows.length}`;
+    }
+  } else {
+    rows.forEach(ev => { ev.id = 'local-' + Date.now() + Math.random().toString(16).slice(2); localSave(ev); });
+  }
+  status.textContent = `✓ Imported ${rows.length} events.`;
+  toast(`Imported ${rows.length} events ✓`);
+  await loadData(); renderAll();
 }
 document.addEventListener('DOMContentLoaded', init);
 
