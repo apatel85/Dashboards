@@ -13,6 +13,7 @@
    Project : iknfvddnevudpjtyxkbh
    --------------------------------------------------------------------- */
 window.ST_CONFIG = {
+  APP_NAME: 'Simba Telemetry', // v2.2 — white-label: rebrand future pet apps here
   SUPABASE_URL: 'https://iknfvddnevudpjtyxkbh.supabase.co',
   // Filled at build time from the Supabase dashboard (Project Settings → API
   // → "anon public" key). Placeholder until then — the app falls back to a
