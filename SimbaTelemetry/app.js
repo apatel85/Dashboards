@@ -23,6 +23,15 @@ const CFG = {
         CFG: 'st_cfg', DISMISSED: 'st_dismissed' },
 };
 
+/* Shared backend config (config.js) — one Supabase project for every app.
+   The anon key is public by design; RLS (not the key) protects the data. */
+const ST_CONFIG = window.ST_CONFIG || {};
+function effectiveSbKey() {
+  const k = ST_CONFIG.SUPABASE_ANON_KEY;
+  if (k && !k.includes('PASTE')) return k;
+  return localStorage.getItem(CFG.LS.SB_KEY) || '';
+}
+
 /* ---------------- Global state ---------------- */
 const S = {
   sb: null,            // supabase-js client
@@ -79,7 +88,8 @@ function ageWeeks(dob = '2026-05-31') {
 function sbReady() { return !!(S.sb && S.user && !localStorage.getItem(CFG.LS.OFFLINE)); }
 
 function initSupabase() {
-  const url = localStorage.getItem(CFG.LS.SB_URL), key = localStorage.getItem(CFG.LS.SB_KEY);
+  const url = ST_CONFIG.SUPABASE_URL || localStorage.getItem(CFG.LS.SB_URL);
+  const key = effectiveSbKey();
   if (!url || !key || !window.supabase) return false;
   try {
     S.sb = window.supabase.createClient(url, key, { db: { schema: CFG.SCHEMA } });
@@ -87,14 +97,21 @@ function initSupabase() {
   } catch(e) { console.warn('supabase init failed', e); return false; }
 }
 
+function renderConnStatus(ok) {
+  const el = $('connStatus'); if (!el) return;
+  el.innerHTML = ok === true ? '<span class="conn-ok">● Connected — syncing automatically</span>'
+    : ok === false ? '<span class="conn-bad">○ Not connected</span>'
+    : '<span class="muted">Checking connection…</span>';
+}
 async function testConnection() {
-  const url = $('sbUrl').value.trim(), key = $('sbKey').value.trim();
-  if (!url || !key) { $('sbStatus').textContent = 'Enter URL and anon key first.'; return; }
+  const url = ST_CONFIG.SUPABASE_URL, key = effectiveSbKey();
+  if (!url || !key) { $('sbStatus').textContent = 'Built-in key not installed yet.'; renderConnStatus(false); return; }
   $('sbStatus').textContent = 'Testing…';
   try {
     const r = await fetch(`${url}/rest/v1/`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-    $('sbStatus').textContent = r.ok ? '✓ Connection OK (HTTP ' + r.status + '). Save to use.' : '✗ HTTP ' + r.status + ' — check URL/key.';
-  } catch(e) { $('sbStatus').textContent = '✗ Network error: ' + e.message; }
+    $('sbStatus').textContent = r.ok ? '✓ Connection OK (HTTP ' + r.status + ').' : '✗ HTTP ' + r.status + ' — check the Supabase project.';
+    renderConnStatus(r.ok);
+  } catch(e) { $('sbStatus').textContent = '✗ Network error: ' + e.message; renderConnStatus(false); }
 }
 
 async function refreshSession() {
@@ -102,7 +119,11 @@ async function refreshSession() {
   const { data: { session } } = await S.sb.auth.getSession();
   S.user = session?.user || null;
   renderAuth();
-  if (S.user) { await claimHousehold(); await loadSubjects(); await loadCareTables(); await loadData(); }
+  if (S.user) {
+    await claimHousehold(); await loadSubjects(); await loadCareTables(); await loadData();
+    if (S._needsOnboard) { S._needsOnboard = false; openOnboard(false); }  // v2.1 first-run profile
+    else maybeWeightPrompt();                                              // v2.1 monthly check-in
+  }
   else { S.events = []; S.subject = null; S.subjects = []; renderAll(); }
   setSync(S.user ? true : false);
 }
@@ -155,17 +176,14 @@ async function loadSubjects() {
     S.subjects = data || [];
   } catch (e) { console.warn('subjects load failed', e); return; }
   if (!S.subjects.length) {
-    // v1 fallback — but never auto-claim the seed if this user is a household member
+    // v2.1 — no silent auto-create: first-run users complete the onboarding
+    // profile screen instead. Household members never onboard (they share).
     let isMember = false;
     try {
       const { data: mem } = await S.sb.from('household_members').select('id').eq('user_id', S.user.id).limit(1);
       isMember = !!(mem && mem.length);
     } catch (e) { /* table missing pre-migration */ }
-    if (!isMember) await ensureSubject();
-    try {
-      const { data } = await S.sb.from('subjects').select('*').order('created_at');
-      S.subjects = data || [];
-    } catch (e) { /* ignore */ }
+    if (!isMember) S._needsOnboard = true;
   }
   const saved = localStorage.getItem('st_active_pet');
   S.subject = S.subjects.find(s => String(s.id) === String(saved)) || S.subjects[0] || null;
@@ -613,6 +631,16 @@ function openSheet(kind, existing = null) {
       <input id="wNote" placeholder="e.g. after play">`;
   } else if (kind === 'Weight') {
     b.innerHTML = `<label class="lbl">Weight (lbs)</label><input id="wtLbs" type="number" step="0.05" placeholder="7.60">`;
+  } else if (kind === 'WeightPrompt') {
+    // v2.1 — monthly check-in: update or skip (either way we ask again next month)
+    $('sheetTitle').textContent = 'Monthly weight check-in';
+    const lbs = S.subject?.current_weight_kg ? (S.subject.current_weight_kg * 2.20462).toFixed(2) : '';
+    b.innerHTML = `<p class="muted">How much does <b>${esc(S.subject?.name || 'your dog')}</b> weigh today? Update it below \u2014 or skip and we\u2019ll ask again next month.</p>
+      <label class="lbl">Weight (lbs)</label>
+      <input id="wpLbs" type="number" step="0.05" inputmode="decimal" value="${lbs}" placeholder="${lbs || 'e.g. 7.6'}">`;
+    $('sheetSave').textContent = 'Update weight';
+    $('sheetCancel').textContent = 'Skip';
+    $('sheetCancel').onclick = () => { localStorage.setItem('st_weight_prompt', String(Date.now())); closeSheet(); };
   } else if (kind === 'Note') {
     b.innerHTML = `<label class="lbl">Note</label><textarea id="nText" rows="3" placeholder="Behavior, training, vet…"></textarea>`;
   } else if (kind === 'Pet') {
@@ -660,7 +688,11 @@ function openSheet(kind, existing = null) {
   }
   $('sheet').hidden = false;
 }
-function closeSheet() { $('sheet').hidden = true; S.sheetCtx = null; }
+function closeSheet() {
+  $('sheet').hidden = true; S.sheetCtx = null;
+  $('sheetSave').textContent = 'Save'; $('sheetCancel').textContent = 'Cancel';
+  $('sheetCancel').onclick = closeSheet; // restore default after WeightPrompt override
+}
 async function saveSheet() {
   const { kind, existing } = S.sheetCtx || {};
   if (!kind) return closeSheet();
@@ -686,6 +718,23 @@ async function saveSheet() {
       await S.sb.from('subjects').update({ current_weight_kg: kg }).eq('id', S.subject.id);
       S.subject.current_weight_kg = kg;
     }
+  } else if (kind === 'WeightPrompt') {
+    // v2.1 — monthly check-in
+    const lbs = parseFloat($('wpLbs').value);
+    localStorage.setItem('st_weight_prompt', String(Date.now()));
+    closeSheet();
+    if (isFinite(lbs) && lbs > 0) {
+      const kg = +(lbs / 2.20462).toFixed(2);
+      localStorage.setItem('st_weight', String(kg));
+      if (S.subject && sbReady()) {
+        await S.sb.from('subjects').update({ current_weight_kg: kg }).eq('id', S.subject.id);
+        S.subject.current_weight_kg = kg;
+      }
+      await saveEvent({ category: 'Weight', status_outcome: `Weight: ${lbs} lbs` });
+      await loadData(); renderCockpit();
+      toast('Weight updated \u2713');
+    } else toast('Skipped \u2014 we\u2019ll ask again next month.');
+    return;
   } else if (kind === 'Note') {
     ev.category = 'Note'; ev.raw_input = $('nText').value; ev.status_outcome = $('nText').value.slice(0, 120);
   } else if (kind === 'Pet') {
@@ -1137,6 +1186,7 @@ async function exportXLSX() {
 async function renderAuth() {
   const inOut = !!S.user;
   $('signInBtn').hidden = inOut; $('signUpBtn').hidden = inOut; $('signOutBtn').hidden = !inOut;
+  const gb = $('googleBtn'); if (gb) gb.hidden = inOut;
   $('authEmail').disabled = inOut; $('authPass').disabled = inOut;
   $('authStatus').textContent = inOut ? `Signed in as ${S.user.email}` : 'Not signed in.';
 }
@@ -1149,6 +1199,84 @@ async function signUp() {
   if (!S.sb) { toast('Connect Supabase first.'); return; }
   const { error } = await S.sb.auth.signUp({ email: $('authEmail').value.trim(), password: $('authPass').value });
   toast(error ? 'Sign-up failed: ' + error.message : 'Account created — check email if confirmation is on, then sign in.');
+}
+
+/* v2.1 — Google Sign-In. Requires the Google provider enabled in the
+   Supabase dashboard (Authentication → Providers → Google) with a Google
+   Cloud OAuth client whose authorized redirect URI is:
+   https://iknfvddnevudpjtyxkbh.supabase.co/auth/v1/callback            */
+async function signInWithGoogle() {
+  if (!S.sb) { toast('Still connecting — try again in a moment.'); return; }
+  const { error } = await S.sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname },
+  });
+  if (error) toast('Google sign-in failed: ' + error.message);
+  // On return, supabase-js picks the session up from the URL automatically.
+}
+
+/* ---------- v2.1 onboarding: landing profile page ---------- */
+function openOnboard(edit = false) {
+  S._obEdit = edit;
+  const s = edit ? S.subject : null;
+  $('obTitle').textContent = edit ? 'Pet profile' : 'Welcome to Simba Telemetry';
+  $('obSub').textContent = edit
+    ? 'Update your dog\u2019s details \u2014 predictions, targets and reports use this.'
+    : 'Tell us about your dog \u2014 this builds their profile and tunes every prediction to them.';
+  $('obName').value = s?.name || '';
+  $('obBreed').value = s?.breed || 'Cavapoo';
+  $('obDob').value = s?.date_of_birth || '2026-05-31';
+  $('obSex').value = s?.sex || 'male';
+  $('obWeight').value = s?.current_weight_kg ? (s.current_weight_kg * 2.20462).toFixed(1) : '';
+  $('obSave').innerHTML = edit ? 'Save changes \u2713' : 'Save &amp; continue \u2192';
+  $('obStatus').textContent = '';
+  show('onboard');
+}
+async function saveOnboard() {
+  const name = $('obName').value.trim();
+  if (!name) { $('obStatus').textContent = 'Please enter your dog\u2019s name.'; return; }
+  const lbs = parseFloat($('obWeight').value);
+  const kg = isFinite(lbs) && lbs > 0 ? +(lbs / 2.20462).toFixed(2) : null;
+  const data = { name, breed: $('obBreed').value.trim() || null,
+    date_of_birth: $('obDob').value || null, sex: $('obSex').value, current_weight_kg: kg };
+  $('obSave').disabled = true; $('obStatus').textContent = 'Saving\u2026';
+  try {
+    if (S._obEdit && S.subject) {
+      const { error } = await S.sb.from('subjects').update(data).eq('id', S.subject.id);
+      if (error) throw error;
+      Object.assign(S.subject, data);
+      toast('Profile updated \u2713');
+      renderCockpit(); show('cockpit');
+    } else {
+      // Claim the unclaimed seed row when present, else insert fresh.
+      let row = null;
+      const { data: claimed, error: cErr } = await S.sb.from('subjects')
+        .update({ owner_id: S.user.id, ...data }).is('owner_id', null).select();
+      if (cErr) throw cErr;
+      row = (claimed && claimed[0]) || null;
+      if (!row) {
+        const { data: created, error } = await S.sb.from('subjects')
+          .insert({ owner_id: S.user.id, target_awake_hold_mins: 80, clean_overnight_streak_days: 0, ...data }).select();
+        if (error) throw error;
+        row = created[0];
+      }
+      if (kg) localStorage.setItem('st_weight', String(kg));
+      await loadSubjects();
+      toast(`Welcome, ${name}! \u2713`);
+      show('cockpit');
+    }
+  } catch (e) { $('obStatus').textContent = 'Save failed: ' + e.message; }
+  $('obSave').disabled = false;
+}
+
+/* ---------- v2.1 monthly weight check-in ---------- */
+const WEIGHT_PROMPT_MS = 30 * 86400000;
+function maybeWeightPrompt() {
+  if (!sbReady() || !S.subject || S._wpShown) return;
+  const last = +localStorage.getItem('st_weight_prompt') || 0;
+  if (Date.now() - last < WEIGHT_PROMPT_MS) return;
+  S._wpShown = true;
+  openSheet('WeightPrompt');
 }
 
 /* ---------- Voice input (Web Speech API — free, no key) ---------- */
@@ -1190,6 +1318,8 @@ function parseAndPreview() {
 function wire() {
   document.querySelectorAll('#tabbar button').forEach(b => b.onclick = () => show(b.dataset.screen));
   document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => show(b.dataset.goto));
+  const obMenuBtn = document.querySelector('[data-goto="onboard"]');
+  if (obMenuBtn) obMenuBtn.onclick = () => openOnboard(true); // edit mode: prefill current profile
   document.querySelectorAll('.dock-btn').forEach(b => b.onclick = () => quickLog(b.dataset.log));
   $('sheetSave').onclick = saveSheet; $('sheetCancel').onclick = closeSheet;
   $('sheet').addEventListener('click', e => { if (e.target === $('sheet')) closeSheet(); });
@@ -1212,12 +1342,8 @@ function wire() {
   $('genGeminiBtn').onclick = generateWithGemini;
   $('expCsv').onclick = exportCSV; $('expMd').onclick = exportMD; $('expXlsx').onclick = exportXLSX;
   $('sbTest').onclick = testConnection;
-  $('sbSave').onclick = () => {
-    localStorage.setItem(CFG.LS.SB_URL, $('sbUrl').value.trim());
-    localStorage.setItem(CFG.LS.SB_KEY, $('sbKey').value.trim());
-    localStorage.removeItem(CFG.LS.OFFLINE);
-    initSupabase(); toast('Saved. Sign in below.'); refreshSession();
-  };
+  $('googleBtn').onclick = signInWithGoogle;
+  $('obSave').onclick = saveOnboard;
   $('offlineBtn').onclick = () => { localStorage.setItem(CFG.LS.OFFLINE, '1'); setSync(false); toast('Offline mode — events stay on this device.'); show('cockpit'); };
   $('signInBtn').onclick = signIn; $('signUpBtn').onclick = signUp;
   $('signOutBtn').onclick = async () => { await S.sb.auth.signOut(); S.user = null; S.events = []; renderAuth(); renderAll(); setSync(false); };
@@ -1248,15 +1374,14 @@ function wire() {
 
 async function init() {
   loadCfg();
-  $('sbUrl').value = localStorage.getItem(CFG.LS.SB_URL) || '';
-  $('sbKey').value = localStorage.getItem(CFG.LS.SB_KEY) || '';
   $('geminiKey').value = localStorage.getItem(CFG.LS.GEMINI) || '';
   $('cfgKcalMin').value = CFG.KCAL_MIN; $('cfgKcalMax').value = CFG.KCAL_MAX;
   $('cfgBedtime').value = CFG.BEDTIME; $('cfgDayOne').value = CFG.DAY_ONE;
   wire();
-  if (localStorage.getItem(CFG.LS.OFFLINE)) { setSync(false); renderAll(); }
-  else if (initSupabase()) { await refreshSession(); }
-  else { setSync(false); renderAll(); show('setup'); toast('Welcome — connect Supabase or use offline mode.'); }
+  renderConnStatus(null);
+  if (localStorage.getItem(CFG.LS.OFFLINE)) { setSync(false); renderAll(); renderConnStatus(false); }
+  else if (initSupabase()) { renderConnStatus(true); await refreshSession(); }
+  else { setSync(false); renderAll(); renderConnStatus(false); show('setup'); toast('Welcome — connect Supabase or use offline mode.'); }
   // 60-second deterministic engine tick (spec section 5)
   S.tickTimer = setInterval(() => { renderCockpit(); checkNudges(); }, 60000);
 }
@@ -1701,7 +1826,7 @@ async function renderVetReport() {
     <div class="vet-head">
       <h2>🐾 ${esc(s.name || 'Simba')} — Veterinary Summary</h2>
       <div class="muted">${esc(s.breed || 'Cavapoo')} · ${s.sex || 'male'} · DOB ${esc(s.date_of_birth || '2026-05-31')} (${wks} weeks) · ${(kg * 2.20462).toFixed(2)} lbs (${kg} kg)</div>
-      <div class="muted small">Generated ${new Date().toLocaleString()} · trailing 30 days · Simba Telemetry v2.0</div>
+      <div class="muted small">Generated ${new Date().toLocaleString()} · trailing 30 days · Simba Telemetry v2.1</div>
     </div>
     <h3>Weight</h3>
     <canvas id="chVetWeight" height="110"></canvas>
