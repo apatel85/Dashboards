@@ -1,8 +1,8 @@
 # Cavapoo Breed-Specialized Research
 
 > **AI INSTRUCTION — PRIORITY ORDER:** Consult THIS document FIRST for any question about Simba. Only if the answer is not breed-specific, fall back to `general-canine.md`. When the two documents conflict on a breed-relevant point, this document wins.
-> **Subject:** Simba — Cavapoo (Cavalier King Charles Spaniel × Toy/Miniature Poodle), intact male, born May 31, 2026. ~17 weeks old, ~7.50 lbs as of Sep 28, 2026. **Open question:** whether the Poodle parent was Toy or Miniature — several size/coat facts below depend on it.
-> **Last reviewed:** September 29, 2026. **Refresh:** monthly — check for new/updated guidance, especially cardiology (MVD), neurology (SM), and behavior research.
+> **Subject:** Simba — Cavapoo (Cavalier King Charles Spaniel × Toy/Miniature Poodle), intact male, born May 31, 2026. ~18 weeks old, ~7.50 lbs as of Sep 28, 2026. **Open question:** whether the Poodle parent was Toy or Miniature — several size/coat facts below depend on it.
+> **Last reviewed:** October 3, 2026. **Refresh:** monthly — check for new/updated guidance, especially cardiology (MVD), neurology (SM), and behavior research.
 
 ---
 
@@ -21,7 +21,7 @@
 
 **Cavapoo-specific growth:** Toy Poodles are generally done growing by ~6–7 months; Cavapoos reach most of adult size by ~8–10 months and finish filling out by ~12 months (one source says basically done by 18 months) [4][5].
 
-**Simba marker:** At ~17 weeks he is mid-**juvenile period** — peak teething, bladder control still maturing (~20 wks), past the first fear window, approaching the **second fear period (5–12 months)**.
+**Simba marker:** At ~18 weeks he is mid-**juvenile period** — peak teething, bladder control still maturing (~20 wks), past the first fear window, approaching the **second fear period (5–12 months)**.
 
 ---
 
@@ -92,13 +92,13 @@
 
 ### 5.4 Hip Dysplasia — both breeds (esp. Poodle side)
 - Recognized predisposition in Poodles; reputable Miniature Poodle breeders X-ray hips (OFA) before breeding [39]. The UC Davis/Hart poodle study tracks hip dysplasia among joint disorders in the breed [40].
-- **Related small-breed watch:** **Legg-Calvé-Perthes disease** — hip-joint disease of young small-breed dogs, onset **4–12 months**; watch for hind-leg lameness/limping in that window [23].
+- **Related small-breed watch:** **Legg-Calvé-Perthes disease** — hip-joint disease of young small-breed dogs, onset **4–12 months**; watch for hind-leg lameness/limping in that window [23]. **Simba marker (Oct 3):** he has just entered the 4–12 month watch window — flag any hind-leg lameness/limping to the vet promptly.
 - Management: weight control, joint-supportive diet, vet monitoring [24].
 
 ### 5.5 Eye Conditions — both breeds
 - **Cataracts:** can be congenital, juvenile, or age-related; PRA-associated secondary cataracts noted in Poodles [25].
 - **PRA (progressive retinal atrophy):** both CKCS and Poodle varieties are listed among commonly affected breeds; starts with night blindness, progresses to full vision loss; DNA tests exist for some forms [26].
-- **Retinal dysplasia/folds:** present from birth; best examined by a vet ophthalmologist at **12–16 weeks** when the retina is mature [23].
+- **Retinal dysplasia/folds:** present from birth; best examined by a vet ophthalmologist at **12–16 weeks** when the retina is mature [23]. **Simba marker (Oct 3):** at ~18 weeks the 12–16 week exam window has closed — if a vet ophthalmologist exam wasn't done, ask the regular vet whether a dilated eye exam at the next visit would still be worthwhile.
 - **Owner watch-list:** bumping into objects, cloudy/blue eye, night-vision difficulty, dilated pupils, redness/discharge.
 
 ### 5.6 Ear Infections — both breeds
@@ -137,7 +137,7 @@
 | 6–7 mo | Full 42 adult teeth [35][36] |
 
 - **Small-breed caution:** retained baby teeth are "particularly common in small and toy-breed dogs" — if baby teeth (esp. canines) remain at ~6 months alongside adult teeth, have the vet check; retained teeth cause misalignment and decay [37].
-- **Simba marker:** at ~17 weeks he is in peak tooth-loss/chewing phase — expect chewing, drooling, mild gum bleeding, possible appetite dips.
+- **Simba marker:** at ~18 weeks he is in peak tooth-loss/chewing phase — expect chewing, drooling, mild gum bleeding, possible appetite dips.
 
 ### Socialization windows
 - **Primary critical window: 3–12 weeks** [1]; commonly extended in practice to ~16 weeks.
