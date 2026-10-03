@@ -400,17 +400,49 @@ function extractAmount(t, unitRe) {
   return v;
 }
 /** Parse freeform telemetry text → structured event. Returns {event, notes[]} */
+/* --- negation guard (v2.4): "did not poop" / "didn't pee" / "no poop yet" ---
+   A negated mention must NEVER become a positive event — it is recorded as a
+   Note (observation) instead, so the telemetry stays truthful. */
+const NEG_SRC = "didn'?t|did not|doesn'?t|does not|hasn'?t|has not|haven'?t|have not|hadn'?t|had not|won'?t|will not|wouldn'?t|would not|couldn'?t|could not|never|without";
+const NEG_GROUPS = [
+  { id: 'pee', words: ['peed', 'pee', 'urinated', 'urination'] },
+  { id: 'poop', words: ['pooped', 'poop', 'bowel movement', 'stool'] },
+  { id: 'food', words: ['ate', 'eat', 'eating', 'food', 'kibble', 'meal', 'breakfast', 'lunch', 'dinner', 'fed'] },
+  { id: 'water', words: ['drank', 'drink', 'drinking', 'water', 'hydration'] },
+  { id: 'train', words: ['train', 'training', 'trained', 'sit', 'stay', 'recall', 'leash', 'session'] },
+  { id: 'nap', words: ['nap', 'napping', 'crate', 'sleep', 'bedtime', 'den'] },
+  { id: 'accident', words: ['accident', 'accidents'] },
+];
+function negatedGroups(t) {
+  const neg = new Set();
+  const clean = t.replace(/\bnot only\b/g, ' '); // "not only peed but also pooped" is positive
+  const clauses = clean.split(/[.,;!?]+|\bbut\b|\band then\b|\bthen\b/);
+  const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const cl of clauses) {
+    for (const g of NEG_GROUPS) {
+      for (const w of g.words) {
+        const kw = escRe(w);
+        const re = new RegExp(`\\b(?:${NEG_SRC})\\b(?:\\s+\\w+){0,3}\\s+\\b${kw}\\b|\\bno\\b\\s+\\b${kw}\\b`);
+        if (re.test(cl)) { neg.add(g.id); break; }
+      }
+    }
+  }
+  return neg;
+}
 function parseTelemetry(raw) {
-  const t = wordsToNum(raw);
+  let t = wordsToNum(raw);
+  t = t.replace(/\bpoop bags?\b/g, ' ').replace(/\bpee pads?\b|\bpotty pads?\b/g, ' '); // supplies, not telemetry
   const notes = [];
   const ev = { category: 'Note', raw_input: raw, location_substrate: 'Unknown' };
   // Word-boundary matching (avoids "ate" matching "water", "p " matching "poop")
   const has = (...ws) => ws.some(w => new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(t));
+  const neg = negatedGroups(t);
+  if (neg.size) notes.push('Negation noted (' + [...neg].join(', ') + ') — saved as observation, no event logged.');
 
   // --- elimination type ---
-  const peeW = has('peed', 'pee', 'urinated', 'urination');
-  const poopW = has('pooped', 'poop', 'bowel movement', 'stool');
-  if (/\baccident\b/.test(t) || has('inside', 'indoors', 'on the carpet', 'on carpet')) {
+  const peeW = has('peed', 'pee', 'urinated', 'urination') && !neg.has('pee');
+  const poopW = has('pooped', 'poop', 'bowel movement', 'stool') && !neg.has('poop');
+  if ((/\baccident\b/.test(t) || has('inside', 'indoors', 'on the carpet', 'on carpet')) && !neg.has('accident')) {
     ev.category = 'Elimination';
     ev.elimination_type = poopW ? 'Accident_Poop' : 'Accident_Pee';
   } else if (peeW && poopW) { ev.category = 'Elimination'; ev.elimination_type = 'Pee_Poop'; }
@@ -423,7 +455,7 @@ function parseTelemetry(raw) {
   // --- food / water / training / nap / weight ---
   const tbsp = extractAmount(t, 'tbsp|tablespoons?');
   const tsp = extractAmount(t, 'tsp|teaspoons?');
-  if (has('ate', 'food', 'kibble', 'meal', 'breakfast', 'lunch', 'dinner', 'fed') || tbsp > 0) {
+  if ((has('ate', 'food', 'kibble', 'meal', 'breakfast', 'lunch', 'dinner', 'fed') || tbsp > 0) && !neg.has('food')) {
     ev.category = 'Food';
     ev.kibble_offered_tbsp = tbsp || 0; ev.kibble_consumed_tbsp = tbsp || 0;
     ev.kibble_type = has('salmon') ? 'Salmon' : 'Chicken';
@@ -431,12 +463,12 @@ function parseTelemetry(raw) {
     if (has('goat')) { ev.toppers_detail = (ev.toppers_detail || '') + ' goat milk'; ev.event_kcal = (ev.event_kcal || 0) + 3 * CFG.KCAL_PER_TSP_GOATMILK; }
     ev.event_kcal = (ev.event_kcal || 0) + tbsp * CFG.KCAL_PER_TBSP[ev.kibble_type === 'Salmon' ? 'Salmon' : 'Chicken'];
   }
-  if (has('drank', 'water', 'hydration') || (tsp > 0 && ev.category !== 'Food')) {
+  if ((has('drank', 'water', 'hydration') || (tsp > 0 && ev.category !== 'Food')) && !neg.has('water')) {
     if (ev.category === 'Note') ev.category = 'Water';
     ev.water_consumed_tsp = tsp || 2;
   }
-  if (has('train', 'training', 'trained', 'sit', 'stay', 'recall', 'leash', 'session')) ev.category = 'Training';
-  if (has('nap', 'napping', 'crate', 'sleep', 'bedtime', 'den')) {
+  if (has('train', 'training', 'trained', 'sit', 'stay', 'recall', 'leash', 'session') && !neg.has('train')) ev.category = 'Training';
+  if (has('nap', 'napping', 'crate', 'sleep', 'bedtime', 'den') && !neg.has('nap')) {
     ev.category = has('nap', 'napping') ? 'Nap' : 'Crate';
     ev.crate_action = has('woke', 'wake', 'out of crate') ? 'Crate_Wake' : 'Crate_Entry';
   }
