@@ -1,8 +1,8 @@
 # General Canine / Puppy Science Reference
 
 > **AI INSTRUCTION — PRIORITY ORDER:** Consult this document SECOND, only after `cavapoo-specialized.md`. When the two conflict on a breed-relevant point, the breed document wins. Note: small-breed puppies (like Simba, ~7.5 lbs at ~17 weeks) run **below** average on bladder capacity and feeding intervals — apply the small-breed refinements in each section.
-> **Subject:** Simba — Cavapoo, intact male, born May 31, 2026; ~17 weeks old, ~7.50 lbs (as of Sep 28, 2026). Feeding: Deronda "Frontrunner Puppy" Chicken, Oats & Turkey + FreeStyle Salmon & Lentils (405 kcal/cup; AAFCO all-life-stages except large-breed growth).
-> **Last reviewed:** September 29, 2026. **Refresh:** monthly — check for new/updated guidance, especially AAFCO/WSAVA nutrition and AAHA vaccination guidelines.
+> **Subject:** Simba — Cavapoo, intact male, born May 31, 2026; ~18 weeks old, ~7.50 lbs (as of Sep 28, 2026). Feeding: Deronda "Frontrunner Puppy" Chicken, Oats & Turkey + FreeStyle Salmon & Lentils (405 kcal/cup; AAFCO all-life-stages except large-breed growth).
+> **Last reviewed:** October 3, 2026. **Refresh:** monthly — check for new/updated guidance, especially AAFCO/WSAVA nutrition and AAHA vaccination guidelines.
 
 ---
 
@@ -35,6 +35,7 @@
 - **RER = 70 × (body weight in kg)^0.75** [10].
 - **Standard DER multipliers for puppies** (Hemopet, clinical protocol): **×3.0 for puppies under 4 months; ×2.0 for puppies 4 months and older** [11].
 - **Individual variation is large:** adjust ±50% based on body-condition score, weight trend, activity, stool quality, and vet input; the multiplier is a starting point, not a prescription [11].
+- **Simba marker (Oct 3):** he has now crossed 4 months, so the Hemopet starting multiplier steps down from ×3.0 to ×2.0; the app's configurable 300–330 kcal/day target remains consistent with ~2× RER (≈351 kcal at 3.40 kg), adjusted from observed body condition.
 - **Small-breed caveat:** standard equations (NRC 2006) can **overestimate** energy needs of small breeds by ~20% — the Waltham puppy equation (Dobenecker-based) tends to fit better for small dogs; always adjust from observed body condition [21][22].
 
 ### AAFCO nutritional-adequacy statements (what to look for on the label)
@@ -60,7 +61,7 @@
 | Age | Typical total sleep/day |
 |---|---|
 | Young puppy (8–12 wks) | 18–20 hours |
-| 3–6 months (incl. Simba, ~17 wks) | 14–18 hours |
+| 3–6 months (incl. Simba, ~18 wks) | 14–18 hours |
 | Adult | 12–14 hours [23][24][25] |
 
 - Sleep supports memory consolidation (Kis et al.), behavior regulation, growth, and immune function [26][23].
@@ -89,7 +90,7 @@
 | 6–7 months | Full 42 permanent teeth [30][31][32] |
 
 - **Small-breed caution:** retained baby teeth are "particularly common in small and toy-breed dogs" — if baby teeth persist alongside adult teeth at ~6 months, have the vet check; retained teeth cause misalignment and decay [37 in breed doc].
-- **Simba marker:** at ~17 weeks he is in active adult-tooth eruption — expect heavy chewing, drooling, mild gum bleeding, possible appetite dips; offer appropriate chews [33].
+- **Simba marker:** at ~18 weeks he is in active adult-tooth eruption — expect heavy chewing, drooling, mild gum bleeding, possible appetite dips; offer appropriate chews [33].
 
 ---
 
@@ -97,7 +98,9 @@
 
 - **Core (DA2PP) series:** starts 6–8 weeks, repeated every 2–4 weeks **until at least 16 weeks**; booster at ~1 year, then every 3 years (2022 AAHA guidelines + 2024 update) [34][35].
 - **Rabies:** from 12–16 weeks per local law and product label [34].
-- **Lifestyle vaccines** (lepto, Bordetella, Lyme, flu): per local risk + vet advice [36][37].
+- **Leptospirosis is now AAHA-core** (re-designated ~2025 on ACVIM/WSAVA consensus — rising prevalence and zoonotic risk): 2-dose puppy series from 12 weeks, then annual boosters [53].
+- **Lifestyle vaccines** (Bordetella, Lyme, flu): per local risk + vet advice [36][37].
+- **Simba marker (Oct 3):** DA2PP series window (to 16 weeks) is closed — next milestone is the ~1-year booster. If his lepto 2-dose series started at 12 weeks it should also be complete; confirm against his vet records.
 - **Why repeated doses:** maternal antibodies can neutralize early vaccines — the series exists to catch the window when they wane [36].
 - **The socialization debate:** AVSAB consensus — **do not isolate the puppy until the series ends**; controlled socialization (clean, low-risk settings; known healthy dogs; carry in public) can start after initial vaccination/deworming. Avoid dog parks and unknown/unvaccinated dogs until the vet confirms protection [38][39][40].
 - The classic evidence: Dr. R.K. Anderson's 2013 parvo study — early, careful socialization before 16 weeks showed **no increased parvo risk** vs. later socialization [39].
@@ -213,3 +216,4 @@
 [50] https://www.edinburghlive.co.uk/news/uk-world-news/dog-vomit-colour-guide-see-34649241
 [51] https://d33gy59ovltp76.cloudfront.net/news/vomiting-or-diarrhea-in-pets-when-to-rush-to-the-vet
 [52] https://mindmybusinessnyc.wordpress.com/2026/09/15/digestive-issues-in-dogs-a-practical-guide-for-busy-dog-parents/
+[53] http://www.aaha.org/newstat/publications/leptospirosis-vaccination-recommended-to-be-core-for-most-dogs/
