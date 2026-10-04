@@ -101,10 +101,14 @@ body {
 
 /* ---------- Risk gauge ---------- */
 .risk-card { text-align: center; }
+/* v3.0 — compact risk tile */
+.risk-card { padding: 12px 14px; }
 .risk-label { font-size: 11.5px; color: var(--muted); letter-spacing: .12em; font-weight: 800; }
-.risk-value { font-family: var(--font-display); font-size: 38px; font-weight: 800; margin: 6px 0; letter-spacing: .02em; }
+.risk-value { font-family: var(--font-display); font-size: 30px; font-weight: 800; margin: 2px 0; letter-spacing: .02em; }
 .risk-LOW { color: var(--accent); } .risk-ELEVATED { color: var(--honey); } .risk-CRITICAL { color: var(--danger); }
-.risk-sub { font-size: 13.5px; color: var(--muted); }
+.risk-sub { font-size: 12.5px; color: var(--muted); }
+/* v3.0 — alerts sit at the top of the cockpit; give them a subtle highlight */
+.alert-card { border-color: #E4C56B; background: linear-gradient(180deg, #FFFBEE, var(--card)); }
 
 /* ---------- Stats & grids ---------- */
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
@@ -129,19 +133,20 @@ body {
 .countdown .t { color: var(--honey); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---------- Quick-log dock: uniform tiles ---------- */
-.dock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.dock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .dock-btn {
   background: linear-gradient(180deg, #FFFDF7, #F8F1DE);
   border: 1px solid #E7DCC3; color: var(--ink);
-  border-radius: 18px; padding: 12px 4px 10px; font-size: 30px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-  cursor: pointer; min-height: 88px; font-weight: 700;
+  border-radius: 15px; padding: 8px 4px 7px; font-size: 26px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  cursor: pointer; min-height: 70px; font-weight: 700;
   box-shadow: 0 2px 6px rgba(84, 66, 32, .06);
   transition: transform .08s ease, border-color .15s ease, background .15s ease;
 }
-.dock-btn span { font-size: 11.5px; font-weight: 800; color: var(--ink-soft); letter-spacing: .01em; }
+.dock-btn span { font-size: 11px; font-weight: 800; color: var(--ink-soft); letter-spacing: .01em; }
 .dock-btn:active { transform: scale(.93); border-color: var(--accent); background: var(--accent-soft); }
-.dock-btn.small { font-size: 26px; min-height: 88px; }
+.dock-btn.small { font-size: 23px; min-height: 70px; }
+.dock-card { padding: 14px; } /* v3.0 — compact dock */
 
 /* ---------- Buttons / inputs ---------- */
 .btn {
