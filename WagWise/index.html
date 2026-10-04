@@ -19,6 +19,7 @@
 <div class="brand"><span id="brandName">WagWise</span></div>
   <div class="topbar-right">
     <select id="topSubjectPick" class="pet-pick" aria-label="Switch pet" hidden></select>
+    <span id="appVersionTop" class="ver-pill" title="App version">v…</span>
     <div id="syncState" class="sync-state" title="Connection state">○ offline</div>
   </div>
 </header>
@@ -269,6 +270,8 @@
     <div class="card">
       <div class="card-title">About</div>
       <p class="muted small">WagWise <span id="appVersion">v…</span> — PWA. Deterministic physiological engines run on-device. Data syncs to your Supabase project. AI clinical reasoning happens with Muse (your agent) or your own Gemini key — nothing is sent anywhere without your action.</p>
+      <button id="updateCheckBtn" class="btn block">⟳ Check for updates</button>
+      <div class="muted small" id="updateStatus" style="margin-top:6px"></div>
     </div>
   </section>
 
@@ -511,7 +514,9 @@
 // Register service worker (offline PWA)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW failed', e));
+    // v3.5 — updateViaCache 'none': the update check always fetches sw.js fresh,
+    // so new versions are found immediately instead of waiting out HTTP cache.
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(e => console.warn('SW failed', e));
   });
   // v3.3 — when a new app version takes over, reload once so the user
   // is never stuck running stale code (e.g. an old mic engine).
