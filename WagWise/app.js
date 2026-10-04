@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.2'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.3'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1526,7 +1526,7 @@ function maybeWeightPrompt() {
 }
 
 /* ---------- Voice input (Web Speech API — free, no key) ---------- */
-let recog = null, listening = false, micUserStop = false, micFatal = false;
+let recog = null, listening = false, micUserStop = false, micFatal = false, micSession = 0;
 /* v2.2 — generalized voice engine: works from the Log tab mic and the global FAB */
 function startVoice(btn, labelEl, statusEl, goToLog) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1536,6 +1536,7 @@ function startVoice(btn, labelEl, statusEl, goToLog) {
   if (btn) btn.classList.add('listening');
   if (labelEl) labelEl.textContent = 'LISTENING… TAP TO STOP';
   listening = true; micUserStop = false; micFatal = false;
+  const mySession = ++micSession; // v3.3 — stale resumes from an older session can never fire
   let final = '';
   let seenFinals = 0; // v3.2 — consume each final-result index exactly once
   const finalizeMic = () => {
@@ -1569,7 +1570,7 @@ function startVoice(btn, labelEl, statusEl, goToLog) {
       // replays stale results, which caused the word-duplication bug.
       if (listening && !micUserStop && !micFatal) {
         setTimeout(() => {
-          if (listening && !micUserStop && !micFatal) {
+          if (listening && !micUserStop && !micFatal && micSession === mySession) {
             seenFinals = 0;
             recog = attach(new SR());
             try { recog.start(); } catch (e) {}
