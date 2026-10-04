@@ -201,6 +201,12 @@ textarea { resize: vertical; font-family: inherit; }
 }
 .seg button.active { background: var(--card); color: var(--accent-deep); box-shadow: var(--shadow); }
 
+/* v3.7 — meal-mix rows: food name left, amount input right */
+.foodrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.foodrow-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.foodrow-name b { font-size: 14px; }
+.foodrow input { width: 92px; flex: none; text-align: right; }
+
 /* ---------- Connection / auth ---------- */
 .conn-status { font-size: 14.5px; font-weight: 700; }
 .conn-ok { color: var(--accent-deep); }
