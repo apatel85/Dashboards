@@ -49,8 +49,19 @@ body {
   background: rgba(255, 253, 247, .86); backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
 }
-.brand { font-family: var(--font-display); font-weight: 800; font-size: 19px; display: flex; align-items: center; gap: 10px; letter-spacing: .01em; }
-.brand::before {
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.pet-pick {
+  font: 700 13px var(--font-body); color: var(--ink);
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 6px 8px; max-width: 130px; cursor: pointer;
+}
+@media (max-width: 480px) {
+  #topbar { padding: 11px 12px; }
+  .brand { font-size: 16px; min-width: 0; }
+  .brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pet-pick { max-width: 104px; }
+}
+.brand { font-family: var(--font-display); font-weight: 800; font-size: 19px; display: flex; align-items: center; gap: 10px; letter-spacing: .01em; }.brand::before {
   content: "🐾"; display: inline-flex; align-items: center; justify-content: center;
   width: 36px; height: 36px; border-radius: 13px; font-size: 19px;
   background: linear-gradient(135deg, var(--accent2), var(--accent-deep));
@@ -133,19 +144,20 @@ body {
 .countdown .t { color: var(--honey); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---------- Quick-log dock: uniform tiles ---------- */
-.dock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.dock { display: grid; grid-template-columns: repeat(auto-fit, minmax(52px, 1fr)); gap: 8px; }
+/* v3.1 — 9 tiles: 1 row on ≥640px (body max-width), 2 rows (5+4) on phones */
 .dock-btn {
   background: linear-gradient(180deg, #FFFDF7, #F8F1DE);
   border: 1px solid #E7DCC3; color: var(--ink);
-  border-radius: 15px; padding: 8px 4px 7px; font-size: 26px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  cursor: pointer; min-height: 70px; font-weight: 700;
+  border-radius: 14px; padding: 7px 2px 6px; font-size: 24px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  cursor: pointer; min-height: 64px; min-width: 0; font-weight: 700;
   box-shadow: 0 2px 6px rgba(84, 66, 32, .06);
   transition: transform .08s ease, border-color .15s ease, background .15s ease;
 }
-.dock-btn span { font-size: 11px; font-weight: 800; color: var(--ink-soft); letter-spacing: .01em; }
+.dock-btn span { font-size: 10.5px; font-weight: 800; color: var(--ink-soft); letter-spacing: .01em; white-space: nowrap; }
 .dock-btn:active { transform: scale(.93); border-color: var(--accent); background: var(--accent-soft); }
-.dock-btn.small { font-size: 23px; min-height: 70px; }
+.dock-btn.small { font-size: 22px; min-height: 64px; }
 .dock-card { padding: 14px; } /* v3.0 — compact dock */
 
 /* ---------- Buttons / inputs ---------- */
@@ -294,9 +306,6 @@ canvas { width: 100%; background: var(--bg); border: 1px solid var(--line); bord
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px;
   font-size: 14px; box-shadow: var(--shadow);
 }
-.pet-switch { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
-.pet-switch select { flex: 1; margin: 0; }
-.pet-switch .btn { white-space: nowrap; }
 
 /* Vet report */
 .vet-head h2 { font-family: var(--font-display); margin: 0 0 6px; font-size: 22px; }
