@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.11'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.12'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -798,31 +798,147 @@ function minsSinceFluidNote(st) {
   const m = Math.round((Date.now() - ts) / 60000);
   return m <= 45 ? `peak filtration window (${m}m)` : 'drained';
 }
-function renderCountdowns(st) {
-  const box = $('countdowns'); const items = [];
-  careReminders().forEach(r => items.push([r.label, r.ms, r.action || null])); // v2.0 med/vax due
-  const now = new Date();
-  const hm = s => { const [h, m] = s.split(':').map(Number); const d = new Date(); d.setHours(h, m, 0, 0); return d; };
-  // Water cutoff
-  const wc = hm(CFG.WATER_CUTOFF);
-  if (now < wc) items.push(['💧 Hard water cutoff ' + fmtClock(CFG.WATER_CUTOFF), wc - now, () => { localStorage.setItem('st_bowls', '1'); renderCockpit(); toast('Water bowls marked as pulled.'); }]);
-  // Pre-bed drain + lockdown
-  const bed = hm(CFG.BEDTIME);
+/* ---------- v3.12 — "Next up" action panel ----------
+   Data-driven action items with time windows + live countdowns. Recomputed
+   from history on every render, so each logged event refreshes the windows.
+   Pure where possible — tested. */
+function medianNum(a) { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+/** Pure: median minutes from meal end to next pee (within 4h), from history. Tested. */
+function postMealPeeLatencyMin(events) {
+  const evs = [...events].sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
+  const lat = [];
+  evs.forEach((e, i) => {
+    if (e.category !== 'Food') return;
+    const t0 = new Date(e.logged_at).getTime();
+    const nxt = evs.slice(i + 1).find(x => isPee(x) && (new Date(x.logged_at).getTime() - t0) <= 4 * 3600000);
+    if (nxt) lat.push((new Date(nxt.logged_at).getTime() - t0) / 60000);
+  });
+  return Math.round(medianNum(lat) ?? 50);
+}
+/** Pure: median clock-minutes of the day's 2nd poop. Tested. */
+function bowel2ClockMin(events) {
+  const byDay = {};
+  events.forEach(e => {
+    if (!['Poop', 'Pee_Poop'].includes(e.elimination_type)) return;
+    const d = new Date(e.logged_at), k = d.toDateString();
+    (byDay[k] = byDay[k] || []).push(d.getHours() * 60 + d.getMinutes());
+  });
+  const seconds = Object.values(byDay).filter(a => a.length >= 2).map(a => a.sort((x, y) => x - y)[1]);
+  return Math.round(medianNum(seconds) ?? (17 * 60 + 18)); // v3.10 master-log median 5:18 PM
+}
+/** Pure: countdown text for an action item. Tested. */
+function actionCountdownText(it, nowMs) {
+  if (it.done) return 'done ✓';
+  const s = it.winStart.getTime(), e = it.winEnd.getTime();
+  if (nowMs < s) return 'in ' + fmtDur((s - nowMs) / 60000);
+  if (nowMs <= e) return 'now · ' + fmtDur((e - nowMs) / 60000) + ' left';
+  return 'missed';
+}
+/** Pure: build the ordered action items. doneMap = {id:1} manual check-offs.
+    hist = trailing history, today = today's events, avgHold = personalAvgHold(). Tested. */
+function buildNextActions(hist, today, st, now, doneMap, avgHold) {
+  const items = [], nowMs = now.getTime();
+  const atHM = (h, m, dayOff = 0) => { const d = new Date(now); d.setDate(d.getDate() + dayOff); d.setHours(h, m, 0, 0); return d; };
+  const hmParts = s => s.split(':').map(Number);
+  const peeAt = e => new Date(e.logged_at).getTime();
+  const mk = (id, icon, label, winStart, winEnd, why, done) =>
+    ({ id, icon, label, winStart, winEnd, why, done: !!(done || (doneMap || {})[id]) });
+  const [wch, wcm] = hmParts(CFG.WATER_CUTOFF), wc = atHM(wch, wcm);
+  const [bh, bm] = hmParts(CFG.BEDTIME), bed = atHM(bh, bm);
+  // 0. meal dish pickup
+  if (st.mealInProgress && st.lastMealAt) {
+    const end = new Date(new Date(st.lastMealAt).getTime() + CFG.MEAL_WINDOW_MIN * 60000);
+    if (end.getTime() > nowMs) items.push(mk('dish-pickup', '🍽️', 'Dish pickup', end, end, `${CFG.MEAL_WINDOW_MIN}-min food pickup rule`, false));
+  }
+  // 1. post-nap take-out — highest-risk window
+  const lastWake = today.filter(isNapEnd).map(e => peeAt(e)).sort((a, b) => b - a)[0];
+  if (!st.asleep && lastWake && (nowMs - lastWake) / 60000 <= 30 && !today.some(e => isPee(e) && peeAt(e) > lastWake))
+    items.push(mk('nap-out', '⏰', 'Take out — just woke up', new Date(nowMs), new Date(nowMs + 15 * 60000),
+      'post-nap = highest-risk window', false));
+  // 2. post-meal potty intercept
+  const meals = today.filter(e => e.category === 'Food');
+  const lastMeal = meals.length ? peeAt(meals[meals.length - 1]) : null;
+  if (lastMeal && (nowMs - lastMeal) / 60000 <= 100) {
+    const lat = postMealPeeLatencyMin(hist), c = lastMeal + lat * 60000;
+    const done = today.some(e => isPee(e) && (peeAt(e) - lastMeal) > 60000 && (peeAt(e) - lastMeal) < 130 * 60000);
+    items.push(mk('meal-intercept', '🍽️', 'Post-meal potty intercept', new Date(c - 10 * 60000), new Date(c + 10 * 60000),
+      `post-meal urge median ${lat}m (your history)`, done));
+  }
+  // 3. general pee window from the bladder model (suppressed when nap-out is active)
+  if (!st.asleep && !items.some(i => i.id === 'nap-out')) {
+    const pees = today.filter(isPee), lastPeeT = pees.length ? peeAt(pees[pees.length - 1]) : null;
+    if (!lastPeeT) items.push(mk('pee-window', '🚻', 'Morning pee', new Date(nowMs), new Date(nowMs + 30 * 60000),
+      'no pee logged yet today', false));
+    else {
+      const due = lastPeeT + avgHold * 60000;
+      const done = (nowMs - lastPeeT) < 25 * 60000;
+      items.push(mk('pee-window', '🚻', 'Pee window', new Date(due - 15 * 60000), new Date(due + 15 * 60000),
+        `avg hold ${Math.round(avgHold)}m · last pee ${fmtTime(new Date(lastPeeT))}`, done));
+    }
+  }
+  // 4. bowel #2 window
+  const poops = today.filter(e => ['Poop', 'Pee_Poop'].includes(e.elimination_type)).length;
+  if (poops < 2) {
+    const cmin = bowel2ClockMin(hist), c = atHM(Math.floor(cmin / 60), cmin % 60);
+    if (nowMs < c.getTime() + 90 * 60000)
+      items.push(mk('poop2', '💩', 'Bowel #2 window', new Date(c.getTime() - 60 * 60000), new Date(c.getTime() + 60 * 60000),
+        `bowel #2 median ${fmtTime(c)} (your history)`, false));
+  }
+  // 5. water cutoff
+  if (nowMs < wc.getTime() + 30 * 60000)
+    items.push(mk('water-cutoff', '💧', 'Hard water cutoff ' + fmtClock(CFG.WATER_CUTOFF), wc, wc,
+      'shut down renal inflow for the night', st.waterBowlsPulled));
+  // 6. pre-bed drain + 7. crate lockdown
   const drain = new Date(bed.getTime() - CFG.PRE_BED_DRAIN_MIN * 60000);
-  if (now < drain) items.push(['🌙 Pre-bed lawn drain (~' + fmtTime(drain) + ')', drain - now, null]);
-  if (now < bed) items.push(['💤 Overnight den lockdown ' + fmtClock(CFG.BEDTIME), bed - now, null]);
-  // Meal pickup countdown
-  if (st.mealInProgress) {
-    const end = new Date(st.lastMealAt.getTime() + CFG.MEAL_WINDOW_MIN * 60000);
-    if (end > now) items.push(['🍽️ Dish pickup in', end - now, null]);
+  if (nowMs < bed.getTime())
+    items.push(mk('drain', '🌙', 'Pre-bed lawn drain', drain, bed, 'reset bladder to true zero',
+      today.some(e => isPee(e) && peeAt(e) > drain.getTime() - 30 * 60000)));
+  if (nowMs < bed.getTime() + 20 * 60000)
+    items.push(mk('crate', '💤', 'Overnight den lockdown ' + fmtClock(CFG.BEDTIME), bed, new Date(bed.getTime() + 15 * 60000),
+      'covered crate + brown noise', false));
+  // 8. tomorrow morning pee (evening lookahead)
+  if (nowMs > bed.getTime() - 60 * 60000) {
+    const morn = atHM(7, 43, 1); // v3.10 master-log median wake 7:43 AM
+    items.push(mk('morning-pee', '🌅', 'Morning pee', new Date(morn.getTime() - 15 * 60000), new Date(morn.getTime() + 15 * 60000),
+      'median wake 7:43 AM (your history)', false));
   }
-  box.innerHTML = items.length ? '' : '<div class="muted">No active countdowns.</div>';
-  for (const [label, ms, action] of items) {
+  return items.sort((a, b) => a.winStart - b.winStart).slice(0, 6);
+}
+function renderCountdowns(st) {
+  const box = $('countdowns'); const now = new Date(); const nowMs = now.getTime();
+  const dayKey = 'actionDone:' + todayStr();
+  const doneMap = JSON.parse(localStorage.getItem(dayKey) || '{}');
+  const checkOff = id => { const d = JSON.parse(localStorage.getItem(dayKey) || '{}'); d[id] = 1; localStorage.setItem(dayKey, JSON.stringify(d)); renderCockpit(); };
+  box.innerHTML = '';
+  // v2.0 med/vax reminders keep their compact treatment
+  careReminders().forEach(r => {
     const div = document.createElement('div'); div.className = 'countdown';
-    div.innerHTML = `<span>${esc(label)}</span><span class="t">${fmtDur(ms / 60000)}${action ? ' <button class="btn small">done</button>' : ''}</span>`;
-    if (action) div.querySelector('button').onclick = action;
+    div.innerHTML = `<span>${esc(r.label)}</span><span class="t">${fmtDur(r.ms / 60000)}${r.action ? ' <button class="btn small">done</button>' : ''}</span>`;
+    if (r.action) div.querySelector('button').onclick = r.action;
     box.appendChild(div);
-  }
+  });
+  // v3.12 — data-driven action items with windows + live countdowns
+  const actions = buildNextActions(eventsInDays(90), S.events, st, now, doneMap, personalAvgHold());
+  actions.forEach(a => {
+    const cd = actionCountdownText(a, nowMs);
+    const point = a.winStart.getTime() === a.winEnd.getTime();
+    const win = point ? fmtTime(a.winStart) : `${fmtTime(a.winStart)}–${fmtTime(a.winEnd)}`;
+    const div = document.createElement('div');
+    div.className = 'nextup' + (a.done ? ' done' : cd === 'missed' ? ' missed' : '');
+    div.innerHTML = `
+      <div class="nu-main"><span class="nu-icon">${a.icon}</span>
+        <div><div class="nu-label">${esc(a.label)} <span class="nu-win">${win}</span></div>
+        <div class="nu-why">${esc(a.why)}</div></div></div>
+      <div class="nu-right"><span class="nu-count">${cd}</span>
+        ${!a.done ? `<button class="btn small" data-nu="${a.id}" title="Mark done">✓</button>` : ''}</div>`;
+    const btn = div.querySelector('[data-nu]');
+    if (btn) btn.onclick = () => {
+      if (a.id === 'water-cutoff') { localStorage.setItem('st_bowls', '1'); toast('Water bowls marked as pulled.'); }
+      checkOff(a.id);
+    };
+    box.appendChild(div);
+  });
+  if (!box.children.length) box.innerHTML = '<div class="muted">Nothing on the schedule.</div>';
 }
 function renderAlerts(alerts) {
   const card = $('alertCard'), list = $('alertList');
