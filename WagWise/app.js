@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.10.3'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.11'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -32,8 +32,50 @@ const FOODS = [
   { id: 'freestyle', short: 'FreeStyle Small Breed', name: 'Nulo FreeStyle Small Breed — Salmon & Lentils', kcalTbsp: 25.31, defaultTbsp: 0, kcalCup: 405, kcalSrc: 'bag' },
   { id: 'medalseries', short: 'MedalSeries Small Breed', name: 'Nulo MedalSeries Ancient Grains Small Breed — Salmon, Oats & Acadian Redfish', kcalTbsp: 26.69, defaultTbsp: 0, kcalCup: 427, kcalSrc: 'mfr' },
 ];
+/* ---------- v3.11 — snack library ----------
+   Portions researched 2026-10-04 (analysis/snack-portions.md):
+   experts AKC Dr. Jerry Klein, Tufts Drs. Heinze/Freeman, WSAVA; kcal from
+   USDA FoodData Central. puppy = portion for Simba NOW (~8 lbs, 18 wks),
+   pre-filled in the sheet; adultMax = cap for adult Cavapoo (~13 lbs).
+   Treats+snacks combined must stay ≤10% of daily kcal (~30-33 kcal). */
+const SNACKS = [
+  { id: 'pumpkin', name: 'Pumpkin puree', emoji: '🎃', unit: 'tsp', units: 'tsp', puppy: 1, adultMax: 2, kcalPerUnit: 1.7, words: ['pumpkin'], note: 'Plain canned only — never pie filling' },
+  { id: 'yogurt', name: 'Plain yogurt', emoji: '🥛', unit: 'tsp', units: 'tsp', puppy: 2, adultMax: 3, kcalPerUnit: 3, words: ['yogurt', 'yoghurt'], note: 'Unsweetened, no xylitol/birch sugar' },
+  { id: 'goatmilk', name: 'Goat milk', emoji: '🐐', unit: 'tsp', units: 'tsp', puppy: 2, adultMax: 4, kcalPerUnit: 3.5, words: ['goat milk', 'goatmilk'], note: 'Easier to digest than cow milk' },
+  { id: 'cheese', name: 'Cheese cube', emoji: '🧀', unit: 'cube', units: 'cubes', puppy: 1, adultMax: 3, kcalPerUnit: 3, words: ['cheese'], note: 'Pea-size; low-fat mozzarella/cottage/goat — never blue cheese; occasional' },
+  { id: 'tofu', name: 'Tofu cube', emoji: '🍢', unit: 'cube', units: 'cubes', puppy: 1, adultMax: 2, kcalPerUnit: 9, words: ['tofu'], note: 'Plain, cooked, unsalted; occasional' },
+  { id: 'blueberry', name: 'Blueberries', emoji: '🫐', unit: 'berry', units: 'berries', puppy: 3, adultMax: 8, kcalPerUnit: 0.6, words: ['blueberr'], note: 'Halve for gulpy eaters' },
+  { id: 'strawberry', name: 'Strawberry', emoji: '🍓', unit: 'berry', units: 'berries', puppy: 1, adultMax: 1, kcalPerUnit: 5, words: ['strawberr'], note: 'Sliced; higher sugar than blueberries' },
+  { id: 'carrot', name: 'Baby carrot', emoji: '🥕', unit: 'piece', units: 'pieces', puppy: 1, adultMax: 2, kcalPerUnit: 2, words: ['carrot'], note: 'Cut into sticks for small dogs' },
+  { id: 'greenbean', name: 'Green beans', emoji: '🫛', unit: 'bean', units: 'beans', puppy: 3, adultMax: 8, kcalPerUnit: 1.3, words: ['green bean', 'greenbean'], note: 'Plain only — no salt/butter/garlic' },
+  { id: 'apple', name: 'Apple slice', emoji: '🍎', unit: 'slice', units: 'slices', puppy: 1, adultMax: 3, kcalPerUnit: 5, words: ['apple'], note: 'No seeds/core/stem' },
+  { id: 'watermelon', name: 'Watermelon cube', emoji: '🍉', unit: 'cube', units: 'cubes', puppy: 2, adultMax: 5, kcalPerUnit: 3, words: ['watermelon'], note: 'Seedless flesh only, no rind' },
+  { id: 'banana', name: 'Banana slice', emoji: '🍌', unit: 'slice', units: 'slices', puppy: 2, adultMax: 3, kcalPerUnit: 6, words: ['banana'], note: '¼-inch slices; high sugar — occasional only' },
+];
 /** Pure: food by id, defaulting to Frontrunner. Tested. */
 function foodById(id) { return FOODS.find(f => f.id === id) || FOODS[0]; }
+/** Pure: snack by id. Tested. */
+function snackById(id) { return SNACKS.find(s => s.id === id) || SNACKS[0]; }
+/** Pure: build a snack event; amount clamped to the adult max. Tested. */
+function buildSnackEvent(snackId, amount) {
+  const s = snackById(snackId);
+  let amt = +amount || 0;
+  const clamped = amt > s.adultMax;
+  if (clamped) amt = s.adultMax;
+  const kcal = +(amt * s.kcalPerUnit).toFixed(1);
+  return {
+    snack: s, amount: amt, clamped, kcal,
+    ev: {
+      category: 'Snack', snack_name: s.name, snack_amount: amt, snack_unit: s.unit, event_kcal: kcal,
+      status_outcome: `Snack: ${amt} ${amt === 1 ? s.unit : s.units} ${s.name.toLowerCase()} (~${kcal} kcal)`,
+    },
+  };
+}
+/** Pure: find the snack mentioned in free text, if any. Tested. */
+function snackFromWords(t) {
+  const low = String(t || '').toLowerCase();
+  return SNACKS.find(s => s.words.some(w => low.includes(w))) || null;
+}
 /** Pure: resolve any stored kibble_type (id, short name, full name, legacy 'Chicken'/'Salmon', or a "Mix: ..." label) to a food. Tested. */
 function foodFor(v) {
   const t = String(v || '').toLowerCase();
@@ -590,7 +632,21 @@ function parseTelemetry(raw, now = new Date()) {
     if (has('goat')) { ev.toppers_detail = (ev.toppers_detail || '') + ' goat milk'; ev.event_kcal = (ev.event_kcal || 0) + 3 * CFG.KCAL_PER_TSP_GOATMILK; }
     ev.event_kcal = (ev.event_kcal || 0) + tbsp * foodFor(ev.kibble_type).kcalTbsp;
   }
-  if ((has('drank', 'water', 'hydration') || (tsp > 0 && ev.category !== 'Food')) && !neg.has('water')) {
+  // v3.11 — snacks: "gave him a teaspoon of pumpkin puree", "3 blueberries as a snack".
+  // Goat milk stays a food topper when meal words are present without the word "snack".
+  const snackHit = snackFromWords(t);
+  const snackWord = has('snack', 'treat', 'treats');
+  const mealWord = has('ate', 'food', 'kibble', 'meal', 'fed', 'breakfast', 'lunch', 'dinner');
+  if (snackHit && !neg.has('snack') && (snackWord || !mealWord || snackHit.id !== 'goatmilk')) {
+    const s = snackHit;
+    let samt = 0;
+    if (s.unit === 'tsp') samt = tsp || 0;
+    else if (s.unit === 'tbsp') samt = tbsp || 0;
+    else { const pm = t.match(/(\d+(?:\.\d+)?)\s*(pieces?|cubes?|berr(?:y|ies)|slices?|beans?|carrots?|sticks?)/); samt = pm ? +pm[1] : 0; }
+    const built = buildSnackEvent(s.id, samt || s.puppy);
+    Object.assign(ev, built.ev);
+  }
+  if ((has('drank', 'water', 'hydration') || (tsp > 0 && !['Food', 'Snack'].includes(ev.category))) && !neg.has('water')) {
     if (ev.category === 'Note') ev.category = 'Water';
     ev.water_consumed_tsp = tsp || 2;
     if (ev.category === 'Water' && !ev.status_outcome) ev.status_outcome = `Drank ${ev.water_consumed_tsp} tsp water`; // v3.9.2
@@ -776,7 +832,7 @@ function renderAlerts(alerts) {
 }
 
 /* ---------- Quick-log dock ---------- */
-const CAT_EMOJI = { Pee: '💧', Poop: '💩', Food: '🥩', Water: '🚰', Nap: '💤', Training: '🎯', Weight: '⚖️', Note: '📝', Elimination: '🚻', Crate: '💤' };
+const CAT_EMOJI = { Pee: '💧', Poop: '💩', Food: '🥩', Water: '🚰', Nap: '💤', Training: '🎯', Weight: '⚖️', Note: '📝', Elimination: '🚻', Crate: '💤', Snack: '🍪' };
 /** Pure: quick-log-consistent icon for any event — pee/poop/accident resolve from elimination_type. Tested. */
 function eventEmoji(ev) {
   const t = ev.elimination_type || '';
@@ -895,6 +951,7 @@ async function toggleNap() {
 function quickLog(category) {
   if (category === 'Nap') return toggleNap(); // v3.9 — start/end toggle
   if (category === 'Food' || category === 'Water') return openSheet(category);
+  if (category === 'Snack') return openSheet('Snack'); // v3.11
   if (category === 'Accident') return openSheet('Accident');
   if (category === 'Poop') return openSheet('PoopScore');
   if (category === 'Weight') return openSheet('Weight');
@@ -938,6 +995,28 @@ function openSheet(kind, existing = null) {
       <input id="wTsp" type="number" step="0.5" value="4">
       <label class="lbl">Notes</label>
       <input id="wNote" placeholder="e.g. after play">`;
+  } else if (kind === 'Snack') {
+    // v3.11 — snack picker: researched portions (puppy now vs adult max), capped at adult max
+    b.innerHTML = `
+      <label class="lbl">Snack</label>
+      <select id="snPick">${SNACKS.map(s => `<option value="${s.id}">${s.emoji} ${esc(s.name)}</option>`).join('')}</select>
+      <p class="muted small" id="snGuide"></p>
+      <label class="lbl">Amount (<span id="snUnitLbl">tsp</span>)</label>
+      <div class="foodrow"><input id="snAmt" type="number" step="0.5" min="0" inputmode="decimal">
+      <button class="btn small" id="snPuppyBtn" type="button">Use puppy portion</button></div>
+      <p class="muted small" id="snKcal"></p>`;
+    const refreshSnackSheet = () => {
+      const s = snackById($('snPick').value);
+      $('snUnitLbl').textContent = s.units;
+      $('snGuide').textContent = `Puppy portion now: ${s.puppy} ${s.puppy === 1 ? s.unit : s.units} · Adult max: ${s.adultMax} ${s.units} · ~${s.kcalPerUnit} kcal/${s.unit}. ${s.note}.`;
+      const amt = +$('snAmt').value || 0;
+      $('snKcal').textContent = amt > 0 ? `≈ ${(amt * s.kcalPerUnit).toFixed(1)} kcal` : '';
+    };
+    $('snPick').onchange = () => { const s = snackById($('snPick').value); $('snAmt').value = s.puppy; refreshSnackSheet(); };
+    $('snAmt').oninput = refreshSnackSheet;
+    $('snPuppyBtn').onclick = () => { const s = snackById($('snPick').value); $('snAmt').value = s.puppy; refreshSnackSheet(); };
+    $('snAmt').value = SNACKS[0].puppy;
+    refreshSnackSheet();
   } else if (kind === 'Accident') {
     // v3.0 — quick-log accident: type + floor
     $('sheetTitle').textContent = 'Log accident';
@@ -1072,6 +1151,13 @@ function openSheet(kind, existing = null) {
       refreshMixSheet();
     }
     if (kind === 'Water') { $('wTsp').value = existing.water_consumed_tsp || 0; }
+    if (kind === 'Snack') { // v3.11
+      const s = SNACKS.find(x => x.name === existing.snack_name) || SNACKS[0];
+      $('snPick').value = s.id;
+      $('snPick').onchange(); // refreshes guide + unit label
+      $('snAmt').value = existing.snack_amount || s.puppy;
+      $('snAmt').oninput(); // refreshes kcal line
+    }
   }
   $('sheet').hidden = false;
 }
@@ -1176,6 +1262,12 @@ async function saveSheet() {
   } else if (kind === 'Water') {
     ev.category = 'Water'; ev.water_consumed_tsp = +$('wTsp').value || 0;
     ev.status_outcome = `Drank ${ev.water_consumed_tsp} tsp water` + ($('wNote').value ? ' (' + $('wNote').value + ')' : '');
+  } else if (kind === 'Snack') {
+    // v3.11 — one snack per event; amount clamped to the researched adult max
+    const built = buildSnackEvent($('snPick').value, +$('snAmt').value || 0);
+    if (!built.amount) { toast('Enter an amount.'); return; }
+    ev = Object.assign(ev, built.ev);
+    if (built.clamped) toast(`Capped at the adult max (${built.snack.adultMax} ${built.snack.units}).`);
   } else if (kind === 'Accident') {
     ev = Object.assign(ev, buildAccidentEvent(segVal('aTypeSeg', 'Pee'), segVal('aFloorSeg', 'Hard')));
   } else if (kind === 'PoopScore') {
@@ -1277,8 +1369,8 @@ function renderTimeline() {
       <div class="tl-actions"><button data-act="edit" title="Edit">✏️</button><button data-act="del" title="Delete">🗑</button></div>`;
     div.querySelector('[data-act=del]').onclick = () => { if (confirm('Delete this event?')) deleteEvent(ev.id); };
     div.querySelector('[data-act=edit]').onclick = () => {
-      // v2.7 — Food/Water keep their dedicated sheets; everything else uses the generic editor
-      openSheet(ev.category === 'Food' ? 'Food' : ev.category === 'Water' ? 'Water' : 'Edit', ev);
+      // v2.7 — Food/Water/Snack keep their dedicated sheets; everything else uses the generic editor
+      openSheet(ev.category === 'Food' ? 'Food' : ev.category === 'Water' ? 'Water' : ev.category === 'Snack' ? 'Snack' : 'Edit', ev);
     };
     if (ev.category === 'Walk') { // v2.0 — tap to view the GPS route
       const body = div.querySelector('.tl-body');
@@ -1617,7 +1709,7 @@ function download(name, content, type) {
   a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 function toCSV(rows) {
-  const cols = ['event_code', 'logged_at', 'day_number', 'category', 'elimination_type', 'fecal_score', 'kibble_consumed_tbsp', 'kibble_type', 'water_consumed_tsp', 'event_kcal', 'location_substrate', 'door_tell_observed', 'status_outcome', 'raw_input'];
+  const cols = ['event_code', 'logged_at', 'day_number', 'category', 'elimination_type', 'fecal_score', 'kibble_consumed_tbsp', 'kibble_type', 'water_consumed_tsp', 'snack_name', 'snack_amount', 'snack_unit', 'event_kcal', 'location_substrate', 'door_tell_observed', 'status_outcome', 'raw_input'];
   const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
   return cols.join(',') + '\n' + rows.map(r => cols.map(c => q(r[c])).join(',')).join('\n');
 }
@@ -1664,6 +1756,7 @@ async function exportXLSX() {
       Event_ID: r.event_code, Date: (r.logged_at || '').slice(0, 10), Timestamp: r.logged_at, Day: r.day_number,
       Category: r.category, Elimination: r.elimination_type, Fecal_Score: r.fecal_score,
       Kibble_tbsp: r.kibble_consumed_tbsp, Kibble_Type: r.kibble_type, Water_tsp: r.water_consumed_tsp,
+      Snack_Name: r.snack_name, Snack_Amount: r.snack_amount, Snack_Unit: r.snack_unit,
       Kcal: r.event_kcal, Substrate: r.location_substrate, Door_Tell: r.door_tell_observed, Notes: r.status_outcome || r.raw_input,
     }))), 'Full_Master_Log');
     const days = dayBuckets(rows);
@@ -2124,6 +2217,11 @@ function buildDailyDigest({ petName, breed, ageWeeks, weightLbs, dateISO, now, e
   const foodBits = Object.entries(byFood).map(([k, v]) => `${foodById(k).short} ${+v.toFixed(2)} tbsp`).join(' · ');
   L.push(`food: ${meals.length} meals, ${cups} cup, ${kcal} kcal (target ${kcalMin}-${kcalMax} kcal)${foodBits ? ' — ' + foodBits : ''}`);
   L.push(`water: ${waterTsp} tsp${foodTsp ? ` (bowl ${Math.round(bowlTsp)}, in food ${Math.round(foodTsp)})` : ''}`);
+  const snacks = evs.filter(e => e.category === 'Snack'); // v3.11
+  if (snacks.length) {
+    const snackKcal = snacks.reduce((a, e) => a + (+e.event_kcal || 0), 0);
+    L.push(`snack: ${snacks.length} (${Math.round(snackKcal)} kcal — ${snacks.map(e => e.snack_name || '').filter(Boolean).join(', ')})`);
+  }
   L.push(`walk: ${walks.length} (${walkKm} km, ${walkMin} min)`);
   L.push(`nap: ${napPairs.length} (${fmtDur(napMin)} total) | training: ${trains}`);
   L.push('');
