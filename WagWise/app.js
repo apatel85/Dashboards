@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.6'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.7'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -29,17 +29,18 @@ const CFG = {
    helpers below resolve ids, legacy 'Chicken'/'Salmon' values, and voice words. */
 const FOODS = [
   { id: 'frontrunner', short: 'Frontrunner Puppy', name: 'Nulo Frontrunner Puppy — Chicken, Oats & Turkey (Ancient Grains)', kcalTbsp: 26.94, defaultTbsp: 3.5, kcalCup: 431, kcalSrc: 'bag' },
-  { id: 'freestyle', short: 'FreeStyle Small Breed', name: 'Nulo FreeStyle Small Breed — Salmon & Lentils', kcalTbsp: 25.31, defaultTbsp: 3.5, kcalCup: 405, kcalSrc: 'bag' },
-  { id: 'medalseries', short: 'MedalSeries Small Breed', name: 'Nulo MedalSeries Ancient Grains Small Breed — Salmon, Oats & Acadian Redfish', kcalTbsp: 26.69, defaultTbsp: 3.5, kcalCup: 427, kcalSrc: 'mfr' },
+  { id: 'freestyle', short: 'FreeStyle Small Breed', name: 'Nulo FreeStyle Small Breed — Salmon & Lentils', kcalTbsp: 25.31, defaultTbsp: 0, kcalCup: 405, kcalSrc: 'bag' },
+  { id: 'medalseries', short: 'MedalSeries Small Breed', name: 'Nulo MedalSeries Ancient Grains Small Breed — Salmon, Oats & Acadian Redfish', kcalTbsp: 26.69, defaultTbsp: 0, kcalCup: 427, kcalSrc: 'mfr' },
 ];
 /** Pure: food by id, defaulting to Frontrunner. Tested. */
 function foodById(id) { return FOODS.find(f => f.id === id) || FOODS[0]; }
-/** Pure: resolve any stored kibble_type (id, full name, legacy 'Chicken'/'Salmon') to a food. Tested. */
+/** Pure: resolve any stored kibble_type (id, short name, full name, legacy 'Chicken'/'Salmon', or a "Mix: ..." label) to a food. Tested. */
 function foodFor(v) {
   const t = String(v || '').toLowerCase();
   if (!t) return FOODS[0];
   const byId = FOODS.find(f => f.id === t); if (byId) return byId;
   const byName = FOODS.find(f => f.name.toLowerCase() === t); if (byName) return byName;
+  const byShort = FOODS.find(f => f.short.toLowerCase() === t); if (byShort) return byShort;
   if (/oat|redfish|medal|acadian/.test(t)) return foodById('medalseries');
   if (/freestyle|lentil|salmon/.test(t)) return foodById('freestyle'); // legacy 'Salmon' → his established salmon food
   return FOODS[0]; // legacy 'Chicken' or anything else → Frontrunner
@@ -52,6 +53,34 @@ function foodIdFromWords(t) {
   if (/oat|redfish|medal|acadian/.test(x)) return 'medalseries';
   if (/freestyle|lentil|salmon/.test(x)) return 'freestyle';
   return 'frontrunner'; // chicken/turkey or unspecified → his primary food
+}
+/** Pure: build the stored kibble_type label from meal components [{food, tbsp}].
+    Single food → full product name (v3.6-compatible); a mix → "Mix: <full name> <tbsp> tbsp + ...". Tested. */
+function buildMixLabel(comp) {
+  const parts = comp.filter(c => c.tbsp > 0);
+  if (!parts.length) return foodById('frontrunner').name;
+  if (parts.length === 1) return parts[0].food.name;
+  return 'Mix: ' + parts.map(c => `${c.food.name} ${+c.tbsp.toFixed(2)} tbsp`).join(' + ');
+}
+/** Pure: parse a stored kibble_type back into [{id, tbsp}] — tbsp is null for
+    single/legacy foods (use the event's kibble_consumed_tbsp as the total). Tested. */
+function parseMix(v) {
+  const t = String(v || '').trim();
+  const m = t.match(/^mix:\s*(.+)$/i);
+  if (m) {
+    return m[1].split(/\s*\+\s*/).map(p => {
+      const pm = p.match(/^(.*?)\s+([\d.]+)\s*tbsp$/i);
+      if (!pm) return null;
+      return { id: foodFor(pm[1]).id, tbsp: parseFloat(pm[2]) };
+    }).filter(Boolean);
+  }
+  return [{ id: foodFor(t).id, tbsp: null }];
+}
+/** Pure: short human summary of a stored kibble_type for timelines/edits. Tested. */
+function mixSummary(v) {
+  const parts = parseMix(v);
+  if (parts.length === 1 && parts[0].tbsp == null) return foodById(parts[0].id).short;
+  return 'mix ' + parts.map(p => `${+p.tbsp.toFixed(2)} ${foodById(p.id).short}`).join(' + ');
 }
 
 /* Shared backend config (config.js) — one Supabase project for every app.
@@ -750,23 +779,28 @@ function segVal(id, fallback) {
   const b = document.querySelector(`#${id} button.active`);
   return b ? b.dataset.v : fallback;
 }
-/* v3.6 — food sheet helpers: each food remembers its own last-used amount. */
+/* v3.6 — food sheet helpers: each food remembers its own last-used amount (0 allowed). */
 function lastFoodTbsp(fid) {
   try {
     const v = parseFloat(localStorage.getItem('st_food_tbsp_' + fid));
-    if (isFinite(v) && v > 0) return v;
+    if (isFinite(v) && v >= 0) return v;
   } catch (e) {}
   return foodById(fid).defaultTbsp;
 }
-function refreshFoodSheet(fid) {
-  const f = foodById(fid);
-  const hh = $('fFoodHint');
-  if (hh) hh.textContent = `${f.name} · ${f.kcalTbsp.toFixed(2)} kcal/tbsp`;
-  const kh = $('fKcalHint'), tbspEl = $('fTbsp'), eggEl = $('fEgg');
-  if (kh && tbspEl) {
-    const kcal = (+tbspEl.value || 0) * f.kcalTbsp + (+(eggEl && eggEl.value) || 0) * CFG.KCAL_PER_EGG;
-    kh.textContent = `≈ ${Math.round(kcal)} kcal`;
-  }
+/* v3.7 — meal-mix sheet helpers: read the three amounts, show the live total. */
+function readMixSheet() {
+  return FOODS.map(f => ({ food: f, tbsp: (+($('fTbsp_' + f.id) || {}).value) || 0 }))
+    .filter(c => c.tbsp > 0);
+}
+function refreshMixSheet() {
+  const comp = readMixSheet();
+  const totalTbsp = comp.reduce((s, c) => s + c.tbsp, 0);
+  const egg = (+(($('fEgg') || {}).value)) || 0;
+  const kcal = comp.reduce((s, c) => s + c.tbsp * c.food.kcalTbsp, 0) + egg * CFG.KCAL_PER_EGG;
+  const hh = $('fMixHint');
+  if (hh) hh.textContent = comp.length
+    ? `Total ${+totalTbsp.toFixed(2)} tbsp (${comp.map(c => `${+c.tbsp.toFixed(2)} ${c.food.short}`).join(' + ')}) ≈ ${Math.round(kcal)} kcal incl. egg`
+    : 'Enter at least one food amount.';
 }
 function quickLog(category) {
   if (category === 'Food' || category === 'Water') return openSheet(category);
@@ -787,23 +821,24 @@ function openSheet(kind, existing = null) {
   $('sheetTitle').textContent = (existing ? 'Edit ' : 'Log ') + kind;
   const b = $('sheetBody');
   if (kind === 'Food') {
-    // v3.6 — multiple-choice food picker with proper product names + per-food amounts
+    // v3.7 — meal mix: one amount per food, accumulated into a single meal event.
+    // Egg + toppers apply ONCE to the whole meal, never per food.
     b.innerHTML = `
-      <label class="lbl">Food</label>
-      <div class="seg" id="fFoodSeg">${FOODS.map((f, i) => `<button data-v="${f.id}"${i === 0 ? ' class="active"' : ''}>${f.short}</button>`).join('')}</div>
-      <p class="muted small" id="fFoodHint"></p>
-      <label class="lbl">Amount (tbsp)</label>
-      <input id="fTbsp" type="number" step="0.25" inputmode="decimal" value="3.5">
-      <p class="muted small" id="fKcalHint"></p>
-      <label class="lbl">Toppers / notes</label>
-      <input id="fTop" placeholder="e.g. 0.5 scrambled egg, goat milk 2 tsp">
-      <label class="lbl">Egg (whole eggs)</label>
-      <input id="fEgg" type="number" step="0.25" value="0.5">`;
-    wireSeg('fFoodSeg', fid => { $('fTbsp').value = lastFoodTbsp(fid); refreshFoodSheet(fid); });
-    $('fTbsp').oninput = () => refreshFoodSheet(segVal('fFoodSeg', 'frontrunner'));
-    $('fEgg').oninput = () => refreshFoodSheet(segVal('fFoodSeg', 'frontrunner'));
-    $('fTbsp').value = lastFoodTbsp('frontrunner');
-    refreshFoodSheet('frontrunner');
+      <label class="lbl">Foods — tbsp of each</label>
+      ${FOODS.map(f => `
+      <div class="foodrow">
+        <div class="foodrow-name"><b>${f.short}</b><span class="muted small">${esc(f.name)}</span></div>
+        <input id="fTbsp_${f.id}" type="number" step="0.25" min="0" inputmode="decimal" value="${lastFoodTbsp(f.id)}">
+      </div>`).join('')}
+      <p class="muted small" id="fMixHint"></p>
+      <label class="lbl">Egg — whole eggs, for the whole meal</label>
+      <input id="fEgg" type="number" step="0.25" min="0" value="0.5">
+      <label class="lbl">Toppers / notes — for the whole meal</label>
+      <input id="fTop" placeholder="e.g. goat milk 2 tsp">`;
+    const updMix = () => refreshMixSheet();
+    FOODS.forEach(f => { $('fTbsp_' + f.id).oninput = updMix; });
+    $('fEgg').oninput = updMix;
+    refreshMixSheet();
   } else if (kind === 'Water') {
     b.innerHTML = `
       <label class="lbl">Water consumed (tsp)</label>
@@ -871,7 +906,9 @@ function openSheet(kind, existing = null) {
       <label class="lbl">Location</label>
       <input id="eLoc" value="${esc(ev.location_substrate || '')}" placeholder="e.g. Lawn Grass">
       <div data-enums="Food" hidden>
-        <label class="lbl">Food</label><select id="eFood">${FOODS.map(f => `<option value="${f.id}"${foodFor(ev.kibble_type).id === f.id ? ' selected' : ''}>${esc(f.name)}</option>`).join('')}</select>
+        ${parseMix(ev.kibble_type).length > 1
+          ? `<label class="lbl">Food</label><p class="muted small">${esc(mixSummary(ev.kibble_type))} — full product names in the log.<br>To change the mix amounts, edit this event from the timeline (Food opens the meal editor).</p>`
+          : `<label class="lbl">Food</label><select id="eFood">${FOODS.map(f => `<option value="${f.id}"${foodFor(ev.kibble_type).id === f.id ? ' selected' : ''}>${esc(f.name)}</option>`).join('')}</select>`}
         <label class="lbl">kcal</label><input id="eKcal" type="number" step="1" value="${ev.event_kcal || 0}">
         <label class="lbl">Kibble (tbsp)</label><input id="eTbsp" type="number" step="0.25" value="${ev.kibble_consumed_tbsp || 0}">
       </div>
@@ -926,12 +963,17 @@ function openSheet(kind, existing = null) {
   }
   if (existing) {
     if (kind === 'Food') {
-      // v3.6 — restore the saved food in the picker
-      const fid = foodFor(existing.kibble_type).id;
-      document.querySelectorAll('#fFoodSeg button').forEach(x => x.classList.toggle('active', x.dataset.v === fid));
-      $('fTbsp').value = existing.kibble_consumed_tbsp || 0;
+      // v3.7 — restore each mix component amount (single-food events → their total)
+      const parts = parseMix(existing.kibble_type);
+      const total = +existing.kibble_consumed_tbsp || 0;
+      FOODS.forEach(f => {
+        const p = parts.find(x => x.id === f.id);
+        const amt = (p && p.tbsp != null) ? p.tbsp
+          : (parts.length === 1 && parts[0].id === f.id) ? total : 0;
+        $('fTbsp_' + f.id).value = amt;
+      });
       $('fTop').value = existing.toppers_detail || '';
-      refreshFoodSheet(fid);
+      refreshMixSheet();
     }
     if (kind === 'Water') { $('wTsp').value = existing.water_consumed_tsp || 0; }
   }
@@ -942,6 +984,7 @@ function summarizeEdit(p) {
   const bits = [];
   const tp = (p.elimination_type || p.crate_action || '').replace(/_/g, ' ');
   if (tp) bits.push(tp);
+  if (p.category === 'Food' && p.kibble_type) bits.push(mixSummary(p.kibble_type)); // v3.7 — mix breakdown
   if (p.category === 'Food' && p.event_kcal) bits.push(p.event_kcal + ' kcal');
   if (p.category === 'Water' && p.water_consumed_tsp) bits.push(p.water_consumed_tsp + ' tsp water');
   if (p.fecal_score) bits.push('score ' + p.fecal_score);
@@ -962,7 +1005,21 @@ function buildEditPatch(prev, f) {
   if (f.cat === 'Elimination') { patch.elimination_type = f.type || null; patch.crate_action = null; }
   else if (f.cat === 'Nap') { patch.crate_action = f.type || null; patch.elimination_type = null; }
   else { patch.elimination_type = null; patch.crate_action = null; }
-  if (f.cat === 'Food') { patch.event_kcal = +f.kcal || 0; patch.kibble_consumed_tbsp = +f.tbsp || 0; if (f.food) patch.kibble_type = foodById(f.food).name; }
+  if (f.cat === 'Food') {
+    patch.event_kcal = +f.kcal || 0;
+    const newTbsp = +f.tbsp || 0;
+    patch.kibble_consumed_tbsp = newTbsp;
+    if (f.food) patch.kibble_type = foodById(f.food).name;
+    else {
+      // v3.7 — mix event edited here: re-scale components proportionally so the label never goes stale
+      const parts = parseMix(prev.kibble_type);
+      const oldTbsp = +prev.kibble_consumed_tbsp || 0;
+      if (parts.length > 1 && parts.every(p => p.tbsp != null) && oldTbsp > 0 && newTbsp >= 0) {
+        const ratio = newTbsp / oldTbsp;
+        patch.kibble_type = buildMixLabel(parts.map(p => ({ food: foodById(p.id), tbsp: +(p.tbsp * ratio).toFixed(2) })));
+      }
+    }
+  }
   if (f.cat === 'Water') { patch.water_consumed_tsp = +f.tsp || 0; }
   if (f.cat === 'Elimination') { const fs = +f.fecal; patch.fecal_score = fs >= 1 && fs <= 7 ? fs : null; }
   patch.status_outcome = summarizeEdit(patch);
@@ -998,15 +1055,19 @@ async function saveSheet() {
   if (kind === 'WalkView') return closeSheet(); // read-only route viewer
   let ev = existing ? { ...existing } : { category: kind };
   if (kind === 'Food') {
-    // v3.6 — save the full product name; each food remembers its own last amount
-    const fid = segVal('fFoodSeg', 'frontrunner'), food = foodById(fid);
-    const tbsp = +$('fTbsp').value || 0, egg = +$('fEgg').value || 0;
-    ev.category = 'Food'; ev.kibble_type = food.name;
-    ev.kibble_offered_tbsp = tbsp; ev.kibble_consumed_tbsp = tbsp;
+    // v3.7 — one meal event accumulating every food entered; egg + toppers count ONCE for the whole meal
+    const comp = readMixSheet();
+    if (!comp.length) { toast('Enter at least one food amount.'); return; }
+    const egg = +$('fEgg').value || 0;
+    const totalTbsp = +comp.reduce((s, c) => s + c.tbsp, 0).toFixed(2);
+    ev.category = 'Food'; ev.kibble_type = buildMixLabel(comp);
+    ev.kibble_offered_tbsp = totalTbsp; ev.kibble_consumed_tbsp = totalTbsp;
     ev.toppers_detail = $('fTop').value;
-    ev.event_kcal = tbsp * food.kcalTbsp + egg * CFG.KCAL_PER_EGG;
-    ev.status_outcome = `Ate ${tbsp} tbsp ${food.short}${ev.toppers_detail ? ' + ' + ev.toppers_detail : ''}`;
-    try { localStorage.setItem('st_food_tbsp_' + fid, String(tbsp)); } catch (e) {}
+    ev.event_kcal = comp.reduce((s, c) => s + c.tbsp * c.food.kcalTbsp, 0) + egg * CFG.KCAL_PER_EGG;
+    ev.status_outcome = `Ate ${totalTbsp} tbsp ${comp.length > 1 ? 'mix' : comp[0].food.short}` +
+      ` (${comp.map(c => `${+c.tbsp.toFixed(2)} ${c.food.short}`).join(' + ')})` +
+      (egg ? ` + ${egg} egg (whole meal)` : '') + (ev.toppers_detail ? ' + ' + ev.toppers_detail : '');
+    try { FOODS.forEach(f => localStorage.setItem('st_food_tbsp_' + f.id, String((comp.find(c => c.food.id === f.id) || { tbsp: 0 }).tbsp))); } catch (e) {}
   } else if (kind === 'Water') {
     ev.category = 'Water'; ev.water_consumed_tsp = +$('wTsp').value || 0;
     ev.status_outcome = `Drank ${ev.water_consumed_tsp} tsp water` + ($('wNote').value ? ' (' + $('wNote').value + ')' : '');
@@ -1913,9 +1974,18 @@ function buildDailyDigest({ petName, breed, ageWeeks, weightLbs, dateISO, now, e
   L.push('TODAY');
   L.push(`pee: ${pees.length} total (outdoor ${pees.filter(e => !isAcc(e)).length}, accidents ${accs.filter(a => /Pee/.test(a.elimination_type || '')).length})`);
   L.push(`poop: ${poops.length} total${scores.length ? ` (scores ${scores.join(',')})` : ''}`);
-  // v3.6 — per-food tbsp breakdown (tracks food type + habit, not just totals)
+  // v3.7 — per-food tbsp breakdown from mix labels (tracks food type + habit, not just totals)
   const byFood = {};
-  meals.forEach(m => { const k = foodFor(m.kibble_type).id; byFood[k] = (byFood[k] || 0) + (+m.kibble_consumed_tbsp || 0); });
+  const addFood = (id, tbsp) => { byFood[id] = (byFood[id] || 0) + tbsp; };
+  meals.forEach(m => {
+    const total = +m.kibble_consumed_tbsp || 0;
+    const parts = parseMix(m.kibble_type);
+    if (parts.length === 1 && parts[0].tbsp == null) addFood(parts[0].id, total); // single/legacy food
+    else {
+      const sum = parts.reduce((s, p) => s + (p.tbsp || 0), 0) || 1;
+      parts.forEach(p => addFood(p.id, total * (p.tbsp || 0) / sum));
+    }
+  });
   const foodBits = Object.entries(byFood).map(([k, v]) => `${foodById(k).short} ${+v.toFixed(2)} tbsp`).join(' · ');
   L.push(`food: ${meals.length} meals, ${cups} cup, ${kcal} kcal (target ${kcalMin}-${kcalMax} kcal)${foodBits ? ' — ' + foodBits : ''}`);
   L.push(`water: ${waterTsp} tsp`);
