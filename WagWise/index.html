@@ -513,6 +513,13 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW failed', e));
   });
+  // v3.3 — when a new app version takes over, reload once so the user
+  // is never stuck running stale code (e.g. an old mic engine).
+  let _wwUpdated = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (_wwUpdated) return; _wwUpdated = true;
+    setTimeout(() => window.location.reload(), 900);
+  });
 }
 </script>
 </body>
