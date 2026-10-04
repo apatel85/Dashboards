@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '2.9'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -57,6 +57,11 @@ const S = {
 const $ = id => document.getElementById(id);
 const todayStr = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+/** Pure: local calendar day for an ISO timestamp. Tested. */
+const localDay = iso => { const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+/** Pure: is this ISO timestamp today (local)? Tested. */
+const isToday = iso => localDay(iso) === todayStr();
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtTime = d => { d = new Date(d); let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`; };
 const fmtDur = mins => mins < 60 ? `${Math.round(mins)}m` : `${Math.floor(mins/60)}h ${Math.round(mins%60)}m`;
@@ -237,8 +242,9 @@ async function loadData() {
     .gte('logged_at', since.toISOString()).order('logged_at', { ascending: true });
   if (error) { console.warn('load failed', error); return; }
   S.history = data || [];
-  const t = todayStr();
-  S.events = S.history.filter(e => e.logged_at.slice(0,10) === t);
+  // v3.0 — compare LOCAL calendar days: logged_at is UTC, so a UTC slice
+  // hides everything logged after 8 PM EDT from "today"
+  S.events = S.history.filter(e => isToday(e.logged_at));
   renderAll();
 }
 
@@ -667,13 +673,46 @@ function renderAlerts(alerts) {
 /* ---------- Quick-log dock ---------- */
 const CAT_EMOJI = { Pee: '💧', Poop: '💩', Food: '🥩', Water: '🚰', Nap: '💤', Training: '🎯', Weight: '⚖️', Note: '📝', Elimination: '🚻', Crate: '💤' };
 
+/** Pure: build an accident event from the sheet choices. Tested. */
+function buildAccidentEvent(type, floor) {
+  const isPee = type !== 'Poop';
+  const carpet = floor === 'Carpet';
+  return {
+    category: 'Elimination',
+    elimination_type: isPee ? 'Accident_Pee' : 'Accident_Poop',
+    location_substrate: carpet ? 'Living Room Carpet' : 'Hard Floor',
+    status_outcome: `Accident: ${isPee ? 'Pee' : 'Poop'} on ${carpet ? 'carpet' : 'hard floor'}`,
+  };
+}
+/** Pure: build a poop event with fecal score. Tested. */
+function buildPoopEvent(score) {
+  const fs = Math.min(7, Math.max(1, parseInt(score, 10) || 4));
+  return {
+    category: 'Elimination', elimination_type: 'Poop',
+    location_substrate: 'Lawn Grass', fecal_score: fs,
+    status_outcome: `Poop (score ${fs})`,
+  };
+}
+/* Segmented option rows inside sheets. */
+function wireSeg(id, onPick) {
+  const seg = $(id); if (!seg) return;
+  seg.querySelectorAll('button').forEach(bt => bt.onclick = () => {
+    seg.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === bt));
+    if (onPick) onPick(bt.dataset.v);
+  });
+}
+function segVal(id, fallback) {
+  const b = document.querySelector(`#${id} button.active`);
+  return b ? b.dataset.v : fallback;
+}
 function quickLog(category) {
   if (category === 'Food' || category === 'Water') return openSheet(category);
+  if (category === 'Accident') return openSheet('Accident');
+  if (category === 'Poop') return openSheet('PoopScore');
   if (category === 'Weight') return openSheet('Weight');
   if (category === 'Note') return openSheet('Note');
   const ev = { category };
   if (category === 'Pee') { ev.category = 'Elimination'; ev.elimination_type = 'Pee'; ev.location_substrate = 'Lawn Grass'; }
-  if (category === 'Poop') { ev.category = 'Elimination'; ev.elimination_type = 'Poop'; ev.location_substrate = 'Lawn Grass'; ev.fecal_score = 2; }
   if (category === 'Nap') { ev.category = 'Nap'; ev.crate_action = 'Crate_Entry'; }
   if (category === 'Training') { ev.status_outcome = 'Training session logged'; }
   saveEvent(ev).then(r => { if (r) { toast(`${category} logged ✓`); loadData(); checkNudges(); } });
@@ -700,6 +739,25 @@ function openSheet(kind, existing = null) {
       <input id="wTsp" type="number" step="0.5" value="4">
       <label class="lbl">Notes</label>
       <input id="wNote" placeholder="e.g. after play">`;
+  } else if (kind === 'Accident') {
+    // v3.0 — quick-log accident: type + floor
+    $('sheetTitle').textContent = 'Log accident';
+    b.innerHTML = `
+      <label class="lbl">Type</label>
+      <div class="seg" id="aTypeSeg"><button data-v="Pee" class="active">💧 Pee</button><button data-v="Poop">💩 Poop</button></div>
+      <label class="lbl">Floor type</label>
+      <div class="seg" id="aFloorSeg"><button data-v="Hard" class="active">Hard floor</button><button data-v="Carpet">Carpet</button></div>
+      <p class="muted small">Saved as an indoor accident — counts against the success rate.</p>`;
+    wireSeg('aTypeSeg'); wireSeg('aFloorSeg');
+  } else if (kind === 'PoopScore') {
+    // v3.0 — quick-log poop: fecal score picker
+    $('sheetTitle').textContent = 'Log poop';
+    const descs = { 1: 'Hard pellets', 2: 'Firm', 3: 'Log-shaped', 4: 'Soft log · ideal', 5: 'Soft blobs', 6: 'Mushy', 7: 'Watery' };
+    b.innerHTML = `
+      <label class="lbl">Fecal score (1–7)</label>
+      <div class="seg" id="pScoreSeg">${[1, 2, 3, 4, 5, 6, 7].map(n => `<button data-v="${n}"${n === 4 ? ' class="active"' : ''}>${n}</button>`).join('')}</div>
+      <p class="muted small" id="pScoreHint">${descs[4]}</p>`;
+    wireSeg('pScoreSeg', v => { const h = $('pScoreHint'); if (h) h.textContent = descs[v] || ''; });
   } else if (kind === 'Weight') {
     b.innerHTML = `<label class="lbl">Weight (lbs)</label><input id="wtLbs" type="number" step="0.05" placeholder="7.60">`;
   } else if (kind === 'WeightPrompt') {
@@ -786,7 +844,7 @@ function openSheet(kind, existing = null) {
       <input id="bNote" placeholder="e.g. found the puddle by the door">`;
   }
   // v2.0 — back-dated entries: every manual log sheet gets a log-time picker
-  if (['Food', 'Water', 'Weight', 'Note'].includes(kind)) {
+  if (['Food', 'Water', 'Weight', 'Note', 'Accident', 'PoopScore'].includes(kind)) {
     b.innerHTML += `<label class="lbl">Log time <span class="hint">(back-date if needed)</span></label>
       <input id="logAt" type="datetime-local" value="${nowLocalInput()}">`;
   }
@@ -866,6 +924,10 @@ async function saveSheet() {
   } else if (kind === 'Water') {
     ev.category = 'Water'; ev.water_consumed_tsp = +$('wTsp').value || 0;
     ev.status_outcome = `Drank ${ev.water_consumed_tsp} tsp water` + ($('wNote').value ? ' (' + $('wNote').value + ')' : '');
+  } else if (kind === 'Accident') {
+    ev = Object.assign(ev, buildAccidentEvent(segVal('aTypeSeg', 'Pee'), segVal('aFloorSeg', 'Hard')));
+  } else if (kind === 'PoopScore') {
+    ev = Object.assign(ev, buildPoopEvent(segVal('pScoreSeg', '4')));
   } else if (kind === 'Weight') {
     const lbs = +$('wtLbs').value;
     if (!lbs) { toast('Enter a weight.'); return; }
@@ -979,7 +1041,7 @@ function filterLastDays(history, n, now = new Date()) {
 function eventsInDays(n) { return filterLastDays(S.history, n); }
 function dayBuckets(events) {
   const m = {};
-  events.forEach(e => { const d = e.logged_at.slice(0, 10); (m[d] = m[d] || []).push(e); });
+  events.forEach(e => { const d = localDay(e.logged_at); (m[d] = m[d] || []).push(e); }); // v3.0 — local days
   return m;
 }
 /* Pee probability per hour-of-day over the window: days with ≥1 pee in that hour / days with data */
@@ -1452,24 +1514,27 @@ function maybeWeightPrompt() {
 }
 
 /* ---------- Voice input (Web Speech API — free, no key) ---------- */
-let recog = null, listening = false;
+let recog = null, listening = false, micUserStop = false, micFatal = false;
 /* v2.2 — generalized voice engine: works from the Log tab mic and the global FAB */
 function startVoice(btn, labelEl, statusEl, goToLog) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const setStatus = t => { if (statusEl) statusEl.textContent = t; };
   if (!SR) { setStatus('Voice not supported in this browser — type instead.'); if (goToLog) toast('Voice not supported here — use the Log tab.'); return; }
-  if (listening) { if (recog) recog.stop(); return; }
-  recog = new SR(); recog.lang = 'en-US'; recog.interimResults = true;
+  if (listening) { micUserStop = true; if (recog) try { recog.stop(); } catch (e) {} return; } // v3.0 — tap toggles stop
+  recog = new SR(); recog.lang = 'en-US'; recog.interimResults = true; recog.continuous = true; // v3.0 — stay live until the user taps stop
   if (btn) btn.classList.add('listening');
   if (labelEl) labelEl.textContent = 'LISTENING… TAP TO STOP';
-  listening = true;
+  listening = true; micUserStop = false; micFatal = false;
   let final = '';
   recog.onresult = ev => {
     let interim = '';
-    for (const r of ev.results) { if (r.isFinal) final += r[0].transcript; else interim += r[0].transcript; }
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const r = ev.results[i];
+      if (r.isFinal) final += r[0].transcript; else interim += r[0].transcript;
+    }
     setStatus((final + interim).slice(-120));
   };
-  recog.onend = () => {
+  const finalizeMic = () => {
     if (btn) btn.classList.remove('listening');
     if (labelEl) labelEl.textContent = 'TAP TO SPEAK TELEMETRY';
     listening = false;
@@ -1481,8 +1546,20 @@ function startVoice(btn, labelEl, statusEl, goToLog) {
     }
     else setStatus('Did not catch that — try again.');
   };
-  recog.onerror = e => { setStatus('Mic error: ' + e.error); };
-  recog.start();
+  recog.onend = () => {
+    // v3.0 — manual stop: a pause must not end the session; silently resume
+    // listening until the user taps stop (or a fatal mic error occurs)
+    if (listening && !micUserStop && !micFatal) {
+      setTimeout(() => { try { if (listening && !micUserStop && !micFatal) recog.start(); } catch (e) {} }, 120);
+      return;
+    }
+    finalizeMic();
+  };
+  recog.onerror = e => {
+    setStatus('Mic error: ' + e.error);
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') micFatal = true;
+  };
+  try { recog.start(); } catch (e) { setStatus('Mic error: ' + e.message); listening = false; }
 }
 function toggleMic() { startVoice($('micBtn'), $('micLabel'), $('micStatus'), false); }
 function toggleMicFab() { startVoice($('micFab'), null, null, true); }
@@ -1730,7 +1807,7 @@ async function todaysWalks() {
       rows = data || [];
     } catch (e) { /* pre-migration */ }
   }
-  const local = JSON.parse(localStorage.getItem('st_walks') || '[]').filter(w => String(w.started_at).slice(0, 10) === t);
+  const local = JSON.parse(localStorage.getItem('st_walks') || '[]').filter(w => isToday(w.started_at)); // v3.0 — local days
   return rows.concat(local);
 }
 async function buildDigestUI() {
