@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.12'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.13'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -802,6 +802,39 @@ function minsSinceFluidNote(st) {
    Data-driven action items with time windows + live countdowns. Recomputed
    from history on every render, so each logged event refreshes the windows.
    Pure where possible — tested. */
+/* ---------- v3.13 — valid-data-only trend math ----------
+   Days with almost nothing logged are NOT real data: they neither dilute
+   probabilities nor break streaks, and the app reminds you to backfill them.
+   A day counts as valid with ≥2 logged events (a single stray event — e.g.
+   one pee then a forgotten day — is not a day of data). */
+function validDayKeys(events, minEvents = 2) {
+  const days = dayBuckets(events);
+  return Object.keys(days).filter(k => days[k].length >= minEvents);
+}
+/** Pure: valid awake pee-to-pee holds (minutes) from sorted pee events. Tested.
+    v3.13 — cap 240m (was 360): overnight sleep is ~9.7h, so anything longer is
+    sleep or a missing-data span, never a valid awake hold. */
+function awakeGaps(peesSorted) {
+  const gaps = [];
+  for (let i = 1; i < peesSorted.length; i++) {
+    const g = (new Date(peesSorted[i].logged_at) - new Date(peesSorted[i - 1].logged_at)) / 60000;
+    if (g > 10 && g < 240) gaps.push(g);
+  }
+  return gaps;
+}
+/** Pure: trailing n calendar days (excluding today) with zero logged events. Tested. */
+function missingDays(hist, now, n = 14) {
+  const days = dayBuckets(hist), out = [];
+  const keys = Object.keys(days).sort();
+  const first = keys.length ? keys[0] : todayStr(now);
+  for (let i = 1; i <= n; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    const k = todayStr(d);
+    if (k < first) break; // never nag about before he started logging
+    if (!days[k] || !days[k].length) out.push(k);
+  }
+  return out;
+}
 function medianNum(a) { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
 /** Pure: median minutes from meal end to next pee (within 4h), from history. Tested. */
 function postMealPeeLatencyMin(events) {
@@ -842,7 +875,9 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
   const hmParts = s => s.split(':').map(Number);
   const peeAt = e => new Date(e.logged_at).getTime();
   const mk = (id, icon, label, winStart, winEnd, why, done) =>
-    ({ id, icon, label, winStart, winEnd, why, done: !!(done || (doneMap || {})[id]) });
+    ({ id, icon, label, winStart, winEnd, why,
+       autoDone: !!done, manualDone: !!((doneMap || {})[id]),
+       done: !!(done || (doneMap || {})[id]) });
   const [wch, wcm] = hmParts(CFG.WATER_CUTOFF), wc = atHM(wch, wcm);
   const [bh, bm] = hmParts(CFG.BEDTIME), bed = atHM(bh, bm);
   // 0. meal dish pickup
@@ -904,6 +939,32 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
   }
   return items.sort((a, b) => a.winStart - b.winStart).slice(0, 6);
 }
+/* ---------- v3.13 — local action alerts (Notification API, $0, no server) ----------
+   Fires as a Next-up window opens (10-min heads-up), once per item per day.
+   Works while the app is open; browsers throttle background tabs, and a
+   fully-closed PWA cannot wake itself — the agent check-in backstop remains
+   the cover for that case (documented PWA limit). */
+function ntfyOn() { return localStorage.getItem('ntfy') === '1' && 'Notification' in window && Notification.permission === 'granted'; }
+function paintNtfyBtn() { const b = $('ntfyBtn'); if (!b) return; const on = ntfyOn(); b.textContent = on ? '🔔 on' : '🔔 off'; b.classList.toggle('primary', on); }
+async function toggleNtfy() {
+  if (!('Notification' in window)) { toast('Notifications not supported in this browser.'); return; }
+  if (Notification.permission === 'default') {
+    if (await Notification.requestPermission() !== 'granted') { toast('Permission denied — enable it in browser settings to use alerts.'); return; }
+  }
+  if (Notification.permission === 'denied') { toast('Blocked — enable notifications for this site in browser settings.'); return; }
+  const on = localStorage.getItem('ntfy') === '1';
+  localStorage.setItem('ntfy', on ? '0' : '1');
+  toast(on ? 'Action alerts off.' : "Action alerts on — I'll ping you as windows open.");
+  paintNtfyBtn(); renderCockpit();
+}
+function fireNtfy(a, win) {
+  const title = `${a.icon} ${a.label}`, body = `${win} — ${a.why}`;
+  const opts = { body, tag: 'nextup:' + todayStr() + ':' + a.id, icon: 'icons/icon-192.png' };
+  try {
+    if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(reg => reg.showNotification(title, opts)).catch(() => new Notification(title, opts));
+    else new Notification(title, opts);
+  } catch (e) { /* alerts are best-effort */ }
+}
 function renderCountdowns(st) {
   const box = $('countdowns'); const now = new Date(); const nowMs = now.getTime();
   const dayKey = 'actionDone:' + todayStr();
@@ -919,6 +980,21 @@ function renderCountdowns(st) {
   });
   // v3.12 — data-driven action items with windows + live countdowns
   const actions = buildNextActions(eventsInDays(90), S.events, st, now, doneMap, personalAvgHold());
+  // v3.13 — fire each alert once as its window opens (10-min heads-up)
+  if (ntfyOn()) {
+    const sentKey = 'ntfySent:' + todayStr(), sent = JSON.parse(localStorage.getItem(sentKey) || '{}');
+    let changed = false;
+    actions.forEach(a => {
+      if (a.done || sent[a.id]) return;
+      if (nowMs >= a.winStart.getTime() - 10 * 60000 && nowMs <= a.winEnd.getTime()) {
+        const point = a.winStart.getTime() === a.winEnd.getTime();
+        fireNtfy(a, point ? fmtTime(a.winStart) : `${fmtTime(a.winStart)}–${fmtTime(a.winEnd)}`);
+        sent[a.id] = 1; changed = true;
+      }
+    });
+    if (changed) localStorage.setItem(sentKey, JSON.stringify(sent));
+  }
+  paintNtfyBtn();
   actions.forEach(a => {
     const cd = actionCountdownText(a, nowMs);
     const point = a.winStart.getTime() === a.winEnd.getTime();
@@ -930,14 +1006,39 @@ function renderCountdowns(st) {
         <div><div class="nu-label">${esc(a.label)} <span class="nu-win">${win}</span></div>
         <div class="nu-why">${esc(a.why)}</div></div></div>
       <div class="nu-right"><span class="nu-count">${cd}</span>
-        ${!a.done ? `<button class="btn small" data-nu="${a.id}" title="Mark done">✓</button>` : ''}</div>`;
+        ${!a.done ? `<button class="btn small" data-nu="${a.id}" title="Mark done">✓</button>`
+          : a.manualDone ? `<button class="btn small" data-nuundo="${a.id}" title="Uncheck">↩</button>` : ''}</div>`;
     const btn = div.querySelector('[data-nu]');
     if (btn) btn.onclick = () => {
       if (a.id === 'water-cutoff') { localStorage.setItem('st_bowls', '1'); toast('Water bowls marked as pulled.'); }
       checkOff(a.id);
     };
+    const unbtn = div.querySelector('[data-nuundo]');
+    if (unbtn) unbtn.onclick = () => { // v3.13 — uncheck a mistaken tap
+      const d = JSON.parse(localStorage.getItem(dayKey) || '{}'); delete d[a.id];
+      localStorage.setItem(dayKey, JSON.stringify(d)); renderCockpit(); toast('Unchecked.');
+    };
     box.appendChild(div);
   });
+  // v3.13 — missing-day reminder (those days are excluded from all trend math)
+  const hist30 = eventsInDays(30);
+  const vset = new Set(validDayKeys(hist30));
+  if (vset.size >= 5) {
+    const firstK = Object.keys(dayBuckets(hist30)).sort()[0];
+    const miss = [];
+    for (let i = 1; i <= 14 && miss.length < 14; i++) {
+      const d = new Date(now); d.setDate(d.getDate() - i);
+      const k = todayStr(d);
+      if (k < firstK) break; // never nag about before he started logging
+      if (!vset.has(k)) miss.push(k); // zero logs OR too thin to count
+    }
+    if (miss.length) {
+      const div = document.createElement('div'); div.className = 'nu-missing';
+      const fmtD = k => new Date(k + 'T12:00:00').toLocaleDateString([], { month: 'short', day: 'numeric' });
+      div.textContent = `📝 Skipped in trends (too little data): ${miss.slice(0, 4).map(fmtD).join(', ')}${miss.length > 4 ? ` +${miss.length - 4} more` : ''} — backfill to keep predictions sharp.`;
+      box.prepend(div);
+    }
+  }
   if (!box.children.length) box.innerHTML = '<div class="muted">Nothing on the schedule.</div>';
 }
 function renderAlerts(alerts) {
@@ -1247,7 +1348,7 @@ function openSheet(kind, existing = null) {
   // destroys every node in the sheet, silently dropping the tap handlers that
   // wireSeg() had just attached to the PoopScore/Accident/Food pickers (taps
   // did nothing and the score always saved as the default). Appending preserves them.
-  if (['Food', 'Water', 'Weight', 'Note', 'Accident', 'PoopScore'].includes(kind)) {
+  if (['Food', 'Water', 'Weight', 'Note', 'Accident', 'PoopScore', 'Snack'].includes(kind)) {
     b.insertAdjacentHTML('beforeend', `<label class="lbl">Log time <span class="hint">(back-date if needed)</span></label>
       <input id="logAt" type="datetime-local" value="${nowLocalInput()}">`);
   }
@@ -1513,15 +1614,15 @@ function dayBuckets(events) {
 /* Pee probability per hour-of-day over the window: days with ≥1 pee in that hour / days with data */
 function hourlyProb(events, matchFn) {
   const days = dayBuckets(events);
-  const dayKeys = Object.keys(days);
+  const vkeys = validDayKeys(events); // v3.13 — stray partial days don't dilute probabilities
   const probs = new Array(24).fill(0), counts = new Array(24).fill(0);
-  dayKeys.forEach(d => {
+  vkeys.forEach(d => {
     const hours = new Set();
     days[d].forEach(e => { if (matchFn(e)) hours.add(new Date(e.logged_at).getHours()); });
     hours.forEach(h => counts[h]++);
   });
-  for (let h = 0; h < 24; h++) probs[h] = dayKeys.length ? counts[h] / dayKeys.length : 0;
-  return { probs, days: dayKeys.length };
+  for (let h = 0; h < 24; h++) probs[h] = vkeys.length ? counts[h] / vkeys.length : 0;
+  return { probs, days: vkeys.length };
 }
 const isPee = e => ['Pee', 'Pee_Poop', 'Micro_Pee'].includes(e.elimination_type);
 
@@ -1558,13 +1659,9 @@ function renderTrends() {
   const kcalByDay = dayKeys.map(d => days[d].reduce((a, e) => a + (+e.event_kcal || 0), 0));
   drawBars('chKcal', dayKeys.map(d => d.slice(5)), kcalByDay,
     { band: [CFG.KCAL_MIN, CFG.KCAL_MAX], colorFn: v => (v >= CFG.KCAL_MIN && v <= CFG.KCAL_MAX) ? '#35c37d' : '#f2b134' });
-  // Avg awake hold: pee-to-pee gaps while awake-ish (filter gaps < 6h as awake holds)
+  // Avg awake hold: pee-to-pee gaps while awake-ish (awakeGaps: valid holds only)
   const pees = evs.filter(isPee).sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
-  const gaps = [];
-  for (let i = 1; i < pees.length; i++) {
-    const g = (new Date(pees[i].logged_at) - new Date(pees[i - 1].logged_at)) / 60000;
-    if (g > 10 && g < 360) gaps.push(g);
-  }
+  const gaps = awakeGaps(pees);
   $('trHold').textContent = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) + 'm' : '—';
   const acc = evs.filter(e => ['Accident_Pee', 'Accident_Poop'].includes(e.elimination_type)).length;
   $('trAcc').textContent = acc;
@@ -1604,9 +1701,11 @@ function learnedWindows(events, matchFn, label, threshold = 0.8) {
   const { probs, days } = hourlyProb(events, matchFn);
   if (days < 3) return [];
   const daysWith = dayBuckets(events);
+  const vkeys = new Set(validDayKeys(events)); // v3.13 — cluster needs real days too
   const clusterDaysFor = (h0, h1) => {
     let n = 0;
     for (const d of Object.keys(daysWith)) {
+      if (!vkeys.has(d)) continue;
       if (daysWith[d].some(e => { const h = new Date(e.logged_at).getHours(); return matchFn(e) && h >= h0 && h <= h1; })) n++;
     }
     return n;
@@ -2417,7 +2516,7 @@ function wire() {
   });
   document.querySelectorAll('#kbTabs button').forEach(b => b.onclick = () => loadKnowledge(b.dataset.kb));
   $('buildDigestBtn').onclick = buildDigestUI;
-  $('copyDigestBtn').onclick = () => { $('digestOut').select(); document.execCommand('copy'); toast('Digest copied ✓'); };
+  const nb = $('ntfyBtn'); if (nb) nb.onclick = toggleNtfy; // v3.13 — action alerts toggle  $('copyDigestBtn').onclick = () => { $('digestOut').select(); document.execCommand('copy'); toast('Digest copied ✓'); };
   $('buildPromptBtn').onclick = buildAuditPrompt;
   $('copyPromptBtn').onclick = () => { $('auditPrompt').select(); document.execCommand('copy'); toast('Prompt copied ✓'); };
   $('saveGeminiBtn').onclick = () => { localStorage.setItem(CFG.LS.GEMINI, $('geminiKey').value.trim()); toast('Gemini key saved on this device.'); };
@@ -3018,14 +3117,16 @@ function accidentFreeStreak(history, now = new Date()) {
   const t = todayStr(now), y = todayStr(new Date(now.getTime() - 86400000));
   const anchor = days[t] ? t : (days[y] ? y : null);
   if (!anchor) return 0;
-  let streak = 0, d = new Date(anchor + 'T12:00:00');
-  for (;;) {
+  // v3.13 — a day with no logged data is skipped, not a streak-breaker:
+  // only real data counts.
+  let streak = 0; const d = new Date(anchor + 'T12:00:00');
+  for (let guard = 0; guard < 3650; guard++) {
     const k = todayStr(d), evs = days[k];
-    if (!evs || !evs.length) break;
-    if (evs.some(e => /Accident/.test(e.elimination_type || ''))) break;
-    streak++;
-    d = new Date(d.getTime() - 86400000);
-    if (streak > 3650) break;
+    if (evs && evs.length) {
+      if (evs.some(e => /Accident/.test(e.elimination_type || ''))) break;
+      streak++;
+    }
+    d.setDate(d.getDate() - 1);
   }
   return streak;
 }
