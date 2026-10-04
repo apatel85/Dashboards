@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.9'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.9.1'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -594,7 +594,7 @@ function parseTelemetry(raw, now = new Date()) {
     const wake = has('woke', 'wake', 'woken', 'out of crate');
     ev.category = has('nap', 'napping') ? 'Nap' : 'Crate';
     // v3.9 — explicit nap start/end
-    ev.crate_action = ev.category === 'Nap' ? (wake ? 'Nap_End' : 'Nap_Start') : (wake ? 'Crate_Wake' : 'Crate_Entry');
+    ev.crate_action = ev.category === 'Nap' ? (wake ? 'Crate_Exit' : 'Crate_Entry') : (wake ? 'Crate_Wake' : 'Crate_Entry'); // v3.9.1
     if (ev.category === 'Nap') ev.status_outcome = wake ? 'Nap ended' : 'Nap started';
   }
   const wMatch = t.match(/(\d+(?:\.\d+)?)\s*lbs?/);
@@ -878,10 +878,10 @@ async function toggleNap() {
   const start = napInProgress(allEvents());
   if (start) {
     const mins = Math.max(1, Math.round((Date.now() - new Date(start.logged_at).getTime()) / 60000));
-    const r = await saveEvent({ category: 'Nap', crate_action: 'Nap_End', status_outcome: 'Nap ended' });
+    const r = await saveEvent({ category: 'Nap', crate_action: 'Crate_Exit', status_outcome: 'Nap ended' }); // v3.9.1 — nap end = crate exit
     if (r) { toast(`Nap ended — slept ${fmtDur(mins)} 💤`); await loadData(); renderCockpit(); checkNudges(); }
   } else {
-    const r = await saveEvent({ category: 'Nap', crate_action: 'Nap_Start', status_outcome: 'Nap started' });
+    const r = await saveEvent({ category: 'Nap', crate_action: 'Crate_Entry', status_outcome: 'Nap started' }); // v3.9.1 — nap start = crate entry
     if (r) { toast('Nap started 💤 — tap Nap again to end'); await loadData(); renderCockpit(); checkNudges(); }
   }
 }
@@ -1013,7 +1013,8 @@ function openSheet(kind, existing = null) {
         ? ['Pee', 'Poop', 'Pee_Poop', 'Micro_Pee', 'Dry_Check', 'Accident_Pee', 'Accident_Poop']
         : c === 'Nap' ? ['Crate_Entry', 'Crate_Exit'] : [];
       $('eTypeWrap').style.display = opts.length ? '' : 'none';
-      const cur = c === 'Elimination' ? ev.elimination_type : c === 'Nap' ? ev.crate_action : '';
+      let cur = c === 'Elimination' ? ev.elimination_type : c === 'Nap' ? ev.crate_action : '';
+      if (c === 'Nap') cur = cur === 'Nap_Start' ? 'Crate_Entry' : cur === 'Nap_End' ? 'Crate_Exit' : cur; // v3.9.1 — normalize
       sel.innerHTML = opts.map(o => `<option${o === cur ? ' selected' : ''}>${o}</option>`).join('');
       document.querySelectorAll('[data-enums]').forEach(d => d.hidden = d.dataset.enums !== c);
     };
