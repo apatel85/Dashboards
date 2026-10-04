@@ -265,6 +265,7 @@
       <button class="menu-btn" data-goto="household">🏠 Household sharing →</button>
       <button class="menu-btn" data-goto="export">📤 Export data →</button>
       <button class="menu-btn" data-goto="import">📥 Import data →</button>
+      <button class="menu-btn" data-goto="versions">🕘 Data versions →</button>
       <button class="menu-btn" data-goto="setup">⚙️ Setup &amp; login →</button>
     </div>
     <div class="card">
@@ -453,6 +454,19 @@
         </div>
         <div class="muted small" id="impStatus"></div>
       </div>
+    </div>
+  </section>
+
+  <!-- DATA VERSIONS (v3.10) -->
+  <section class="screen" id="screen-versions">
+    <div class="card">
+      <div class="card-title">🕘 Data versions</div>
+      <p class="muted small">Snapshots of Simba's full event history, stored server-side. A snapshot is taken automatically before every import. <b>Restoring</b> a version replaces <b>all</b> of Simba's events for <b>everyone</b> (global) — only the pet owner can roll back, and a safety snapshot is taken first.</p>
+      <div class="row">
+        <button id="verSnap" class="btn">📸 Snapshot now</button>
+      </div>
+      <div id="verList" style="margin-top:8px"></div>
+      <div class="muted small" id="verStatus" style="margin-top:6px"></div>
     </div>
   </section>
 
