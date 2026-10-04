@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.1'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1464,6 +1464,7 @@ function openOnboard(edit = false) {
   $('obWeight').value = s?.current_weight_kg ? (s.current_weight_kg * 2.20462).toFixed(1) : '';
   $('obSave').innerHTML = edit ? 'Save changes \u2713' : 'Save &amp; continue \u2192';
   $('obStatus').textContent = '';
+  $('addPetBtn2').hidden = !edit;   // v3.1 — add pets from the profile screen, not Home
   show('onboard');
 }
 async function saveOnboard() {
@@ -1893,8 +1894,8 @@ function wire() {
   $('walkStartBtn').onclick = startWalk;
   $('walkStopBtn').onclick = stopWalk;
   $('backdateBtn').onclick = () => openSheet('Backdate');
-  $('addPetBtn').onclick = () => openSheet('Pet');
-  $('subjectPick').onchange = e => switchSubject(e.target.value);
+  $('topSubjectPick').onchange = e => switchSubject(e.target.value);
+  $('addPetBtn2').onclick = () => openSheet('Pet');
   $('medAddBtn').onclick = () => { $('medForm').hidden = !$('medForm').hidden; };
   $('medSaveBtn').onclick = saveMedForm;
   $('vaxAddBtn').onclick = () => { $('vaxForm').hidden = !$('vaxForm').hidden; };
@@ -2211,12 +2212,13 @@ function renderStreaks() {
     <div class="stat"><div class="stat-label">💩 Poop quota · 7d</div><div class="stat-value">${q === null ? '—' : q + '<span class="unit"> %</span>'}</div></div>`;
 }
 
-/* ---------- Multi-pet subject switcher ---------- */
+/* ---------- Multi-pet subject switcher (v3.1 — lives in the top header) ---------- */
 function renderSubjectSwitcher() {
-  const box = $('petSwitch'); if (!box) return;
-  if (!sbReady()) { box.hidden = true; return; }   // single local pet offline
-  box.hidden = false;
-  $('subjectPick').innerHTML = S.subjects.map(s =>
+  const sel = $('topSubjectPick'); if (!sel) return;
+  const multi = sbReady() && S.subjects.length > 1;
+  sel.hidden = !multi;
+  if (!multi) return;
+  sel.innerHTML = S.subjects.map(s =>
     `<option value="${s.id}"${S.subject && String(s.id) === String(S.subject.id) ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
 }
 async function addPet(data) {
