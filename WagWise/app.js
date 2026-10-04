@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.9.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.9.2'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -577,7 +577,9 @@ function parseTelemetry(raw, now = new Date()) {
   // --- food / water / training / nap / weight ---
   const tbsp = extractAmount(t, 'tbsp|tablespoons?');
   const tsp = extractAmount(t, 'tsp|teaspoons?');
-  if ((has('ate', 'food', 'kibble', 'meal', 'breakfast', 'lunch', 'dinner', 'fed') || tbsp > 0) && !neg.has('food')) {
+  // v3.9.2 — "around his lunch hours" is a time reference, not a meal
+  const mealTimeRef = /\b(around|after|before|during)\s+(his\s+|the\s+)?(breakfast|lunch|dinner)\s+(hours?|time)\b/i.test(t);
+  if ((has('ate', 'food', 'kibble', 'meal', 'fed') || (!mealTimeRef && has('breakfast', 'lunch', 'dinner')) || tbsp > 0) && !neg.has('food')) {
     ev.category = 'Food';
     ev.kibble_offered_tbsp = tbsp || 0; ev.kibble_consumed_tbsp = tbsp || 0;
     ev.kibble_type = foodById(foodIdFromWords(t)).name; // v3.6 — which of Simba's three foods
@@ -588,8 +590,9 @@ function parseTelemetry(raw, now = new Date()) {
   if ((has('drank', 'water', 'hydration') || (tsp > 0 && ev.category !== 'Food')) && !neg.has('water')) {
     if (ev.category === 'Note') ev.category = 'Water';
     ev.water_consumed_tsp = tsp || 2;
+    if (ev.category === 'Water' && !ev.status_outcome) ev.status_outcome = `Drank ${ev.water_consumed_tsp} tsp water`; // v3.9.2
   }
-  if (has('train', 'training', 'trained', 'sit', 'stay', 'recall', 'leash', 'session') && !neg.has('train')) ev.category = 'Training';
+  if (has('train', 'training', 'trained', 'sit', 'stay', 'recall', 'leash') && !neg.has('train')) ev.category = 'Training'; // v3.9.2 — bare "session" is ambiguous ("drinking session" ≠ training); "training session" still matches via "training"
   if (has('nap', 'napping', 'crate', 'sleep', 'bedtime', 'den') && !neg.has('nap')) {
     const wake = has('woke', 'wake', 'woken', 'out of crate');
     ev.category = has('nap', 'napping') ? 'Nap' : 'Crate';
@@ -1929,10 +1932,25 @@ function splitClauses(t) {
     /\b(pee|peed|poop|pooped|ate|eat|food|kibble|meal|breakfast|lunch|dinner|fed|drank|drink|water|train|training|nap|sleep|crate|weigh|walk)\b/.test(x);
   for (const s of strong) {
     const sides = s.split(/\band\b/i).map(x => x.trim()).filter(x => x.length > 1);
-    if (sides.length > 1 && sides.filter(rich).length >= 2) out.push(...sides);
-    else out.push(s);
+    const parts = sides.length > 1 && sides.filter(rich).length >= 2 ? sides : [s];
+    for (const p of parts) out.push(...splitNowTransition(p)); // v3.9.2 — "…water. now … nap" split
   }
   return out;
+}
+/* v3.9.2 — a finished water drink followed by "now … nap/crate" is two events:
+   "gave him 12 tsp of water … now putting him in his crate for a nap"
+   → Water event + Nap event. Previously the nap branch swallowed the water
+   (one Nap event with the tsp buried on it, invisible to fluid totals).
+   The amount requirement guards against phantom water events
+   ("the water bowl is empty now …" must not log a drink). Tested. */
+function splitNowTransition(s) {
+  const m = /\bnow\b/i.exec(s);
+  if (!m) return [s];
+  const pre = s.slice(0, m.index).trim(), post = s.slice(m.index).trim();
+  const preHasWater = /\bwater\b/i.test(pre) && /\d+\s*(tsp|teaspoons?)\b/i.test(pre);
+  const postHasRest = /\b(crate|nap|napping|sleep|sleeping|bedtime|den)\b/i.test(post);
+  if (preHasWater && postHasRest && pre.length > 1 && post.length > 1) return [pre, post];
+  return [s];
 }
 /* Merge adjacent same-type events close in time ("took him out to pee" @5:15
    followed by "he peed at 5:16" is ONE pee, not two). Keeps the later
