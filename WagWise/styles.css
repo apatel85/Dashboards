@@ -147,6 +147,19 @@ body {
 .countdown { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 11px 0; border-bottom: 1px dashed var(--line); font-size: 14.5px; }
 .countdown:last-child { border-bottom: none; }
 .countdown .t { color: var(--honey); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* v3.12 — Next-up action rows */
+.nextup { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px dashed var(--line); }
+.nextup:last-child { border-bottom: none; }
+.nu-main { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.nu-icon { font-size: 19px; line-height: 1.3; }
+.nu-label { font-size: 14px; font-weight: 700; }
+.nu-win { font-weight: 400; color: var(--accent-deep); font-size: 13px; margin-left: 6px; white-space: nowrap; }
+.nu-why { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.nu-right { display: flex; align-items: center; gap: 8px; flex: none; }
+.nu-count { font-size: 13px; font-weight: 800; color: var(--honey); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nextup.done { opacity: .55; }
+.nextup.done .nu-count { color: var(--muted); }
+.nextup.missed .nu-count { color: #B3541E; }
 
 /* ---------- Quick-log dock: uniform tiles ---------- */
 .dock { display: grid; grid-template-columns: repeat(auto-fit, minmax(52px, 1fr)); gap: 8px; }
