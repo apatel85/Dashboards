@@ -17,7 +17,10 @@
 <!-- ============ TOP BAR ============ -->
 <header id="topbar">
 <div class="brand"><span id="brandName">WagWise</span></div>
-  <div id="syncState" class="sync-state" title="Connection state">○ offline</div>
+  <div class="topbar-right">
+    <select id="topSubjectPick" class="pet-pick" aria-label="Switch pet" hidden></select>
+    <div id="syncState" class="sync-state" title="Connection state">○ offline</div>
+  </div>
 </header>
 
 <!-- ============ SCREENS ============ -->
@@ -70,15 +73,16 @@
     <div class="card subject-card">
       <div class="subject-name" id="subjectName">SIMBA</div>
       <div class="subject-meta" id="subjectMeta">— weeks · — lbs · streak —</div>
-      <div id="petSwitch" class="pet-switch" hidden>
-        <select id="subjectPick" aria-label="Switch pet"></select>
-        <button id="addPetBtn" class="btn small">＋ Pet</button>
-      </div>
     </div>
 
     <div class="card alert-card" id="alertCard" hidden>
       <div class="card-title">⚠ Alerts</div>
       <div id="alertList"></div>
+    </div>
+
+    <div class="card" id="countdownCard">
+      <div class="card-title">Active countdowns</div>
+      <div id="countdowns"><div class="muted">No active countdowns.</div></div>
     </div>
 
     <div class="card dock-card">
@@ -138,11 +142,6 @@
         <span class="pill" id="pillBladder">Bladder: —</span>
         <span class="pill" id="pillColon">Colon: —</span>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Active countdowns</div>
-      <div id="countdowns"><div class="muted">No active countdowns.</div></div>
     </div>
 
   </section>
@@ -293,6 +292,7 @@
       <label class="lbl">Current weight (lbs)</label>
       <input id="obWeight" type="number" step="0.1" min="0" placeholder="e.g. 7.5">
       <button id="obSave" class="btn primary block">Save &amp; continue →</button>
+      <button id="addPetBtn2" class="btn block" hidden>＋ Add another pet</button>
       <div class="muted small" id="obStatus" style="margin-top:6px"></div>
     </div>
   </section>
