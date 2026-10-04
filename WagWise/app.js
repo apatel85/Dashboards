@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.4'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.5'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1623,6 +1623,28 @@ function parseAndPreview() {
   $('parseCard').hidden = false;
 }
 
+/* ---------- v3.5: force-check for app updates ---------- */
+async function checkForUpdates() {
+  const st = $('updateStatus');
+  const say = t => { if (st) st.textContent = t; };
+  try {
+    if (!('serviceWorker' in navigator)) { say('Service workers are not supported in this browser.'); return; }
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) { say('No service worker registered — reload the page once.'); return; }
+    say('Checking for updates…');
+    await reg.update(); // bypasses HTTP cache (updateViaCache 'none')
+    const w = reg.waiting || reg.installing;
+    if (w) {
+      say('Update found — applying…');
+      try { w.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
+      // the controllerchange handler reloads the page once the new worker takes over
+      setTimeout(() => { const el = $('updateStatus'); if (el && el.textContent.startsWith('Update found')) el.textContent = 'Still applying — the app will reload on its own.'; }, 12000);
+    } else {
+      say('You are on the latest version (v' + APP_VERSION + ').');
+    }
+  } catch (e) { say('Update check failed: ' + (e && e.message || e)); }
+}
+
 /* ---------- v2.5 PWA install prompt ---------- */
 let deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
@@ -1948,6 +1970,7 @@ function wire() {
   $('medAddBtn').onclick = () => { $('medForm').hidden = !$('medForm').hidden; };
   $('medSaveBtn').onclick = saveMedForm;
   $('vaxAddBtn').onclick = () => { $('vaxForm').hidden = !$('vaxForm').hidden; };
+  $('updateCheckBtn').onclick = checkForUpdates; // v3.5 — force update check
   $('vaxSaveBtn').onclick = saveVaxForm;
   $('printReportBtn').onclick = printVetReport;
   $('expReportBtn').onclick = () => show('report');
@@ -1967,6 +1990,7 @@ async function init() {
   maybeShowInstall(); // v2.9 — surface the install option for signed-in users too (not just landing)
   const av = $('appVersion'); if (av) av.textContent = 'v' + APP_VERSION; // v2.9 — visible version
   const avl = $('appVersionLanding'); if (avl) avl.textContent = 'v' + APP_VERSION;
+  const avt = $('appVersionTop'); if (avt) avt.textContent = 'v' + APP_VERSION; // v3.5 — version pill in the top bar
   if (localStorage.getItem(CFG.LS.OFFLINE)) { setSync(false); renderAll(); renderConnStatus(false); }
   else if (initSupabase()) {
     renderConnStatus(true);
