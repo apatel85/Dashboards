@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.3'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.4'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -382,6 +382,10 @@ const WORD_NUM = { zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7
 function wordsToNum(text) {
   let t = ' ' + text.toLowerCase() + ' ';
   const DEN = { half: 2, halves: 2, quarter: 4, quarters: 4, fourth: 4, fourths: 4, third: 3, thirds: 3 };
+  // v3.4 — ASR mangles "pm"/"am": "10:00 p." / "10 p.m." / "10 p m" → "10:00 pm"
+  t = t.replace(/\b([ap])\.m\./g, '$1m');
+  t = t.replace(/(?<![\d.])(\d{1,2}(?::\d{2})?)\s*([ap])\s*\.(?!\d)/g, '$1 $2m');
+  t = t.replace(/(\d{1,2}(?::\d{2})?)\s+([ap])\s+m\b/g, '$1 $2m');
   // v3.2 — spoken clock times BEFORE single words are digitized:
   // "nine fifty-one" → 9:51, "ten oh five" → 10:05
   const HRS = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, eleven:11, twelve:12 };
@@ -1527,6 +1531,23 @@ function maybeWeightPrompt() {
 
 /* ---------- Voice input (Web Speech API — free, no key) ---------- */
 let recog = null, listening = false, micUserStop = false, micFatal = false, micSession = 0;
+/* v3.4 — content-based transcript merge. Some Chrome builds deliver each new
+   FINAL result as the FULL transcript-so-far (not just the new words), so
+   naive appending duplicates everything ("HeHe peedHe peed at…"). Merge on
+   content: extension/correction replaces, exact re-send is skipped, otherwise
+   only the non-overlapping tail is appended. */
+function mergeFinal(cur, add) {
+  if (!add) return cur;
+  if (!cur) return add;
+  if (add.startsWith(cur)) return add;   // newer full text (or correction) → take it
+  if (cur.endsWith(add)) return cur;     // exact re-send → skip
+  let ov = 0;
+  const max = Math.min(cur.length, add.length);
+  for (let len = max; len > 3; len--) {  // >3 chars avoids "a"/"at" false overlaps
+    if (cur.endsWith(add.slice(0, len))) { ov = len; break; }
+  }
+  return cur + add.slice(ov);
+}
 /* v2.2 — generalized voice engine: works from the Log tab mic and the global FAB */
 function startVoice(btn, labelEl, statusEl, goToLog) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1538,7 +1559,6 @@ function startVoice(btn, labelEl, statusEl, goToLog) {
   listening = true; micUserStop = false; micFatal = false;
   const mySession = ++micSession; // v3.3 — stale resumes from an older session can never fire
   let final = '';
-  let seenFinals = 0; // v3.2 — consume each final-result index exactly once
   const finalizeMic = () => {
     if (btn) btn.classList.remove('listening');
     if (labelEl) labelEl.textContent = 'TAP TO SPEAK TELEMETRY';
@@ -1557,8 +1577,7 @@ function startVoice(btn, labelEl, statusEl, goToLog) {
       let interim = '';
       for (let i = ev.resultIndex; i < ev.results.length; i++) {
         const res = ev.results[i];
-        // v3.2 — Chrome re-sends already-seen finals with resultIndex 0; never append twice
-        if (res.isFinal) { if (i >= seenFinals) { final += res[0].transcript; seenFinals = i + 1; } }
+        if (res.isFinal) final = mergeFinal(final, res[0].transcript); // v3.4 — content merge, never blind append
         else interim += res[0].transcript;
       }
       setStatus((final + interim).slice(-120));
@@ -1571,7 +1590,6 @@ function startVoice(btn, labelEl, statusEl, goToLog) {
       if (listening && !micUserStop && !micFatal) {
         setTimeout(() => {
           if (listening && !micUserStop && !micFatal && micSession === mySession) {
-            seenFinals = 0;
             recog = attach(new SR());
             try { recog.start(); } catch (e) {}
           }
@@ -1686,7 +1704,11 @@ function mergeNearDupes(list) {
   return out;
 }
 function parseTelemetryMulti(raw, now = new Date()) {
-  const t = wordsToNum(raw); // normalize number words BEFORE splitting ("two and a half" → 2.5)
+  let t = wordsToNum(raw); // normalize number words BEFORE splitting ("two and a half" → 2.5)
+  // v3.4 — glue an orphaned bare time to the following clause:
+  // "…and 10:00 pm. Was the crate entry…" → the 10pm belongs to the crate entry,
+  // not stranded as its own fragment by the sentence boundary.
+  t = t.replace(/\band\s+((?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm))\s*\.\s*/gi, 'and $1 ');
   const events = [];
   for (const part of splitClauses(t)) {
     for (const seg of splitOnTimes(part)) { // v2.9: one clause, several timestamps → several events
