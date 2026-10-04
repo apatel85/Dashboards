@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.13'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.14'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -822,6 +822,141 @@ function awakeGaps(peesSorted) {
   }
   return gaps;
 }
+
+/* ---------- v3.14 — contextual hold model ----------
+   The overall average is one input, not the whole story. Every valid awake
+   pee-to-pee gap is classified by what happened DURING it, producing
+   per-scenario median holds from his own history:
+     postNap      — a nap ended inside the gap (highest-risk context)
+     breakfast / lunch / dinner — a meal of that slot inside the gap
+     postMeal     — any meal inside the gap
+     postMealBig  — a ≥3 tbsp meal inside the gap
+     postWater    — fluid intake inside the gap, no meal
+     postWaterBig — ≥10 tsp fluid inside the gap, no meal
+     baseline     — none of the above
+   predictHold() picks the most specific context with ≥5 samples and blends it
+   toward the overall average when the sample is thin. holdTrend() watches
+   whether holds are stretching or shrinking week-over-week, so the model and
+   its copy keep up as he matures. Recomputed on every save and every 60s tick
+   — the algorithm re-tunes itself from each newly logged event. Pure — tested. */
+/** Pure: which meal slot a timestamp falls in. Tested. */
+function mealSlot(d) {
+  const h = d.getHours() + d.getMinutes() / 60;
+  if (h >= 5 && h < 10.5) return 'breakfast';
+  if (h >= 10.5 && h < 15) return 'lunch';
+  if (h >= 15 && h < 21.5) return 'dinner';
+  return 'other';
+}
+function medBucket(a) { return a.length ? { med: Math.round(medianNum(a)), n: a.length } : { med: null, n: 0 }; }
+/** Pure: per-scenario median awake holds from history. Tested. */
+function contextualHolds(events) {
+  const pees = events.filter(isPee).sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
+  const evs = [...events].sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
+  const B = { overall: [], baseline: [], postNap: [], postMeal: [], breakfast: [], lunch: [], dinner: [], postMealBig: [], postWater: [], postWaterBig: [] };
+  let lo = 0;
+  for (let i = 1; i < pees.length; i++) {
+    const t0 = new Date(pees[i - 1].logged_at).getTime(), t1 = new Date(pees[i].logged_at).getTime();
+    const g = (t1 - t0) / 60000;
+    if (!(g > 10 && g < 240)) continue; // valid awake hold only
+    B.overall.push(g);
+    while (lo < evs.length && new Date(evs[lo].logged_at).getTime() <= t0) lo++;
+    let hi = lo;
+    while (hi < evs.length && new Date(evs[hi].logged_at).getTime() < t1) hi++;
+    const between = evs.slice(lo, hi);
+    const hadNap = between.some(isNapEnd);
+    const meals = between.filter(e => e.category === 'Food');
+    const fluidTsp = between.filter(isFluidEvent).reduce((a, e) => a + (+e.water_consumed_tsp || 0), 0);
+    const mealTbsp = meals.reduce((a, e) => a + (+e.kibble_consumed_tbsp || 0), 0);
+    let bucketed = false;
+    if (hadNap) { B.postNap.push(g); bucketed = true; }
+    if (meals.length) {
+      B.postMeal.push(g); bucketed = true;
+      const slot = mealSlot(new Date(meals[meals.length - 1].logged_at));
+      if (B[slot]) B[slot].push(g);
+      if (mealTbsp >= 3) B.postMealBig.push(g);
+    } else if (fluidTsp > 0) {
+      B.postWater.push(g); bucketed = true;
+      if (fluidTsp >= 10) B.postWaterBig.push(g);
+    }
+    if (!bucketed) B.baseline.push(g);
+  }
+  const out = {};
+  for (const k of Object.keys(B)) out[k] = medBucket(B[k]);
+  if (!out.overall.n) out.overall = { med: 75, n: 0 }; // v3.10 master-log fallback
+  return out;
+}
+/** Pure: predicted hold for the current situation + what it's based on. Tested. */
+function predictHold(ctx, cur) {
+  // cur: { hadNap, mealSlot, mealTbsp, waterTsp }
+  const ok = b => b && b.n >= 5 && b.med != null;
+  let c = null, basis = 'overall average';
+  if (cur.hadNap && ok(ctx.postNap)) { c = ctx.postNap; basis = 'post-nap'; }
+  else if (cur.mealSlot && cur.mealSlot !== 'other' && ok(ctx[cur.mealSlot])) { c = ctx[cur.mealSlot]; basis = 'post-' + cur.mealSlot; }
+  else if (cur.mealTbsp >= 3 && ok(ctx.postMealBig)) { c = ctx.postMealBig; basis = 'big-meal'; }
+  else if ((cur.mealSlot || cur.mealTbsp > 0) && ok(ctx.postMeal)) { c = ctx.postMeal; basis = 'post-meal'; }
+  if (!c && cur.waterTsp >= 10 && ok(ctx.postWaterBig)) { c = ctx.postWaterBig; basis = 'big-drink'; }
+  if (!c && cur.waterTsp > 0 && ok(ctx.postWater)) { c = ctx.postWater; basis = 'post-drink'; }
+  if (!c && ok(ctx.baseline)) { c = ctx.baseline; basis = 'baseline'; }
+  if (!c) { c = ctx.overall; basis = c.n ? 'overall average' : 'typical puppy'; }
+  const w = c.n >= 10 ? 0.7 : c.n >= 5 ? 0.5 : 0;
+  const hold = Math.round(w ? w * c.med + (1 - w) * ctx.overall.med : ctx.overall.med);
+  return { hold, basis, n: c.n, blended: w > 0 && w < 1 };
+}
+/** Pure: are holds stretching or shrinking? trailing-7d median vs prior 23d. Tested. */
+function holdTrend(events, now) {
+  const t = now.getTime(), recent = [], older = [];
+  const pees = events.filter(isPee).sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
+  for (let i = 1; i < pees.length; i++) {
+    const g = (new Date(pees[i].logged_at) - new Date(pees[i - 1].logged_at)) / 60000;
+    if (!(g > 10 && g < 240)) continue;
+    const ageD = (t - new Date(pees[i].logged_at).getTime()) / 86400000;
+    if (ageD < 0 || ageD > 30) continue;
+    (ageD <= 7 ? recent : older).push(g);
+  }
+  if (recent.length < 8 || older.length < 8) return null; // not enough data to call it
+  const r = medianNum(recent), o = medianNum(older), pct = Math.round((r - o) / o * 100);
+  return Math.abs(pct) < 10 ? { dir: 'stable', pct } : { dir: pct > 0 ? 'stretching' : 'shrinking', pct };
+}
+/** Pure: median meal→next-pee latency per meal slot. Tested. */
+function mealLatencyBySlot(events) {
+  const evs = [...events].sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
+  const B = { overall: [], breakfast: [], lunch: [], dinner: [], other: [] };
+  evs.forEach((e, i) => {
+    if (e.category !== 'Food') return;
+    const t0 = new Date(e.logged_at).getTime(), slot = mealSlot(new Date(e.logged_at));
+    for (let j = i + 1; j < evs.length; j++) {
+      const dt = (new Date(evs[j].logged_at).getTime() - t0) / 60000;
+      if (dt > 240) break;
+      if (isPee(evs[j])) { B.overall.push(dt); B[slot].push(dt); break; }
+    }
+  });
+  const out = {};
+  for (const k of Object.keys(B)) out[k] = medBucket(B[k]);
+  return out;
+}
+/** Pure: most recent fluid-intake timestamp at or before nowMs. Tested. */
+function lastFluidBefore(hist, nowMs) {
+  const ts = hist.filter(isFluidEvent).map(e => new Date(e.logged_at).getTime()).filter(t => t <= nowMs).sort((a, b) => b - a)[0];
+  return ts || null;
+}
+/** Current situation → predicted hold + plain-English guidance.
+    Single source of truth for Next-up and What-to-expect (both tabs agree). */
+function holdGuidance(hist, now) {
+  const nowMs = now.getTime();
+  const pees = hist.filter(isPee).map(e => new Date(e.logged_at).getTime()).filter(t => t <= nowMs).sort((a, b) => a - b);
+  if (!pees.length) return null;
+  const lastPeeT = pees[pees.length - 1];
+  const after = hist.filter(e => { const t = new Date(e.logged_at).getTime(); return t > lastPeeT && t <= nowMs; });
+  const hadNap = after.some(isNapEnd);
+  const mealEv = after.filter(e => e.category === 'Food').pop();
+  const waterTsp = after.filter(isFluidEvent).reduce((a, e) => a + (+e.water_consumed_tsp || 0), 0);
+  const mealTbsp = mealEv ? (+mealEv.kibble_consumed_tbsp || 0) : 0;
+  const ctx = contextualHolds(hist);
+  const pred = predictHold(ctx, { hadNap, mealSlot: mealEv ? mealSlot(new Date(mealEv.logged_at)) : null, mealTbsp, waterTsp });
+  const elapsed = Math.round((nowMs - lastPeeT) / 60000);
+  const ratio = pred.hold ? elapsed / pred.hold : 1;
+  return { ...pred, elapsed, lastPeeT, trend: holdTrend(hist, now), verdict: ratio < 0.6 ? 'fine' : ratio < 0.85 ? 'ontrack' : 'due' };
+}
 /** Pure: trailing n calendar days (excluding today) with zero logged events. Tested. */
 function missingDays(hist, now, n = 14) {
   const days = dayBuckets(hist), out = [];
@@ -890,25 +1025,42 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
   if (!st.asleep && lastWake && (nowMs - lastWake) / 60000 <= 30 && !today.some(e => isPee(e) && peeAt(e) > lastWake))
     items.push(mk('nap-out', '⏰', 'Take out — just woke up', new Date(nowMs), new Date(nowMs + 15 * 60000),
       'post-nap = highest-risk window', false));
-  // 2. post-meal potty intercept
+  // 2. post-meal potty intercept — v3.14: slot-specific latency (dinner ≠ lunch)
   const meals = today.filter(e => e.category === 'Food');
   const lastMeal = meals.length ? peeAt(meals[meals.length - 1]) : null;
   if (lastMeal && (nowMs - lastMeal) / 60000 <= 100) {
-    const lat = postMealPeeLatencyMin(hist), c = lastMeal + lat * 60000;
+    const latBySlot = mealLatencyBySlot(hist);
+    const slot = mealSlot(new Date(lastMeal));
+    const slotLat = latBySlot[slot] && latBySlot[slot].n >= 5 ? latBySlot[slot] : null;
+    const lat = slotLat ? slotLat.med : postMealPeeLatencyMin(hist);
+    const c = lastMeal + lat * 60000;
     const done = today.some(e => isPee(e) && (peeAt(e) - lastMeal) > 60000 && (peeAt(e) - lastMeal) < 130 * 60000);
+    const mealTbsp = +meals[meals.length - 1].kibble_consumed_tbsp || 0;
     items.push(mk('meal-intercept', '🍽️', 'Post-meal potty intercept', new Date(c - 10 * 60000), new Date(c + 10 * 60000),
-      `post-meal urge median ${lat}m (your history)`, done));
+      `post-${slot} urge median ${lat}m${mealTbsp ? ` · ${mealTbsp} tbsp meal` : ''} (your history)`, done));
   }
-  // 3. general pee window from the bladder model (suppressed when nap-out is active)
+  // 3. general pee window — v3.14: contextual hold prediction + merged "what to expect"
+  //    insight (skip/ontrack/due verdict, trend, filtration peak). Suppressed when nap-out is active.
   if (!st.asleep && !items.some(i => i.id === 'nap-out')) {
     const pees = today.filter(isPee), lastPeeT = pees.length ? peeAt(pees[pees.length - 1]) : null;
     if (!lastPeeT) items.push(mk('pee-window', '🚻', 'Morning pee', new Date(nowMs), new Date(nowMs + 30 * 60000),
       'no pee logged yet today', false));
     else {
-      const due = lastPeeT + avgHold * 60000;
+      const g = holdGuidance(hist, now);
+      const hold = g ? g.hold : Math.round(avgHold);
+      const due = lastPeeT + hold * 60000;
       const done = (nowMs - lastPeeT) < 25 * 60000;
-      items.push(mk('pee-window', '🚻', 'Pee window', new Date(due - 15 * 60000), new Date(due + 15 * 60000),
-        `avg hold ${Math.round(avgHold)}m · last pee ${fmtTime(new Date(lastPeeT))}`, done));
+      let why = g ? `${g.basis} hold ${g.hold}m (your history) · last pee ${fmtTime(new Date(lastPeeT))}`
+                  : `avg hold ${Math.round(avgHold)}m · last pee ${fmtTime(new Date(lastPeeT))}`;
+      if (g) {
+        why += g.verdict === 'fine' ? ' · ✅ skipping this trip is fine'
+             : g.verdict === 'ontrack' ? ' · 🟡 on track' : ' · 🔴 due — take him out';
+        if (g.trend && g.trend.dir !== 'stable')
+          why += ` · ${g.trend.dir === 'stretching' ? '📈' : '📉'} holds ${g.trend.dir} (${g.trend.pct > 0 ? '+' : ''}${g.trend.pct}% this week)`;
+        const fts = lastFluidBefore(hist, nowMs);
+        if (fts) { const m = Math.round((nowMs - fts) / 60000); if (m > 20 && m < 50) why += ` · 💧 fluids ${m}m ago hitting now`; }
+      }
+      items.push(mk('pee-window', '🚻', 'Pee window', new Date(due - 15 * 60000), new Date(due + 15 * 60000), why, done));
     }
   }
   // 4. bowel #2 window
@@ -948,15 +1100,42 @@ function ntfyOn() { return localStorage.getItem('ntfy') === '1' && 'Notification
 function paintNtfyBtn() { const b = $('ntfyBtn'); if (!b) return; const on = ntfyOn(); b.textContent = on ? '🔔 on' : '🔔 off'; b.classList.toggle('primary', on); }
 async function toggleNtfy() {
   if (!('Notification' in window)) { toast('Notifications not supported in this browser.'); return; }
-  if (Notification.permission === 'default') {
-    if (await Notification.requestPermission() !== 'granted') { toast('Permission denied — enable it in browser settings to use alerts.'); return; }
-  }
-  if (Notification.permission === 'denied') { toast('Blocked — enable notifications for this site in browser settings.'); return; }
+  let perm = Notification.permission;
+  if (perm === 'default') perm = await Notification.requestPermission();
+  if (perm !== 'granted') { showNtfyHelp(perm); return; } // v3.14 — denied/dismissed gets a real fix-it guide, not a dead toast
   const on = localStorage.getItem('ntfy') === '1';
   localStorage.setItem('ntfy', on ? '0' : '1');
   toast(on ? 'Action alerts off.' : "Action alerts on — I'll ping you as windows open.");
   paintNtfyBtn(); renderCockpit();
 }
+/* v3.14 — once Chrome denies notification permission, no site can re-prompt.
+   This sheet walks him to the exact toggle in Chrome Android site settings. */
+function showNtfyHelp(perm) {
+  closeNtfyHelp();
+  const ov = document.createElement('div'); ov.id = 'ntfyHelp'; ov.className = 'ntfy-help-ov';
+  const dismissed = perm === 'default';
+  ov.innerHTML = `<div class="ntfy-help-card">
+    <div class="ntfy-help-title">🔔 Alerts need permission</div>
+    <div class="ntfy-help-body">${dismissed
+      ? 'The permission prompt was dismissed. Tap <b>🔔 off</b> again and choose <b>Allow</b> when Chrome asks.'
+      : 'Chrome is currently <b>blocking</b> notifications for WagWise, so I can\'t ask again from here. Fix it in 20 seconds:'}
+    </div>
+    ${dismissed ? '' : `<ol class="ntfy-help-steps">
+      <li>Tap the <b>tune ◔ icon</b> (left of the address bar)</li>
+      <li>Tap <b>Permissions</b></li>
+      <li>Set <b>Notifications</b> to <b>Allow</b></li>
+      <li>Come back here and tap <b>🔔 off</b> again</li>
+    </ol>`}
+    <div class="ntfy-help-btns">
+      <button class="btn primary" id="ntfyRetry">Try again</button>
+      <button class="btn" id="ntfyLater">Not now</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e => { if (e.target === ov) closeNtfyHelp(); });
+  document.getElementById('ntfyRetry').onclick = () => { closeNtfyHelp(); toggleNtfy(); };
+  document.getElementById('ntfyLater').onclick = closeNtfyHelp;
+}
+function closeNtfyHelp() { const o = document.getElementById('ntfyHelp'); if (o) o.remove(); }
 function fireNtfy(a, win) {
   const title = `${a.icon} ${a.label}`, body = `${win} — ${a.why}`;
   const opts = { body, tag: 'nextup:' + todayStr() + ':' + a.id, icon: 'icons/icon-192.png' };
@@ -1732,13 +1911,18 @@ function personalAvgHold() {
 function renderInsights() {
   const evs = eventsInDays(90);
   const st = liveState();
-  // --- What to expect right now ---
+  // --- What to expect right now — v3.14: same contextual engine as Next-up, both tabs agree
   const box = $('expectNow'); const cards = [];
-  const avg = personalAvgHold(), el = st.asleep ? 0 : st.bladder.elapsedMins;
+  const g = holdGuidance(evs, new Date());
+  const avg = g ? g.hold : personalAvgHold(), el = st.asleep ? 0 : (g ? g.elapsed : st.bladder.elapsedMins);
+  const basisTxt = g ? `${g.hold}m ${g.basis}` : `${Math.round(avg)}m average`;
   if (st.asleep) cards.push('😴 <b>Crating.</b> ADH suppression is handling continence — no action needed.');
-  else if (el < avg * 0.6) cards.push(`✅ <b>No urgency.</b> Hold is ${fmtDur(el)} vs your ${Math.round(avg)}m average — <b>skipping this trip is fine.</b>`);
-  else if (el < avg * 0.85) cards.push(`🟡 <b>On track.</b> Hold ${fmtDur(el)} vs ${Math.round(avg)}m average. Next window approaching.`);
-  else cards.push(`🔴 <b>Due soon.</b> Hold ${fmtDur(el)} is at/past your ${Math.round(avg)}m average — take him out.`);
+  else if (!g) cards.push(`🟡 <b>On track.</b> Hold ${fmtDur(el)} vs ${Math.round(avg)}m average. Next window approaching.`);
+  else if (g.verdict === 'fine') cards.push(`✅ <b>No urgency.</b> Hold is ${fmtDur(el)} vs your ${basisTxt} hold — <b>skipping this trip is fine.</b>`);
+  else if (g.verdict === 'ontrack') cards.push(`🟡 <b>On track.</b> Hold ${fmtDur(el)} vs ${basisTxt}. Next window approaching.`);
+  else cards.push(`🔴 <b>Due soon.</b> Hold ${fmtDur(el)} is at/past your ${basisTxt} hold — take him out.`);
+  if (g && g.trend && g.trend.dir !== 'stable')
+    cards.push(`${g.trend.dir === 'stretching' ? '📈' : '📉'} <b>Holds ${g.trend.dir}.</b> ${g.trend.pct > 0 ? '+' : ''}${g.trend.pct}% vs the prior three weeks — the windows above already account for it.`);
   // v3.10 — post-nap vigilance: 3 of 4 instrumented accidents struck 83–125 min
   // after nap wake. Surface a take-out card for 30 min after every nap end.
   const lastWake = evs.filter(isNapEnd).map(e => new Date(e.logged_at).getTime()).sort((a, b) => b - a)[0];
