@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.7'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.8'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -75,6 +75,13 @@ function parseMix(v) {
     }).filter(Boolean);
   }
   return [{ id: foodFor(t).id, tbsp: null }];
+}
+/** Pure: events that count as fluid intake for the bladder model — bowl water,
+    water added to a meal, or goat-milk toppers. Tested. */
+function isFluidEvent(e) {
+  return e.category === 'Water' ||
+    (e.category === 'Food' && (+e.water_consumed_tsp || 0) > 0) ||
+    (e.toppers_detail || '').includes('goat');
 }
 /** Pure: short human summary of a stored kibble_type for timelines/edits. Tested. */
 function mixSummary(v) {
@@ -407,7 +414,7 @@ function isAsleep() {
 function liveState(now = new Date()) {
   const pee = lastElim(['Pee', 'Pee_Poop']);
   const lastVoidTs = pee ? new Date(pee.logged_at).getTime() : new Date(now).setHours(0,0,0,0);
-  const fluids = S.events.filter(e => e.category === 'Water' || (e.toppers_detail || '').includes('goat'));
+  const fluids = S.events.filter(isFluidEvent); // v3.8 — meal water counts as fluid intake too
   const lastFluid = fluids.length ? fluids[fluids.length - 1] : null;
   const recentFluidMl = lastFluid ? (lastFluid.water_consumed_tsp || 0) * CFG.ML_PER_TSP : 0;
   const minsSinceFluid = lastFluid ? (now - new Date(lastFluid.logged_at)) / 60000 : 999;
@@ -697,7 +704,7 @@ function renderCockpit() {
   renderAlerts(alerts);
 }
 function lastFluidTs() {
-  const fs = S.events.filter(e => e.category === 'Water' || (e.toppers_detail || '').includes('goat'));
+  const fs = S.events.filter(isFluidEvent); // v3.8 — meal water counts too
   return fs.length ? new Date(fs[fs.length - 1].logged_at).getTime() : null;
 }
 function kcalPaceNote(st) {
@@ -788,6 +795,13 @@ function lastFoodTbsp(fid) {
   return foodById(fid).defaultTbsp;
 }
 /* v3.7 — meal-mix sheet helpers: read the three amounts, show the live total. */
+function lastFoodWaterTsp() {
+  try {
+    const v = parseFloat(localStorage.getItem('st_food_water_tsp'));
+    if (isFinite(v) && v >= 0) return v;
+  } catch (e) {}
+  return 0;
+}
 function readMixSheet() {
   return FOODS.map(f => ({ food: f, tbsp: (+($('fTbsp_' + f.id) || {}).value) || 0 }))
     .filter(c => c.tbsp > 0);
@@ -796,10 +810,11 @@ function refreshMixSheet() {
   const comp = readMixSheet();
   const totalTbsp = comp.reduce((s, c) => s + c.tbsp, 0);
   const egg = (+(($('fEgg') || {}).value)) || 0;
+  const water = (+(($('fWaterTsp') || {}).value)) || 0;
   const kcal = comp.reduce((s, c) => s + c.tbsp * c.food.kcalTbsp, 0) + egg * CFG.KCAL_PER_EGG;
   const hh = $('fMixHint');
   if (hh) hh.textContent = comp.length
-    ? `Total ${+totalTbsp.toFixed(2)} tbsp (${comp.map(c => `${+c.tbsp.toFixed(2)} ${c.food.short}`).join(' + ')}) ≈ ${Math.round(kcal)} kcal incl. egg`
+    ? `Total ${+totalTbsp.toFixed(2)} tbsp (${comp.map(c => `${+c.tbsp.toFixed(2)} ${c.food.short}`).join(' + ')}) ≈ ${Math.round(kcal)} kcal incl. egg${water ? ` + ${water} tsp water in food` : ''}`
     : 'Enter at least one food amount.';
 }
 function quickLog(category) {
@@ -833,11 +848,14 @@ function openSheet(kind, existing = null) {
       <p class="muted small" id="fMixHint"></p>
       <label class="lbl">Egg — whole eggs, for the whole meal</label>
       <input id="fEgg" type="number" step="0.25" min="0" value="0.5">
+      <label class="lbl">Water added to food (tsp) — for the whole meal</label>
+      <input id="fWaterTsp" type="number" step="0.5" min="0" inputmode="decimal" value="0">
       <label class="lbl">Toppers / notes — for the whole meal</label>
       <input id="fTop" placeholder="e.g. goat milk 2 tsp">`;
     const updMix = () => refreshMixSheet();
     FOODS.forEach(f => { $('fTbsp_' + f.id).oninput = updMix; });
-    $('fEgg').oninput = updMix;
+    $('fEgg').oninput = updMix; $('fWaterTsp').oninput = updMix;
+    $('fWaterTsp').value = lastFoodWaterTsp();
     refreshMixSheet();
   } else if (kind === 'Water') {
     b.innerHTML = `
@@ -911,6 +929,7 @@ function openSheet(kind, existing = null) {
           : `<label class="lbl">Food</label><select id="eFood">${FOODS.map(f => `<option value="${f.id}"${foodFor(ev.kibble_type).id === f.id ? ' selected' : ''}>${esc(f.name)}</option>`).join('')}</select>`}
         <label class="lbl">kcal</label><input id="eKcal" type="number" step="1" value="${ev.event_kcal || 0}">
         <label class="lbl">Kibble (tbsp)</label><input id="eTbsp" type="number" step="0.25" value="${ev.kibble_consumed_tbsp || 0}">
+        <label class="lbl">Water in food (tsp)</label><input id="eFoodTsp" type="number" step="0.5" value="${ev.water_consumed_tsp || 0}">
       </div>
       <div data-enums="Water" hidden>
         <label class="lbl">Water (tsp)</label><input id="eTsp" type="number" step="0.5" value="${ev.water_consumed_tsp || 0}">
@@ -973,6 +992,7 @@ function openSheet(kind, existing = null) {
         $('fTbsp_' + f.id).value = amt;
       });
       $('fTop').value = existing.toppers_detail || '';
+      $('fWaterTsp').value = existing.water_consumed_tsp || 0;
       refreshMixSheet();
     }
     if (kind === 'Water') { $('wTsp').value = existing.water_consumed_tsp || 0; }
@@ -985,8 +1005,8 @@ function summarizeEdit(p) {
   const tp = (p.elimination_type || p.crate_action || '').replace(/_/g, ' ');
   if (tp) bits.push(tp);
   if (p.category === 'Food' && p.kibble_type) bits.push(mixSummary(p.kibble_type)); // v3.7 — mix breakdown
+  if (p.water_consumed_tsp && (p.category === 'Water' || p.category === 'Food')) bits.push(p.water_consumed_tsp + ' tsp water' + (p.category === 'Food' ? ' in food' : '')); // v3.8
   if (p.category === 'Food' && p.event_kcal) bits.push(p.event_kcal + ' kcal');
-  if (p.category === 'Water' && p.water_consumed_tsp) bits.push(p.water_consumed_tsp + ' tsp water');
   if (p.fecal_score) bits.push('score ' + p.fecal_score);
   if (p.location_substrate) bits.push('@ ' + p.location_substrate);
   const note = (p.raw_input || '').slice(0, 80);
@@ -1009,6 +1029,7 @@ function buildEditPatch(prev, f) {
     patch.event_kcal = +f.kcal || 0;
     const newTbsp = +f.tbsp || 0;
     patch.kibble_consumed_tbsp = newTbsp;
+    if (f.foodTsp != null && f.foodTsp !== '') patch.water_consumed_tsp = +f.foodTsp || 0; // v3.8 — water added to food
     if (f.food) patch.kibble_type = foodById(f.food).name;
     else {
       // v3.7 — mix event edited here: re-scale components proportionally so the label never goes stale
@@ -1056,18 +1077,26 @@ async function saveSheet() {
   let ev = existing ? { ...existing } : { category: kind };
   if (kind === 'Food') {
     // v3.7 — one meal event accumulating every food entered; egg + toppers count ONCE for the whole meal
+    // v3.8 — water added to the food is logged on the meal (water_consumed_tsp), feeding fluid totals + bladder model
     const comp = readMixSheet();
     if (!comp.length) { toast('Enter at least one food amount.'); return; }
     const egg = +$('fEgg').value || 0;
+    const waterTsp = +$('fWaterTsp').value || 0;
     const totalTbsp = +comp.reduce((s, c) => s + c.tbsp, 0).toFixed(2);
     ev.category = 'Food'; ev.kibble_type = buildMixLabel(comp);
     ev.kibble_offered_tbsp = totalTbsp; ev.kibble_consumed_tbsp = totalTbsp;
+    ev.water_consumed_tsp = waterTsp;
     ev.toppers_detail = $('fTop').value;
     ev.event_kcal = comp.reduce((s, c) => s + c.tbsp * c.food.kcalTbsp, 0) + egg * CFG.KCAL_PER_EGG;
     ev.status_outcome = `Ate ${totalTbsp} tbsp ${comp.length > 1 ? 'mix' : comp[0].food.short}` +
       ` (${comp.map(c => `${+c.tbsp.toFixed(2)} ${c.food.short}`).join(' + ')})` +
-      (egg ? ` + ${egg} egg (whole meal)` : '') + (ev.toppers_detail ? ' + ' + ev.toppers_detail : '');
-    try { FOODS.forEach(f => localStorage.setItem('st_food_tbsp_' + f.id, String((comp.find(c => c.food.id === f.id) || { tbsp: 0 }).tbsp))); } catch (e) {}
+      (egg ? ` + ${egg} egg (whole meal)` : '') +
+      (waterTsp ? ` + ${waterTsp} tsp water in food` : '') +
+      (ev.toppers_detail ? ' + ' + ev.toppers_detail : '');
+    try {
+      FOODS.forEach(f => localStorage.setItem('st_food_tbsp_' + f.id, String((comp.find(c => c.food.id === f.id) || { tbsp: 0 }).tbsp)));
+      localStorage.setItem('st_food_water_tsp', String(waterTsp));
+    } catch (e) {}
   } else if (kind === 'Water') {
     ev.category = 'Water'; ev.water_consumed_tsp = +$('wTsp').value || 0;
     ev.status_outcome = `Drank ${ev.water_consumed_tsp} tsp water` + ($('wNote').value ? ' (' + $('wNote').value + ')' : '');
@@ -1122,6 +1151,7 @@ async function saveSheet() {
       type: $('eType') ? $('eType').value : '',
       kcal: $('eKcal').value, tbsp: $('eTbsp').value, tsp: $('eTsp').value, fecal: $('eFecal').value,
       food: $('eFood') ? $('eFood').value : '',
+      foodTsp: $('eFoodTsp') ? $('eFoodTsp').value : '',
     };
     const patch = buildEditPatch(existing, f);
     closeSheet();
@@ -1965,7 +1995,10 @@ function buildDailyDigest({ petName, breed, ageWeeks, weightLbs, dateISO, now, e
   const meals = evs.filter(e => e.category === 'Food');
   const kcal = Math.round(meals.reduce((s, e) => s + (+e.event_kcal || 0), 0));
   const cups = (meals.reduce((s, e) => s + (+e.kibble_consumed_tbsp || 0), 0) / 16).toFixed(2);
-  const waterTsp = Math.round(evs.filter(e => e.category === 'Water').reduce((s, e) => s + (+e.water_consumed_tsp || 0), 0));
+  // v3.8 — fluid intake = bowl water + water added to meals
+  const bowlTsp = evs.filter(e => e.category === 'Water').reduce((s, e) => s + (+e.water_consumed_tsp || 0), 0);
+  const foodTsp = evs.filter(e => e.category === 'Food').reduce((s, e) => s + (+e.water_consumed_tsp || 0), 0);
+  const waterTsp = Math.round(bowlTsp + foodTsp);
   const scores = poops.map(e => e.fecal_score).filter(s => s >= 1 && s <= 7);
   const walkKm = (walks.reduce((s, w) => s + (+w.distance_m || 0), 0) / 1000).toFixed(2);
   const walkMin = Math.round(walks.reduce((s, w) => s + (+w.duration_mins || 0), 0));
@@ -1988,7 +2021,7 @@ function buildDailyDigest({ petName, breed, ageWeeks, weightLbs, dateISO, now, e
   });
   const foodBits = Object.entries(byFood).map(([k, v]) => `${foodById(k).short} ${+v.toFixed(2)} tbsp`).join(' · ');
   L.push(`food: ${meals.length} meals, ${cups} cup, ${kcal} kcal (target ${kcalMin}-${kcalMax} kcal)${foodBits ? ' — ' + foodBits : ''}`);
-  L.push(`water: ${waterTsp} tsp`);
+  L.push(`water: ${waterTsp} tsp${foodTsp ? ` (bowl ${Math.round(bowlTsp)}, in food ${Math.round(foodTsp)})` : ''}`);
   L.push(`walk: ${walks.length} (${walkKm} km, ${walkMin} min)`);
   L.push(`nap: ${naps} | training: ${trains}`);
   L.push('');
@@ -2004,7 +2037,7 @@ function buildDailyDigest({ petName, breed, ageWeeks, weightLbs, dateISO, now, e
   accs.forEach(a => flags.push(`accident: ${/Poop/.test(a.elimination_type || '') ? 'poop' : 'pee'} indoors ${t(a.logged_at)}`));
   if (kcal > kcalMax) flags.push(`kcal_over_target: ${kcal} > ${kcalMax}`);
   if (poops.length < 2) flags.push(`poop_below_quota: ${poops.length}/2`);
-  if (!evs.some(e => e.category === 'Water')) flags.push('no_water_logged');
+  if (!evs.some(isFluidEvent)) flags.push('no_water_logged'); // v3.8 — meal water counts too
   if (!flags.length) flags.push('none');
   flags.forEach(f => L.push(`- ${f}`));
   L.push('');
