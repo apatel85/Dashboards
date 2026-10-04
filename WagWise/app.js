@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.10.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.10.2'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -2453,13 +2453,29 @@ function detectMasterLog(headers) {
   if (M.id < 0 || M.date < 0 || M.time < 0 || M.cat < 0 || M.obs < 0) return null;
   return M;
 }
-/** Pure: "2026-08-31" + "7:30 AM" → local Date. Tested. */
+/** Pure: "2026-08-31" + "7:30 AM" → local Date. Tolerant of US "8/31/2026",
+ *  24h "19:30", and Excel serial dates. Tested. */
 function parseMasterLogDate(d, t) {
-  const dm = String(d).match(/(\d{4})-(\d{2})-(\d{2})/);
-  const tm = String(t).match(/(\d{1,2}):(\d{2})\s*([AP])\.?M\.?/i);
-  if (!dm || !tm) return null;
-  let h = (+tm[1]) % 12; if (/p/i.test(tm[3])) h += 12;
-  return new Date(+dm[1], +dm[2] - 1, +dm[3], h, +tm[2]);
+  let Y, Mo, D;
+  const dv = String(d ?? '').trim();
+  let m = dv.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) { Y = +m[1]; Mo = +m[2]; D = +m[3]; }
+  else if ((m = dv.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/))) { // US M/D/Y
+    let yy = +m[3]; if (yy < 100) yy += 2000;
+    Y = yy; Mo = +m[1]; D = +m[2];
+  } else if (typeof d === 'number' && isFinite(d) && d > 20000 && d < 80000) { // Excel serial
+    const sdt = new Date(Math.round((d - 25569) * 86400 * 1000));
+    Y = sdt.getUTCFullYear(); Mo = sdt.getUTCMonth() + 1; D = sdt.getUTCDate();
+  } else return null;
+  const tv = String(t ?? '').trim();
+  let h, mi;
+  m = tv.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*([AP])\.?M\.?/i);
+  if (m) { h = (+m[1]) % 12; if (/p/i.test(m[3])) h += 12; mi = +m[2]; }
+  else if ((m = tv.match(/(\d{1,2}):(\d{2})(?::\d{2})?/))) { h = +m[1]; mi = +m[2]; }
+  else return null;
+  if (h > 23 || mi > 59 || Mo < 1 || Mo > 12 || D < 1 || D > 31) return null;
+  const dt = new Date(Y, Mo - 1, D, h, mi);
+  return isNaN(dt) ? null : dt;
 }
 /** Pure: verbose AI category row → app event fields. Tested. */
 function classifyMasterLog(r, M) {
@@ -2595,6 +2611,10 @@ function renderImportPreview() {
   ).join('\n') || '(no rows map cleanly — check the Date and Event columns)';
   if (IMP.masterLog && ok.length) // v3.10.1 — full breakdown so the classification can be eyeballed
     txt += '\n\nBreakdown: ' + importBreakdown(ok).map(([k, n]) => `${n}× ${k}`).join(', ');
+  if (IMP.masterLog && !ok.length && IMP.rows.length) { // v3.10.2 — say WHY nothing parsed
+    const M = IMP.masterLog, r0 = IMP.rows[0];
+    txt = `⚠ 0 of ${IMP.rows.length} rows parsed.\nFirst row: Date="${String(r0[M.date] ?? '')}" Timestamp="${String(r0[M.time] ?? '')}".\nCheck the file's date/time format and re-upload, or send me the file.`;
+  }
   $('impPreview').textContent = txt;
   $('impGo').textContent = `Import ${ok.length} rows`;
 }
