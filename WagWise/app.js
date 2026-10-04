@@ -7,14 +7,14 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.9.2'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.10'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
   WATER_CUTOFF: '20:15',              // hard water cutoff (local time HH:MM)
-  BEDTIME: '21:45',                   // den lockdown target
+  BEDTIME: '22:00',                   // v3.10 — master-log median lockdown 9:57 PM (was 21:45)
   PRE_BED_DRAIN_MIN: 10,              // pre-bed lawn drain = bedtime - this many min
-  TARGET_AWAKE_HOLD: 80,              // fallback when no personal history yet
+  TARGET_AWAKE_HOLD: 75,              // v3.10 — master-log median awake hold (was 80)
   MEAL_WINDOW_MIN: 15,                // 15-minute dish pickup rule
   KCAL_PER_TBSP: { Chicken: 26.94, Salmon: 25.31, Blend: 26.13 }, // legacy; v3.6 uses FOODS
   KCAL_PER_TSP_GOATMILK: 0.7,
@@ -358,6 +358,7 @@ async function deleteEvent(id) {
  * Port of calculate_bladder_state(): basal renal filtrate accumulates at
  * ~1.8 mL/kg/hr (3.4 kg → 0.102 mL/min awake, 0.035 mL/min in sleep);
  * fluid bolus peaks 30–45 min post-intake.
+ * v3.10 thresholds (CRITICAL 90m / ELEVATED 70m) tuned on the 33-day master log.
  */
 function calculateBladderState(lastVoidTs, nowTs, isAsleep, recentFluidMl, timeSinceFluidMins) {
   const elapsed = (nowTs - lastVoidTs) / 60000;              // minutes
@@ -373,9 +374,11 @@ function calculateBladderState(lastVoidTs, nowTs, isAsleep, recentFluidMl, timeS
   const estimatedVolumeMl = accumulatedBasal + bolusFiltrate;
   let accidentRisk = 'LOW';
   if (!isAsleep) {
-    if (elapsed >= 75 || (timeSinceFluidMins >= 30 && timeSinceFluidMins <= 45 && estimatedVolumeMl > 18.0))
+    // v3.10 — thresholds from 33-day master log: median verified awake hold = 75 min
+    // (48% of routine holds tripped the old 75-min CRITICAL); accidents at 83–125 min.
+    if (elapsed >= 90 || (timeSinceFluidMins >= 30 && timeSinceFluidMins <= 45 && estimatedVolumeMl > 18.0))
       accidentRisk = 'CRITICAL';
-    else if (elapsed >= 60 || estimatedVolumeMl > 14.0)
+    else if (elapsed >= 70 || estimatedVolumeMl > 14.0)
       accidentRisk = 'ELEVATED';
   }
   return { elapsedMins: Math.round(elapsed), estimatedVolumeMl: +estimatedVolumeMl.toFixed(2), accidentRisk };
@@ -389,10 +392,10 @@ function calculateBladderState(lastVoidTs, nowTs, isAsleep, recentFluidMl, timeS
  */
 function evaluateContingencyTriggers(st) {
   const alerts = [];
-  if (st.elapsedAwakeHoldMins >= 75 &&
+  if (st.elapsedAwakeHoldMins >= 90 && // v3.10 — was 75; master-log median awake hold is 75
       st.minsSinceFluid >= 30 && st.minsSinceFluid <= 45 &&
       st.currentSubstrate === 'Living Room Carpet')
-    alerts.push({ level: 'crit', text: 'CRITICAL: 80m awake hold converging with peak fluid filtration on carpet substrate. Carry to grass immediately.' });
+    alerts.push({ level: 'crit', text: 'CRITICAL: 90m awake hold converging with peak fluid filtration on carpet substrate. Carry to grass immediately.' });
   if (st.minsSinceLastPee <= 20 && st.dailyPoopsCompleted >= 2 && st.doorTellFlag && st.lastMealTexture === 'Dry_Kibble')
     alerts.push({ level: 'warn', text: 'DIAGNOSTIC ADVISORY: Dry kibble gastric swelling detected. Bladder and colon are physically empty. Allow stationed chewing on tile to dispel gas.' });
   if (st.mealInProgress && st.mealElapsedMins >= CFG.MEAL_WINDOW_MIN)
@@ -647,6 +650,7 @@ function show(name) {
   if (name === 'ask') refreshAuditEvents();
   if (name === 'meds') renderMeds();
   if (name === 'report') renderVetReport();
+  if (name === 'versions') renderVersions(); // v3.10 — data versions
   if (name === 'household') renderHousehold();
   if (name === 'walk') { renderWalkCard(); renderWalkHistory(); } // v2.2 — walk is its own tab
   if (name === 'landing') maybeShowInstall(); // v2.5 — surface the install prompt
@@ -1416,7 +1420,7 @@ function learnedWindows(events, matchFn, label, threshold = 0.8) {
 }
 function personalAvgHold() {
   const g = S._gaps || [];
-  return g.length >= 5 ? g.reduce((a, b) => a + b, 0) / g.length : 81.9; // spec baseline
+  return g.length >= 5 ? g.reduce((a, b) => a + b, 0) / g.length : 75; // v3.10 — master-log median awake hold (was 81.9 spec)
 }
 function renderInsights() {
   const evs = eventsInDays(90);
@@ -1428,6 +1432,11 @@ function renderInsights() {
   else if (el < avg * 0.6) cards.push(`✅ <b>No urgency.</b> Hold is ${fmtDur(el)} vs your ${Math.round(avg)}m average — <b>skipping this trip is fine.</b>`);
   else if (el < avg * 0.85) cards.push(`🟡 <b>On track.</b> Hold ${fmtDur(el)} vs ${Math.round(avg)}m average. Next window approaching.`);
   else cards.push(`🔴 <b>Due soon.</b> Hold ${fmtDur(el)} is at/past your ${Math.round(avg)}m average — take him out.`);
+  // v3.10 — post-nap vigilance: 3 of 4 instrumented accidents struck 83–125 min
+  // after nap wake. Surface a take-out card for 30 min after every nap end.
+  const lastWake = evs.filter(isNapEnd).map(e => new Date(e.logged_at).getTime()).sort((a, b) => b - a)[0];
+  if (!st.asleep && lastWake && (Date.now() - lastWake) / 60000 <= 30)
+    cards.unshift(`⏰ <b>Just woke up.</b> Post-nap is Simba's highest-risk window — take him out now, even if the hold looks short.`);
   const ts = lastFluidTs();
   if (ts) {
     const m = (Date.now() - ts) / 60000;
@@ -2201,6 +2210,7 @@ function wire() {
   $('genGeminiBtn').onclick = generateWithGemini;
   $('expCsv').onclick = exportCSV; $('expMd').onclick = exportMD; $('expXlsx').onclick = exportXLSX;
   $('impFile').onchange = handleImportFile; $('impGo').onclick = runImport; // v2.2 — CSV/Excel import
+  $('verSnap').onclick = () => createDataVersion('Manual snapshot'); // v3.10 — data versions
   $('sbTest').onclick = async () => {
     // v2.2 — Test doubles as Reconnect: clears any offline flag and retries everything
     localStorage.removeItem(CFG.LS.OFFLINE);
@@ -2358,11 +2368,21 @@ async function handleImportFile(e) {
     const headers = aoa[0].map(h => String(h).trim());
     const rows = aoa.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
     if (!rows.length) throw new Error('No data rows found.');
-    IMP = { headers, rows, map: {}, _ok: [] };
-    IMPORT_FIELDS.forEach(f => { IMP.map[f.key] = autoMapColumn(headers, f.aliases); });
-    renderImportFields(); renderImportPreview();
-    mapBox.hidden = false;
-    status.textContent = `${rows.length} rows detected. Check the mapping, glance at the preview, then import.`;
+    IMP = { headers, rows, map: {}, _ok: [], fileName: file.name, masterLog: null };
+    const M = detectMasterLog(headers); // v3.10 — Simba master-log preset
+    if (M) {
+      IMP.masterLog = M;
+      IMP.map.logged_at = M.time; IMP.map.event = M.cat; IMP.map.notes = M.obs;
+      IMP.map.kcal = -1; IMP.map.weight_lbs = -1; IMP.map.fecal_score = -1;
+      renderImportFields(); renderImportPreview();
+      mapBox.hidden = false;
+      status.textContent = `📋 Master-log format detected — Date+Timestamp, Category and observations mapped automatically (${rows.length} rows). Mapping is fixed for this format; glance at the preview, then import.`;
+    } else {
+      IMPORT_FIELDS.forEach(f => { IMP.map[f.key] = autoMapColumn(headers, f.aliases); });
+      renderImportFields(); renderImportPreview();
+      mapBox.hidden = false;
+      status.textContent = `${rows.length} rows detected. Check the mapping, glance at the preview, then import.`;
+    }
   } catch (err) { status.textContent = '✗ ' + err.message; }
 }
 function renderImportFields() {
@@ -2376,6 +2396,7 @@ function renderImportFields() {
       </select>
     </div>`).join('');
   box.querySelectorAll('[data-imp]').forEach(s => s.onchange = () => { IMP.map[s.dataset.imp] = +s.value; renderImportPreview(); });
+  if (IMP.masterLog) box.querySelectorAll('select').forEach(s => s.disabled = true); // v3.10 — fixed mapping
 }
 function normalizeImportEvent(v) {
   const t = String(v || '').toLowerCase().trim();
@@ -2389,6 +2410,128 @@ function normalizeImportEvent(v) {
   if (/nap|sleep|crate/.test(t)) return { category: 'Nap' };
   return { category: 'Note' };
 }
+/* ---------- v3.10 — Simba master-log (Google AI) import preset ----------
+   Detected by headers: Event_ID, Date, Timestamp, Category,
+   Actual_Event_Observation (+ Behavioral_Telemetry_Notes). The verbose AI
+   categories map to app event fields via classifyMasterLog(). Tested. */
+function detectMasterLog(headers) {
+  const norm = h => String(h).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const has = a => headers.some(h => norm(h) === a);
+  if (!(has('eventid') && has('date') && has('timestamp') && has('category'))) return null;
+  const col = a => headers.findIndex(h => norm(h) === a || norm(h).includes(a));
+  const M = {
+    id: col('eventid'), date: col('date'), time: col('timestamp'), cat: col('category'),
+    elim: col('eliminationtype'), status: col('statusoutcome'),
+    obs: headers.findIndex(h => norm(h).includes('actualevent')),
+    notes: headers.findIndex(h => norm(h).includes('behavioraltelemetry')),
+  };
+  if (M.id < 0 || M.date < 0 || M.time < 0 || M.cat < 0 || M.obs < 0) return null;
+  return M;
+}
+/** Pure: "2026-08-31" + "7:30 AM" → local Date. Tested. */
+function parseMasterLogDate(d, t) {
+  const dm = String(d).match(/(\d{4})-(\d{2})-(\d{2})/);
+  const tm = String(t).match(/(\d{1,2}):(\d{2})\s*([AP])\.?M\.?/i);
+  if (!dm || !tm) return null;
+  let h = (+tm[1]) % 12; if (/p/i.test(tm[3])) h += 12;
+  return new Date(+dm[1], +dm[2] - 1, +dm[3], h, +tm[2]);
+}
+/** Pure: verbose AI category row → app event fields. Tested. */
+function classifyMasterLog(r, M) {
+  const g = i => String(r[i] ?? '').trim();
+  const cat = g(M.cat), elimC = g(M.elim), obs = g(M.obs);
+  const text = (cat + ' ' + elimC + ' ' + obs).toLowerCase();
+  const ev = {};
+  const num = (re, s = obs) => { const m = String(s).match(re); return m ? parseFloat(m[1]) : 0; };
+  if (/accident|incident/.test(text)) {
+    ev.category = 'Elimination';
+    ev.elimination_type = /poop|stool|bowel/.test(text) ? 'Accident_Poop' : 'Accident_Pee';
+  } else if (/\bwalk\b/.test(cat.toLowerCase()) && !/pee|poop|urine|stool/i.test(elimC)) {
+    ev.category = 'Walk'; // decompression / perimeter walks (pee-on-walk rows keep elim)
+  } else if (/potty|pee|urin|poop|stool|bowel|colonic|elimination|dry check/.test(cat.toLowerCase()) ||
+             /pee|poop|urine|stool|dual/i.test(elimC)) {
+    // v3.10 — pee/poop decided from the Elimination_Type COLUMN first; the
+    // observation text mentions "bowel" spuriously (e.g. "Bowel #2 check").
+    ev.category = 'Elimination';
+    const el = elimC.toLowerCase();
+    const peeW = /\bpee\b|urine|urination/.test(el), poopW = /\bpoop\b|stool/.test(el);
+    if (peeW && poopW) ev.elimination_type = 'Pee_Poop';
+    else if (peeW) ev.elimination_type = 'Pee';
+    else if (poopW) ev.elimination_type = 'Poop';
+    else {
+      const c = cat.toLowerCase(), o = obs.toLowerCase();
+      if (/\bdry\b/.test(c) || /did not (produce|eliminate)|no elimination produced|no urination|but did not/.test(o)) ev.elimination_type = 'Dry_Check';
+      else if (/\bpoop\b|colonic|\bbowel\b/.test(c)) ev.elimination_type = 'Poop';
+      else if (/\bpee\b/.test(c)) ev.elimination_type = 'Pee';
+      else if (/produced a bowel movement|\bbowel movement\b/.test(o)) ev.elimination_type = 'Poop';
+      else if (/bladder drain|urination|\bvoid\b/.test(o)) ev.elimination_type = 'Pee';
+      else ev.elimination_type = 'Dry_Check'; // attempted check, nothing confirmed
+    }
+  } else if (/hydration|water/.test(cat.toLowerCase())) {
+    const tbsp = num(/(\d+(?:\.\d+)?)\s*tbsp/i);
+    if (tbsp > 0 && /kibble|mash|meal|food/.test(obs.toLowerCase())) {
+      ev.category = 'Food'; ev.kibble_offered_tbsp = ev.kibble_consumed_tbsp = tbsp;
+      const wtsp = num(/(\d+(?:\.\d+)?)\s*tsp/i); if (wtsp > 0) ev.water_consumed_tsp = wtsp; // meal water
+      ev.event_kcal = Math.round(tbsp * 26.94); // Frontrunner staple estimate
+    } else {
+      ev.category = 'Water';
+      const cm = obs.match(/consumed[^.]{0,80}?(\d+(?:\.\d+)?)\s*tsp/i);
+      ev.water_consumed_tsp = cm ? parseFloat(cm[1]) : (num(/(\d+(?:\.\d+)?)\s*tsp/i) || 2);
+    }
+  } else if (/nutrition|meal|kibble|breakfast|lunch|dinner/.test(cat.toLowerCase())) {
+    ev.category = 'Food';
+    const tbsp = num(/(\d+(?:\.\d+)?)\s*tbsp/i);
+    ev.kibble_offered_tbsp = ev.kibble_consumed_tbsp = tbsp;
+    const wtsp = num(/(\d+(?:\.\d+)?)\s*tsp/i); if (wtsp > 0) ev.water_consumed_tsp = wtsp;
+    let kcalTbsp = 26.94; // Frontrunner default
+    if (/frontrunner/i.test(text)) { ev.kibble_type = 'Nulo Frontrunner Puppy — Chicken, Oats & Turkey (Ancient Grains)'; kcalTbsp = 26.94; }
+    else if (/freestyle/i.test(text)) { ev.kibble_type = 'Nulo FreeStyle Small Breed — Salmon & Lentils'; kcalTbsp = 25.31; }
+    else if (/medal/i.test(text)) { ev.kibble_type = 'Nulo MedalSeries Ancient Grains Small Breed — Salmon, Oats & Acadian Redfish'; kcalTbsp = 26.69; }
+    if (/egg/i.test(text)) ev.toppers_detail = 'scrambled egg';
+    if (/goat\s*milk/i.test(text)) ev.toppers_detail = ((ev.toppers_detail || '') + ' goat milk').trim();
+    ev.event_kcal = Math.round(tbsp * kcalTbsp + (/egg/i.test(text) ? 39 : 0));
+  } else if (/nap|overnight|rest & recovery|lockdown|sleep|crate|settle/.test(cat.toLowerCase())) {
+    ev.category = /overnight/.test(cat.toLowerCase()) ? 'Crate' : 'Nap';
+    ev.crate_action = 'Crate_Entry';
+    const dur = (obs).match(/(\d{1,2}):(\d{2})\s*([AP])\.?M\.?\s*-\s*(\d{1,2}):(\d{2})\s*([AP])\.?M\.?/i);
+    if (dur) {
+      const toM = (h, m, ap) => ((+h) % 12 + (/p/i.test(ap) ? 12 : 0)) * 60 + (+m);
+      let mins = toM(dur[4], dur[5], dur[6]) - toM(dur[1], dur[2], dur[3]);
+      if (mins < 0) mins += 1440;
+      if (mins > 0 && mins < 900) ev.sleep_duration_mins = mins;
+    }
+  } else if (/train|conditioning|enrichment/.test(cat.toLowerCase())) {
+    ev.category = 'Training';
+  } else if (/weigh/.test(cat.toLowerCase())) {
+    ev.category = 'Weight';
+    const w = num(/(\d+(?:\.\d+)?)\s*(lb|lbs|pound)/i, text);
+    if (w > 0) ev.status_outcome = `Weight: ${w} lbs`;
+  } else {
+    ev.category = 'Note';
+  }
+  const fs = (obs).match(/fecal score\s*(\d)/i);
+  if (fs) ev.fecal_score = Math.min(7, Math.max(1, +fs[1]));
+  const lat = obs.match(/latency\s*(?:<|of)?\s*(\d+)\s*min/i);
+  if (lat) ev.latency_to_eliminate_mins = +lat[1];
+  return ev;
+}
+/** Build an app event from one master-log row. Tested via classifyMasterLog. */
+function mapMasterLogRow(r) {
+  const M = IMP.masterLog;
+  const g = i => String(r[i] ?? '').trim();
+  const d = parseMasterLogDate(g(M.date), g(M.time));
+  if (!d) return null;
+  const cls = classifyMasterLog(r, M);
+  const obs = g(M.obs), note = M.notes >= 0 ? g(M.notes) : '', status = M.status >= 0 ? g(M.status) : '';
+  return {
+    ...cls,
+    logged_at: d.toISOString(),
+    day_number: dayNumber(d.toISOString()),
+    raw_input: (`[master ${g(M.id)}] ` + (obs + ' ' + note).trim()).slice(0, 2000),
+    status_outcome: (cls.status_outcome || status.slice(0, 200)) || null,
+    behavioral_telemetry_notes: note.slice(0, 2000) || null,
+  };
+}
 function parseImportDate(v) {
   if (v === '' || v == null) return null;
   if (typeof v === 'number' && isFinite(v)) { // Excel serial date
@@ -2399,6 +2542,7 @@ function parseImportDate(v) {
   return isNaN(d) ? null : d;
 }
 function mapImportRow(r) {
+  if (IMP.masterLog) return mapMasterLogRow(r); // v3.10 — master-log preset
   const col = k => { const i = IMP.map[k]; return i >= 0 ? r[i] : ''; };
   const d = parseImportDate(col('logged_at'));
   if (!d) return null;
@@ -2427,10 +2571,30 @@ function renderImportPreview() {
   $('impGo').textContent = `Import ${ok.length} rows`;
 }
 async function runImport() {
-  const ok = IMP._ok || [];
+  let ok = IMP._ok || [];
   const status = $('impStatus');
   if (!ok.length) { status.textContent = 'Nothing to import.'; return; }
   if (!S.subject) { status.textContent = 'Sign in and finish onboarding first.'; return; }
+  // v3.10 — master-log: skip rows already imported (exact, via [master LOG-xxx] tag)
+  let skipped = 0;
+  if (IMP.masterLog) {
+    const seen = new Set();
+    (S.events || []).forEach(e => { const m = String(e.raw_input || '').match(/\[master (LOG-\d+)\]/); if (m) seen.add(m[1]); });
+    ok = ok.filter(ev => {
+      const m = String(ev.raw_input || '').match(/\[master (LOG-\d+)\]/);
+      if (m && seen.has(m[1])) { skipped++; return false; }
+      if (m) seen.add(m[1]);
+      return true;
+    });
+  }
+  if (!ok.length) { status.textContent = skipped ? `Nothing new — all ${skipped} rows already imported.` : 'Nothing to import.'; return; }
+  // v3.10 — auto-snapshot before import so a bad import can be rolled back (More → Data versions)
+  if (sbReady()) { status.textContent = 'Snapshotting current data…'; try { await createDataVersion('Before import · ' + (IMP.fileName || 'file')); } catch (e) {} }
+  // v3.10 — the master log starts on Simba's true Day 1; align the app's Day 1
+  if (IMP.masterLog) {
+    const first = ok.map(ev => ev.logged_at.slice(0, 10)).sort()[0];
+    if (first && first < CFG.DAY_ONE) { CFG.DAY_ONE = first; saveCfg(); }
+  }
   status.textContent = `Importing ${ok.length}…`;
   const rows = ok.map(ev => ({ ...ev, subject_id: S.subject.id, owner_id: S.user ? S.user.id : null }));
   if (sbReady()) {
@@ -2442,9 +2606,79 @@ async function runImport() {
   } else {
     rows.forEach(ev => { ev.id = 'local-' + Date.now() + Math.random().toString(16).slice(2); localSave(ev); });
   }
-  status.textContent = `✓ Imported ${rows.length} events.`;
+  status.textContent = `✓ Imported ${rows.length} events.` + (skipped ? ` (${skipped} duplicates skipped)` : '');
   toast(`Imported ${rows.length} events ✓`);
   await loadData(); renderAll();
+}
+
+/* ---------- v3.10 — Data versions: snapshots + admin global rollback ----------
+   Snapshots live server-side (simba_telemetry.data_versions) so a rollback
+   applies globally — every household member sees the restored history.
+   Snapshots: any household member. Rollback: pet owner only (the admin),
+   enforced again inside the restore_data_version() SQL function. */
+async function createDataVersion(label) {
+  const status = $('verStatus');
+  if (!sbReady() || !S.subject) { if (status) status.textContent = 'Sign in to snapshot.'; return null; }
+  try {
+    if (status) status.textContent = 'Snapshotting…';
+    const { data: rows, error } = await S.sb.from('telemetry_events').select('*').eq('subject_id', S.subject.id).order('logged_at');
+    if (error) throw error;
+    const { data, error: e2 } = await S.sb.from('data_versions').insert({
+      subject_id: S.subject.id,
+      created_by: S.user ? S.user.id : null,
+      created_by_email: S.user && S.user.email ? S.user.email : null,
+      label: label || 'Manual snapshot',
+      event_count: rows.length,
+      snapshot: rows,
+    }).select('id').single();
+    if (e2) throw e2;
+    try { // prune to the latest 20 (owner-only delete; members skip silently)
+      const { data: all } = await S.sb.from('data_versions').select('id').eq('subject_id', S.subject.id).order('created_at', { ascending: false });
+      if (all && all.length > 20) await S.sb.from('data_versions').delete().in('id', all.slice(20).map(x => x.id));
+    } catch (e) { /* best-effort */ }
+    if (status) status.textContent = `✓ Snapshot saved (${rows.length} events).`;
+    await renderVersions();
+    return data.id;
+  } catch (e) { if (status) status.textContent = '✗ Snapshot failed: ' + e.message; return null; }
+}
+async function renderVersions() {
+  const box = $('verList'); if (!box) return;
+  if (!sbReady() || !S.subject) { box.innerHTML = '<div class="muted">Sign in to use data versions.</div>'; return; }
+  let rows = null;
+  try {
+    const { data, error } = await S.sb.from('data_versions')
+      .select('id,label,event_count,created_by_email,created_at')
+      .eq('subject_id', S.subject.id).order('created_at', { ascending: false });
+    if (error) throw error;
+    rows = data || [];
+  } catch (e) {
+    box.innerHTML = '<div class="muted">Run <b>migration_v3.sql</b> in the Supabase SQL editor to enable data versions.</div>';
+    return;
+  }
+  const admin = isSubjectOwner();
+  box.innerHTML = rows.length ? rows.map((v, i) => `
+    <div class="tl-item"><div class="tl-body"><b>v${rows.length - i}</b> · ${esc(v.label)}<br>
+    <span class="hint">${new Date(v.created_at).toLocaleString()} · ${v.event_count} events${v.created_by_email ? ' · by ' + esc(v.created_by_email) : ''}</span></div>
+    ${admin ? `<div class="tl-actions"><button data-restore="${v.id}" title="Roll back to this version">↩ Restore</button></div>` : ''}</div>`).join('')
+    : '<div class="muted">No snapshots yet. One is taken automatically before every import.</div>';
+  if (!admin && rows.length) box.innerHTML += '<div class="muted small" style="margin-top:6px">Only the pet owner can roll back a version.</div>';
+  box.querySelectorAll('[data-restore]').forEach(b => b.onclick = () => restoreVersion(b.dataset.restore, b));
+}
+async function restoreVersion(id, btn) {
+  const status = $('verStatus');
+  if (!isSubjectOwner()) { toast('Only the pet owner can roll back.'); return; }
+  if (!confirm('Roll back ALL of Simba\u2019s events to this version?\n\nThis replaces the entire event history for everyone (global). A safety snapshot of the current data is taken first.')) return;
+  try {
+    if (btn) btn.disabled = true;
+    if (status) status.textContent = 'Rolling back…';
+    await createDataVersion('Auto: before rollback'); // safety net
+    const { data, error } = await S.sb.rpc('restore_data_version', { _version_id: id });
+    if (error) throw error;
+    if (status) status.textContent = `✓ Rolled back — ${data} events restored for everyone.`;
+    toast('Rolled back ✓');
+    await loadData(); renderAll(); await renderVersions();
+  } catch (e) { if (status) status.textContent = '✗ Rollback failed: ' + e.message; }
+  finally { if (btn) btn.disabled = false; }
 }
 document.addEventListener('DOMContentLoaded', init);
 
