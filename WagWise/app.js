@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.10.2'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.10.3'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -2469,8 +2469,10 @@ function parseMasterLogDate(d, t) {
   } else return null;
   const tv = String(t ?? '').trim();
   let h, mi;
-  m = tv.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*([AP])\.?M\.?/i);
-  if (m) { h = (+m[1]) % 12; if (/p/i.test(m[3])) h += 12; mi = +m[2]; }
+  if (typeof t === 'number' && isFinite(t) && t >= 0) { // Excel time fraction: 0.3125 = 7:30 AM
+    const mins = Math.round((t % 1) * 1440) % 1440;
+    h = Math.floor(mins / 60); mi = mins % 60;
+  } else if ((m = tv.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*([AP])\.?M\.?/i))) { h = (+m[1]) % 12; if (/p/i.test(m[3])) h += 12; mi = +m[2]; }
   else if ((m = tv.match(/(\d{1,2}):(\d{2})(?::\d{2})?/))) { h = +m[1]; mi = +m[2]; }
   else return null;
   if (h > 23 || mi > 59 || Mo < 1 || Mo > 12 || D < 1 || D > 31) return null;
@@ -2560,7 +2562,7 @@ function classifyMasterLog(r, M) {
 function mapMasterLogRow(r) {
   const M = IMP.masterLog;
   const g = i => String(r[i] ?? '').trim();
-  const d = parseMasterLogDate(g(M.date), g(M.time));
+  const d = parseMasterLogDate(r[M.date], r[M.time]); // v3.10.3 — raw values: SheetJS may give Excel serials (numbers)
   if (!d) return null;
   const cls = classifyMasterLog(r, M);
   const obs = g(M.obs), note = M.notes >= 0 ? g(M.notes) : '', status = M.status >= 0 ? g(M.status) : '';
