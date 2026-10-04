@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.10'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.10.1'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -2387,7 +2387,12 @@ async function handleImportFile(e) {
 }
 function renderImportFields() {
   const box = $('impFields');
-  box.innerHTML = IMPORT_FIELDS.map(f => `
+  // v3.10.1 — master-log: show exactly what happens to every column of the file
+  const mapTable = IMP.masterLog ? `
+    <div class="card-title" style="margin-top:2px">How your file's columns map</div>
+    <div class="kb-body" style="max-height:30vh">${masterLogMapRows().map(([c, u]) =>
+      `<div>📄 <b>${esc(c)}</b><br><span class="hint">→ ${esc(u)}</span></div>`).join('')}</div>` : '';
+  box.innerHTML = mapTable + IMPORT_FIELDS.map(f => `
     <div class="imp-row">
       <label class="lbl">${esc(f.label)}${f.required ? ' *' : ''}</label>
       <select data-imp="${f.key}">
@@ -2397,6 +2402,26 @@ function renderImportFields() {
     </div>`).join('');
   box.querySelectorAll('[data-imp]').forEach(s => s.onchange = () => { IMP.map[s.dataset.imp] = +s.value; renderImportPreview(); });
   if (IMP.masterLog) box.querySelectorAll('select').forEach(s => s.disabled = true); // v3.10 — fixed mapping
+}
+/** Pure: every master-log column → what the app does with it. */
+function masterLogMapRows() {
+  const M = IMP.masterLog, col = i => i >= 0 ? IMP.headers[i] : '—';
+  return [
+    [col(M.id), 'Duplicate detection — stamped on each event; re-importing skips these rows'],
+    [`${col(M.date)} + ${col(M.time)}`, 'Event date & time'],
+    [col(M.cat), 'Event type — the 100+ AI categories are classified (pee / poop / food / nap / …)'],
+    [col(M.elim), 'Refines pee vs poop vs dry-check'],
+    ['Target_Guideline', 'Not imported — that column is the AI\u2019s daily plan, not an observation'],
+    [col(M.obs), 'Notes — amounts (tbsp / tsp), fecal scores and latencies are extracted from it'],
+    [col(M.status), 'Outcome label shown on the timeline'],
+    [col(M.notes), 'Saved to the telemetry-notes field'],
+  ];
+}
+/** Pure: count mapped rows by category/elimination_type. Tested. */
+function importBreakdown(ok) {
+  const m = {};
+  for (const ev of ok) { const k = ev.elimination_type || ev.category; m[k] = (m[k] || 0) + 1; }
+  return Object.entries(m).sort((a, b) => b[1] - a[1]);
 }
 function normalizeImportEvent(v) {
   const t = String(v || '').toLowerCase().trim();
@@ -2563,11 +2588,14 @@ function mapImportRow(r) {
 function renderImportPreview() {
   const ok = IMP.rows.map(mapImportRow).filter(Boolean);
   IMP._ok = ok;
-  $('impPreview').textContent = ok.slice(0, 5).map(ev =>
+  let txt = ok.slice(0, 5).map(ev =>
     `${ev.logged_at.slice(0, 16).replace('T', ' ')} · ${ev.elimination_type || ev.category}` +
     (ev.event_kcal ? ` · ${ev.event_kcal} kcal` : '') +
     (ev.status_outcome ? ` · ${ev.status_outcome.slice(0, 60)}` : '')
   ).join('\n') || '(no rows map cleanly — check the Date and Event columns)';
+  if (IMP.masterLog && ok.length) // v3.10.1 — full breakdown so the classification can be eyeballed
+    txt += '\n\nBreakdown: ' + importBreakdown(ok).map(([k, n]) => `${n}× ${k}`).join(', ');
+  $('impPreview').textContent = txt;
   $('impGo').textContent = `Import ${ok.length} rows`;
 }
 async function runImport() {
