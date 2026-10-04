@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.5'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.6'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -16,13 +16,43 @@ const CFG = {
   PRE_BED_DRAIN_MIN: 10,              // pre-bed lawn drain = bedtime - this many min
   TARGET_AWAKE_HOLD: 80,              // fallback when no personal history yet
   MEAL_WINDOW_MIN: 15,                // 15-minute dish pickup rule
-  KCAL_PER_TBSP: { Chicken: 26.94, Salmon: 25.31, Blend: 26.13 },
+  KCAL_PER_TBSP: { Chicken: 26.94, Salmon: 25.31, Blend: 26.13 }, // legacy; v3.6 uses FOODS
   KCAL_PER_TSP_GOATMILK: 0.7,
   KCAL_PER_EGG: 70,
   ML_PER_TBSP: 14.78, ML_PER_TSP: 4.93,
   LS: { SB_URL: 'st_sb_url', SB_KEY: 'st_sb_key', GEMINI: 'st_gemini', OFFLINE: 'st_offline',
         CFG: 'st_cfg', DISMISSED: 'st_dismissed' },
 };
+
+/* v3.6 — Simba's foods with proper product names. kcal/tbsp = kcal/cup ÷ 16.
+   kibble_type stores the full product name (no ambiguity in logs/exports);
+   helpers below resolve ids, legacy 'Chicken'/'Salmon' values, and voice words. */
+const FOODS = [
+  { id: 'frontrunner', short: 'Frontrunner Puppy', name: 'Nulo Frontrunner Puppy — Chicken, Oats & Turkey (Ancient Grains)', kcalTbsp: 26.94, defaultTbsp: 3.5, kcalCup: 431, kcalSrc: 'bag' },
+  { id: 'freestyle', short: 'FreeStyle Small Breed', name: 'Nulo FreeStyle Small Breed — Salmon & Lentils', kcalTbsp: 25.31, defaultTbsp: 3.5, kcalCup: 405, kcalSrc: 'bag' },
+  { id: 'medalseries', short: 'MedalSeries Small Breed', name: 'Nulo MedalSeries Ancient Grains Small Breed — Salmon, Oats & Acadian Redfish', kcalTbsp: 26.69, defaultTbsp: 3.5, kcalCup: 427, kcalSrc: 'mfr' },
+];
+/** Pure: food by id, defaulting to Frontrunner. Tested. */
+function foodById(id) { return FOODS.find(f => f.id === id) || FOODS[0]; }
+/** Pure: resolve any stored kibble_type (id, full name, legacy 'Chicken'/'Salmon') to a food. Tested. */
+function foodFor(v) {
+  const t = String(v || '').toLowerCase();
+  if (!t) return FOODS[0];
+  const byId = FOODS.find(f => f.id === t); if (byId) return byId;
+  const byName = FOODS.find(f => f.name.toLowerCase() === t); if (byName) return byName;
+  if (/oat|redfish|medal|acadian/.test(t)) return foodById('medalseries');
+  if (/freestyle|lentil|salmon/.test(t)) return foodById('freestyle'); // legacy 'Salmon' → his established salmon food
+  return FOODS[0]; // legacy 'Chicken' or anything else → Frontrunner
+}
+/** Pure: full proper product name for a stored kibble_type. Tested. */
+function foodLabel(v) { return foodFor(v).name; }
+/** Pure: detect which food a voice/text note describes. Tested. */
+function foodIdFromWords(t) {
+  const x = String(t || '').toLowerCase();
+  if (/oat|redfish|medal|acadian/.test(x)) return 'medalseries';
+  if (/freestyle|lentil|salmon/.test(x)) return 'freestyle';
+  return 'frontrunner'; // chicken/turkey or unspecified → his primary food
+}
 
 /* Shared backend config (config.js) — one Supabase project for every app.
    The anon key is public by design; RLS (not the key) protects the data. */
@@ -508,10 +538,10 @@ function parseTelemetry(raw, now = new Date()) {
   if ((has('ate', 'food', 'kibble', 'meal', 'breakfast', 'lunch', 'dinner', 'fed') || tbsp > 0) && !neg.has('food')) {
     ev.category = 'Food';
     ev.kibble_offered_tbsp = tbsp || 0; ev.kibble_consumed_tbsp = tbsp || 0;
-    ev.kibble_type = has('salmon') ? 'Salmon' : 'Chicken';
+    ev.kibble_type = foodById(foodIdFromWords(t)).name; // v3.6 — which of Simba's three foods
     if (has('egg', 'eggs')) { ev.toppers_detail = (ev.toppers_detail || '') + ' scrambled egg'; ev.event_kcal = (ev.event_kcal || 0) + CFG.KCAL_PER_EGG * 0.5; }
     if (has('goat')) { ev.toppers_detail = (ev.toppers_detail || '') + ' goat milk'; ev.event_kcal = (ev.event_kcal || 0) + 3 * CFG.KCAL_PER_TSP_GOATMILK; }
-    ev.event_kcal = (ev.event_kcal || 0) + tbsp * CFG.KCAL_PER_TBSP[ev.kibble_type === 'Salmon' ? 'Salmon' : 'Chicken'];
+    ev.event_kcal = (ev.event_kcal || 0) + tbsp * foodFor(ev.kibble_type).kcalTbsp;
   }
   if ((has('drank', 'water', 'hydration') || (tsp > 0 && ev.category !== 'Food')) && !neg.has('water')) {
     if (ev.category === 'Note') ev.category = 'Water';
@@ -720,6 +750,24 @@ function segVal(id, fallback) {
   const b = document.querySelector(`#${id} button.active`);
   return b ? b.dataset.v : fallback;
 }
+/* v3.6 — food sheet helpers: each food remembers its own last-used amount. */
+function lastFoodTbsp(fid) {
+  try {
+    const v = parseFloat(localStorage.getItem('st_food_tbsp_' + fid));
+    if (isFinite(v) && v > 0) return v;
+  } catch (e) {}
+  return foodById(fid).defaultTbsp;
+}
+function refreshFoodSheet(fid) {
+  const f = foodById(fid);
+  const hh = $('fFoodHint');
+  if (hh) hh.textContent = `${f.name} · ${f.kcalTbsp.toFixed(2)} kcal/tbsp`;
+  const kh = $('fKcalHint'), tbspEl = $('fTbsp'), eggEl = $('fEgg');
+  if (kh && tbspEl) {
+    const kcal = (+tbspEl.value || 0) * f.kcalTbsp + (+(eggEl && eggEl.value) || 0) * CFG.KCAL_PER_EGG;
+    kh.textContent = `≈ ${Math.round(kcal)} kcal`;
+  }
+}
 function quickLog(category) {
   if (category === 'Food' || category === 'Water') return openSheet(category);
   if (category === 'Accident') return openSheet('Accident');
@@ -739,15 +787,23 @@ function openSheet(kind, existing = null) {
   $('sheetTitle').textContent = (existing ? 'Edit ' : 'Log ') + kind;
   const b = $('sheetBody');
   if (kind === 'Food') {
+    // v3.6 — multiple-choice food picker with proper product names + per-food amounts
     b.innerHTML = `
-      <label class="lbl">Kibble type</label>
-      <select id="fType"><option>Chicken</option><option>Salmon</option></select>
-      <label class="lbl">Kibble consumed (tbsp)</label>
-      <input id="fTbsp" type="number" step="0.25" value="3">
+      <label class="lbl">Food</label>
+      <div class="seg" id="fFoodSeg">${FOODS.map((f, i) => `<button data-v="${f.id}"${i === 0 ? ' class="active"' : ''}>${f.short}</button>`).join('')}</div>
+      <p class="muted small" id="fFoodHint"></p>
+      <label class="lbl">Amount (tbsp)</label>
+      <input id="fTbsp" type="number" step="0.25" inputmode="decimal" value="3.5">
+      <p class="muted small" id="fKcalHint"></p>
       <label class="lbl">Toppers / notes</label>
       <input id="fTop" placeholder="e.g. 0.5 scrambled egg, goat milk 2 tsp">
       <label class="lbl">Egg (whole eggs)</label>
       <input id="fEgg" type="number" step="0.25" value="0.5">`;
+    wireSeg('fFoodSeg', fid => { $('fTbsp').value = lastFoodTbsp(fid); refreshFoodSheet(fid); });
+    $('fTbsp').oninput = () => refreshFoodSheet(segVal('fFoodSeg', 'frontrunner'));
+    $('fEgg').oninput = () => refreshFoodSheet(segVal('fFoodSeg', 'frontrunner'));
+    $('fTbsp').value = lastFoodTbsp('frontrunner');
+    refreshFoodSheet('frontrunner');
   } else if (kind === 'Water') {
     b.innerHTML = `
       <label class="lbl">Water consumed (tsp)</label>
@@ -815,6 +871,7 @@ function openSheet(kind, existing = null) {
       <label class="lbl">Location</label>
       <input id="eLoc" value="${esc(ev.location_substrate || '')}" placeholder="e.g. Lawn Grass">
       <div data-enums="Food" hidden>
+        <label class="lbl">Food</label><select id="eFood">${FOODS.map(f => `<option value="${f.id}"${foodFor(ev.kibble_type).id === f.id ? ' selected' : ''}>${esc(f.name)}</option>`).join('')}</select>
         <label class="lbl">kcal</label><input id="eKcal" type="number" step="1" value="${ev.event_kcal || 0}">
         <label class="lbl">Kibble (tbsp)</label><input id="eTbsp" type="number" step="0.25" value="${ev.kibble_consumed_tbsp || 0}">
       </div>
@@ -859,12 +916,23 @@ function openSheet(kind, existing = null) {
       <input id="bNote" placeholder="e.g. found the puddle by the door">`;
   }
   // v2.0 — back-dated entries: every manual log sheet gets a log-time picker
+  // v3.6 FIX — use insertAdjacentHTML, NOT innerHTML += : re-assigning innerHTML
+  // destroys every node in the sheet, silently dropping the tap handlers that
+  // wireSeg() had just attached to the PoopScore/Accident/Food pickers (taps
+  // did nothing and the score always saved as the default). Appending preserves them.
   if (['Food', 'Water', 'Weight', 'Note', 'Accident', 'PoopScore'].includes(kind)) {
-    b.innerHTML += `<label class="lbl">Log time <span class="hint">(back-date if needed)</span></label>
-      <input id="logAt" type="datetime-local" value="${nowLocalInput()}">`;
+    b.insertAdjacentHTML('beforeend', `<label class="lbl">Log time <span class="hint">(back-date if needed)</span></label>
+      <input id="logAt" type="datetime-local" value="${nowLocalInput()}">`);
   }
   if (existing) {
-    if (kind === 'Food') { $('fType').value = existing.kibble_type || 'Chicken'; $('fTbsp').value = existing.kibble_consumed_tbsp || 0; $('fTop').value = existing.toppers_detail || ''; }
+    if (kind === 'Food') {
+      // v3.6 — restore the saved food in the picker
+      const fid = foodFor(existing.kibble_type).id;
+      document.querySelectorAll('#fFoodSeg button').forEach(x => x.classList.toggle('active', x.dataset.v === fid));
+      $('fTbsp').value = existing.kibble_consumed_tbsp || 0;
+      $('fTop').value = existing.toppers_detail || '';
+      refreshFoodSheet(fid);
+    }
     if (kind === 'Water') { $('wTsp').value = existing.water_consumed_tsp || 0; }
   }
   $('sheet').hidden = false;
@@ -894,7 +962,7 @@ function buildEditPatch(prev, f) {
   if (f.cat === 'Elimination') { patch.elimination_type = f.type || null; patch.crate_action = null; }
   else if (f.cat === 'Nap') { patch.crate_action = f.type || null; patch.elimination_type = null; }
   else { patch.elimination_type = null; patch.crate_action = null; }
-  if (f.cat === 'Food') { patch.event_kcal = +f.kcal || 0; patch.kibble_consumed_tbsp = +f.tbsp || 0; }
+  if (f.cat === 'Food') { patch.event_kcal = +f.kcal || 0; patch.kibble_consumed_tbsp = +f.tbsp || 0; if (f.food) patch.kibble_type = foodById(f.food).name; }
   if (f.cat === 'Water') { patch.water_consumed_tsp = +f.tsp || 0; }
   if (f.cat === 'Elimination') { const fs = +f.fecal; patch.fecal_score = fs >= 1 && fs <= 7 ? fs : null; }
   patch.status_outcome = summarizeEdit(patch);
@@ -930,12 +998,15 @@ async function saveSheet() {
   if (kind === 'WalkView') return closeSheet(); // read-only route viewer
   let ev = existing ? { ...existing } : { category: kind };
   if (kind === 'Food') {
-    const type = $('fType').value, tbsp = +$('fTbsp').value || 0, egg = +$('fEgg').value || 0;
-    ev.category = 'Food'; ev.kibble_type = type;
+    // v3.6 — save the full product name; each food remembers its own last amount
+    const fid = segVal('fFoodSeg', 'frontrunner'), food = foodById(fid);
+    const tbsp = +$('fTbsp').value || 0, egg = +$('fEgg').value || 0;
+    ev.category = 'Food'; ev.kibble_type = food.name;
     ev.kibble_offered_tbsp = tbsp; ev.kibble_consumed_tbsp = tbsp;
     ev.toppers_detail = $('fTop').value;
-    ev.event_kcal = tbsp * (type === 'Salmon' ? CFG.KCAL_PER_TBSP.Salmon : CFG.KCAL_PER_TBSP.Chicken) + egg * CFG.KCAL_PER_EGG;
-    ev.status_outcome = `Ate ${tbsp} tbsp ${type} kibble${ev.toppers_detail ? ' + ' + ev.toppers_detail : ''}`;
+    ev.event_kcal = tbsp * food.kcalTbsp + egg * CFG.KCAL_PER_EGG;
+    ev.status_outcome = `Ate ${tbsp} tbsp ${food.short}${ev.toppers_detail ? ' + ' + ev.toppers_detail : ''}`;
+    try { localStorage.setItem('st_food_tbsp_' + fid, String(tbsp)); } catch (e) {}
   } else if (kind === 'Water') {
     ev.category = 'Water'; ev.water_consumed_tsp = +$('wTsp').value || 0;
     ev.status_outcome = `Drank ${ev.water_consumed_tsp} tsp water` + ($('wNote').value ? ' (' + $('wNote').value + ')' : '');
@@ -989,6 +1060,7 @@ async function saveSheet() {
       loc: $('eLoc').value, notes: $('eNotes').value,
       type: $('eType') ? $('eType').value : '',
       kcal: $('eKcal').value, tbsp: $('eTbsp').value, tsp: $('eTsp').value, fecal: $('eFecal').value,
+      food: $('eFood') ? $('eFood').value : '',
     };
     const patch = buildEditPatch(existing, f);
     closeSheet();
@@ -1841,7 +1913,11 @@ function buildDailyDigest({ petName, breed, ageWeeks, weightLbs, dateISO, now, e
   L.push('TODAY');
   L.push(`pee: ${pees.length} total (outdoor ${pees.filter(e => !isAcc(e)).length}, accidents ${accs.filter(a => /Pee/.test(a.elimination_type || '')).length})`);
   L.push(`poop: ${poops.length} total${scores.length ? ` (scores ${scores.join(',')})` : ''}`);
-  L.push(`food: ${meals.length} meals, ${cups} cup, ${kcal} kcal (target ${kcalMin}-${kcalMax} kcal)`);
+  // v3.6 — per-food tbsp breakdown (tracks food type + habit, not just totals)
+  const byFood = {};
+  meals.forEach(m => { const k = foodFor(m.kibble_type).id; byFood[k] = (byFood[k] || 0) + (+m.kibble_consumed_tbsp || 0); });
+  const foodBits = Object.entries(byFood).map(([k, v]) => `${foodById(k).short} ${+v.toFixed(2)} tbsp`).join(' · ');
+  L.push(`food: ${meals.length} meals, ${cups} cup, ${kcal} kcal (target ${kcalMin}-${kcalMax} kcal)${foodBits ? ' — ' + foodBits : ''}`);
   L.push(`water: ${waterTsp} tsp`);
   L.push(`walk: ${walks.length} (${walkKm} km, ${walkMin} min)`);
   L.push(`nap: ${naps} | training: ${trains}`);
