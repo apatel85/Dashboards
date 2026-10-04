@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.8'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.9'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -131,6 +131,12 @@ const isToday = iso => localDay(iso) === todayStr();
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtTime = d => { d = new Date(d); let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`; };
 const fmtDur = mins => mins < 60 ? `${Math.round(mins)}m` : `${Math.floor(mins/60)}h ${Math.round(mins%60)}m`;
+/** Pure: 24h hour → "7 AM". Tested. */
+function fmtHour(h) { h = ((Math.round(h) % 24) + 24) % 24; const ap = h >= 12 ? 'PM' : 'AM'; return `${h % 12 || 12} ${ap}`; }
+/** Pure: 24h hour + minutes → "7:05 AM". Tested. */
+function fmtHM(h, m) { h = ((Math.round(h) % 24) + 24) % 24; const mm = String(Math.round(m || 0)).padStart(2, '0'); const ap = h >= 12 ? 'PM' : 'AM'; return `${h % 12 || 12}:${mm} ${ap}`; }
+/** Pure: "20:15" → "8:15 PM". Tested. */
+function fmtClock(hhmm) { const [h, m] = String(hhmm || '').split(':').map(Number); return fmtHM(h || 0, m || 0); }
 function toast(msg) {
   let t = document.querySelector('.app-toast');
   if (!t) { t = document.createElement('div'); t.className = 'app-toast'; document.body.appendChild(t); }
@@ -409,7 +415,7 @@ function isAsleep() {
   const crates = S.events.filter(e => e.category === 'Crate' || e.category === 'Nap');
   if (!crates.length) return false;
   const last = crates[crates.length - 1];
-  return last.crate_action === 'Crate_Entry'; // no wake logged yet
+  return last.crate_action === 'Crate_Entry' || last.crate_action === 'Nap_Start'; // v3.9 — nap/crate session still open
 }
 function liveState(now = new Date()) {
   const pee = lastElim(['Pee', 'Pee_Poop']);
@@ -585,8 +591,11 @@ function parseTelemetry(raw, now = new Date()) {
   }
   if (has('train', 'training', 'trained', 'sit', 'stay', 'recall', 'leash', 'session') && !neg.has('train')) ev.category = 'Training';
   if (has('nap', 'napping', 'crate', 'sleep', 'bedtime', 'den') && !neg.has('nap')) {
+    const wake = has('woke', 'wake', 'woken', 'out of crate');
     ev.category = has('nap', 'napping') ? 'Nap' : 'Crate';
-    ev.crate_action = has('woke', 'wake', 'out of crate') ? 'Crate_Wake' : 'Crate_Entry';
+    // v3.9 — explicit nap start/end
+    ev.crate_action = ev.category === 'Nap' ? (wake ? 'Nap_End' : 'Nap_Start') : (wake ? 'Crate_Wake' : 'Crate_Entry');
+    if (ev.category === 'Nap') ev.status_outcome = wake ? 'Nap ended' : 'Nap started';
   }
   const wMatch = t.match(/(\d+(?:\.\d+)?)\s*lbs?/);
   if (wMatch && has('weigh', 'weighs', 'weighed', 'weight', 'lbs')) { ev.category = 'Weight'; ev.status_outcome = `Weight: ${wMatch[1]} lbs`; }
@@ -655,6 +664,14 @@ function renderCockpit() {
   renderSubjectSwitcher();   // v2.0 multi-pet
   renderLearnBannerCockpit();// v2.0 confidence / quiet start
   renderStreaks();           // v2.0 streaks & success rates
+
+  // v3.9 — Nap tile reflects session state (tap to start / tap to end)
+  const napBtn = document.querySelector('.dock-btn[data-log="Nap"]');
+  if (napBtn) {
+    const ns = napInProgress(allEvents());
+    napBtn.innerHTML = ns ? `💤<span>End nap</span>` : `💤<span>Nap</span>`;
+    napBtn.title = ns ? `Napping since ${fmtTime(ns.logged_at)} — tap to end` : 'Start a nap';
+  }
 
   const st = liveState();
   // Risk gauge
@@ -725,12 +742,12 @@ function renderCountdowns(st) {
   const hm = s => { const [h, m] = s.split(':').map(Number); const d = new Date(); d.setHours(h, m, 0, 0); return d; };
   // Water cutoff
   const wc = hm(CFG.WATER_CUTOFF);
-  if (now < wc) items.push(['💧 Hard water cutoff ' + CFG.WATER_CUTOFF, wc - now, () => { localStorage.setItem('st_bowls', '1'); renderCockpit(); toast('Water bowls marked as pulled.'); }]);
+  if (now < wc) items.push(['💧 Hard water cutoff ' + fmtClock(CFG.WATER_CUTOFF), wc - now, () => { localStorage.setItem('st_bowls', '1'); renderCockpit(); toast('Water bowls marked as pulled.'); }]);
   // Pre-bed drain + lockdown
   const bed = hm(CFG.BEDTIME);
   const drain = new Date(bed.getTime() - CFG.PRE_BED_DRAIN_MIN * 60000);
   if (now < drain) items.push(['🌙 Pre-bed lawn drain (~' + fmtTime(drain) + ')', drain - now, null]);
-  if (now < bed) items.push(['💤 Overnight den lockdown ' + CFG.BEDTIME, bed - now, null]);
+  if (now < bed) items.push(['💤 Overnight den lockdown ' + fmtClock(CFG.BEDTIME), bed - now, null]);
   // Meal pickup countdown
   if (st.mealInProgress) {
     const end = new Date(st.lastMealAt.getTime() + CFG.MEAL_WINDOW_MIN * 60000);
@@ -753,6 +770,14 @@ function renderAlerts(alerts) {
 
 /* ---------- Quick-log dock ---------- */
 const CAT_EMOJI = { Pee: '💧', Poop: '💩', Food: '🥩', Water: '🚰', Nap: '💤', Training: '🎯', Weight: '⚖️', Note: '📝', Elimination: '🚻', Crate: '💤' };
+/** Pure: quick-log-consistent icon for any event — pee/poop/accident resolve from elimination_type. Tested. */
+function eventEmoji(ev) {
+  const t = ev.elimination_type || '';
+  if (/Accident/.test(t)) return '⚠️';
+  if (/Pee/.test(t)) return '💧';
+  if (/Poop/.test(t)) return '💩';
+  return CAT_EMOJI[ev.category] || '•';
+}
 
 /** Pure: build an accident event from the sheet choices. Tested. */
 function buildAccidentEvent(type, floor) {
@@ -817,7 +842,51 @@ function refreshMixSheet() {
     ? `Total ${+totalTbsp.toFixed(2)} tbsp (${comp.map(c => `${+c.tbsp.toFixed(2)} ${c.food.short}`).join(' + ')}) ≈ ${Math.round(kcal)} kcal incl. egg${water ? ` + ${water} tsp water in food` : ''}`
     : 'Enter at least one food amount.';
 }
+/* v3.9 — nap start/end: the Nap tile toggles a nap session; sleep durations pair at render time. */
+/** Pure: nap-start event (Nap_Start, or legacy Crate_Entry on a Nap). Tested. */
+function isNapStart(e) { return e.category === 'Nap' && (e.crate_action === 'Nap_Start' || e.crate_action === 'Crate_Entry'); }
+/** Pure: nap-end event (Nap_End, or legacy Crate_Exit / Crate_Wake on a Nap). Tested. */
+function isNapEnd(e) { return e.category === 'Nap' && (e.crate_action === 'Nap_End' || e.crate_action === 'Crate_Exit' || e.crate_action === 'Crate_Wake'); }
+/** Pure: the currently-open nap start event, or null. Tested. */
+function napInProgress(evs) {
+  const naps = evs.filter(e => isNapStart(e) || isNapEnd(e)).sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
+  const last = naps[naps.length - 1];
+  return last && isNapStart(last) ? last : null;
+}
+/** Pure: pair nap starts with ends chronologically → [{start, end|null, mins}]. Tested. */
+function pairNaps(evs) {
+  const naps = evs.filter(e => isNapStart(e) || isNapEnd(e)).sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
+  const pairs = []; let open = null;
+  for (const e of naps) {
+    if (isNapStart(e)) { if (open) pairs.push({ start: open, end: null, mins: 0 }); open = e; }
+    else if (open) { pairs.push({ start: open, end: e, mins: Math.max(0, Math.round((new Date(e.logged_at) - new Date(open.logged_at)) / 60000)) }); open = null; }
+  }
+  if (open) pairs.push({ start: open, end: null, mins: 0 });
+  return pairs;
+}
+/** Pure: minutes slept for a nap-end event (pairs with the latest start at/before it). Tested. */
+function napEndMins(endEv, evs) {
+  const t = new Date(endEv.logged_at).getTime();
+  const starts = evs.filter(e => isNapStart(e) && new Date(e.logged_at).getTime() <= t)
+    .sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at));
+  return starts.length ? Math.max(0, Math.round((t - new Date(starts[0].logged_at).getTime()) / 60000)) : 0;
+}
+/** All events available locally (90-day history when synced, today's cache otherwise). */
+function allEvents() { return (S.history && S.history.length ? S.history : S.events) || []; }
+/* v3.9 — Nap tile toggles a nap session: tap to start, tap again to end. */
+async function toggleNap() {
+  const start = napInProgress(allEvents());
+  if (start) {
+    const mins = Math.max(1, Math.round((Date.now() - new Date(start.logged_at).getTime()) / 60000));
+    const r = await saveEvent({ category: 'Nap', crate_action: 'Nap_End', status_outcome: 'Nap ended' });
+    if (r) { toast(`Nap ended — slept ${fmtDur(mins)} 💤`); await loadData(); renderCockpit(); checkNudges(); }
+  } else {
+    const r = await saveEvent({ category: 'Nap', crate_action: 'Nap_Start', status_outcome: 'Nap started' });
+    if (r) { toast('Nap started 💤 — tap Nap again to end'); await loadData(); renderCockpit(); checkNudges(); }
+  }
+}
 function quickLog(category) {
+  if (category === 'Nap') return toggleNap(); // v3.9 — start/end toggle
   if (category === 'Food' || category === 'Water') return openSheet(category);
   if (category === 'Accident') return openSheet('Accident');
   if (category === 'Poop') return openSheet('PoopScore');
@@ -825,7 +894,6 @@ function quickLog(category) {
   if (category === 'Note') return openSheet('Note');
   const ev = { category };
   if (category === 'Pee') { ev.category = 'Elimination'; ev.elimination_type = 'Pee'; ev.location_substrate = 'Lawn Grass'; }
-  if (category === 'Nap') { ev.category = 'Nap'; ev.crate_action = 'Crate_Entry'; }
   if (category === 'Training') { ev.status_outcome = 'Training session logged'; }
   saveEvent(ev).then(r => { if (r) { toast(`${category} logged ✓`); loadData(); checkNudges(); } });
 }
@@ -1191,9 +1259,13 @@ function renderTimeline() {
   rows.forEach(ev => {
     const div = document.createElement('div'); div.className = 'tl-item';
     const cat = ev.elimination_type || ev.category;
+    // v3.9 — nap rows show start/end with the paired sleep duration
+    let sub = ev.status_outcome || ev.raw_input || '';
+    if (isNapStart(ev)) sub = `Fell asleep at ${fmtTime(ev.logged_at)}`;
+    else if (isNapEnd(ev)) { const m = napEndMins(ev, rows); sub = m > 0 ? `Slept ${fmtDur(m)}` : 'Woke up'; }
     div.innerHTML = `<div class="tl-time">${fmtTime(ev.logged_at)}</div>
-      <div class="tl-body"><span class="tl-cat">${CAT_EMOJI[ev.category] || '•'} ${esc(cat)}</span><br>
-      <span class="muted">${esc(ev.status_outcome || ev.raw_input || '')}</span></div>
+      <div class="tl-body"><span class="tl-cat">${eventEmoji(ev)} ${esc(cat)}</span><br>
+      <span class="muted">${esc(sub)}</span></div>
       <div class="tl-actions"><button data-act="edit" title="Edit">✏️</button><button data-act="del" title="Delete">🗑</button></div>`;
     div.querySelector('[data-act=del]').onclick = () => { if (confirm('Delete this event?')) deleteEvent(ev.id); };
     div.querySelector('[data-act=edit]').onclick = () => {
@@ -1264,7 +1336,7 @@ function renderTrends() {
   const days = dayBuckets(evs), dayKeys = Object.keys(days).sort();
   // Pee probability by hour
   const { probs } = hourlyProb(evs, isPee);
-  drawBars('chPee', [...Array(24).keys()].map(h => h + ':00'), probs,
+  drawBars('chPee', [...Array(24).keys()].map(fmtHour), probs, // v3.9 — AM/PM hour labels
     { colorFn: v => v >= .8 ? '#35c37d' : v >= .5 ? '#f2b134' : '#2a4636' });
   // Daily kcal
   const kcalByDay = dayKeys.map(d => days[d].reduce((a, e) => a + (+e.event_kcal || 0), 0));
@@ -1358,7 +1430,7 @@ function renderInsights() {
     if (m > 20 && m < 50) cards.push(`💧 <b>Filtration peak.</b> Fluids ${Math.round(m)}m ago are hitting the bladder now — expect a full void if you go out.`);
     else if (m >= 50) cards.push('💧 Fluids drained — bladder volume is basal only.');
   }
-  if (st.poops < 2) cards.push(`💩 <b>Colon quota ${st.poops}/2.</b> ${st.poops === 0 ? 'Morning bowel #1 typically lands 07:45–08:30.' : 'Afternoon bowel #2 typically lands 12:45–17:00.'}`);
+  if (st.poops < 2) cards.push(`💩 <b>Colon quota ${st.poops}/2.</b> ${st.poops === 0 ? 'Morning bowel #1 typically lands 7:45–8:30 AM.' : 'Afternoon bowel #2 typically lands 12:45–5:00 PM.'}`);
   else cards.push('💩 <b>Colon quota met (2/2).</b> Further squats today are likely gas/false urge.');
   box.innerHTML = cards.map(c => `<div class="window-card">${c}</div>`).join('');
 
@@ -1377,7 +1449,7 @@ function renderInsights() {
     else lb.hidden = true;
   }
   sw.innerHTML = wins.length
-    ? wins.map(w => `<div class="window-card"><span class="prob">${w.confidence}%</span> confident · ${Math.round(w.prob * 100)}% of days: <b>${w.label}</b> ${String(w.start).padStart(2, '0')}:00–${String(w.end).padStart(2, '0')}:59 <span class="hint">(${w.clusterDays}d cluster)</span></div>`).join('')
+    ? wins.map(w => `<div class="window-card"><span class="prob">${w.confidence}%</span> confident · ${Math.round(w.prob * 100)}% of days: <b>${w.label}</b> ${fmtHM(w.start, 0)}–${fmtHM(w.end, 59)} <span class="hint">(${w.clusterDays}d cluster)</span></div>`).join('')
     : '<div class="muted">Not enough history yet — windows appear after ~3 days of logging.</div>';
   renderNudges(wins);
 }
@@ -1399,7 +1471,7 @@ function renderNudges(wins) {
     if (!loggedToday) upcoming.push(w);
   }
   box.innerHTML = upcoming.length
-    ? upcoming.map(w => `<div class="nudge">🔔 <b>${w.confidence}% confident</b> — Simba ${w.label === 'Meal' ? 'eats' : w.label.toLowerCase() + 's'} around <b>${String(w.start).padStart(2, '0')}:00</b> — take him out / prep now. <button class="btn small" data-nk="${esc(nudgeKey(w))}">dismiss</button></div>`).join('')
+    ? upcoming.map(w => `<div class="nudge">🔔 <b>${w.confidence}% confident</b> — Simba ${w.label === 'Meal' ? 'eats' : w.label.toLowerCase() + 's'} around <b>${fmtHour(w.start)}</b> — take him out / prep now. <button class="btn small" data-nk="${esc(nudgeKey(w))}">dismiss</button></div>`).join('')
     : '<div class="muted">No upcoming high-probability windows.</div>';
   box.querySelectorAll('[data-nk]').forEach(b => b.onclick = () => {
     const d = JSON.parse(localStorage.getItem(CFG.LS.DISMISSED) || '{}');
@@ -1426,7 +1498,7 @@ function checkNudges() {
         const card = $('alertCard'); card.hidden = false;
         const div = document.createElement('div');
         div.className = 'nudge'; div.dataset.liveNudge = nudgeKey(w);
-        div.innerHTML = `🔔 <b>${w.confidence}% confident</b> — Simba ${w.label === 'Meal' ? 'eats' : w.label.toLowerCase() + 's'} ~${String(w.start).padStart(2, '0')}:00 — in case you forgot.`;
+        div.innerHTML = `🔔 <b>${w.confidence}% confident</b> — Simba ${w.label === 'Meal' ? 'eats' : w.label.toLowerCase() + 's'} ~${fmtHour(w.start)} — in case you forgot.`;
         $('alertList').prepend(div);
       }
     }
@@ -2002,8 +2074,10 @@ function buildDailyDigest({ petName, breed, ageWeeks, weightLbs, dateISO, now, e
   const scores = poops.map(e => e.fecal_score).filter(s => s >= 1 && s <= 7);
   const walkKm = (walks.reduce((s, w) => s + (+w.distance_m || 0), 0) / 1000).toFixed(2);
   const walkMin = Math.round(walks.reduce((s, w) => s + (+w.duration_mins || 0), 0));
-  const naps = evs.filter(e => e.category === 'Nap' || e.category === 'Crate').length;
   const trains = evs.filter(e => e.category === 'Training').length;
+  // v3.9 — nap sessions with total sleep (in-progress nap counts elapsed time so far)
+  const napPairs = pairNaps(evs);
+  const napMin = napPairs.reduce((s, p) => s + (p.end ? p.mins : Math.max(0, Math.round((now - new Date(p.start.logged_at).getTime()) / 60000))), 0);
   L.push('TODAY');
   L.push(`pee: ${pees.length} total (outdoor ${pees.filter(e => !isAcc(e)).length}, accidents ${accs.filter(a => /Pee/.test(a.elimination_type || '')).length})`);
   L.push(`poop: ${poops.length} total${scores.length ? ` (scores ${scores.join(',')})` : ''}`);
@@ -2023,7 +2097,7 @@ function buildDailyDigest({ petName, breed, ageWeeks, weightLbs, dateISO, now, e
   L.push(`food: ${meals.length} meals, ${cups} cup, ${kcal} kcal (target ${kcalMin}-${kcalMax} kcal)${foodBits ? ' — ' + foodBits : ''}`);
   L.push(`water: ${waterTsp} tsp${foodTsp ? ` (bowl ${Math.round(bowlTsp)}, in food ${Math.round(foodTsp)})` : ''}`);
   L.push(`walk: ${walks.length} (${walkKm} km, ${walkMin} min)`);
-  L.push(`nap: ${naps} | training: ${trains}`);
+  L.push(`nap: ${napPairs.length} (${fmtDur(napMin)} total) | training: ${trains}`);
   L.push('');
   L.push('NOW');
   L.push(`bladder_hold_min: ${bladder.elapsedMins} | est_vol_ml: ${Math.round(bladder.estimatedVolumeMl)} | risk: ${bladder.accidentRisk}`);
@@ -2401,14 +2475,14 @@ function renderClockDial() {
     s += `<path d="M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}" stroke="${col}" stroke-width="${w.toFixed(1)}" fill="none" stroke-linecap="round" opacity="${p > 0 ? 0.95 : 0.45}"/>`;
     if (h % 3 === 0) {
       const lx = (cx + (r + 34) * Math.cos(a)).toFixed(1), ly = (cy + (r + 34) * Math.sin(a)).toFixed(1);
-      s += `<text x="${lx}" y="${(+ly + 4).toFixed(1)}" fill="#9db3a7" font-size="11" text-anchor="middle">${h}:00</text>`;
+      s += `<text x="${lx}" y="${(+ly + 4).toFixed(1)}" fill="#9db3a7" font-size="11" text-anchor="middle">${fmtHour(h)}</text>`;
     }
   }
   // hands pointing at the two strongest hours
   const ranked = probs.map((p, h) => [p, h]).sort((a, b) => b[0] - a[0]).slice(0, 2);
   s += `<text x="${cx}" y="${cy - 4}" fill="#eef5f0" font-size="15" text-anchor="middle" font-weight="700">${type === 'All' ? 'Pee + Poop' : type}</text>`;
   s += `<text x="${cx}" y="${cy + 16}" fill="#9db3a7" font-size="11" text-anchor="middle">${days} days of data</text>`;
-  if (ranked[0][0] > 0) s += `<text x="${cx}" y="${cy + 34}" fill="#35c37d" font-size="11" text-anchor="middle">peak ${String(ranked[0][1]).padStart(2,'0')}:00${ranked[1][0] > 0 ? ' · ' + String(ranked[1][1]).padStart(2,'0') + ':00' : ''}</text>`;
+  if (ranked[0][0] > 0) s += `<text x="${cx}" y="${cy + 34}" fill="#35c37d" font-size="11" text-anchor="middle">peak ${fmtHour(ranked[0][1])}${ranked[1][0] > 0 ? ' · ' + fmtHour(ranked[1][1]) : ''}</text>`;
   s += `</svg>`;
   box.innerHTML = s;
   const note = $('dialNote');
