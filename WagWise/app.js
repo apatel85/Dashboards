@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.2'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -382,6 +382,17 @@ const WORD_NUM = { zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7
 function wordsToNum(text) {
   let t = ' ' + text.toLowerCase() + ' ';
   const DEN = { half: 2, halves: 2, quarter: 4, quarters: 4, fourth: 4, fourths: 4, third: 3, thirds: 3 };
+  // v3.2 — spoken clock times BEFORE single words are digitized:
+  // "nine fifty-one" → 9:51, "ten oh five" → 10:05
+  const HRS = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, eleven:11, twelve:12 };
+  const TENSW = { twenty:20, thirty:30, forty:40, fifty:50 };
+  const ONEW = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9 };
+  const HW = 'one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve';
+  const OW = 'one|two|three|four|five|six|seven|eight|nine';
+  t = t.replace(new RegExp(`\\b(${HW})[\\s-]+(twenty|thirty|forty|fifty)(?:[\\s-]+(${OW}))?\\b`, 'g'),
+    (m, h, te, on) => ` ${HRS[h]}:${String(TENSW[te] + (on ? ONEW[on] : 0)).padStart(2, '0')} `);
+  t = t.replace(new RegExp(`\\b(${HW})\\s+oh\\s+(${OW})\\b`, 'g'),
+    (m, h, on) => ` ${HRS[h]}:0${ONEW[on]} `);
   // "two and three fourth" → 2.75 ; "one and a half" → 1.5
   t = t.replace(/\b(one|two|three|four|five)\s+and\s+(?:a\s+)?(one|two|three)\s+(half|halves|quarter|quarters|fourth|fourths|third|thirds)\b/g,
     (m, a, b, c) => ` ${(WORD_NUM[a] + WORD_NUM[b] / DEN[c]).toFixed(3)} `);
@@ -527,7 +538,7 @@ function parseTelemetry(raw, now = new Date()) {
   // --- explicit time: LAST time mentioned wins ("out at 7:50 … peed at 7:52" → 7:52).
   // Bare times assume the current half of the day (afternoon → PM, morning → AM);
   // explicit am/pm always wins. "4 o'clock" works too.
-  const rawT = raw.replace(/(\d{1,2})\s*o'clock/gi, '$1:00');
+  const rawT = t.replace(/(\d{1,2})\s*o'?clock/gi, '$1:00'); // v3.2 — run on wordsToNum'd text so "ten o'clock" works
   const timeMatches = findTimeMatches(rawT); // v2.9: shared finder (minutes, am/pm, or explicit "at")
   if (timeMatches.length) {
     const tm = timeMatches[timeMatches.length - 1];
@@ -1522,19 +1533,11 @@ function startVoice(btn, labelEl, statusEl, goToLog) {
   const setStatus = t => { if (statusEl) statusEl.textContent = t; };
   if (!SR) { setStatus('Voice not supported in this browser — type instead.'); if (goToLog) toast('Voice not supported here — use the Log tab.'); return; }
   if (listening) { micUserStop = true; if (recog) try { recog.stop(); } catch (e) {} return; } // v3.0 — tap toggles stop
-  recog = new SR(); recog.lang = 'en-US'; recog.interimResults = true; recog.continuous = true; // v3.0 — stay live until the user taps stop
   if (btn) btn.classList.add('listening');
   if (labelEl) labelEl.textContent = 'LISTENING… TAP TO STOP';
   listening = true; micUserStop = false; micFatal = false;
   let final = '';
-  recog.onresult = ev => {
-    let interim = '';
-    for (let i = ev.resultIndex; i < ev.results.length; i++) {
-      const r = ev.results[i];
-      if (r.isFinal) final += r[0].transcript; else interim += r[0].transcript;
-    }
-    setStatus((final + interim).slice(-120));
-  };
+  let seenFinals = 0; // v3.2 — consume each final-result index exactly once
   const finalizeMic = () => {
     if (btn) btn.classList.remove('listening');
     if (labelEl) labelEl.textContent = 'TAP TO SPEAK TELEMETRY';
@@ -1542,24 +1545,47 @@ function startVoice(btn, labelEl, statusEl, goToLog) {
     if (final.trim()) {
       $('logText').value = punctuate(cleanVoiceText(final.trim())); // v2.7 — cleaned, punctuated transcript
       if (goToLog) show('log');
-      $('micStatus').textContent = 'Heard ✓ — cleaned up, review and Parse.';
+      $('micStatus').textContent = 'Heard \u2713 \u2014 cleaned up, review and Parse.';
       parseAndPreview();
     }
-    else setStatus('Did not catch that — try again.');
+    else setStatus('Did not catch that \u2014 try again.');
   };
-  recog.onend = () => {
-    // v3.0 — manual stop: a pause must not end the session; silently resume
-    // listening until the user taps stop (or a fatal mic error occurs)
-    if (listening && !micUserStop && !micFatal) {
-      setTimeout(() => { try { if (listening && !micUserStop && !micFatal) recog.start(); } catch (e) {} }, 120);
-      return;
-    }
-    finalizeMic();
+  const attach = r => {
+    r.lang = 'en-US'; r.interimResults = true; r.continuous = true; // stay live until the user taps stop
+    r.onresult = ev => {
+      let interim = '';
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const res = ev.results[i];
+        // v3.2 — Chrome re-sends already-seen finals with resultIndex 0; never append twice
+        if (res.isFinal) { if (i >= seenFinals) { final += res[0].transcript; seenFinals = i + 1; } }
+        else interim += res[0].transcript;
+      }
+      setStatus((final + interim).slice(-120));
+    };
+    r.onend = () => {
+      // manual stop: a pause must not end the session; silently resume
+      // listening until the user taps stop (or a fatal mic error occurs).
+      // v3.2 — resume with a FRESH recognizer: restarting the same object
+      // replays stale results, which caused the word-duplication bug.
+      if (listening && !micUserStop && !micFatal) {
+        setTimeout(() => {
+          if (listening && !micUserStop && !micFatal) {
+            seenFinals = 0;
+            recog = attach(new SR());
+            try { recog.start(); } catch (e) {}
+          }
+        }, 120);
+        return;
+      }
+      finalizeMic();
+    };
+    r.onerror = e => {
+      setStatus('Mic error: ' + e.error);
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') micFatal = true;
+    };
+    return r;
   };
-  recog.onerror = e => {
-    setStatus('Mic error: ' + e.error);
-    if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') micFatal = true;
-  };
+  recog = attach(new SR());
   try { recog.start(); } catch (e) { setStatus('Mic error: ' + e.message); listening = false; }
 }
 function toggleMic() { startVoice($('micBtn'), $('micLabel'), $('micStatus'), false); }
