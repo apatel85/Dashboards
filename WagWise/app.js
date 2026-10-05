@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.17.5'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.18.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1103,7 +1103,10 @@ function bowel1ClockMin(events) {
   return firsts.length ? Math.round(medianNum(firsts)) : null;
 }
 /** Pure: today's upcoming nap predictions — ideal start, typical span, predicted wake.
-    A live in-progress nap comes first (predicts its wake). Tested. */
+    A live in-progress nap comes first (predicts its wake). Tested.
+    v3.18 — 30% threshold (was 50%) with ≥2 cluster days, so rarer naps (e.g. an
+    evening catnap) still surface; each row shows its % of days so weaker ones
+    are honest. */
 function upcomingNaps(hist, today, now = new Date()) {
   const pairs = pairNaps(hist).filter(p => p.mins > 0 && p.mins < 300);
   const medDur = ms => Math.round(medianNum(ms.length ? ms : pairs.map(p => p.mins)) || 90);
@@ -1116,7 +1119,8 @@ function upcomingNaps(hist, today, now = new Date()) {
     const dur = medDur([]);
     out.push({ kind: 'live', startMin: sMin, durMin: dur, wakeMin: sMin + dur, prob: 1, days: 0 });
   }
-  learnedWindows(hist, isNapStart, 'Nap', 0.5).forEach(w => {
+  learnedWindows(hist, isNapStart, 'Nap', 0.3).forEach(w => {
+    if (w.clusterDays < 2) return; // v3.18 — one-off naps aren't a schedule
     const wStart = w.start * 60, wEnd = w.end * 60 + 59;
     if (wEnd <= nowMin - 30) return; // window fully past
     if (startsToday.some(m => m >= wStart - 30 && m <= wEnd)) return; // already napped in this slot
@@ -1153,9 +1157,9 @@ function actionCountdownText(it, nowMs) {
   if (nowMs <= e) return 'now · ' + fmtDur((e - nowMs) / 60000) + ' left';
   return 'missed';
 }
-/** Pure: build the ordered action items. doneMap = {id:1} manual check-offs.
-    hist = trailing history, today = today's events, avgHold = personalAvgHold(). Tested. */
-function buildNextActions(hist, today, st, now, doneMap, avgHold) {
+/** Pure: build the ordered action items. doneMap = {id:1} manual check-offs,
+    skipMap = {id:timestamp} "didn't go" skips → next slot. Tested. */
+function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   const nowMs = now.getTime();
   let items = []; // v3.17.5 — reassigned by the nap-overlap filter below
   let napSpans = []; // v3.17.5 — predicted nap spans [{s, e}] as Dates, for overlap suppression
@@ -1216,7 +1220,6 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
   // the ±10 min drives the alert (ntfy fires 10 min before winStart), not the display.
   if (!st.asleep) {
     const naps = upcomingNaps(hist, today, now);
-    const peeLat = postNapLatencyMin(hist, 'Pee');
     const poopLat = postNapLatencyMin(hist, 'Poop');
     naps.forEach((n, i) => {
       const s = atHM(Math.floor(n.startMin / 60), n.startMin % 60);
@@ -1232,10 +1235,15 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
         items.push(mk('napwin-' + i, '😴', part + ' nap', s, w,
           `avg start ${fmtTime(s)} → avg end ${fmtTime(w)} (${n.durMin}m nap, ${basis})`, false));
       }
-      if (peeLat != null) {
-        const p = new Date(w.getTime() + peeLat * 60000);
+      // v3.18 — after EVERY nap he goes out for a pee: the row is always shown.
+      // With 3+ logged nap→pee latencies the timing is data-driven; until then
+      // it defaults to 15 min after predicted wake and learns from his logs.
+      const peeLat = postNapLatencyMin(hist, 'Pee');
+      const lat = peeLat != null ? peeLat : 15;
+      {
+        const p = new Date(w.getTime() + lat * 60000);
         items.push(mk('nappee-' + i, '🚻', 'Post-nap pee', new Date(p.getTime() - 10 * 60000), new Date(p.getTime() + 10 * 60000),
-          `~${peeLat}m after waking (${span} nap)`, false));
+          peeLat != null ? `~${lat}m after waking (${span} nap)` : `after every nap — take him out (~${lat}m after waking until your logs teach it better)`, false));
       }
       if (poopLat != null) {
         const p = new Date(w.getTime() + poopLat * 60000);
@@ -1248,15 +1256,18 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
   //    insight (skip/ontrack/due verdict, trend, filtration peak). Suppressed when nap-out is active.
   if (!st.asleep && !items.some(i => i.id === 'nap-out')) {
     const pees = today.filter(isPee), lastPeeT = pees.length ? peeAt(pees[pees.length - 1]) : null;
-    if (!lastPeeT) items.push(mk('pee-window', '🚻', 'Morning pee', new Date(nowMs), new Date(nowMs + 30 * 60000),
+    const skipTs = (skipMap || {})['pee-window']; // v3.18 — ✕ "didn't go": re-anchor one hold after the skipped outing
+    if (!lastPeeT && !skipTs) items.push(mk('pee-window', '🚻', 'Morning pee', new Date(nowMs), new Date(nowMs + 30 * 60000),
       'no pee logged yet today', false));
     else {
       const g = holdGuidance(hist, now);
       const hold = g ? g.hold : Math.round(avgHold);
-      const due = lastPeeT + hold * 60000;
+      const anchor = skipTs || lastPeeT;
+      const due = anchor + hold * 60000;
       const done = (nowMs - lastPeeT) < 25 * 60000;
-      let why = g ? `${g.basis} hold ${g.hold}m (your history) · last pee ${fmtTime(new Date(lastPeeT))}`
-                  : `avg hold ${Math.round(avgHold)}m · last pee ${fmtTime(new Date(lastPeeT))}`;
+      let why = g ? `${g.basis} hold ${g.hold}m (your history)` : `avg hold ${Math.round(avgHold)}m`;
+      why += lastPeeT ? ` · last pee ${fmtTime(new Date(lastPeeT))}` : ' · no pee logged yet today';
+      if (skipTs) why += ` · ⏭ didn't go at ${fmtTime(new Date(skipTs))} — next slot`;
       if (g) {
         why += g.verdict === 'fine' ? ' · ✅ skipping this trip is fine'
              : g.verdict === 'ontrack' ? ' · 🟡 on track' : ' · 🔴 due — take him out';
@@ -1336,6 +1347,13 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
   };
   mergeInto('pee-window', 'meal-intercept');
   mergeInto('pee-window', 'nappee-');
+  // v3.18 — ✕ "didn't go" skips on pee/poop rows. The hold-based pee window
+  // re-anchors above; clock-based ones show greyed as skipped for today.
+  const SKIP_RE = /^(pee-window|meal-intercept|nappee-\d+|nappoop-\d+|poop[12])$/;
+  items.forEach(a => {
+    a.skippable = SKIP_RE.test(a.id);
+    a.skipped = a.skippable && a.id !== 'pee-window' && !!(skipMap || {})[a.id];
+  });
   return items.sort((a, b) => a.winStart - b.winStart).slice(0, 9); // v3.17.4 — was 6; more predictions now, rows are compact
 }
 /* ---------- v3.13 — local action alerts (Notification API, $0, no server) ----------
@@ -1395,6 +1413,8 @@ function renderCountdowns(st) {
   const box = $('countdowns'); const now = new Date(); const nowMs = now.getTime();
   const dayKey = 'actionDone:' + todayStr();
   const doneMap = JSON.parse(localStorage.getItem(dayKey) || '{}');
+  const skipKey = 'actionSkip:' + todayStr(); // v3.18 — ✕ "didn't go" skips, date-scoped like check-offs
+  const skipMap = JSON.parse(localStorage.getItem(skipKey) || '{}');
   const checkOff = id => { const d = JSON.parse(localStorage.getItem(dayKey) || '{}'); d[id] = 1; localStorage.setItem(dayKey, JSON.stringify(d)); renderCockpit(); };
   box.innerHTML = '';
   // v2.0 med/vax reminders keep their compact treatment
@@ -1405,7 +1425,7 @@ function renderCountdowns(st) {
     box.appendChild(div);
   });
   // v3.12 — data-driven action items with windows + live countdowns
-  const actions = buildNextActions(eventsInDays(90), S.events, st, now, doneMap, personalAvgHold());
+  const actions = buildNextActions(eventsInDays(90), S.events, st, now, doneMap, personalAvgHold(), skipMap);
   // v3.13 — fire each alert once as its window opens (10-min heads-up)
   if (ntfyOn()) {
     const sentKey = 'ntfySent:' + todayStr(), sent = JSON.parse(localStorage.getItem(sentKey) || '{}');
@@ -1422,19 +1442,21 @@ function renderCountdowns(st) {
   }
   paintNtfyBtn();
   actions.forEach(a => {
-    const cd = actionCountdownText(a, nowMs);
+    const cd = a.skipped ? 'skipped' : actionCountdownText(a, nowMs);
     const point = a.winStart.getTime() === a.winEnd.getTime();
     const win = point ? fmtTime(a.winStart) : `${fmtTime(a.winStart)}–${fmtTime(a.winEnd)}`;
     const div = document.createElement('div');
-    div.className = 'nextup' + (a.done ? ' done' : cd === 'missed' ? ' missed' : '');
+    div.className = 'nextup' + ((a.done || a.skipped) ? ' done' : cd === 'missed' ? ' missed' : '');
     // v3.17.2 — compact rows: label · window · countdown on one line; the
     // explanation hides until you tap the row (less scrolling, info one tap away).
+    // v3.18 — pee/poop rows also get ✕ ("didn't go" → next slot); skipped rows show ↩ to undo.
     div.innerHTML = `
       <div class="nu-main"><span class="nu-icon">${a.icon}</span>
         <div class="nu-body"><div class="nu-label">${esc(a.label)} <span class="nu-win">${win} · <span class="nu-count">${cd}</span></span></div>
         <div class="nu-why">${esc(a.why)}</div></div></div>
       <div class="nu-right">
-        ${!a.done ? `<button class="btn small" data-nu="${a.id}" title="Mark done">✓</button>`
+        ${a.skipped ? `<button class="btn small" data-nuunskip="${a.id}" title="Undo skip">↩</button>`
+          : !a.done ? `<button class="btn small" data-nu="${a.id}" title="Mark done">✓</button>${a.skippable ? ` <button class="btn small" data-nuskip="${a.id}" title="Didn't go — next slot">✕</button>` : ''}`
           : a.manualDone ? `<button class="btn small" data-nuundo="${a.id}" title="Uncheck">↩</button>` : ''}</div>`;
     div.querySelector('.nu-main').onclick = () => div.classList.toggle('open');
     const btn = div.querySelector('[data-nu]');
@@ -1449,6 +1471,20 @@ function renderCountdowns(st) {
       localStorage.setItem(dayKey, JSON.stringify(d));
       if (a.id === 'water-cutoff') localStorage.removeItem('st_bowls'); // v3.15 — un-pull the bowls too
       renderCockpit(); toast('Unchecked.');
+    };
+    const skipBtn = div.querySelector('[data-nuskip]');
+    if (skipBtn) skipBtn.onclick = () => { // v3.18 — ✕ didn't go: jump to the next slot
+      const m = JSON.parse(localStorage.getItem(skipKey) || '{}');
+      m[skipBtn.getAttribute('data-nuskip')] = Date.now();
+      localStorage.setItem(skipKey, JSON.stringify(m));
+      renderCockpit(); toast("Skipped — next slot's up.");
+    };
+    const unskipBtn = div.querySelector('[data-nuunskip]');
+    if (unskipBtn) unskipBtn.onclick = () => { // v3.18 — undo a mistaken skip
+      const m = JSON.parse(localStorage.getItem(skipKey) || '{}');
+      delete m[unskipBtn.getAttribute('data-nuunskip')];
+      localStorage.setItem(skipKey, JSON.stringify(m));
+      renderCockpit(); toast('Skip undone.');
     };
     box.appendChild(div);
   });
