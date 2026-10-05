@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.16.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.17.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -759,6 +759,7 @@ function show(name) {
   if (name === 'timeline') renderTimeline();
   if (name === 'knowledge') loadKnowledge('specialized');
   if (name === 'ask') refreshAuditEvents();
+  if (name === 'chat') { renderChat(); updateKbFresh(); } // v3.17 — Ask tab
   if (name === 'meds') renderMeds();
   if (name === 'report') renderVetReport();
   if (name === 'versions') renderVersions(); // v3.10 — data versions
@@ -2199,6 +2200,215 @@ async function loadKnowledgeSilent(file) {
   catch (e) { S.kbCache[file] = ''; return ''; }
 }
 
+/* ---------- Ask Simba's assistant (v3.17) ---------- */
+/** Pure: extract the "Last reviewed: <date>" stamp from a knowledge doc. Tested. */
+function kbReviewDate(txt) {
+  const m = /Last reviewed:\*{0,2}\s*([A-Za-z]+\s+\d{1,2},\s*\d{4})/.exec(txt || '');
+  return m ? m[1] : '';
+}
+/** Pure: keyword-rank KB sections for a query; top n sections, truncated. Tested. */
+function kbSearchSections(kbText, query, n = 2, maxChars = 1500) {
+  const toks = [...new Set((query.toLowerCase().match(/[a-z]{3,}/g) || []))];
+  if (!toks.length || !kbText) return [];
+  const sections = kbText.split(/^## /m).map((s, i) => (i ? '## ' + s : s)).filter(s => s.trim().length > 40);
+  return sections
+    .map(s => {
+      const low = s.toLowerCase();
+      let score = 0;
+      toks.forEach(t => { if (low.includes(t)) score += t.length > 5 ? 2 : 1; });
+      return { s, score };
+    })
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, n)
+    .map(x => x.s.length > maxChars ? x.s.slice(0, maxChars) + '…' : x.s);
+}
+/** Pure: compact behavior brief from event history, grounding chat answers in Simba's real data. Tested. */
+function buildTelemetryBrief(history, subj, now = new Date()) {
+  const L = [];
+  const nm = (subj && subj.name) || 'Simba';
+  const ageWk = subj && subj.date_of_birth ? Math.floor((now - new Date(subj.date_of_birth)) / 604800000) : '?';
+  const wt = subj && subj.current_weight_kg ? (subj.current_weight_kg * 2.20462).toFixed(1) + ' lbs' : 'weight unknown';
+  L.push(`${nm}: Cavapoo, ${ageWk} weeks old, ${wt}. Today is ${todayStr(now)}.`);
+  const d7 = filterLastDays(history, 7, now);
+  if (!d7.length) { L.push('No events logged in the last 7 days — lean on the knowledge base only.'); return L.join('\n'); }
+  const nDays = Math.max(1, new Set(d7.map(e => localDay(e.logged_at))).size);
+  const per = x => (x / nDays).toFixed(1);
+  const meals = d7.filter(e => e.category === 'Food');
+  const kcal = meals.reduce((a, e) => a + (+e.event_kcal || 0), 0);
+  const tbsp = meals.reduce((a, e) => a + (+e.kibble_consumed_tbsp || 0), 0);
+  const pees = d7.filter(e => e.elimination_type === 'Pee').sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
+  const poops = d7.filter(e => e.elimination_type === 'Poop');
+  const accs = d7.filter(e => e.category === 'Accident');
+  const water = d7.filter(e => e.category === 'Water').reduce((a, e) => a + (+e.water_consumed_tsp || 0), 0);
+  const fecal = poops.map(e => +e.fecal_score).filter(x => x > 0);
+  const medGap = medianNum(awakeGaps(pees));
+  L.push(`Last 7 days (${nDays} days with data): meals ${per(meals.length)}/day, ${per(tbsp)} tbsp/day, ~${Math.round(kcal / nDays)} kcal/day from meals; ` +
+    `bowl water ${per(water)} tsp/day; pees ${per(pees.length)}/day${medGap ? `, median awake hold ${Math.round(medGap)} min` : ''}; ` +
+    `poops ${per(poops.length)}/day${fecal.length ? `, avg stool score ${(fecal.reduce((a, b) => a + b, 0) / fecal.length).toFixed(1)}/7` : ''}; ` +
+    `accidents: ${accs.length}; naps started: ${d7.filter(isNapStart).length}.`);
+  const d3 = filterLastDays(history, 3, now);
+  const loose = d3.filter(e => e.elimination_type === 'Poop' && +e.fecal_score > 0 && +e.fecal_score <= 3);
+  if (loose.length) L.push(`FLAG: ${loose.length} loose stool(s) (score ≤3) in the last 3 days.`);
+  if (d3.some(e => e.category === 'Accident')) L.push('FLAG: at least one accident in the last 3 days.');
+  L.push(`Accident-free streak: ${accidentFreeStreak(history, now)} day(s).`);
+  const ht = holdTrend(history, now);
+  if (ht) L.push(`Hold trend: ${ht.dir} (${ht.pct >= 0 ? '+' : ''}${ht.pct}% vs prior weeks).`);
+  return L.join('\n');
+}
+
+/* ----- Chat state, key management, Gemini call ----- */const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// v3.17 — one shared key: the clinical-audit generator already uses CFG.LS.GEMINI ('st_gemini').
+function chatKey() { return localStorage.getItem(CFG.LS.GEMINI) || ''; }
+function setChatKey(k) { if (k && k.trim()) localStorage.setItem(CFG.LS.GEMINI, k.trim()); else localStorage.removeItem(CFG.LS.GEMINI); }
+function chatMsgs() {
+  if (!S.chat) { try { S.chat = { msgs: JSON.parse(localStorage.getItem('st_chat') || '[]'), web: localStorage.getItem('st_chat_web') !== '0' }; } catch (e) { S.chat = { msgs: [], web: true }; } }
+  return S.chat;
+}
+function saveChat() {
+  const c = chatMsgs();
+  try { localStorage.setItem('st_chat', JSON.stringify(c.msgs.slice(-30))); localStorage.setItem('st_chat_web', c.web ? '1' : '0'); } catch (e) {}
+}
+function pushChat(role, text, sources) {
+  const c = chatMsgs(); c.msgs.push({ role, text, sources: sources || [] }); saveChat(); renderChat();
+}
+const CHAT_SYSTEM_BASE = `You are the in-app assistant inside WagWise, a telemetry app for Ankit's Cavapoo puppy Simba. Consult sources in this order:
+1. KNOWLEDGE BASE excerpts below (Cavapoo-specialized first — it wins on breed points; then general canine). This is your primary authority.
+2. SIMBA'S TELEMETRY BRIEF — his actual logged data. Ground every behavior, health, food, or training answer in these numbers and quote them.
+3. WEB SEARCH results (only when provided) for anything beyond the knowledge base or needing current info (products, recalls, guideline updates).
+4. Your own training knowledge only as a last resort — label it clearly as general knowledge, not verified for Simba.
+Rules: answer compactly — lead with the direct answer, then at most 2-4 short bullets. When the question concerns behavior, health, food, or training, end with a concrete recommendation or adjustment when the data supports one (what to change, by how much, for how long) — or say plainly that no change is warranted. Never invent data about Simba; if the brief lacks what you need, say what's missing and what to log. Flag anything you could not verify instead of guessing. You are not a vet — for red-flag symptoms (blood in stool, repeated vomiting, lethargy + not eating, bloat signs, possible toxin ingestion) say to call the vet promptly.`;
+/** Build the per-question system prompt: base + KB excerpts ranked for the query + telemetry brief. */
+async function buildChatSystem(query) {
+  const spec = await loadKnowledgeSilent('knowledge/cavapoo-specialized.md');
+  const gen = await loadKnowledgeSilent('knowledge/general-canine.md');
+  let kb = '';
+  const sSecs = kbSearchSections(spec, query), gSecs = kbSearchSections(gen, query);
+  if (sSecs.length) kb += '\n\n--- CAVAPOO KNOWLEDGE (primary) ---\n' + sSecs.join('\n\n');
+  if (gSecs.length) kb += '\n\n--- GENERAL CANINE KNOWLEDGE (secondary) ---\n' + gSecs.join('\n\n');
+  const brief = buildTelemetryBrief(S.history || [], S.subject || {});
+  return `${CHAT_SYSTEM_BASE}\n\n--- SIMBA'S TELEMETRY BRIEF ---${brief}${kb || '\n\n(knowledge documents unavailable)'}`;
+}
+/** Call Gemini from the browser (BYOK). Returns {text, sources[], webUsed, error}. */
+async function callGemini(key, systemText, history, web) {
+  const contents = history.slice(-10).map(m => ({ role: m.role === 'ai' ? 'model' : 'user', parts: [{ text: m.text }] }));
+  const body = {
+    system_instruction: { parts: [{ text: systemText }] },
+    contents,
+    generationConfig: { temperature: 0.35, maxOutputTokens: 1200 },
+  };
+  if (web) body.tools = [{ googleSearch: {} }];
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 45000);
+  try {
+    const r = await fetch(GEMINI_URL, {
+      method: 'POST', signal: ctl.signal,
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      const msg = (data.error && data.error.message) || `HTTP ${r.status}`;
+      if (web && /tool|search|ground/i.test(msg)) {
+        const retry = await callGemini(key, systemText, history, false); // grounding not allowed on this key — answer without it
+        if (!retry.error) { retry.note = 'Web search is not enabled on this key — answered from knowledge + Simba\u2019s data.'; return retry; }
+      }
+      return { error: geminiErrText(r.status, msg) };
+    }
+    const cand = (data.candidates || [])[0] || {};
+    const text = ((cand.content || {}).parts || []).map(p => p.text || '').join('').trim();
+    if (!text) return { error: 'The AI returned an empty answer. Try rephrasing.' };
+    const chunks = ((cand.groundingMetadata || {}).groundingChunks || [])
+      .map(c => c.web).filter(w => w && w.uri)
+      .filter((w, i, a) => a.findIndex(x => x.uri === w.uri) === i).slice(0, 6);
+    return { text, sources: chunks, webUsed: web && chunks.length > 0 };
+  } catch (e) {
+    return { error: e.name === 'AbortError' ? 'The request timed out — check your connection and try again.' : 'Network error reaching the AI service.' };
+  } finally { clearTimeout(timer); }
+}
+function geminiErrText(status, msg) {
+  if (status === 400) return 'The key was rejected (invalid key or model). Double-check the pasted key.';
+  if (status === 401 || status === 403) return 'Access denied — the key may be restricted or lack Gemini API access. In Google Cloud console, allow HTTP referrers for this app\u2019s address, or create a fresh key.';
+  if (status === 429) return 'Free-tier quota used up for now (or 500 web searches/day reached). Wait a bit and try again.';
+  return 'AI error: ' + msg;
+}
+/** No-key fallback: answer from KB excerpts + Simba's data with a few intent routes. */
+async function answerLocally(query) {
+  const spec = await loadKnowledgeSilent('knowledge/cavapoo-specialized.md');
+  const gen = await loadKnowledgeSilent('knowledge/general-canine.md');
+  const brief = buildTelemetryBrief(S.history || [], S.subject || {});
+  const q = query.toLowerCase();
+  const secs = [...kbSearchSections(spec, query, 1, 1200), ...kbSearchSections(gen, query, 1, 1200)];
+  let lead;
+  if (/stool|poop|diarrhea|loose/.test(q)) lead = 'Here\u2019s what Simba\u2019s log + knowledge base say about his stools:';
+  else if (/pee|potty|hold|bladder|accident|house.train/.test(q)) lead = 'Here\u2019s his potty picture from the last 7 days:';
+  else if (/food|eat|meal|kibble|kcal|egg|treat|snack/.test(q)) lead = 'Here\u2019s his recent feeding data:';
+  else if (/water|drink/.test(q)) lead = 'Here\u2019s his recent water intake:';
+  else if (/nap|sleep|crate/.test(q)) lead = 'Here\u2019s his recent rest data:';
+  else if (/weight|grow/.test(q)) lead = 'Here\u2019s his growth data:';
+  else lead = 'Here\u2019s Simba\u2019s recent data plus the most relevant knowledge-base section:';
+  const kbPart = secs.length ? '\n\nFrom the knowledge base:\n' + secs.join('\n\n') : '';
+  return `📴 On-device answer (no AI key added yet) — from your knowledge base + Simba\u2019s logged data. Add a free Gemini key below for full AI answers with web search.\n\n${lead}\n${brief}${kbPart}`;
+}
+async function sendChat(text) {
+  const q = (text || '').trim();
+  if (!q) return;
+  pushChat('user', q);
+  const input = $('chatInput'); if (input) input.value = '';
+  const typing = { role: 'ai', text: '…', typing: true };
+  chatMsgs().msgs.push(typing); renderChat();
+  const key = chatKey();
+  try {
+    let res;
+    if (!key) {
+      res = { text: await answerLocally(q) };
+    } else {
+      const sys = await buildChatSystem(q);
+      const hist = chatMsgs().msgs.filter(m => !m.typing);
+      res = await callGemini(key, sys, hist, chatMsgs().web);
+    }
+    chatMsgs().msgs = chatMsgs().msgs.filter(m => !m.typing);
+    if (res.error) pushChat('ai', '⚠️ ' + res.error);
+    else pushChat('ai', (res.note ? res.note + '\n\n' : '') + res.text, res.sources || []);
+  } catch (e) {
+    chatMsgs().msgs = chatMsgs().msgs.filter(m => !m.typing);
+    pushChat('ai', '⚠️ Something went wrong answering that. Try again.');
+  }
+}
+/** Render chat messages into the Ask screen. */
+function renderChat() {
+  const list = $('chatList'); if (!list) return;
+  const c = chatMsgs();
+  if (!c.msgs.length) {
+    list.innerHTML = `<div class="chat-empty">Ask about Simba's behavior, health, food, or training — answers start from your knowledge base, then his actual logged data${c.web ? ', with live web search' : ''}.<br><br>Try a suggestion below, or type your own.</div>`;
+    return;
+  }
+  list.innerHTML = c.msgs.map(m => {
+    let html = esc(m.text).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+    let src = '';
+    if (m.sources && m.sources.length) {
+      src = '<div class="chat-src"><div class="chat-src-title">Sources</div>' +
+        m.sources.map(s => `<a href="${esc(s.uri)}" target="_blank" rel="noopener">${esc(s.title || s.uri)}</a>`).join('') + '</div>';
+    }
+    return `<div class="chat-msg ${m.role}${m.typing ? ' typing' : ''}"><div class="chat-bubble">${html}${src}</div></div>`;
+  }).join('');
+  list.scrollTop = list.scrollHeight;
+  const webT = $('chatWeb');
+  if (webT) webT.checked = c.web;
+}
+/** Show knowledge-base freshness in the Ask header. */
+async function updateKbFresh() {
+  const el = $('kbFresh'); if (!el) return;
+  const spec = await loadKnowledgeSilent('knowledge/cavapoo-specialized.md');
+  const gen = await loadKnowledgeSilent('knowledge/general-canine.md');
+  const ds = kbReviewDate(spec), dg = kbReviewDate(gen);
+  const parts = [];
+  if (ds) parts.push(`Cavapoo guide · reviewed ${ds}`);
+  if (dg) parts.push(`general canine · reviewed ${dg}`);
+  el.textContent = parts.length ? '📚 Knowledge: ' + parts.join(' · ') + ' (refreshed monthly)' : '📚 Knowledge base loading…';
+}
+
 /* ---------- Clinical audit prompt (spec 6.2) ---------- */
 function refreshAuditEvents() {
   const sel = $('auditEvent');
@@ -2854,6 +3064,27 @@ function wire() {
     document.querySelectorAll('#timelineRange button').forEach(x => x.classList.remove('active'));
     b.classList.add('active'); S.timelineRange = +b.dataset.range; renderTimeline();
   });
+  // v3.17 — Ask Simba's assistant (chat tab)
+  $('chatSend').onclick = () => sendChat($('chatInput').value);
+  $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat($('chatInput').value); });
+  document.querySelectorAll('#chatChips button').forEach(b => b.onclick = () => sendChat(b.textContent));
+  $('chatWeb').onchange = e => { chatMsgs().web = e.target.checked; saveChat(); renderChat(); };
+  $('chatKeyBtn').onclick = () => {
+    const box = $('chatKeyBox'); box.hidden = !box.hidden;
+    if (!box.hidden) {
+      $('chatKeyInput').value = '';
+      $('chatKeyStatus').textContent = chatKey() ? '✓ Key saved on this device (shared with the clinical audit generator).' : 'No key saved yet — the chat answers from your knowledge base + Simba\u2019s data.';
+    }
+  };
+  $('chatKeySave').onclick = () => { setChatKey($('chatKeyInput').value); $('chatKeyInput').value = ''; $('chatKeyStatus').textContent = chatKey() ? '✓ Key saved on this device.' : 'Key cleared.'; };
+  $('chatKeyClear').onclick = () => { setChatKey(''); $('chatKeyStatus').textContent = 'Key removed.'; };
+  $('chatKeyTest').onclick = async () => {
+    const k = $('chatKeyInput').value.trim() || chatKey();
+    if (!k) { $('chatKeyStatus').textContent = 'Paste a key first.'; return; }
+    $('chatKeyStatus').textContent = 'Testing…';
+    const r = await callGemini(k, 'Reply with exactly: OK', [{ role: 'user', text: 'Reply with exactly: OK' }], false);
+    $('chatKeyStatus').textContent = r.error ? '⚠️ ' + r.error : '✓ Key works — full AI answers enabled.';
+  };
   document.querySelectorAll('#kbTabs button').forEach(b => b.onclick = () => loadKnowledge(b.dataset.kb));
   $('buildDigestBtn').onclick = buildDigestUI;
   const nb = $('ntfyBtn'); if (nb) nb.onclick = toggleNtfy; // v3.13 — action alerts toggle  $('copyDigestBtn').onclick = () => { $('digestOut').select(); document.execCommand('copy'); toast('Digest copied ✓'); };
