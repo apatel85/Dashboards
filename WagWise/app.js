@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.17.3'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.17.4'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1102,15 +1102,48 @@ function bowel1ClockMin(events) {
   const firsts = Object.values(byDay).map(a => a.sort((x, y) => x - y)[0]);
   return firsts.length ? Math.round(medianNum(firsts)) : null;
 }
-/** Pure: today's not-yet-passed nap windows from learned nap-start clusters (50% threshold — naps are looser than pees). Tested. */
-function upcomingNapWindows(hist, today, now = new Date()) {
-  const wins = learnedWindows(hist, isNapStart, 'Nap', 0.5);
+/** Pure: today's upcoming nap predictions — ideal start, typical span, predicted wake.
+    A live in-progress nap comes first (predicts its wake). Tested. */
+function upcomingNaps(hist, today, now = new Date()) {
+  const pairs = pairNaps(hist).filter(p => p.mins > 0 && p.mins < 300);
+  const medDur = ms => Math.round(medianNum(ms.length ? ms : pairs.map(p => p.mins)) || 90);
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const startsToday = today.filter(isNapStart).map(e => { const d = new Date(e.logged_at); return d.getHours() * 60 + d.getMinutes(); });
-  return wins
-    .filter(w => (w.end * 60 + 59) > nowMin - 30) // window not fully past
-    .filter(w => !startsToday.some(m => m >= w.start * 60 - 30 && m <= w.end * 60 + 59)) // not already napped in this slot
-    .map(w => ({ startMin: w.start * 60, endMin: w.end * 60 + 59, prob: w.prob, days: w.clusterDays }));
+  const out = [];
+  const inProg = napInProgress(today);
+  if (inProg) {
+    const d = new Date(inProg.logged_at), sMin = d.getHours() * 60 + d.getMinutes();
+    const dur = medDur([]);
+    out.push({ kind: 'live', startMin: sMin, durMin: dur, wakeMin: sMin + dur, prob: 1, days: 0 });
+  }
+  learnedWindows(hist, isNapStart, 'Nap', 0.5).forEach(w => {
+    const wStart = w.start * 60, wEnd = w.end * 60 + 59;
+    if (wEnd <= nowMin - 30) return; // window fully past
+    if (startsToday.some(m => m >= wStart - 30 && m <= wEnd)) return; // already napped in this slot
+    const starts = hist.filter(isNapStart).map(e => { const d = new Date(e.logged_at); return d.getHours() * 60 + d.getMinutes(); })
+      .filter(m => m >= wStart - 30 && m <= wEnd);
+    if (!starts.length) return;
+    const ideal = Math.round(medianNum(starts));
+    const durs = pairs.filter(p => { const d = new Date(p.start.logged_at); const m = d.getHours() * 60 + d.getMinutes(); return m >= wStart - 30 && m <= wEnd; }).map(p => p.mins);
+    const dur = medDur(durs);
+    out.push({ kind: 'window', startMin: ideal, durMin: dur, wakeMin: ideal + dur, prob: w.prob, days: w.clusterDays });
+  });
+  return out;
+}
+/** Pure: median nap-end → next pee/poop latency in minutes (null when <3 samples). Tested. */
+function postNapLatencyMin(history, elimType) {
+  const evs = [...history].sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
+  const lats = [];
+  evs.forEach((e, i) => {
+    if (!isNapEnd(e)) return;
+    const t0 = new Date(e.logged_at).getTime();
+    for (let j = i + 1; j < evs.length; j++) {
+      const dt = (new Date(evs[j].logged_at).getTime() - t0) / 60000;
+      if (dt > 120) break;
+      if (evs[j].elimination_type === elimType) { lats.push(dt); break; }
+    }
+  });
+  return lats.length >= 3 ? Math.round(medianNum(lats)) : null;
 }
 /** Pure: countdown text for an action item. Tested. */
 function actionCountdownText(it, nowMs) {
@@ -1174,15 +1207,40 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
     if (nowMs > c.getTime() + 45 * 60000) return;
     const label = slot.charAt(0).toUpperCase() + slot.slice(1) + ' window';
     items.push(mk('meal-' + slot, icon, label,
-      new Date(c.getTime() - 30 * 60000), new Date(c.getTime() + 30 * 60000),
+      new Date(c.getTime() - 10 * 60000), new Date(c.getTime() + 10 * 60000),
       `avg ${fmtTime(c)}${s.avgTbsp ? ` · ${s.avgTbsp.toFixed(1)} tbsp` : ''} (${s.n} meals, your history)`, false));
   });
-  // 2c. nap schedule — v3.17.3: predicted nap windows from his history
+  // 2c. nap schedule — v3.17.4: ideal start + typical span (median duration),
+  // plus post-nap pee/poop at the median latency after predicted wake. All ±10m.
   if (!st.asleep) {
-    upcomingNapWindows(hist, today, now).forEach((w, i) => {
-      const s = atHM(Math.floor(w.startMin / 60), w.startMin % 60), e = atHM(Math.floor(w.endMin / 60), w.endMin % 60);
-      items.push(mk('napwin-' + i, '😴', 'Nap window', s, e,
-        `usually naps ${fmtTime(s)}–${fmtTime(e)} (${Math.round(w.prob * 100)}% of days)`, false));
+    const naps = upcomingNaps(hist, today, now);
+    const peeLat = postNapLatencyMin(hist, 'Pee');
+    const poopLat = postNapLatencyMin(hist, 'Poop');
+    naps.forEach((n, i) => {
+      const s = atHM(Math.floor(n.startMin / 60), n.startMin % 60);
+      const w = atHM(Math.floor(n.wakeMin / 60), n.wakeMin % 60);
+      const part = n.startMin < 12 * 60 ? 'Morning' : n.startMin < 17 * 60 ? 'Afternoon' : 'Evening';
+      const span = `${fmtTime(s)}–${fmtTime(w)}`;
+      if (n.kind === 'live') {
+        items.push(mk('napwin-' + i, '😴', part + ' nap (in progress)',
+          new Date(w.getTime() - 10 * 60000), new Date(w.getTime() + 10 * 60000),
+          `down since ${fmtTime(s)} · up ~${fmtTime(w)} (${n.durMin}m typical)`, false));
+      } else {
+        const basis = `${Math.round(n.prob * 100)}% of days`;
+        items.push(mk('napwin-' + i, '😴', part + ' nap',
+          new Date(s.getTime() - 10 * 60000), new Date(s.getTime() + 10 * 60000),
+          `ideal ${span} (${n.durMin}m nap, ${basis})`, false));
+      }
+      if (peeLat != null) {
+        const p = new Date(w.getTime() + peeLat * 60000);
+        items.push(mk('nappee-' + i, '🚻', 'Post-nap pee', new Date(p.getTime() - 10 * 60000), new Date(p.getTime() + 10 * 60000),
+          `~${peeLat}m after waking (${span} nap)`, false));
+      }
+      if (poopLat != null) {
+        const p = new Date(w.getTime() + poopLat * 60000);
+        items.push(mk('nappoop-' + i, '💩', 'Post-nap poop', new Date(p.getTime() - 10 * 60000), new Date(p.getTime() + 10 * 60000),
+          `~${poopLat}m after waking (${span} nap)`, false));
+      }
     });
   }
   // 3. general pee window — v3.14: contextual hold prediction + merged "what to expect"
@@ -1216,14 +1274,14 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
     if (b1 != null) {
       const c1 = atHM(Math.floor(b1 / 60), b1 % 60);
       if (nowMs < c1.getTime() + 45 * 60000)
-        items.push(mk('poop1', '💩', 'Morning bowel window', new Date(c1.getTime() - 45 * 60000), new Date(c1.getTime() + 45 * 60000),
+        items.push(mk('poop1', '💩', 'Morning bowel window', new Date(c1.getTime() - 10 * 60000), new Date(c1.getTime() + 10 * 60000),
           `bowel #1 median ${fmtTime(c1)} (your history)`, false));
     }
   }
   if (poops < 2) {
     const cmin = bowel2ClockMin(hist), c = atHM(Math.floor(cmin / 60), cmin % 60);
     if (nowMs < c.getTime() + 90 * 60000)
-      items.push(mk('poop2', '💩', 'Bowel #2 window', new Date(c.getTime() - 60 * 60000), new Date(c.getTime() + 60 * 60000),
+      items.push(mk('poop2', '💩', 'Bowel #2 window', new Date(c.getTime() - 10 * 60000), new Date(c.getTime() + 10 * 60000),
         `bowel #2 median ${fmtTime(c)} (your history)`, false));
   }
   // 5. water cutoff — v3.15: a real daily checkbox (manual check/uncheck via doneMap).
@@ -1249,19 +1307,24 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
   // v3.15 — merge: when the meal urge and the hold-based window point at the same
   // outing (centers within 45m), show ONE "Potty break" row with both reasons
   // instead of two near-duplicate, seemingly contradictory rows.
-  const pwI = items.findIndex(i => i.id === 'pee-window'), miI = items.findIndex(i => i.id === 'meal-intercept');
-  if (pwI >= 0 && miI >= 0) {
-    const pw = items[pwI], mi = items[miI];
-    const center = a => (a.winStart.getTime() + a.winEnd.getTime()) / 2;
-    if (!pw.done && !mi.done && Math.abs(center(pw) - center(mi)) <= 45 * 60000) {
-      pw.label = 'Potty break';
-      pw.winStart = new Date(Math.min(pw.winStart.getTime(), mi.winStart.getTime()));
-      pw.winEnd = new Date(Math.max(pw.winEnd.getTime(), mi.winEnd.getTime()));
-      pw.why = `${mi.why} · ${pw.why}`;
-      items.splice(miI, 1);
+  // v3.17.4 — same for a post-nap pee prediction overlapping the hold window.
+  const center = a => (a.winStart.getTime() + a.winEnd.getTime()) / 2;
+  const mergeInto = (keepId, dropId) => {
+    const kI = items.findIndex(i => i.id === keepId || i.id.startsWith(keepId));
+    const dI = items.findIndex(i => i.id === dropId || i.id.startsWith(dropId));
+    if (kI < 0 || dI < 0) return;
+    const k = items[kI], d = items[dI];
+    if (!k.done && !d.done && Math.abs(center(k) - center(d)) <= 45 * 60000) {
+      k.label = 'Potty break';
+      k.winStart = new Date(Math.min(k.winStart.getTime(), d.winStart.getTime()));
+      k.winEnd = new Date(Math.max(k.winEnd.getTime(), d.winEnd.getTime()));
+      k.why = `${d.why} · ${k.why}`;
+      items.splice(dI, 1);
     }
-  }
-  return items.sort((a, b) => a.winStart - b.winStart).slice(0, 6);
+  };
+  mergeInto('pee-window', 'meal-intercept');
+  mergeInto('pee-window', 'nappee-');
+  return items.sort((a, b) => a.winStart - b.winStart).slice(0, 9); // v3.17.4 — was 6; more predictions now, rows are compact
 }
 /* ---------- v3.13 — local action alerts (Notification API, $0, no server) ----------
    Fires as a Next-up window opens (10-min heads-up), once per item per day.
