@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.19.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.19.1'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1270,7 +1270,11 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       const hold = g ? g.hold : Math.round(avgHold);
       const anchor = skipTs || lastPeeT;
       const due = anchor + hold * 60000;
-      const done = (nowMs - lastPeeT) < 25 * 60000;
+      const winStart = due - 15 * 60000;
+      // v3.19.1 — auto-done only when he peed inside (or just before) THIS window.
+      // A recent pee before a future window must not grey it out — the hold model
+      // already pushed the window out to account for it.
+      const done = lastPeeT >= winStart - 10 * 60000;
       let why = g ? `${g.basis} hold ${g.hold}m (your history)` : `avg hold ${Math.round(avgHold)}m`;
       why += lastPeeT ? ` · last pee ${fmtTime(new Date(lastPeeT))}` : ' · no pee logged yet today';
       if (skipTs) why += ` · ⏭ didn't go at ${fmtTime(new Date(skipTs))} — next slot`;
