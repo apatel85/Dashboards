@@ -259,12 +259,46 @@
     </div>
   </section>
 
+  <!-- CHAT -->
+  <section class="screen" id="screen-chat">
+    <div class="card">
+      <div class="card-title">Ask about Simba</div>
+      <div class="hint" id="kbFresh" style="margin-bottom:8px">📚 Knowledge base loading…</div>
+      <div class="chat-tools">
+        <label class="chat-web"><input type="checkbox" id="chatWeb" checked> 🌐 Web search <span class="hint">(live Google results · 500 free/day)</span></label>
+        <button id="chatKeyBtn" class="btn small">🔑 AI key</button>
+      </div>
+      <div id="chatKeyBox" hidden>
+        <p class="muted small">Answers use your <b>free Gemini key</b> — <a href="https://aistudio.google.com" target="_blank" rel="noopener">get one at Google AI Studio</a>, paste it here. It stays on this device only, and is sent only to Google's Gemini API. Tip: in Google Cloud console, restrict the key to this app's address (APIs &amp; Services → Credentials → HTTP referrers). Note: on the free tier Google may use prompts to improve its products.</p>
+        <div class="chat-keyrow">
+          <input id="chatKeyInput" type="password" placeholder="Paste Gemini API key" autocomplete="off">
+          <button id="chatKeySave" class="btn small">Save</button>
+          <button id="chatKeyTest" class="btn small ghost">Test</button>
+          <button id="chatKeyClear" class="btn small ghost">Remove</button>
+        </div>
+        <div id="chatKeyStatus" class="hint"></div>
+      </div>
+      <div id="chatList" class="chat-list"></div>
+      <div class="chat-chips" id="chatChips">
+        <button>How's his potty training this week?</button>
+        <button>Why the loose stools in the afternoons?</button>
+        <button>Should I adjust his food amount?</button>
+        <button>Is his water intake normal?</button>
+      </div>
+      <div class="chat-inputrow">
+        <input id="chatInput" placeholder="Ask about Simba…" autocomplete="off">
+        <button id="chatSend" class="btn">Send</button>
+      </div>
+    </div>
+  </section>
+
   <!-- MORE -->
   <section class="screen" id="screen-more">
     <div class="card menu">
       <button class="menu-btn" data-goto="onboard">🐾 Pet profile →</button>
       <button class="menu-btn" id="installMenuBtn" hidden>📲 Install WagWise →</button>
-      <button class="menu-btn" data-goto="ask">🧠 Ask / Clinical audit →</button>
+      <button class="menu-btn" data-goto="chat">💬 Ask Simba's assistant →</button>
+      <button class="menu-btn" data-goto="ask">🧠 Clinical audit generator →</button>
       <button class="menu-btn" data-goto="knowledge">📚 Knowledge base →</button>
       <button class="menu-btn" data-goto="meds">💊 Meds &amp; vaccines →</button>
       <button class="menu-btn" data-goto="report">🖨️ Vet report →</button>
@@ -524,6 +558,7 @@
   <button data-screen="timeline">🕘<span>Today</span></button>
   <button data-screen="trends">📈<span>Trends</span></button>
   <button data-screen="insights">💡<span>Insights</span></button>
+  <button data-screen="chat">💬<span>Ask</span></button>
   <button data-screen="more">⋯<span>More</span></button>
 </nav>
 
