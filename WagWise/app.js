@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.16.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.16.1'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -201,6 +201,7 @@ const S = {
   sheetCtx: null,      // current modal context
   parsed: null,        // last parsed telemetry
   trendRange: 30,
+  timelineRange: 1,    // v3.16.1 — timeline review range: 1=today, 2=yesterday, 7=last 7 days
   kbCache: {},
   dialType: 'All',     // clockface filter: All | Pee | Poop
   walk: null,          // active GPS walk {points, startTs, distM, watchId}
@@ -1641,8 +1642,10 @@ function openSheet(kind, existing = null) {
   // wireSeg() had just attached to the PoopScore/Accident/Food pickers (taps
   // did nothing and the score always saved as the default). Appending preserves them.
   if (['Food', 'Water', 'Weight', 'Note', 'Accident', 'PoopScore', 'Snack'].includes(kind)) {
-    b.insertAdjacentHTML('beforeend', `<label class="lbl">Log time <span class="hint">(back-date if needed)</span></label>
-      <input id="logAt" type="datetime-local" value="${nowLocalInput()}">`);
+    // v3.16.1 — when editing, the time defaults to the ORIGINAL entry's time
+    // (not "now"); the user can still change it.
+    b.insertAdjacentHTML('beforeend', `<label class="lbl">Log time <span class="hint">(${existing ? 'original entry time' : 'back-date if needed'})</span></label>
+      <input id="logAt" type="datetime-local" value="${existing ? nowLocalInput(new Date(existing.logged_at)) : nowLocalInput()}">`);
   }
   if (existing) {
     if (kind === 'Food') {
@@ -1864,12 +1867,42 @@ async function saveSheet() {
 }
 
 /* ---------- Timeline ---------- */
+/** Pure: events for the timeline review range — 1=today, 2=yesterday, 7=trailing 7d. Tested. */
+function timelineRangeEvents(history, range, now = new Date()) {
+  if (range === 2) {
+    const y = new Date(now); y.setDate(y.getDate() - 1);
+    const ys = todayStr(y);
+    return history.filter(e => localDay(e.logged_at) === ys);
+  }
+  if (range === 7) return filterLastDays(history, 7, now);
+  const ts = todayStr(now);
+  return history.filter(e => localDay(e.logged_at) === ts);
+}
+// v3.16.1 — review ranges: Today / Yesterday / Last 7 days (S.timelineRange).
 function renderTimeline() {
-  $('timelineDate').textContent = todayStr();
+  const range = S.timelineRange || 1;
+  const now = new Date();
+  let evs, label, empty;
+  if (range === 2) {
+    evs = timelineRangeEvents(S.history, 2);
+    const y = new Date(now); y.setDate(y.getDate() - 1);
+    label = y.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    empty = 'No events logged yesterday.';
+  } else if (range === 7) {
+    evs = timelineRangeEvents(S.history, 7);
+    const a = new Date(now); a.setDate(a.getDate() - 6);
+    label = `${a.toLocaleDateString([], { month: 'short', day: 'numeric' })} – ${now.toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
+    empty = 'No events in the last 7 days.';
+  } else {
+    evs = timelineRangeEvents(S.history, 1);
+    label = todayStr();
+    empty = 'No events logged today yet.';
+  }
+  $('timelineDate').textContent = label;
   const list = $('timelineList');
-  if (!S.events.length) { list.innerHTML = '<div class="muted">No events logged today yet.</div>'; return; }
+  if (!evs.length) { list.innerHTML = `<div class="muted">${empty}</div>`; return; }
   list.innerHTML = '';
-  const rows = [...S.events].sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at)); // newest first, always chronological
+  const rows = [...evs].sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at)); // newest first, always chronological
   rows.forEach(ev => {
     const div = document.createElement('div'); div.className = 'tl-item';
     const cat = ev.elimination_type || ev.category;
@@ -2815,6 +2848,11 @@ function wire() {
   document.querySelectorAll('#trendRange button').forEach(b => b.onclick = () => {
     document.querySelectorAll('#trendRange button').forEach(x => x.classList.remove('active'));
     b.classList.add('active'); S.trendRange = +b.dataset.range; renderTrends();
+  });
+  // v3.16.1 — timeline review ranges (Today / Yesterday / 7 days)
+  document.querySelectorAll('#timelineRange button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#timelineRange button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); S.timelineRange = +b.dataset.range; renderTimeline();
   });
   document.querySelectorAll('#kbTabs button').forEach(b => b.onclick = () => loadKnowledge(b.dataset.kb));
   $('buildDigestBtn').onclick = buildDigestUI;
