@@ -148,13 +148,16 @@ body {
 .countdown:last-child { border-bottom: none; }
 .countdown .t { color: var(--honey); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* v3.12 — Next-up action rows */
-.nextup { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px dashed var(--line); }
+.nextup { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--line); }
 .nextup:last-child { border-bottom: none; }
-.nu-main { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.nu-main { display: flex; gap: 10px; align-items: flex-start; min-width: 0; flex: 1; cursor: pointer; }
 .nu-icon { font-size: 19px; line-height: 1.3; }
+.nu-body { min-width: 0; flex: 1; }
 .nu-label { font-size: 14px; font-weight: 700; }
 .nu-win { font-weight: 400; color: var(--accent-deep); font-size: 13px; margin-left: 6px; white-space: nowrap; }
-.nu-why { font-size: 12px; color: var(--muted); margin-top: 1px; }
+/* v3.17.2 — compact: the why hides until the row is tapped */
+.nu-why { display: none; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.nextup.open .nu-why { display: block; }
 .nu-right { display: flex; align-items: center; gap: 8px; flex: none; }
 .nu-count { font-size: 13px; font-weight: 800; color: var(--honey); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .nextup.done { opacity: .55; }
