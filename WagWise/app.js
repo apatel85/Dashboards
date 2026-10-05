@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.17.4'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.17.5'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1156,7 +1156,9 @@ function actionCountdownText(it, nowMs) {
 /** Pure: build the ordered action items. doneMap = {id:1} manual check-offs.
     hist = trailing history, today = today's events, avgHold = personalAvgHold(). Tested. */
 function buildNextActions(hist, today, st, now, doneMap, avgHold) {
-  const items = [], nowMs = now.getTime();
+  const nowMs = now.getTime();
+  let items = []; // v3.17.5 — reassigned by the nap-overlap filter below
+  let napSpans = []; // v3.17.5 — predicted nap spans [{s, e}] as Dates, for overlap suppression
   const atHM = (h, m, dayOff = 0) => { const d = new Date(now); d.setDate(d.getDate() + dayOff); d.setHours(h, m, 0, 0); return d; };
   const hmParts = s => s.split(':').map(Number);
   const peeAt = e => new Date(e.logged_at).getTime();
@@ -1210,8 +1212,8 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
       new Date(c.getTime() - 10 * 60000), new Date(c.getTime() + 10 * 60000),
       `avg ${fmtTime(c)}${s.avgTbsp ? ` · ${s.avgTbsp.toFixed(1)} tbsp` : ''} (${s.n} meals, your history)`, false));
   });
-  // 2c. nap schedule — v3.17.4: ideal start + typical span (median duration),
-  // plus post-nap pee/poop at the median latency after predicted wake. All ±10m.
+  // 2c. nap schedule — v3.17.5: the row shows the WHOLE span (avg start → avg end);
+  // the ±10 min drives the alert (ntfy fires 10 min before winStart), not the display.
   if (!st.asleep) {
     const naps = upcomingNaps(hist, today, now);
     const peeLat = postNapLatencyMin(hist, 'Pee');
@@ -1219,17 +1221,16 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
     naps.forEach((n, i) => {
       const s = atHM(Math.floor(n.startMin / 60), n.startMin % 60);
       const w = atHM(Math.floor(n.wakeMin / 60), n.wakeMin % 60);
+      napSpans.push({ s, e: w });
       const part = n.startMin < 12 * 60 ? 'Morning' : n.startMin < 17 * 60 ? 'Afternoon' : 'Evening';
       const span = `${fmtTime(s)}–${fmtTime(w)}`;
       if (n.kind === 'live') {
-        items.push(mk('napwin-' + i, '😴', part + ' nap (in progress)',
-          new Date(w.getTime() - 10 * 60000), new Date(w.getTime() + 10 * 60000),
+        items.push(mk('napwin-' + i, '😴', part + ' nap (in progress)', s, w,
           `down since ${fmtTime(s)} · up ~${fmtTime(w)} (${n.durMin}m typical)`, false));
       } else {
         const basis = `${Math.round(n.prob * 100)}% of days`;
-        items.push(mk('napwin-' + i, '😴', part + ' nap',
-          new Date(s.getTime() - 10 * 60000), new Date(s.getTime() + 10 * 60000),
-          `ideal ${span} (${n.durMin}m nap, ${basis})`, false));
+        items.push(mk('napwin-' + i, '😴', part + ' nap', s, w,
+          `avg start ${fmtTime(s)} → avg end ${fmtTime(w)} (${n.durMin}m nap, ${basis})`, false));
       }
       if (peeLat != null) {
         const p = new Date(w.getTime() + peeLat * 60000);
@@ -1303,6 +1304,17 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
     const morn = atHM(7, 43, 1); // v3.10 master-log median wake 7:43 AM
     items.push(mk('morning-pee', '🌅', 'Morning pee', new Date(morn.getTime() - 15 * 60000), new Date(morn.getTime() + 15 * 60000),
       'median wake 7:43 AM (your history)', false));
+  }
+  // v3.17.5 — a pee/poop prediction whose window falls inside a predicted nap span
+  // is invalid (he's asleep — ADH suppression handles continence). Drop it; the
+  // post-nap pee/poop predictions already cover the wake.
+  if (napSpans.length) {
+    const peePoopIds = ['pee-window', 'morning-pee', 'meal-intercept', 'poop1', 'poop2'];
+    items = items.filter(a => {
+      if (!peePoopIds.includes(a.id)) return true;
+      const bad = napSpans.some(ns => a.winStart < ns.e && a.winEnd > ns.s);
+      return !bad;
+    });
   }
   // v3.15 — merge: when the meal urge and the hold-based window point at the same
   // outing (centers within 45m), show ONE "Potty break" row with both reasons
