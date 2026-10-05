@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.17.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.17.2'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -933,6 +933,18 @@ function mealSlot(d) {
   return 'other';
 }
 function medBucket(a) { return a.length ? { med: Math.round(medianNum(a)), n: a.length } : { med: null, n: 0 }; }
+/** Pure: median clock time + median tbsp per meal slot (needs ≥3 samples per slot). Tested. */
+function mealTimeSuggestions(history, now = new Date()) {
+  const out = {};
+  ['breakfast', 'lunch', 'dinner'].forEach(slot => {
+    const ms = history.filter(e => e.category === 'Food' && mealSlot(new Date(e.logged_at)) === slot);
+    if (ms.length < 3) return;
+    const mins = ms.map(e => { const d = new Date(e.logged_at); return d.getHours() * 60 + d.getMinutes(); }).sort((a, b) => a - b);
+    const tb = ms.map(e => +e.kibble_consumed_tbsp || 0).filter(x => x > 0);
+    out[slot] = { n: ms.length, clockMin: Math.round(medianNum(mins)), avgTbsp: tb.length ? tb.reduce((a, b) => a + b, 0) / tb.length : 0 };
+  });
+  return out;
+}
 /** Pure: per-scenario median awake holds from history. Tested. */
 function contextualHolds(events) {
   const pees = events.filter(isPee).sort((a, b) => new Date(a.logged_at) - new Date(b.logged_at));
@@ -1129,6 +1141,21 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
     items.push(mk('meal-intercept', '🍽️', 'Post-meal potty break', new Date(c - 10 * 60000), new Date(c + 10 * 60000),
       `🍽️ ${cap(slot)} moves his bladder ~${lat}m after the meal${mealTbsp ? ` (${mealTbsp} tbsp)` : ''} — catch it before he goes inside`, outAfterMeal));
   }
+  // 2b. meal windows — v3.17.2: suggested meal times from his own history
+  // (median clock time per slot, ≥3 samples). Skips slots already logged today
+  // and windows that fully passed.
+  const loggedSlots = new Set(today.filter(e => e.category === 'Food').map(e => mealSlot(new Date(e.logged_at))));
+  const sugg = mealTimeSuggestions(hist, now);
+  [['breakfast', '🍳'], ['lunch', '🍽️'], ['dinner', '🌙']].forEach(([slot, icon]) => {
+    const s = sugg[slot];
+    if (!s || loggedSlots.has(slot)) return;
+    const c = atHM(Math.floor(s.clockMin / 60), s.clockMin % 60);
+    if (nowMs > c.getTime() + 45 * 60000) return;
+    const label = slot.charAt(0).toUpperCase() + slot.slice(1) + ' window';
+    items.push(mk('meal-' + slot, icon, label,
+      new Date(c.getTime() - 30 * 60000), new Date(c.getTime() + 30 * 60000),
+      `avg ${fmtTime(c)}${s.avgTbsp ? ` · ${s.avgTbsp.toFixed(1)} tbsp` : ''} (${s.n} meals, your history)`, false));
+  });
   // 3. general pee window — v3.14: contextual hold prediction + merged "what to expect"
   //    insight (skip/ontrack/due verdict, trend, filtration peak). Suppressed when nap-out is active.
   if (!st.asleep && !items.some(i => i.id === 'nap-out')) {
@@ -1287,13 +1314,16 @@ function renderCountdowns(st) {
     const win = point ? fmtTime(a.winStart) : `${fmtTime(a.winStart)}–${fmtTime(a.winEnd)}`;
     const div = document.createElement('div');
     div.className = 'nextup' + (a.done ? ' done' : cd === 'missed' ? ' missed' : '');
+    // v3.17.2 — compact rows: label · window · countdown on one line; the
+    // explanation hides until you tap the row (less scrolling, info one tap away).
     div.innerHTML = `
       <div class="nu-main"><span class="nu-icon">${a.icon}</span>
-        <div><div class="nu-label">${esc(a.label)} <span class="nu-win">${win}</span></div>
+        <div class="nu-body"><div class="nu-label">${esc(a.label)} <span class="nu-win">${win} · <span class="nu-count">${cd}</span></span></div>
         <div class="nu-why">${esc(a.why)}</div></div></div>
-      <div class="nu-right"><span class="nu-count">${cd}</span>
+      <div class="nu-right">
         ${!a.done ? `<button class="btn small" data-nu="${a.id}" title="Mark done">✓</button>`
           : a.manualDone ? `<button class="btn small" data-nuundo="${a.id}" title="Uncheck">↩</button>` : ''}</div>`;
+    div.querySelector('.nu-main').onclick = () => div.classList.toggle('open');
     const btn = div.querySelector('[data-nu]');
     if (btn) btn.onclick = () => {
       // v3.15 — date-scoped bowls flag: today's check-off never leaks into tomorrow
