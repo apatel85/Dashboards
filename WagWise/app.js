@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.17.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.17.1'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -83,6 +83,35 @@ function parseToppersDetail(str) {
     if (m) { rows.push({ snackId: s.id, amount: +m[1] }); rest = rest.replace(re, ' '); }
   });
   return { rows, notes: rest.replace(/\s*\+\s*/g, ' ').trim() };
+}
+/** Pure: did this meal have a topper (structured row or egg mention)? Tested. */
+function mealHasTopper(e) {
+  if (!e || e.category !== 'Food') return false;
+  const d = e.toppers_detail || '';
+  if (parseToppersDetail(d).rows.length) return true;
+  return /egg/i.test(d);
+}
+/** Pure: compare intake with vs without toppers over the trailing 14 days; verdict on dropping them. Tested. */
+function topperEatingAnalysis(history, now = new Date()) {
+  const meals = filterLastDays(history, 14, now).filter(e => e.category === 'Food');
+  const withT = meals.filter(mealHasTopper);
+  const plain = meals.filter(e => !mealHasTopper(e));
+  const stats = arr => {
+    const tb = arr.map(e => +e.kibble_consumed_tbsp || 0).filter(x => x > 0);
+    return { n: arr.length, avgTbsp: tb.length ? tb.reduce((a, b) => a + b, 0) / tb.length : 0 };
+  };
+  const t = stats(withT), p = stats(plain);
+  let verdict = 'not-enough-data', text;
+  if (!meals.length) text = 'No meals logged in the last 14 days.';
+  else if (p.n < 3 && !t.n) text = `Only ${p.n} plain meal(s) in the last 14 days — log a few more to judge.`;
+  else if (!t.n) { verdict = 'eating-well'; text = `All ${p.n} recent meals were plain, averaging ${p.avgTbsp.toFixed(1)} tbsp — he's eating without toppers. Continue without.`; }
+  else if (p.n < 3) { text = `Only ${p.n} plain meal(s) vs ${t.n} with toppers in the last 14 days — log a few more plain meals to judge.`; }
+  else {
+    const ratio = t.avgTbsp > 0 ? p.avgTbsp / t.avgTbsp : 1;
+    if (ratio >= 0.9) { verdict = 'eating-well'; text = `Without toppers he's eating ${p.avgTbsp.toFixed(1)} tbsp/meal vs ${t.avgTbsp.toFixed(1)} with toppers (${p.n} plain vs ${t.n} topper meals) — he's eating it. Continue without toppers.`; }
+    else { verdict = 'eating-less'; text = `Without toppers he's eating ${p.avgTbsp.toFixed(1)} tbsp/meal vs ${t.avgTbsp.toFixed(1)} with toppers — noticeably less. Keep a topper for now.`; }
+  }
+  return { topper: t, plain: p, verdict, text };
 }
 /** Pure: unit-aware amount for a snack mentioned in free text. Tested. */
 function snackAmountFromWords(t, s, tbsp, tsp) {
@@ -1492,6 +1521,7 @@ function openSheet(kind, existing = null) {
       <label class="lbl">Toppers — pick + portion <span class="hint">(kcal counted)</span></label>
       <div id="fTopperRows"></div>
       <button class="btn small" id="fAddTopper" type="button">＋ Add topper</button>
+      <div class="hint" id="fTopperHint" style="margin-top:6px"></div>
       <label class="lbl">Notes (optional)</label>
       <input id="fTop" placeholder="e.g. extra notes">`;
     const updMix = () => refreshMixSheet();
@@ -1499,6 +1529,10 @@ function openSheet(kind, existing = null) {
     $('fEgg').oninput = updMix; $('fWaterTsp').oninput = updMix;
     $('fWaterTsp').value = lastFoodWaterTsp();
     $('fAddTopper').onclick = () => addTopperRow(); // v3.16 — structured toppers
+    // v3.17.1 — nudge the topper decision with his own recent data (option always stays)
+    const taHint = topperEatingAnalysis(S.history, new Date());
+    const hintEl = $('fTopperHint');
+    if (hintEl) hintEl.textContent = taHint.verdict === 'eating-well' ? '💡 ' + taHint.text : '';
     refreshMixSheet();
   } else if (kind === 'Water') {
     b.innerHTML = `
@@ -2107,6 +2141,10 @@ function renderInsights() {
   sw.innerHTML = wins.length
     ? wins.map(w => `<div class="window-card"><span class="prob">${w.confidence}%</span> confident · ${Math.round(w.prob * 100)}% of days: <b>${w.label}</b> ${fmtHM(w.start, 0)}–${fmtHM(w.end, 59)} <span class="hint">(${w.clusterDays}d cluster)</span></div>`).join('')
     : '<div class="muted">Not enough history yet — windows appear after ~3 days of logging.</div>';
+  // v3.17.1 — topper vs appetite: is he eating without toppers?
+  const ta = topperEatingAnalysis(S.history, new Date());
+  const tc = $('topperCheck');
+  if (tc) tc.innerHTML = `<div class="window-card">${ta.verdict === 'eating-well' ? '✅' : ta.verdict === 'eating-less' ? '🟡' : '⚪'} ${esc(ta.text)}</div>`;
   renderNudges(wins);
 }
 function nudgeKey(w) { return `nudge:${todayStr()}:${w.label}:${w.start}`; }
@@ -2254,6 +2292,8 @@ function buildTelemetryBrief(history, subj, now = new Date()) {
   L.push(`Accident-free streak: ${accidentFreeStreak(history, now)} day(s).`);
   const ht = holdTrend(history, now);
   if (ht) L.push(`Hold trend: ${ht.dir} (${ht.pct >= 0 ? '+' : ''}${ht.pct}% vs prior weeks).`);
+  const ta = topperEatingAnalysis(history, now);
+  if (ta.verdict !== 'not-enough-data') L.push(`Topper check: ${ta.text}`);
   return L.join('\n');
 }
 
