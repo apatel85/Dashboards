@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.14'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.15'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -485,7 +485,7 @@ function liveState(now = new Date()) {
     mealElapsedMins: mealElapsed,
     lastMealTexture: lastMeal && /dry/i.test(lastMeal.toppers_detail || '') ? 'Dry_Kibble' : 'Wet_Topped',
     doorTellFlag: S.events.some(e => e.door_tell_observed),
-    waterBowlsPulled: localStorage.getItem('st_bowls') === '1',
+    waterBowlsPulled: localStorage.getItem('st_bowls') === todayStr(), // v3.15 — date-scoped: reset daily
     currentSubstrate: (S.events.filter(e => e.location_substrate).pop() || {}).location_substrate || 'Unknown',
     currentTimeStr: fmtTime(now),
   };
@@ -1025,7 +1025,9 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
   if (!st.asleep && lastWake && (nowMs - lastWake) / 60000 <= 30 && !today.some(e => isPee(e) && peeAt(e) > lastWake))
     items.push(mk('nap-out', '⏰', 'Take out — just woke up', new Date(nowMs), new Date(nowMs + 15 * 60000),
       'post-nap = highest-risk window', false));
-  // 2. post-meal potty intercept — v3.14: slot-specific latency (dinner ≠ lunch)
+  // 2. post-meal potty break — v3.15: plain-words copy ("what does the intercept mean?"
+  //    → it catches the post-meal bladder urge before he goes inside). Done when he
+  //    peed OR pooped within 1–130 min after the meal — the outing already happened.
   const meals = today.filter(e => e.category === 'Food');
   const lastMeal = meals.length ? peeAt(meals[meals.length - 1]) : null;
   if (lastMeal && (nowMs - lastMeal) / 60000 <= 100) {
@@ -1034,10 +1036,13 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
     const slotLat = latBySlot[slot] && latBySlot[slot].n >= 5 ? latBySlot[slot] : null;
     const lat = slotLat ? slotLat.med : postMealPeeLatencyMin(hist);
     const c = lastMeal + lat * 60000;
-    const done = today.some(e => isPee(e) && (peeAt(e) - lastMeal) > 60000 && (peeAt(e) - lastMeal) < 130 * 60000);
+    const outAfterMeal = today.some(e =>
+      (isPee(e) || e.elimination_type === 'Poop') &&
+      (peeAt(e) - lastMeal) > 60000 && (peeAt(e) - lastMeal) < 130 * 60000);
     const mealTbsp = +meals[meals.length - 1].kibble_consumed_tbsp || 0;
-    items.push(mk('meal-intercept', '🍽️', 'Post-meal potty intercept', new Date(c - 10 * 60000), new Date(c + 10 * 60000),
-      `post-${slot} urge median ${lat}m${mealTbsp ? ` · ${mealTbsp} tbsp meal` : ''} (your history)`, done));
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    items.push(mk('meal-intercept', '🍽️', 'Post-meal potty break', new Date(c - 10 * 60000), new Date(c + 10 * 60000),
+      `🍽️ ${cap(slot)} moves his bladder ~${lat}m after the meal${mealTbsp ? ` (${mealTbsp} tbsp)` : ''} — catch it before he goes inside`, outAfterMeal));
   }
   // 3. general pee window — v3.14: contextual hold prediction + merged "what to expect"
   //    insight (skip/ontrack/due verdict, trend, filtration peak). Suppressed when nap-out is active.
@@ -1071,10 +1076,12 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
       items.push(mk('poop2', '💩', 'Bowel #2 window', new Date(c.getTime() - 60 * 60000), new Date(c.getTime() + 60 * 60000),
         `bowel #2 median ${fmtTime(c)} (your history)`, false));
   }
-  // 5. water cutoff
+  // 5. water cutoff — v3.15: a real daily checkbox (manual check/uncheck via doneMap).
+  //    The bowls-pulled flag itself is date-scoped in liveState, so yesterday's
+  //    check-off never auto-completes today's item.
   if (nowMs < wc.getTime() + 30 * 60000)
     items.push(mk('water-cutoff', '💧', 'Hard water cutoff ' + fmtClock(CFG.WATER_CUTOFF), wc, wc,
-      'shut down renal inflow for the night', st.waterBowlsPulled));
+      'shut down renal inflow for the night — pull the bowls', false));
   // 6. pre-bed drain + 7. crate lockdown
   const drain = new Date(bed.getTime() - CFG.PRE_BED_DRAIN_MIN * 60000);
   if (nowMs < bed.getTime())
@@ -1088,6 +1095,21 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
     const morn = atHM(7, 43, 1); // v3.10 master-log median wake 7:43 AM
     items.push(mk('morning-pee', '🌅', 'Morning pee', new Date(morn.getTime() - 15 * 60000), new Date(morn.getTime() + 15 * 60000),
       'median wake 7:43 AM (your history)', false));
+  }
+  // v3.15 — merge: when the meal urge and the hold-based window point at the same
+  // outing (centers within 45m), show ONE "Potty break" row with both reasons
+  // instead of two near-duplicate, seemingly contradictory rows.
+  const pwI = items.findIndex(i => i.id === 'pee-window'), miI = items.findIndex(i => i.id === 'meal-intercept');
+  if (pwI >= 0 && miI >= 0) {
+    const pw = items[pwI], mi = items[miI];
+    const center = a => (a.winStart.getTime() + a.winEnd.getTime()) / 2;
+    if (!pw.done && !mi.done && Math.abs(center(pw) - center(mi)) <= 45 * 60000) {
+      pw.label = 'Potty break';
+      pw.winStart = new Date(Math.min(pw.winStart.getTime(), mi.winStart.getTime()));
+      pw.winEnd = new Date(Math.max(pw.winEnd.getTime(), mi.winEnd.getTime()));
+      pw.why = `${mi.why} · ${pw.why}`;
+      items.splice(miI, 1);
+    }
   }
   return items.sort((a, b) => a.winStart - b.winStart).slice(0, 6);
 }
@@ -1189,13 +1211,16 @@ function renderCountdowns(st) {
           : a.manualDone ? `<button class="btn small" data-nuundo="${a.id}" title="Uncheck">↩</button>` : ''}</div>`;
     const btn = div.querySelector('[data-nu]');
     if (btn) btn.onclick = () => {
-      if (a.id === 'water-cutoff') { localStorage.setItem('st_bowls', '1'); toast('Water bowls marked as pulled.'); }
+      // v3.15 — date-scoped bowls flag: today's check-off never leaks into tomorrow
+      if (a.id === 'water-cutoff') { localStorage.setItem('st_bowls', todayStr()); toast('Water bowls marked as pulled for today.'); }
       checkOff(a.id);
     };
     const unbtn = div.querySelector('[data-nuundo]');
     if (unbtn) unbtn.onclick = () => { // v3.13 — uncheck a mistaken tap
       const d = JSON.parse(localStorage.getItem(dayKey) || '{}'); delete d[a.id];
-      localStorage.setItem(dayKey, JSON.stringify(d)); renderCockpit(); toast('Unchecked.');
+      localStorage.setItem(dayKey, JSON.stringify(d));
+      if (a.id === 'water-cutoff') localStorage.removeItem('st_bowls'); // v3.15 — un-pull the bowls too
+      renderCockpit(); toast('Unchecked.');
     };
     box.appendChild(div);
   });
