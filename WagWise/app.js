@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.18.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.19.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1102,35 +1102,44 @@ function bowel1ClockMin(events) {
   const firsts = Object.values(byDay).map(a => a.sort((x, y) => x - y)[0]);
   return firsts.length ? Math.round(medianNum(firsts)) : null;
 }
-/** Pure: today's upcoming nap predictions — ideal start, typical span, predicted wake.
-    A live in-progress nap comes first (predicts its wake). Tested.
-    v3.18 — 30% threshold (was 50%) with ≥2 cluster days, so rarer naps (e.g. an
-    evening catnap) still surface; each row shows its % of days so weaker ones
-    are honest. */
+/** v3.19 — canonical nap schedule (Ankit-set 2026-10-05, reconciled against 32 days
+    of master-log data: 8:55 AM / 1:20 PM / 5:00 PM medians, nudged to his current
+    times). startMin = midpoint of his start range; durMin = to his typical end. */
+const CANONICAL_NAPS = [
+  { label: 'Morning', startMin: 9 * 60 + 37, durMin: 128 },  // 9:37 AM → 11:45 AM
+  { label: 'Afternoon', startMin: 13 * 60 + 37, durMin: 128 }, // 1:37 PM → 3:45 PM
+  { label: 'Evening', startMin: 17 * 60 + 45, durMin: 60 },  // 5:45 PM → 6:45 PM
+];
+/** Pure: today's upcoming nap predictions from the canonical 3-nap schedule.
+    Logged data refines a slot's start/duration once ≥3 samples fall within
+    ±90 min of it; a live in-progress nap predicts its own wake. Tested. */
 function upcomingNaps(hist, today, now = new Date()) {
   const pairs = pairNaps(hist).filter(p => p.mins > 0 && p.mins < 300);
-  const medDur = ms => Math.round(medianNum(ms.length ? ms : pairs.map(p => p.mins)) || 90);
+  const minOf = e => { const d = new Date(e.logged_at); return d.getHours() * 60 + d.getMinutes(); };
   const nowMin = now.getHours() * 60 + now.getMinutes();
-  const startsToday = today.filter(isNapStart).map(e => { const d = new Date(e.logged_at); return d.getHours() * 60 + d.getMinutes(); });
+  const startsToday = today.filter(isNapStart).map(minOf);
+  const slotFor = m => CANONICAL_NAPS.find(c => Math.abs(m - c.startMin) <= 90);
+  const learnedDur = c => {
+    const ds = pairs.filter(p => Math.abs(minOf(p.start) - c.startMin) <= 90).map(p => p.mins);
+    return ds.length >= 3 ? Math.round(medianNum(ds)) : c.durMin;
+  };
   const out = [];
   const inProg = napInProgress(today);
   if (inProg) {
-    const d = new Date(inProg.logged_at), sMin = d.getHours() * 60 + d.getMinutes();
-    const dur = medDur([]);
-    out.push({ kind: 'live', startMin: sMin, durMin: dur, wakeMin: sMin + dur, prob: 1, days: 0 });
+    const sMin = minOf(inProg);
+    const slot = slotFor(sMin);
+    const dur = slot ? learnedDur(slot) : Math.round(medianNum(pairs.map(p => p.mins)) || 90);
+    out.push({ kind: 'live', label: slot ? slot.label : 'Nap', startMin: sMin, durMin: dur, wakeMin: sMin + dur, days: 0 });
+    return out;
   }
-  learnedWindows(hist, isNapStart, 'Nap', 0.3).forEach(w => {
-    if (w.clusterDays < 2) return; // v3.18 — one-off naps aren't a schedule
-    const wStart = w.start * 60, wEnd = w.end * 60 + 59;
-    if (wEnd <= nowMin - 30) return; // window fully past
-    if (startsToday.some(m => m >= wStart - 30 && m <= wEnd)) return; // already napped in this slot
-    const starts = hist.filter(isNapStart).map(e => { const d = new Date(e.logged_at); return d.getHours() * 60 + d.getMinutes(); })
-      .filter(m => m >= wStart - 30 && m <= wEnd);
-    if (!starts.length) return;
-    const ideal = Math.round(medianNum(starts));
-    const durs = pairs.filter(p => { const d = new Date(p.start.logged_at); const m = d.getHours() * 60 + d.getMinutes(); return m >= wStart - 30 && m <= wEnd; }).map(p => p.mins);
-    const dur = medDur(durs);
-    out.push({ kind: 'window', startMin: ideal, durMin: dur, wakeMin: ideal + dur, prob: w.prob, days: w.clusterDays });
+  CANONICAL_NAPS.forEach(c => {
+    const starts = hist.filter(isNapStart).map(minOf).filter(m => Math.abs(m - c.startMin) <= 90);
+    const ideal = starts.length >= 3 ? Math.round(medianNum(starts)) : c.startMin;
+    const dur = learnedDur(c);
+    if (ideal + dur <= nowMin - 30) return; // nap over
+    if (startsToday.some(m => Math.abs(m - c.startMin) <= 90)) return; // already napped
+    out.push({ kind: starts.length >= 3 ? 'learned' : 'canonical', label: c.label,
+               startMin: ideal, durMin: dur, wakeMin: ideal + dur, days: starts.length });
   });
   return out;
 }
@@ -1216,8 +1225,8 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       new Date(c.getTime() - 10 * 60000), new Date(c.getTime() + 10 * 60000),
       `avg ${fmtTime(c)}${s.avgTbsp ? ` · ${s.avgTbsp.toFixed(1)} tbsp` : ''} (${s.n} meals, your history)`, false));
   });
-  // 2c. nap schedule — v3.17.5: the row shows the WHOLE span (avg start → avg end);
-  // the ±10 min drives the alert (ntfy fires 10 min before winStart), not the display.
+  // 2c. nap schedule — v3.19: canonical 3-nap slots (whole span shown, ±10m drives
+  // the alert). Logged data refines a slot once ≥3 samples exist near it.
   if (!st.asleep) {
     const naps = upcomingNaps(hist, today, now);
     const poopLat = postNapLatencyMin(hist, 'Poop');
@@ -1225,25 +1234,22 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       const s = atHM(Math.floor(n.startMin / 60), n.startMin % 60);
       const w = atHM(Math.floor(n.wakeMin / 60), n.wakeMin % 60);
       napSpans.push({ s, e: w });
-      const part = n.startMin < 12 * 60 ? 'Morning' : n.startMin < 17 * 60 ? 'Afternoon' : 'Evening';
       const span = `${fmtTime(s)}–${fmtTime(w)}`;
-      if (n.kind === 'live') {
-        items.push(mk('napwin-' + i, '😴', part + ' nap (in progress)', s, w,
-          `down since ${fmtTime(s)} · up ~${fmtTime(w)} (${n.durMin}m typical)`, false));
-      } else {
-        const basis = `${Math.round(n.prob * 100)}% of days`;
-        items.push(mk('napwin-' + i, '😴', part + ' nap', s, w,
-          `avg start ${fmtTime(s)} → avg end ${fmtTime(w)} (${n.durMin}m nap, ${basis})`, false));
-      }
-      // v3.18 — after EVERY nap he goes out for a pee: the row is always shown.
-      // With 3+ logged nap→pee latencies the timing is data-driven; until then
-      // it defaults to 15 min after predicted wake and learns from his logs.
+      const basis = n.kind === 'live' ? `down since ${fmtTime(s)}`
+        : n.kind === 'learned' ? `avg of ${n.days} logged naps` : 'set schedule';
+      items.push(mk('napwin-' + i, '😴', n.label + ' nap' + (n.kind === 'live' ? ' (in progress)' : ''), s, w,
+        `typical ${span} (${n.durMin}m · ${basis})`, false));
+      // v3.19 — post-nap pee is immediate at wake (master-log: wake potty ~5m
+      // after waking); data-driven latency takes over once 3+ are logged.
+      // Shown for live/upcoming naps, plus a 45-min "just woke" grace for
+      // unlogged canonical naps — the row reads as "now", not "missed".
       const peeLat = postNapLatencyMin(hist, 'Pee');
-      const lat = peeLat != null ? peeLat : 15;
-      {
-        const p = new Date(w.getTime() + lat * 60000);
-        items.push(mk('nappee-' + i, '🚻', 'Post-nap pee', new Date(p.getTime() - 10 * 60000), new Date(p.getTime() + 10 * 60000),
-          peeLat != null ? `~${lat}m after waking (${span} nap)` : `after every nap — take him out (~${lat}m after waking until your logs teach it better)`, false));
+      const lat = peeLat != null ? peeLat : 5;
+      const peeMoment = w.getTime() + lat * 60000;
+      if (n.kind === 'live' || peeMoment > nowMs - 45 * 60000) {
+        const pEnd = new Date(Math.max(peeMoment + 10 * 60000, nowMs + 10 * 60000));
+        items.push(mk('nappee-' + i, '🚻', 'Post-nap pee', new Date(peeMoment - 10 * 60000), pEnd,
+          peeLat != null ? `~${lat}m after waking (${span} nap)` : `right after waking — take him out (timing learns from your logs)`, false));
       }
       if (poopLat != null) {
         const p = new Date(w.getTime() + poopLat * 60000);
