@@ -191,7 +191,12 @@
   <!-- TIMELINE -->
   <section class="screen" id="screen-timeline">
     <div class="card">
-      <div class="card-title">Today's timeline <span class="hint" id="timelineDate"></span></div>
+      <div class="card-title">Timeline <span class="hint" id="timelineDate"></span></div>
+      <div class="seg" id="timelineRange" style="margin-bottom:10px">
+        <button data-range="1" class="active">Today</button>
+        <button data-range="2">Yesterday</button>
+        <button data-range="7">7 days</button>
+      </div>
       <div id="timelineList"><div class="muted">No events logged today yet.</div></div>
     </div>
   </section>
