@@ -230,6 +230,12 @@ textarea { resize: vertical; font-family: inherit; }
 .foodrow-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .foodrow-name b { font-size: 14px; }
 .foodrow input { width: 92px; flex: none; text-align: right; }
+/* v3.16 — structured topper rows */
+.topperrow { gap: 8px; }
+.topperrow .tpPick { flex: 1; min-width: 0; }
+.topperrow .tpAmt { width: 64px; flex: none; text-align: right; }
+.topperrow .tpUnit { flex: none; min-width: 34px; }
+#fAddTopper { margin-top: 10px; }
 
 /* ---------- Connection / auth ---------- */
 .conn-status { font-size: 14.5px; font-weight: 700; }
