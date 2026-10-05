@@ -32,4 +32,3 @@ self.addEventListener('fetch', e => {
   );
 });
 
-// v3.19.0 — rebuild trigger (Pages build race on rapid pushes)
