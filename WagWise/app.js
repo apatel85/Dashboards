@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.17.2'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.17.3'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1091,6 +1091,27 @@ function bowel2ClockMin(events) {
   const seconds = Object.values(byDay).filter(a => a.length >= 2).map(a => a.sort((x, y) => x - y)[1]);
   return Math.round(medianNum(seconds) ?? (17 * 60 + 18)); // v3.10 master-log median 5:18 PM
 }
+/** Pure: median clock-minutes of the day's 1st poop (null when no data). Tested. */
+function bowel1ClockMin(events) {
+  const byDay = {};
+  events.forEach(e => {
+    if (!['Poop', 'Pee_Poop'].includes(e.elimination_type)) return;
+    const d = new Date(e.logged_at), k = d.toDateString();
+    (byDay[k] = byDay[k] || []).push(d.getHours() * 60 + d.getMinutes());
+  });
+  const firsts = Object.values(byDay).map(a => a.sort((x, y) => x - y)[0]);
+  return firsts.length ? Math.round(medianNum(firsts)) : null;
+}
+/** Pure: today's not-yet-passed nap windows from learned nap-start clusters (50% threshold — naps are looser than pees). Tested. */
+function upcomingNapWindows(hist, today, now = new Date()) {
+  const wins = learnedWindows(hist, isNapStart, 'Nap', 0.5);
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const startsToday = today.filter(isNapStart).map(e => { const d = new Date(e.logged_at); return d.getHours() * 60 + d.getMinutes(); });
+  return wins
+    .filter(w => (w.end * 60 + 59) > nowMin - 30) // window not fully past
+    .filter(w => !startsToday.some(m => m >= w.start * 60 - 30 && m <= w.end * 60 + 59)) // not already napped in this slot
+    .map(w => ({ startMin: w.start * 60, endMin: w.end * 60 + 59, prob: w.prob, days: w.clusterDays }));
+}
 /** Pure: countdown text for an action item. Tested. */
 function actionCountdownText(it, nowMs) {
   if (it.done) return 'done ✓';
@@ -1156,6 +1177,14 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
       new Date(c.getTime() - 30 * 60000), new Date(c.getTime() + 30 * 60000),
       `avg ${fmtTime(c)}${s.avgTbsp ? ` · ${s.avgTbsp.toFixed(1)} tbsp` : ''} (${s.n} meals, your history)`, false));
   });
+  // 2c. nap schedule — v3.17.3: predicted nap windows from his history
+  if (!st.asleep) {
+    upcomingNapWindows(hist, today, now).forEach((w, i) => {
+      const s = atHM(Math.floor(w.startMin / 60), w.startMin % 60), e = atHM(Math.floor(w.endMin / 60), w.endMin % 60);
+      items.push(mk('napwin-' + i, '😴', 'Nap window', s, e,
+        `usually naps ${fmtTime(s)}–${fmtTime(e)} (${Math.round(w.prob * 100)}% of days)`, false));
+    });
+  }
   // 3. general pee window — v3.14: contextual hold prediction + merged "what to expect"
   //    insight (skip/ontrack/due verdict, trend, filtration peak). Suppressed when nap-out is active.
   if (!st.asleep && !items.some(i => i.id === 'nap-out')) {
@@ -1180,8 +1209,17 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold) {
       items.push(mk('pee-window', '🚻', 'Pee window', new Date(due - 15 * 60000), new Date(due + 15 * 60000), why, done));
     }
   }
-  // 4. bowel #2 window
+  // 4. bowel #1 + #2 windows — v3.17.3: #1 predicted from median first-poop clock time
   const poops = today.filter(e => ['Poop', 'Pee_Poop'].includes(e.elimination_type)).length;
+  if (poops === 0) {
+    const b1 = bowel1ClockMin(hist);
+    if (b1 != null) {
+      const c1 = atHM(Math.floor(b1 / 60), b1 % 60);
+      if (nowMs < c1.getTime() + 45 * 60000)
+        items.push(mk('poop1', '💩', 'Morning bowel window', new Date(c1.getTime() - 45 * 60000), new Date(c1.getTime() + 45 * 60000),
+          `bowel #1 median ${fmtTime(c1)} (your history)`, false));
+    }
+  }
   if (poops < 2) {
     const cmin = bowel2ClockMin(hist), c = atHM(Math.floor(cmin / 60), cmin % 60);
     if (nowMs < c.getTime() + 90 * 60000)
@@ -2150,8 +2188,11 @@ function renderInsights() {
     if (m > 20 && m < 50) cards.push(`💧 <b>Filtration peak.</b> Fluids ${Math.round(m)}m ago are hitting the bladder now — expect a full void if you go out.`);
     else if (m >= 50) cards.push('💧 Fluids drained — bladder volume is basal only.');
   }
-  if (st.poops < 2) cards.push(`💩 <b>Colon quota ${st.poops}/2.</b> ${st.poops === 0 ? 'Morning bowel #1 typically lands 7:45–8:30 AM.' : 'Afternoon bowel #2 typically lands 12:45–5:00 PM.'}`);
-  else cards.push('💩 <b>Colon quota met (2/2).</b> Further squats today are likely gas/false urge.');
+  if (st.poops < 2) {
+    const b1m = bowel1ClockMin(evs); // v3.17.3 — was hardcoded 7:45–8:30 AM
+    const b1txt = b1m != null ? `typically lands around ${fmtHM(Math.floor(b1m / 60), b1m % 60)}` : 'typically lands 7:45–8:30 AM';
+    cards.push(`💩 <b>Colon quota ${st.poops}/2.</b> ${st.poops === 0 ? `Morning bowel #1 ${b1txt}.` : 'Afternoon bowel #2 typically lands 12:45–5:00 PM.'}`);
+  } else cards.push('💩 <b>Colon quota met (2/2).</b> Further squats today are likely gas/false urge.');
   box.innerHTML = cards.map(c => `<div class="window-card">${c}</div>`).join('');
 
   // --- Learned schedule windows ---
