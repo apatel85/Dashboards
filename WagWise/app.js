@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.15'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.16.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -17,7 +17,7 @@ const CFG = {
   TARGET_AWAKE_HOLD: 75,              // v3.10 — master-log median awake hold (was 80)
   MEAL_WINDOW_MIN: 15,                // 15-minute dish pickup rule
   KCAL_PER_TBSP: { Chicken: 26.94, Salmon: 25.31, Blend: 26.13 }, // legacy; v3.6 uses FOODS
-  KCAL_PER_TSP_GOATMILK: 0.7,
+  KCAL_PER_TSP_GOATMILK: 3.5, // v3.16 — was 0.7 (wrong); USDA 21 kcal/fl oz → 3.5/tsp, matches researched snack value
   KCAL_PER_EGG: 70,
   ML_PER_TBSP: 14.78, ML_PER_TSP: 4.93,
   LS: { SB_URL: 'st_sb_url', SB_KEY: 'st_sb_key', GEMINI: 'st_gemini', OFFLINE: 'st_offline',
@@ -56,6 +56,52 @@ const SNACKS = [
 function foodById(id) { return FOODS.find(f => f.id === id) || FOODS[0]; }
 /** Pure: snack by id. Tested. */
 function snackById(id) { return SNACKS.find(s => s.id === id) || SNACKS[0]; }
+/* ---------- v3.16 — structured meal toppers with portions + kcal ----------
+   Any of the 12 researched snacks can be logged as a meal topper with its
+   portion; kcal = amount × kcalPerUnit flows into the meal's event_kcal so
+   daily totals are real. Pure — tested. */
+/** Pure: kcal for topper rows [{snack, amount}]. Tested. */
+function topperKcal(rows) {
+  return +rows.reduce((s, r) => s + (r.amount || 0) * ((r.snack || {}).kcalPerUnit || 0), 0).toFixed(1);
+}
+/** Pure: "Pumpkin puree 2 tsp + Blueberries 3 berries" (+ trailing notes). Tested. */
+function buildToppersDetail(rows, notes) {
+  const parts = (rows || []).filter(r => r.amount > 0).map(r => {
+    const u = +r.amount === 1 ? r.snack.unit : r.snack.units;
+    return `${r.snack.name} ${+r.amount} ${u}`;
+  });
+  if (notes && String(notes).trim()) parts.push(String(notes).trim());
+  return parts.join(' + ');
+}
+const escRe = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** Pure: restore rows + notes from a stored toppers_detail (edit path). Tested. */
+function parseToppersDetail(str) {
+  const rows = []; let rest = ' ' + (str || '') + ' ';
+  SNACKS.forEach(s => {
+    const re = new RegExp(escRe(s.name) + '\\s+([\\d.]+)\\s+(' + escRe(s.unit) + '|' + escRe(s.units) + ')', 'i');
+    const m = rest.match(re);
+    if (m) { rows.push({ snackId: s.id, amount: +m[1] }); rest = rest.replace(re, ' '); }
+  });
+  return { rows, notes: rest.replace(/\s*\+\s*/g, ' ').trim() };
+}
+/** Pure: unit-aware amount for a snack mentioned in free text. Tested. */
+function snackAmountFromWords(t, s, tbsp, tsp) {
+  if (s.unit === 'tsp') return tsp || 0;
+  if (s.unit === 'tbsp') return tbsp || 0;
+  // v3.16 FIX: the old unit-words regex required the number directly before the
+  // unit ('3 berries') and never matched '3 blueberries' — scan words instead.
+  const units = ['piece', 'pieces', 'cube', 'cubes', 'berry', 'berries', 'slice', 'slices', 'bean', 'beans', 'carrot', 'carrots', 'stick', 'sticks'];
+  const words = String(t).toLowerCase().split(/[^a-z0-9.]+/);
+  const isUnit = w => units.some(u => w.endsWith(u)); // 'blueberries' endswith 'berries'
+  for (let i = 0; i < words.length; i++) {
+    if (!isUnit(words[i])) continue;
+    for (let k = i - 1; k >= Math.max(0, i - 3); k--) {
+      const n = parseFloat(words[k]);
+      if (isFinite(n)) return n;
+    }
+  }
+  return 0;
+}
 /** Pure: build a snack event; amount clamped to the adult max. Tested. */
 function buildSnackEvent(snackId, amount) {
   const s = snackById(snackId);
@@ -628,22 +674,30 @@ function parseTelemetry(raw, now = new Date()) {
     ev.category = 'Food';
     ev.kibble_offered_tbsp = tbsp || 0; ev.kibble_consumed_tbsp = tbsp || 0;
     ev.kibble_type = foodById(foodIdFromWords(t)).name; // v3.6 — which of Simba's three foods
-    if (has('egg', 'eggs')) { ev.toppers_detail = (ev.toppers_detail || '') + ' scrambled egg'; ev.event_kcal = (ev.event_kcal || 0) + CFG.KCAL_PER_EGG * 0.5; }
+    if (has('egg', 'eggs')) {
+      const eggAmt = extractAmount(t, 'eggs?') || 0.5; // v3.16 — "2 eggs" → 2; default half
+      ev.toppers_detail = (ev.toppers_detail || '') + ` scrambled egg (${eggAmt})`;
+      ev.event_kcal = (ev.event_kcal || 0) + CFG.KCAL_PER_EGG * eggAmt;
+    }
     if (has('goat')) { ev.toppers_detail = (ev.toppers_detail || '') + ' goat milk'; ev.event_kcal = (ev.event_kcal || 0) + 3 * CFG.KCAL_PER_TSP_GOATMILK; }
     ev.event_kcal = (ev.event_kcal || 0) + tbsp * foodFor(ev.kibble_type).kcalTbsp;
   }
   // v3.11 — snacks: "gave him a teaspoon of pumpkin puree", "3 blueberries as a snack".
+  // v3.16 — "2 tsp pumpkin puree on his dinner" is a MEAL TOPPER: it joins the Food
+  //   event (portion + kcal) instead of overwriting the meal as a Snack event.
   // Goat milk stays a food topper when meal words are present without the word "snack".
   const snackHit = snackFromWords(t);
   const snackWord = has('snack', 'treat', 'treats');
   const mealWord = has('ate', 'food', 'kibble', 'meal', 'fed', 'breakfast', 'lunch', 'dinner');
-  if (snackHit && !neg.has('snack') && (snackWord || !mealWord || snackHit.id !== 'goatmilk')) {
+  const asMealTopper = snackHit && snackHit.id !== 'goatmilk' && mealWord && !snackWord && !neg.has('snack') && ev.category === 'Food';
+  if (asMealTopper) {
+    const s = snackHit, tamt = snackAmountFromWords(t, s, tbsp, tsp) || s.puppy;
+    const tu = tamt == 1 ? s.unit : s.units;
+    ev.toppers_detail = ((ev.toppers_detail ? ev.toppers_detail + ' + ' : '') + `${s.name} ${tamt} ${tu}`).trim();
+    ev.event_kcal = (ev.event_kcal || 0) + +(tamt * s.kcalPerUnit).toFixed(1);
+  } else if (snackHit && !neg.has('snack') && (snackWord || !mealWord || snackHit.id !== 'goatmilk')) {
     const s = snackHit;
-    let samt = 0;
-    if (s.unit === 'tsp') samt = tsp || 0;
-    else if (s.unit === 'tbsp') samt = tbsp || 0;
-    else { const pm = t.match(/(\d+(?:\.\d+)?)\s*(pieces?|cubes?|berr(?:y|ies)|slices?|beans?|carrots?|sticks?)/); samt = pm ? +pm[1] : 0; }
-    const built = buildSnackEvent(s.id, samt || s.puppy);
+    const built = buildSnackEvent(s.id, snackAmountFromWords(t, s, tbsp, tsp) || s.puppy);
     Object.assign(ev, built.ev);
   }
   if ((has('drank', 'water', 'hydration') || (tsp > 0 && !['Food', 'Snack'].includes(ev.category))) && !neg.has('water')) {
@@ -1320,11 +1374,41 @@ function refreshMixSheet() {
   const totalTbsp = comp.reduce((s, c) => s + c.tbsp, 0);
   const egg = (+(($('fEgg') || {}).value)) || 0;
   const water = (+(($('fWaterTsp') || {}).value)) || 0;
-  const kcal = comp.reduce((s, c) => s + c.tbsp * c.food.kcalTbsp, 0) + egg * CFG.KCAL_PER_EGG;
+  const rows = readTopperRows(); // v3.16 — structured toppers feed the kcal line
+  const tKcal = topperKcal(rows);
+  const kcal = comp.reduce((s, c) => s + c.tbsp * c.food.kcalTbsp, 0) + egg * CFG.KCAL_PER_EGG + tKcal;
   const hh = $('fMixHint');
   if (hh) hh.textContent = comp.length
-    ? `Total ${+totalTbsp.toFixed(2)} tbsp (${comp.map(c => `${+c.tbsp.toFixed(2)} ${c.food.short}`).join(' + ')}) ≈ ${Math.round(kcal)} kcal incl. egg${water ? ` + ${water} tsp water in food` : ''}`
+    ? `Total ${+totalTbsp.toFixed(2)} tbsp (${comp.map(c => `${+c.tbsp.toFixed(2)} ${c.food.short}`).join(' + ')}) ≈ ${Math.round(kcal)} kcal incl. egg${tKcal ? ` + toppers (${Math.round(tKcal)})` : ''}${water ? ` + ${water} tsp water in food` : ''}`
     : 'Enter at least one food amount.';
+}
+/* v3.16 — structured topper rows (DOM). Prefills the researched puppy portion. */
+function addTopperRow(snackId = 'pumpkin', amount = null) {
+  const wrap = $('fTopperRows'); if (!wrap) return;
+  const s0 = snackById(snackId);
+  const div = document.createElement('div'); div.className = 'foodrow topperrow';
+  const sel = document.createElement('select'); sel.className = 'tpPick';
+  sel.innerHTML = SNACKS.map(s => `<option value="${s.id}">${s.emoji} ${esc(s.name)} · ${s.kcalPerUnit}/${s.unit}</option>`).join('');
+  sel.value = s0.id;
+  const amt = document.createElement('input');
+  amt.type = 'number'; amt.className = 'tpAmt'; amt.min = '0'; amt.step = '0.5'; amt.inputMode = 'decimal';
+  amt.placeholder = 'amt'; amt.value = amount != null ? amount : s0.puppy;
+  const unit = document.createElement('span'); unit.className = 'tpUnit muted small';
+  const del = document.createElement('button'); del.type = 'button'; del.className = 'btn small'; del.textContent = '✕'; del.title = 'Remove topper';
+  const paint = () => { const s = snackById(sel.value); unit.textContent = (+amt.value || 0) === 1 ? s.unit : s.units; refreshMixSheet(); };
+  sel.onchange = paint; amt.oninput = paint;
+  del.onclick = () => { div.remove(); refreshMixSheet(); };
+  div.append(sel, amt, unit, del); wrap.appendChild(div); paint();
+}
+function readTopperRows() {
+  const rows = [];
+  document.querySelectorAll('#fTopperRows .topperrow').forEach(div => {
+    const pick = div.querySelector('.tpPick'), am = div.querySelector('.tpAmt');
+    if (!pick || !am) return;
+    const snack = snackById(pick.value), amount = +am.value || 0;
+    if (amount > 0) rows.push({ snack, amount });
+  });
+  return rows;
 }
 /* v3.9 — nap start/end: the Nap tile toggles a nap session; sleep durations pair at render time. */
 /** Pure: nap-start event (Nap_Start, or legacy Crate_Entry on a Nap). Tested. */
@@ -1403,12 +1487,16 @@ function openSheet(kind, existing = null) {
       <input id="fEgg" type="number" step="0.25" min="0" value="0.5">
       <label class="lbl">Water added to food (tsp) — for the whole meal</label>
       <input id="fWaterTsp" type="number" step="0.5" min="0" inputmode="decimal" value="0">
-      <label class="lbl">Toppers / notes — for the whole meal</label>
-      <input id="fTop" placeholder="e.g. goat milk 2 tsp">`;
+      <label class="lbl">Toppers — pick + portion <span class="hint">(kcal counted)</span></label>
+      <div id="fTopperRows"></div>
+      <button class="btn small" id="fAddTopper" type="button">＋ Add topper</button>
+      <label class="lbl">Notes (optional)</label>
+      <input id="fTop" placeholder="e.g. extra notes">`;
     const updMix = () => refreshMixSheet();
     FOODS.forEach(f => { $('fTbsp_' + f.id).oninput = updMix; });
     $('fEgg').oninput = updMix; $('fWaterTsp').oninput = updMix;
     $('fWaterTsp').value = lastFoodWaterTsp();
+    $('fAddTopper').onclick = () => addTopperRow(); // v3.16 — structured toppers
     refreshMixSheet();
   } else if (kind === 'Water') {
     b.innerHTML = `
@@ -1567,7 +1655,10 @@ function openSheet(kind, existing = null) {
           : (parts.length === 1 && parts[0].id === f.id) ? total : 0;
         $('fTbsp_' + f.id).value = amt;
       });
-      $('fTop').value = existing.toppers_detail || '';
+      // v3.16 — restore structured topper rows; anything unparseable → notes
+      const pt = parseToppersDetail(existing.toppers_detail || '');
+      pt.rows.forEach(r => addTopperRow(r.snackId, r.amount));
+      $('fTop').value = pt.notes || '';
       $('fWaterTsp').value = existing.water_consumed_tsp || 0;
       refreshMixSheet();
     }
@@ -1665,12 +1756,14 @@ async function saveSheet() {
     if (!comp.length) { toast('Enter at least one food amount.'); return; }
     const egg = +$('fEgg').value || 0;
     const waterTsp = +$('fWaterTsp').value || 0;
+    const tRows = readTopperRows(); // v3.16 — structured toppers with portions
+    const tKcal = topperKcal(tRows);
     const totalTbsp = +comp.reduce((s, c) => s + c.tbsp, 0).toFixed(2);
     ev.category = 'Food'; ev.kibble_type = buildMixLabel(comp);
     ev.kibble_offered_tbsp = totalTbsp; ev.kibble_consumed_tbsp = totalTbsp;
     ev.water_consumed_tsp = waterTsp;
-    ev.toppers_detail = $('fTop').value;
-    ev.event_kcal = comp.reduce((s, c) => s + c.tbsp * c.food.kcalTbsp, 0) + egg * CFG.KCAL_PER_EGG;
+    ev.toppers_detail = buildToppersDetail(tRows, $('fTop').value);
+    ev.event_kcal = comp.reduce((s, c) => s + c.tbsp * c.food.kcalTbsp, 0) + egg * CFG.KCAL_PER_EGG + tKcal;
     ev.status_outcome = `Ate ${totalTbsp} tbsp ${comp.length > 1 ? 'mix' : comp[0].food.short}` +
       ` (${comp.map(c => `${+c.tbsp.toFixed(2)} ${c.food.short}`).join(' + ')})` +
       (egg ? ` + ${egg} egg (whole meal)` : '') +
