@@ -31,3 +31,5 @@ self.addEventListener('fetch', e => {
     }).catch(() => caches.match('./index.html')))
   );
 });
+
+// v3.19.0 — rebuild trigger (Pages build race on rapid pushes)
