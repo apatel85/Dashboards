@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.23.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.24.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1404,7 +1404,32 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
     a.skippable = SKIP_RE.test(a.id);
     a.skipped = a.skippable && a.id !== 'pee-window' && !!(skipMap || {})[a.id];
   });
-  return items.sort((a, b) => a.winStart - b.winStart).slice(0, 9); // v3.17.4 — was 6; more predictions now, rows are compact
+  // v3.24 — urgent risk-driven pee break (Ankit 2026-10-06): bladder risk is
+  // ELEVATED/CRITICAL but no pee/poop block is imminent (e.g. the hold window was
+  // dropped for nap overlap while he needs to go BEFORE the nap). Adds an
+  // immediate "take him out in 5–10 min" row; the ntfy loop fires it as a
+  // notification when the bell is on. Not while asleep (ADH handles continence).
+  if (!st.asleep && ((st.bladder || {}).accidentRisk === 'ELEVATED' || (st.bladder || {}).accidentRisk === 'CRITICAL')) {
+    const PEEPOOP_RE = /^(pee-window|morning-pee|meal-intercept|nappee-|nappoop-|poop[12])/;
+    const horizon = nowMs + 45 * 60000;
+    const imminent = items.some(a => !a.done && !a.skipped && PEEPOOP_RE.test(a.id) &&
+                                     a.winEnd.getTime() >= nowMs && a.winStart.getTime() <= horizon);
+    if (!imminent) {
+      const nextPP = items.filter(a => !a.done && PEEPOOP_RE.test(a.id) && a.winStart.getTime() >= nowMs)
+                          .sort((x, y) => x.winStart - y.winStart)[0];
+      const holdM = Math.round(st.bladder.elapsedMins || 0);
+      const holdTxt = holdM >= 60 ? `${Math.floor(holdM / 60)}h ${holdM % 60}m` : `${holdM}m`;
+      const lastPeeTxt = st.lastPeeAt ? fmtTime(st.lastPeeAt) : '—';
+      items.push(mk('urgent-pee', '🚨', 'Urgent pee break', new Date(nowMs), new Date(nowMs + 10 * 60000),
+        `risk ${st.bladder.accidentRisk} · ${holdTxt} since last pee (${lastPeeTxt})` +
+        `${nextPP ? ` · next pee block ${fmtTime(nextPP.winStart)}` : ''} — take him out in the next 5–10 min`, false));
+    }
+  }
+  const sorted = items.sort((a, b) => a.winStart - b.winStart);
+  // v3.24 — the urgent pee break pins to the top while it's active
+  const ui = sorted.findIndex(a => a.id === 'urgent-pee');
+  if (ui > 0) { const [u] = sorted.splice(ui, 1); sorted.unshift(u); }
+  return sorted.slice(0, 9); // v3.17.4 — was 6; more predictions now, rows are compact
 }
 /* ---------- v3.13 — local action alerts (Notification API, $0, no server) ----------
    Fires as a Next-up window opens (10-min heads-up), once per item per day.
