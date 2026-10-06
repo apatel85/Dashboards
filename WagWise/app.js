@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.24.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.25.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1114,6 +1114,13 @@ const CANONICAL_NAPS = [
 /** v3.20 — canonical meal times (Ankit-set 2026-10-06; slots not listed here
     stay learned from his history). Lunch 1:00–1:15 PM: gap before the 1:45 PM nap. */
 const CANONICAL_MEALS = { lunch: { startMin: 13 * 60, endMin: 13 * 60 + 15 } };
+/** v3.25 — clock-anchored pee blocks, confirmed from his data (Ankit 2026-10-06):
+    pre-evening-nap pee 5:00–5:30 PM (7/11 recent days), post-dinner pee
+    8:00–8:30 PM (7/11). Auto-done when he pees in/just before the window. */
+const CANONICAL_PEE = [
+  { label: 'Pre-nap pee', startMin: 17 * 60, endMin: 17 * 60 + 30 },
+  { label: 'Post-dinner pee', startMin: 20 * 60, endMin: 20 * 60 + 30 },
+];
 /** Pure: today's upcoming nap predictions from the canonical 3-nap schedule
     (Ankit-set; explicit times are used as-is). A live in-progress nap predicts
     its own wake from the matching slot's duration. Tested. */
@@ -1277,7 +1284,9 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
         if (n.label === 'Evening') {
           const b2min = bowel2ClockMin(hist);
           const b2End = atHM(Math.floor(b2min / 60), b2min % 60).getTime() + 10 * 60000;
-          showPoop = poopsToday < 2 && nowMs > b2End;
+          // v3.25 — dinner logged → the post-dinner poop takes over as the fallback
+          const dinnerLogged = today.some(e => e.category === 'Food' && mealSlot(new Date(e.logged_at)) === 'dinner');
+          showPoop = poopsToday < 2 && nowMs > b2End && !dinnerLogged;
         }
         if (showPoop) {
           const p = new Date(w.getTime() + poopLat * 60000);
@@ -1335,6 +1344,39 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       items.push(mk('poop2', '💩', 'Bowel #2 window', new Date(c.getTime() - 10 * 60000), new Date(c.getTime() + 10 * 60000),
         `bowel #2 median ${fmtTime(c)} (your history) · he often pees around this time too`, false));
   }
+  // v3.25 — post-dinner poop fallback (Ankit 2026-10-06): the 2nd poop still isn't
+  // logged and dinner was logged → very likely within ~15 min after dinner.
+  if (poopsToday < 2) {
+    const dinners = today.filter(e => e.category === 'Food' && mealSlot(new Date(e.logged_at)) === 'dinner');
+    if (dinners.length) {
+      const dT = new Date(dinners[dinners.length - 1].logged_at).getTime();
+      const p = dT + 15 * 60000;
+      if (nowMs >= dT - 10 * 60000 && nowMs <= p + 45 * 60000) {
+        items.push(mk('dinner-poop', '💩', 'Post-dinner poop',
+          new Date(p - 10 * 60000), new Date(p + 10 * 60000),
+          `~15m after dinner (${fmtTime(new Date(dT))}) — 2nd poop still pending`, false));
+      }
+    }
+  }
+  // v3.25 — clock-anchored pee blocks (confirmed 7/11 recent days each). Only the next
+  // upcoming block renders (keeps the list compact). Auto-done when he pees
+  // in/just before the window (v3.19.1 pattern).
+  {
+    const peeEvts = today.filter(isPee);
+    const lastPeeAll = peeEvts.length ? peeAt(peeEvts[peeEvts.length - 1]) : null;
+    const bi = CANONICAL_PEE.findIndex(b => {
+      const we = atHM(Math.floor(b.endMin / 60), b.endMin % 60);
+      return nowMs <= we.getTime() + 15 * 60000;
+    });
+    if (bi >= 0) {
+      const b = CANONICAL_PEE[bi];
+      const ws = atHM(Math.floor(b.startMin / 60), b.startMin % 60);
+      const we = atHM(Math.floor(b.endMin / 60), b.endMin % 60);
+      const done = !!(lastPeeAll && lastPeeAll >= ws.getTime() - 10 * 60000);
+      items.push(mk('pee-block-' + bi, '🚻', b.label, ws, we,
+        `usually goes ${fmtTime(ws)}–${fmtTime(we)} (your history)`, done));
+    }
+  }
   // 5. water cutoff — v3.15: a real daily checkbox (manual check/uncheck via doneMap).
   //    The bowls-pulled flag itself is date-scoped in liveState, so yesterday's
   //    check-off never auto-completes today's item.
@@ -1359,9 +1401,9 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   // is invalid (he's asleep — ADH suppression handles continence). Drop it; the
   // post-nap pee/poop predictions already cover the wake.
   if (napSpans.length) {
-    const peePoopIds = ['pee-window', 'morning-pee', 'meal-intercept', 'poop1', 'poop2'];
+    const peePoopIds = ['pee-window', 'morning-pee', 'meal-intercept', 'poop1', 'poop2', 'dinner-poop'];
     items = items.filter(a => {
-      if (!peePoopIds.includes(a.id)) return true;
+      if (!peePoopIds.includes(a.id) && !a.id.startsWith('pee-block-')) return true;
       const bad = napSpans.some(ns => a.winStart < ns.e && a.winEnd > ns.s);
       return !bad;
     });
@@ -1399,7 +1441,7 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   mergeInto('pee-window', 'nappee-');
   // v3.18 — ✕ "didn't go" skips on pee/poop rows. The hold-based pee window
   // re-anchors above; clock-based ones show greyed as skipped for today.
-  const SKIP_RE = /^(pee-window|meal-intercept|nappee-\d+|nappoop-\d+|poop[12])$/;
+  const SKIP_RE = /^(pee-window|meal-intercept|nappee-\d+|nappoop-\d+|poop[12]|dinner-poop|pee-block-\d+)$/;
   items.forEach(a => {
     a.skippable = SKIP_RE.test(a.id);
     a.skipped = a.skippable && a.id !== 'pee-window' && !!(skipMap || {})[a.id];
@@ -1410,7 +1452,7 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   // immediate "take him out in 5–10 min" row; the ntfy loop fires it as a
   // notification when the bell is on. Not while asleep (ADH handles continence).
   if (!st.asleep && ((st.bladder || {}).accidentRisk === 'ELEVATED' || (st.bladder || {}).accidentRisk === 'CRITICAL')) {
-    const PEEPOOP_RE = /^(pee-window|morning-pee|meal-intercept|nappee-|nappoop-|poop[12])/;
+    const PEEPOOP_RE = /^(pee-window|morning-pee|meal-intercept|nappee-|nappoop-|poop[12]|dinner-poop|pee-block-)/;
     const horizon = nowMs + 45 * 60000;
     const imminent = items.some(a => !a.done && !a.skipped && PEEPOOP_RE.test(a.id) &&
                                      a.winEnd.getTime() >= nowMs && a.winStart.getTime() <= horizon);
@@ -1429,7 +1471,7 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   // v3.24 — the urgent pee break pins to the top while it's active
   const ui = sorted.findIndex(a => a.id === 'urgent-pee');
   if (ui > 0) { const [u] = sorted.splice(ui, 1); sorted.unshift(u); }
-  return sorted.slice(0, 9); // v3.17.4 — was 6; more predictions now, rows are compact
+  return sorted.slice(0, 10); // v3.25 — was 9; room for the clock-anchored pee block
 }
 /* ---------- v3.13 — local action alerts (Notification API, $0, no server) ----------
    Fires as a Next-up window opens (10-min heads-up), once per item per day.
