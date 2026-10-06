@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.19.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.20.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1102,44 +1102,40 @@ function bowel1ClockMin(events) {
   const firsts = Object.values(byDay).map(a => a.sort((x, y) => x - y)[0]);
   return firsts.length ? Math.round(medianNum(firsts)) : null;
 }
-/** v3.19 — canonical nap schedule (Ankit-set 2026-10-05, reconciled against 32 days
-    of master-log data: 8:55 AM / 1:20 PM / 5:00 PM medians, nudged to his current
-    times). startMin = midpoint of his start range; durMin = to his typical end. */
+/** v3.20 — canonical nap schedule (Ankit-set 2026-10-05/06; his word is the
+    schedule, learned data does not override it).
+    Morning: 9:30 AM → 11:45 AM ("any time after 9:30").
+    Afternoon: 1:45 PM → 3:45 PM. Evening: 5:45 PM → 6:45 PM. */
 const CANONICAL_NAPS = [
-  { label: 'Morning', startMin: 9 * 60 + 37, durMin: 128 },  // 9:37 AM → 11:45 AM
-  { label: 'Afternoon', startMin: 13 * 60 + 37, durMin: 128 }, // 1:37 PM → 3:45 PM
+  { label: 'Morning', startMin: 9 * 60 + 30, durMin: 135 },  // 9:30 AM → 11:45 AM
+  { label: 'Afternoon', startMin: 13 * 60 + 45, durMin: 120 }, // 1:45 PM → 3:45 PM
   { label: 'Evening', startMin: 17 * 60 + 45, durMin: 60 },  // 5:45 PM → 6:45 PM
 ];
-/** Pure: today's upcoming nap predictions from the canonical 3-nap schedule.
-    Logged data refines a slot's start/duration once ≥3 samples fall within
-    ±90 min of it; a live in-progress nap predicts its own wake. Tested. */
+/** v3.20 — canonical meal times (Ankit-set 2026-10-06; slots not listed here
+    stay learned from his history). Lunch 1:00–1:15 PM: gap before the 1:45 PM nap. */
+const CANONICAL_MEALS = { lunch: { startMin: 13 * 60, endMin: 13 * 60 + 15 } };
+/** Pure: today's upcoming nap predictions from the canonical 3-nap schedule
+    (Ankit-set; explicit times are used as-is). A live in-progress nap predicts
+    its own wake from the matching slot's duration. Tested. */
 function upcomingNaps(hist, today, now = new Date()) {
-  const pairs = pairNaps(hist).filter(p => p.mins > 0 && p.mins < 300);
   const minOf = e => { const d = new Date(e.logged_at); return d.getHours() * 60 + d.getMinutes(); };
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const startsToday = today.filter(isNapStart).map(minOf);
   const slotFor = m => CANONICAL_NAPS.find(c => Math.abs(m - c.startMin) <= 90);
-  const learnedDur = c => {
-    const ds = pairs.filter(p => Math.abs(minOf(p.start) - c.startMin) <= 90).map(p => p.mins);
-    return ds.length >= 3 ? Math.round(medianNum(ds)) : c.durMin;
-  };
   const out = [];
   const inProg = napInProgress(today);
   if (inProg) {
     const sMin = minOf(inProg);
     const slot = slotFor(sMin);
-    const dur = slot ? learnedDur(slot) : Math.round(medianNum(pairs.map(p => p.mins)) || 90);
+    const dur = slot ? slot.durMin : 90;
     out.push({ kind: 'live', label: slot ? slot.label : 'Nap', startMin: sMin, durMin: dur, wakeMin: sMin + dur, days: 0 });
     return out;
   }
   CANONICAL_NAPS.forEach(c => {
-    const starts = hist.filter(isNapStart).map(minOf).filter(m => Math.abs(m - c.startMin) <= 90);
-    const ideal = starts.length >= 3 ? Math.round(medianNum(starts)) : c.startMin;
-    const dur = learnedDur(c);
-    if (ideal + dur <= nowMin - 30) return; // nap over
+    if (c.startMin + c.durMin <= nowMin - 30) return; // nap over
     if (startsToday.some(m => Math.abs(m - c.startMin) <= 90)) return; // already napped
-    out.push({ kind: starts.length >= 3 ? 'learned' : 'canonical', label: c.label,
-               startMin: ideal, durMin: dur, wakeMin: ideal + dur, days: starts.length });
+    out.push({ kind: 'canonical', label: c.label,
+               startMin: c.startMin, durMin: c.durMin, wakeMin: c.startMin + c.durMin, days: 0 });
   });
   return out;
 }
@@ -1211,22 +1207,26 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       `🍽️ ${cap(slot)} moves his bladder ~${lat}m after the meal${mealTbsp ? ` (${mealTbsp} tbsp)` : ''} — catch it before he goes inside`, outAfterMeal));
   }
   // 2b. meal windows — v3.17.2: suggested meal times from his own history
-  // (median clock time per slot, ≥3 samples). Skips slots already logged today
-  // and windows that fully passed.
+  // (median clock time per slot, ≥3 samples). v3.20: Ankit-set canonical slots
+  // (CANONICAL_MEALS) take precedence — his word is the schedule. Skips slots
+  // already logged today and windows that fully passed.
   const loggedSlots = new Set(today.filter(e => e.category === 'Food').map(e => mealSlot(new Date(e.logged_at))));
   const sugg = mealTimeSuggestions(hist, now);
   [['breakfast', '🍳'], ['lunch', '🍽️'], ['dinner', '🌙']].forEach(([slot, icon]) => {
+    const cm = CANONICAL_MEALS[slot];
     const s = sugg[slot];
-    if (!s || loggedSlots.has(slot)) return;
-    const c = atHM(Math.floor(s.clockMin / 60), s.clockMin % 60);
-    if (nowMs > c.getTime() + 45 * 60000) return;
+    if ((!cm && !s) || loggedSlots.has(slot)) return;
+    const center = cm ? null : atHM(Math.floor(s.clockMin / 60), s.clockMin % 60);
+    const wStart = cm ? atHM(Math.floor(cm.startMin / 60), cm.startMin % 60) : new Date(center.getTime() - 10 * 60000);
+    const wEnd = cm ? atHM(Math.floor(cm.endMin / 60), cm.endMin % 60) : new Date(center.getTime() + 10 * 60000);
+    if (nowMs > wEnd.getTime() + (cm ? 10 : 35) * 60000) return;
     const label = slot.charAt(0).toUpperCase() + slot.slice(1) + ' window';
-    items.push(mk('meal-' + slot, icon, label,
-      new Date(c.getTime() - 10 * 60000), new Date(c.getTime() + 10 * 60000),
-      `avg ${fmtTime(c)}${s.avgTbsp ? ` · ${s.avgTbsp.toFixed(1)} tbsp` : ''} (${s.n} meals, your history)`, false));
+    const why = cm ? `set schedule ${fmtTime(wStart)}–${fmtTime(wEnd)}${s && s.avgTbsp ? ` · avg ${s.avgTbsp.toFixed(1)} tbsp` : ''}`
+                   : `avg ${fmtTime(center)}${s.avgTbsp ? ` · ${s.avgTbsp.toFixed(1)} tbsp` : ''} (${s.n} meals, your history)`;
+    items.push(mk('meal-' + slot, icon, label, wStart, wEnd, why, false));
   });
-  // 2c. nap schedule — v3.19: canonical 3-nap slots (whole span shown, ±10m drives
-  // the alert). Logged data refines a slot once ≥3 samples exist near it.
+  // 2c. nap schedule — v3.20: canonical 3-nap slots, Ankit-set (whole span shown,
+  // ±10m drives the alert). Logged data does not override his set times.
   if (!st.asleep) {
     const naps = upcomingNaps(hist, today, now);
     const poopLat = postNapLatencyMin(hist, 'Poop');
@@ -1235,8 +1235,7 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       const w = atHM(Math.floor(n.wakeMin / 60), n.wakeMin % 60);
       napSpans.push({ s, e: w });
       const span = `${fmtTime(s)}–${fmtTime(w)}`;
-      const basis = n.kind === 'live' ? `down since ${fmtTime(s)}`
-        : n.kind === 'learned' ? `avg of ${n.days} logged naps` : 'set schedule';
+      const basis = n.kind === 'live' ? `down since ${fmtTime(s)}` : 'set schedule';
       items.push(mk('napwin-' + i, '😴', n.label + ' nap' + (n.kind === 'live' ? ' (in progress)' : ''), s, w,
         `typical ${span} (${n.durMin}m · ${basis})`, false));
       // v3.19 — post-nap pee is immediate at wake (master-log: wake potty ~5m
@@ -1337,6 +1336,17 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       return !bad;
     });
   }
+  // v3.20 — one poop schedule per part of day (Ankit, 2026-10-06): a post-nap poop
+  // whose center falls within 90 min BEFORE a bowel window's center is the same
+  // afternoon outing counted twice — drop it. The bowel window (learned directly
+  // from poop clock times) is the authoritative one.
+  const bowelCenters = items.filter(a => a.id === 'poop1' || a.id === 'poop2')
+                            .map(a => (a.winStart.getTime() + a.winEnd.getTime()) / 2);
+  items = items.filter(a => {
+    if (!a.id.startsWith('nappoop-')) return true;
+    const c = (a.winStart.getTime() + a.winEnd.getTime()) / 2;
+    return !bowelCenters.some(b => b > c && b - c <= 90 * 60000);
+  });
   // v3.15 — merge: when the meal urge and the hold-based window point at the same
   // outing (centers within 45m), show ONE "Potty break" row with both reasons
   // instead of two near-duplicate, seemingly contradictory rows.
