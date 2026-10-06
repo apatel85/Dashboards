@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.25.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.25.1'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1429,7 +1429,10 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
     const dI = items.findIndex(i => i.id === dropId || i.id.startsWith(dropId));
     if (kI < 0 || dI < 0) return;
     const k = items[kI], d = items[dI];
-    if (!k.done && !d.done && Math.abs(center(k) - center(d)) <= 45 * 60000) {
+    // v3.25.1 — merge when both share the same done status (two active predictions
+    // of one outing, or two greyed-out rows for one completed outing); never merge
+    // a done row into an active one.
+    if (k.done === d.done && Math.abs(center(k) - center(d)) <= 45 * 60000) {
       k.label = 'Potty break';
       k.winStart = new Date(Math.min(k.winStart.getTime(), d.winStart.getTime()));
       k.winEnd = new Date(Math.max(k.winEnd.getTime(), d.winEnd.getTime()));
@@ -1437,8 +1440,12 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       items.splice(dI, 1);
     }
   };
-  mergeInto('pee-window', 'meal-intercept');
+  mergeInto('pee-window', 'meal-intercept'); // v3.15 — hold window first
   mergeInto('pee-window', 'nappee-');
+  mergeInto('pee-block-', 'meal-intercept'); // v3.25.1 — clock block takes the
+  // meal-anchored intercept only if the hold window didn't (same post-dinner outing).
+  // (No pee-block/pee-window merge: the hold window is a separate prediction and
+  // must not be absorbed by the habit block.)
   // v3.18 — ✕ "didn't go" skips on pee/poop rows. The hold-based pee window
   // re-anchors above; clock-based ones show greyed as skipped for today.
   const SKIP_RE = /^(pee-window|meal-intercept|nappee-\d+|nappoop-\d+|poop[12]|dinner-poop|pee-block-\d+)$/;
