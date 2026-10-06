@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.22.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.23.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1129,6 +1129,13 @@ function upcomingNaps(hist, today, now = new Date()) {
     const slot = slotFor(sMin);
     const dur = slot ? slot.durMin : 90;
     out.push({ kind: 'live', label: slot ? slot.label : 'Nap', startMin: sMin, durMin: dur, wakeMin: sMin + dur, days: 0 });
+    // v3.23 — later canonical slots still show after the live nap (rest of day)
+    CANONICAL_NAPS.forEach(c => {
+      if (slot && c.label === slot.label) return; // the live nap's own slot
+      if (c.startMin <= nowMin) return; // already started/passed
+      out.push({ kind: 'canonical', label: c.label,
+                 startMin: c.startMin, durMin: c.durMin, wakeMin: c.startMin + c.durMin, days: 0 });
+    });
     return out;
   }
   CANONICAL_NAPS.forEach(c => {
@@ -1228,9 +1235,13 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   // 2c. nap schedule — v3.20: canonical 3-nap slots, Ankit-set (whole span shown,
   // ±10m drives the alert). Logged data does not override his set times.
   // v3.21 — poopsToday drives the conditional evening post-nap notes.
+  // v3.23 — run even while he's asleep (live nap): the post-nap pee must still show,
+  // and napSpans must exist so the overlap filter drops predictions inside the live
+  // nap (e.g. a 2:21 PM potty break during the 1:45–3:45 nap). upcomingNaps already
+  // returns just the live nap when one is in progress.
   const poopsToday = today.filter(e => ['Poop', 'Pee_Poop'].includes(e.elimination_type)).length;
-  if (!st.asleep) {
-    const naps = upcomingNaps(hist, today, now);
+  const naps = upcomingNaps(hist, today, now);
+  if (naps.length && (naps[0].kind === 'live' || !st.asleep)) {
     const poopLat = postNapLatencyMin(hist, 'Poop');
     naps.forEach((n, i) => {
       const s = atHM(Math.floor(n.startMin / 60), n.startMin % 60);
