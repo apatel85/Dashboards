@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.21.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.22.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1258,9 +1258,21 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
         items.push(mk('nappee-' + i, '🚻', 'Post-nap pee', new Date(peeMoment - 10 * 60000), pEnd, peeWhy, false));
       }
       if (poopLat != null) {
-        const p = new Date(w.getTime() + poopLat * 60000);
-        items.push(mk('nappoop-' + i, '💩', 'Post-nap poop', new Date(p.getTime() - 10 * 60000), new Date(p.getTime() + 10 * 60000),
-          `~${poopLat}m after waking (${span} nap)`, false));
+        // v3.22 — the evening (3rd-nap) post-nap poop only predicts when the afternoon
+        // poop didn't happen: he typically poops twice (morning + afternoon). While
+        // bowel #2 is still upcoming, that prediction stands; once its window passes
+        // with no 2nd poop logged, the evening poop becomes the fallback.
+        let showPoop = true;
+        if (n.label === 'Evening') {
+          const b2min = bowel2ClockMin(hist);
+          const b2End = atHM(Math.floor(b2min / 60), b2min % 60).getTime() + 10 * 60000;
+          showPoop = poopsToday < 2 && nowMs > b2End;
+        }
+        if (showPoop) {
+          const p = new Date(w.getTime() + poopLat * 60000);
+          items.push(mk('nappoop-' + i, '💩', 'Post-nap poop', new Date(p.getTime() - 10 * 60000), new Date(p.getTime() + 10 * 60000),
+            `~${poopLat}m after waking (${span} nap)`, false));
+        }
       }
     });
   }
