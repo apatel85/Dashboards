@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.20.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.21.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1227,6 +1227,8 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   });
   // 2c. nap schedule — v3.20: canonical 3-nap slots, Ankit-set (whole span shown,
   // ±10m drives the alert). Logged data does not override his set times.
+  // v3.21 — poopsToday drives the conditional evening post-nap notes.
+  const poopsToday = today.filter(e => ['Poop', 'Pee_Poop'].includes(e.elimination_type)).length;
   if (!st.asleep) {
     const naps = upcomingNaps(hist, today, now);
     const poopLat = postNapLatencyMin(hist, 'Poop');
@@ -1247,8 +1249,13 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       const peeMoment = w.getTime() + lat * 60000;
       if (n.kind === 'live' || peeMoment > nowMs - 45 * 60000) {
         const pEnd = new Date(Math.max(peeMoment + 10 * 60000, nowMs + 10 * 60000));
-        items.push(mk('nappee-' + i, '🚻', 'Post-nap pee', new Date(peeMoment - 10 * 60000), pEnd,
-          peeLat != null ? `~${lat}m after waking (${span} nap)` : `right after waking — take him out (timing learns from your logs)`, false));
+        let peeWhy = peeLat != null ? `~${lat}m after waking (${span} nap)`
+                                    : `right after waking — take him out (timing learns from your logs)`;
+        // v3.21 — evening post-nap pee: flag a possible poop, but only while the
+        // 2nd poop hasn't been logged yet today (Ankit 2026-10-06)
+        if (n.label === 'Evening' && poopsToday < 2)
+          peeWhy += ' · 💩 may poop too if he skipped the afternoon one';
+        items.push(mk('nappee-' + i, '🚻', 'Post-nap pee', new Date(peeMoment - 10 * 60000), pEnd, peeWhy, false));
       }
       if (poopLat != null) {
         const p = new Date(w.getTime() + poopLat * 60000);
@@ -1289,7 +1296,7 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
     }
   }
   // 4. bowel #1 + #2 windows — v3.17.3: #1 predicted from median first-poop clock time
-  const poops = today.filter(e => ['Poop', 'Pee_Poop'].includes(e.elimination_type)).length;
+  const poops = poopsToday;
   if (poops === 0) {
     const b1 = bowel1ClockMin(hist);
     if (b1 != null) {
@@ -1303,7 +1310,7 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
     const cmin = bowel2ClockMin(hist), c = atHM(Math.floor(cmin / 60), cmin % 60);
     if (nowMs < c.getTime() + 90 * 60000)
       items.push(mk('poop2', '💩', 'Bowel #2 window', new Date(c.getTime() - 10 * 60000), new Date(c.getTime() + 10 * 60000),
-        `bowel #2 median ${fmtTime(c)} (your history)`, false));
+        `bowel #2 median ${fmtTime(c)} (your history) · he often pees around this time too`, false));
   }
   // 5. water cutoff — v3.15: a real daily checkbox (manual check/uncheck via doneMap).
   //    The bowls-pulled flag itself is date-scoped in liveState, so yesterday's
