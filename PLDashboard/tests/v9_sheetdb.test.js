@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+// v9 test suite: SheetDB serialization + sheet fetch/parse + row map (Phase 2)
+// Extracts the CURRENT code from ../index.html at runtime, so the tests always
+// run against the real implementation. Run: node tests/v9_sheetdb.test.js
+'use strict';
+const fs = require('fs'), path = require('path');
+const lines = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf-8').split('\n');
+function extract(name) {
+  const re = new RegExp('^(async )?function ' + name + '\\(');
+  const start = lines.findIndex(l => re.test(l));
+  if (start < 0) throw new Error('not found: ' + name);
+  let end = start + 1;
+  while (end < lines.length && lines[end] !== '}') end++;
+  if (end >= lines.length) throw new Error('no end: ' + name);
+  return lines.slice(start, end + 1).join('\n');
+}
+function extractConst(name) {
+  const re = new RegExp('^(const|let) ' + name + '\\b');
+  const i = lines.findIndex(l => re.test(l));
+  if (i < 0) throw new Error('const not found: ' + name);
+  return lines[i];
+}
+const __consts = ['GSHEETS_SHEET_TITLE', '_sheetRowMap'].map(extractConst).join('\n');
+const __fns = ['sheetRowFromTxn', 'fetchIncomingSheetRows'].map(extract).join('\n');
+const src = __consts + "\n" + __fns + "\n" + "// Phase 2 SheetDB unit tests — serialization + fetch/parse + row map.\nlet __mockRows = [];\nasync function gSheetsAPI(method, url, body) {\n  return { values: __mockRows };\n}\n\nlet pass = 0, fail = 0;\nfunction eq(a, b, name) {\n  const ok = JSON.stringify(a) === JSON.stringify(b);\n  if (ok) pass++;\n  else { fail++; console.log('FAIL - ' + name + '\\n  expected: ' + JSON.stringify(b) + '\\n  actual:   ' + JSON.stringify(a)); }\n}\n\nasync function run() {\n  const meta = { spreadsheetId: 'X' };\n\n  // 1. Serialization: 11 columns, v9 order\n  const row = sheetRowFromTxn({ id: 'a1', date: '2026-10-01', type: 'revenue', category: 'Sales',\n    description: 'Test', amount: 100, month: 'October', year: 2026, source: 'manual',\n    modifiedAt: '2026-10-06T00:00:00.000Z' });\n  eq(row.length, 11, 'serialize: 11 columns');\n  eq(row, ['a1','2026-10-01','revenue','Sales','Test',100,'October',2026,'manual','2026-10-06T00:00:00.000Z',''],\n    'serialize: v9 column order');\n\n  // 2. Parse a v9 sheet: skips deleted, collects deletedIds, builds row map\n  __mockRows = [\n    ['ID','Date','Type','Category','Description','Amount','Month','Year','Source','UpdatedAt','Deleted'],\n    ['a1','2026-10-01','revenue','Sales','One',100,'October',2026,'manual','2026-10-06T01:00:00.000Z',''],\n    ['a2','2026-10-02','expense','Rent','Two',50,'October',2026,'import','2026-10-06T02:00:00.000Z','TRUE'],\n    ['a3','2026-10-03','revenue','Sales','Three',75,'October',2026,'manual','2026-10-06T03:00:00.000Z','true'],\n  ];\n  const r2 = await fetchIncomingSheetRows(meta);\n  eq(r2.rows.length, 1, 'fetch: deleted rows excluded');\n  eq(r2.rows[0].id, 'a1', 'fetch: live row parsed');\n  eq(r2.rows[0].source, 'manual', 'fetch: source column parsed');\n  eq(r2.rows[0].modifiedAt, '2026-10-06T01:00:00.000Z', 'fetch: UpdatedAt parsed');\n  eq(r2.deletedIds, ['a2','a3'], 'fetch: deletedIds collected (case-insensitive TRUE)');\n  eq(_sheetRowMap.get('a1'), 2, 'rowmap: a1 -> row 2');\n  eq(_sheetRowMap.get('a2'), 3, 'rowmap: deleted rows still mapped');\n  eq(_sheetRowMap.get('a3'), 4, 'rowmap: a3 -> row 4');\n\n  // 3. Legacy v8 sheet (8 cols): still parses, defaults for new cols\n  __mockRows = [\n    ['ID','Date','Type','Category','Description','Amount','Month','Year'],\n    ['b1','2026-09-01','expense','Food','Old',20,'September',2026],\n  ];\n  const r3 = await fetchIncomingSheetRows(meta);\n  eq(r3.rows.length, 1, 'fetch: legacy v8 sheet parses');\n  eq(r3.rows[0].source, '', 'fetch: legacy source defaults empty');\n  eq(r3.rows[0].modifiedAt, '', 'fetch: legacy UpdatedAt defaults empty');\n  eq(r3.deletedIds, [], 'fetch: legacy sheet has no deletions');\n  eq(_sheetRowMap.get('b1'), 2, 'rowmap: rebuilt on each pull');\n\n  // 4. ID-less rows are skipped (no phantom ids invented)\n  __mockRows = [\n    ['ID','Date','Type','Category','Description','Amount','Month','Year'],\n    ['','2026-09-01','expense','Food','NoId',20,'September',2026],\n    ['c1','2026-09-02','expense','Food','HasId',30,'September',2026],\n  ];\n  const r4 = await fetchIncomingSheetRows(meta);\n  eq(r4.rows.length, 1, 'fetch: id-less rows skipped');\n  eq(r4.rows[0].id, 'c1', 'fetch: only the id-bearing row kept');\n  eq(_sheetRowMap.has(''), false, 'rowmap: no empty-string key');\n\n  // 5. Empty sheet\n  __mockRows = [['ID','Date','Type','Category','Description','Amount','Month','Year']];\n  const r5 = await fetchIncomingSheetRows(meta);\n  eq(r5.rows.length, 0, 'fetch: header-only sheet -> no rows');\n  eq(_sheetRowMap.size, 0, 'fetch: empty sheet clears row map');\n\n  // 6. Zero-amount rows filtered (existing behavior preserved)\n  __mockRows = [\n    ['ID','Date','Type','Category','Description','Amount','Month','Year'],\n    ['d1','2026-09-01','revenue','Sales','Zero',0,'September',2026],\n  ];\n  const r6 = await fetchIncomingSheetRows(meta);\n  eq(r6.rows.length, 0, 'fetch: zero-amount rows still filtered');\n\n  console.log(`\\n${pass} passed, ${fail} failed`);\n  process.exit(fail ? 1 : 0);\n}\nrun();\n";
+(0,eval)(src);

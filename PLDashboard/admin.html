@@ -405,21 +405,23 @@ tbody tr:hover{background:rgba(14,207,190,.03)}
 var SUPA_URL='https://iknfvddnevudpjtyxkbh.supabase.co';
 var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrbmZ2ZGRuZXZ1ZHBqdHl4a2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzMwNzQsImV4cCI6MjA5MjkwOTA3NH0.Ry5ggZ5kH9lfGFpv5zfkJoZeITvneukMRV7H0yUMtwE';
 
+// v9: the session holds a short-lived server-issued token, never the PIN.
+// The PIN exists only in memory during the login call below.
 function getSession(){
   var e=sessionStorage.getItem('admin_email');
-  var p=sessionStorage.getItem('admin_pin');
-  if(e&&p) return {email:e,pin:p};
+  var t=sessionStorage.getItem('admin_token');
+  if(e&&t) return {email:e,token:t};
   return null;
 }
 
-function setSession(e,p){
+function setSession(e,t){
   sessionStorage.setItem('admin_email',e);
-  sessionStorage.setItem('admin_pin',p);
+  sessionStorage.setItem('admin_token',t);
 }
 
 function clearSession(){
   sessionStorage.removeItem('admin_email');
-  sessionStorage.removeItem('admin_pin');
+  sessionStorage.removeItem('admin_token');
 }
 
 async function adminFetch(rpcName,params){
@@ -445,7 +447,7 @@ async function adminFetch(rpcName,params){
 async function rpc(name,extra){
   var s=getSession();
   if(!s) throw new Error('Not authenticated');
-  var params=Object.assign({p_email:s.email,p_pin:s.pin},extra||{});
+  var params=Object.assign({p_token:s.token},extra||{});
   var d=await adminFetch(name,params);
   if(d&&d.success===false) throw new Error(d.error||'Operation failed');
   return d;
@@ -525,17 +527,22 @@ document.getElementById('login-btn').addEventListener('click',async function(){
   if(!email){errEl.textContent='Enter your email';return}
   if(pin.length!==4){errEl.textContent='Enter your 4-digit PIN';return}
   try{
-    setSession(email,pin);
-    var d=await rpc('admin_get_stats');
+    // Login once via admin_login; the PIN is never stored, only the token.
+    var d=await adminFetch('admin_login',{p_email:email,p_pin:pin});
+    if(!d||d.success!==true||!d.token) throw new Error((d&&d.error)||'Authentication failed');
+    setSession(email,d.token);
+    pinBoxes.forEach(function(b){b.value=''});
+    var stats=await rpc('admin_get_stats');
     showApp();
-    loadDashboard(d);
+    loadDashboard(stats);
   }catch(e){
     clearSession();
     errEl.textContent='Authentication failed. Check email and PIN.';
   }
 });
 
-document.getElementById('signout-btn').addEventListener('click',function(){
+document.getElementById('signout-btn').addEventListener('click',async function(){
+  try{ await rpc('admin_logout'); }catch(e){/* best effort: clear local state regardless */}
   clearSession();
   showLogin();
 });
@@ -894,8 +901,14 @@ document.getElementById('hamburger').addEventListener('click',function(){
 (function init(){
   var s=getSession();
   if(s){
-    showApp();
-    loadDashboard();
+    // A stored token may have expired; validate it before showing the app.
+    rpc('admin_get_stats').then(function(d){
+      showApp();
+      loadDashboard(d);
+    }).catch(function(){
+      clearSession();
+      showLogin();
+    });
   }else{
     showLogin();
   }

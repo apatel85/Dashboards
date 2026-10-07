@@ -24,7 +24,7 @@
  *    sync bug. An online user should always get the latest deployed code.
  */
 
-const CACHE_VERSION = 'pl-dashboard-v8.12.0';
+const CACHE_VERSION = 'pl-dashboard-v9.0.0';
 const CORE_ASSETS = [
   './',
   './index.html',
