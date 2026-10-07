@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.25.3'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.25.4'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1342,7 +1342,12 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
         const fts = lastFluidBefore(hist, nowMs);
         if (fts) { const m = Math.round((nowMs - fts) / 60000); if (m > 20 && m < 50) why += ` · 💧 fluids ${m}m ago hitting now`; }
       }
-      items.push(mk('pee-window', '🚻', 'Pee window', new Date(due - 15 * 60000), new Date(due + 15 * 60000), why, done));
+      const pwStart = due - 15 * 60000, pwEnd = due + 15 * 60000;
+      // v3.25.4 — expire stale pee windows (Ankit 2026-10-07: 10:35 AM window still
+      // showing at 7 PM). A hold-based window older than 3h is clutter, not signal —
+      // the newer predictions (from recent pees) carry the schedule.
+      if (nowMs < pwEnd + 3 * 3600000)
+        items.push(mk('pee-window', '🚻', 'Pee window', new Date(pwStart), new Date(pwEnd), why, done));
     }
   }
   // 4. bowel #1 + #2 windows — v3.17.3: #1 predicted from median first-poop clock time
