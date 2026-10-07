@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.25.2'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.25.3'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -199,6 +199,11 @@ function isFluidEvent(e) {
   return e.category === 'Water' ||
     (e.category === 'Food' && (+e.water_consumed_tsp || 0) > 0) ||
     (e.toppers_detail || '').includes('goat');
+}
+/** v3.25.3 — fluid intake after the last void (for bladder volume). Fluid drunk
+    before a pee was already emptied and must not count. Pure for testing. */
+function fluidsAfterVoid(events, lastVoidTs) {
+  return events.filter(isFluidEvent).filter(f => new Date(f.logged_at).getTime() > lastVoidTs);
 }
 /** Pure: short human summary of a stored kibble_type for timelines/edits. Tested. */
 function mixSummary(v) {
@@ -542,7 +547,11 @@ function liveState(now = new Date()) {
   const pee = lastElim(['Pee', 'Pee_Poop']);
   const lastVoidTs = pee ? new Date(pee.logged_at).getTime() : new Date(now).setHours(0,0,0,0);
   const fluids = S.events.filter(isFluidEvent); // v3.8 — meal water counts as fluid intake too
-  const lastFluid = fluids.length ? fluids[fluids.length - 1] : null;
+  // v3.25.3 — only fluid drunk AFTER the last pee counts toward bladder volume.
+  // Fluid ingested before a void was already emptied (Ankit 2026-10-07: water
+  // 30–40 min ago + pee 5 min ago must not trigger an urgent break).
+  const fluidsAfterPee = fluidsAfterVoid(S.events, lastVoidTs);
+  const lastFluid = fluidsAfterPee.length ? fluidsAfterPee[fluidsAfterPee.length - 1] : null;
   const recentFluidMl = lastFluid ? (lastFluid.water_consumed_tsp || 0) * CFG.ML_PER_TSP : 0;
   const minsSinceFluid = lastFluid ? (now - new Date(lastFluid.logged_at)) / 60000 : 999;
   const asleep = isAsleep();
