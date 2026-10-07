@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.25.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.25.2'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1114,6 +1114,10 @@ const CANONICAL_NAPS = [
 /** v3.20 — canonical meal times (Ankit-set 2026-10-06; slots not listed here
     stay learned from his history). Lunch 1:00–1:15 PM: gap before the 1:45 PM nap. */
 const CANONICAL_MEALS = { lunch: { startMin: 13 * 60, endMin: 13 * 60 + 15 } };
+/** v3.25.2 — bedtime cutoff: a "nap" starting at/after 9:30 PM is overnight sleep,
+    not a nap cycle (Ankit 2026-10-06: 9:35 PM crate → 11:30 PM pee → back down for
+    the night). No post-nap pee/poop predictions — he's not waking again. */
+const BEDTIME_START_MIN = 21 * 60 + 30;
 /** v3.25 — clock-anchored pee blocks, confirmed from his data (Ankit 2026-10-06):
     pre-evening-nap pee 5:00–5:30 PM (7/11 recent days), post-dinner pee
     8:00–8:30 PM (7/11). Auto-done when he pees in/just before the window. */
@@ -1256,8 +1260,13 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       napSpans.push({ s, e: w });
       const span = `${fmtTime(s)}–${fmtTime(w)}`;
       const basis = n.kind === 'live' ? `down since ${fmtTime(s)}` : 'set schedule';
-      items.push(mk('napwin-' + i, '😴', n.label + ' nap' + (n.kind === 'live' ? ' (in progress)' : ''), s, w,
-        `typical ${span} (${n.durMin}m · ${basis})`, false));
+      // v3.25.2 — overnight sleep (not a nap cycle): no post-nap predictions.
+      const isBedtime = n.startMin >= BEDTIME_START_MIN;
+      const napLabel = isBedtime ? 'Overnight sleep'
+        : n.label === 'Nap' ? 'Nap' : n.label + ' nap';
+      items.push(mk('napwin-' + i, '😴', napLabel + (n.kind === 'live' ? ' (in progress)' : ''), s, w,
+        isBedtime ? `down for the night (${span})` : `typical ${span} (${n.durMin}m · ${basis})`, false));
+      if (isBedtime) return; // no post-nap pee/poop — he's not waking again
       // v3.19 — post-nap pee is immediate at wake (master-log: wake potty ~5m
       // after waking); data-driven latency takes over once 3+ are logged.
       // Shown for live/upcoming naps, plus a 45-min "just woke" grace for
