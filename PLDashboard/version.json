@@ -1,0 +1,341 @@
+{
+  "latest_version": "8.12.1",
+  "minimum_version": "1.0.0",
+  "download_url": "https://apatel85.github.io/pl-dashboard/",
+  "release_notes": [
+    {
+      "version": "8.12.1",
+      "date": "2026-10-03",
+      "title": "Fix Devices Running Stale App Code (Service Worker Cache)",
+      "summary": "Fixes a second, separate cause of devices looking out of sync with each other — not a data sync bug this time, but the installed app (PWA) itself silently running an old cached build of the code. The service worker previously served the cached copy of the app instantly on every load and only updated that cache in the background for the *next* load, so a device could stay stuck running an old version — with old bugs, including old sync bugs — for a long time after a fix was deployed, with no visible warning. It now always fetches the live deployed version when online, only falling back to the cached copy when actually offline, and the \"new version available\" notification now includes a one-tap Reload button.",
+      "changes": [
+        { "type": "fix", "text": "The service worker's app-shell caching strategy changed from stale-while-revalidate (always serve the cached copy immediately, refresh the cache in the background) to network-first (always fetch the live deployed copy when online; fall back to the cache only when offline). Previously, a real behavior fix — not just a cosmetic change — could sit invisible on a device for one or more app opens after being deployed, and a device that closed the app before a background cache refresh finished (common on mobile) could stay on an old build indefinitely. This was a second, independent cause of different devices appearing out of sync, on top of (and easy to mistake for) any actual data sync issue." },
+        { "type": "fix", "text": "The in-app service worker registration now forces an immediate update check on every load instead of waiting on the browser's own update heuristic (which can be as infrequent as once per 24 hours), and the \"a new version is available\" toast now includes a Reload button instead of just telling you to refresh manually." }
+      ]
+    },
+    {
+      "version": "8.12.0",
+      "date": "2026-10-03",
+      "title": "Mobile Dropdown Fix, Same-Row Filters, Real Cross-Device Re-Sync & Proactive Duplicate Review",
+      "summary": "Fixes the Year/Month filter dropdowns not opening on mobile (they were being clipped by the page's mobile scroll container). Year and Month now sit on the same row instead of stacking. Fixed the deeper cause of sync still not working after the previous fix: a returning device never re-requested Google Sheets access on a normal app load, so after the first browser session it silently stopped syncing with other devices. Duplicate detection is now proactive — every app load scans all local data for possible duplicates (not just ones found during a sync pull), and a new \"Possible Duplicates\" section on the Review Categories page lets you confirm or remove them, with a toast pointing you there the moment any are found.",
+      "changes": [
+        { "type": "fix", "text": "Fixed the Year/Month filter dropdowns not opening on mobile phone screens — the popover used to be clipped invisible by a parent container's mobile scroll styling. It now positions itself using the same fixed-position technique already used elsewhere in the app for this exact problem, so it's always fully on-screen and tappable." },
+        { "type": "imp", "text": "The Year and Month filter dropdowns now sit on the same row instead of stacking on top of each other, using space more efficiently on both mobile and desktop." },
+        { "type": "fix", "text": "Fixed the actual remaining cause of cross-device sync going stale: a device returning on a cached login session (the normal case for reopening the app after closing the browser) never re-requested Google Sheets access, so it silently stopped syncing with other devices after its first browser session ended. The app now re-establishes Sheets access and pulls fresh data on every load, not only on a brand-new sign-in." },
+        { "type": "new", "text": "Duplicate detection now runs proactively on every app load by scanning all local data for transactions that look identical to another entry (same date, amount, description, and type) — not only ones caught during a sync pull. A toast appears the moment any are found, with a \"Review\" button that jumps straight to a new \"Possible Duplicates\" section on the Review Categories page." },
+        { "type": "new", "text": "Review Categories page now surfaces possible duplicates directly (in addition to predicted-category confirmations), with a \"Review Duplicates\" button that opens the same side-by-side comparison table used elsewhere — confirm a row to keep both as separate transactions, or leave it unchecked to remove the duplicate. The sidebar badge count now includes pending duplicates alongside unconfirmed categories." }
+      ]
+    },
+    {
+      "version": "8.11.0",
+      "date": "2026-10-03",
+      "title": "KPI Tile Overflow Fix, Clickable Charts, Real Sync Fix & Multi-Select Filters",
+      "summary": "Fixes KPI tiles clipping large dollar amounts instead of shrinking to fit. Dashboard charts are now interactive — click a bar or point to filter by that month, or a pie slice to drill into that category. Fixed the actual cause of two devices showing different totals: a background sync push was a destructive full-sheet overwrite with no pull-merge first, so two devices syncing independently could silently erase each other's changes — sync now merges remote changes in before pushing, on every push path. The Year/Month filters are now compact dropdowns supporting multiple selections at once, and the mobile KPI tiles no longer require side-scrolling to see — all 6 are visible in a wrapping grid.",
+      "changes": [
+        { "type": "fix", "text": "KPI tiles (Total Revenue, Total Expenses, etc.) no longer clip large dollar amounts — the font size now automatically shrinks to fit the card instead of using one fixed size regardless of how many digits the amount has." },
+        { "type": "new", "text": "Dashboard charts are now interactive: click a bar in Revenue vs Expenses, a point in Net Profit Trend, or a slice in Revenue by Category / Expense Breakdown to filter the whole dashboard by that month or category. Click the same one again (or the ✕ on the category badge) to clear it. Selected bars/slices are highlighted; the rest dim slightly." },
+        { "type": "fix", "text": "Fixed the real cause of two devices showing very different totals despite auto-sync being on: pushing to Google Sheets cleared and rewrote the entire sheet with this device's local data only, without first pulling in whatever the other device had already pushed — so two devices syncing independently could repeatedly overwrite each other's unsynced changes. Every push path (automatic and the manual Backup tab buttons) now pulls and merges remote changes in before pushing, and won't accidentally erase a row from the sheet that hasn't been resolved locally yet." },
+        { "type": "imp", "text": "The manual \"Pull\" button in Backup & Restore now uses the same safe, content-aware merge as automatic sync (previously a blind overwrite-by-ID) and reports how many records it merged vs. how many were flagged as possible duplicates for review." },
+        { "type": "new", "text": "The Dashboard's Year and Month filters are now compact dropdowns (saving significant space, especially on mobile) that support selecting more than one year and/or month at once — e.g. compare 2024 and 2025 together, or just Jan/Feb/Mar." },
+        { "type": "fix", "text": "Mobile: the KPI tiles no longer require side-swiping to see — they previously used a horizontal scroll carousel showing only 1-2 of the 6 tiles at a time; all 6 now fit in a compact 2-column grid visible without scrolling." }
+      ]
+    },
+    {
+      "version": "8.10.0",
+      "date": "2026-10-03",
+      "title": "Login Fix, Dashboard Year Filter, Chart Resize Fix, Duplicate Detection & Automatic Device Sync",
+      "summary": "Fixes a bug where signing in could hang indefinitely for some users (a Supabase request with no timeout). The Dashboard now has a Year filter and correctly defaults to the most recent year your data actually has, instead of showing the real-world current year. Charts now resize properly when you resize the browser window on tablet or desktop. Every transaction now gets a content-based fingerprint and created/modified timestamps, powering a new duplicate-detection system with a side-by-side comparison for manual entries and a review table for CSV imports. Signing in with Google now sets up automatic cross-device sync on its own — no more separate manual \"Connect Google Sheets\" step — and sync-time conflicts (the same transaction created independently on two devices) are flagged for your review instead of silently duplicated or dropped.",
+      "changes": [
+        { "type": "fix", "text": "Fixed sign-in sometimes hanging indefinitely with no error — Supabase requests had no timeout, so a slow or temporarily-paused connection (common on free-tier database cold starts) would leave the \"Verifying your license…\" spinner stuck forever. Every Supabase call now times out (20s) and the license-check retries once automatically, since the first request is often what wakes a paused project. The loading message also now explains what's happening if it takes more than a few seconds." },
+        { "type": "new", "text": "Dashboard: added a Year filter alongside the existing Month filter, so you can view totals for a specific year or switch to \"All Years\"." },
+        { "type": "fix", "text": "Dashboard: the period header (\"Full Year ____\") now reflects the most recent year your data actually has, instead of an unrelated \"Fiscal Year\" setting that defaulted to today's real-world calendar year — previously the header could claim \"2026\" while every loaded transaction was from 2024 or 2025." },
+        { "type": "fix", "text": "Fixed Dashboard charts not resizing properly when the browser window was resized on tablet or desktop (a 2-column chart layout). The underlying cause: CSS Grid items don't shrink below their content's size by default, which stopped Chart.js's own resize handling from working." },
+        { "type": "new", "text": "Every transaction now carries a content-based fingerprint (from its date, amount, description, and type) plus created/last-modified timestamps, enabling real duplicate detection instead of a same-ID-only check." },
+        { "type": "new", "text": "Manual entry (Quick Add) now checks for a matching existing transaction before saving and shows a side-by-side comparison — Keep Existing, Replace With New, or Keep Both — instead of silently creating a duplicate." },
+        { "type": "imp", "text": "CSV import's duplicate handling replaced a single all-or-nothing confirmation with a review table listing every flagged pair (existing vs. incoming) with a checkbox per row, defaulting to excluded — the same per-row control CSV import's category review already offered for categories." },
+        { "type": "new", "text": "Creating a new category from any \"+ Add new category…\" dropdown, or by typing an unrecognized name into Quick Add, now opens the same Add Category dialog as the Categories tab and asks for its Revenue/Expense type — instead of silently guessing from the category's name." },
+        { "type": "fix", "text": "That category type is now actually saved and used everywhere a category is grouped or displayed by type — previously the Categories tab's own \"Add Category\" dialog captured a type but never stored it, so a Revenue category named e.g. \"Rent Rebate\" would have been mis-bucketed as Expense by the keyword guesser." },
+        { "type": "new", "text": "Signing in with Google now requests Google Sheets access as part of the same sign-in — automatically creating a sync spreadsheet and turning on auto-sync — instead of requiring a separate trip to Backup & Restore to manually connect. Auto-sync still debounces pushes ~3s after each change and pulls every 60s / on tab focus, so syncing lands within seconds rather than instantly, but no manual setup is needed on any device signed in with Google." },
+        { "type": "fix", "text": "Background sync pulls that update an existing transaction (matched by ID) now merge the sheet's values onto the local record instead of replacing it outright — previously this silently erased local-only fields like Source that the Google Sheets export doesn't carry." },
+        { "type": "new", "text": "When a background sync pull finds a transaction that looks identical to one already on this device but was created independently (e.g. entered on two devices before they'd synced), it's no longer silently duplicated or dropped — it's queued and a \"Review Possible Duplicates\" button appears in Backup & Restore, using the same comparison table as CSV import." },
+        { "type": "new", "text": "Added CLAUDE.md — a project-memory file documenting the app's architecture, key conventions, and a running log of major work, so future updates (even months later) start with full context instead of re-deriving it." }
+      ]
+    },
+    {
+      "version": "8.9.1",
+      "date": "2026-08-16",
+      "title": "Category-Type Prompts, Smarter Predictions & Add Transaction Layout Fix",
+      "summary": "Creating a new Revenue/Expense category from a dropdown (All Transactions, Review Categories, the mobile edit sheet, or typing a new one in Quick Add) now asks which type it belongs to, the same as the Categories tab — so it's classified correctly everywhere instead of guessed from its name. Category prediction is also more accurate: it now recognizes the same vendor across noisy bank/card descriptions (different store numbers, dates, reference codes) and uses a QuickBooks-style majority vote across that vendor's past transactions. Also fixes a layout bug where the Add Transaction form's fields didn't line up.",
+      "changes": [
+        { "type": "new", "text": "Creating a new category from any \"+ Add new category…\" dropdown (All Transactions, Review Categories, the mobile edit sheet) or by typing an unrecognized name into Quick Add now opens the same Add Category dialog used on the Categories tab, asking for the category's Revenue/Expense type instead of guessing from its name." },
+        { "type": "fix", "text": "That type is now actually stored and honored everywhere a category is grouped or displayed as Revenue vs. Expense — previously the Categories tab's own \"Add Category\" dialog captured a type but never saved it, so classification always fell back to a keyword guess (e.g. a Revenue category named \"Rent Rebate\" would have been mis-bucketed as Expense)." },
+        { "type": "imp", "text": "Category prediction now recognizes the same vendor across noisy, real-world bank/card descriptions — different store numbers, dates, and reference codes (\"STARBUCKS STORE #4521 01/05\" vs \"STARBUCKS STORE #9981 01/09\") now normalize to the same vendor instead of failing to match." },
+        { "type": "imp", "text": "When a vendor's past transactions weren't all categorized the same way, prediction now uses a majority vote (like QuickBooks bank rules) and scales its confidence to how consistent that history actually was, instead of a single length-weighted guess." },
+        { "type": "fix", "text": "Fixed a false-match bug in the prediction fallback where two unrelated vendors sharing only generic bank boilerplate (\"ACH DEBIT PURCHASE WEB ID…\") could incorrectly be scored as similar; shared filler words are now stripped before comparing." },
+        { "type": "fix", "text": "Add Transaction: fixed a layout bug where the Date field appeared misaligned below the Type field. The \"More types\" (Equity/Liability/Asset) selector, which had made the Type field much taller than the others, now has its own row below the main form grid." }
+      ]
+    },
+    {
+      "version": "8.9.0",
+      "date": "2026-08-16",
+      "title": "Category Prediction Engine + Review Categories Page",
+      "summary": "When a CSV/Excel import has no category column (or a blank cell), the app now predicts one — first from how you've categorized similar descriptions before, then from an industry-standard merchant-keyword list — instead of dropping everything into \"Uncategorized.\" Predictions are never written as final: they land on a new Review Categories page where you confirm (or correct) each one before it's saved for good.",
+      "changes": [
+        { "type": "new", "text": "New category prediction engine: for any transaction with no explicit category, the app first checks how you've categorized similar descriptions before (exact match, then substring, then keyword-overlap scoring — the same logic as the Quick Add live-suggestion) and falls back to industry-standard merchant keywords (e.g. Shell/Chevron → Vehicle & Fuel, AWS/Zoom → Software & Subscriptions) when there's no matching history yet." },
+        { "type": "new", "text": "New Review Categories page: every transaction with a predicted-but-unconfirmed category (or no category at all) lands here, showing the predicted category in an editable dropdown alongside a High/Medium/Low confidence indicator. Nothing is final until you hit Confirm — pick a different category first if a guess is wrong." },
+        { "type": "new", "text": "Confirm All button on the Review Categories page commits every visible row's currently-selected category in one click." },
+        { "type": "new", "text": "Predict Categories button runs the prediction engine over existing Uncategorized transactions (from before this feature, or where no confident guess was available at import time) so older data can be caught up too." },
+        { "type": "new", "text": "Sidebar badge on the Review Categories nav item shows how many transactions are waiting for review, updated on every navigation." },
+        { "type": "imp", "text": "CSV/Excel import: after importing rows that needed a predicted category, the app now routes straight to Review Categories instead of the dashboard, and the import summary toast reports how many categories need review." },
+        { "type": "imp", "text": "Explicitly mapping a Category column during import is unaffected and still trusted as final — prediction only runs when a category cell is blank or no Category column was mapped at all." },
+        { "type": "imp", "text": "Directly editing a category (inline in All Transactions, the mobile edit sheet, or a manual Quick Add entry) always counts as an explicit, final choice — those never get flagged for review." }
+      ]
+    },
+    {
+      "version": "8.8.0",
+      "date": "2026-08-16",
+      "title": "Whole-File Header Search, Category Dropdown, Balance Sheet Types & Credit Card Payment Offsetting",
+      "summary": "CSV import now searches the entire file for your header row (not just the first 7 lines) and shows a ±3-row window around whatever it finds, with a manual row-number override. All Transactions now has a real Category dropdown pulled from your actual category list, grouped by type, with an inline \"add new category\" option. Three new account types — Owner's Equity, Long-Term Liability, Short-Term Liability — let you track loans, equipment, and owner contributions/draws without polluting your P&L, plus a new Balance Sheet Summary report. Bank statement imports now recognize a payment to a credit card as a transfer between your own accounts and correctly exclude it from P&L.",
+      "changes": [
+        { "type": "fix", "text": "CSV/Excel header detection now scans the whole file (bounded for performance) instead of only the first 7 rows, so a header buried at row 10, row 15, or beyond is still found automatically." },
+        { "type": "new", "text": "The file preview now shows a ±3-row window centered on the detected header row (e.g. header at row 10 shows rows 7-13; row 15 shows rows 12-18) instead of always showing rows 1-7, with the header row highlighted." },
+        { "type": "new", "text": "Added a \"jump to row #\" input next to the header-row picker for files where the real header sits outside the detected window." },
+        { "type": "new", "text": "All Transactions' Category column is now a dropdown built from your real category list (the same one used on Add Transaction), grouped with the matching type's categories first — Expense categories first for an Expense row, Revenue first for Revenue — with a \"+ Add new category…\" option at the bottom. Changing a row's Type live-regroups its Category dropdown. Applied to the mobile edit sheet too." },
+        { "type": "new", "text": "Three new transaction types: Owner's Equity, Long-Term Liability, and Short-Term Liability, plus Asset (Fixed / Equipment) — the one still missing once Equity and Liability existed, since Asset/Liability/Equity/Revenue/Expense are the five fundamental account types in double-entry accounting. Available from Add Transaction's \"More types\" selector and the All Transactions Type dropdown." },
+        { "type": "fix", "text": "Fixed several report/dashboard totals that silently bucketed anything that wasn't Revenue into Expense — the new Balance Sheet types would have inflated your P&L expenses. The P&L Statement, Monthly P&L, Monthly Trend, Quarterly Summary, dashboard KPIs, and CSV/Excel exports now explicitly gate on Revenue vs. Expense and correctly exclude Owner's Equity, Liability, and Asset entries." },
+        { "type": "new", "text": "New Balance Sheet Summary report: running totals of your Asset, Liability, and Owner's Equity entries, as of a selected date — a lightweight snapshot, not a full formal balance sheet." },
+        { "type": "new", "text": "Manual entry (Add Transaction) and the mobile edit sheet now accept negative amounts, for recording a refund, an owner draw, or a debt repayment directly." },
+        { "type": "fix", "text": "Bank statement imports now recognize a payment to a credit card (by description or Type column keywords — \"Chase Card Payment\", \"AUTOPAY\", etc.) as a transfer between your own accounts and exclude it from P&L, the same way credit card imports already skip the card's own \"Payment\" rows — so the expense isn't double-counted (or missed) on either side of the transfer." }
+      ]
+    },
+    {
+      "version": "8.7.0",
+      "date": "2026-08-16",
+      "title": "Refund Colors, Bank-Statement In/Out Formatting & Messy-File Import Detection",
+      "summary": "Amount colors now reflect real money movement, not just a Revenue/Expense label: credit card and expense-report refunds show as a positive green amount, and bank-statement withdrawals show red in parentheses while deposits show green. CSV/Excel import also now detects messy files — leading account-info rows before the real header, and trailing totals/footer rows — and lets you confirm or fix both before importing.",
+      "changes": [
+        { "type": "fix", "text": "Credit card and expense-report refunds/returns/credits now display as a positive amount in green, instead of a negative red parenthesized number, on All Transactions, Revenue, Expenses, and the Add Transaction recent-entries list. The underlying P&L math is unchanged — refunds still correctly reduce the expense total." },
+        { "type": "new", "text": "Bank statement amounts follow standard ledger convention: money in (deposits) shows green; money out (withdrawals) shows red and in parentheses, e.g. \"($1,800.00)\". This coloring is now applied consistently to every expense/revenue amount app-wide, not just newly-imported bank data." },
+        { "type": "fix", "text": "Expense Report CSV imports now detect refund/credit/return rows (via a Type column, or the file's own negative sign) and store them as a credit that reduces the expense total, matching how Credit Card imports already worked." },
+        { "type": "new", "text": "CSV/Excel import now shows the top 7 raw rows of your file and lets you pick which row is actually your column headers — useful for bank/card exports that lead with a couple of \"Account: ...\" or \"Statement Period: ...\" lines before the real header row. The likely header row is auto-detected and highlighted; override it with one dropdown if it's wrong." },
+        { "type": "new", "text": "Trailing totals/footer rows (e.g. a \"Total,,,$1,234.56\" row at the end of the file) are auto-detected and excluded from the import by default, with a one-click toggle to include them if the detection is wrong." },
+        { "type": "new", "text": "Both detections are quiet on well-formed files — if your file already starts with a proper header row and has no footer row, nothing changes and no extra prompts appear." }
+      ]
+    },
+    {
+      "version": "8.6.0",
+      "date": "2026-08-16",
+      "title": "Track Where Your Data Comes From — Source / Account Tracking",
+      "summary": "Every transaction can now be tagged with where it came from — a bank, a credit card, a sales channel, or a manual account name. CSV imports of a Bank Statement or Credit Card Statement now ask which bank/card it is; manual entries get a free-text Source / Account field. A new Source column appears on All Transactions, Revenue, and Expenses, and Reports can break Revenue/Expense down by Source instead of Category.",
+      "changes": [
+        { "type": "new", "text": "CSV import now asks for the account name for Bank Statement and Credit Card Statement imports (\"Which bank is this?\" / \"Which card/bank is this?\") and applies it to every row in the file. Sales, Expense Report, and \"map a Type column myself\" imports get the same field as an optional Source name." },
+        { "type": "new", "text": "A CSV can also be mapped directly to a Source/Account column if different rows come from different accounts — the per-row value overrides the file-level name." },
+        { "type": "new", "text": "The account name you type is remembered per import type, so re-importing next month's statement pre-fills it." },
+        { "type": "new", "text": "Manual entry (Add Transaction) now has a Source / Account field with autocomplete from previously used accounts, for tracking things like \"Chase Checking\", \"Cash\", or \"PayPal\"." },
+        { "type": "new", "text": "A Source column is now shown — and inline-editable — on All Transactions, Revenue, and Expenses, including the mobile edit sheet. All Transactions gained a Source filter dropdown, and the search box on every table now matches Source too." },
+        { "type": "new", "text": "Reports → Expense Breakdown and Revenue Breakdown got a Group By toggle: switch between Category and Source / Account to see revenue or spend broken down by where it came from." },
+        { "type": "new", "text": "CSV/Excel export and File Sync now include the Source column, so it round-trips on export and re-import." }
+      ]
+    },
+    {
+      "version": "8.5.0",
+      "date": "2026-08-16",
+      "title": "CSV Import: Data-Type-Aware Revenue/Expense Classification",
+      "summary": "Fixes credit card transactions being misclassified as revenue on import. A new \"What kind of data is this?\" step lets you tell the importer whether a file is Sales/Revenue, a Credit Card Statement, an Expense Report, or a Bank Statement — each uses the correct accounting convention. Unmapped transactions are also auto-categorized using industry-standard expense categories based on the merchant name.",
+      "changes": [
+        { "type": "fix", "text": "Credit card statements no longer import as Revenue. Previously, files with no Type column (or an issuer-provided Type column like \"Sale\") fell back to a plain amount-sign guess or a keyword match that treated \"Sale\" as revenue — correct for a sales ledger, wrong for a credit card charge." },
+        { "type": "new", "text": "New \"What kind of data is this?\" selector in the Import CSV mapping screen: Sales/Revenue data, Credit Card Statement, Expense Report, Bank Statement, or the original \"I'll map a Type column myself.\" Each applies the right revenue/expense rule automatically, and the Type column mapping becomes optional once you pick one." },
+        { "type": "new", "text": "Credit card imports understand issuer Type labels (Sale/Purchase/Fee → Expense, Payment → skipped as a transfer, Return/Refund/Credit → a negative expense that reduces your total) and, when no Type column exists, a configurable amount-sign convention (positive = charge, as on most cards, or negative = charge, as on Chase)." },
+        { "type": "new", "text": "Bank statement imports let you specify whether positive amounts are deposits (Revenue) or withdrawals (Expense)." },
+        { "type": "new", "text": "Industry-standard merchant categorization: rows with no mapped category are auto-categorized from the description — e.g. Uber/DoorDash → Travel & Meals, Shell/Chevron → Vehicle & Fuel, AWS/Zoom/Slack → Software & Subscriptions, Staples/Amazon → Office Supplies, using the same category set as the rest of the app. Newly-used categories are added to your category list automatically." },
+        { "type": "new", "text": "The chosen import source is remembered for next time, since re-importing the same kind of file (e.g. a monthly card statement) is common." },
+        { "type": "new", "text": "The original \"I'll map a Type column myself\" mode is unchanged — existing imports that rely on it behave exactly as before." }
+      ]
+    },
+    {
+      "version": "8.4.0",
+      "date": "2026-07-04",
+      "title": "Reports Tab, PDF Export & Configurable Auto Sign-Out",
+      "summary": "New Reports tab with a proper Profit & Loss statement, a line-by-line Year-over-Year comparison, and four analysis reports — printable and exportable to letter-size PDF or CSV. Plus: refreshing the page no longer signs you out (configurable inactivity timer, default 5 min) and a always-visible Sign Out button.",
+      "changes": [
+        { "type": "new", "text": "P&L Statement: industry-standard common-size income statement — Revenue, COGS, Gross Profit, Operating Expenses and Net Profit, each shown as a dollar amount and as a % of revenue, with KPI summary cards on top." },
+        { "type": "new", "text": "P&L Year-over-Year: compares any year against the prior year line by line, with dollar change, % change and up/down arrows, plus a grouped bar chart of Revenue, Gross Profit, Op. Expenses and Net Profit." },
+        { "type": "new", "text": "Time-frame selector: This Year, Last Year, Year to Date, This/Last Quarter, This/Last Month, All Time, or a custom From/To date range — resolved consistently across every report." },
+        { "type": "new", "text": "Four analysis reports: Expense Breakdown and Revenue Breakdown (doughnut + ranked table with % of total), Monthly Trend (revenue/expense/net line chart), and Quarterly Summary (Q1–Q4 P&L)." },
+        { "type": "new", "text": "Industry-aware suggestions: the Reports tab recommends the most useful next reports based on your selected industry template and whether you track COGS." },
+        { "type": "new", "text": "Save as PDF and Print: every report opens a print-friendly US Letter (8.5 x 11 in) statement — use Print, or Save PDF to save one via the browser's built-in PDF export. CSV export (formula-injection sanitized) is also available. Jump to Reports with g then p." },
+        { "type": "new", "text": "Refreshing the page no longer signs you out. You stay signed in and are only asked to re-enter your PIN (or sign in again) after a period of inactivity." },
+        { "type": "new", "text": "Configurable auto sign-out timer in Settings → Security & Session: choose 1, 5, 15, 30, 60 minutes or Never. Default is 5 minutes. Reduces reliance on the auth server on every refresh." },
+        { "type": "new", "text": "Always-visible Sign Out button in the sidebar (desktop) and the More menu (mobile)." }
+      ]
+    },
+    {
+      "version": "8.3.0",
+      "date": "2026-05-14",
+      "title": "Industry Templates, Smart Categories, Keyboard Shortcuts & Bulk Actions",
+      "summary": "6 polish features: one-click industry setup (Consulting/E-commerce/SaaS/Restaurant), auto-categorize from your history, full keyboard shortcuts, bulk-select with undo, PWA shortcuts + Share Target, and a clear-sample-data button.",
+      "changes": [
+        { "type": "new", "text": "Industry templates: pick Consulting, E-commerce, SaaS, Restaurant, or Generic on first run to get a tailored set of revenue + expense categories. Templates merge with existing categories — your data is never overwritten." },
+        { "type": "new", "text": "Auto-categorize from history: when you type a description that resembles a previous one, the app suggests the matching category with a one-tap 'Use this' button. Uses exact match, substring, then token overlap scoring." },
+        { "type": "new", "text": "Keyboard shortcuts: press ? anywhere to see the cheat sheet. n = new transaction, / = focus search, g+d/r/e/b/s/i/t/m = jump to view, Esc = close any dialog. Disabled while typing." },
+        { "type": "new", "text": "Bulk actions on Revenue and Expense: checkbox per row + select-all-on-page header. Floating action bar shows selection count; bulk delete uses the same 6-second Undo pattern as single deletes." },
+        { "type": "new", "text": "PWA shortcuts: long-press the app icon on Android/Chrome OS to see Add Transaction, Import CSV, and Dashboard quick actions." },
+        { "type": "new", "text": "Share Target API: 'Share to P&L Dashboard' now appears in your phone's share sheet for CSV and Excel files. Sharing routes to the import view ready for mapping." },
+        { "type": "new", "text": "Sample Data is now tagged so you can clear it in one click — the Dashboard shows a 'Clear Sample Data' button whenever demo transactions are loaded." }
+      ]
+    },
+    {
+      "version": "8.2.0",
+      "date": "2026-05-14",
+      "title": "Power Features — Undo, Search, Duplicates, Workers & Optimistic Sync",
+      "summary": "5 high-impact upgrades adapted from Linear, Gmail, Stripe: undo any delete, instant search on Revenue/Expense, non-blocking CSV import via Web Worker, automatic duplicate detection on import, and live sync status indicators.",
+      "changes": [
+        { "type": "new", "text": "Undo deletes: deleting a transaction now shows a 6-second 'Undo' toast (Linear/Gmail pattern) — no more confirm dialog, no more accidental data loss. The transaction is fully restored if you click Undo." },
+        { "type": "new", "text": "Instant inline search on Revenue and Expense tabs — search descriptions, categories, amounts, dates, and months all at once with 150ms debounce. Empty-state hint appears when no matches found." },
+        { "type": "new", "text": "Pagination Prev/Next controls now visible on Revenue and Expense tables — combined with search you can scan 100k+ rows without ever leaving the page." },
+        { "type": "new", "text": "Non-blocking CSV import via Web Worker: files over 500KB now parse on a background thread, so the UI stays responsive (typing, charts, scrolling) during big imports. Progress bar shows live parse progress." },
+        { "type": "new", "text": "Automatic duplicate detection on CSV import: rows matching existing transactions on date + amount + description + type are flagged. One-click choice to skip duplicates (recommended) or import everything." },
+        { "type": "new", "text": "Optimistic UI for Google Drive sync: top-bar status now shows 'Syncing to Google Drive…' then '✓ Synced' on every edit, removing the 'did it sync?' anxiety. Failures show 'Sync failed — will retry'." },
+        { "type": "imp", "text": "CSP updated to allow blob: workers (required for the non-blocking CSV parsing) while keeping all other lock-down protections intact." }
+      ]
+    },
+    {
+      "version": "8.1.0",
+      "date": "2026-05-14",
+      "title": "CX Polish — Help, Install Prompt, Plain-Language Backup & Empty States",
+      "summary": "7 usability improvements: smart CSV import with date/number format selectors, actionable empty states with sample data, in-app help drawer, smart PWA install banner, plain-English backup labels, and canonical URL.",
+      "changes": [
+        { "type": "new", "text": "CSV import: date format selector (Auto-detect / US / European / ISO) and number format selector (Auto-detect / US 1,234.56 / EU 1.234,56) — no more silent parse failures on European bank exports" },
+        { "type": "new", "text": "Empty state on Dashboard, Revenue, and Expense tabs: three CTA buttons (Add Transaction, Import CSV, Try Sample Data) guide first-time users instead of a blank screen" },
+        { "type": "new", "text": "Sample Data mode: one click loads 6 months of realistic demo transactions so you can explore the app before entering real data" },
+        { "type": "new", "text": "In-app Help drawer: ? button in the top bar opens a slide-in panel with Quick Start steps and 7 common-question FAQs with a link to the full User Guide" },
+        { "type": "new", "text": "Smart PWA install banner: shows 'Install this app' only after you've added 3+ transactions (engaged users accept at ~25% vs ~3% on first load)" },
+        { "type": "imp", "text": "Backup tab labels renamed from developer jargon ('Layer 1/2/3') to plain English: Quick Save, Save to My Computer, Sync to Google Drive" },
+        { "type": "imp", "text": "Canonical URL meta tag added; manifest start_url updated to / so the app installs to the root URL" }
+      ]
+    },
+    {
+      "version": "8.0.4",
+      "date": "2026-05-14",
+      "title": "License Key Sign-In + Blank-Page Hardening",
+      "summary": "Sign in to the app with just your email + license key — no Google account required. Plus defensive code so a corrupted cached session can never blank the screen.",
+      "changes": [
+        { "type": "new", "text": "Alternative sign-in: use your email + license key (from your purchase receipt). No Google account needed to access the dashboard. Google sign-in remains the default; license-key entry is linked below the Google button." },
+        { "type": "fix", "text": "Blank-page root cause fixed: an old or malformed cached session (missing user.plan or user.name) would throw an uncaught error in unlockApp() after the auth gate was hidden, leaving the screen blank. unlockApp() now handles every field defensively and restores the auth gate if anything goes wrong." },
+        { "type": "fix", "text": "Boot flow wrapped in try/catch — if bootApp() itself crashes for any reason, the cached session is cleared and the auth gate is brought back so the user has a recoverable state." },
+        { "type": "imp", "text": "Google Sheets sync is unchanged and remains optional — it's still accessed from Backup tab and uses Google OAuth separately from app sign-in. License-key users get full Sheets sync if they choose to enable it." }
+      ]
+    },
+    {
+      "version": "8.0.3",
+      "date": "2026-05-14",
+      "title": "Direct Index + CSP Fix for Google OAuth",
+      "summary": "Clean URL now serves the dashboard directly (no redirect dance) and Content-Security-Policy now allows Google OAuth iframes — fixes blank-page issue.",
+      "changes": [
+        { "type": "fix", "text": "Blank page at clean URL — index.html now contains the full dashboard directly instead of redirecting (eliminates redirect failure mode)" },
+        { "type": "fix", "text": "CSP frame-src 'none' was blocking Google OAuth iframes — relaxed to allow accounts.google.com" },
+        { "type": "imp", "text": "CSP also now allows Google profile images (lh3.googleusercontent.com) and oauth2.googleapis.com" },
+        { "type": "imp", "text": "Service worker pre-caches both index.html and pl-dashboard-v8.html so both URLs work offline" }
+      ]
+    },
+    {
+      "version": "8.0.2",
+      "date": "2026-05-14",
+      "title": "Always-Latest Loader + One-Click Update",
+      "summary": "New clean URL with always-fresh loading, plus a 'Reload Now' button on the update banner that clears all caches and forces the latest build.",
+      "changes": [
+        { "type": "new", "text": "Clean URL: https://apatel85.github.io/pl-dashboard/ — auto-redirects to the newest build with cache-busting query string" },
+        { "type": "new", "text": "Update banner now has a 'Reload Now' button: clears service worker, drops all caches, and reloads to the latest version" },
+        { "type": "imp", "text": "Cache-Control headers on the HTML force browsers to revalidate on every visit" },
+        { "type": "imp", "text": "Service worker updated to v8.0.2 — old caches auto-purge on next load" }
+      ]
+    },
+    {
+      "version": "8.0.1",
+      "date": "2026-05-14",
+      "title": "Mobile Layout Overhaul",
+      "summary": "Comprehensive mobile-first responsive redesign — proper stacking on phones, big tap targets, iOS safe-area support, full-screen modals on small screens, and bottom-pinned toasts.",
+      "changes": [
+        { "type": "fix", "text": "Charts now correctly stack vertically on mobile (was caused by a class name typo in mobile CSS)" },
+        { "type": "imp", "text": "All buttons and inputs meet 44px minimum tap-target size for accessibility" },
+        { "type": "imp", "text": "Form inputs use 16px font on mobile to prevent iOS auto-zoom on focus" },
+        { "type": "imp", "text": "iOS safe-area insets respected — no content hides behind notch or home indicator" },
+        { "type": "imp", "text": "Modals slide up from bottom on mobile (native app feel) instead of centered overlays" },
+        { "type": "imp", "text": "Mapping modal field grid stacks vertically on phones (was overlapping)" },
+        { "type": "imp", "text": "Backup tier rows wrap properly — status badges no longer overflow" },
+        { "type": "imp", "text": "Google Sheets connect card stacks on mobile so action buttons aren't cramped" },
+        { "type": "imp", "text": "Snapshot list rows wrap with action buttons on their own line on small screens" },
+        { "type": "imp", "text": "Sidebar drawer is now 85vw max width with proper iOS top padding" },
+        { "type": "imp", "text": "Toast position pinned to bottom-center on mobile, above iOS home indicator" },
+        { "type": "imp", "text": "PWA standalone mode hides the iOS install hint and adjusts top padding" },
+        { "type": "imp", "text": "Landscape orientation on small phones now scrolls modals properly" }
+      ]
+    },
+    {
+      "version": "8.0.0",
+      "date": "2026-05-13",
+      "title": "Security, Performance & Offline Hardening",
+      "summary": "Audit-driven release: 19 security and reliability fixes, single self-contained file that works online AND offline, table pagination for 100k+ rows, and accessibility improvements.",
+      "changes": [
+        { "type": "new", "text": "Single self-contained HTML — Chart.js + XLSX.js inlined, no CDN dependency. Works fully offline from a downloaded file." },
+        { "type": "fix", "text": "XSS hardening — all user-controlled fields (descriptions, categories, CSV imports, toast messages) now properly HTML-escaped" },
+        { "type": "new", "text": "Content-Security-Policy meta tag added — blocks injected scripts even if escaping is bypassed" },
+        { "type": "fix", "text": "CSV export now prefixes formula-injection cells (=, +, -, @) with a leading quote to prevent Excel formula execution" },
+        { "type": "imp", "text": "Revenue and Expense tables now paginate at 50 rows per page — instant render even with 100,000+ transactions" },
+        { "type": "imp", "text": "Snapshot quota errors now surface a clear toast instead of failing silently" },
+        { "type": "fix", "text": "Amount parser now handles accounting-negative format (99.00) and EU format 1.234,56" },
+        { "type": "new", "text": "Date format selector in CSV mapping modal (auto / MM-DD-YYYY / DD-MM-YYYY)" },
+        { "type": "fix", "text": "CSV parser now correctly handles RFC 4180 escaped quotes and strips BOM" },
+        { "type": "fix", "text": "Monthly P&L total row now uses consistent Net Profit math (was mixing gross and net)" },
+        { "type": "new", "text": "Double-confirmation for Clear All Data — two prompts before permanent deletion" },
+        { "type": "new", "text": "User-facing error screen when IndexedDB is unavailable (private mode, quota exhausted)" },
+        { "type": "imp", "text": "Toast notifications now properly announce to screen readers (ARIA live region)" },
+        { "type": "imp", "text": "Float drift suppressed in displayed totals via Math.round(n*100)/100 in fmt()" }
+      ]
+    },
+    {
+      "version": "5.0.0",
+      "date": "2025-05-12",
+      "title": "3-Layer Backup + Google Sheets Cloud Sync",
+      "summary": "Full data protection with browser snapshots, auto-file backup, and Google Sheets live sync.",
+      "changes": [
+        { "type": "new", "text": "Layer 1: Auto browser snapshots — last 5 states stored, one-click restore" },
+        { "type": "new", "text": "Layer 2: Auto file backup every 30 min to your computer (Chrome/Edge/Brave)" },
+        { "type": "new", "text": "Layer 3: Google Sheets live sync — push/pull cloud backup accessible from any device" },
+        { "type": "new", "text": "Protection score banner showing which backup layers are active" },
+        { "type": "new", "text": "In-app step-by-step Google sign-in guide — no technical knowledge needed" },
+        { "type": "new", "text": "Persistent storage request — protects IndexedDB from browser eviction" },
+        { "type": "new", "text": "Storage health dashboard with size estimates" },
+        { "type": "imp", "text": "All data changes trigger automatic snapshot scheduling" }
+      ]
+    },
+    {
+      "version": "4.0.0",
+      "date": "2025-04-01",
+      "title": "IndexedDB Engine + File Sync",
+      "summary": "Complete data entry, IndexedDB storage for 100K+ rows, and local file sync.",
+      "changes": [
+        { "type": "new", "text": "IndexedDB storage — handles 100,000+ transactions with proper indexing" },
+        { "type": "new", "text": "Quick-Add form with Enter-key rapid entry" },
+        { "type": "new", "text": "Inline editing of all transaction fields in the table" },
+        { "type": "new", "text": "Paginated transactions table with sort, search, and multi-filter" },
+        { "type": "new", "text": "File System Access API — sync directly to a CSV or XLSX on disk" },
+        { "type": "new", "text": "Export to Excel (.xlsx) with Transactions + Monthly Summary sheets" },
+        { "type": "imp", "text": "Charts and dashboard fully async — no lag on large datasets" }
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2025-01-01",
+      "title": "Initial Release",
+      "summary": "Full-featured P&L dashboard with CSV import, charts, and auto-save.",
+      "changes": [
+        { "type": "new", "text": "CSV upload with intelligent field mapping" },
+        { "type": "new", "text": "Revenue & expense tracking with category breakdown" },
+        { "type": "new", "text": "4 interactive charts: bar, line, and donut visualizations" },
+        { "type": "new", "text": "Auto-save — data persists between sessions" },
+        { "type": "new", "text": "Export to CSV and JSON backup/restore" }
+      ]
+    }
+  ]
+}

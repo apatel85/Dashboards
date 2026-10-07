@@ -1,0 +1,76 @@
+name: Supabase Keep-Alive
+
+# Supabase free-tier projects pause after ~7 days with no database activity.
+# This job sends a tiny read request every 3 days so the inactivity clock keeps
+# resetting and the project never gets suspended.
+#
+# NOTE: scheduled workflows only run from the repository's DEFAULT branch (main).
+# This won't fire until it's merged to main. You can always run it by hand from
+# the Actions tab (workflow_dispatch) to test it beforehand.
+
+on:
+  schedule:
+    # 08:17 UTC every 3rd day. Odd minute avoids the top-of-hour scheduler rush
+    # (GitHub can delay or drop crons that all fire at :00).
+    - cron: '17 8 */3 * *'
+  workflow_dispatch: {}   # manual "Run workflow" button in the Actions tab
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          # Optional override: Settings → Secrets and variables → Actions → Variables
+          KEEPALIVE_TABLE: ${{ vars.SUPABASE_KEEPALIVE_TABLE || 'pl_licensed_users' }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::Missing SUPABASE_URL or SUPABASE_ANON_KEY repository secret. Add them under Settings → Secrets and variables → Actions (see .github/workflows/README.md)."
+            exit 1
+          fi
+
+          BASE="${SUPABASE_URL%/}"
+          URL="${BASE}/rest/v1/${KEEPALIVE_TABLE}?select=*&limit=1"
+          echo "Pinging ${BASE}/rest/v1/${KEEPALIVE_TABLE} (response body discarded)…"
+
+          # -o /dev/null: never print row data — this repo's Actions logs are public.
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Accept: application/json" \
+            --max-time 30 --retry 2 --retry-delay 5 \
+            "$URL" || echo "000")
+
+          echo "HTTP status: ${code}"
+          case "${code}" in
+            2*)
+              echo "✓ Keep-alive query ran against Supabase (status ${code}). Inactivity clock reset."
+              ;;
+            401|403)
+              echo "::error::Supabase rejected the anon key (status ${code}). Check the SUPABASE_ANON_KEY secret and that the table has an RLS SELECT policy for anon."
+              exit 1
+              ;;
+            404|406)
+              echo "::error::Table '${KEEPALIVE_TABLE}' not found or not selectable (status ${code}). Set the SUPABASE_KEEPALIVE_TABLE Actions variable to a table anon can read."
+              exit 1
+              ;;
+            000)
+              echo "::error::Could not reach Supabase (network/timeout). Verify SUPABASE_URL is correct and the project isn't already paused."
+              exit 1
+              ;;
+            *)
+              echo "::error::Unexpected status ${code} from Supabase."
+              exit 1
+              ;;
+          esac
