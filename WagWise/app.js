@@ -3554,6 +3554,9 @@ async function init() {
   $('cfgKcalMin').value = CFG.KCAL_MIN; $('cfgKcalMax').value = CFG.KCAL_MAX;
   $('cfgBedtime').value = CFG.BEDTIME; $('cfgDayOne').value = CFG.DAY_ONE;
   wire();
+  const av0 = $('appVersion'); if (av0) av0.textContent = 'v' + APP_VERSION;
+  const avl0 = $('appVersionLanding'); if (avl0) avl0.textContent = 'v' + APP_VERSION;
+  const avt0 = $('appVersionTop'); if (avt0) avt0.textContent = 'v' + APP_VERSION;
   if (DEMO) { initDemoMode(); return; } // v3.26 — sandboxed demo, before Supabase/auth
   renderConnStatus(null);
   maybeShowInstall(); // v2.9 — surface the install option for signed-in users too (not just landing)
