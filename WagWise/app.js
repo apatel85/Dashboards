@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.25.4'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.26.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -222,6 +222,9 @@ function effectiveSbKey() {
 }
 
 /* ---------------- Global state ---------------- */
+/** v3.26 — Demo mode: ?demo=1 runs a sandboxed, in-memory demo with sample data.
+    No Supabase, no auth, no localStorage writes, no backend modifications. */
+const DEMO = new URLSearchParams(location.search).get('demo') === '1';
 const S = {
   sb: null,            // supabase-js client
   user: null,
@@ -409,6 +412,7 @@ function isSubjectOwner() {
 
 /* ---------------- Event persistence ---------------- */
 function localSave(ev) { // offline queue
+  if (DEMO) return; // v3.26 — demo mode: memory only, never touch localStorage
   const q = JSON.parse(localStorage.getItem('st_queue') || '[]');
   q.push(ev); localStorage.setItem('st_queue', JSON.stringify(q));
 }
@@ -3514,6 +3518,35 @@ function wire() {
   document.addEventListener('visibilitychange', () => { if (!document.hidden) renderCockpit(); });
 }
 
+/** v3.26 — Demo mode (?demo=1): sandboxed in-memory demo with sample data.
+    No Supabase client, no auth, no localStorage writes, no backend modifications.
+    All logging works in-memory so visitors can play; a refresh resets to the sample. */
+function initDemoMode() {
+  S.sb = null; // guarantee: sbReady() is false everywhere -> no backend writes, ever
+  S.user = { id: 'demo-user', email: 'demo@wagwise.app' };
+  S.subject = { id: 'demo-simba', name: 'Simba', species: 'dog', breed: 'Cavapoo' };
+  S.subjects = [S.subject];
+  // Shift demo dates so the most recent sample day is always "today" for the viewer.
+  const evs = (window.DEMO_EVENTS || []).map(e => ({ ...e }));
+  if (evs.length) {
+    const maxTs = Math.max(...evs.map(e => new Date(e.logged_at).getTime()));
+    const maxDay = new Date(maxTs); maxDay.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const shift = today.getTime() - maxDay.getTime();
+    if (shift !== 0) evs.forEach(e => {
+      e.logged_at = new Date(new Date(e.logged_at).getTime() + shift).toISOString();
+    });
+  }
+  S.history = evs.map(e => ({ ...e, id: e.id || ('demo-' + Math.random().toString(36).slice(2)) }));
+  S.events = S.history.filter(e => isToday(e.logged_at));
+  setSync(false);
+  renderAll();
+  show('cockpit');
+  const el = $('syncState');
+  if (el) { el.textContent = '● demo'; el.classList.add('on'); el.title = 'Demo mode — sample data; changes stay in this tab and are never saved.'; }
+  const so = $('signOutBtn'); if (so) so.hidden = true; // no auth in demo
+  toast('Demo mode — sample data. Play around; nothing leaves this tab.');
+}
 async function init() {
   loadCfg();
   applyBrand(); // v2.2 — white-label: brand name from config.js
@@ -3521,6 +3554,7 @@ async function init() {
   $('cfgKcalMin').value = CFG.KCAL_MIN; $('cfgKcalMax').value = CFG.KCAL_MAX;
   $('cfgBedtime').value = CFG.BEDTIME; $('cfgDayOne').value = CFG.DAY_ONE;
   wire();
+  if (DEMO) { initDemoMode(); return; } // v3.26 — sandboxed demo, before Supabase/auth
   renderConnStatus(null);
   maybeShowInstall(); // v2.9 — surface the install option for signed-in users too (not just landing)
   const av = $('appVersion'); if (av) av.textContent = 'v' + APP_VERSION; // v2.9 — visible version
