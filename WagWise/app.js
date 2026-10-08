@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.26.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -2706,8 +2706,142 @@ function geminiErrText(status, msg) {
   if (status === 429) return 'Free-tier quota used up for now (or 500 web searches/day reached). Wait a bit and try again.';
   return 'AI error: ' + msg;
 }
+/** v3.27 — On-device data query engine. Parses natural-language questions about
+    Simba's logged data (counts, times, eating) and answers from S.history directly.
+    Returns { text } or null if the query isn't a data question. */
+function parseTimeWindow(q) {
+  // "between 9 and 9:30 am", "between 9-9:30am", "from 5 to 5:30 pm"
+  let m = q.match(/between\s+(\d{1,2})(?::(\d{2}))?\s*(?:and|to|-)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)/);
+  if (m) {
+    const ap = m[5];
+    let h1 = +m[1] % 12 + (ap === 'pm' ? 12 : 0), min1 = +(m[2] || 0);
+    let h2 = +m[3] % 12 + (ap === 'pm' ? 12 : 0), min2 = +(m[4] || 0);
+    return { start: h1 * 60 + min1, end: h2 * 60 + min2, label: `${fmtHourMin(h1, min1)}–${fmtHourMin(h2, min2)}` };
+  }
+  if (/morning/.test(q)) return { start: 360, end: 720, label: 'morning (6 AM–12 PM)' };
+  if (/afternoon/.test(q)) return { start: 720, end: 1020, label: 'afternoon (12–5 PM)' };
+  if (/evening/.test(q)) return { start: 1020, end: 1320, label: 'evening (5–10 PM)' };
+  if (/night|overnight/.test(q)) return { start: 1320, end: 1440 + 360, label: 'night (10 PM–6 AM)' };
+  return null;
+}
+function fmtHourMin(h, m) {
+  const ap = h >= 12 ? 'PM' : 'AM'; const hh = h % 12 || 12;
+  return `${hh}:${String(m).padStart(2, '0')} ${ap}`;
+}
+function parseDateRange(q) {
+  let m = q.match(/(?:last|past)\s+(\d+)\s+days?/);
+  if (m) return { days: +m[1], label: `last ${m[1]} days` };
+  if (/\blast week\b/.test(q)) return { days: 7, label: 'last 7 days' };
+  if (/\btoday\b/.test(q)) return { days: 1, today: true, label: 'today' };
+  if (/\byesterday\b/.test(q)) return { days: 1, yesterday: true, label: 'yesterday' };
+  return { days: 7, label: 'last 7 days' }; // default
+}
+function answerDataQuestion(query) {
+  const q = query.toLowerCase();
+  const history = S.history || [];
+  if (!history.length) return null;
+  // Detect metric
+  let metric = null, metricLabel = '';
+  if (/\bpees?\b|\bpeed\b|\burinat/.test(q)) { metric = 'pee'; metricLabel = 'peed'; }
+  else if (/\bpoops?\b|\bpooped\b|\bstool\b|\bbowel\b/.test(q)) { metric = 'poop'; metricLabel = 'pooped'; }
+  else if (/\b(eat|eating|meal|food|kibble|breakfast|lunch|dinner|appetite)\b/.test(q)) { metric = 'food'; metricLabel = 'meals'; }
+  else if (/\bwater\b|\bdrink\b/.test(q)) { metric = 'water'; metricLabel = 'drank water'; }
+  if (!metric) return null;
+  // Must be a data-seeking question (count, when, how much, how often)
+  if (!/\b(how many|how often|how much|when|what time|count|times)\b/.test(q) && metric !== 'food') return null;
+
+  const tw = parseTimeWindow(q);
+  const dr = parseDateRange(q);
+  const now = new Date();
+  let startDay, endDay;
+  if (dr.today) { startDay = new Date(now); startDay.setHours(0, 0, 0, 0); endDay = now; }
+  else if (dr.yesterday) {
+    startDay = new Date(now); startDay.setDate(startDay.getDate() - 1); startDay.setHours(0, 0, 0, 0);
+    endDay = new Date(startDay); endDay.setHours(23, 59, 59, 999);
+  } else {
+    endDay = now;
+    startDay = new Date(now); startDay.setDate(startDay.getDate() - dr.days); startDay.setHours(0, 0, 0, 0);
+  }
+  const inRange = history.filter(e => {
+    const t = new Date(e.logged_at);
+    return t >= startDay && t <= endDay;
+  });
+  const daysWithData = new Set(inRange.map(e => localDay(e.logged_at))).size;
+
+  if (metric === 'pee' || metric === 'poop') {
+    const type = metric === 'pee' ? 'Pee' : 'Poop';
+    let evs = inRange.filter(e => e.elimination_type === type);
+    if (tw) {
+      evs = evs.filter(e => {
+        const t = new Date(e.logged_at);
+        const mins = t.getHours() * 60 + t.getMinutes();
+        // handle overnight wrap
+        if (tw.end > 1440) return mins >= tw.start || mins <= (tw.end - 1440);
+        return mins >= tw.start && mins <= tw.end;
+      });
+    }
+    const n = evs.length;
+    const when = tw ? ` between ${tw.label}` : '';
+    let text = `**${n} time${n === 1 ? '' : 's'}** — Simba ${metricLabel}${when} in the ${dr.label}`;
+    text += daysWithData > 1 ? ` (${daysWithData} days with data).` : '.';
+    if (n > 0) {
+      // Per-day breakdown
+      const byDay = {};
+      evs.forEach(e => {
+        const d = localDay(e.logged_at);
+        if (!byDay[d]) byDay[d] = [];
+        byDay[d].push(fmtTime(new Date(e.logged_at)));
+      });
+      const days = Object.keys(byDay).sort().slice(-7);
+      text += '\n\n' + days.map(d => `• ${d}: ${byDay[d].join(', ')}`).join('\n');
+      if (metric === 'poop') {
+        const scores = evs.map(e => +e.fecal_score).filter(x => x > 0);
+        if (scores.length) text += `\n\nStool scores: ${scores.join(', ')} (avg ${(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)}/7).`;
+      }
+    } else {
+      text += `\n\nNo ${type.toLowerCase()}s logged${when} in that period — check that days were entered (missing days don't count).`;
+    }
+    return { text };
+  }
+  if (metric === 'food') {
+    const meals = inRange.filter(e => e.category === 'Food');
+    if (!meals.length) return { text: `No meals logged in the ${dr.label}.` };
+    const tbsp = meals.reduce((a, e) => a + (+e.kibble_consumed_tbsp || 0), 0);
+    const kcal = meals.reduce((a, e) => a + (+e.event_kcal || 0), 0);
+    const bySlot = {};
+    meals.forEach(e => {
+      const h = new Date(e.logged_at).getHours();
+      const slot = h < 11 ? 'Breakfast' : h < 15 ? 'Lunch' : 'Dinner';
+      if (!bySlot[slot]) bySlot[slot] = { n: 0, tbsp: 0 };
+      bySlot[slot].n++; bySlot[slot].tbsp += (+e.kibble_consumed_tbsp || 0);
+    });
+    let text = `**Eating — ${dr.label}** (${daysWithData} days with data):\n`;
+    text += `• ${meals.length} meals, ${tbsp.toFixed(1)} tbsp total (~${(tbsp / Math.max(1, daysWithData)).toFixed(1)}/day)`;
+    if (kcal > 0) text += `, ~${Math.round(kcal / Math.max(1, daysWithData))} kcal/day from meals`;
+    text += '\n';
+    ['Breakfast', 'Lunch', 'Dinner'].forEach(s => {
+      if (bySlot[s]) text += `• ${s}: ${bySlot[s].n} meals, avg ${(bySlot[s].tbsp / bySlot[s].n).toFixed(1)} tbsp\n`;
+    });
+    // Recent trend: last 3 days vs prior
+    if (dr.days >= 7) {
+      const recent = inRange.filter(e => new Date(e.logged_at) >= new Date(now - 3 * 86400000));
+      const rt = recent.reduce((a, e) => a + (+e.kibble_consumed_tbsp || 0), 0);
+      text += `\nLast 3 days: ${rt.toFixed(1)} tbsp total.`;
+    }
+    return { text };
+  }
+  if (metric === 'water') {
+    const ws = inRange.filter(e => e.category === 'Water');
+    const tsp = ws.reduce((a, e) => a + (+e.water_consumed_tsp || 0), 0);
+    return { text: `**Water — ${dr.label}**: ${tsp.toFixed(0)} tsp total (~${(tsp / Math.max(1, daysWithData)).toFixed(0)} tsp/day across ${daysWithData} days with data, ${ws.length} water logs).` };
+  }
+  return null;
+}
 /** No-key fallback: answer from KB excerpts + Simba's data with a few intent routes. */
 async function answerLocally(query) {
+  // v3.27 — data questions get a specific computed answer, not the generic brief.
+  const dq = answerDataQuestion(query);
+  if (dq) return `📊 From Simba's logged data:\n\n${dq.text}\n\n_Add a free Gemini key below for AI-powered analysis with web search._`;
   const spec = await loadKnowledgeSilent('knowledge/cavapoo-specialized.md');
   const gen = await loadKnowledgeSilent('knowledge/general-canine.md');
   const brief = buildTelemetryBrief(S.history || [], S.subject || {});
@@ -2758,7 +2892,12 @@ function renderChat() {
     return;
   }
   list.innerHTML = c.msgs.map(m => {
-    let html = esc(m.text).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+    let html = esc(m.text)
+      .replace(/^#### (.+)$/gm, '<b>$1</b>')
+      .replace(/^### (.+)$/gm, '<b style="font-size:1.05em">$1</b>')
+      .replace(/^## (.+)$/gm, '<b style="font-size:1.1em">$1</b>')
+      .replace(/^[-•] /gm, '• ')
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
     let src = '';
     if (m.sources && m.sources.length) {
       src = '<div class="chat-src"><div class="chat-src-title">Sources</div>' +
@@ -2779,7 +2918,7 @@ async function updateKbFresh() {
   const parts = [];
   if (ds) parts.push(`Cavapoo guide · reviewed ${ds}`);
   if (dg) parts.push(`general canine · reviewed ${dg}`);
-  el.textContent = parts.length ? '📚 Knowledge: ' + parts.join(' · ') + ' (refreshed monthly)' : '📚 Knowledge base loading…';
+  el.textContent = parts.length ? '📚 ' + parts.join(' · ') : '📚 Knowledge base loading…';
 }
 
 /* ---------- Clinical audit prompt (spec 6.2) ---------- */
