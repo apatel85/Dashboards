@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quixera — Simple by Design (UX Demo)</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="demo-bar">
+  <div class="demo-bar-inner">
+    <div class="demo-brand"><span class="demo-logo">Q</span> Quixera <span class="demo-tag">UX redesign demo</span></div>
+    <div class="persona-switch" role="tablist" aria-label="Choose a view">
+      <button class="persona-btn active" data-persona="guardian" role="tab">👪 Parent</button>
+      <button class="persona-btn" data-persona="coach" role="tab">🏏 Coach</button>
+      <button class="persona-btn" data-persona="admin" role="tab">🏟️ Academy</button>
+    </div>
+  </div>
+</div>
+<p class="demo-note">Demo with sample data — click around. Nothing here is real, nothing is saved.</p>
+
+<!-- ==================== GUARDIAN VIEW ==================== -->
+<main id="view-guardian" class="phone-frame view active">
+  <header class="greet">
+    <div>
+      <p class="greet-hi">Good morning,</p>
+      <h1>Priya Sharma</h1>
+    </div>
+    <div class="avatar">PS</div>
+  </header>
+
+  <div class="child-chips" id="childChips">
+    <button class="child-chip active" data-child="aarav">Aarav · U12</button>
+    <button class="child-chip" data-child="diya">Diya · U8</button>
+  </div>
+
+  <!-- PRIORITY STACK -->
+  <section>
+    <h2 class="section-title">Needs your attention <span class="count-badge">3</span></h2>
+    <div class="stack" id="guardianStack">
+      <article class="card priority red">
+        <div class="card-top"><span class="dot red"></span><span class="card-kicker">Action needed</span></div>
+        <h3>Fall season waiver isn't signed</h3>
+        <p class="card-sub">Aarav can't join sessions until it's signed. Takes about 30 seconds.</p>
+        <button class="btn primary">Sign waiver</button>
+      </article>
+      <article class="card priority amber">
+        <div class="card-top"><span class="dot amber"></span><span class="card-kicker">Payment</span></div>
+        <h3>$120 due Oct 15</h3>
+        <p class="card-sub">October tuition for Aarav · U12 Advanced</p>
+        <button class="btn primary">Pay now</button>
+      </article>
+      <article class="card priority green">
+        <div class="card-top"><span class="dot green"></span><span class="card-kicker">Today · 4:30 PM</span></div>
+        <h3>U12 Nets — Turf 2</h3>
+        <p class="card-sub">4:30–6:00 PM · Coach Rahul · Bring water bottle</p>
+        <button class="btn ghost">Get directions</button>
+      </article>
+    </div>
+  </section>
+
+  <!-- THIS WEEK -->
+  <section>
+    <h2 class="section-title">This week</h2>
+    <div class="week-strip" id="weekStrip"></div>
+  </section>
+
+  <!-- WEEKLY RECAP -->
+  <section>
+    <h2 class="section-title">Aarav's week</h2>
+    <article class="card">
+      <div class="recap-row">
+        <div class="recap-stat"><strong>3</strong><span>sessions</span></div>
+        <div class="recap-stat"><strong>L3</strong><span>bowling level</span></div>
+        <div class="recap-stat"><strong>4</strong><span>week streak</span></div>
+      </div>
+      <p class="coach-quote">"Aarav's run-up is much more consistent. Working on wrist position next." — Coach Rahul</p>
+      <button class="btn ghost full">See full progress</button>
+    </article>
+  </section>
+
+  <!-- SAFETY -->
+  <section>
+    <h2 class="section-title">Safety</h2>
+    <article class="card safety">
+      <div class="safety-top">
+        <h3>Bowling load this week</h3>
+        <span class="pill safe">Safe</span>
+      </div>
+      <div class="meter"><div class="meter-fill" style="width:80%"></div></div>
+      <p class="card-sub">96 of 120 balls · within the U12 weekly limit</p>
+    </article>
+  </section>
+
+  <!-- PATH -->
+  <section>
+    <h2 class="section-title">Knight's Path</h2>
+    <article class="card">
+      <div class="skill-row"><div><strong>Batting</strong><span class="lvl">Level 3</span></div>
+        <div class="meter sm"><div class="meter-fill" style="width:70%"></div></div>
+        <p class="card-sub">2 sessions to Level 4</p></div>
+      <div class="skill-row"><div><strong>Bowling</strong><span class="lvl">Level 3</span></div>
+        <div class="meter sm"><div class="meter-fill" style="width:45%"></div></div>
+        <p class="card-sub">Working on wrist position</p></div>
+      <div class="skill-row"><div><strong>Fielding</strong><span class="lvl">Level 2</span></div>
+        <div class="meter sm"><div class="meter-fill" style="width:60%"></div></div>
+        <p class="card-sub">Catching drills assigned for home</p></div>
+    </article>
+  </section>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active">🏠<span>Home</span></button>
+    <button class="nav-item">📅<span>Schedule</span></button>
+    <button class="nav-item">📈<span>Progress</span></button>
+    <button class="nav-item">💳<span>Billing</span></button>
+    <button class="nav-item">⋯<span>More</span></button>
+  </nav>
+</main>
+
+<!-- ==================== COACH VIEW ==================== -->
+<main id="view-coach" class="phone-frame view">
+  <header class="greet">
+    <div>
+      <p class="greet-hi">Tuesday, Oct 8</p>
+      <h1>Coach Rahul</h1>
+    </div>
+    <div class="avatar">RK</div>
+  </header>
+
+  <section>
+    <h2 class="section-title">Up next</h2>
+    <article class="card session-now">
+      <div class="card-top"><span class="dot green pulse"></span><span class="card-kicker">Starts in 25 min</span></div>
+      <h3>U12 Nets</h3>
+      <p class="card-sub">4:30–6:00 PM · Turf 2 · 18 athletes · Focus: wrist position</p>
+      <button class="btn primary big" id="startSessionBtn">Start session</button>
+    </article>
+  </section>
+
+  <!-- ATTENDANCE FLOW -->
+  <section id="attendanceFlow" hidden>
+    <h2 class="section-title">Who's here? <span class="count-badge" id="presentCount">0/18</span></h2>
+    <button class="btn ghost full" id="markAllBtn">Mark all present</button>
+    <div class="roster" id="roster"></div>
+    <button class="btn primary big" id="finishAttendanceBtn">Finish attendance</button>
+    <div id="notesStep" hidden>
+      <h2 class="section-title">Quick notes <span class="muted">(optional)</span></h2>
+      <div class="roster" id="notesRoster"></div>
+      <button class="btn primary big" id="wrapUpBtn">Wrap up session</button>
+    </div>
+    <div id="doneStep" class="done-banner" hidden>
+      <h3>✅ Session wrapped</h3>
+      <p class="card-sub">Attendance saved · notes sent to parents · workload updated</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Later today</h2>
+    <article class="card session-row">
+      <div><h3>U14 Match Prep</h3><p class="card-sub">6:30–8:00 PM · Main Ground · 22 athletes</p></div>
+      <span class="pill">6:30 PM</span>
+    </article>
+    <article class="card session-row">
+      <div><h3>U10 Beginners</h3><p class="card-sub">Tomorrow 5:00 PM · Turf 1 · 14 athletes</p></div>
+      <span class="pill">Tomorrow</span>
+    </article>
+  </section>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active">🏠<span>Home</span></button>
+    <button class="nav-item">📅<span>Schedule</span></button>
+    <button class="nav-item">✅<span>Attendance</span></button>
+    <button class="nav-item">📝<span>Notes</span></button>
+    <button class="nav-item">⋯<span>More</span></button>
+  </nav>
+</main>
+
+<!-- ==================== ADMIN VIEW ==================== -->
+<main id="view-admin" class="desktop-frame view">
+  <header class="admin-head">
+    <div>
+      <p class="greet-hi">CricMax Academy · Edison, NJ</p>
+      <h1>What needs you today</h1>
+    </div>
+    <div class="admin-today">
+      <div class="today-stat"><strong>5</strong><span>sessions today</span></div>
+      <div class="today-stat"><strong>82</strong><span>athletes expected</span></div>
+    </div>
+  </header>
+
+  <section class="triage">
+    <div class="triage-list" id="triageList">
+      <article class="triage-item red">
+        <span class="triage-num">1</span>
+        <div><h3>6 payments overdue — $720 total</h3><p>Oldest is 11 days late. One tap sends reminders to all 6 families.</p></div>
+        <button class="btn primary sm">Send reminders</button>
+      </article>
+      <article class="triage-item amber">
+        <span class="triage-num">2</span>
+        <div><h3>2 sessions missing attendance</h3><p>Yesterday's U10 and U14 sessions were never marked.</p></div>
+        <button class="btn ghost sm">Review</button>
+      </article>
+      <article class="triage-item amber">
+        <span class="triage-num">3</span>
+        <div><h3>14 athletes missing fall waivers</h3><p>They can't train until signed. Parents were notified Monday.</p></div>
+        <button class="btn ghost sm">Remind again</button>
+      </article>
+      <article class="triage-item blue">
+        <span class="triage-num">4</span>
+        <div><h3>U8 Beginners is 40% full</h3><p>12 spots still open for the winter batch starting Nov 2.</p></div>
+        <button class="btn ghost sm">Promote</button>
+      </article>
+      <article class="triage-item blue">
+        <span class="triage-num">5</span>
+        <div><h3>3 new trial requests</h3><p>Waiting over 24 hours. Fast replies convert 2× better.</p></div>
+        <button class="btn ghost sm">View leads</button>
+      </article>
+    </div>
+    <aside class="admin-side">
+      <article class="card">
+        <h3>The numbers</h3>
+        <div class="num-row"><span>Athletes</span><strong>214</strong></div>
+        <div class="num-row"><span>Attendance this week</span><strong>91%</strong></div>
+        <div class="num-row"><span>Collected in October</span><strong>$18,240</strong></div>
+        <div class="num-row"><span>Overdue</span><strong class="warn">$720</strong></div>
+      </article>
+      <article class="card">
+        <h3>Today's sessions</h3>
+        <div class="num-row"><span>U12 Nets · 4:30 PM</span><strong>18</strong></div>
+        <div class="num-row"><span>U14 Match Prep · 6:30 PM</span><strong>22</strong></div>
+        <div class="num-row"><span>Adult Social · 8:00 PM</span><strong>12</strong></div>
+      </article>
+    </aside>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
