@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quixera — Market & Strategy Infographic</title>
+<style>
+:root{--ink:#14181f;--muted:#6b7280;--bg:#f4f5f7;--card:#fff;--green:#14532d;--green2:#1a5c3f;--gold:#d9a419;--red:#d64545;--amber:#c77f1a;--blue:#2b6cb0;--purple:#5b3a96;--radius:16px;--shadow:0 1px 3px rgba(16,24,40,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.hero{background:linear-gradient(135deg,#0f1f16 0%,#14532d 60%,#1a5c3f 100%);color:#fff;padding:56px 20px 44px;text-align:center}
+.hero .kicker{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#e9b949;font-weight:800}
+.hero h1{font-size:clamp(30px,5vw,52px);letter-spacing:-.02em;margin:12px 0 8px}
+.hero p{max-width:640px;margin:0 auto;color:#cfe0d6;font-size:16px;line-height:1.55}
+.stat-band{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;max-width:1000px;margin:-26px auto 0;padding:0 16px}
+.stat{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 26px;text-align:center;min-width:150px;border-top:4px solid var(--gold)}
+.stat strong{display:block;font-size:30px;letter-spacing:-.02em}
+.stat span{font-size:12px;color:var(--muted);font-weight:600}
+.wrap{max-width:1000px;margin:0 auto;padding:34px 16px 60px}
+.sec{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;border:1px solid #eceef1}
+.sec-head{width:100%;background:none;text-align:left;padding:20px 22px;display:flex;align-items:center;gap:14px;cursor:pointer;font:inherit}
+.sec-head .ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.sec-head h2{font-size:18px;flex:1}
+.sec-head .tag{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sec-head .chev{font-size:20px;color:var(--muted);transition:transform .25s}
+.sec.open .sec-head .chev{transform:rotate(180deg)}
+.sec-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.sec-body-inner{padding:0 22px 24px;font-size:14.5px;line-height:1.65;color:#333a45}
+.sec-body-inner h4{margin:16px 0 6px;font-size:14px;color:var(--ink)}
+.sec-body-inner p{margin-bottom:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+@media(max-width:760px){.grid3{grid-template-columns:1fr}}
+.pcard{border:1px solid #eceef1;border-radius:14px;padding:16px;background:#fafbfa}
+.pcard h4{margin:0 0 6px;font-size:15px}
+.pcard .price{font-size:12px;font-weight:800;color:var(--green2);text-transform:uppercase;letter-spacing:.05em}
+.pcard ul{margin:8px 0 0 18px;font-size:13.5px}
+.vbadge{display:inline-block;font-size:10.5px;font-weight:800;border-radius:20px;padding:3px 10px;margin:8px 6px 0 0;letter-spacing:.03em}
+.vbadge.ok{background:#e9f7ef;color:#1e8e4e}
+.vbadge.warn{background:#fdf4e3;color:#a86a12}
+.vbadge.info{background:#eaf2fb;color:#2b6cb0}
+.vbadge.risk{background:#fdeeee;color:#b03a3a}
+table.cmp{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+table.cmp th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:10px;border-bottom:2px solid #eceef1}
+table.cmp td{padding:10px;border-bottom:1px solid #f0f1ee;vertical-align:top}
+.bar{height:10px;border-radius:6px;background:#edf0f4;overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;border-radius:6px}
+.callout{border-left:4px solid var(--gold);background:#fdf8ec;border-radius:0 12px 12px 0;padding:14px 16px;margin:14px 0;font-size:14px}
+.callout.risk{border-color:var(--red);background:#fdf0f0}
+.callout.good{border-color:var(--green2);background:#eff6f1}
+.sources{font-size:12px;color:var(--muted);margin-top:14px}
+.sources a{color:var(--blue);text-decoration:none}
+.sources li{margin-bottom:4px}
+ol.ideas{margin:10px 0 0 20px}
+ol.ideas li{margin-bottom:12px}
+ol.ideas strong{color:var(--ink)}
+.back{display:inline-block;margin:22px 16px 0;color:var(--green2);font-weight:700;text-decoration:none;font-size:14px}
+.foot{text-align:center;color:var(--muted);font-size:12px;padding:0 16px 40px}
+.num{font-weight:800;color:var(--ink)}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">← Back to UX demo</a>
+<header class="hero">
+  <div class="kicker">Independent market check · Oct 2026</div>
+  <h1>Quixera: the app, the market,<br>the money</h1>
+  <p>Your docs, summarized — plus my own validated competitor research and an honest opinion. Tap any section to expand the detail.</p>
+</header>
+<div class="stat-band">
+  <div class="stat"><strong>3</strong><span>products · one athlete record</span></div>
+  <div class="stat"><strong>615</strong><span>tracked stories · 19 domains</span></div>
+  <div class="stat"><strong>$40B+</strong><span>US family youth-sports spend</span></div>
+  <div class="stat"><strong>7×</strong><span>revenue per academy (modeled)</span></div>
+</div>
+
+<div class="wrap">
+
+<!-- 1 WHAT IT IS -->
+<div class="sec open">
+  <button class="sec-head"><span class="ico" style="background:#eef6f1">🏟️</span><h2>What Quixera is</h2><span class="tag">from your docs</span><span class="chev">▾</span></button>
+  <div class="sec-body"><div class="sec-body-inner">
+    <p>One platform, three products, <span class="num">one athlete record</span> — a youth-sports operating system replacing the 4–7 disconnected tools academies use today (registration, scheduling, coaching, payments, comms). Person-centric identity, portable athlete records, consent management, event-driven architecture.</p>
+    <div class="grid3">
+      <div class="pcard"><h4>Academy</h4><div class="price">Live · $1.2B US market</div><p>Private academies & clubs. Enrollment, scheduling, coaching tools, athlete development, payments, facility management.</p></div>
+      <div class="pcard"><h4>Community</h4><div class="price">Launched · $8.2B US market</div><p>Municipal parks & rec. Registration, facility permitting, grant reporting, youth development tracking.</p></div>
+      <div class="pcard"><h4>Pipeline</h4><div class="price">2027 · $200M global</div><p>National governing bodies. Talent ID grassroots→elite, assessment frameworks, coach credentialing, competition management.</p></div>
+    </div>
+    <span class="vbadge warn">My check: market sizes</span>
+    <p>Independent software-market reports put <em>youth sports software</em> at ~$506M globally in 2025 (→$1.64B by 2035, 12.5% CAGR) and sports league software at $1.25B (→$2.94B by 2032). Your $1.2B Academy figure is defensible only if it counts adjacent spend (payments volume, services) — pure software TAM is smaller. The honest TAM story is share of the <span class="num">$40B+ families spend</span> plus payments flowing through your rails, not software licences alone.</p>
+  </div></div>
+</div>
+
+<!-- 2 CAPABILITIES -->
+<div class="sec">
+  <button class="sec-head"><span class="ico" style="background:#eaf2fb">⚙️</span><h2>Capabilities</h2><span class="tag">from your docs + live app</span><span class="chev">▾</span></button>
+  <div class="sec-body"><div class="sec-body-inner">
+    <div class="grid3">
+      <div class="pcard"><h4>Enrollment</h4><ul><li>5-min guardian enrollment</li><li>Consent gating, waivers</li><li>Family accounts, multi-child checkout</li><li>Waitlists</li></ul></div>
+      <div class="pcard"><h4>Programs & scheduling</h4><ul><li>Template → schedule deployment</li><li>Multi-location, session generation</li><li>Lane-grid scheduler, slot finder</li></ul></div>
+      <div class="pcard"><h4>Coaching</h4><ul><li>Mobile session notes + skill tagging</li><li>Attendance, offline-first</li><li>AI video analysis (roadmap)</li></ul></div>
+      <div class="pcard"><h4>Athlete development</h4><ul><li>Longitudinal timeline</li><li>Assessments, skill observations</li><li>Parent visibility, portable records</li></ul></div>
+      <div class="pcard"><h4>Payments</h4><ul><li>Stripe-native, family billing</li><li>Packages, credits, auto-invoicing</li><li>Dunning & recovery</li></ul></div>
+      <div class="pcard"><h4>Ops & comms</h4><ul><li>Facility catalog, capacity enforcement</li><li>Inbox, broadcasts, announcements</li><li>Reports, analytics, AI insights</li></ul></div>
+    </div>
+    <p style="margin-top:12px">Build state per your tracker: coach mobile app shipped; admin web app live (reviewed — dense, 137 screens); <span class="num">guardian app at 0/49 stories</span> — the parent surface is the biggest gap and, per the memo, the revenue engine.</p>
+  </div></div>
+</div>
+
+<!-- 3 COMPETITOR LANDSCAPE -->
+<div class="sec">
+  <button class="sec-head"><span class="ico" style="background:#fdf4e3">🥊</span><h2>Competitor landscape — independently validated</h2><span class="tag">my research</span><span class="chev">▾</span></button>
+  <div class="sec-body"><div class="sec-body-inner">
+    <p>The market splits into four camps. I re-checked every price your memo cited against current sources — <span class="num">all validated</span> — and added the threats your memo underplays.</p>
+    <h4>Camp 1 — Club operations (bills the club, no athlete-side product)</h4>
+    <table class="cmp">
+      <tr><th>Player</th><th>Scale / price (verified)</th><th>My read</th></tr>
+      <tr><td><strong>TeamSnap</strong> (2009)</td><td>19,000+ orgs, 30M+ parents/players/coaches reach (2026). ~$0–25/team/mo + 3.25%+$1.50 processing + $3.50/player/mo. <strong>TeamSnap ONE + $799 Falcon camera</strong>, free live streaming for ONE users.</td><td>The one to watch. It's moving <em>toward</em> your fan/streaming revenue with cameras + streaming bundles. Comms-first, no development pathway — but distribution is solved.</td></tr>
+      <tr><td><strong>SportsEngine</strong> (NBC Sports Next)</td><td>650K+ teams/leagues/clubs/NGBs served historically. SportsEngine Play streaming: $9.99/mo or $79.99/yr. Deep NGB ties (USA Hockey etc.).</td><td><span class="num">The underplayed threat.</span> NBC-backed, owns governing-body relationships — a direct threat to your <em>Pipeline</em> product specifically.</td></tr>
+      <tr><td><strong>Upper Hand</strong></td><td>$79/mo Start, $199/mo Grow. Facility-focused, no free tier.</td><td>Validates your memo exactly. Solid ops tool, zero consumer SKU — cedes the household to you.</td></tr>
+      <tr><td><strong>PlayMetrics</strong></td><td>~$25–40/player/yr + ~3% payments. Club-billed.</td><td>Validates. Parent never becomes a customer.</td></tr>
+      <tr><td><strong>Spond</strong></td><td>Free (+3.29%+$1.00 processing). Pure comms.</td><td>Validates "race to zero" — do not compete on ops price.</td></tr>
+    </table>
+    <h4>Camp 2 — Cricket-native</h4>
+    <table class="cmp">
+      <tr><th>Player</th><th>Scale / price (verified)</th><th>My read</th></tr>
+      <tr><td><strong>CricHeroes</strong> (2016)</td><td>10M+ Android installs (~30M estimated), 363K ratings @ 4.47. Free + premium (~$12.49). India-centric amateur scoring.</td><td>Your memo's "40M+ users" is plausible incl. iOS. Confirms the gap: massive scoring footprint, <em>zero</em> academy development product. A potential partner <em>or</em> acquirer-watch.</td></tr>
+      <tr><td><strong>CricClubs</strong></td><td>Free. US-focused league management, scoring, points tables, livestream.</td><td>Closer to your ops space than the memo suggests — the cricket-native club tool in your home market. Worth tracking feature-for-feature.</td></tr>
+      <tr><td><strong>StanceBeam</strong></td><td>₹5,299 hardware, no subscription.</td><td>Hardware-gated, non-recurring — not a software competitor.</td></tr>
+    </table>
+    <h4>Camp 3 — Consumer video (high churn)</h4>
+    <table class="cmp">
+      <tr><th>Player</th><th>Price (verified)</th><th>My read</th></tr>
+      <tr><td><strong>CoachNow</strong></td><td>From $4.99/mo</td><td>Coach tool, no academy graph. Churns.</td></tr>
+      <tr><td><strong>Sportsbox / Mustard</strong></td><td>~$80/mo / $24.99/mo</td><td>Single-skill AI, standalone. Your memo is right: video converts, it doesn't retain. Sell as credits, never as the retention bet.</td></tr>
+    </table>
+    <h4>Camp 4 — The parent wallet (pathway & fans)</h4>
+    <table class="cmp">
+      <tr><th>Player</th><th>Price (verified)</th><th>My read</th></tr>
+      <tr><td><strong>NCSA</strong></td><td>$500–$4,000+ tiers (Champion → MVP+); reports up to ~$8K. No public pricing — quote on sales call.</td><td>Your memo's $1,320–$4,200 sits inside the real band. <span class="num">Bigger finding:</span> NCSA is widely distrusted — aggressive sales, near-impossible cancellation (per parent reviews & ex-employee accounts). The pathway wallet is real; the incumbent is hated. An honest, product-led alternative is a genuine opening.</td></tr>
+      <tr><td><strong>GameChanger</strong> (Dick's)</td><td>Plus <strong>$39.99/yr</strong> (validates your memo exactly) · Premium $99.99/yr · Family $179.99/yr. 5.2M+ downloads. Free for coaches/teams; 5 free streams then paywall.</td><td>Your Fan Pass anchor is correctly priced. But GameChanger <em>is</em> the fan-wallet competitor — 13M athletes claimed, Dick's distribution. Your edge: cricket has no GameChanger, and diaspora families pay for relatives abroad.</td></tr>
+    </table>
+    <h4>Parent spending (the wallet you're fishing in)</h4>
+    <p>Aspen Institute Project Play (1,848 parents, Nov–Dec 2024): <span class="num">$1,016</span>/child on the primary sport (+46% since 2019), ~$1,500 across all sports, <span class="num">$40B+</span> total family spend. Sep 2026 survey: <span class="num">44% of parents delayed or skipped enrollment due to cost.</span> Your memo's numbers validate — but note the tension: the wallet is huge <em>and</em> price sensitivity is rising. Your $99 price framed as "4% of what you already spend" (the memo's framing) is exactly right; framed as "another subscription," it dies.</p>
+    <div class="sources"><strong>Sources:</strong><ul>
+      <li><a href="https://www.marketresearchintellect.com/product/youth-sports-software-market/">MarketResearchIntellect — Youth Sports Software Market</a></li>
+      <li><a href="https://pmarketresearch.com/it/sports-league-software-market/">PW Consulting — Sports League Software Market</a></li>
+      <li><a href="https://youthsportsbusinessreport.com/teamsnap-opens-youth-sports-live-streaming-to-all-one-users-with-799-xbotgo-camera/">YSBR — TeamSnap ONE + XbotGo/Falcon</a></li>
+      <li><a href="https://www.nbcuniversal.com/article/nbc-sports-next-breaks-ground-sportsengine-play-first-its-kind-streaming-service-youth-amateur">NBCUniversal — SportsEngine Play</a></li>
+      <li><a href="https://help.gc.com/hc/en-us/articles/28521445314957-Individual-Subscription-FAQs">GameChanger — subscription FAQs</a></li>
+      <li><a href="https://androidrank.org/application/cricheroes_cricket_scoring_app/com.cricheroes.cricheroes.alpha">AndroidRank — CricHeroes installs/ratings</a></li>
+      <li><a href="https://medium.com/@trenton_42972/ncsa-review-what-parents-need-to-know-before-paying-for-recruiting-help-699189f3fb7d">Parent-reported NCSA pricing & tactics</a></li>
+      <li><a href="https://projectplay.org/news/2025/2/24/project-play-survey-family-spending-on-youth-sports-rises-46-over-five-years">Aspen Project Play — family spending survey</a></li>
+      <li><a href="https://www.consumeraffairs.com/news/youth-sports-costs-are-soaring-5-ways-parents-can-save-and-keep-kids-in-the-game-092326.html">ConsumerAffairs — 44% skipped enrollment on cost (Sep 2026)</a></li>
+    </ul></div>
+  </div></div>
+</div>
+
+<!-- 4 MY HONEST OPINION -->
+<div class="sec">
+  <button class="sec-head"><span class="ico" style="background:#fdeeee">💬</span><h2>My true opinion</h2><span class="tag">not from your docs</span><span class="chev">▾</span></button>
+  <div class="sec-body"><div class="sec-body-inner">
+    <div class="callout good"><strong>What's right.</strong> The core thesis survives my research: monetize the household, price on aspiration not features, sequence expensive CV last, and the Workload Guardian is genuinely the best anti-churn mechanic in youth sports software — nobody else can build an ECB-standard safety feature. The per-<em>fan</em> billing insight (Fan Pass) is the smartest unit-of-billing call in the memo.</div>
+    <div class="callout risk"><strong>Where I'd push back.</strong>
+    <br>1. <strong>TAM is overstated.</strong> Pure software TAM is ~$0.5B globally, not $1.2B US. The pitch that works is share of the $40B family spend + payments volume — don't let a diligence process catch the bigger number undefended.
+    <br>2. <strong>The moat is rented.</strong> Everything in the $199 Pathway tier depends on what the LAKR agreement <em>actually permits in a paid consumer SKU</em> — brand use, badge issuance, selection linkage. Your memo flags this as Monday item #1 and it's still the #1 risk. If scope narrows, Pathway pricing collapses to "app with videos."
+    <br>3. <strong>35% attach is aggressive.</strong> It's defensible only if three things all fire: checkout placement + 25% rev-share + coach endorsement. NCSA converts with high-pressure sales; you're proposing to convert with product. The Phase-0 pilot is the whole ballgame — fund nothing in Phase 2 until it reports.
+    <br>4. <strong>SportsEngine/NBC is underplayed</strong> in the memo — it's the direct threat to Pipeline (NGB relationships) and it's already bundling streaming.
+    <br>5. <strong>Execution bandwidth.</strong> 615 stories, guardian app at zero, AI layer at zero — the roadmap is a lot for one team. The memo's "cheapest first" sequencing is the right defense; protect it against scope creep.</div>
+    <div class="callout"><strong>The one-line bet.</strong> If the workload guardian + weekly recap ship in the guardian app and attach clears 20% at winter registration, the model works. Everything else is optimization.</div>
+  </div></div>
+</div>
+
+<!-- 5 MONETIZATION -->
+<div class="sec">
+  <button class="sec-head"><span class="ico" style="background:#eef6f1">💰</span><h2>Monetization: the three engines</h2><span class="tag">from your docs</span><span class="chev">▾</span></button>
+  <div class="sec-body"><div class="sec-body-inner">
+    <h4>Engine 1 — Academy SaaS <span class="vbadge info">billed to facility</span></h4>
+    <p>Club $99/mo → Academy $249/mo → Elite $599/mo, scaled by athlete count (never flat). Knight Riders Academy brand licence $1,500+/mo — a franchise price, highest-margin line.</p>
+    <h4>Engine 2 — Household <span class="vbadge info">billed to parent at enrollment checkout</span></h4>
+    <p>Connect <strong>free</strong> · Athlete Pro <strong>$99/yr</strong> (recap, skill path + gap-to-goal, workload guardian, drills/streaks) · Knight Riders Pathway <strong>$199/yr</strong> (passport, pathway map, private percentiles, showcase) · Fan Pass <strong>$39.99/yr per fan</strong> · Family $69/yr add-on (3rd sibling free) · Performance $79/yr (14–18).</p>
+    <h4>Engine 3 — Payments & consumables <span class="vbadge info">no churn exposure</span></h4>
+    <p>0.75% platform margin on volume (bigger than SaaS above ~150 athletes) · AI video credits · camera bundle $180–300/yr · showcase fees · equipment reorder margin.</p>
+    <h4>The term that makes it work</h4>
+    <p><span class="num">25% of household revenue back to the academy.</span> Without it, academies block the parent tier and attach goes to zero.</p>
+    <h4>Unit economics (200-athlete reference academy)</h4>
+    <p><span class="num">$2,388/yr → $16,723/yr (7×).</span> Mix shifts from 100% SaaS to:</p>
+    <div class="bar"><i style="width:45%;background:#14532d"></i></div><p>Household subscriptions — 45%</p>
+    <div class="bar"><i style="width:22%;background:#2b6cb0"></i></div><p>Payments margin — 22%</p>
+    <div class="bar"><i style="width:18%;background:#d9a419"></i></div><p>Academy SaaS — 18%</p>
+    <div class="bar"><i style="width:14%;background:#5b3a96"></i></div><p>Commerce/consumables — 14%</p>
+  </div></div>
+</div>
+
+<!-- 6 EXTRA IDEAS -->
+<div class="sec">
+  <button class="sec-head"><span class="ico" style="background:#fdf4e3">💡</span><h2>7 more monetization ideas</h2><span class="tag">my suggestions</span><span class="chev">▾</span></button>
+  <div class="sec-body"><div class="sec-body-inner">
+    <ol class="ideas">
+      <li><strong>Private-lesson marketplace take rate (10–15%).</strong> 1:1 coaching booking is already on your roadmap — the highest-intent transaction in youth sports, zero CAC.</li>
+      <li><strong>Paid tryouts & tournament fees.</strong> Per-player tryout fee ($5–15, the SkillShark model) or per-team tournament fee on your competition module. Doubles as a demand signal for where to open academies.</li>
+      <li><strong>Registration insurance at checkout.</strong> Carrier rev-share on an opt-in checkbox — standard in youth sports, pure margin.</li>
+      <li><strong>NGB data licensing (Pipeline).</strong> Anonymized benchmarking reports for federations and equipment brands + usage-based API pricing on the Federation Data Exchange.</li>
+      <li><strong>Gift subscriptions.</strong> Grandparents buy Athlete Pro/Fan Pass for the grandchild — diaspora cricket makes this unusually strong for you.</li>
+      <li><strong>Contextual sponsorship of the free tier.</strong> A brand underwrites Connect (logo placement, never behavioral targeting of minors) — funds free without taxing parents.</li>
+      <li><strong>White-label for multi-sport operators.</strong> Beyond the KR licence: your rails under a big chain's brand.</li>
+    </ol>
+    <div class="callout risk"><strong>Deliberately avoid:</strong> wearables/hardware margins · a social feed with minors' photos (COPPA surface) · selling scholarship <em>outcomes</em> (no NCAA cricket status — mis-selling risk that burns the Knight Riders brand) · competing on ops price with free tools.</div>
+  </div></div>
+</div>
+
+</div>
+<div class="foot">Built from your uploaded docs + independent web research, Oct 8 2026. Figures are cited per-section; model outputs are hypotheses, not forecasts.<br><a href="index.html" style="color:var(--blue)">← Back to UX demo</a></div>
+
+<script>
+document.querySelectorAll('.sec-head').forEach(head => {
+  head.addEventListener('click', () => {
+    const sec = head.parentElement;
+    const body = sec.querySelector('.sec-body');
+    const open = sec.classList.toggle('open');
+    body.style.maxHeight = open ? body.scrollHeight + 'px' : '0';
+  });
+});
+// open first section by default
+document.querySelectorAll('.sec.open').forEach(sec => {
+  sec.querySelector('.sec-body').style.maxHeight = sec.querySelector('.sec-body').scrollHeight + 'px';
+});
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.sec.open .sec-body').forEach(b => b.style.maxHeight = b.scrollHeight + 'px');
+});
+</script>
+</body>
+</html>
