@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.1'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -2636,12 +2636,14 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 function chatKey() { return localStorage.getItem(CFG.LS.GEMINI) || ''; }
 function setChatKey(k) { if (k && k.trim()) localStorage.setItem(CFG.LS.GEMINI, k.trim()); else localStorage.removeItem(CFG.LS.GEMINI); }
 function chatMsgs() {
-  if (!S.chat) { try { S.chat = { msgs: JSON.parse(localStorage.getItem('st_chat') || '[]'), web: localStorage.getItem('st_chat_web') !== '0' }; } catch (e) { S.chat = { msgs: [], web: true }; } }
+  // v3.27.1 — versioned chat key: old cached answers (pre-query-engine) don't persist.
+  const CK = 'st_chat_v3_27_1';
+  if (!S.chat) { try { S.chat = { msgs: JSON.parse(localStorage.getItem(CK) || '[]'), web: localStorage.getItem('st_chat_web') !== '0' }; } catch (e) { S.chat = { msgs: [], web: true }; } }
   return S.chat;
 }
 function saveChat() {
   const c = chatMsgs();
-  try { localStorage.setItem('st_chat', JSON.stringify(c.msgs.slice(-30))); localStorage.setItem('st_chat_web', c.web ? '1' : '0'); } catch (e) {}
+  try { localStorage.setItem('st_chat_v3_27_1', JSON.stringify(c.msgs.slice(-30))); localStorage.setItem('st_chat_web', c.web ? '1' : '0'); } catch (e) {}
 }
 function pushChat(role, text, sources) {
   const c = chatMsgs(); c.msgs.push({ role, text, sources: sources || [] }); saveChat(); renderChat();
@@ -2782,24 +2784,24 @@ function answerDataQuestion(query) {
     }
     const n = evs.length;
     const when = tw ? ` between ${tw.label}` : '';
-    let text = `**${n} time${n === 1 ? '' : 's'}** — Simba ${metricLabel}${when} in the ${dr.label}`;
-    text += daysWithData > 1 ? ` (${daysWithData} days with data).` : '.';
-    if (n > 0) {
-      // Per-day breakdown
+    // v3.27.1 — human-short: lead with the number, compact day list, no fluff.
+    let text;
+    if (n === 0) {
+      text = `None${when} in the ${dr.label}.`;
+    } else {
       const byDay = {};
       evs.forEach(e => {
-        const d = localDay(e.logged_at);
-        if (!byDay[d]) byDay[d] = [];
-        byDay[d].push(fmtTime(new Date(e.logged_at)));
+        const d = new Date(e.logged_at);
+        const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        if (!byDay[key]) byDay[key] = [];
+        byDay[key].push(fmtTime(d).replace(':00 ', ' '));
       });
-      const days = Object.keys(byDay).sort().slice(-7);
-      text += '\n\n' + days.map(d => `• ${d}: ${byDay[d].join(', ')}`).join('\n');
+      const parts = Object.keys(byDay).map(d => `${d} (${byDay[d].join(', ')})`);
+      text = `${n} time${n === 1 ? '' : 's'}${when} — ${parts.join(', ')}.`;
       if (metric === 'poop') {
         const scores = evs.map(e => +e.fecal_score).filter(x => x > 0);
-        if (scores.length) text += `\n\nStool scores: ${scores.join(', ')} (avg ${(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)}/7).`;
+        if (scores.length) text += ` Stool avg ${(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)}/7.`;
       }
-    } else {
-      text += `\n\nNo ${type.toLowerCase()}s logged${when} in that period — check that days were entered (missing days don't count).`;
     }
     return { text };
   }
@@ -2807,7 +2809,9 @@ function answerDataQuestion(query) {
     const meals = inRange.filter(e => e.category === 'Food');
     if (!meals.length) return { text: `No meals logged in the ${dr.label}.` };
     const tbsp = meals.reduce((a, e) => a + (+e.kibble_consumed_tbsp || 0), 0);
-    const kcal = meals.reduce((a, e) => a + (+e.event_kcal || 0), 0);
+    const perDay = (tbsp / Math.max(1, daysWithData)).toFixed(1);
+    // v3.27.1 — human-short
+    let text = `${tbsp.toFixed(1)} tbsp over ${daysWithData} day${daysWithData === 1 ? '' : 's'} (~${perDay}/day).`;
     const bySlot = {};
     meals.forEach(e => {
       const h = new Date(e.logged_at).getHours();
@@ -2815,25 +2819,15 @@ function answerDataQuestion(query) {
       if (!bySlot[slot]) bySlot[slot] = { n: 0, tbsp: 0 };
       bySlot[slot].n++; bySlot[slot].tbsp += (+e.kibble_consumed_tbsp || 0);
     });
-    let text = `**Eating — ${dr.label}** (${daysWithData} days with data):\n`;
-    text += `• ${meals.length} meals, ${tbsp.toFixed(1)} tbsp total (~${(tbsp / Math.max(1, daysWithData)).toFixed(1)}/day)`;
-    if (kcal > 0) text += `, ~${Math.round(kcal / Math.max(1, daysWithData))} kcal/day from meals`;
-    text += '\n';
-    ['Breakfast', 'Lunch', 'Dinner'].forEach(s => {
-      if (bySlot[s]) text += `• ${s}: ${bySlot[s].n} meals, avg ${(bySlot[s].tbsp / bySlot[s].n).toFixed(1)} tbsp\n`;
-    });
-    // Recent trend: last 3 days vs prior
-    if (dr.days >= 7) {
-      const recent = inRange.filter(e => new Date(e.logged_at) >= new Date(now - 3 * 86400000));
-      const rt = recent.reduce((a, e) => a + (+e.kibble_consumed_tbsp || 0), 0);
-      text += `\nLast 3 days: ${rt.toFixed(1)} tbsp total.`;
-    }
+    const slots = ['Breakfast', 'Lunch', 'Dinner'].filter(s => bySlot[s])
+      .map(s => `${s} avg ${(bySlot[s].tbsp / bySlot[s].n).toFixed(1)}`);
+    if (slots.length) text += ' ' + slots.join(', ') + '.';
     return { text };
   }
   if (metric === 'water') {
     const ws = inRange.filter(e => e.category === 'Water');
     const tsp = ws.reduce((a, e) => a + (+e.water_consumed_tsp || 0), 0);
-    return { text: `**Water — ${dr.label}**: ${tsp.toFixed(0)} tsp total (~${(tsp / Math.max(1, daysWithData)).toFixed(0)} tsp/day across ${daysWithData} days with data, ${ws.length} water logs).` };
+    return { text: `~${(tsp / Math.max(1, daysWithData)).toFixed(0)} tsp/day over ${daysWithData} day${daysWithData === 1 ? '' : 's'}.` };
   }
   return null;
 }
@@ -2841,7 +2835,7 @@ function answerDataQuestion(query) {
 async function answerLocally(query) {
   // v3.27 — data questions get a specific computed answer, not the generic brief.
   const dq = answerDataQuestion(query);
-  if (dq) return `📊 From Simba's logged data:\n\n${dq.text}\n\n_Add a free Gemini key below for AI-powered analysis with web search._`;
+  if (dq) return dq.text;
   const spec = await loadKnowledgeSilent('knowledge/cavapoo-specialized.md');
   const gen = await loadKnowledgeSilent('knowledge/general-canine.md');
   const brief = buildTelemetryBrief(S.history || [], S.subject || {});
