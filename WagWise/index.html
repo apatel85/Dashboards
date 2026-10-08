@@ -267,10 +267,10 @@
   <section class="screen" id="screen-chat">
     <div class="card">
       <div class="card-title">Ask about Simba</div>
-      <div class="hint" id="kbFresh" style="margin-bottom:8px">📚 Knowledge base loading…</div>
-      <div class="chat-tools">
-        <label class="chat-web"><input type="checkbox" id="chatWeb" checked> 🌐 Web search <span class="hint">(live Google results · 500 free/day)</span></label>
-        <button id="chatKeyBtn" class="btn small">🔑 AI key</button>
+      <div class="ask-meta"><span id="kbFresh" class="hint">📚 Knowledge base loading…</span></div>
+      <div class="chat-tools compact">
+        <label class="chat-web"><input type="checkbox" id="chatWeb" checked> 🌐 Web</label>
+        <button id="chatKeyBtn" class="btn small ghost">🔑 AI key</button>
       </div>
       <div id="chatKeyBox" hidden>
         <p class="muted small">Answers use your <b>free Gemini key</b> — <a href="https://aistudio.google.com" target="_blank" rel="noopener">get one at Google AI Studio</a>, paste it here. It stays on this device only, and is sent only to Google's Gemini API. Tip: in Google Cloud console, restrict the key to this app's address (APIs &amp; Services → Credentials → HTTP referrers). Note: on the free tier Google may use prompts to improve its products.</p>
