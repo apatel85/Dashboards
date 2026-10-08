@@ -3,24 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quixera — Simple by Design (UX Demo)</title>
+<title>Quixera — UX Review Demo (Current vs Proposed)</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="demo-bar">
   <div class="demo-bar-inner">
-    <div class="demo-brand"><span class="demo-logo">Q</span> Quixera <span class="demo-tag">UX redesign demo</span></div>
+    <div class="demo-brand"><span class="demo-logo">Q</span> Quixera <span class="demo-tag">UX review demo</span></div>
     <div class="persona-switch" role="tablist" aria-label="Choose a view">
-      <button class="persona-btn active" data-persona="guardian" role="tab">👪 Parent</button>
+      <button class="persona-btn" data-persona="guardian" role="tab">👪 Parent</button>
       <button class="persona-btn" data-persona="coach" role="tab">🏏 Coach</button>
-      <button class="persona-btn" data-persona="admin" role="tab">🏟️ Academy</button>
+      <button class="persona-btn active" data-persona="admin" role="tab">🏟️ Academy</button>
     </div>
   </div>
 </div>
-<p class="demo-note">Demo with sample data — click around. Nothing here is real, nothing is saved.</p>
+<p class="demo-note">Replica of the real app built from a read-only review — sample data, nothing is real, nothing is saved, nothing was changed in the actual app.</p>
 
 <!-- ==================== GUARDIAN VIEW ==================== -->
-<main id="view-guardian" class="phone-frame view active">
+<main id="view-guardian" class="phone-frame view">
   <header class="greet">
     <div>
       <p class="greet-hi">Good morning,</p>
@@ -34,7 +34,6 @@
     <button class="child-chip" data-child="diya">Diya · U8</button>
   </div>
 
-  <!-- PRIORITY STACK -->
   <section>
     <h2 class="section-title">Needs your attention <span class="count-badge">3</span></h2>
     <div class="stack" id="guardianStack">
@@ -59,13 +58,11 @@
     </div>
   </section>
 
-  <!-- THIS WEEK -->
   <section>
     <h2 class="section-title">This week</h2>
     <div class="week-strip" id="weekStrip"></div>
   </section>
 
-  <!-- WEEKLY RECAP -->
   <section>
     <h2 class="section-title">Aarav's week</h2>
     <article class="card">
@@ -79,7 +76,6 @@
     </article>
   </section>
 
-  <!-- SAFETY -->
   <section>
     <h2 class="section-title">Safety</h2>
     <article class="card safety">
@@ -92,7 +88,6 @@
     </article>
   </section>
 
-  <!-- PATH -->
   <section>
     <h2 class="section-title">Knight's Path</h2>
     <article class="card">
@@ -137,7 +132,6 @@
     </article>
   </section>
 
-  <!-- ATTENDANCE FLOW -->
   <section id="attendanceFlow" hidden>
     <h2 class="section-title">Who's here? <span class="count-badge" id="presentCount">0/18</span></h2>
     <button class="btn ghost full" id="markAllBtn">Mark all present</button>
@@ -175,63 +169,196 @@
   </nav>
 </main>
 
-<!-- ==================== ADMIN VIEW ==================== -->
-<main id="view-admin" class="desktop-frame view">
-  <header class="admin-head">
-    <div>
-      <p class="greet-hi">CricMax Academy · Edison, NJ</p>
-      <h1>What needs you today</h1>
-    </div>
-    <div class="admin-today">
-      <div class="today-stat"><strong>5</strong><span>sessions today</span></div>
-      <div class="today-stat"><strong>82</strong><span>athletes expected</span></div>
-    </div>
-  </header>
+<!-- ==================== ACADEMY VIEW ==================== -->
+<main id="view-admin" class="view active">
+  <div class="mode-toggle" role="tablist" aria-label="Replica mode">
+    <button class="mode-btn active" data-mode="current">📋 Current app (replica)</button>
+    <button class="mode-btn" data-mode="proposed">✨ Proposed redesign</button>
+  </div>
+  <p class="mode-caption" id="modeCaption">Faithful replica of the live app as reviewed — this is how it looks today.</p>
 
-  <section class="triage">
-    <div class="triage-list" id="triageList">
-      <article class="triage-item red">
-        <span class="triage-num">1</span>
-        <div><h3>6 payments overdue — $720 total</h3><p>Oldest is 11 days late. One tap sends reminders to all 6 families.</p></div>
-        <button class="btn primary sm">Send reminders</button>
-      </article>
-      <article class="triage-item amber">
-        <span class="triage-num">2</span>
-        <div><h3>2 sessions missing attendance</h3><p>Yesterday's U10 and U14 sessions were never marked.</p></div>
-        <button class="btn ghost sm">Review</button>
-      </article>
-      <article class="triage-item amber">
-        <span class="triage-num">3</span>
-        <div><h3>14 athletes missing fall waivers</h3><p>They can't train until signed. Parents were notified Monday.</p></div>
-        <button class="btn ghost sm">Remind again</button>
-      </article>
-      <article class="triage-item blue">
-        <span class="triage-num">4</span>
-        <div><h3>U8 Beginners is 40% full</h3><p>12 spots still open for the winter batch starting Nov 2.</p></div>
-        <button class="btn ghost sm">Promote</button>
-      </article>
-      <article class="triage-item blue">
-        <span class="triage-num">5</span>
-        <div><h3>3 new trial requests</h3><p>Waiting over 24 hours. Fast replies convert 2× better.</p></div>
-        <button class="btn ghost sm">View leads</button>
-      </article>
-    </div>
-    <aside class="admin-side">
-      <article class="card">
-        <h3>The numbers</h3>
-        <div class="num-row"><span>Athletes</span><strong>214</strong></div>
-        <div class="num-row"><span>Attendance this week</span><strong>91%</strong></div>
-        <div class="num-row"><span>Collected in October</span><strong>$18,240</strong></div>
-        <div class="num-row"><span>Overdue</span><strong class="warn">$720</strong></div>
-      </article>
-      <article class="card">
-        <h3>Today's sessions</h3>
-        <div class="num-row"><span>U12 Nets · 4:30 PM</span><strong>18</strong></div>
-        <div class="num-row"><span>U14 Match Prep · 6:30 PM</span><strong>22</strong></div>
-        <div class="num-row"><span>Adult Social · 8:00 PM</span><strong>12</strong></div>
-      </article>
+  <!-- ============ CURRENT (faithful replica) ============ -->
+  <div id="academy-current" class="academy-app">
+    <aside class="side">
+      <div class="side-user"><span class="avatar sm">SC</span><div><strong>Sarah Chen</strong><span>Admin</span></div></div>
+      <nav class="side-nav" id="sideNav"></nav>
+      <div class="side-foot">Synced · Just now</div>
     </aside>
-  </section>
+    <div class="app-main">
+      <header class="topbar">
+        <div class="topbar-title" id="topbarTitle">Dashboard</div>
+        <div class="topbar-search">🔍 Search athletes, programs… <kbd>F8</kbd></div>
+      </header>
+
+      <!-- DASHBOARD -->
+      <section class="app-section active" data-section="dashboard">
+        <h1 class="page-h1">Good morning 👋</h1>
+        <p class="page-sub">Thursday, October 8, 2026 · 5 sessions today · <strong class="warn">22 need attention</strong></p>
+
+        <div class="rightnow-head"><h2>RIGHT NOW — click any tile to act</h2>
+          <div class="seg"><button class="on">Right now</button><button>This term</button><button>Both</button></div>
+        </div>
+        <div class="tiles" id="rightNowTiles"></div>
+
+        <div class="dash-grid">
+          <div class="dcard span2">
+            <h3>Today's Schedule</h3>
+            <div id="todaySchedule"></div>
+          </div>
+          <div class="dcard">
+            <h3>Program capacity</h3>
+            <div id="capacityBars"></div>
+          </div>
+          <div class="dcard">
+            <h3>Revenue trend</h3>
+            <div class="big-num">$34,280 <span class="up">▲ 8% MoM</span></div>
+            <div class="meter"><div class="meter-fill" style="width:86%"></div></div>
+            <p class="card-sub">86% of $40,000 goal</p>
+            <div class="bars" id="revBars"></div>
+            <div class="streams" id="revStreams"></div>
+          </div>
+          <div class="dcard">
+            <h3>Inquiries pipeline</h3>
+            <div class="pipe" id="inquiryPipe"></div>
+            <div class="bars" id="inqBars"></div>
+            <p class="card-sub">Last 7 days</p>
+          </div>
+          <div class="dcard span2">
+            <h3>Coach utilization</h3>
+            <div class="coach-cards" id="coachCards"></div>
+          </div>
+          <div class="dcard">
+            <h3>Insights</h3>
+            <div id="insightCards"></div>
+          </div>
+        </div>
+
+        <div class="dcard queue">
+          <div class="queue-head">
+            <h3>Action needed — <span class="warn">9 errors</span> · <span class="amber-t">13 warnings</span></h3>
+            <div class="seg" id="queueTabs"><button class="on" data-q="all">All 22</button><button data-q="billing">Billing 11</button><button data-q="people">People 10</button><button data-q="schedule">Schedule 1</button></div>
+          </div>
+          <div id="actionQueue"></div>
+        </div>
+      </section>
+
+      <!-- ATHLETES -->
+      <section class="app-section" data-section="athletes">
+        <h1 class="page-h1">Athletes</h1>
+        <p class="page-sub">Everyone training at your academy</p>
+        <div class="toolbar">
+          <div class="seg" id="athleteTabs"><button class="on">All 75</button><button>Active 71</button><button>Pending Consent 2</button><button>On Waitlist 1</button><button>Inactive 1</button></div>
+          <div class="toolbar-right"><div class="fake-search">🔍 Search</div><button class="btn ghost sm">Filters</button></div>
+        </div>
+        <div class="dcard pad0"><table class="tbl" id="athleteTable"></table></div>
+        <p class="card-sub table-foot">1–10 of 75 · Last updated 2 mins ago</p>
+      </section>
+
+      <!-- SCHEDULE -->
+      <section class="app-section" data-section="schedule">
+        <h1 class="page-h1">Schedule</h1>
+        <p class="page-sub">Week of Jun 8–14, 2026</p>
+        <div class="toolbar wrap">
+          <button class="btn ghost sm">🔍 Find</button>
+          <button class="btn ghost sm">Mark Unavailable</button>
+          <button class="btn primary sm">+ New</button>
+          <div class="seg"><button class="on">Calendar</button><button>List</button></div>
+          <div class="seg"><button>Day</button><button class="on">Week</button><button>Month</button></div>
+          <button class="btn ghost sm">Filters</button>
+          <button class="btn ghost sm">⚙️</button>
+        </div>
+        <div class="dcard">
+          <div class="filter-row">
+            <span><strong>Space:</strong> All spaces ▾</span><span><strong>Status:</strong> Confirmed ▾</span>
+            <span><strong>Type:</strong> Program ▾</span><span><strong>Duration:</strong> Any ▾</span>
+            <span><strong>Layout:</strong> Lanes as columns ▾</span><span><strong>Density:</strong> Comfortable ▾</span>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="slot-finder">
+            <strong>Find Available Slot</strong>
+            <span>Duration ▾</span><span>Space ▾</span><span>Time of day ▾</span><span>Date range ▾</span>
+            <button class="btn primary sm">Search</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- BILLING -->
+      <section class="app-section" data-section="billing">
+        <h1 class="page-h1">Billing</h1>
+        <p class="page-sub">Invoices and what families owe</p>
+        <div class="tiles sm4" id="billingTiles"></div>
+        <div class="toolbar">
+          <div class="seg"><button class="on">All Invoices 17</button><button>Outstanding 8</button><button>Refunded 1</button></div>
+        </div>
+        <div class="dcard pad0"><table class="tbl" id="billingTable"></table></div>
+      </section>
+
+      <!-- NOTIFICATIONS -->
+      <section class="app-section" data-section="notifications">
+        <h1 class="page-h1">Notifications</h1>
+        <p class="page-sub">7 unread · system alerts that need your attention</p>
+        <div class="toolbar">
+          <div class="seg"><button class="on">All 11</button><button>Urgent 3</button><button>Warning 4</button><button>Info 4</button></div>
+          <div class="toolbar-right"><button class="btn ghost sm">Mark all read</button><button class="btn ghost sm">⚙️ Settings</button></div>
+        </div>
+        <div id="notifFeed"></div>
+      </section>
+
+      <!-- GENERIC (other nav sections) -->
+      <section class="app-section" data-section="generic">
+        <h1 class="page-h1" id="genericTitle">Section</h1>
+        <p class="page-sub" id="genericSub"></p>
+        <div class="tiles sm4" id="genericTiles"></div>
+        <div class="dcard"><h3>What lives here</h3><div id="genericBody"></div></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ============ PROPOSED (redesign) ============ -->
+  <div id="academy-proposed" class="academy-app" hidden>
+    <aside class="side">
+      <div class="side-user"><span class="avatar sm">SC</span><div><strong>Sarah Chen</strong><span>Admin</span></div></div>
+      <nav class="side-nav" id="sideNavProposed"></nav>
+      <div class="side-foot">Synced · Just now</div>
+    </aside>
+    <div class="app-main">
+      <header class="topbar">
+        <div class="topbar-title">What needs you today</div>
+        <div class="topbar-search">🔍 Search athletes, programs…</div>
+      </header>
+
+      <h1 class="page-h1">Good morning 👋</h1>
+      <p class="page-sub">Thursday, October 8 · 5 sessions today · <strong>5 things need you</strong> (down from 22 alerts)</p>
+
+      <div class="triage-list" id="proposedTriage"></div>
+
+      <div class="dash-grid">
+        <div class="dcard span2">
+          <h3>Today's sessions</h3>
+          <div id="proposedSessions"></div>
+        </div>
+        <div class="dcard">
+          <h3>The numbers</h3>
+          <div class="num-row"><span>Athletes</span><strong>247</strong></div>
+          <div class="num-row"><span>Attendance this week</span><strong>91%</strong></div>
+          <div class="num-row"><span>Collected in June</span><strong>$34,280</strong></div>
+          <div class="num-row"><span>Money owed</span><strong class="warn">$1,915</strong></div>
+        </div>
+      </div>
+
+      <div class="dcard">
+        <h3>What changed in this redesign — and why</h3>
+        <ol class="changes">
+          <li><strong>One attention queue, ranked.</strong> The 22-item error/warning list plus scattered badges become 5 plain-language items, ordered by money and urgency. Alert fatigue was the #1 complaint pattern.</li>
+          <li><strong>Plain words.</strong> "Money owed" not <em>Outstanding / AR aging</em>; "How full are my classes" not <em>Utilization</em>; "Failed payments" not <em>Dunning</em>.</li>
+          <li><strong>One Programs, one People.</strong> Programs and Programs v2 merge into a single builder; Athletes, Customers, Memberships and Inquiries stop being four overlapping "people" lists.</li>
+          <li><strong>Schedule defaults to simple.</strong> Day view with the sessions; lane/layout/density controls move behind "More filters" for the power users.</li>
+          <li><strong>Blocking facts surface.</strong> Missing waivers, overdue money and unmarked attendance appear on the home screen — never two tabs deep.</li>
+          <li><strong>Everything is still here.</strong> Simplicity is the default view, not removed capability — every screen stays one search away.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
 </main>
 
 <script src="app.js"></script>
