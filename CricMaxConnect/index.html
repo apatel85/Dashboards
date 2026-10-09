@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CricMaxConnect Task Monitor</title>
+<style>
+  :root{--purple:#1c0837;--purple2:#2a1150;--gold:#e6c22d;--bg:#0f0721;--card:#1a0e33;--card2:#221242;--ink:#f4f1fa;--muted:#b9aecb;--green:#3ddc84;--amber:#ffb020;--red:#ff6b6b;--blue:#5aa9ff;--line:rgba(230,194,45,.16)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:0 16px 60px}
+  header.hero{background:linear-gradient(135deg,var(--purple),var(--purple2) 65%,#160a2c);border-bottom:3px solid var(--gold);padding:34px 16px 26px;text-align:center}
+  header.hero h1{font-size:1.6rem;letter-spacing:.4px}
+  header.hero h1 .gold{color:var(--gold)}
+  header.hero p{color:var(--muted);font-size:.9rem;margin-top:6px}
+  .stats{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+  .stat{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:10px 18px;text-align:center;min-width:110px}
+  .stat b{font-size:1.4rem;color:var(--gold);display:block}
+  .stat span{font-size:.75rem;color:var(--muted)}
+  .bar{height:8px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin-top:14px;max-width:520px;margin-left:auto;margin-right:auto}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#f5d76e);border-radius:99px;transition:width .4s}
+  nav.tabs{display:flex;gap:8px;margin:22px 0 6px;overflow-x:auto;padding-bottom:4px}
+  nav.tabs button{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:12px 10px;cursor:pointer;font-size:.88rem;font-weight:600;white-space:nowrap}
+  nav.tabs button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem;margin-top:2px}
+  nav.tabs button.active{background:var(--purple2);border-color:var(--gold)}
+  .projhead{display:flex;justify-content:space-between;align-items:center;margin:14px 2px 10px;flex-wrap:wrap;gap:8px}
+  .projhead h2{font-size:1.05rem;color:var(--gold)}
+  .projbar{height:6px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;flex:1;min-width:120px;max-width:280px}
+  .projbar i{display:block;height:100%;background:var(--green);border-radius:99px;transition:width .4s}
+  .viewtoggle{display:flex;gap:6px;margin:0 2px 12px}
+  .viewtoggle button{background:none;border:1px solid var(--line);color:var(--muted);border-radius:99px;padding:6px 16px;font-size:.8rem;cursor:pointer}
+  .viewtoggle button.active{color:var(--gold);border-color:var(--gold)}
+  .task{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start}
+  .task.done{opacity:.55}
+  .task.done .t-title{text-decoration:line-through}
+  .t-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--gold);flex-shrink:0;margin-top:2px;cursor:pointer;background:none;position:relative}
+  .task.doing .t-check{border-color:var(--blue)}
+  .task.done .t-check{background:var(--green);border-color:var(--green)}
+  .task.done .t-check::after{content:"✓";color:#06210f;font-weight:800;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.85rem}
+  .task.doing .t-check::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--blue)}
+  .t-body{flex:1;min-width:0}
+  .t-title{font-size:.93rem;font-weight:600}
+  .t-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:.74rem;color:var(--muted);align-items:center}
+  .pill{padding:2px 10px;border-radius:99px;font-weight:600;font-size:.7rem}
+  .pill.ankit{background:rgba(255,176,32,.14);color:var(--amber);border:1px solid rgba(255,176,32,.4)}
+  .pill.arlo{background:rgba(90,169,255,.14);color:var(--blue);border:1px solid rgba(90,169,255,.4)}
+  .pill.due{background:rgba(255,255,255,.06);color:var(--ink);border:1px solid var(--line)}
+  .pill.overdue{background:rgba(255,107,107,.14);color:var(--red);border:1px solid rgba(255,107,107,.45)}
+  .pill.today{background:rgba(230,194,45,.16);color:var(--gold);border:1px solid var(--gold)}
+  .pill.mile{background:rgba(61,220,132,.12);color:var(--green);border:1px solid rgba(61,220,132,.4)}
+  .t-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.05rem;padding:2px 6px;flex-shrink:0}
+  .t-del:hover{color:var(--red)}
+  .t-state{background:none;border:1px solid var(--line);color:var(--muted);border-radius:99px;padding:2px 10px;font-size:.7rem;cursor:pointer}
+  .grouphead{font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin:18px 2px 8px}
+  .addform{background:var(--card);border:1px dashed var(--gold);border-radius:12px;padding:14px;margin-top:16px}
+  .addform h3{font-size:.9rem;color:var(--gold);margin-bottom:10px}
+  .addform .row{display:flex;gap:8px;flex-wrap:wrap}
+  .addform input,.addform select{background:#0e0620;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:9px 12px;font-size:.86rem;flex:1;min-width:120px}
+  .addform button{background:var(--gold);color:var(--purple);border:none;border-radius:8px;padding:9px 20px;font-weight:700;cursor:pointer;font-size:.86rem}
+  .empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:.9rem}
+  .tools{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+  .tools button{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:7px 14px;font-size:.78rem;cursor:pointer}
+  .tools button:hover{color:var(--gold);border-color:var(--gold)}
+  footer{margin-top:26px;text-align:center;color:var(--muted);font-size:.75rem}
+  footer b{color:var(--gold)}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap" style="padding-bottom:0">
+    <h1>CricMaxConnect <span class="gold">Task Monitor</span></h1>
+    <p>One board for every project · v1.0.0</p>
+    <div class="stats">
+      <div class="stat"><b id="sDone">0</b><span>done</span></div>
+      <div class="stat"><b id="sOpen">0</b><span>open</span></div>
+      <div class="stat"><b id="sDue">0</b><span>due ≤ 3 days</span></div>
+    </div>
+    <div class="bar"><i id="overallBar" style="width:0%"></i></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs" id="tabs"></nav>
+
+  <div class="projhead">
+    <h2 id="projTitle"></h2>
+    <div class="projbar"><i id="projBar" style="width:0%"></i></div>
+    <span id="projPct" style="font-size:.8rem;color:var(--muted)"></span>
+  </div>
+
+  <div class="viewtoggle">
+    <button id="vList" class="active" onclick="setView('list')">List</button>
+    <button id="vTime" onclick="setView('time')">Timeline</button>
+  </div>
+
+  <div id="taskArea"></div>
+
+  <div class="addform">
+    <h3>+ Add task</h3>
+    <div class="row">
+      <input id="fTitle" placeholder="Task title…" style="flex:3;min-width:180px">
+      <input id="fDue" type="date" style="flex:1">
+      <select id="fOwner" style="flex:1"><option value="Ankit">Ankit</option><option value="Arlo">Arlo</option></select>
+      <button onclick="addTask()">Add</button>
+    </div>
+  </div>
+
+  <div class="tools">
+    <button onclick="exportJSON()">Export JSON</button>
+    <button onclick="document.getElementById('imp').click()">Import JSON</button>
+    <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
+    <button onclick="if(confirm('Reset all tasks to the shipped defaults?')){localStorage.removeItem(LS);location.reload()}">Reset</button>
+  </div>
+
+  <footer>Data stays on this device (localStorage) · <b>v1.0.0</b> · CricMaxConnect</footer>
+</div>
+
+<script>
+const LS='cricmax_tasks_v1';
+const PROJECTS=[
+  {id:'krca', name:'KRCA Marketing', sub:'Campaign go-live · Fri Oct 16'},
+  {id:'qxdev', name:'Quixera Development', sub:'Details coming'},
+  {id:'qxtest', name:'Quixera Testing', sub:'Details coming'}
+];
+const SEED=[
+  // KRCA Marketing — go-live by Fri Oct 16 2026
+  {p:'krca',t:'Connect Instagram account (Meta Accounts Center)',d:'2026-10-12',o:'Ankit'},
+  {p:'krca',t:'Resolve FB access or commit to Meta Business Suite',d:'2026-10-12',o:'Ankit'},
+  {p:'krca',t:'Subscribe Metricool Advanced',d:'2026-10-12',o:'Ankit'},
+  {p:'krca',t:'Bio + trial-booking link on T1 profile',d:'2026-10-13',o:'Ankit'},
+  {p:'krca',t:'Clear DM backlog — 11/13 threads, incl. Sep 12 enrollment inquiry',d:'2026-10-13',o:'Ankit'},
+  {p:'krca',t:'Generate creative pack #1 (2–3 creatives + captions/hooks + 8-scan gate)',d:'2026-10-13',o:'Arlo'},
+  {p:'krca',t:'Approve creative pack #1 (~15 min pass)',d:'2026-10-13',o:'Ankit'},
+  {p:'krca',t:'Designate lead recipients per academy (default: manager + owner)',d:'2026-10-14',o:'Ankit'},
+  {p:'krca',t:'License-agreement social clauses (page ownership / termination)',d:'2026-10-14',o:'Ankit'},
+  {p:'krca',t:'Configure Metricool scheduling + parent→child rotation matrix',d:'2026-10-14',o:'Arlo'},
+  {p:'krca',t:'Activate inbox watcher (draft mode, 2× daily)',d:'2026-10-15',o:'Arlo'},
+  {p:'krca',t:'Set up lead digest + Friday scorecard',d:'2026-10-15',o:'Arlo'},
+  {p:'krca',t:'GO LIVE — pilot first posts publish (T1)',d:'2026-10-16',o:'Ankit',mile:true},
+  {p:'qxdev',t:'Define scope — details coming from Ankit',d:'',o:'Ankit'},
+  {p:'qxtest',t:'Define scope — details coming from Ankit',d:'',o:'Ankit'}
+];
+let tasks, cur='krca', view='list';
+function load(){ try{tasks=JSON.parse(localStorage.getItem(LS))}catch(e){tasks=null}
+  if(!Array.isArray(tasks)){tasks=SEED.map((s,i)=>({id:'t'+i+'_'+Date.now(),p:s.p,t:s.t,d:s.d||'',o:s.o,st:'todo',mile:!!s.mile}));save()} }
+function save(){localStorage.setItem(LS,JSON.stringify(tasks))}
+function todayStr(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')}
+function dueInfo(d){ if(!d) return {cls:'',txt:'no date'};
+  const t=todayStr(); if(d<t) return {cls:'overdue',txt:'overdue '+d.slice(5)};
+  if(d===t) return {cls:'today',txt:'today'};
+  const days=(new Date(d)-new Date(t))/864e5; if(days<=3) return {cls:'today',txt:'in '+Math.round(days)+'d'};
+  return {cls:'',txt:d.slice(5)} }
+function cycle(id){const k=tasks.find(x=>x.id===id);k.st=k.st==='todo'?'doing':k.st==='doing'?'done':'todo';save();render()}
+function del(id){if(!confirm('Delete this task?'))return;tasks=tasks.filter(x=>x.id!==id);save();render()}
+function setState(id,s){tasks.find(x=>x.id===id).st=s;save();render()}
+function addTask(){const ti=document.getElementById('fTitle').value.trim();if(!ti)return;
+  tasks.push({id:'t'+Date.now(),p:cur,t:ti,d:document.getElementById('fDue').value,o:document.getElementById('fOwner').value,st:'todo'});
+  document.getElementById('fTitle').value='';document.getElementById('fDue').value='';save();render()}
+function taskHTML(k){
+  const di=dueInfo(k.d);
+  return `<div class="task ${k.st==='done'?'done':k.st==='doing'?'doing':''}">
+    <button class="t-check" onclick="cycle('${k.id}')" title="tap to advance: todo → doing → done"></button>
+    <div class="t-body"><div class="t-title">${esc(k.t)}</div>
+      <div class="t-meta">
+        <span class="pill ${k.o==='Ankit'?'ankit':'arlo'}">${k.o}</span>
+        ${k.mile?'<span class="pill mile">milestone</span>':''}
+        <span class="pill due ${di.cls}">📅 ${di.txt}</span>
+        <button class="t-state" onclick="setState('${k.id}','todo')">reset</button>
+      </div></div>
+    <button class="t-del" onclick="del('${k.id}')">×</button></div>`}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function render(){
+  const tabs=document.getElementById('tabs');tabs.innerHTML='';
+  PROJECTS.forEach(p=>{const n=tasks.filter(t=>t.p===p.id).length,dn=tasks.filter(t=>t.p===p.id&&t.st==='done').length;
+    tabs.innerHTML+=`<button class="${p.id===cur?'active':''}" onclick="cur='${p.id}';render()">${p.name}<small>${dn}/${n} done · ${p.sub}</small></button>`});
+  const pr=PROJECTS.find(p=>p.id===cur);
+  document.getElementById('projTitle').textContent=pr.name;
+  const list=tasks.filter(t=>t.p===cur), dn=list.filter(t=>t.st==='done').length;
+  const pct=list.length?Math.round(dn/list.length*100):0;
+  document.getElementById('projBar').style.width=pct+'%';
+  document.getElementById('projPct').textContent=pct+'%';
+  const area=document.getElementById('taskArea');
+  document.getElementById('vList').className=view==='list'?'active':'';
+  document.getElementById('vTime').className=view==='time'?'active':'';
+  if(!list.length){area.innerHTML='<div class="empty">No tasks yet — add the first one below.</div>'}
+  else if(view==='list'){area.innerHTML=list.map(taskHTML).join('')}
+  else{
+    const dated=list.filter(t=>t.d).sort((a,b)=>a.d.localeCompare(b.d));
+    const undated=list.filter(t=>!t.d);
+    const t=todayStr();let html='';
+    const groups=[['Overdue',dated.filter(x=>x.d<t)],['Today',dated.filter(x=>x.d===t)],['Upcoming',dated.filter(x=>x.d>t)]];
+    groups.forEach(([g,items])=>{ if(items.length){html+=`<div class="grouphead">${g}</div>`+items.map(taskHTML).join('')} });
+    if(undated.length) html+=`<div class="grouphead">No date</div>`+undated.map(taskHTML).join('');
+    area.innerHTML=html||'<div class="empty">No dated tasks.</div>';
+  }
+  const all=tasks, ad=all.filter(t=>t.st==='done').length;
+  document.getElementById('sDone').textContent=ad;
+  document.getElementById('sOpen').textContent=all.length-ad;
+  document.getElementById('overallBar').style.width=(all.length?Math.round(ad/all.length*100):0)+'%';
+  const t3=todayStr(),lim=new Date(Date.parse(t3)+3*864e5).toISOString().slice(0,10);
+  document.getElementById('sDue').textContent=all.filter(x=>x.st!=='done'&&x.d&&x.d<=lim).length;
+}
+function setView(v){view=v;render()}
+function exportJSON(){const b=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='cricmax-tasks.json';a.click()}
+function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d)){tasks=d;save();render()}else alert('Not a task file')}catch(err){alert('Could not read file')}};r.readAsText(f)}
+load();render();
+</script>
+</body>
+</html>
