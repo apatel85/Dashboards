@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CricMaxConnect Task Monitor</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 <style>
   :root{--purple:#1c0837;--purple2:#2a1150;--gold:#e6c22d;--bg:#0f0721;--card:#1a0e33;--card2:#221242;--ink:#f4f1fa;--muted:#b9aecb;--green:#3ddc84;--amber:#ffb020;--red:#ff6b6b;--blue:#5aa9ff;--line:rgba(230,194,45,.16)}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -67,6 +68,15 @@
   .tools button.primary{border-color:var(--gold);color:var(--gold);font-weight:700}
   footer{margin-top:26px;text-align:center;color:var(--muted);font-size:.75rem}
   footer b{color:var(--gold)}
+  .syncbar{display:flex;gap:10px;align-items:center;justify-content:center;margin:14px 2px 0;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+  .syncbar .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0}
+  .syncbar.on .dot{background:var(--green)}
+  .syncbar button{background:none;border:1px solid var(--line);color:var(--gold);border-radius:99px;padding:4px 14px;font-size:.75rem;font-weight:600;cursor:pointer}
+  .authmodal input{width:100%;background:#0e0620;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:.88rem;margin-bottom:10px}
+  .authmodal .gbtn{width:100%;background:#fff;color:#1c0837;border:none;border-radius:8px;padding:10px;font-weight:700;cursor:pointer;font-size:.88rem;margin-bottom:12px}
+  .authmodal .ebtn{width:100%;background:var(--gold);color:var(--purple);border:none;border-radius:8px;padding:10px;font-weight:700;cursor:pointer;font-size:.88rem}
+  .authmodal .link{background:none;border:none;color:var(--muted);font-size:.78rem;cursor:pointer;margin-top:10px;text-decoration:underline}
+  .authmodal .err{color:var(--red);font-size:.8rem;margin-bottom:10px;min-height:1.1em}
   .modal-back{position:fixed;inset:0;background:rgba(8,4,18,.75);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}
   .modal-back.open{display:flex}
   .modal{background:var(--card2);border:1px solid var(--gold);border-radius:16px;max-width:580px;width:100%;max-height:84vh;overflow:auto;padding:22px}
@@ -84,7 +94,7 @@
 <header class="hero">
   <div class="wrap" style="padding-bottom:0">
     <h1>CricMaxConnect <span class="gold">Task Monitor</span></h1>
-    <p>One board for every project · v1.1.0</p>
+    <p>One board for every project · v1.2.0</p>
     <div class="stats">
       <div class="stat"><b id="sDone">0</b><span>done</span></div>
       <div class="stat"><b id="sOpen">0</b><span>open</span></div>
@@ -93,6 +103,10 @@
     <div class="bar"><i id="overallBar" style="width:0%"></i></div>
   </div>
 </header>
+
+<div class="wrap" style="padding-bottom:0">
+  <div class="syncbar" id="syncbar"><span class="dot"></span><span id="syncTxt">Offline — sign in to sync</span><button id="authBtn" onclick="openAuth()">Sign in</button></div>
+</div>
 
 <div class="wrap">
   <nav class="tabs" id="tabs"></nav>
@@ -128,9 +142,22 @@
     <button onclick="if(confirm('Reset all tasks to the shipped defaults?')){localStorage.removeItem(LS);location.reload()}">Reset</button>
   </div>
 
-  <footer>Data stays on this device (localStorage) · <b>v1.1.0</b> · CricMaxConnect</footer>
+  <footer>Sign in to sync across devices · <b>v1.2.0</b> · CricMaxConnect</footer>
 </div>
 
+<div class="modal-back" id="authBack" onclick="if(event.target===this)closeAuth()">
+  <div class="modal authmodal">
+    <h3>Sign in to sync</h3>
+    <div class="m-sub">Tasks sync to your Supabase project so the auto-watch can see check-offs and pick up next steps. Offline mode keeps working without sign-in.</div>
+    <div class="err" id="authErr"></div>
+    <button class="gbtn" onclick="googleSignIn()">Continue with Google</button>
+    <input id="aEmail" type="email" placeholder="Email" autocomplete="email">
+    <input id="aPass" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="ebtn" id="emailBtn" onclick="emailAuth()">Sign in</button>
+    <div style="text-align:center"><button class="link" id="swapMode" onclick="swapAuthMode()">No account? Sign up</button></div>
+    <button class="m-close" onclick="closeAuth()">Cancel</button>
+  </div>
+</div>
 <div class="modal-back" id="howBack" onclick="if(event.target===this)closeHow()">
   <div class="modal">
     <h3 id="howTitle"></h3>
@@ -143,6 +170,69 @@
 
 <script>
 const LS='cricmax_tasks_v1';
+// --- Supabase sync (v1.2.0) ---
+const SB_URL='https://iknfvddnevudpjtyxkbh.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlrbmZ2ZGRuZXZ1ZHBqdHl4a2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMzMwNzQsImV4cCI6MjA5MjkwOTA3NH0.Ry5ggZ5kH9lfGFpv5zfkJoZeITvneukMRV7H0yUMtwE';
+let SB=null, sbUser=null, sbChannel=null, pushTimer=null;
+function sbInit(){ if(window.supabase && !SB){
+  SB=window.supabase.createClient(SB_URL, SB_ANON, {db:{schema:'cricmax'}});
+  SB.auth.onAuthStateChange((_e,s)=>{ sbUser=(s&&s.user)?s.user:null; updateSyncBar();
+    if(sbUser){ startSync(); } else { stopSync(); } });
+} }
+function rowOf(k){ return {id:k.id, project:k.p, title:k.t, description:k.desc||'', how_to:k.how||[],
+  due_date:k.d||null, owner:k.o, status:k.st, milestone:!!k.mile, sort:k.sort||0}; }
+function taskOf(r){ return {id:r.id, p:r.project, t:r.title, d:r.due_date||'', o:r.owner, st:r.status,
+  mile:!!r.milestone, desc:r.description||'', how:(r.how_to&&r.how_to.length)?r.how_to:null,
+  sort:r.sort||0, u:new Date(r.updated_at).getTime()}; }
+function touch(k){ k.u=Date.now(); save(); queuePush(); }
+function queuePush(){ clearTimeout(pushTimer); pushTimer=setTimeout(pushAll, 900); }
+async function pushAll(){ if(!SB||!sbUser) return; updateSyncBar('syncing');
+  try{ const {error}=await SB.from('tasks').upsert(tasks.map(rowOf), {onConflict:'id'}); if(error) throw error; }
+  catch(e){ updateSyncBar(); return; } updateSyncBar('synced'); }
+async function pullMerge(){ if(!SB||!sbUser) return; updateSyncBar('syncing');
+  try{
+    const {data, error}=await SB.from('tasks').select('*'); if(error) throw error;
+    const byId=new Map((data||[]).map(r=>[r.id, r])); const toPush=[];
+    tasks.forEach(k=>{ const r=byId.get(k.id);
+      if(!r){ toPush.push(rowOf(k)); return; }
+      const ru=new Date(r.updated_at).getTime();
+      if(ru>(k.u||0)){ const nt=taskOf(r); Object.keys(nt).forEach(key=>{k[key]=nt[key]}); }
+      else if((k.u||0)>ru){ toPush.push(rowOf(k)); }
+      byId.delete(k.id); });
+    byId.forEach(r=>tasks.push(taskOf(r)));
+    if(toPush.length) await SB.from('tasks').upsert(toPush, {onConflict:'id'});
+    save(); render();
+  }catch(e){} updateSyncBar('synced'); }
+function startSync(){ pullMerge(); if(sbChannel||!SB) return;
+  sbChannel=SB.channel('cricmax-tasks')
+    .on('postgres_changes', {event:'*', schema:'cricmax', table:'tasks'}, ()=>pullMerge())
+    .subscribe(); }
+function stopSync(){ if(sbChannel&&SB){ SB.removeChannel(sbChannel); sbChannel=null; } }
+function updateSyncBar(state){ const bar=document.getElementById('syncbar'); if(!bar) return;
+  const txt=document.getElementById('syncTxt'), btn=document.getElementById('authBtn');
+  if(sbUser){ bar.classList.add('on'); btn.textContent='Sign out'; btn.onclick=signOut;
+    txt.textContent=(state==='syncing') ? 'Syncing…' : ('Synced · '+(sbUser.email||'signed in'));
+  } else { bar.classList.remove('on'); btn.textContent='Sign in'; btn.onclick=openAuth;
+    txt.textContent='Offline — sign in to sync'; } }
+// --- Auth UI ---
+let authMode='signin';
+function openAuth(){ document.getElementById('authErr').textContent=''; document.getElementById('authBack').classList.add('open'); }
+function closeAuth(){ document.getElementById('authBack').classList.remove('open'); }
+function swapAuthMode(){ authMode=(authMode==='signin')?'signup':'signin';
+  document.getElementById('emailBtn').textContent=(authMode==='signin')?'Sign in':'Sign up';
+  document.getElementById('swapMode').textContent=(authMode==='signin')?'No account? Sign up':'Have an account? Sign in'; }
+async function googleSignIn(){ sbInit(); if(!SB) return;
+  const {error}=await SB.auth.signInWithOAuth({provider:'google', options:{redirectTo:location.href.split('#')[0]}});
+  if(error) document.getElementById('authErr').textContent=error.message; }
+async function emailAuth(){ sbInit(); if(!SB) return;
+  const em=document.getElementById('aEmail').value.trim(), pw=document.getElementById('aPass').value;
+  const err=document.getElementById('authErr'); err.textContent='';
+  if(!em||!pw){ err.textContent='Enter email and password.'; return; }
+  const res=(authMode==='signin')
+    ? await SB.auth.signInWithPassword({email:em, password:pw})
+    : await SB.auth.signUp({email:em, password:pw});
+  if(res.error) err.textContent=res.error.message; else closeAuth(); }
+async function signOut(){ if(SB) await SB.auth.signOut(); }
 const PROJECTS=[
   {id:'krca', name:'KRCA Marketing', sub:'Campaign go-live · Fri Oct 16'},
   {id:'qxdev', name:'Quixera Development', sub:'Details coming'},
@@ -247,8 +337,9 @@ const SEED=[
 ];
 let tasks, cur='krca', view='list';
 function load(){ try{tasks=JSON.parse(localStorage.getItem(LS))}catch(e){tasks=null}
-  if(!Array.isArray(tasks)){tasks=SEED.map((s,i)=>({id:'t'+i+'_'+Date.now(),p:s.p,t:s.t,d:s.d||'',o:s.o,st:'todo',mile:!!s.mile,desc:s.desc||'',how:s.how||null}));}
-  mergeSeeds(); save(); }
+  if(!Array.isArray(tasks)){tasks=SEED.map((s,i)=>({id:'t'+i+'_'+Date.now(),p:s.p,t:s.t,d:s.d||'',o:s.o,st:'todo',mile:!!s.mile,desc:s.desc||'',how:s.how||null,sort:i,u:Date.now()}));}
+  tasks.forEach((k,i)=>{ if(k.sort==null)k.sort=i; if(!k.u)k.u=Date.now(); });
+  mergeSeeds(); save(); sbInit(); updateSyncBar(); }
 function mergeSeeds(){ let changed=false;
   tasks.forEach(k=>{const s=SEED.find(x=>x.p===k.p&&x.t===k.t);
     if(s&&(k.desc!==s.desc||JSON.stringify(k.how)!==JSON.stringify(s.how))){k.desc=s.desc||'';k.how=s.how||null;changed=true}});
@@ -260,12 +351,15 @@ function dueInfo(d){ if(!d) return {cls:'',txt:'no date'};
   if(d===t) return {cls:'today',txt:'today'};
   const days=(new Date(d)-new Date(t))/864e5; if(days<=3) return {cls:'today',txt:'in '+Math.round(days)+'d'};
   return {cls:'',txt:d.slice(5)} }
-function cycle(id){const k=tasks.find(x=>x.id===id);k.st=k.st==='todo'?'doing':k.st==='doing'?'done':'todo';save();render()}
-function del(id){if(!confirm('Delete this task?'))return;tasks=tasks.filter(x=>x.id!==id);save();render()}
-function setState(id,s){tasks.find(x=>x.id===id).st=s;save();render()}
+function cycle(id){const k=tasks.find(x=>x.id===id);k.st=k.st==='todo'?'doing':k.st==='doing'?'done':'todo';touch(k);render()}
+function del(id){if(!confirm('Delete this task?'))return;tasks=tasks.filter(x=>x.id!==id);
+  if(SB&&sbUser){SB.from('tasks').delete().eq('id',id).then(()=>{},()=>{})}
+  save();render()}
+function setState(id,s){const k=tasks.find(x=>x.id===id);k.st=s;touch(k);render()}
 function addTask(){const ti=document.getElementById('fTitle').value.trim();if(!ti)return;
-  tasks.push({id:'t'+Date.now(),p:cur,t:ti,d:document.getElementById('fDue').value,o:document.getElementById('fOwner').value,st:'todo',desc:'',how:null});
-  document.getElementById('fTitle').value='';document.getElementById('fDue').value='';save();render()}
+  const mx=tasks.reduce((m,k)=>Math.max(m,k.sort||0),-1);
+  tasks.push({id:'t'+Date.now(),p:cur,t:ti,d:document.getElementById('fDue').value,o:document.getElementById('fOwner').value,st:'todo',desc:'',how:null,sort:mx+1,u:Date.now()});
+  document.getElementById('fTitle').value='';document.getElementById('fDue').value='';save();queuePush();render()}
 function openHow(id){const k=tasks.find(x=>x.id===id);if(!k||!k.how)return;
   document.getElementById('howTitle').textContent=k.t;
   document.getElementById('howDesc').textContent=k.desc||'';
@@ -308,7 +402,7 @@ function render(){
     tabs.innerHTML+=`<button class="${p.id===cur?'active':''}" onclick="cur='${p.id}';render()">${p.name}<small>${dn}/${n} done · ${p.sub}</small></button>`});
   const pr=PROJECTS.find(p=>p.id===cur);
   document.getElementById('projTitle').textContent=pr.name;
-  const list=tasks.filter(t=>t.p===cur), dn=list.filter(t=>t.st==='done').length;
+  const list=tasks.filter(t=>t.p===cur).sort((a,b)=>(a.sort||0)-(b.sort||0)), dn=list.filter(t=>t.st==='done').length;
   const pct=list.length?Math.round(dn/list.length*100):0;
   document.getElementById('projBar').style.width=pct+'%';
   document.getElementById('projPct').textContent=pct+'%';
