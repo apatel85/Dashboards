@@ -40,7 +40,8 @@
   .task.doing .t-check::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--blue)}
   .t-body{flex:1;min-width:0}
   .t-title{font-size:.93rem;font-weight:600}
-  .t-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:.74rem;color:var(--muted);align-items:center}
+  .t-desc{font-size:.8rem;color:var(--muted);margin-top:3px}
+  .t-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:.74rem;color:var(--muted);align-items:center}
   .pill{padding:2px 10px;border-radius:99px;font-weight:600;font-size:.7rem}
   .pill.ankit{background:rgba(255,176,32,.14);color:var(--amber);border:1px solid rgba(255,176,32,.4)}
   .pill.arlo{background:rgba(90,169,255,.14);color:var(--blue);border:1px solid rgba(90,169,255,.4)}
@@ -51,6 +52,8 @@
   .t-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.05rem;padding:2px 6px;flex-shrink:0}
   .t-del:hover{color:var(--red)}
   .t-state{background:none;border:1px solid var(--line);color:var(--muted);border-radius:99px;padding:2px 10px;font-size:.7rem;cursor:pointer}
+  .howto{background:none;border:1px solid var(--line);color:var(--gold);border-radius:99px;padding:2px 12px;font-size:.72rem;font-weight:600;cursor:pointer}
+  .howto:hover{border-color:var(--gold);background:rgba(230,194,45,.08)}
   .grouphead{font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin:18px 2px 8px}
   .addform{background:var(--card);border:1px dashed var(--gold);border-radius:12px;padding:14px;margin-top:16px}
   .addform h3{font-size:.9rem;color:var(--gold);margin-bottom:10px}
@@ -61,15 +64,27 @@
   .tools{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
   .tools button{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:7px 14px;font-size:.78rem;cursor:pointer}
   .tools button:hover{color:var(--gold);border-color:var(--gold)}
+  .tools button.primary{border-color:var(--gold);color:var(--gold);font-weight:700}
   footer{margin-top:26px;text-align:center;color:var(--muted);font-size:.75rem}
   footer b{color:var(--gold)}
+  .modal-back{position:fixed;inset:0;background:rgba(8,4,18,.75);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}
+  .modal-back.open{display:flex}
+  .modal{background:var(--card2);border:1px solid var(--gold);border-radius:16px;max-width:580px;width:100%;max-height:84vh;overflow:auto;padding:22px}
+  .modal h3{color:var(--gold);font-size:1.02rem;margin-bottom:4px}
+  .modal .m-sub{font-size:.82rem;color:var(--muted);margin-bottom:14px}
+  .modal ol{margin:0 0 6px 22px;font-size:.88rem}
+  .modal ol li{margin-bottom:10px;padding-left:2px}
+  .modal ol li::marker{color:var(--gold);font-weight:700}
+  .modal .m-close{margin-top:12px;background:var(--gold);color:var(--purple);border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;width:100%;font-size:.9rem}
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--green);color:#06210f;padding:11px 22px;border-radius:99px;font-weight:700;font-size:.85rem;z-index:60;display:none;max-width:90vw;text-align:center}
+  .toast.show{display:block}
 </style>
 </head>
 <body>
 <header class="hero">
   <div class="wrap" style="padding-bottom:0">
     <h1>CricMaxConnect <span class="gold">Task Monitor</span></h1>
-    <p>One board for every project · v1.0.0</p>
+    <p>One board for every project · v1.1.0</p>
     <div class="stats">
       <div class="stat"><b id="sDone">0</b><span>done</span></div>
       <div class="stat"><b id="sOpen">0</b><span>open</span></div>
@@ -106,14 +121,25 @@
   </div>
 
   <div class="tools">
+    <button class="primary" onclick="shareUpdate()">📋 Copy update for Arlo</button>
     <button onclick="exportJSON()">Export JSON</button>
     <button onclick="document.getElementById('imp').click()">Import JSON</button>
     <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
     <button onclick="if(confirm('Reset all tasks to the shipped defaults?')){localStorage.removeItem(LS);location.reload()}">Reset</button>
   </div>
 
-  <footer>Data stays on this device (localStorage) · <b>v1.0.0</b> · CricMaxConnect</footer>
+  <footer>Data stays on this device (localStorage) · <b>v1.1.0</b> · CricMaxConnect</footer>
 </div>
+
+<div class="modal-back" id="howBack" onclick="if(event.target===this)closeHow()">
+  <div class="modal">
+    <h3 id="howTitle"></h3>
+    <div class="m-sub" id="howDesc"></div>
+    <ol id="howSteps"></ol>
+    <button class="m-close" onclick="closeHow()">Close</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
 
 <script>
 const LS='cricmax_tasks_v1';
@@ -124,25 +150,109 @@ const PROJECTS=[
 ];
 const SEED=[
   // KRCA Marketing — go-live by Fri Oct 16 2026
-  {p:'krca',t:'Connect Instagram account (Meta Accounts Center)',d:'2026-10-12',o:'Ankit'},
-  {p:'krca',t:'Resolve FB access or commit to Meta Business Suite',d:'2026-10-12',o:'Ankit'},
-  {p:'krca',t:'Subscribe Metricool Advanced',d:'2026-10-12',o:'Ankit'},
-  {p:'krca',t:'Bio + trial-booking link on T1 profile',d:'2026-10-13',o:'Ankit'},
-  {p:'krca',t:'Clear DM backlog — 11/13 threads, incl. Sep 12 enrollment inquiry',d:'2026-10-13',o:'Ankit'},
-  {p:'krca',t:'Generate creative pack #1 (2–3 creatives + captions/hooks + 8-scan gate)',d:'2026-10-13',o:'Arlo'},
-  {p:'krca',t:'Approve creative pack #1 (~15 min pass)',d:'2026-10-13',o:'Ankit'},
-  {p:'krca',t:'Designate lead recipients per academy (default: manager + owner)',d:'2026-10-14',o:'Ankit'},
-  {p:'krca',t:'License-agreement social clauses (page ownership / termination)',d:'2026-10-14',o:'Ankit'},
-  {p:'krca',t:'Configure Metricool scheduling + parent→child rotation matrix',d:'2026-10-14',o:'Arlo'},
-  {p:'krca',t:'Activate inbox watcher (draft mode, 2× daily)',d:'2026-10-15',o:'Arlo'},
-  {p:'krca',t:'Set up lead digest + Friday scorecard',d:'2026-10-15',o:'Arlo'},
-  {p:'krca',t:'GO LIVE — pilot first posts publish (T1)',d:'2026-10-16',o:'Ankit',mile:true},
+  {p:'krca',t:'Connect Instagram account (Meta Accounts Center)',d:'2026-10-12',o:'Ankit',
+   desc:'Unblocks the IG publishing rail — Meta requires the IG business account linked through Accounts Center before anything can post.',
+   how:[
+    'Open accountscenter.meta.com and sign in with the Facebook login that owns the @knightriderscricketacademy page.',
+    'Go to Accounts → Add accounts → add the academy\u2019s Instagram account (if it isn\u2019t a business account yet: IG Settings → Account type → Switch to professional).',
+    'In the same Accounts Center, confirm the Facebook Page is added too, then link the two: Page Settings → Linked accounts → Instagram → Connect.',
+    'Tell me once it\u2019s linked — I\u2019ll verify the connection and clear this blocker.']},
+  {p:'krca',t:'Resolve FB access or commit to Meta Business Suite',d:'2026-10-12',o:'Ankit',
+   desc:'The FB publishing path is blocked (facebook-cli returns a server-side 403). Either fix that access or standardize on Meta Business Suite.',
+   how:[
+    'Option A — Business Suite (fastest): go to business.facebook.com, open the @knightriderscricketacademy Page, and confirm you can create a draft post and schedule it for a future time.',
+    'Option B — fix cli access: send me the exact command and the full 403 error output; I\u2019ll debug it from my side.',
+    'Tell me which path you took — the FB rail stays red until one of them works.']},
+  {p:'krca',t:'Subscribe Metricool Advanced',d:'2026-10-12',o:'Ankit',
+   desc:'Locked scheduler rail: Metricool Advanced ($53/mo annual, $67/mo monthly fallback). Covers T1 + 5 academies and absorbs the 2 incoming academies at no extra cost. Required for YouTube + TikTok, which have no native rail.',
+   how:[
+    'Go to metricool.com → sign up with your work email.',
+    'Add brands: one per academy plus T1 national. For each brand connect its Facebook Page, Instagram business account, YouTube channel and TikTok (skip any you don\u2019t have yet — they can be added later).',
+    'Upgrade to the Advanced plan — Annual ($53/mo) unless you\u2019d rather start Monthly ($67/mo).',
+    'In Settings → Approvals, confirm the approval workflow is enabled — v1 keeps per-post approval.',
+    'Tell me when you\u2019re subscribed; I\u2019ll configure scheduling + the parent→child rotation on my step.']},
+  {p:'krca',t:'Bio + trial-booking link on T1 profile',d:'2026-10-13',o:'Ankit',
+   desc:'The T1 profile has 0 website taps in 60 days. Add the one-line bio + free-trial link so the TRIAL CTA actually converts.',
+   how:[
+    'Open the @knightriderscricketacademy Instagram profile → Edit profile.',
+    'Set the bio one-liner, e.g.: \u201CYouth cricket academy \u00B7 The Cap Ladder: White \u2192 Silver \u2192 Gold \u2192 Purple \u00B7 First class FREE \uD83D\uDC47\u201D',
+    'Add the trial-booking link (the academy\u2019s booking URL, or a link hub if each academy has its own).',
+    'Mirror the same bio + link on the Facebook Page About section.',
+    'Open the profile in a logged-out browser and confirm the link is tappable.']},
+  {p:'krca',t:'Clear DM backlog — 11/13 threads, incl. Sep 12 enrollment inquiry',d:'2026-10-13',o:'Ankit',
+   desc:'11 of 13 DM threads are unanswered, including a Sep 12 enrollment inquiry. Meta\u2019s API can\u2019t reply to threads older than 24h — these must be answered in the app, by hand.',
+   how:[
+    'Open the Instagram app → inbox → work oldest-first.',
+    'Start with the Sep 12 enrollment inquiry: apologize for the delay, answer their question, offer the free trial class, and ask which academy (location) they\u2019re near.',
+    'Work through the other 10: FAQ-style questions get a short answer + the trial CTA; spam gets archived.',
+    'Mark each thread resolved as you go. Tell me \u201Cbacklog cleared\u201D and I\u2019ll fold the patterns into the inbox watcher\u2019s FAQ bank.']},
+  {p:'krca',t:'Generate creative pack #1 (2–3 creatives + captions/hooks + 8-scan gate)',d:'2026-10-13',o:'Arlo',
+   desc:'My step: generate the week\u2019s 2–3 creatives + captions/hooks, and run every item through the KRCA 8-scan compliance gate.',
+   how:[
+    'Generate masters (1080×1350 feed / 1080×1920 reels) in KKR purple #1c0837 + gold #e6c22d — photorealistic youth players in US settings.',
+    'Write each caption as hook → substance → gloss → one CTA (trial CTA on ~30% of posts; objective is enrollments + brand).',
+    'Run the 8-scan compliance gate; attach a pass/fail + which scan to each item.',
+    'Deliver the pack to this chat Tuesday for your ~15-min approval pass.']},
+  {p:'krca',t:'Approve creative pack #1 (~15 min pass)',d:'2026-10-13',o:'Ankit',
+   desc:'One ~15-min pass: approve, edit, or reject each creative. Nothing publishes or schedules without this — the standing rule.',
+   how:[
+    'Open the creative pack I deliver in this chat.',
+    'For each creative: \u2705 approve as-is, \u270F\uFE0F list the tweak you want, or \u274C reject.',
+    'Reply with your verdicts (e.g. \u201CA approved, B approved with a new hook, C rejected\u201D).',
+    'I\u2019ll schedule only approved items — nothing moves without your say.']},
+  {p:'krca',t:'Designate lead recipients per academy (default: manager + owner)',d:'2026-10-14',o:'Ankit',
+   desc:'Default is manager + owner per academy, configurable. I need names + channels before the lead digest goes live Oct 15.',
+   how:[
+    'For each of the 5 academies (Corona, Dublin, Jersey City, San Diego, Tracy) list: manager name + best channel (email / WhatsApp / SMS), owner name + channel.',
+    'Flag any academy where you want fewer people (manager only) or an extra recipient.',
+    'Send the list to me here — I\u2019ll wire it into the lead routing and confirm it back.']},
+  {p:'krca',t:'License-agreement social clauses (page ownership / termination)',d:'2026-10-14',o:'Ankit',
+   desc:'Page ownership, trademark scope, and termination mechanics must be in the license agreement BEFORE any child pages get created.',
+   how:[
+    'Decide who owns each academy\u2019s Facebook/Instagram page on termination — parent or licensee?',
+    'Decide who holds the page credentials during the license term.',
+    'Define trademark/brand-use scope: what the academy may and may not do with KR marks.',
+    'Define content approval rights: what the parent can require or remove.',
+    'Define termination mechanics: notice period, page access handover, rebrand timeline.',
+    'Share the draft social clauses with me and I\u2019ll sanity-check them against the compliance matrix.']},
+  {p:'krca',t:'Configure Metricool scheduling + parent→child rotation matrix',d:'2026-10-14',o:'Arlo',
+   desc:'My step: scheduling + the parent→child rotation matrix. Never a simultaneous identical blast — Meta penalizes duplicate blasts.',
+   how:[
+    'Connect all 6 brands (T1 + 5 academies) with their FB + IG + YT + TikTok profiles.',
+    'Build the rotation matrix: parent posts Mon/Wed/Fri; child set A gets localized posts Tue/Thu; child set B staggered — minimum 24h after the parent post.',
+    'Localize every child post (city tag, local CTA, academy handle) — never byte-identical to the parent or a sibling.',
+    'Set best-time slots from the posting-time hypotheses; keep the approvals gate on.',
+    'I\u2019ll share the publishing calendar for your review before anything is queued.']},
+  {p:'krca',t:'Activate inbox watcher (draft mode, 2× daily)',d:'2026-10-15',o:'Arlo',
+   desc:'My step: 2×-daily poll of IG DMs + FB comments, triage HOT / QUESTION / COLD. AI drafts, your one-tap send (v1 mode).',
+   how:[
+    'Set up the inbox watch (2× daily) once IG is connected.',
+    'Classification: HOT = trial/enroll intent → immediate academy alert; QUESTION = FAQ → drafted reply; COLD = spam → archive.',
+    'Draft replies land in your one-tap queue — you tap send; nothing sends itself (v1).',
+    'I\u2019ll report the first triage run to this chat so you can calibrate the classifications.']},
+  {p:'krca',t:'Set up lead digest + Friday scorecard',d:'2026-10-15',o:'Arlo',
+   desc:'My step: daily morning lead digest + Friday 15-min scorecard (reach, saves, profile visits, link taps, DMs answered, HOT leads per academy).',
+   how:[
+    'Wire the daily digest: HOT / WARM / COLD leads, stale-thread nudges, follow-up queue — delivered to this chat each morning.',
+    'Build the Friday scorecard: reach (non-follower share), saves, profile visits, link taps, DMs answered, HOT leads by academy.',
+    'Monthly layer: trial bookings attributed to social, enrollment conversion, pillar-mix retune, posting-time validation.']},
+  {p:'krca',t:'GO LIVE — pilot first posts publish (T1)',d:'2026-10-16',o:'Ankit',mile:true,
+   desc:'Milestone: the first pilot posts publish on T1. 3 posts/week, full approval gate, parent account only for weeks 1–2.',
+   how:[
+    'Confirm creative pack #1 is approved and the rails (IG, FB, Metricool) are green.',
+    'I\u2019ll queue the approved posts; the first publishes go live Friday Oct 16.',
+    'Watch the first posts land — then we review the Friday scorecard together and tune.']},
   {p:'qxdev',t:'Define scope — details coming from Ankit',d:'',o:'Ankit'},
   {p:'qxtest',t:'Define scope — details coming from Ankit',d:'',o:'Ankit'}
 ];
 let tasks, cur='krca', view='list';
 function load(){ try{tasks=JSON.parse(localStorage.getItem(LS))}catch(e){tasks=null}
-  if(!Array.isArray(tasks)){tasks=SEED.map((s,i)=>({id:'t'+i+'_'+Date.now(),p:s.p,t:s.t,d:s.d||'',o:s.o,st:'todo',mile:!!s.mile}));save()} }
+  if(!Array.isArray(tasks)){tasks=SEED.map((s,i)=>({id:'t'+i+'_'+Date.now(),p:s.p,t:s.t,d:s.d||'',o:s.o,st:'todo',mile:!!s.mile,desc:s.desc||'',how:s.how||null}));}
+  mergeSeeds(); save(); }
+function mergeSeeds(){ let changed=false;
+  tasks.forEach(k=>{const s=SEED.find(x=>x.p===k.p&&x.t===k.t);
+    if(s&&(k.desc!==s.desc||JSON.stringify(k.how)!==JSON.stringify(s.how))){k.desc=s.desc||'';k.how=s.how||null;changed=true}});
+  if(changed) save(); }
 function save(){localStorage.setItem(LS,JSON.stringify(tasks))}
 function todayStr(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')}
 function dueInfo(d){ if(!d) return {cls:'',txt:'no date'};
@@ -154,21 +264,44 @@ function cycle(id){const k=tasks.find(x=>x.id===id);k.st=k.st==='todo'?'doing':k
 function del(id){if(!confirm('Delete this task?'))return;tasks=tasks.filter(x=>x.id!==id);save();render()}
 function setState(id,s){tasks.find(x=>x.id===id).st=s;save();render()}
 function addTask(){const ti=document.getElementById('fTitle').value.trim();if(!ti)return;
-  tasks.push({id:'t'+Date.now(),p:cur,t:ti,d:document.getElementById('fDue').value,o:document.getElementById('fOwner').value,st:'todo'});
+  tasks.push({id:'t'+Date.now(),p:cur,t:ti,d:document.getElementById('fDue').value,o:document.getElementById('fOwner').value,st:'todo',desc:'',how:null});
   document.getElementById('fTitle').value='';document.getElementById('fDue').value='';save();render()}
+function openHow(id){const k=tasks.find(x=>x.id===id);if(!k||!k.how)return;
+  document.getElementById('howTitle').textContent=k.t;
+  document.getElementById('howDesc').textContent=k.desc||'';
+  document.getElementById('howSteps').innerHTML=k.how.map(s=>'<li>'+esc(s)+'</li>').join('');
+  document.getElementById('howBack').classList.add('open')}
+function closeHow(){document.getElementById('howBack').classList.remove('open')}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3800)}
+function shareUpdate(){
+  const pr=PROJECTS.find(p=>p.id===cur);
+  const list=tasks.filter(t=>t.p===cur);
+  const dn=list.filter(t=>t.st==='done');
+  const pct=list.length?Math.round(dn.length/list.length*100):0;
+  const names=a=>a.map(t=>'\u2022 '+t.t).join('\n');
+  const txt=pr.name+' update \u2014 '+dn.length+'/'+list.length+' done ('+pct+'%)\n'+
+    'Done:\n'+(names(dn)||'\u2014')+'\n'+
+    'Still on my plate:\n'+(names(list.filter(t=>t.st!=='done'&&t.o==='Ankit'))||'\u2014')+'\n'+
+    'Arlo, your move:\n'+(names(list.filter(t=>t.st!=='done'&&t.o==='Arlo'))||'\u2014');
+  const done=()=>toast('Update copied \u2014 paste it in your chat with me and I\u2019ll pick up my next step.');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>{window.prompt('Copy this update and paste it in your chat with me:',txt)})}
+  else window.prompt('Copy this update and paste it in your chat with me:',txt)}
 function taskHTML(k){
   const di=dueInfo(k.d);
   return `<div class="task ${k.st==='done'?'done':k.st==='doing'?'doing':''}">
     <button class="t-check" onclick="cycle('${k.id}')" title="tap to advance: todo → doing → done"></button>
     <div class="t-body"><div class="t-title">${esc(k.t)}</div>
+      ${k.desc?`<div class="t-desc">${esc(k.desc)}</div>`:''}
       <div class="t-meta">
         <span class="pill ${k.o==='Ankit'?'ankit':'arlo'}">${k.o}</span>
         ${k.mile?'<span class="pill mile">milestone</span>':''}
         <span class="pill due ${di.cls}">📅 ${di.txt}</span>
+        ${k.how?`<button class="howto" onclick="openHow('${k.id}')">How-To</button>`:''}
         <button class="t-state" onclick="setState('${k.id}','todo')">reset</button>
       </div></div>
     <button class="t-del" onclick="del('${k.id}')">×</button></div>`}
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function render(){
   const tabs=document.getElementById('tabs');tabs.innerHTML='';
   PROJECTS.forEach(p=>{const n=tasks.filter(t=>t.p===p.id).length,dn=tasks.filter(t=>t.p===p.id&&t.st==='done').length;
@@ -204,7 +337,7 @@ function setView(v){view=v;render()}
 function exportJSON(){const b=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='cricmax-tasks.json';a.click()}
 function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d)){tasks=d;save();render()}else alert('Not a task file')}catch(err){alert('Could not read file')}};r.readAsText(f)}
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d)){tasks=d;mergeSeeds();save();render()}else alert('Not a task file')}catch(err){alert('Could not read file')}};r.readAsText(f)}
 load();render();
 </script>
 </body>
