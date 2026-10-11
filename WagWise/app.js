@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.2'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -1303,7 +1303,11 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
         // bowel #2 is still upcoming, that prediction stands; once its window passes
         // with no 2nd poop logged, the evening poop becomes the fallback.
         let showPoop = true;
-        if (n.label === 'Evening') {
+        // v3.27.2 — morning post-nap poop is a fallback for a MISSED morning poop.
+        // Once any poop is logged today (even late/backdated), withdraw the fallback
+        // (Ankit 2026-10-11: logged the morning poop late, stale prediction stayed).
+        if (n.label === 'Morning') showPoop = poopsToday === 0;
+        else if (n.label === 'Evening') {
           const b2min = bowel2ClockMin(hist);
           const b2End = atHM(Math.floor(b2min / 60), b2min % 60).getTime() + 10 * 60000;
           // v3.25 — dinner logged → the post-dinner poop takes over as the fallback
