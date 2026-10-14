@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.2'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.3'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -433,13 +433,18 @@ async function saveEvent(ev) {
   return ev;
 }
 
-async function loadData() {
+async function loadData(silent) {
   if (!sbReady() || !S.subject) return;
   const since = new Date(); since.setDate(since.getDate() - 90);
-  const { data, error } = await S.sb.from('telemetry_events')
-    .select('*').eq('subject_id', S.subject.id)
-    .gte('logged_at', since.toISOString()).order('logged_at', { ascending: true });
-  if (error) { console.warn('load failed', error); return; }
+  let data, error;
+  try {
+    ({ data, error } = await S.sb.from('telemetry_events')
+      .select('*').eq('subject_id', S.subject.id)
+      .gte('logged_at', since.toISOString()).order('logged_at', { ascending: true }));
+  } catch (e) { error = e; }
+  // v3.27.3 — surface load failures (Ankit 2026-10-14: logged events not appearing,
+  // silent failure left stale timeline). Don't fail silently.
+  if (error) { console.warn('load failed', error); if (!silent) toast('Couldn\'t refresh — check connection, then tap ⟳'); return; }
   S.history = data || [];
   // v3.0 — compare LOCAL calendar days: logged_at is UTC, so a UTC slice
   // hides everything logged after 8 PM EDT from "today"
@@ -3574,6 +3579,9 @@ function wire() {
     document.querySelectorAll('#timelineRange button').forEach(x => x.classList.remove('active'));
     b.classList.add('active'); S.timelineRange = +b.dataset.range; renderTimeline();
   });
+  // v3.27.3 — manual refresh (Ankit 2026-10-14: logged events not appearing)
+  const tr = $('timelineRefresh');
+  if (tr) tr.onclick = async () => { tr.textContent = '…'; await loadData(); renderTimeline(); tr.textContent = '⟳'; };
   // v3.17 — Ask Simba's assistant (chat tab)
   $('chatSend').onclick = () => sendChat($('chatInput').value);
   $('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat($('chatInput').value); });
