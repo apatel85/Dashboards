@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.9'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.10'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -249,18 +249,8 @@ const S = {
 const $ = id => document.getElementById(id);
 const todayStr = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-/** Pure: normalize an ISO timestamp — if it lacks timezone info, assume UTC.
-    v3.27.8 (Ankit 2026-10-14): server-returned timestamps without 'Z'/offset parse
-    as local time, shifting the day and hiding events from the timeline. */
-const normISO = iso => {
-  if (!iso || typeof iso !== 'string') return iso;
-  if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(iso)) return iso; // already has tz
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(iso)) return iso.replace(' ', 'T') + 'Z';
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(iso)) return iso + 'Z';
-  return iso;
-};
 /** Pure: local calendar day for an ISO timestamp. Tested. */
-const localDay = iso => { const d = new Date(normISO(iso));
+const localDay = iso => { const d = new Date(iso);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 /** Pure: is this ISO timestamp today (local)? Tested. */
 const isToday = iso => localDay(iso) === todayStr();
@@ -498,10 +488,14 @@ async function loadData(silent) {
   // v3.27.8 — sticky optimistic events (Ankit 2026-10-14): if we optimistically showed
   // an event but the server data doesn't include it yet, keep showing it instead of
   // wiping it. Prevents "toast but no timeline" when server data lags or mismatches.
+  // v3.27.10 — keep the _optimistic flag until server confirms (was deleting after
+  // one refresh, but server may never have the row).
   const serverIds = new Set((data || []).map(e => e.id));
   const sticky = (S.history || []).filter(e => e._optimistic && !serverIds.has(e.id));
+  // Clear the flag for events the server now confirms
+  for (const e of (S.history || [])) { if (e._optimistic && serverIds.has(e.id)) delete e._optimistic; }
   S.history = data || [];
-  for (const e of sticky) { delete e._optimistic; S.history.push(e); }
+  for (const e of sticky) S.history.push(e); // keep flag; stays sticky until confirmed
   // v3.0 — compare LOCAL calendar days: logged_at is UTC, so a UTC slice
   // hides everything logged after 8 PM EDT from "today"
   S.events = S.history.filter(e => isToday(e.logged_at));
