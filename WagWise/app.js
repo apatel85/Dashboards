@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.5'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.6'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -426,7 +426,11 @@ async function saveEvent(ev) {
     if (sbReady() && ev.subject_id) {
       let data, error;
       try {
-        ({ data, error } = await S.sb.from('telemetry_events').insert(ev).select());
+        // v3.27.6 — 10s timeout on the insert (Ankit 2026-10-14: taps hanging with
+        // no toast, no save, no error — Supabase client has no default timeout).
+        const insertP = S.sb.from('telemetry_events').insert(ev).select();
+        const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error('save timed out — check connection')), 10000));
+        ({ data, error } = await Promise.race([insertP, timeoutP]));
       } catch (e) { error = e; }
       if (error) { toast('Save failed: ' + (error.message || 'network error')); localSave(ev); return null; }
       const saved = data[0];
@@ -456,9 +460,12 @@ async function loadData(silent) {
   const since = new Date(); since.setDate(since.getDate() - 90);
   let data, error;
   try {
-    ({ data, error } = await S.sb.from('telemetry_events')
+    // v3.27.6 — timeout on load too (same hang risk as save)
+    const loadP = S.sb.from('telemetry_events')
       .select('*').eq('subject_id', S.subject.id)
-      .gte('logged_at', since.toISOString()).order('logged_at', { ascending: true }));
+      .gte('logged_at', since.toISOString()).order('logged_at', { ascending: true });
+    const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error('refresh timed out')), 10000));
+    ({ data, error } = await Promise.race([loadP, timeoutP]));
   } catch (e) { error = e; }
   // v3.27.3 — surface load failures (Ankit 2026-10-14: logged events not appearing,
   // silent failure left stale timeline). Don't fail silently.
