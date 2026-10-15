@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.6'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.7'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -437,9 +437,13 @@ async function saveEvent(ev) {
       // v3.27.4 — optimistic UI: show the saved event immediately instead of waiting
       // for loadData(). (Ankit 2026-10-14: logged pee+nap saved but invisible when the
       // post-save refresh hiccuped.) loadData() later replaces S.history wholesale.
+      // v3.27.7 — use OUR logged_at (known-correct ISO) not the server's returned
+      // format, which can parse as the wrong day (Ankit 2026-10-14: "Pee logged ✓"
+      // toast at 9:32 PM but event missing from timeline — timestamp day mismatch).
       if (saved) {
-        S.history.push(saved);
-        if (isToday(saved.logged_at)) S.events.push(saved);
+        ev.id = saved.id; // adopt server ID, keep our timestamp
+        S.history.push(ev);
+        if (isToday(ev.logged_at)) S.events.push(ev);
       }
       return saved;
     }
@@ -1849,6 +1853,7 @@ async function toggleNap() {
   }
 }
 function quickLog(category) {
+  if (category === 'Nap') return toggleNap();
   if (category === 'Nap') return toggleNap(); // v3.9 — start/end toggle
   if (category === 'Food' || category === 'Water') return openSheet(category);
   if (category === 'Snack') return openSheet('Snack'); // v3.11
