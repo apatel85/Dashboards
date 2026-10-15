@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.3'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.4'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -425,7 +425,15 @@ async function saveEvent(ev) {
   if (sbReady() && ev.subject_id) {
     const { data, error } = await S.sb.from('telemetry_events').insert(ev).select();
     if (error) { toast('Save failed: ' + error.message); localSave(ev); return null; }
-    return data[0];
+    const saved = data[0];
+    // v3.27.4 — optimistic UI: show the saved event immediately instead of waiting
+    // for loadData(). (Ankit 2026-10-14: logged pee+nap saved but invisible when the
+    // post-save refresh hiccuped.) loadData() later replaces S.history wholesale.
+    if (saved) {
+      S.history.push(saved);
+      if (isToday(saved.logged_at)) S.events.push(saved);
+    }
+    return saved;
   }
   localSave(ev); // offline: queue locally
   ev.id = 'local-' + Date.now();
@@ -1817,10 +1825,10 @@ async function toggleNap() {
   if (start) {
     const mins = Math.max(1, Math.round((Date.now() - new Date(start.logged_at).getTime()) / 60000));
     const r = await saveEvent({ category: 'Nap', crate_action: 'Crate_Exit', status_outcome: 'Nap ended' }); // v3.9.1 — nap end = crate exit
-    if (r) { toast(`Nap ended — slept ${fmtDur(mins)} 💤`); await loadData(); renderCockpit(); checkNudges(); }
+    if (r) { toast(`Nap ended — slept ${fmtDur(mins)} 💤`); renderAll(); await loadData(true); renderCockpit(); checkNudges(); }
   } else {
     const r = await saveEvent({ category: 'Nap', crate_action: 'Crate_Entry', status_outcome: 'Nap started' }); // v3.9.1 — nap start = crate entry
-    if (r) { toast('Nap started 💤 — tap Nap again to end'); await loadData(); renderCockpit(); checkNudges(); }
+    if (r) { toast('Nap started 💤 — tap Nap again to end'); renderAll(); await loadData(true); renderCockpit(); checkNudges(); }
   }
 }
 function quickLog(category) {
@@ -1834,7 +1842,7 @@ function quickLog(category) {
   const ev = { category };
   if (category === 'Pee') { ev.category = 'Elimination'; ev.elimination_type = 'Pee'; ev.location_substrate = 'Lawn Grass'; }
   if (category === 'Training') { ev.status_outcome = 'Training session logged'; }
-  saveEvent(ev).then(r => { if (r) { toast(`${category} logged ✓`); loadData(); checkNudges(); } });
+  saveEvent(ev).then(r => { if (r) { toast(`${category} logged ✓`); renderAll(); loadData(true); checkNudges(); } });
 }
 
 /* ---------- Detail sheet (modal) ---------- */
@@ -2224,7 +2232,7 @@ async function saveSheet() {
     ev.day_number = dayNumber(ev.logged_at);
     closeSheet();
     const r = await saveEvent(ev);
-    if (r) { toast('Past event saved ✓'); await loadData(); renderCockpit(); checkNudges(); }
+    if (r) { toast('Past event saved ✓'); renderAll(); await loadData(true); renderCockpit(); checkNudges(); }
     return;
   }
   // v2.0 — apply the back-date picker when present
@@ -3568,7 +3576,7 @@ function wire() {
     if (!list || !list.length) return;
     let n = 0;
     for (const { event } of list) { const r = await saveEvent(event); if (r) n++; }
-    if (n) { toast(n === 1 ? 'Event saved ✓' : `${n} events saved ✓`); $('parseCard').hidden = true; $('logText').value = ''; S.parsedMulti = null; await loadData(); checkNudges(); }
+    if (n) { toast(n === 1 ? 'Event saved ✓' : `${n} events saved ✓`); $('parseCard').hidden = true; $('logText').value = ''; S.parsedMulti = null; renderAll(); await loadData(true); checkNudges(); }
   };
   document.querySelectorAll('#trendRange button').forEach(b => b.onclick = () => {
     document.querySelectorAll('#trendRange button').forEach(x => x.classList.remove('active'));
