@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.10'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.11'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -445,6 +445,14 @@ async function saveEvent(ev) {
       if (saved) {
         ev.id = saved.id; // adopt server ID, keep our timestamp
         ev._optimistic = true; // v3.27.8 — sticky: survives loadData until server confirms
+        // v3.27.11 — persist optimistic events to localStorage so they survive page
+        // reloads (Ankit 2026-10-15: "it logs but upon refresh it goes away" — the
+        // in-memory sticky was wiped by browser-level refresh).
+        try {
+          const pend = JSON.parse(localStorage.getItem('st_pending') || '[]');
+          pend.push(ev);
+          localStorage.setItem('st_pending', JSON.stringify(pend));
+        } catch (pe) { console.warn('pending persist failed', pe); }
         // Verify: can we read it back?
         try {
           const { data: verify } = await S.sb.from('telemetry_events').select('id').eq('id', saved.id).limit(1);
@@ -496,6 +504,18 @@ async function loadData(silent) {
   for (const e of (S.history || [])) { if (e._optimistic && serverIds.has(e.id)) delete e._optimistic; }
   S.history = data || [];
   for (const e of sticky) S.history.push(e); // keep flag; stays sticky until confirmed
+  // v3.27.11 — merge pending events from localStorage (survive page reloads).
+  // Remove from pending once the server confirms them.
+  try {
+    const pend = JSON.parse(localStorage.getItem('st_pending') || '[]');
+    const stillPend = [];
+    for (const p of pend) {
+      if (serverIds.has(p.id)) continue; // server has it now — drop from pending
+      if (!S.history.some(h => h.id === p.id)) { p._optimistic = true; S.history.push(p); }
+      stillPend.push(p);
+    }
+    localStorage.setItem('st_pending', JSON.stringify(stillPend));
+  } catch (pe) { console.warn('pending merge failed', pe); }
   // v3.0 — compare LOCAL calendar days: logged_at is UTC, so a UTC slice
   // hides everything logged after 8 PM EDT from "today"
   S.events = S.history.filter(e => isToday(e.logged_at));
