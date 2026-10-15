@@ -96,6 +96,33 @@ intraday signal.
 
 ---
 
+## `executive.json` → Congress & Gov tab, "White House" branch (`CongressTrade[]`)
+
+Senior executive-branch disclosures — the President, Vice President, Cabinet and
+top appointees, who file under the STOCK Act just like Congress (periodic
+transaction reports for >$1,000 trades, ~45-day deadline). Source: the
+DisclosedCapitol open dataset, parsed from official OGE Form 278/278-T filings
+and refreshed nightly upstream. Same shape as `congress.json`, with differences:
+
+| Field | Type | Notes |
+|---|---|---|
+| `chamber` | `"Executive"` | The app branches on this value |
+| `role`, `agency` | string \| null | e.g. `"President"`, `"White House"` |
+| `party`, `state`, `committee` | — | Omitted (always null upstream) |
+| `ticker` | string \| null | **Often null** — filings frequently name no tradeable ticker |
+| `agg_key` | string | Grouping key: ticker when known, else `"DESC:<normalized asset description>"`. Tickers are never invented from descriptions |
+| `asset_name` | string | Human description, e.g. `"NVIDIA CORP"` |
+| `disclosed_date` | string \| null | **Null for ~2/3 of rows** — upstream lacks filing dates on many annual-278 rows. The app sorts those by `tx_date` and excludes them from the Notable (publication-recency) ranking |
+| `lag_days` | number \| null | Null when `disclosed_date` is unknown |
+| `doc_url` | string \| null | DisclosedCapitol record page (audit trail) |
+
+Honest limits: upstream refresh lags OGE publication (check the "latest filing"
+date in the tab header); covers each official's own plus spouse/dependent-child
+transactions as reported on their forms — "associates" are not covered by
+disclosure law.
+
+---
+
 ## `research.json` → Research tab (`ResearchIdea[]`)
 
 Ranked output of the agentic research flow (technical / fundamental / news /

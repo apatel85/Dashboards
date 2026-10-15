@@ -11,6 +11,7 @@ import {
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
+import PremarketLine from '../components/PremarketLine';
 import { fmtMoney, fmtNum, fmtPct, fmtDayLabel, fmtTimeET, prettify } from '../lib/format';
 import type { EarningsEntry, EarningsQuarter } from '../types';
 
@@ -62,6 +63,7 @@ function EarningsRow({ e }: { e: EarningsEntry }) {
                 ? fmtTimeET(e.price_ts)
                 : ''}
           </span>
+          <PremarketLine pm={lp.premarket} />
         </td>
         <td data-th="Impl. move" className="num">{fmtPct(e.implied_move_pct, 1, false)}</td>
         <td data-th="EPS" className="num hide-sm">

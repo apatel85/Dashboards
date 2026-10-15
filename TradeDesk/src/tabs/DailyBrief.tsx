@@ -14,6 +14,7 @@ import {
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
+import PremarketLine from '../components/PremarketLine';
 import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, prettify } from '../lib/format';
 import type { DailyBrief, BreakoutCandidate, DtePick, SectorPerf, MarketRegime } from '../types';
 
@@ -51,6 +52,7 @@ function BreakoutRow({ c }: { c: BreakoutCandidate }) {
                 ? fmtTimeET(c.price_ts)
                 : ''}
           </span>
+          <PremarketLine pm={lp.premarket} />
         </td>
         <td data-th="Score">
           <ScoreBar value={c.score} small />
@@ -128,6 +130,7 @@ function DteCard({ p }: { p: DtePick }) {
         <Stat label="IV rank" value={p.iv_rank != null ? `${p.iv_rank}` : '—'} />
         <Stat label="Exp. move" value={fmtPct(p.expected_move_pct, 1, false)} />
       </div>
+      <PremarketLine pm={lp.premarket} />
       <div className="dte-levels">
         <span className="detail-label">Key levels</span>
         <div className="chips">

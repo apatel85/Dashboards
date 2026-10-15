@@ -245,6 +245,21 @@ code {
   vertical-align: 1px;
 }
 
+/* Amber dot + line for extended-hours (pre/post-market) quotes */
+.pmdot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+
+.pmline {
+  color: var(--amber);
+}
+
 .brand-mark {
   color: var(--green);
   font-size: 18px;
@@ -464,6 +479,96 @@ code {
 .seg button.active {
   background: var(--accent);
   color: #fff;
+}
+
+.seg-large {
+  margin: 4px 0 12px;
+}
+
+.seg-large button {
+  padding: 9px 22px;
+  font-size: 13px;
+}
+
+/* Active drill-down filter chip */
+.activefilter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+/* Asset name when no tradeable ticker exists */
+.assetname {
+  font-size: 13px;
+  color: var(--text);
+  display: block;
+  line-height: 1.4;
+}
+
+/* Notable (recency-ranked) cards */
+.notable-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notable-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.notable-card.open {
+  border-color: var(--accent);
+}
+
+.notable-main {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: inherit;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.notable-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notable-top .ticker {
+  display: inline;
+}
+
+.notable-amt {
+  margin-left: auto;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.notable-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.notable-detail {
+  border-top: 1px solid var(--border);
+  padding: 10px 12px;
+  background: var(--bg-raised);
 }
 
 /* Mobile detail blocks inside expandable rows */

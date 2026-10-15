@@ -124,18 +124,27 @@ export interface EarningsEntry {
 
 export interface CongressTrade {
   member: string;
-  chamber: 'House' | 'Senate';
-  party: string | null;
-  state: string | null;
-  committee: string | null; // relevant committee, if any
-  ticker: string;
+  chamber: 'House' | 'Senate' | 'Executive';
+  party?: string | null;
+  state?: string | null;
+  committee?: string | null; // relevant committee, if any
+  /** Executive-branch only: e.g. "President", "Secretary of Energy". */
+  role?: string | null;
+  /** Executive-branch only: e.g. "White House", "DOE". */
+  agency?: string | null;
+  ticker: string | null; // null when the filing names no tradeable ticker
+  /**
+   * Aggregation key: tradeable ticker when known, else a normalized asset
+   * description ("DESC:…"). Never invent tickers from descriptions.
+   */
+  agg_key?: string | null;
   asset_name: string;
   trade_type: 'buy' | 'sell' | 'exchange';
   amount_range: string; // disclosure range, e.g. "$1,001 - $15,000"
   amount_mid: number | null; // midpoint in USD
   tx_date: string; // YYYY-MM-DD (actual trade)
-  disclosed_date: string; // YYYY-MM-DD (filing)
-  lag_days: number; // disclosed_date - tx_date
+  disclosed_date: string | null; // YYYY-MM-DD (filing); null when unknown upstream
+  lag_days: number | null; // disclosed_date - tx_date
   doc_url: string | null; // official filing PDF
   /** True when 2+ members bought the same ticker in a ~7d window. */
   cluster: boolean;
