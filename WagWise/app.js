@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.8'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.9'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -450,9 +450,19 @@ async function saveEvent(ev) {
       // v3.27.7 — use OUR logged_at (known-correct ISO) not the server's returned
       // format, which can parse as the wrong day (Ankit 2026-10-14: "Pee logged ✓"
       // toast at 9:32 PM but event missing from timeline — timestamp day mismatch).
+      // v3.27.9 — verify the server actually persisted it (Ankit 2026-10-14: event shows
+      // then vanishes on refresh = server doesn't have it). Read back by ID.
       if (saved) {
         ev.id = saved.id; // adopt server ID, keep our timestamp
         ev._optimistic = true; // v3.27.8 — sticky: survives loadData until server confirms
+        // Verify: can we read it back?
+        try {
+          const { data: verify } = await S.sb.from('telemetry_events').select('id').eq('id', saved.id).limit(1);
+          if (!verify || !verify.length) {
+            console.warn('Save verification failed: server does not return the new row', saved.id);
+            toast('Saved locally — server sync pending');
+          }
+        } catch (ve) { console.warn('Save verification error', ve); }
         S.history.push(ev);
         if (isToday(ev.logged_at)) S.events.push(ev);
       }
