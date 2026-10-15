@@ -1,0 +1,90 @@
+name: TradeDesk Research Agent
+
+# Agentic stock-research flow (tradingagents-style): analysts → bull/bear debate
+# → research-manager judge → trader → risk review → portfolio-manager judge.
+# Runs Sunday + Wednesday ~11pm ET; results feed the next morning's context.
+#
+# REQUIRED repo secrets:  GEMINI_API_KEY (free tier)
+# REQUIRED repo variables: SEC_CONTACT_EMAIL (plain email for the SEC User-Agent)
+# Zero other secrets. All market data is keyless.
+
+on:
+  schedule:
+    - cron: '0 3 * * 0,3'
+  workflow_dispatch:
+    inputs:
+      ticker:
+        description: 'Single ticker to research (blank = full watchlist)'
+        required: false
+        default: ''
+      max_tickers:
+        description: 'Max tickers for a full run'
+        required: false
+        default: '12'
+
+permissions:
+  contents: write
+
+jobs:
+  research:
+    name: Run research agent & rebuild
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run research agent
+        working-directory: TradeDesk/pipeline
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SEC_CONTACT_EMAIL: ${{ vars.SEC_CONTACT_EMAIL }}
+        run: |
+          if [ -n "${{ inputs.ticker }}" ]; then
+            node research-agent.mjs --data-dir ../public/data --ticker "${{ inputs.ticker }}"
+          else
+            node research-agent.mjs --data-dir ../public/data --max-tickers "${{ inputs.max_tickers }}"
+          fi
+
+      - name: Validate research.json contract
+        working-directory: TradeDesk/pipeline
+        run: |
+          node -e "
+            const fs = require('fs');
+            const ideas = JSON.parse(fs.readFileSync('../public/data/research.json', 'utf8'));
+            if (!Array.isArray(ideas)) throw new Error('research.json is not an array');
+            const required = ['ticker','name','sector','subsector','index_membership','thesis','score','score_breakdown','trend_template_pass','stage','insider_clusters','congress_buys','unusual_options','sentiment','quality_gate_pass','quality_flags','invalidation','analyst_notes','updated_at'];
+            for (const idea of ideas) {
+              for (const f of required) {
+                if (!(f in idea)) throw new Error(idea.ticker + ': missing field ' + f);
+              }
+              if (typeof idea.score !== 'number' || idea.score < 0 || idea.score > 100) throw new Error(idea.ticker + ': bad score');
+            }
+            console.log('contract OK:', ideas.length, 'ideas');
+          "
+
+      - name: Build app
+        working-directory: TradeDesk
+        run: |
+          npm ci
+          npm run build
+
+      - name: Commit research.json + dist
+        run: |
+          git config user.name "tradedesk-bot[bot]"
+          git config user.email "tradedesk-bot@noreply.github.com"
+          git add TradeDesk/public/data/research.json
+          git add TradeDesk/dist/
+          if git diff --staged --quiet; then
+            echo "No changes — skipping commit."
+          else
+            git commit -m "auto: research agent $(date -u +%Y-%m-%d) [skip ci]"
+            git push
+            echo "Pushed updated research.json."
+          fi

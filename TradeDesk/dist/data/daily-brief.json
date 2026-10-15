@@ -1,1 +1,572 @@
-{"_note":"Placeholder. The daily-brief pipeline will overwrite this file each trading day. See DATA_CONTRACTS.md for the full shape.","breakout_candidates":[],"brief_date":null,"dte_focus":{"one_dte":[],"zero_dte":[]},"generated_at":null,"market_regime":"unknown","regime_notes":"","rotation_notes":"","sectors":{"hot":[],"weak":[]},"universe":"liquid US equities"}
+{
+  "brief_date": "2026-10-15",
+  "generated_at": "2026-10-15T04:14:36.943Z",
+  "universe": "liquid US equities — S&P 500 + Nasdaq-100 (517 scanned)",
+  "market_regime": "choppy",
+  "regime_notes": "SPY $769.6 vs 50-day $768.57 / 200-day $724.21; 34.8% of 517 scanned stocks above their 50-day; VIX 16.87.",
+  "breakout_candidates": [
+    {
+      "ticker": "ELV",
+      "name": "ELV",
+      "price": 428.09,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Healthcare",
+      "subsector": "Healthcare Plans",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 436.24,
+      "stop_price": 375.74,
+      "score": 80,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "ELV is 1.9% below its 52-week high of $436.24, with 3-month relative strength of 12.3% vs SPY and volume running 1.4x its 50-day average. Trigger on a high-volume break of $436.24; invalidation on a close below $375.74."
+    },
+    {
+      "ticker": "FAST",
+      "name": "FAST",
+      "price": 52,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500",
+        "NASDAQ100"
+      ],
+      "sector": "Industrials",
+      "subsector": "Industrial Distribution",
+      "setup": "near 52-week high on expanding volume",
+      "trigger_price": 52.92,
+      "stop_price": 47.3,
+      "score": 80,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "volume_expansion",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "FAST is 1.7% below its 52-week high of $52.92, with 3-month relative strength of 8.91% vs SPY and volume running 1.51x its 50-day average. Trigger on a high-volume break of $52.92; invalidation on a close below $47.3."
+    },
+    {
+      "ticker": "ABBV",
+      "name": "ABBV",
+      "price": 283.48,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Healthcare",
+      "subsector": "Drug Manufacturers - General",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 285.4,
+      "stop_price": 257.87,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "ABBV is 0.7% below its 52-week high of $285.4, with 3-month relative strength of 8.92% vs SPY and volume running 1.21x its 50-day average. Trigger on a high-volume break of $285.4; invalidation on a close below $257.87."
+    },
+    {
+      "ticker": "A",
+      "name": "A",
+      "price": 174,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Healthcare",
+      "subsector": "Diagnostics & Research",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 177.05,
+      "stop_price": 154.03,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "A is 1.7% below its 52-week high of $177.05, with 3-month relative strength of 25.33% vs SPY and volume running 0.85x its 50-day average. Trigger on a high-volume break of $177.05; invalidation on a close below $154.03."
+    },
+    {
+      "ticker": "CVX",
+      "name": "CVX",
+      "price": 222.04,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Energy",
+      "subsector": "Oil & Gas Integrated",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 222.55,
+      "stop_price": 200.78,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "CVX is 0.2% below its 52-week high of $222.55, with 3-month relative strength of 18.25% vs SPY and volume running 0.92x its 50-day average. Trigger on a high-volume break of $222.55; invalidation on a close below $200.78."
+    },
+    {
+      "ticker": "COP",
+      "name": "COP",
+      "price": 142.34,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Energy",
+      "subsector": "Oil & Gas E&P",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 142.55,
+      "stop_price": 123.46,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "COP is 0.1% below its 52-week high of $142.55, with 3-month relative strength of 23.63% vs SPY and volume running 0.8x its 50-day average. Trigger on a high-volume break of $142.55; invalidation on a close below $123.46."
+    },
+    {
+      "ticker": "XOM",
+      "name": "XOM",
+      "price": 177.01,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Energy",
+      "subsector": "Oil & Gas Integrated",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 177.43,
+      "stop_price": 155.85,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "XOM is 0.2% below its 52-week high of $177.43, with 3-month relative strength of 18.77% vs SPY and volume running 0.82x its 50-day average. Trigger on a high-volume break of $177.43; invalidation on a close below $155.85."
+    },
+    {
+      "ticker": "IFF",
+      "name": "IFF",
+      "price": 89.6,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Basic Materials",
+      "subsector": "Specialty Chemicals",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 89.7,
+      "stop_price": 81.54,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "IFF is 0.1% below its 52-week high of $89.7, with 3-month relative strength of 12.95% vs SPY and volume running 1.19x its 50-day average. Trigger on a high-volume break of $89.7; invalidation on a close below $81.54."
+    },
+    {
+      "ticker": "MPC",
+      "name": "MPC",
+      "price": 484.92,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Energy",
+      "subsector": "Oil & Gas Refining & Marketing",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 485.22,
+      "stop_price": 378.8,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "MPC is 0.1% below its 52-week high of $485.22, with 3-month relative strength of 56.03% vs SPY and volume running 0.72x its 50-day average. Trigger on a high-volume break of $485.22; invalidation on a close below $378.8."
+    },
+    {
+      "ticker": "MTD",
+      "name": "MTD",
+      "price": 1609.27,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Healthcare",
+      "subsector": "Diagnostics & Research",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 1619.58,
+      "stop_price": 1380.44,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "MTD is 0.6% below its 52-week high of $1619.58, with 3-month relative strength of 18.02% vs SPY and volume running 1.2x its 50-day average. Trigger on a high-volume break of $1619.58; invalidation on a close below $1380.44."
+    },
+    {
+      "ticker": "MRNA",
+      "name": "MRNA",
+      "price": 226.3,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500",
+        "NASDAQ100"
+      ],
+      "sector": "Healthcare",
+      "subsector": "Biotechnology",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 227.46,
+      "stop_price": 149.5,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "MRNA is 0.5% below its 52-week high of $227.46, with 3-month relative strength of 255.84% vs SPY and volume running 0.97x its 50-day average. Trigger on a high-volume break of $227.46; invalidation on a close below $149.5."
+    },
+    {
+      "ticker": "PFE",
+      "name": "PFE",
+      "price": 29.21,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Healthcare",
+      "subsector": "Drug Manufacturers - General",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 29.49,
+      "stop_price": 27.12,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "PFE is 0.9% below its 52-week high of $29.49, with 3-month relative strength of 13.67% vs SPY and volume running 0.9x its 50-day average. Trigger on a high-volume break of $29.49; invalidation on a close below $27.12."
+    },
+    {
+      "ticker": "PSX",
+      "name": "PSX",
+      "price": 297.29,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Energy",
+      "subsector": "Oil & Gas Refining & Marketing",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 297.42,
+      "stop_price": 248.51,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": "earnings",
+      "catalyst_date": "2026-10-28",
+      "thesis": "PSX is 0% below its 52-week high of $297.42, with 3-month relative strength of 45.16% vs SPY and volume running 0.83x its 50-day average. Trigger on a high-volume break of $297.42; invalidation on a close below $248.51. Earnings report due 2026-10-28 — decide hold/size-down before the print."
+    },
+    {
+      "ticker": "VLO",
+      "name": "VLO",
+      "price": 459.78,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Energy",
+      "subsector": "Oil & Gas Refining & Marketing",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 461.52,
+      "stop_price": 364.96,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": "earnings",
+      "catalyst_date": "2026-10-22",
+      "thesis": "VLO is 0.4% below its 52-week high of $461.52, with 3-month relative strength of 50.61% vs SPY and volume running 0.81x its 50-day average. Trigger on a high-volume break of $461.52; invalidation on a close below $364.96. Earnings report due 2026-10-22 — decide hold/size-down before the print."
+    },
+    {
+      "ticker": "WAT",
+      "name": "WAT",
+      "price": 436.61,
+      "price_ts": "2026-10-14T13:30:00.000Z",
+      "index_membership": [
+        "SP500"
+      ],
+      "sector": "Healthcare",
+      "subsector": "Diagnostics & Research",
+      "setup": "relative-strength 52-week-high approach",
+      "trigger_price": 454.54,
+      "stop_price": 418,
+      "score": 70,
+      "attributes": [
+        "near_52w_high",
+        "relative_strength",
+        "above_50d"
+      ],
+      "catalyst": null,
+      "catalyst_date": null,
+      "thesis": "WAT is 3.9% below its 52-week high of $454.54, with 3-month relative strength of 12.93% vs SPY and volume running 1.33x its 50-day average. Trigger on a high-volume break of $454.54; invalidation on a close below $418."
+    }
+  ],
+  "dte_focus": {
+    "zero_dte": [
+      {
+        "ticker": "SPY",
+        "underlying_price": 769.6,
+        "bias": "neutral",
+        "thesis": "0DTE chain: expected move ±0.63% ($4.85) from $769.6; put/call volume 1.09 (neutral lean); 1,787,359 contracts traded. Unusual: SPY261015C00764000 vol 2121 vs OI 23; SPY261015C00765000 vol 3935 vs OI 569; SPY261015C00766000 vol 6166 vs OI 36.",
+        "key_levels": [
+          764.75,
+          770,
+          774.45
+        ],
+        "iv_rank": null,
+        "expected_move_pct": 0.63
+      },
+      {
+        "ticker": "QQQ",
+        "underlying_price": 728.95,
+        "bias": "neutral",
+        "thesis": "0DTE chain: expected move ±1.06% ($7.73) from $728.95; put/call volume 1.08 (neutral lean); 1,194,977 contracts traded. Unusual: QQQ261015C00725000 vol 2919 vs OI 60; QQQ261015C00726000 vol 2118 vs OI 11; QQQ261015C00727000 vol 11858 vs OI 5.",
+        "key_levels": [
+          721.22,
+          729,
+          736.68
+        ],
+        "iv_rank": null,
+        "expected_move_pct": 1.06
+      },
+      {
+        "ticker": "IWM",
+        "underlying_price": 271.37,
+        "bias": "neutral",
+        "thesis": "0DTE chain: expected move ±0.91% ($2.47) from $271.37; put/call volume 1.02 (neutral lean); 145,999 contracts traded. Unusual: IWM261015C00270000 vol 1807 vs OI 19; IWM261015C00271000 vol 7756 vs OI 147; IWM261015C00272000 vol 10018 vs OI 9.",
+        "key_levels": [
+          268.9,
+          271,
+          273.84
+        ],
+        "iv_rank": null,
+        "expected_move_pct": 0.91
+      },
+      {
+        "ticker": "SMH",
+        "underlying_price": 564.74,
+        "bias": "short",
+        "thesis": "0DTE chain: expected move ±2.31% ($13.05) from $564.74; put/call volume 1.52 (short lean); 15,784 contracts traded. Unusual: SMH261015C00580000 vol 1746 vs OI 24; SMH261015P00545000 vol 2467 vs OI 11; SMH261015P00555000 vol 1733 vs OI 422.",
+        "key_levels": [
+          551.69,
+          565,
+          577.79
+        ],
+        "iv_rank": null,
+        "expected_move_pct": 2.31
+      },
+      {
+        "ticker": "XLF",
+        "underlying_price": 54.52,
+        "bias": "neutral",
+        "thesis": "0DTE chain: expected move ±0.67% ($0.37) from $54.52; put/call volume 1.03 (neutral lean); 3,610 contracts traded. Unusual: XLF261015P00054000 vol 1639 vs OI 89.",
+        "key_levels": [
+          54.15,
+          54.5,
+          54.89
+        ],
+        "iv_rank": null,
+        "expected_move_pct": 0.67
+      }
+    ],
+    "one_dte": [
+      {
+        "ticker": "SPY",
+        "underlying_price": 769.6,
+        "bias": "short",
+        "thesis": "1DTE chain: expected move ±0.85% ($6.54) from $769.6; put/call volume 1.6 (short lean); 1,261,741 contracts traded. Unusual: SPY261016C00768000 vol 15820 vs OI 3796; SPY261016C00769000 vol 15661 vs OI 3559; SPY261016C00770000 vol 38369 vs OI 18899.",
+        "key_levels": [
+          763.06,
+          770,
+          776.14
+        ],
+        "iv_rank": null,
+        "expected_move_pct": 0.85
+      },
+      {
+        "ticker": "QQQ",
+        "underlying_price": 728.95,
+        "bias": "neutral",
+        "thesis": "1DTE chain: expected move ±1.38% ($10.06) from $728.95; put/call volume 1.29 (neutral lean); 1,056,998 contracts traded. Unusual: QQQ261016C00727000 vol 3304 vs OI 2022; QQQ261016C00728000 vol 9311 vs OI 2256; QQQ261016C00729000 vol 6631 vs OI 1567.",
+        "key_levels": [
+          718.89,
+          729,
+          739.01
+        ],
+        "iv_rank": null,
+        "expected_move_pct": 1.38
+      },
+      {
+        "ticker": "NVDA",
+        "underlying_price": 221.3,
+        "bias": "neutral",
+        "thesis": "1DTE chain: expected move ±2.73% ($6.04) from $221.3; put/call volume 0.82 (neutral lean); 758,979 contracts traded. Unusual: NVDA261016C00212500 vol 1382 vs OI 757; NVDA261016C00222500 vol 35947 vs OI 3869; NVDA261016C00225000 vol 60656 vs OI 24243.",
+        "key_levels": [
+          215.26,
+          222.5,
+          227.34
+        ],
+        "iv_rank": null,
+        "expected_move_pct": 2.73
+      },
+      {
+        "ticker": "TSLA",
+        "underlying_price": 367.16,
+        "bias": "long",
+        "thesis": "1DTE chain: expected move ±3.26% ($11.97) from $367.16; put/call volume 0.66 (long lean); 466,105 contracts traded. Unusual: TSLA261016C00362500 vol 3665 vs OI 829; TSLA261016C00365000 vol 16030 vs OI 4974; TSLA261016C00367500 vol 16273 vs OI 609.",
+        "key_levels": [
+          355.19,
+          367.5,
+          379.13
+        ],
+        "iv_rank": null,
+        "expected_move_pct": 3.26
+      },
+      {
+        "ticker": "IWM",
+        "underlying_price": 271.37,
+        "bias": "short",
+        "thesis": "1DTE chain: expected move ±1.27% ($3.45) from $271.37; put/call volume 2.48 (short lean); 456,016 contracts traded. Unusual: IWM261016C00270000 vol 2687 vs OI 377; IWM261016C00271000 vol 5772 vs OI 351; IWM261016C00272000 vol 8280 vs OI 356.",
+        "key_levels": [
+          267.92,
+          271,
+          274.82
+        ],
+        "iv_rank": null,
+        "expected_move_pct": 1.27
+      }
+    ]
+  },
+  "sectors": {
+    "hot": [
+      {
+        "sector": "Health Care",
+        "etf": "XLV",
+        "perf_1d_pct": 2.53,
+        "perf_5d_pct": 3.05,
+        "perf_1m_pct": 3.76,
+        "trend": "up",
+        "rel_strength_rank": 1
+      },
+      {
+        "sector": "Technology",
+        "etf": "XLK",
+        "perf_1d_pct": -2.98,
+        "perf_5d_pct": -5.44,
+        "perf_1m_pct": 3.64,
+        "trend": "down",
+        "rel_strength_rank": 2
+      },
+      {
+        "sector": "Consumer Staples",
+        "etf": "XLP",
+        "perf_1d_pct": 2.22,
+        "perf_5d_pct": 5.34,
+        "perf_1m_pct": 2.78,
+        "trend": "up",
+        "rel_strength_rank": 3
+      },
+      {
+        "sector": "Energy",
+        "etf": "XLE",
+        "perf_1d_pct": 0.64,
+        "perf_5d_pct": 6.74,
+        "perf_1m_pct": 2.58,
+        "trend": "up",
+        "rel_strength_rank": 4
+      }
+    ],
+    "weak": [
+      {
+        "sector": "Financials",
+        "etf": "XLF",
+        "perf_1d_pct": -0.55,
+        "perf_5d_pct": 1.43,
+        "perf_1m_pct": -4.1,
+        "trend": "flat",
+        "rel_strength_rank": 11
+      },
+      {
+        "sector": "Real Estate",
+        "etf": "XLRE",
+        "perf_1d_pct": -0.81,
+        "perf_5d_pct": 2.27,
+        "perf_1m_pct": -3.67,
+        "trend": "flat",
+        "rel_strength_rank": 10
+      },
+      {
+        "sector": "Communication Services",
+        "etf": "XLC",
+        "perf_1d_pct": -1.3,
+        "perf_5d_pct": -0.4,
+        "perf_1m_pct": -2.82,
+        "trend": "flat",
+        "rel_strength_rank": 9
+      },
+      {
+        "sector": "Materials",
+        "etf": "XLB",
+        "perf_1d_pct": -0.1,
+        "perf_5d_pct": 1.41,
+        "perf_1m_pct": -2.09,
+        "trend": "flat",
+        "rel_strength_rank": 8
+      }
+    ]
+  },
+  "rotation_notes": "Rotating in: Financials (5d rank #5 vs 1m rank #11), Real Estate (5d rank #4 vs 1m rank #10). Rotating out: Technology (5d rank #11 vs 1m rank #2), Industrials (5d rank #10 vs 1m rank #7)."
+}
