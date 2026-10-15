@@ -1,0 +1,62 @@
+name: Update Earnings Calendar (keyless)
+
+# Repaired 2026-10-15: the old FMP-based job silently stopped fetching when
+# FMP_API_KEY stopped delivering a value (data frozen since 2026-06-27).
+# This workflow uses ONLY keyless sources (Nasdaq + Yahoo + SEC EDGAR) —
+# there are NO secrets to expire, so a repeat of that failure is impossible.
+on:
+  schedule:
+    # Every Friday at 22:00 UTC = 5:00 PM ET (EST) / 6:00 PM ET (EDT)
+    - cron: '0 22 * * 5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: Fetch Earnings Data (keyless) & Rebuild
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # No API keys, no secrets — Nasdaq/Yahoo/SEC EDGAR are all keyless.
+      - name: Fetch rolling earnings calendar (keyless)
+        env:
+          # Contact email for SEC EDGAR fair-access User-Agent (plain variable, not a secret).
+          SEC_CONTACT_EMAIL: ${{ vars.SEC_CONTACT_EMAIL }}
+        run: node EarningAnalysis/scripts/fetch-earnings-keyless.mjs
+
+      - name: Install dependencies
+        working-directory: EarningAnalysis
+        run: npm ci
+
+      - name: Build
+        working-directory: EarningAnalysis
+        run: npm run build
+
+      - name: Commit and push updated data + dist
+        run: |
+          git config user.name  "earnings-bot[bot]"
+          git config user.email "earnings-bot@noreply.github.com"
+
+          git add EarningAnalysis/public/data/earnings.json
+          git add EarningAnalysis/public/data/meta.json
+          git add EarningAnalysis/dist/
+
+          # Only commit if there are staged changes
+          if git diff --staged --quiet; then
+            echo "No data changes — skipping commit."
+          else
+            DATE=$(date -u +%Y-%m-%d)
+            git commit -m "auto: refresh earnings calendar (keyless) ${DATE} [skip ci]"
+            git push
+            echo "Pushed updated earnings data."
+          fi
