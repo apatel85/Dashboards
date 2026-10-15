@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.4'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.5'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -418,27 +418,37 @@ function localSave(ev) { // offline queue
 }
 
 async function saveEvent(ev) {
-  ev.subject_id = S.subject?.id || null;
-  ev.owner_id = S.user?.id || null;
-  ev.logged_at = ev.logged_at || new Date().toISOString();
-  ev.day_number = dayNumber(ev.logged_at);
-  if (sbReady() && ev.subject_id) {
-    const { data, error } = await S.sb.from('telemetry_events').insert(ev).select();
-    if (error) { toast('Save failed: ' + error.message); localSave(ev); return null; }
-    const saved = data[0];
-    // v3.27.4 — optimistic UI: show the saved event immediately instead of waiting
-    // for loadData(). (Ankit 2026-10-14: logged pee+nap saved but invisible when the
-    // post-save refresh hiccuped.) loadData() later replaces S.history wholesale.
-    if (saved) {
-      S.history.push(saved);
-      if (isToday(saved.logged_at)) S.events.push(saved);
+  try {
+    ev.subject_id = S.subject?.id || null;
+    ev.owner_id = S.user?.id || null;
+    ev.logged_at = ev.logged_at || new Date().toISOString();
+    ev.day_number = dayNumber(ev.logged_at);
+    if (sbReady() && ev.subject_id) {
+      let data, error;
+      try {
+        ({ data, error } = await S.sb.from('telemetry_events').insert(ev).select());
+      } catch (e) { error = e; }
+      if (error) { toast('Save failed: ' + (error.message || 'network error')); localSave(ev); return null; }
+      const saved = data[0];
+      // v3.27.4 — optimistic UI: show the saved event immediately instead of waiting
+      // for loadData(). (Ankit 2026-10-14: logged pee+nap saved but invisible when the
+      // post-save refresh hiccuped.) loadData() later replaces S.history wholesale.
+      if (saved) {
+        S.history.push(saved);
+        if (isToday(saved.logged_at)) S.events.push(saved);
+      }
+      return saved;
     }
-    return saved;
+    localSave(ev);
+    ev.id = 'local-' + Date.now();
+    S.events.push(ev); S.history.push(ev);
+    return ev;
+  } catch (e) {
+    // v3.27.5 — never fail silently (Ankit 2026-10-14: entry attempts vanishing)
+    console.error('saveEvent threw', e);
+    toast('Save failed: ' + (e.message || 'unexpected error'));
+    return null;
   }
-  localSave(ev); // offline: queue locally
-  ev.id = 'local-' + Date.now();
-  S.events.push(ev); S.history.push(ev); // keep local caches live in offline mode
-  return ev;
 }
 
 async function loadData(silent) {
