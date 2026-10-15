@@ -123,6 +123,41 @@ disclosure law.
 
 ---
 
+## `signals.json` → Signals tab (`SignalsFile`)
+
+Smart-money flow signals: Congress + White House disclosed trades ranked by
+buying/selling pressure. Built by `pipeline/build-signals.mjs` (keyless, runs
+inside `refresh.sh`); the research agent reads this file and prioritizes its
+top tickers for deep-dives.
+
+| Field | Type | Notes |
+|---|---|---|
+| `generated_at` | string | ISO timestamp of the build |
+| `window_days` | number | Lookback window (default 90) on `disclosed_date ?? tx_date` |
+| `tickers[]` | `SignalTicker[]` | Sorted by `flow_score` desc |
+
+`SignalTicker`:
+
+| Field | Type | Notes |
+|---|---|---|
+| `ticker`, `asset_name` | string | Real tradeable ticker only — filings without one are excluded |
+| `direction` | `accumulation\|distribution\|mixed` | Buys ≥1.5× sells and net ≥$25k → accumulation; mirror for distribution |
+| `flow_score` | number | 0-100 mechanical: magnitude 0-70 (log10\|net\|), breadth 0-20 (officials), recency 0-10, cluster +8 |
+| `buy_amount`, `sell_amount`, `net_flow` | number | USD range-midpoint sums |
+| `recency_weighted_net` | number | Net flow with exp(−days/14) decay per trade |
+| `buy_trades`, `sell_trades`, `officials` | number | Counts |
+| `congress_trades`, `exec_trades` | number | Branch split |
+| `cluster` | boolean | 2+ officials bought within ~7d |
+| `latest_ref_date` | string | Newest `disclosed_date ?? tx_date` |
+
+Noise filter: a ticker needs ≥2 trades or |net flow| ≥ $50k to qualify.
+
+The Signals tab merges each entry with its `ResearchIdea` (by ticker) when the
+agent has covered it: combined signal = 0.45×flow + 0.55×research; `p_up` is
+the agent's estimated P(close higher in 30d) — model judgment, not calibrated.
+
+---
+
 ## `research.json` → Research tab (`ResearchIdea[]`)
 
 Ranked output of the agentic research flow (technical / fundamental / news /

@@ -17,13 +17,15 @@ export OUT_DIR="$OUT"
 echo "=== TradeDesk pipeline refresh → $OUT ==="
 echo "--- 1/5 congress ---"
 node fetch-congress.mjs
-echo "--- 2/5 executive (White House) ---"
+echo "--- 2/6 executive (White House) ---"
 node fetch-executive.mjs
-echo "--- 3/5 insiders ---"
+echo "--- 3/6 signals (smart-money flow) ---"
+node build-signals.mjs
+echo "--- 4/6 insiders ---"
 node fetch-insiders.mjs
-echo "--- 4/5 earnings ---"
+echo "--- 5/6 earnings ---"
 node fetch-earnings.mjs
-echo "--- 5/5 daily brief ($*) ---"
+echo "--- 6/6 daily brief ($*) ---"
 node build-brief.mjs "$@"
 echo "=== refresh complete ==="
 ls -la "$OUT"

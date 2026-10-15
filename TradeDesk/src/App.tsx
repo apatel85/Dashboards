@@ -5,11 +5,13 @@ import DailyBriefTab from './tabs/DailyBrief';
 import EarningsTab from './tabs/Earnings';
 import CongressGovTab from './tabs/CongressGov';
 import ResearchTab from './tabs/Research';
+import SignalsTab from './tabs/Signals';
 import { supabase } from './lib/supabase';
 import type { TabDef, TabId } from './types';
 
 const TABS: TabDef[] = [
   { id: 'brief', label: 'Daily Brief', dataFile: 'daily-brief.json' },
+  { id: 'signals', label: 'Signals', dataFile: 'signals.json' },
   { id: 'earnings', label: 'Earnings', dataFile: 'earnings.json' },
   { id: 'congress', label: 'Congress & Gov', dataFile: 'congress.json' },
   { id: 'research', label: 'Research', dataFile: 'research.json' },
@@ -53,6 +55,7 @@ function Shell() {
 
       <main className="content">
         {active === 'brief' && <DailyBriefTab />}
+        {active === 'signals' && <SignalsTab />}
         {active === 'earnings' && <EarningsTab />}
         {active === 'congress' && <CongressGovTab />}
         {active === 'research' && <ResearchTab />}

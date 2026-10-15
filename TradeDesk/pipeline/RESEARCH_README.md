@@ -53,8 +53,19 @@ research.json (atomic write, contract-validated in CI)
 
 ## Ticker selection
 
-Up to `--max-tickers` (default 12): top `daily-brief.json` breakout candidates
-by score, then `earnings.json` names reporting within the next 7 days, deduped.
+Up to `--max-tickers` (default 12), in priority order:
+
+1. **`signals.json`** — top smart-money flow tickers by `flow_score`
+   (Congress + White House disclosed buying/selling pressure). Each selected
+   ticker carries its flow signal into the analyst prompts (`ctx.flow`) and
+   into the output `idea.flow`.
+2. **`daily-brief.json`** — top breakout candidates by score, deduped.
+3. **`earnings.json`** — names reporting within the next 7 days, deduped.
+
+Output additions for the Signals tab: `p_up` (Portfolio Manager's estimated
+0-100 probability the stock closes higher 30 days out — model judgment, not
+calibrated; defaults to 50 when the PM call fails) and `flow` (the disclosure
+flow signal object).
 
 ## Cost / rate math
 

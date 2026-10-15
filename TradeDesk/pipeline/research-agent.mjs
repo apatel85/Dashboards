@@ -362,10 +362,18 @@ function loadJson(file, { required = false } = {}) {
 }
 
 // ── Ticker selection ─────────────────────────────────────────────────────────
-function selectTickers(brief, earnings) {
+function selectTickers(brief, earnings, signals) {
   if (SINGLE_TICKER) return [{ ticker: SINGLE_TICKER }];
   const out = [];
   const seen = new Set();
+  // 1) smart-money flow signals first — the user's priority: disclosed
+  //    buying/selling pressure, ranked by flow_score.
+  const sigs = (signals?.tickers || []).slice().sort((a, b) => (b.flow_score || 0) - (a.flow_score || 0));
+  for (const s of sigs) {
+    const t = String(s.ticker || '').toUpperCase();
+    if (t && !seen.has(t)) { seen.add(t); out.push({ ticker: t, from: 'signal', signalEntry: s }); }
+    if (out.length >= MAX_TICKERS) break;
+  }
   const cands = (brief?.breakout_candidates || []).slice().sort((a, b) => (b.score || 0) - (a.score || 0));
   for (const c of cands) {
     const t = String(c.ticker || '').toUpperCase();
@@ -464,8 +472,37 @@ function buildInsiderContext(ticker, insiders) {
   return { clusters, recentBuys: recent.length, notable };
 }
 
-function buildCongressContext(ticker, congress) {
-  const today = isoDate();
+/** Disclosure flow signal for a ticker (from signals.json, if selected via flow). */
+function buildFlowContext(ticker, sel, signals) {
+  const s = sel.signalEntry
+    || (signals?.tickers || []).find((x) => String(x.ticker || '').toUpperCase() === ticker)
+    || null;
+  if (!s) return null;
+  return {
+    direction: s.direction || 'mixed',
+    flow_score: s.flow_score ?? null,
+    net_flow: s.net_flow ?? null,
+    buy_amount: s.buy_amount ?? null,
+    sell_amount: s.sell_amount ?? null,
+    officials: s.officials ?? null,
+    buy_trades: s.buy_trades ?? null,
+    sell_trades: s.sell_trades ?? null,
+    cluster: !!s.cluster,
+    latest_ref_date: s.latest_ref_date || null,
+  };
+}
+
+/** One-line disclosure-flow summary for prompts; '' when no flow signal. */
+function flowLine(ctx) {
+  const f = ctx.flow;
+  if (!f) return '';
+  const dir = f.direction === 'accumulation' ? 'NET BUYING'
+    : f.direction === 'distribution' ? 'NET SELLING' : 'mixed flow';
+  const net = f.net_flow != null ? ` net $${Math.round(Math.abs(f.net_flow) / 1000)}k` : '';
+  return ` Disclosure flow (90d): ${dir}${net} by ${f.officials ?? '?'} officials (flow score ${f.flow_score ?? '?'}/100${f.cluster ? ', CLUSTERED' : ''}).`;
+}
+
+function buildCongressContext(ticker, congress) {  const today = isoDate();
   const rows = (congress || []).filter((r) =>
     String(r.ticker || '').toUpperCase() === ticker &&
     String(r.trade_type || '').toLowerCase() === 'buy' &&
@@ -597,7 +634,7 @@ function pBull(ctx, reports) {
 Analyst reports:
 ${reports}
 
-Smart-money context: ${ctx.insider.recentBuys} insider open-market buys in 7d; ${ctx.congress.buys90d} congressional buys in 90d${ctx.congress.clustered ? ' (CLUSTERED — multiple members)' : ''}.
+Smart-money context: ${ctx.insider.recentBuys} insider open-market buys in 7d; ${ctx.congress.buys90d} congressional buys in 90d${ctx.congress.clustered ? ' (CLUSTERED — multiple members)' : ''}.${flowLine(ctx)}
 
 Respond with a single JSON object only: {"argument": string (4-7 sentences), "strongest_point": string (1 sentence), "stance": "bullish"}`;
 }
@@ -610,7 +647,7 @@ ${reports}
 
 Bull's argument to rebut: ${bullArg}
 
-Smart-money context: ${ctx.insider.recentBuys} insider open-market buys in 7d; ${ctx.congress.buys90d} congressional buys in 90d. (Insider SALES are weak evidence — mostly tax/diversification — do not overweight them.)
+Smart-money context: ${ctx.insider.recentBuys} insider open-market buys in 7d; ${ctx.congress.buys90d} congressional buys in 90d. (Insider SALES are weak evidence — mostly tax/diversification — do not overweight them.)${flowLine(ctx)}
 
 Respond with a single JSON object only: {"argument": string (4-7 sentences), "strongest_point": string (1 sentence), "stance": "bearish"}`;
 }
@@ -671,7 +708,7 @@ Sentiment: ${reports.sentiment.overall_band || 'unknown'} (confidence ${reports.
 
 Deliver the final decision.
 Respond with a single JSON object only:
-{"rating": "Buy"|"Overweight"|"Hold"|"Underweight"|"Sell", "executive_summary": string (2-3 sentences), "investment_thesis": string (3-5 sentences, the one-paragraph bull/bear case), "price_target": number|null (absolute USD, 1-2 week horizon, null if not supportable), "time_horizon": string (e.g. "1-2 weeks")}`;
+{"rating": "Buy"|"Overweight"|"Hold"|"Underweight"|"Sell", "executive_summary": string (2-3 sentences), "investment_thesis": string (3-5 sentences, the one-paragraph bull/bear case), "price_target": number|null (absolute USD, 1-2 week horizon, null if not supportable), "time_horizon": string (e.g. "1-2 weeks"), "p_up": number (0-100 — YOUR estimated probability, as a whole number, that the stock closes HIGHER 30 days from now; 50 = coin flip; be honest about uncertainty, never 0 or 100)}`;
 }
 
 // ── Orchestration ────────────────────────────────────────────────────────────
@@ -731,6 +768,7 @@ async function prefetchTicker(sel, inputs, spyCloses, cikMap) {
   ctx.news = await prefetchNews(ticker);
   ctx.insider = buildInsiderContext(ticker, inputs.insiders);
   ctx.congress = buildCongressContext(ticker, inputs.congress);
+  ctx.flow = buildFlowContext(ticker, sel, inputs.signals);
   ctx.options = await buildOptionsContext(ticker);
 
   if (!ctx.tech && !ctx.fund.cik) {
@@ -821,6 +859,10 @@ async function runTicker(sel, inputs, spyCloses, cikMap) {
     index_membership: ctx.briefEntry?.index_membership || [],
     thesis: coerceStr(pm.investment_thesis, 900) || coerceStr(rm.rationale, 900) || '',
     score,
+    /** Agent-estimated probability (0-100) the stock closes higher 30d out. Model judgment, NOT calibrated. */
+    p_up: clamp(Math.round(coerceNum(pm.p_up) ?? 50), 1, 99),
+    /** Disclosure flow signal that selected this ticker (null when not flow-selected). */
+    flow: ctx.flow,
     score_breakdown: breakdown,
     trend_template_pass: ctx.tech ? !!ctx.tech.trendTemplatePass : false,
     stage: ctx.tech?.stage || 'Stage 1',
@@ -866,6 +908,7 @@ async function main() {
   const earnings = loadJson('earnings.json');
   const insiders = loadJson('insiders.json');
   const congress = loadJson('congress.json');
+  const signals = loadJson('signals.json');
 
   let cikMap = {};
   try { cikMap = await tickerToCikMap(); } catch (e) { console.warn(`[research] CIK map failed: ${e.message} — fundamentals will be thin`); }
@@ -876,7 +919,7 @@ async function main() {
     spyCloses = parseChart(sj)?.closes || null;
   } catch (e) { console.warn(`[research] SPY benchmark fetch failed: ${e.message} — RS rank null`); }
 
-  const tickers = selectTickers(brief, earnings);
+  const tickers = selectTickers(brief, earnings, signals);
   if (!tickers.length) {
     console.error('[research] no tickers selected — writing empty research.json');
     writeJsonAtomic(OUT_PATH, []);
@@ -897,7 +940,7 @@ async function main() {
   const failed = [];
   for (const sel of tickers) {
     try {
-      const idea = await runTicker(sel, { brief, earnings, insiders, congress }, spyCloses, cikMap);
+      const idea = await runTicker(sel, { brief, earnings, insiders, congress, signals }, spyCloses, cikMap);
       if (idea) ideas.push(idea);
       else failed.push(sel.ticker);
     } catch (e) {

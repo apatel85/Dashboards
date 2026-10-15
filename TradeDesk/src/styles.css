@@ -260,6 +260,102 @@ code {
   color: var(--amber);
 }
 
+/* Smart-money signal cards */
+.signal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.signal-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.signal-card.open {
+  border-color: var(--accent);
+}
+
+.signal-main {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: inherit;
+  text-align: left;
+  padding: 12px 14px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.signal-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.signal-top .ticker.big {
+  font-size: 17px;
+}
+
+.signal-dir {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.signal-mid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.signal-price {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.signal-scores {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.signal-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.signal-score .detail-label {
+  flex-shrink: 0;
+}
+
+.signal-meta {
+  display: block;
+  margin-top: 8px;
+}
+
+.signal-detail {
+  border-top: 1px solid var(--border);
+  padding: 12px 14px;
+  background: var(--bg-raised);
+}
+
+.signal-detail .idea-thesis {
+  margin: 0 0 10px;
+}
+
+.pup {
+  display: inline-flex;
+}
+
 .brand-mark {
   color: var(--green);
   font-size: 18px;

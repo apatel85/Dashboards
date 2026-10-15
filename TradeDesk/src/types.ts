@@ -181,6 +181,24 @@ export interface ResearchIdea {
   thesis: string;
   /** 0-100 unified confluence score. */
   score: number;
+  /**
+   * Agent-estimated probability (0-100) the stock closes higher 30 days out.
+   * Model judgment from the Portfolio Manager — NOT a calibrated statistic.
+   */
+  p_up?: number | null;
+  /** Disclosure flow signal for this ticker (null when not flow-selected). */
+  flow?: {
+    direction: 'accumulation' | 'distribution' | 'mixed';
+    flow_score: number | null;
+    net_flow: number | null;
+    buy_amount: number | null;
+    sell_amount: number | null;
+    officials: number | null;
+    buy_trades: number | null;
+    sell_trades: number | null;
+    cluster: boolean;
+    latest_ref_date: string | null;
+  } | null;
   score_breakdown: ScoreComponent[];
   trend_template_pass: boolean;
   stage: 'Stage 1' | 'Stage 2' | 'Stage 3' | 'Stage 4';
@@ -202,7 +220,37 @@ export interface ResearchIdea {
 
 /* ── Tab plumbing ─────────────────────────────────────────────────── */
 
-export type TabId = 'brief' | 'earnings' | 'congress' | 'research';
+/* ── signals.json ─────────────────────────────────────────────────── */
+
+export interface SignalTicker {
+  ticker: string;
+  asset_name: string;
+  direction: 'accumulation' | 'distribution' | 'mixed';
+  /** 0-100 mechanical flow score (amount × officials × recency). */
+  flow_score: number;
+  buy_amount: number;
+  sell_amount: number;
+  /** buy_amount − sell_amount, USD midpoints. */
+  net_flow: number;
+  recency_weighted_net: number;
+  buy_trades: number;
+  sell_trades: number;
+  officials: number;
+  congress_trades: number;
+  exec_trades: number;
+  cluster: boolean;
+  latest_ref_date: string;
+}
+
+export interface SignalsFile {
+  generated_at: string;
+  window_days: number;
+  tickers: SignalTicker[];
+}
+
+/* ── tabs ───────────────────────────────────────────────────────── */
+
+export type TabId = 'brief' | 'earnings' | 'congress' | 'research' | 'signals';
 
 export interface TabDef {
   id: TabId;
