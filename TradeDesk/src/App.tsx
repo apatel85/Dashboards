@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import AuthGate from './auth/AuthGate';
+import LiveQuoteButton from './components/LiveQuoteButton';
 import DailyBriefTab from './tabs/DailyBrief';
 import EarningsTab from './tabs/Earnings';
 import CongressGovTab from './tabs/CongressGov';
@@ -28,9 +29,12 @@ function Shell() {
           <span className="brand-mark" aria-hidden="true">◈</span>
           <h1 className="brand">TradeDesk</h1>
         </div>
-        <button className="btn btn-ghost" onClick={signOut}>
-          Sign out
-        </button>
+        <div className="topbar-actions">
+          <LiveQuoteButton />
+          <button className="btn btn-ghost" onClick={signOut}>
+            Sign out
+          </button>
+        </div>
       </header>
 
       <nav className="tabnav" role="tablist" aria-label="TradeDesk sections">

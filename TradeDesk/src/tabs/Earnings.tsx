@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import EmptyState from '../components/EmptyState';
 import {
   ScoreBar,
@@ -10,6 +10,7 @@ import {
   ErrorPanel,
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
+import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import { fmtMoney, fmtNum, fmtPct, fmtDayLabel, fmtTimeET, prettify } from '../lib/format';
 import type { EarningsEntry, EarningsQuarter } from '../types';
 
@@ -39,22 +40,31 @@ function StreakCell({ streak }: { streak: EarningsQuarter[] }) {
 
 function EarningsRow({ e }: { e: EarningsEntry }) {
   const [open, setOpen] = useState(false);
+  const lp = useLivePrice(e.ticker, e.current_price);
   const timeTone = e.report_time === 'BMO' ? 'blue' : e.report_time === 'AMC' ? 'amber' : 'dim';
   return (
     <>
       <tr className="clickable" onClick={() => setOpen((o) => !o)} title="Click for detail">
-        <td>
+        <td data-th="Ticker">
           <span className="ticker">{e.ticker}</span>
           <span className="subname">{e.name}</span>
         </td>
-        <td>
+        <td data-th="Reports">
           <Badge tone={timeTone}>{e.report_time}</Badge>
         </td>
-        <td className="num">
-          {fmtMoney(e.current_price)}
-          <span className="subname">{e.price_ts ? fmtTimeET(e.price_ts) : ''}</span>
+        <td data-th="Price" className="num">
+          {lp.live ? <span className="livedot" title="Live ~15-min delayed quote" /> : null}
+          {fmtMoney(lp.price)}
+          <span className="subname">
+            {lp.live && lp.fetchedAt
+              ? `live ${fmtTimeET(new Date(lp.fetchedAt).toISOString())}`
+              : e.price_ts
+                ? fmtTimeET(e.price_ts)
+                : ''}
+          </span>
         </td>
-        <td className="num">
+        <td data-th="Impl. move" className="num">{fmtPct(e.implied_move_pct, 1, false)}</td>
+        <td data-th="EPS" className="num hide-sm">
           {e.eps_actual != null ? (
             <>
               <span title="Actual">{fmtNum(e.eps_actual)}</span>
@@ -67,8 +77,7 @@ function EarningsRow({ e }: { e: EarningsEntry }) {
             </>
           )}
         </td>
-        <td className="num">{fmtPct(e.implied_move_pct, 1, false)}</td>
-        <td>
+        <td data-th="H / P / C" className="hide-sm">
           <div className="minibars">
             <span className="minibar" title={`Health ${e.health_score ?? '—'}`}>
               <span className="minibar-label">H</span>
@@ -84,7 +93,7 @@ function EarningsRow({ e }: { e: EarningsEntry }) {
             </span>
           </div>
         </td>
-        <td>
+        <td data-th="Signals" className="hide-sm">
           <div className="sigstack">
             <span title="Insider signal">
               <SignalBadge signal={e.insider_signal} />
@@ -154,6 +163,10 @@ function EarningsRow({ e }: { e: EarningsEntry }) {
 export default function EarningsTab() {
   const { data, loading, error } = useJsonData<EarningsEntry[]>('earnings.json');
 
+  useEffect(() => {
+    if (data) setQuoteUniverse(data.map((e) => e.ticker));
+  }, [data]);
+
   const groups = useMemo(() => {
     if (!data || data.length === 0) return [];
     const map = new Map<string, EarningsEntry[]>();
@@ -206,10 +219,10 @@ export default function EarningsTab() {
                   <th>Ticker</th>
                   <th>Reports</th>
                   <th>Price</th>
-                  <th>EPS</th>
                   <th>Impl. move</th>
-                  <th>H / P / C</th>
-                  <th>Signals</th>
+                  <th className="hide-sm">EPS</th>
+                  <th className="hide-sm">H / P / C</th>
+                  <th className="hide-sm">Signals</th>
                 </tr>
               </thead>
               <tbody>

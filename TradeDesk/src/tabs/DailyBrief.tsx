@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import EmptyState from '../components/EmptyState';
 import {
   ScoreBar,
@@ -13,6 +13,7 @@ import {
   ErrorPanel,
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
+import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, prettify } from '../lib/format';
 import type { DailyBrief, BreakoutCandidate, DtePick, SectorPerf, MarketRegime } from '../types';
 
@@ -32,32 +33,40 @@ const REGIME_LABEL: Record<MarketRegime, string> = {
 
 function BreakoutRow({ c }: { c: BreakoutCandidate }) {
   const [open, setOpen] = useState(false);
+  const lp = useLivePrice(c.ticker, c.price);
   return (
     <>
       <tr className="clickable" onClick={() => setOpen((o) => !o)} title="Click for thesis">
-        <td>
+        <td data-th="Ticker">
           <span className="ticker">{c.ticker}</span>
           <span className="subname">{c.name}</span>
         </td>
-        <td className="num">
-          {fmtMoney(c.price)}
-          <span className="subname">{c.price_ts ? fmtTimeET(c.price_ts) : ''}</span>
+        <td data-th="Price" className="num">
+          {lp.live ? <span className="livedot" title="Live ~15-min delayed quote" /> : null}
+          {fmtMoney(lp.price)}
+          <span className="subname">
+            {lp.live && lp.fetchedAt
+              ? `live ${fmtTimeET(new Date(lp.fetchedAt).toISOString())}`
+              : c.price_ts
+                ? fmtTimeET(c.price_ts)
+                : ''}
+          </span>
         </td>
-        <td>
+        <td data-th="Score">
+          <ScoreBar value={c.score} small />
+        </td>
+        <td data-th="Setup" className="setup">{c.setup}</td>
+        <td data-th="Index" className="hide-sm">
           <IndexBadges items={c.index_membership} />
         </td>
-        <td>
+        <td data-th="Sector" className="hide-sm">
           {c.sector}
           <span className="subname">{c.subsector}</span>
         </td>
-        <td className="setup">{c.setup}</td>
-        <td className="num">
+        <td data-th="Trigger / Stop" className="num hide-sm">
           <span className="up">{fmtMoney(c.trigger_price)}</span>
           {' / '}
           <span className="down">{fmtMoney(c.stop_price)}</span>
-        </td>
-        <td>
-          <ScoreBar value={c.score} small />
         </td>
       </tr>
       {open && (
@@ -99,6 +108,7 @@ function BreakoutRow({ c }: { c: BreakoutCandidate }) {
 }
 
 function DteCard({ p }: { p: DtePick }) {
+  const lp = useLivePrice(p.ticker, p.underlying_price);
   return (
     <div className="dte-card">
       <div className="dte-head">
@@ -106,7 +116,15 @@ function DteCard({ p }: { p: DtePick }) {
         <SignalBadge signal={p.bias} />
       </div>
       <div className="dte-stats">
-        <Stat label="Underlying" value={fmtMoney(p.underlying_price)} />
+        <Stat
+          label={lp.live ? 'Underlying · live' : 'Underlying'}
+          value={
+            <>
+              {lp.live ? <span className="livedot" title="Live ~15-min delayed quote" /> : null}
+              {fmtMoney(lp.price)}
+            </>
+          }
+        />
         <Stat label="IV rank" value={p.iv_rank != null ? `${p.iv_rank}` : '—'} />
         <Stat label="Exp. move" value={fmtPct(p.expected_move_pct, 1, false)} />
       </div>
@@ -129,7 +147,7 @@ function SectorTable({ rows }: { rows: SectorPerf[] }) {
   if (rows.length === 0) return <p className="muted">No sectors in this group.</p>;
   return (
     <div className="table-scroll">
-      <table className="dtable">
+      <table className="dtable notrans">
         <thead>
           <tr>
             <th>Sector</th>
@@ -170,6 +188,16 @@ function SectorTable({ rows }: { rows: SectorPerf[] }) {
 export default function DailyBriefTab() {
   const { data, loading, error } = useJsonData<DailyBrief>('daily-brief.json');
 
+  useEffect(() => {
+    if (data) {
+      setQuoteUniverse([
+        ...data.breakout_candidates.map((c) => c.ticker),
+        ...data.dte_focus.zero_dte.map((p) => p.ticker),
+        ...data.dte_focus.one_dte.map((p) => p.ticker),
+      ]);
+    }
+  }, [data]);
+
   if (loading) return <LoadingPanel what="daily brief" />;
   if (error || !data)
     return (
@@ -207,11 +235,11 @@ export default function DailyBriefTab() {
               <tr>
                 <th>Ticker</th>
                 <th>Price</th>
-                <th>Index</th>
-                <th>Sector</th>
-                <th>Setup</th>
-                <th>Trigger / Stop</th>
                 <th>Score</th>
+                <th>Setup</th>
+                <th className="hide-sm">Index</th>
+                <th className="hide-sm">Sector</th>
+                <th className="hide-sm">Trigger / Stop</th>
               </tr>
             </thead>
             <tbody>
