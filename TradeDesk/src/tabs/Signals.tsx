@@ -10,8 +10,9 @@ import {
 import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import PremarketLine from '../components/PremarketLine';
+import { FuturesGamma, GexAlerts, TickerGamma, useWatchlist } from '../components/Gamma';
 import { fmtDate, fmtMoney, fmtTimeET } from '../lib/format';
-import type { ResearchIdea, SignalTicker, SignalsFile } from '../types';
+import type { ResearchIdea, SignalTicker, SignalsFile, GexChangesFile, GexFile, GexTicker } from '../types';
 
 type DirFilter = 'all' | 'accumulation' | 'distribution';
 type SortKey = 'signal' | 'flow' | 'pup';
@@ -52,7 +53,19 @@ function PupBadge({ p }: { p: number | null }) {
   );
 }
 
-function SignalCard({ m }: { m: Merged }) {
+function SignalCard({
+  m,
+  gex,
+  gexAt,
+  watched,
+  onToggleWatch,
+}: {
+  m: Merged;
+  gex: GexTicker | null;
+  gexAt?: string;
+  watched: boolean;
+  onToggleWatch: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const { sig, idea } = m;
   const lp = useLivePrice(sig.ticker, null);
@@ -65,6 +78,16 @@ function SignalCard({ m }: { m: Merged }) {
             <span className="subname">{sig.asset_name}</span>
           </span>
           <span className="signal-dir">
+            <button
+              className={`watch-star-btn${watched ? ' on' : ''}`}
+              title={watched ? 'Remove from watchlist' : 'Watch for gamma alerts'}
+              onClick={(ev) => {
+                ev.stopPropagation();
+                onToggleWatch();
+              }}
+            >
+              {watched ? '★' : '☆'}
+            </button>
             <Badge tone={DIR_TONE[sig.direction] ?? 'dim'}>{DIR_LABEL[sig.direction]}</Badge>
             {sig.cluster ? <Badge tone="amber">Cluster</Badge> : null}
           </span>
@@ -135,6 +158,11 @@ function SignalCard({ m }: { m: Merged }) {
             {sig.congress_trades > 0 ? <Chip>Congress ×{sig.congress_trades}</Chip> : null}
             {sig.exec_trades > 0 ? <Chip>White House ×{sig.exec_trades}</Chip> : null}
           </div>
+          {gex ? (
+            <div style={{ marginTop: 12 }}>
+              <TickerGamma g={gex} computedAt={gexAt} />
+            </div>
+          ) : null}
         </div>
       )}
     </article>
@@ -144,16 +172,33 @@ function SignalCard({ m }: { m: Merged }) {
 export default function SignalsTab() {
   const { data: sigData, loading: sLoading, error: sError } = useJsonData<SignalsFile>('signals.json');
   const { data: research } = useJsonData<ResearchIdea[]>('research.json');
+  const { data: gex } = useJsonData<GexFile>('gex.json');
+  const { data: gexChanges } = useJsonData<GexChangesFile>('gex-changes.json');
+  const [watched, toggleWatch] = useWatchlist();
 
   const [dir, setDir] = useState<DirFilter>('all');
   const [sort, setSort] = useState<SortKey>('signal');
+  const [query, setQuery] = useState('');
+
+  const gexByTicker = useMemo(() => {
+    const m = new Map<string, GexTicker>();
+    if (gex) for (const [k, v] of Object.entries(gex.tickers)) m.set(k.toUpperCase(), v);
+    return m;
+  }, [gex]);
 
   const merged = useMemo((): Merged[] => {
     if (!sigData) return [];
     const byTicker = new Map<string, ResearchIdea>();
     for (const r of research || []) byTicker.set(r.ticker.toUpperCase(), r);
+    const q = query.trim().toUpperCase();
     return sigData.tickers
       .filter((s) => dir === 'all' || s.direction === dir)
+      .filter(
+        (s) =>
+          !q ||
+          s.ticker.toUpperCase().includes(q) ||
+          (s.asset_name || '').toUpperCase().includes(q)
+      )
       .map((sig) => {
         const idea = byTicker.get(sig.ticker.toUpperCase()) ?? null;
         const signal = idea ? Math.round(0.45 * sig.flow_score + 0.55 * idea.score) : sig.flow_score;
@@ -164,7 +209,7 @@ export default function SignalsTab() {
         if (sort === 'pup') return (b.idea?.p_up ?? -1) - (a.idea?.p_up ?? -1);
         return b.signal - a.signal;
       });
-  }, [sigData, research, dir, sort]);
+  }, [sigData, research, dir, sort, query]);
 
   // Live delayed quotes for the top names on screen.
   useEffect(() => {
@@ -200,6 +245,14 @@ export default function SignalsTab() {
       </div>
 
       <div className="panel filterbar">
+        <input
+          className="search-input"
+          type="search"
+          placeholder="Search ticker or name…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search signals"
+        />
         <div className="seg" role="tablist" aria-label="Direction">
           {(['all', 'accumulation', 'distribution'] as DirFilter[]).map((d) => (
             <button key={d} className={dir === d ? 'active' : ''} onClick={() => setDir(d)}>
@@ -220,6 +273,9 @@ export default function SignalsTab() {
         </div>
       </div>
 
+      <FuturesGamma gex={gex ?? null} />
+      <GexAlerts changes={gexChanges ?? null} watched={watched} />
+
       {merged.length > 0 ? (
         <>
           <SectionHead
@@ -228,7 +284,14 @@ export default function SignalsTab() {
           />
           <div className="signal-list">
             {merged.slice(0, 60).map((m) => (
-              <SignalCard key={m.sig.ticker} m={m} />
+              <SignalCard
+                key={m.sig.ticker}
+                m={m}
+                gex={gexByTicker.get(m.sig.ticker.toUpperCase()) ?? null}
+                gexAt={gex?.computed_at}
+                watched={watched.includes(m.sig.ticker)}
+                onToggleWatch={() => toggleWatch(m.sig.ticker)}
+              />
             ))}
           </div>
           {merged.length > 60 ? (

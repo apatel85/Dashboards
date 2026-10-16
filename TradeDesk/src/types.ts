@@ -248,6 +248,77 @@ export interface SignalsFile {
   tickers: SignalTicker[];
 }
 
+/* ── gex.json / gex-changes.json ─────────────────────────────────── */
+
+export interface GexStrike {
+  k: number;
+  call: number;
+  put: number;
+  net: number;
+}
+
+export interface GexExpiry {
+  expiry: string;
+  dte: number;
+  /** $M per 1% move. */
+  net_gex: number;
+  call_gex: number;
+  put_gex: number;
+  flip_strike: number | null;
+  magnet_strike: number;
+  call_wall: number;
+  put_wall: number;
+  strikes: GexStrike[];
+  bullets: string[];
+}
+
+export interface GexLevel {
+  price: number;
+  type: 'support' | 'resistance' | 'pivot';
+  strength: 'strong' | 'moderate' | 'weak';
+  sources: string[];
+}
+
+export interface GexTicker {
+  ticker: string;
+  spot: number;
+  /** e.g. 'ES' — this ticker's gamma is shown as a futures proxy. */
+  proxy_for?: string;
+  /** multiply strikes/prices by this to read them in futures terms. */
+  proxy_scale?: number;
+  proxy_note?: string;
+  expiries: GexExpiry[];
+  levels: GexLevel[];
+  level_bullets: string[];
+  regime: {
+    direction: 'short' | 'long' | 'neutral';
+    confidence: 'firm' | 'leaning' | 'contested' | 'low';
+    bullet: string;
+  };
+}
+
+export interface GexFile {
+  computed_at: string;
+  risk_free: number;
+  formula: string;
+  watchlist: string[];
+  tickers: Record<string, GexTicker>;
+}
+
+export interface GexChange {
+  ticker: string;
+  expiry: string | null;
+  type: 'flip' | 'swing' | 'wall_move' | 'new' | 'gone';
+  detail: string;
+  rank: number;
+}
+
+export interface GexChangesFile {
+  computed_at: string;
+  prev_computed_at: string | null;
+  changes: GexChange[];
+}
+
 /* ── tabs ───────────────────────────────────────────────────────── */
 
 export type TabId = 'brief' | 'earnings' | 'congress' | 'research' | 'signals';
