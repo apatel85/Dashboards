@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.13'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.14'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -419,6 +419,9 @@ function localSave(ev) { // offline queue
 
 async function saveEvent(ev) {
   try {
+    // v3.27.14 — strip local-only fields before insert (defensive; _optimistic is
+    // added after a successful save, but never send it to Supabase).
+    delete ev._optimistic;
     ev.subject_id = S.subject?.id || null;
     ev.owner_id = S.user?.id || null;
     ev.logged_at = ev.logged_at || new Date().toISOString();
@@ -2170,7 +2173,9 @@ function buildEditPatch(prev, f) {
 }
 /* Update one event by id — Supabase when synced, local queue/caches when offline. */
 async function updateEvent(id, patch) {
-  const { id: _drop, ...clean } = patch;
+  // v3.27.14 — strip local-only fields (Ankit 2026-10-16: "_optimistic column" error —
+  // the flag leaked into the Supabase update payload).
+  const { id: _drop, _optimistic: _opt, ...clean } = patch;
   // v3.27.13 — update local state optimistically on server success too (Ankit 2026-10-16:
   // edits didn't update the timeline — the online path returned without touching S.history).
   const applyLocal = () => {
