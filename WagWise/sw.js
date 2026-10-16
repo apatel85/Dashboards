@@ -1,5 +1,5 @@
 /* WagWise service worker — cache-first offline PWA (v2.2) */
-const CACHE = 'wagwise-v3.27.11';
+const CACHE = 'wagwise-v3.27.12';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js',
   './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
@@ -23,6 +23,20 @@ self.addEventListener('fetch', e => {
   // Never cache API traffic or the build-time config — always network.
   if (/supabase\.co|googleapis\.com/.test(url.hostname)) return;
   if (url.pathname.endsWith('config.js')) return;
+  // v3.27.12 — network-first for the app shell (index.html, app.js, styles.css).
+  // The old cache-first strategy pinned stale versions on devices (Ankit 2026-10-16:
+  // stuck on v3.27.10, updates never arrived). App shell is tiny; always try network.
+  const isShell = /\/(index\.html|app\.js|styles\.css)?(\?|$)/.test(url.pathname) || url.pathname.endsWith('/WagWise/');
+  if (isShell) {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, copy));
+        return res;
+      }).catch(() => caches.match(e.request).then(hit => hit || caches.match('./index.html')))
+    );
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
       const copy = res.clone();
