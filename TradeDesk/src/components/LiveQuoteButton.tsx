@@ -1,4 +1,4 @@
-import { refreshQuotes, useQuoteStatus } from '../lib/quotes';
+import { refreshQuotes, useQuoteStatus, quotesTimestamp } from '../lib/quotes';
 import { fmtTimeET } from '../lib/format';
 
 /** "10:24 AM ET" → "10:24a" for the compact button label. */
@@ -10,29 +10,33 @@ function shortTime(ms: number): string {
 }
 
 /**
- * Top-bar button: pulls ~15-minute-delayed quotes for the tickers on the
- * active tab, straight from the free Stooq feed. Manual refresh only.
+ * Top-bar button: (re)loads the pipeline's delayed quote snapshot
+ * (data/quotes.json, ~15-min-delayed Yahoo prices). No free quote API is
+ * reachable from the browser, so this is the honest refresh path.
  */
 export default function LiveQuoteButton() {
   const s = useQuoteStatus();
+
+  const asOf = quotesTimestamp();
+  const asOfLabel = asOf ? `snapshot ${shortTime(new Date(asOf).getTime())}` : 'snapshot';
 
   let label: string;
   let title: string;
   let className = 'btn btn-ghost livebtn';
   if (s.fetching) {
     label = 'Updating…';
-    title = 'Fetching delayed quotes…';
+    title = 'Loading delayed quotes…';
   } else if (s.lastError && !s.lastOk) {
     label = '↻ Retry prices';
     title = `Last attempt failed: ${s.lastError}. Tap to retry.`;
     className += ' btn-warn';
   } else if (s.lastOk) {
-    label = `● Live ${shortTime(s.lastOk)}`;
-    title = `Delayed ~15 min · updated ${fmtTimeET(new Date(s.lastOk).toISOString())} · ${s.cached} tickers cached. Tap to refresh.`;
+    label = `● Quotes ${asOf ? shortTime(new Date(asOf).getTime()) : shortTime(s.lastOk)}`;
+    title = `Delayed ~15 min · ${asOfLabel} · ${s.cached} tickers. Tap to re-check for a newer snapshot.`;
     className += ' live-on';
   } else {
-    label = '↻ Live prices';
-    title = 'Pull ~15-minute-delayed quotes for this tab (free feed, no key needed)';
+    label = '↻ Quotes';
+    title = 'Load delayed quotes from the latest pipeline snapshot (free feed, no key needed)';
   }
 
   return (

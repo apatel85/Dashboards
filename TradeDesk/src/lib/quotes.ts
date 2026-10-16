@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Live (delayed) quote store — $0, no API key.
+ * Delayed quote store — $0, no API key.
  *
- * Primary source: Stooq's free CSV quote endpoint, fetched straight from the
- * user's browser (their network, not our servers). Quotes are ~15 minutes
- * delayed and reflect the last regular-session trade. Manual refresh only, so
- * we never hammer the free endpoint.
+ * No free quote API sends CORS headers, so the browser cannot fetch quotes
+ * directly (Stooq/Yahoo/Nasdaq all fail from the app — verified 2026-10-16).
+ * Instead the pipeline snapshots ~15-min-delayed Yahoo prices into
+ * `data/quotes.json`; the store loads it on first use and the refresh button
+ * re-reads it (cache-busted). Every price carries its as_of time — nothing
+ * is presented as live.
  *
- * If Stooq is unreachable from the user's network the store keeps the
- * pipeline prices and surfaces the error honestly — nothing is faked.
+ * Extended-hours quotes still attempt CNBC's free batch endpoint straight
+ * from the browser (it sends CORS *); failure is non-fatal.
  */
 
 export interface LiveQuote {
@@ -46,6 +48,9 @@ let universe: string[] = [];
 let fetching = false;
 let lastOk: number | null = null;
 let lastError: string | null = null;
+/** as_of from quotes.json — the honest timestamp behind every price. */
+let quotesAsOf: string | null = null;
+let quotesLoaded = false;
 
 function emit() {
   listeners.forEach((fn) => fn());
@@ -71,6 +76,11 @@ export function quoteStatus(): QuoteStatus {
   return { fetching, lastOk, lastError, cached: cache.size };
 }
 
+/** When the pipeline snapshot was taken (null until loaded). */
+export function quotesTimestamp(): string | null {
+  return quotesAsOf;
+}
+
 export function subscribeQuotes(fn: Listener): () => void {
   listeners.add(fn);
   return () => {
@@ -80,12 +90,12 @@ export function subscribeQuotes(fn: Listener): () => void {
 
 /** Fetch one batched CSV from Stooq and fill the cache. */
 export async function refreshQuotes(): Promise<void> {
-  if (fetching || universe.length === 0) return;
+  if (fetching) return;
   fetching = true;
   lastError = null;
   emit();
   try {
-    await refreshStooq();
+    await refreshPipelineQuotes();
     // Extended-hours quotes are a separate feed; failure must not kill the
     // regular quotes we just fetched.
     try {
@@ -102,23 +112,44 @@ export async function refreshQuotes(): Promise<void> {
   }
 }
 
-async function refreshStooq(): Promise<void> {
-  const syms = universe.map((t) => `${t.toLowerCase()}.us`).join(',');
-  const url = `https://stooq.com/q/l/?s=${encodeURIComponent(syms)}&f=sd2t2ohlcv&h&e=csv`;
+/** Load the pipeline snapshot on first price lookup so cards show prices. */
+let quotesPrime: Promise<void> | null = null;
+export function primeQuotes(): void {
+  if (quotesLoaded || quotesPrime) return;
+  quotesPrime = refreshPipelineQuotes()
+    .then(() => {
+      lastOk = Date.now();
+      emit();
+    })
+    .catch((e: unknown) => {
+      lastError = e instanceof Error ? e.message : 'quote fetch failed';
+      emit();
+    })
+    .finally(() => {
+      quotesPrime = null;
+    });
+}
+
+/** Fetch the pipeline's quotes.json snapshot and fill the cache. */
+async function refreshPipelineQuotes(): Promise<void> {
+  const base = import.meta.env.BASE_URL || '/';
+  const url = `${base}data/quotes.json?ts=${Date.now()}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`quote feed HTTP ${res.status}`);
-  const text = await res.text();
+  if (!res.ok) throw new Error(`quotes snapshot HTTP ${res.status}`);
+  const json = await res.json();
+  const quotes = json?.quotes;
+  if (!quotes || typeof quotes !== 'object') throw new Error('quotes snapshot malformed');
+  quotesAsOf = typeof json.as_of === 'string' ? json.as_of : null;
   let n = 0;
-  for (const line of text.trim().split('\n').slice(1)) {
-    const c = line.split(',');
-    const sym = (c[0] ?? '').trim().toUpperCase().replace(/\.US$/, '');
-    const close = parseFloat(c[6]);
-    if (sym && isFinite(close) && close > 0) {
-      cache.set(sym, { price: close, fetchedAt: Date.now() });
-      n += 1;
+  for (const [sym, q] of Object.entries(quotes)) {
+    const price = (q as { price?: number })?.price;
+    if (typeof price === 'number' && isFinite(price) && price > 0) {
+      cache.set(String(sym).toUpperCase(), { price, fetchedAt: Date.now() });
+      n++;
     }
   }
-  if (n === 0) throw new Error('quote feed returned no usable rows');
+  if (n === 0) throw new Error('quotes snapshot had no usable rows');
+  quotesLoaded = true;
 }
 
 /**
@@ -172,6 +203,9 @@ export function useLivePrice(
 } {
   const [, force] = useState(0);
   useEffect(() => subscribeQuotes(() => force((x) => x + 1)), []);
+  useEffect(() => {
+    primeQuotes();
+  }, []);
   const q = getQuote(ticker);
   const pm = getPremarket(ticker);
   if (q) return { price: q.price, live: true, fetchedAt: q.fetchedAt, premarket: pm };
