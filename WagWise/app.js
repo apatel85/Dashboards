@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.12'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.13'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -2171,9 +2171,24 @@ function buildEditPatch(prev, f) {
 /* Update one event by id — Supabase when synced, local queue/caches when offline. */
 async function updateEvent(id, patch) {
   const { id: _drop, ...clean } = patch;
+  // v3.27.13 — update local state optimistically on server success too (Ankit 2026-10-16:
+  // edits didn't update the timeline — the online path returned without touching S.history).
+  const applyLocal = () => {
+    for (const arr of [S.events, S.history]) {
+      const i = arr.findIndex(e => String(e.id) === String(id));
+      if (i >= 0) arr[i] = { ...arr[i], ...clean };
+    }
+    // Also update pending in localStorage if present
+    try {
+      const pend = JSON.parse(localStorage.getItem('st_pending') || '[]');
+      const upd = pend.map(e => String(e.id) === String(id) ? { ...e, ...clean } : e);
+      localStorage.setItem('st_pending', JSON.stringify(upd));
+    } catch (pe) {}
+  };
   if (sbReady() && !String(id).startsWith('local-')) {
     const { error } = await S.sb.from('telemetry_events').update(clean).eq('id', id);
     if (error) { toast('Update failed: ' + error.message); return false; }
+    applyLocal();
     return true;
   }
   const orig = S.events.find(e => String(e.id) === String(id)) || S.history.find(e => String(e.id) === String(id));
@@ -2181,10 +2196,7 @@ async function updateEvent(id, patch) {
   const q = JSON.parse(localStorage.getItem('st_queue') || '[]')
     .map(e => (String(e.id) === String(id) || sameOrig(e)) ? { ...e, ...clean } : e);
   localStorage.setItem('st_queue', JSON.stringify(q));
-  for (const arr of [S.events, S.history]) {
-    const i = arr.findIndex(e => String(e.id) === String(id));
-    if (i >= 0) arr[i] = { ...arr[i], ...clean };
-  }
+  applyLocal();
   return true;
 }
 function closeSheet() {
@@ -2286,7 +2298,7 @@ async function saveSheet() {
     const patch = buildEditPatch(existing, f);
     closeSheet();
     if (await updateEvent(existing.id, patch)) toast('Event updated ✓');
-    await loadData(); renderCockpit(); checkNudges();
+    renderAll(); await loadData(true); renderCockpit(); checkNudges();
     return;
   } else if (kind === 'Backdate') {
     // v2.0 — "found the puddle an hour later" case
