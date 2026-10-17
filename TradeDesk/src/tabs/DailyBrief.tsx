@@ -11,11 +11,12 @@ import {
   SectionHead,
   LoadingPanel,
   ErrorPanel,
+  TvLink,
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import PremarketLine from '../components/PremarketLine';
-import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, prettify } from '../lib/format';
+import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, prettify, fmtOcc, fmtK, splitThesis, prettifyOptions } from '../lib/format';
 import type { DailyBrief, BreakoutCandidate, DtePick, SectorPerf, MarketRegime } from '../types';
 
 const REGIME_TONE: Record<MarketRegime, 'green' | 'red' | 'amber' | 'dim'> = {
@@ -39,7 +40,7 @@ function BreakoutRow({ c }: { c: BreakoutCandidate }) {
     <>
       <tr className="clickable" onClick={() => setOpen((o) => !o)} title="Click for thesis">
         <td data-th="Ticker">
-          <span className="ticker">{c.ticker}</span>
+          <TvLink ticker={c.ticker} />
           <span className="subname">{c.name}</span>
         </td>
         <td data-th="Price" className="num">
@@ -75,7 +76,7 @@ function BreakoutRow({ c }: { c: BreakoutCandidate }) {
         <tr className="detail-row">
           <td colSpan={7}>
             <div className="detail-grid">
-              <div className="detail-thesis">{c.thesis}</div>
+              <div className="detail-thesis">{prettifyOptions(c.thesis || '')}</div>
               <div className="detail-meta">
                 <div>
                   <span className="detail-label">Attributes</span>
@@ -111,10 +112,11 @@ function BreakoutRow({ c }: { c: BreakoutCandidate }) {
 
 function DteCard({ p }: { p: DtePick }) {
   const lp = useLivePrice(p.ticker, p.underlying_price);
+  const { main: thesisMain, unusual } = splitThesis(p.thesis || '');
   return (
     <div className="dte-card">
       <div className="dte-head">
-        <span className="ticker">{p.ticker}</span>
+        <TvLink ticker={p.ticker} />
         <SignalBadge signal={p.bias} />
       </div>
       <div className="dte-stats">
@@ -141,7 +143,24 @@ function DteCard({ p }: { p: DtePick }) {
           )}
         </div>
       </div>
-      <p className="dte-thesis">{p.thesis}</p>
+      <p className="dte-thesis">{prettifyOptions(thesisMain)}</p>
+      {unusual.length > 0 ? (
+        <div className="unusual-block">
+          <span className="detail-label">Unusual options</span>
+          <div className="chips">
+            {unusual.map((u, i) => (
+              <span className="opt-chip" key={`${u.sym}-${i}`}>
+                <strong>{fmtOcc(u.sym)}</strong>
+                <span className="muted">
+                  {u.vol != null ? `vol ${fmtK(u.vol)}` : ''}
+                  {u.vol != null && u.oi != null ? ' · ' : ''}
+                  {u.oi != null ? `OI ${fmtK(u.oi)}` : ''}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

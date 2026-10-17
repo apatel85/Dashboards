@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Badge, SectionHead, Stat } from './ui';
+import { Badge, SectionHead, Stat, TvLink } from './ui';
+import { prettifyOptions } from '../lib/format';
 import type { LottoCandidate, LottoFile } from '../types';
 
 const SETUP_LABEL: Record<string, string> = {
@@ -18,16 +19,24 @@ function LottoCard({ c, rank }: { c: LottoCandidate; rank: number }) {
   const [open, setOpen] = useState(rank < 3);
   return (
     <div className={`signal-card${open ? ' open' : ''}`}>
-      <button className="signal-head" onClick={() => setOpen((o) => !o)}>
+      <div
+        className="signal-head"
+        role="button"
+        tabIndex={0}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') setOpen((o) => !o);
+        }}
+      >
         <span className="rank num">#{rank + 1}</span>
-        <span className="sig-ticker">{c.ticker}</span>
+        <TvLink ticker={c.ticker} />
         <Badge tone={dirTone(c.direction)}>{c.direction}</Badge>
         <Badge tone={c.setup_validated ? 'green' : 'dim'}>
           {c.setup_validated ? '✓ validated' : c.setup_validated === false ? 'experimental' : 'unscored'}
         </Badge>
         <span className="score num">{c.score}</span>
         <span className="chev">{open ? '▾' : '▸'}</span>
-      </button>
+      </div>
       <div className="signal-sub muted small">
         {SETUP_LABEL[c.setup] ?? c.setup}
         {c.expected_move_pct != null ? ` · 0DTE expected ±${c.expected_move_pct}%` : ''}
@@ -89,7 +98,7 @@ function LottoCard({ c, rank }: { c: LottoCandidate; rank: number }) {
           {c.notes?.length ? (
             <ul className="bullet-list">
               {c.notes.map((n, i) => (
-                <li key={i}>{n}</li>
+                <li key={i}>{prettifyOptions(n)}</li>
               ))}
             </ul>
           ) : null}

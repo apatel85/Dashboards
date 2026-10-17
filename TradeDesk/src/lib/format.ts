@@ -128,3 +128,79 @@ export function clampScore(n: number | null | undefined): number | null {
   if (n == null || !isFinite(n)) return null;
   return Math.max(0, Math.min(100, Math.round(n)));
 }
+
+// ── OCC option symbols, e.g. NVDA261016C00217500 → root + YYMMDD + C/P + strike×1000 ──
+const OCC_RE = /[A-Z]{1,6}\d{6}[CP]\d{8}/;
+const OCC_RE_G = /[A-Z]{1,6}\d{6}[CP]\d{8}/g;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export interface OccParts {
+  expiry: string;
+  cp: 'call' | 'put';
+  strike: number;
+}
+
+export function parseOcc(sym: string): OccParts | null {
+  const m = OCC_RE.exec(sym);
+  if (!m) return null;
+  // root is 1-6 letters, so the date is the first 6-digit run
+  const ds = m[0].search(/\d{6}/);
+  if (ds < 0) return null;
+  const date = m[0].slice(ds, ds + 6);
+  const mo = +date.slice(2, 4), dd = +date.slice(4, 6);
+  if (mo < 1 || mo > 12 || dd < 1 || dd > 31) return null;
+  const cp = m[0].charAt(ds + 6);
+  if (cp !== 'C' && cp !== 'P') return null;
+  const strikeRaw = m[0].slice(ds + 7, ds + 15);
+  if (!/^\d{8}$/.test(strikeRaw)) return null;
+  return { expiry: `${MONTHS[mo - 1]} ${dd}`, cp: cp === 'C' ? 'call' : 'put', strike: +strikeRaw / 1000 };
+}
+
+/** "NVDA261016C00217500" → "Oct 16 $217.50 call" */
+export function fmtOcc(sym: string): string {
+  const p = parseOcc(sym);
+  if (!p) return sym;
+  const s = p.strike % 1 === 0 ? p.strike.toFixed(0) : p.strike.toFixed(2);
+  return `${p.expiry} $${s} ${p.cp}`;
+}
+
+/** 84235 → "84.2k", 7844 → "7.8k" */
+export function fmtK(n: number | null | undefined): string {
+  if (n == null || !isFinite(n)) return DASH;
+  const a = Math.abs(n);
+  if (a >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+  if (a >= 1e3) return `${(n / 1e3).toFixed(1)}k`;
+  return String(Math.round(n));
+}
+
+export interface UnusualItem {
+  sym: string;
+  vol: number | null;
+  oi: number | null;
+}
+
+/** Split "… Unusual: SYM vol X vs OI Y; …" tail off a thesis string. */
+export function splitThesis(thesis: string): { main: string; unusual: UnusualItem[] } {
+  const m = thesis.match(/Unusual:\s*(.+)$/);
+  if (!m || !m.index) return { main: thesis, unusual: [] };
+  const unusual = m[1]
+    .split(/\s*;\s*/)
+    .map((part) => {
+      const sym = (part.match(OCC_RE) || [])[0];
+      if (!sym) return null;
+      const vol = part.match(/vol\s+([\d,]+)/i);
+      const oi = part.match(/\bOI\s+([\d,]+)/i);
+      return {
+        sym,
+        vol: vol ? +vol[1].replace(/,/g, '') : null,
+        oi: oi ? +oi[1].replace(/,/g, '') : null,
+      } as UnusualItem;
+    })
+    .filter((x): x is UnusualItem => x !== null);
+  return { main: thesis.slice(0, m.index).trim(), unusual };
+}
+
+/** Replace any OCC symbols in free text with the readable form. */
+export function prettifyOptions(text: string): string {
+  return text.replace(OCC_RE_G, (s) => fmtOcc(s));
+}

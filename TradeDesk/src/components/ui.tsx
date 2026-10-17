@@ -86,6 +86,45 @@ export function Chip({ children }: { children: ReactNode }) {
   return <span className="chip">{children}</span>;
 }
 
+/* ── TradingView chart link ────────────────────────────────────── */
+
+const TV_SYMBOL_MAP: Record<string, string> = {
+  'ES=F': 'CME:ES1!',
+  'NQ=F': 'CME:NQ1!',
+  'YM=F': 'CBOT:YM1!',
+  'RTY=F': 'CME:RTY1!',
+  '^SPX': 'SP:SPX',
+  '^IXIC': 'NASDAQ:IXIC',
+  '^DJI': 'DJI',
+  '^VIX': 'CBOE:VIX',
+  '^RUT': 'TVC:RUT',
+};
+
+export function tvUrl(ticker: string): string {
+  const t = (ticker || '').trim().toUpperCase();
+  const sym = TV_SYMBOL_MAP[t] ?? t;
+  return `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(sym)}`;
+}
+
+/** Ticker rendered as a link that opens its TradingView chart in a new tab. */
+export function TvLink({ ticker, className }: { ticker: string; className?: string }) {
+  return (
+    <a
+      className={`tv-link${className ? ` ${className}` : ''}`}
+      href={tvUrl(ticker)}
+      target="_blank"
+      rel="noreferrer"
+      title={`Open ${ticker} chart in TradingView`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <span className="ticker">{ticker}</span>
+      <span className="tv-ext" aria-hidden="true">
+        ↗
+      </span>
+    </a>
+  );
+}
+
 /* ── Stat: label + value pair ──────────────────────────────────── */
 
 export function Stat({ label, value, accent }: { label: string; value: ReactNode; accent?: 'up' | 'down' }) {
