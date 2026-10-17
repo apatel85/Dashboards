@@ -36,6 +36,21 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "index.html")
 DEV = "https://facility-dev.quixeraos.com"
 
+def _normalize(b):
+    """Extension-filed bugs (severity/trail/page/url) -> card format (sev/steps/link)."""
+    if "sev" not in b or not b["sev"]:
+        b["sev"] = b.pop("severity", "Medium") if "severity" in b else "Medium"
+    b.setdefault("status", "Open")
+    b.setdefault("source", "manual")
+    if "steps" not in b:
+        trail = b.get("trail") or []
+        b["steps"] = [f"{t.get('page', '')} — {t.get('clicked', '')}".strip(" —") for t in trail] or ["(no steps recorded)"]
+    b.setdefault("link", b.get("url") or DEV)
+    b.setdefault("expected", "")
+    b.setdefault("actual", "")
+    b.setdefault("title", b.get("id", "Untitled"))
+    return b
+
 def _load_bugs():
     base = json.load(open(os.path.join(HERE, "data", "base.json")))
     bugs = list(base["bugs"])
@@ -45,7 +60,7 @@ def _load_bugs():
         for fn in sorted(os.listdir(bugs_dir)):
             if fn.endswith(".json"):
                 with open(os.path.join(bugs_dir, fn)) as f:
-                    bugs.append(json.load(f))
+                    bugs.append(_normalize(json.load(f)))
     for b in bugs:
         b["imgs"] = [os.path.join(HERE, s) for s in b.get("shots", [])]
     return bugs, backlog
