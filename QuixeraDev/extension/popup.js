@@ -1,32 +1,38 @@
-/* popup logic */
-const $ = (id) => document.getElementById(id);
+/* QA Capture v2 — popup */
+(async function () {
+  const status = document.getElementById("status");
+  const list = document.getElementById("list");
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const host = tab && tab.url ? new URL(tab.url).hostname : "";
 
-async function refresh() {
-  const s = await chrome.storage.local.get(['qa_recording', 'qa_trail', 'qa_pat', 'qa_repo', 'qa_branch']);
-  const rec = s.qa_recording !== false;
-  const n = (s.qa_trail || []).length;
-  $('status').innerHTML = `Recording: <b>${rec ? 'ON 🟢' : 'PAUSED ⏸'}</b> · <b>${n}</b> steps captured` +
-    (s.qa_pat ? ' · <b>token saved ✓</b>' : ' · <b style="color:#b91c1c">no token yet</b>');
-  $('toggle').textContent = rec ? 'Pause' : 'Resume';
-  if (s.qa_repo) $('repo').value = s.qa_repo;
-  if (s.qa_branch) $('branch').value = s.qa_branch;
-}
-$('toggle').onclick = async () => {
-  const s = await chrome.storage.local.get('qa_recording');
-  const rec = s.qa_recording !== false;
-  await chrome.storage.local.set({ qa_recording: !rec });
-  refresh();
-};
-$('clear').onclick = async () => { await chrome.storage.local.set({ qa_trail: [] }); refresh(); };
-$('save').onclick = async () => {
-  await chrome.storage.local.set({
-    qa_pat: $('pat').value.trim(),
-    qa_repo: $('repo').value.trim() || 'apatel85/Dashboards',
-    qa_branch: $('branch').value.trim() || 'main',
-    qa_env: 'dev',
+  const resp = await chrome.runtime.sendMessage({ type: "listProjects" });
+  const projects = (resp && resp.projects) || [];
+  const match = (h) => {
+    h = h.toLowerCase(); let best = null, bl = -1;
+    for (const p of projects) for (const r of (p.hosts || [])) {
+      const e = r.trim().toLowerCase();
+      if (e && (h === e || h.endsWith("." + e)) && e.length > bl) { best = p; bl = e.length; }
+    }
+    return best;
+  };
+  const m = match(host);
+  if (m) {
+    status.textContent = "This site files into:";
+    list.innerHTML = `<div class="proj"><b>${m.name}</b>
+      <a href="https://apatel85.github.io/Dashboards/${m.dir || m.slug}/" target="_blank">Open dashboard ↗</a></div>`;
+  } else {
+    status.textContent = "No project matches this site yet.";
+    list.innerHTML = `<div id="nomatch">Add <b>${host}</b> to a project in Settings, then reload the page.</div>`;
+  }
+
+  document.getElementById("flag").addEventListener("click", async () => {
+    if (!m) { status.textContent = "Add this site to a project in Settings first."; return; }
+    await chrome.tabs.sendMessage(tab.id, { type: "openForm" }).catch(() => {
+      status.textContent = "Reload the page, then try again.";
+    });
+    window.close();
   });
-  $('msg').textContent = 'Saved ✓'; $('msg').style.color = '#15803d';
-  $('pat').value = '';
-  refresh();
-};
-refresh();
+  document.getElementById("settings").addEventListener("click", () => {
+    chrome.runtime.openOptionsPage();
+  });
+})();
