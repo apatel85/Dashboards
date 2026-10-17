@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QA Capture — Settings</title>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;max-width:720px;margin:0 auto;padding:20px;color:#222}
+  h1{font-size:22px} h2{font-size:17px;margin-top:28px}
+  .card{border:1px solid #ddd;border-radius:12px;padding:16px;margin:12px 0;background:#fcfcfc}
+  label{display:block;font-size:13px;font-weight:600;margin:10px 0}
+  input[type=text],input[type=password],textarea{width:100%;padding:12px;font-size:15px;border:1px solid #ccc;
+    border-radius:8px;box-sizing:border-box;font-family:inherit;margin-top:6px}
+  textarea{font-family:monospace;font-size:13px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button{min-height:48px;padding:0 20px;font-size:15px;border-radius:10px;border:1px solid #ccc;
+    background:#f4f4f4;cursor:pointer}
+  button.primary{background:#1a73e8;color:#fff;border:none;font-weight:700}
+  button.danger{background:#fff;color:#c0392b;border-color:#c0392b}
+  .hint{font-size:12px;color:#666}
+  .dashlink{font-size:13px}
+  #msg{position:sticky;top:0;background:#e8f5e9;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:none}
+</style></head>
+<body>
+  <h1>🚩 QA Capture — Settings</h1>
+  <div id="msg"></div>
+
+  <h2>GitHub</h2>
+  <div class="card">
+    <label>Personal access token (Contents read &amp; write on your Dashboards repo)
+      <input type="password" id="token" placeholder="ghp_…" autocomplete="off"></label>
+    <label>Repo <input type="text" id="repo" placeholder="apatel85/Dashboards"></label>
+    <p class="hint">The token is stored only in this browser (extension storage). It is never sent anywhere except api.github.com.</p>
+  </div>
+
+  <h2>Projects → dashboards</h2>
+  <p class="hint">Each project watches one or more sites (one host per line — a bare domain also matches its subdomains) and files flagged bugs into its dashboard folder in the repo.</p>
+  <div id="projects"></div>
+  <div class="row">
+    <button id="add">＋ New project / dashboard</button>
+    <button class="primary" id="save">💾 Save all</button>
+  </div>
+
+  <h2>Filed issues</h2>
+  <div class="card">
+    <p class="hint">View and edit bugs previously filed with the extension. Edits update the bug file in the repo; the dashboard rebuilds within ~10 minutes.</p>
+    <div class="row">
+      <select id="issue-proj" style="flex:1;min-height:48px;font-size:15px;border-radius:10px;border:1px solid #ccc;padding:0 12px"></select>
+      <button id="issue-load">Load issues</button>
+    </div>
+    <div id="issue-list" style="margin-top:12px"></div>
+    <div id="issue-edit" style="display:none;margin-top:12px;border-top:1px solid #eee;padding-top:12px"></div>
+  </div>
+
+<script src="options.js"></script>
+</body></html>
