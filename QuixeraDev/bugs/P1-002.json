@@ -1,0 +1,30 @@
+{
+  "id": "P1-002",
+  "source": "manual",
+  "project": "Quixera Dev",
+  "title": "Settings > Users: Reset Password and Disable User fire immediately with no confirmation dialog",
+  "severity": "High",
+  "page": "Settings > Users",
+  "url": "https://facility-dev.quixeraos.com/settings/users",
+  "expected": "Clicking Reset Password or Disable User on a user row should show a confirmation dialog before acting, since both have outward/destructive effects.",
+  "actual": "Clicking Reset Password on TEST USER (ID 3090, abcd@exmaple.com) immediately sent a real password-reset email (toast: 'Success - Password reset email sent to abcd@exmaple.com'). No confirmation step exists between the row-actions menu and the action. Disable User behaves the same way. NOTE: this caused an inadvertent outward email during testing.",
+  "trail": [
+    {
+      "step": 1,
+      "page": "/settings/users",
+      "clicked": "row-actions menu on TEST USER"
+    },
+    {
+      "step": 2,
+      "page": "/settings/users",
+      "clicked": "menu item: \"Reset Password\""
+    },
+    {
+      "step": 3,
+      "page": "/settings/users",
+      "clicked": "(toast) \"Success - Password reset email sent\""
+    }
+  ],
+  "shots": [],
+  "created": "2026-10-17T10:05:00-04:00"
+}
