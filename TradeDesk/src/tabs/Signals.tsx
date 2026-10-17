@@ -11,8 +11,9 @@ import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import PremarketLine from '../components/PremarketLine';
 import { FuturesGamma, GexAlerts, TickerGamma, useWatchlist } from '../components/Gamma';
+import { LottoScanner } from '../components/Lotto';
 import { fmtDate, fmtMoney, fmtTimeET } from '../lib/format';
-import type { ResearchIdea, SignalTicker, SignalsFile, GexChangesFile, GexFile, GexTicker } from '../types';
+import type { ResearchIdea, SignalTicker, SignalsFile, GexChangesFile, GexFile, GexTicker, LottoFile } from '../types';
 
 type DirFilter = 'all' | 'accumulation' | 'distribution';
 type SortKey = 'signal' | 'flow' | 'pup';
@@ -174,6 +175,7 @@ export default function SignalsTab() {
   const { data: research } = useJsonData<ResearchIdea[]>('research.json');
   const { data: gex } = useJsonData<GexFile>('gex.json');
   const { data: gexChanges } = useJsonData<GexChangesFile>('gex-changes.json');
+  const { data: lotto } = useJsonData<LottoFile>('lotto.json');
   const [watched, toggleWatch] = useWatchlist();
 
   const [dir, setDir] = useState<DirFilter>('all');
@@ -275,6 +277,7 @@ export default function SignalsTab() {
 
       <FuturesGamma gex={gex ?? null} />
       <GexAlerts changes={gexChanges ?? null} watched={watched} />
+      <LottoScanner lotto={lotto} />
 
       {merged.length > 0 ? (
         <>

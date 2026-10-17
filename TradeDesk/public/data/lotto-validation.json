@@ -1,0 +1,63 @@
+{
+ "generated_at": "2026-10-17T14:38:53.093Z",
+ "friction": 0.05,
+ "setups": {
+  "S1_IGNITION": {
+   "name": "Momentum ignition",
+   "description": "relVol≥2 + range expansion + close at day extreme → next-day continuation",
+   "n": 1462,
+   "win_rate": 0.237,
+   "avg_return_gross": 0.577,
+   "expectancy_net": 0.498,
+   "avg_winner": 5.49,
+   "avg_loser": -0.95,
+   "validated": true
+  },
+  "S2_CHEAPIV": {
+   "name": "Cheap-IV breakout",
+   "description": "RV20 rank ≤30 + 20d high/low breakout → next-day continuation",
+   "n": 3636,
+   "win_rate": 0.196,
+   "avg_return_gross": 0.649,
+   "expectancy_net": 0.567,
+   "avg_winner": 7.33,
+   "avg_loser": -0.98,
+   "validated": true
+  },
+  "S3_FRIDAYPIN": {
+   "name": "Friday pin-break",
+   "description": "Friday compressed first 30m, break after 10:00 → extension to close",
+   "n": 5,
+   "win_rate": 0,
+   "avg_return_gross": -1,
+   "expectancy_net": -1,
+   "avg_winner": 0,
+   "avg_loser": -1,
+   "validated": false
+  },
+  "S4_TENAM": {
+   "name": "10:00 conditional",
+   "description": "strong first 30m, continuation break by 10:30 → extension to close",
+   "n": 731,
+   "win_rate": 0.2,
+   "avg_return_gross": -0.425,
+   "expectancy_net": -0.453,
+   "avg_winner": 1.54,
+   "avg_loser": -0.91,
+   "validated": false
+  }
+ },
+ "methodology": {
+  "universe": "S&P 500 (0 tickers)",
+  "daily_window": "2 years of daily bars (S1, S2)",
+  "intraday_window": "1 month of 5-minute bars, liquid large-caps (S3, S4) — Yahoo rejects 1m/1mo (HTTP 422)",
+  "option_model": "Black-Scholes; entry IV = trailing 20d realized vol floored at 15%; 1% OTM 1DTE (S1/S2), 0.5% OTM 0DTE (S3/S4); exit at intrinsic on close; 5% friction haircut",
+  "validation_rule": "n>=80 AND net expectancy > 0"
+ },
+ "caveats": [
+  "No free source publishes historical intraday option chains — ticket P&L is MODELED, not observed fills.",
+  "IV proxied by trailing realized vol; actual 0DTE IV skew/smile and bid-ask spreads will differ.",
+  "S3/S4 sample is one month of Fridays — small-n; treat as preliminary until more Fridays accumulate.",
+  "Survivorship: universe is current S&P 500 constituents."
+ ]
+}

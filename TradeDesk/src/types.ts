@@ -328,3 +328,50 @@ export interface TabDef {
   label: string;
   dataFile: string;
 }
+
+/* ── lotto scanner ────────────────────────────────────────────────── */
+
+export interface LottoHotStrike {
+  strike: number;
+  side: 'call' | 'put';
+  volume: number;
+  oi: number | null;
+}
+
+export interface LottoCandidate {
+  ticker: string;
+  spot: number;
+  direction: 'CALL' | 'PUT' | 'BOTH';
+  setup: string;
+  setup_validated: boolean | null;
+  score: number;
+  entry_trigger: string;
+  invalidation: string;
+  targets: number[];
+  expected_move_pct: number | null;
+  expiry_0dte: string | null;
+  expiry_1dte: string | null;
+  unusual: { vol_oi_ratio: number; hot_strikes: LottoHotStrike[]; call_vol: number; put_vol: number };
+  iv_pct: number | null;
+  rv20_pct: number | null;
+  gamma_regime: string | null;
+  friday_pin: { strike: number; distPct: number } | null;
+  notes: string[];
+}
+
+export interface LottoValidationSummary {
+  validated: boolean;
+  n: number;
+  win_rate: number;
+  expectancy_net: number;
+}
+
+export interface LottoFile {
+  generated_at: string;
+  as_of: string;
+  is_friday: boolean;
+  universe_scanned: number;
+  candidates_considered: number;
+  validation_summary: Record<string, LottoValidationSummary>;
+  candidates: LottoCandidate[];
+}
