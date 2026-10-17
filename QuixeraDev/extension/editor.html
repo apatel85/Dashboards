@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QA Capture — Annotate screenshot</title>
+<style>
+  body{margin:0;font-family:system-ui,sans-serif;background:#1e293b;color:#fff;
+    display:flex;flex-direction:column;height:100vh;overflow:hidden}
+  #bar{display:flex;gap:8px;align-items:center;padding:10px 12px;background:#0f172a;flex-wrap:wrap}
+  #bar button{min-height:44px;min-width:48px;padding:8px 12px;font-size:15px;border-radius:8px;
+    border:1px solid #475569;background:#1e293b;color:#fff;cursor:pointer}
+  #bar button.on{background:#c0392b;border-color:#c0392b}
+  #bar .sp{flex:1}
+  #bar button.done{background:#16a34a;border:none;font-weight:700}
+  #wrap{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:12px}
+  canvas{background:#000;border-radius:8px;touch-action:none;max-width:100%}
+  .sw{width:36px;height:36px;border-radius:50%;border:3px solid transparent;padding:0;min-width:36px !important}
+  .sw.on{border-color:#fff}
+</style></head>
+<body>
+<div id="bar">
+  <button data-tool="rect" class="on" title="Rectangle">▭</button>
+  <button data-tool="arrow" title="Arrow">➤</button>
+  <button data-tool="pen" title="Highlight pen">✏️</button>
+  <button data-tool="text" title="Text">T</button>
+  <button class="sw on" data-c="#e11d48" style="background:#e11d48"></button>
+  <button class="sw" data-c="#facc15" style="background:#facc15"></button>
+  <button class="sw" data-c="#3b82f6" style="background:#3b82f6"></button>
+  <button class="sw" data-c="#ffffff" style="background:#ffffff"></button>
+  <button id="undo" title="Undo">↩</button>
+  <button id="clear" title="Clear all">🗑</button>
+  <span class="sp"></span>
+  <button id="cancel">Cancel</button>
+  <button id="done" class="done">✓ Done</button>
+</div>
+<div id="wrap"><canvas id="cv"></canvas></div>
+<script src="editor.js"></script>
+</body></html>
