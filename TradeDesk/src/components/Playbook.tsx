@@ -29,8 +29,8 @@ export function Playbook() {
           <Block title="2 · Wait for the trigger — 15m (decisions happen here)">
             <li>Price tags a mapped zone</li>
             <li>Rejection wick: hammer at support, shooting star at resistance</li>
-            <li>Volume ≥ 1.8× the 20-bar average on the touch bar</li>
-            <li>RSI with the trend: ≥ 55 for longs at support, ≤ 45 for shorts at resistance</li>
+            <li>Volume ≥ 1.8× the 20-bar average on the touch bar (true capitulation prints 5×+)</li>
+            <li>RSI with the trend: ≥ 55 for longs at support, ≤ 45 for shorts at resistance (capitulation bottoms: RSI under ~25)</li>
             <li>Price on the right side of EMA50</li>
           </Block>
           <Block title="3 · Enter — 3m (precision only, no decisions here)">
@@ -49,10 +49,17 @@ export function Playbook() {
             <li>The level already broke and reclaimed (stop hunt — stand aside)</li>
             <li>No volume on the touch — unconfirmed</li>
           </Block>
+          <Block title="6 · Continuation — major swing-high breakout (longs only)">
+            <li>Close ≥ 0.3% beyond a <em>major</em> swing high + volume ≥ 1.5× + price above SMA200</li>
+            <li>Enter next open, stop 0.5× ATR under the level, target 1.5R</li>
+            <li>Breakdown shorts tested at −0.09R in bull regimes — skip them; longs tested +0.13R</li>
+          </Block>
           <p className="muted small footnote-line">
             Why: zones alone bounce ~53% (n=3,586, coin flip); with the trigger conditions 62–93%.
             Mechanical fixed-target entries didn't validate — the edge is in selecting which touches to take,
-            and most bounces exhaust at 0.75–1 ATR. Research and education only — not financial advice.
+            and most bounces exhaust at 0.75–1 ATR. 12 multi-factor strategies backtested on 503 S&P 500 names:
+            no mechanical system cleared a real edge; round-number + climax longs (+0.08R) and breakout longs
+            (+0.13R) are mild tailwinds, not systems. Research and education only — not financial advice.
           </p>
         </div>
       </div>
