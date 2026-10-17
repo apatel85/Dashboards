@@ -1,36 +1,22 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8">
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-body{width:300px;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;font-size:13px;padding:12px 14px;color:#1f2937}
-h3{margin:0 0 8px;font-size:15px}
-.stat{background:#f1f4f8;border-radius:8px;padding:8px 10px;margin-bottom:10px}
-label{display:block;font-size:11px;font-weight:700;margin:8px 0 3px;color:#4b5563}
-input,select{width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:8px;padding:7px 9px;font-size:13px}
-.row{display:flex;gap:8px;margin-top:10px}
-button{flex:1;border:0;border-radius:8px;padding:8px;font-size:13px;font-weight:600;cursor:pointer}
-#save{background:#1e3a5f;color:#fff}
-#toggle{background:#e5e7eb}
-#clear{background:#fef2f2;color:#b91c1c}
-a{color:#1e3a5f;font-size:12px}
-#msg{font-size:12px;min-height:16px;margin-top:8px}
-.hint{font-size:11px;color:#6b7280;margin-top:8px;line-height:1.5}
+  body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:14px;min-width:300px;max-width:360px;color:#222}
+  h1{font-size:17px;margin:0 0 4px}
+  .sub{font-size:12px;color:#666;margin:0 0 12px}
+  .proj{background:#f2f5f9;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:14px}
+  .proj b{display:block;font-size:15px}
+  .proj a{font-size:12px;color:#1a73e8;word-break:break-all}
+  button{width:100%;min-height:48px;font-size:16px;border-radius:10px;border:1px solid #ccc;
+    background:#f4f4f4;cursor:pointer;margin-top:8px}
+  button.primary{background:#c0392b;color:#fff;border:none;font-weight:700}
+  #nomatch{font-size:13px;color:#777;background:#fafafa;border-radius:10px;padding:10px 12px}
 </style></head>
 <body>
-<h3>🎬 Quixera QA Capture</h3>
-<div class="stat" id="status">…</div>
-<div class="row">
-<button id="toggle">Pause</button>
-<button id="clear">Clear trail</button>
-</div>
-<label>GitHub personal access token (repo: Contents read &amp; write)</label>
-<input type="password" id="pat" placeholder="ghp_… or fine-grained token">
-<label>Repo</label>
-<input id="repo" value="apatel85/Dashboards">
-<label>Branch</label>
-<input id="branch" value="main">
-<div class="row"><button id="save">Save settings</button></div>
-<div id="msg"></div>
-<p><a href="https://apatel85.github.io/Dashboards/QuixeraDev/" target="_blank">Open the QA dashboard ↗</a></p>
-<p class="hint">While you test the Quixera app, every click is recorded. Hit the red <b>🚩 Flag issue</b> button on the page the moment you see a bug — add a title and what went wrong, and it's captured (steps + screenshot) and sent to the dashboard, which rebuilds itself in ~2 minutes.</p>
+  <h1>🚩 QA Capture</h1>
+  <p class="sub" id="status">Checking this site…</p>
+  <div id="list"></div>
+  <button class="primary" id="flag">🚩 Flag issue on this page</button>
+  <button id="settings">⚙️ Settings &amp; dashboards</button>
 <script src="popup.js"></script>
 </body></html>
