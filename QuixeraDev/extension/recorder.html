@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QA Capture — Record clip</title>
+<style>
+  body{font-family:system-ui,sans-serif;max-width:900px;margin:0 auto;padding:20px;color:#222}
+  h1{font-size:20px}
+  video{width:100%;border-radius:10px;background:#000;max-height:60vh}
+  #bar{display:flex;gap:10px;align-items:center;margin:14px 0;flex-wrap:wrap}
+  button{min-height:52px;padding:0 26px;font-size:16px;border-radius:10px;border:1px solid #ccc;
+    background:#f4f4f4;cursor:pointer}
+  button.rec{background:#c0392b;color:#fff;border:none;font-weight:700}
+  button.go{background:#16a34a;color:#fff;border:none;font-weight:700}
+  button:disabled{opacity:.45;cursor:default}
+  #timer{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  #timer.live{color:#c0392b}
+  .hint{font-size:13px;color:#666}
+  #meta{font-size:14px}
+</style></head>
+<body>
+  <h1>🎬 Record a clip <span class="hint">(max 60 seconds)</span></h1>
+  <p class="hint">Switch back to the tab you're testing, do the steps, then come back here and hit Stop. The clip attaches to your bug report.</p>
+  <video id="pv" autoplay muted playsinline></video>
+  <div id="bar">
+    <button id="start" class="rec">⏺ Start recording</button>
+    <button id="stop" disabled>⏹ Stop</button>
+    <span id="timer">0:00</span>
+    <span id="meta"></span>
+  </div>
+  <div id="bar">
+    <button id="attach" class="go" disabled>✓ Attach clip to bug</button>
+    <button id="cancel">Cancel</button>
+  </div>
+<script src="recorder.js"></script>
+</body></html>
