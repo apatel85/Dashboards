@@ -4,10 +4,8 @@ import {
   ScoreBar,
   Badge,
   IndexBadges,
-  SignalBadge,
   TrendArrow,
   Chip,
-  Stat,
   SectionHead,
   LoadingPanel,
   ErrorPanel,
@@ -16,8 +14,8 @@ import {
 import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import PremarketLine from '../components/PremarketLine';
-import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, prettify, fmtOcc, fmtK, splitThesis, prettifyOptions } from '../lib/format';
-import type { DailyBrief, BreakoutCandidate, DtePick, SectorPerf, MarketRegime } from '../types';
+import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, prettify, prettifyOptions } from '../lib/format';
+import type { DailyBrief, BreakoutCandidate, SectorPerf, MarketRegime } from '../types';
 
 const REGIME_TONE: Record<MarketRegime, 'green' | 'red' | 'amber' | 'dim'> = {
   uptrend: 'green',
@@ -110,66 +108,11 @@ function BreakoutRow({ c }: { c: BreakoutCandidate }) {
   );
 }
 
-function DteCard({ p }: { p: DtePick }) {
-  const lp = useLivePrice(p.ticker, p.underlying_price);
-  const { main: thesisMain, unusual } = splitThesis(p.thesis || '');
-  return (
-    <div className="dte-card">
-      <div className="dte-head">
-        <TvLink ticker={p.ticker} />
-        <SignalBadge signal={p.bias} />
-      </div>
-      <div className="dte-stats">
-        <Stat
-          label={lp.live ? 'Underlying · live' : 'Underlying'}
-          value={
-            <>
-              {lp.live ? <span className="livedot" title="Live ~15-min delayed quote" /> : null}
-              {fmtMoney(lp.price)}
-            </>
-          }
-        />
-        <Stat label="IV rank" value={p.iv_rank != null ? `${p.iv_rank}` : '—'} />
-        <Stat label="Exp. move" value={fmtPct(p.expected_move_pct, 1, false)} />
-      </div>
-      <PremarketLine pm={lp.premarket} />
-      <div className="dte-levels">
-        <span className="detail-label">Key levels</span>
-        <div className="chips">
-          {p.key_levels.length > 0 ? (
-            p.key_levels.map((k) => <Chip key={k}>{fmtMoney(k)}</Chip>)
-          ) : (
-            <span className="muted">—</span>
-          )}
-        </div>
-      </div>
-      <p className="dte-thesis">{prettifyOptions(thesisMain)}</p>
-      {unusual.length > 0 ? (
-        <div className="unusual-block">
-          <span className="detail-label">Unusual options</span>
-          <div className="chips">
-            {unusual.map((u, i) => (
-              <span className="opt-chip" key={`${u.sym}-${i}`}>
-                <strong>{fmtOcc(u.sym)}</strong>
-                <span className="muted">
-                  {u.vol != null ? `vol ${fmtK(u.vol)}` : ''}
-                  {u.vol != null && u.oi != null ? ' · ' : ''}
-                  {u.oi != null ? `OI ${fmtK(u.oi)}` : ''}
-                </span>
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function SectorTable({ rows }: { rows: SectorPerf[] }) {
-  if (rows.length === 0) return <p className="muted">No sectors in this group.</p>;
+function SectorTable({ rows, emptyText }: { rows: SectorPerf[]; emptyText?: string }) {
+  if (rows.length === 0) return <p className="muted">{emptyText ?? 'No sectors in this group.'}</p>;
   return (
     <div className="table-scroll">
-      <table className="dtable notrans">
+      <table className="dtable slim notrans">
         <thead>
           <tr>
             <th>Sector</th>
@@ -212,11 +155,7 @@ export default function DailyBriefTab() {
 
   useEffect(() => {
     if (data) {
-      setQuoteUniverse([
-        ...data.breakout_candidates.map((c) => c.ticker),
-        ...data.dte_focus.zero_dte.map((p) => p.ticker),
-        ...data.dte_focus.one_dte.map((p) => p.ticker),
-      ]);
+      setQuoteUniverse(data.breakout_candidates.map((c) => c.ticker));
     }
   }, [data]);
 
@@ -280,26 +219,6 @@ export default function DailyBriefTab() {
         />
       )}
 
-      <SectionHead title="0DTE / 1DTE focus" sub="High-liquidity names · options lens" />
-      <div className="dte-grid">
-        <div>
-          <h4 className="dte-title">0DTE — expires today</h4>
-          {brief.dte_focus.zero_dte.length > 0 ? (
-            brief.dte_focus.zero_dte.map((p) => <DteCard key={p.ticker} p={p} />)
-          ) : (
-            <p className="muted">No 0DTE names flagged.</p>
-          )}
-        </div>
-        <div>
-          <h4 className="dte-title">1DTE — expires tomorrow</h4>
-          {brief.dte_focus.one_dte.length > 0 ? (
-            brief.dte_focus.one_dte.map((p) => <DteCard key={p.ticker} p={p} />)
-          ) : (
-            <p className="muted">No 1DTE names flagged.</p>
-          )}
-        </div>
-      </div>
-
       <SectionHead title="Sectors" sub="Hot vs. weak · rotation read" />
       <div className="sector-grid">
         <div className="panel">
@@ -311,6 +230,22 @@ export default function DailyBriefTab() {
           <SectorTable rows={brief.sectors.weak} />
         </div>
       </div>
+      {brief.subsectors ? (
+        <>
+          <SectionHead title="Subsectors" sub="Industry momentum · liquid industry ETFs" />
+          <div className="sector-grid">
+            <div className="panel">
+              <h4 className="sector-title up">Hot subsectors</h4>
+              <SectorTable rows={brief.subsectors.hot} emptyText="No subsector data in this run." />
+            </div>
+            <div className="panel">
+              <h4 className="sector-title down">Weak subsectors</h4>
+              <SectorTable rows={brief.subsectors.weak} emptyText="No subsector data in this run." />
+            </div>
+          </div>
+        </>
+      ) : null}
+
       {brief.rotation_notes ? (
         <div className="callout">
           <span className="detail-label">Rotation</span>

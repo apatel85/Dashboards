@@ -1678,3 +1678,27 @@ code {
     gap: 12px;
   }
 }
+
+/* ── Horizontal-overflow guards ────────────────────────────────── */
+/* The page itself must never scroll sideways; wide tables scroll inside their own container. */
+
+html,
+body {
+  overflow-x: clip;
+}
+
+.sector-grid > *,
+.dte-grid > * {
+  min-width: 0;
+}
+
+/* Slim tables (sectors/subsectors): fit the panel, no min-width blowout */
+.dtable.slim {
+  min-width: 0;
+  font-size: 12.5px;
+}
+
+.dtable.slim th,
+.dtable.slim td {
+  padding: 7px 8px;
+}

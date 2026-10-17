@@ -75,6 +75,11 @@ export interface DailyBrief {
     hot: SectorPerf[];
     weak: SectorPerf[];
   };
+  /** Industry momentum via liquid industry ETFs. Absent in briefs generated before 2026-10-20. */
+  subsectors?: {
+    hot: SectorPerf[];
+    weak: SectorPerf[];
+  };
   rotation_notes: string;
 }
 
@@ -321,7 +326,7 @@ export interface GexChangesFile {
 
 /* ── tabs ───────────────────────────────────────────────────────── */
 
-export type TabId = 'brief' | 'earnings' | 'congress' | 'research' | 'signals';
+export type TabId = 'brief' | 'options' | 'earnings' | 'congress' | 'research' | 'signals';
 
 export interface TabDef {
   id: TabId;

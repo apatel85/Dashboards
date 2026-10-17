@@ -2,6 +2,7 @@ import { useState } from 'react';
 import AuthGate from './auth/AuthGate';
 import LiveQuoteButton from './components/LiveQuoteButton';
 import DailyBriefTab from './tabs/DailyBrief';
+import OptionsTab from './tabs/Options';
 import EarningsTab from './tabs/Earnings';
 import CongressGovTab from './tabs/CongressGov';
 import ResearchTab from './tabs/Research';
@@ -11,6 +12,7 @@ import type { TabDef, TabId } from './types';
 
 const TABS: TabDef[] = [
   { id: 'brief', label: 'Daily Brief', dataFile: 'daily-brief.json' },
+  { id: 'options', label: 'Options', dataFile: 'lotto.json' },
   { id: 'signals', label: 'Signals', dataFile: 'signals.json' },
   { id: 'earnings', label: 'Earnings', dataFile: 'earnings.json' },
   { id: 'congress', label: 'Congress & Gov', dataFile: 'congress.json' },
@@ -55,6 +57,7 @@ function Shell() {
 
       <main className="content">
         {active === 'brief' && <DailyBriefTab />}
+        {active === 'options' && <OptionsTab />}
         {active === 'signals' && <SignalsTab />}
         {active === 'earnings' && <EarningsTab />}
         {active === 'congress' && <CongressGovTab />}
