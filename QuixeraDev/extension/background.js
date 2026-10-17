@@ -218,6 +218,69 @@ async function deleteIssue(projectId, file) {
   return { ok: true };
 }
 
+/* ---------- possible-duplicate matching (mirrors dashboard builder) ---------- */
+const DUP_STOP = new Set(["the","a","an","on","in","of","to","and","or","for",
+  "with","is","are","was","not","no","tab","page","button","click","clicking",
+  "open","opens","shows","show","new","when","from","that","this"]);
+function dupWords(t){
+  return new Set(((t||"").toLowerCase().replace(/[^a-z0-9 ]/g," ")).split(/\s+/)
+    .filter(w => w.length > 3 && !DUP_STOP.has(w)));
+}
+function dupPath(b){
+  for (const k of ["page","link"]) {
+    const v = b[k] || "";
+    if (v.startsWith("/")) return v.split("?")[0];
+    if (v.startsWith("http")) { try { return new URL(v).pathname; } catch(e){} }
+  }
+  return "";
+}
+function dupMatch(manual, others){
+  const mw = dupWords(manual.title), mp = dupPath(manual);
+  let best = null, bs = 0;
+  for (const o of others) {
+    if (o.id === manual.id) continue;
+    const ow = dupWords(o.title);
+    let inter = 0; mw.forEach(w => { if (ow.has(w)) inter++; });
+    let s = 2 * inter;
+    const op = dupPath(o);
+    if (mp && op && mp === op) s += 2;
+    if (manual.issue_type && manual.issue_type !== "Other" && o.issue_type === manual.issue_type) s += 3;
+    if (s > bs) { best = o; bs = s; }
+  }
+  return bs >= 4 ? best : null;
+}
+const DUP_SRC_LABEL = { arlo: "Arlo testing", team: "QA team testing", manual: "another manual capture" };
+
+async function projectBugs(projectId){
+  const key = "dupbugs_" + projectId;
+  const cached = await chrome.storage.session.get([key]);
+  if (cached[key] && Date.now() - cached[key].at < 3600e3) return cached[key].bugs;
+  const { token, repo, projects } = await cfg();
+  const p = projects.find(x => x.id === projectId);
+  if (!p || !token) return [];
+  const dir = p.dir || p.slug, out = [];
+  try {
+    const entries = await gh(`/repos/${repo}/contents/${dir}/bugs?ref=${BRANCH}`, "GET", null, token);
+    const files = entries.filter(e => e.type === "file" && e.name.endsWith(".json")).slice(-80);
+    for (const e of files) {
+      try {
+        const f = await gh(`/repos/${repo}/contents/${dir}/bugs/${e.name}?ref=${BRANCH}`, "GET", null, token);
+        const b = JSON.parse(decodeURIComponent(escape(atob(f.content))));
+        out.push({ id: b.id, title: b.title || "", issue_type: b.issue_type || "",
+                   page: b.page || "", link: b.url || "", source: "manual" });
+      } catch(err){}
+    }
+  } catch(e){}
+  try {
+    const f = await gh(`/repos/${repo}/contents/${dir}/data/base.json?ref=${BRANCH}`, "GET", null, token);
+    const base = JSON.parse(decodeURIComponent(escape(atob(f.content))));
+    for (const b of (base.bugs || []))
+      out.push({ id: b.id, title: b.title || "", issue_type: "", page: "", link: b.link || "", source: b.source || "" });
+  } catch(e){}
+  await chrome.storage.session.set({ [key]: { at: Date.now(), bugs: out } });
+  return out;
+}
+
 /* ---------- message router ---------- */
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
@@ -297,6 +360,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse(await updateIssue(msg.projectId, msg.file, msg.patch));
       } else if (msg.type === "deleteIssue") {
         sendResponse(await deleteIssue(msg.projectId, msg.file));
+      } else if (msg.type === "checkDup") {
+        const bugs = await projectBugs(msg.projectId);
+        const hit = dupMatch({ title: msg.title, issue_type: msg.issue_type,
+                               page: msg.page }, bugs);
+        sendResponse({ ok: true, hit: hit ? { id: hit.id, title: hit.title,
+          src: DUP_SRC_LABEL[hit.source] || "earlier testing" } : null });
       }
     } catch (e) {
       sendResponse({ ok: false, error: String(e.message || e) });
