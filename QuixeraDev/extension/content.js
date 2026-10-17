@@ -142,6 +142,7 @@
         <label>Dashboard project <select id="qa-project">${projOpts}</select></label>
         <label>Issue type <select id="qa-type">${typeOpts}</select></label>
         <label>Title <input id="qa-title" placeholder="e.g. Save button does nothing"></label>
+        <div id="qa-dup"></div>
         <label>Severity <select id="qa-sev"><option>High</option><option selected>Medium</option><option>Low</option></select></label>
         <div class="qa-sec"><b>Screenshots</b><div id="qa-shots"></div></div>
         <div class="qa-sec"><b>Clip</b><div id="qa-clip"></div></div>
@@ -157,7 +158,26 @@
     $("qa-type").addEventListener("change", (e) => {
       if (e.target.value !== "Other" && !$("qa-title").value.trim())
         $("qa-title").value = "[" + e.target.value + "] ";
+      scheduleDupCheck();
     });
+    let dupTimer = null;
+    function scheduleDupCheck() {
+      clearTimeout(dupTimer);
+      dupTimer = setTimeout(() => {
+        const t = $("qa-title").value.trim();
+        if (t.length < 9) { $("qa-dup").innerHTML = ""; return; }
+        chrome.runtime.sendMessage({ type: "checkDup",
+          projectId: $("qa-project").value, title: t,
+          issue_type: $("qa-type").value,
+          page: location.pathname + location.search }, (r) => {
+          const box = $("qa-dup");
+          if (r && r.hit) {
+            box.innerHTML = `<div class="qa-dupwarn">⚠️ Possible duplicate of <b>${esc(r.hit.id)}</b> — “${esc(r.hit.title)}” (already covered by ${esc(r.hit.src)}). You can still file below.</div>`;
+          } else box.innerHTML = "";
+        });
+      }, 700);
+    }
+    $("qa-title").addEventListener("input", scheduleDupCheck);
     $("qa-cancel").addEventListener("click", () => {
       chrome.runtime.sendMessage({ type: "resetPending" });
       ov.remove();
@@ -220,6 +240,8 @@
       border:1px solid #ccc;background:#f4f4f4;cursor:pointer}
     #qa-card #qa-send{background:#c0392b;color:#fff;border:none;font-weight:700}
     #qa-status{font-size:14px;min-height:20px;margin:10px 0 0}
+    .qa-dupwarn{background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;
+      padding:10px 12px;font-size:13px;margin-top:6px;color:#92400e}
     @media (max-width:520px){
       #qa-overlay{padding:0;align-items:stretch}
       #qa-card{width:100%;border-radius:0;max-height:100vh}
