@@ -14,9 +14,15 @@ header p{color:#c3d2e5;font-size:14px}
 .stat{background:#fff;border-radius:10px;padding:12px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .stat .n{font-size:26px;font-weight:700}
 .stat .l{font-size:12px;color:#6b7280}
+.stat.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s}
+.stat.clickable:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.stat.clickable.active{outline:3px solid #1e3a5f}
+.dupwarn{background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:10px}
+.dupwarn a{font-weight:700;color:#b45309}
 .toolbar{position:sticky;top:0;z-index:50;background:#f1f4f8ee;backdrop-filter:blur(6px);padding:12px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-bottom:1px solid #e5e7eb;margin-bottom:18px}
 .fbtn{border:1px solid #d1d5db;background:#fff;border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer}
 .fbtn.active{background:#1e3a5f;color:#fff;border-color:#1e3a5f}
+.tsep{font-size:13px;color:#6b7280;margin-left:6px}
 .tbtn{margin-left:auto;border:1px solid #d1d5db;background:#fff;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
 .seg{margin-bottom:30px}
 .seghead{display:flex;align-items:center;gap:12px;margin-bottom:4px}
@@ -71,10 +77,10 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
 <p>https://facility-dev.quixeraos.com · QA team retest 2026-10-15 (186 fixes) + Arlo dev pass 2026-10-15 · Desktop 1440px, Chromium · Signed in as Ankit Patel (Admin) · QA_AP-labeled test records; no deletes / no outward-facing sends</p>
 <div class="recon"><b>How to reconcile:</b> when a fix lands, tell Arlo (e.g. “QXR-416-F10 is fixed on dev”) — he'll re-verify on dev and flip the card to <b>Fixed</b>. Statuses: Open · Partly fixed · Still failing · Blocked · Fixed.</div>
 <div class="grid">
-<div class="stat"><div class="n" style="color:#1e3a5f">16</div><div class="l">QA team</div></div>
-<div class="stat"><div class="n" style="color:#1e3a5f">19</div><div class="l">Arlo pass</div></div>
-<div class="stat"><div class="n" style="color:#1e3a5f">3</div><div class="l">Manual captures</div></div>
-<div class="stat"><div class="n" style="color:#b91c1c">34</div><div class="l">Open now</div></div>
+<div class="stat clickable" data-seg="team" title="Show only QA team bugs"><div class="n" style="color:#1e3a5f">16</div><div class="l">🧪 QA team — tap to filter</div></div>
+<div class="stat clickable" data-seg="arlo" title="Show only Arlo bugs"><div class="n" style="color:#1e3a5f">19</div><div class="l">🤖 Arlo pass — tap to filter</div></div>
+<div class="stat clickable" data-seg="manual" title="Show only manual captures"><div class="n" style="color:#1e3a5f">3</div><div class="l">🚩 Manual — tap to filter</div></div>
+<div class="stat clickable" data-seg="open" title="Show only open bugs"><div class="n" style="color:#b91c1c">34</div><div class="l">Open now — tap to filter</div></div>
 </div></header>
 <div class="toolbar">
 <button class="fbtn active" data-f="All">All severities</button>
@@ -82,6 +88,9 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
 <button class="fbtn" data-f="Medium">Medium · 11</button>
 <button class="fbtn" data-f="Low">Low · 17</button>
 <button class="fbtn" data-f="Info">Info · 1</button>
+<span class="tsep">Status:</span>
+<button class="fbtn sbtn active" data-st="All">All</button>
+<button class="fbtn sbtn" data-st="Open">Open · 34</button><button class="fbtn sbtn" data-st="Still failing">Still failing · 2</button><button class="fbtn sbtn" data-st="Fixed">Fixed · 2</button>
 <button class="tbtn" onclick="setAll(true)">Expand all</button>
 <button class="tbtn" onclick="setAll(false)">Collapse all</button>
 </div>
@@ -91,7 +100,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <span class="segcount">16 issues · 16 open</span></div>
       <p class="segdesc">Bugs from the QA team's 2026-10-15 retest report — 186 retests (159 Fixed · 19 Partly fixed · 6 Still failing · 2 Blocked) plus 16 new bugs they filed.</p>
       
-    <article class="card" data-sev="High" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-314-F12" data-sev="High" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b91c1c">High</span>
         <span class="cid">QXR-314-F12</span>
@@ -103,6 +112,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-314" target="_blank" rel="noopener">QXR-314</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/memberships/directory" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> Memberships &gt; Add membership &gt; Online &gt; Charge card (Stripe webhooks) · Finance &gt; Payments · invoice detail Payment breakdown</p><p><b>Reproducibility:</b> 1/3</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Memberships &gt; Add Membership as an admin Pick the athlete, plan 'riz invite test 45', lane Online, press 'Pay $45.00 online', then 'Charge card' On Stripe pay with test card 4242 4242 4242 4242 Wait for 'Payment confirmed' on the reopened panel Open Finance &gt; Payments and the athlete's Payments tab &gt; the new invoice</span></li></ol>
@@ -114,7 +124,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="High" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-415-F16" data-sev="High" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b91c1c">High</span>
         <span class="cid">QXR-415-F16</span>
@@ -126,6 +136,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-415" target="_blank" rel="noopener">QXR-415</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/memberships/directory" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> Memberships directory &gt; Row actions &gt; Freeze; POST /api/billing/memberships/{id}/freeze</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>As ADMIN send POST /api/billing/checkout/link-requests {membershipPlanId: 56, athleteProfileId: 237, idempotencyKey: &lt;new&gt;} and open the returned checkoutUrl</span></li><li><span class='stp'>2</span><span class='cl'>Pay with test card 4242 4242 4242 4242 and wait until the new membership is Active (about 2 s)</span></li><li><span class='stp'>3</span><span class='cl'>Within 5 seconds, freeze it: POST /api/billing/memberships/&lt;id&gt;/freeze {"resumesAt": &lt;now + 14 days&gt;, "paidFreeze": false, "reason": "…"} (or Row actions &gt; Freeze)</span></li><li><span class='stp'>4</span><span class='cl'>Wait 20 s; read membership.membership_status_transition and billing.processed_webhook_event for the subscription id from the checkout.session.completed event.</span></li></ol>
@@ -137,7 +148,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="High" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-416-F10" data-sev="High" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b91c1c">High</span>
         <span class="cid">QXR-416-F10</span>
@@ -149,6 +160,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-416" target="_blank" rel="noopener">QXR-416</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/memberships/directory" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> POST /api/billing/check-in (CheckInService → MembershipStateClient, breaker membershipState)</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>As ADMIN of client 1 send POST /api/billing/check-in {"personId":3526,"membershipId":296,"location":"qa"} → note the answer (200, or 409 rate limit if already checked in)</span></li><li><span class='stp'>2</span><span class='cl'>Send POST /api/billing/check-in six times with membershipId 77777700…77777705 (ids that do not exist) — or send them as the client-3 ADMIN</span></li><li><span class='stp'>3</span><span class='cl'>Immediately repeat step 1</span></li><li><span class='stp'>4</span><span class='cl'>Wait 40 s and repeat step 1.</span></li></ol>
@@ -160,7 +172,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="High" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-416-F12" data-sev="High" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b91c1c">High</span>
         <span class="cid">QXR-416-F12</span>
@@ -172,6 +184,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-416" target="_blank" rel="noopener">QXR-416</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/memberships/directory" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> POST /api/billing/memberships/{id}/cancel (billing → membership-service, breaker membershipService); affects /freeze, /activate</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>As ADMIN of client 1 send POST /api/billing/memberships/296/activate (or a freeze) → note 200</span></li><li><span class='stp'>2</span><span class='cl'>Send POST /api/billing/memberships/99999800/cancel {"immediate":true,"reason":"qa"} six times with different unknown ids (or, as the client-3 ADMIN, cancel client-1 membership 296 and unknown ids)</span></li><li><span class='stp'>3</span><span class='cl'>Immediately repeat step 1</span></li><li><span class='stp'>4</span><span class='cl'>Wait 40 s and repeat step 1.</span></li></ol>
@@ -183,7 +196,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Medium" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-416-F14" data-sev="Medium" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b45309">Medium</span>
         <span class="cid">QXR-416-F14</span>
@@ -195,6 +208,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-416" target="_blank" rel="noopener">QXR-416</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/memberships/directory" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> POST /api/billing/subscriptions/{sub}/resume?personId (and /freeze?personId) with a staff token; Memberships directory &gt; membership details &gt; Activity</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>As the guardian send POST /api/billing/subscriptions/{sub}/freeze?personId={child person id} {"resumesAt":"&lt;future date&gt;:00:00.000Z","paidFreeze":false,"reason":"guardian freeze"}; wait until the membership is FROZEN</span></li><li><span class='stp'>2</span><span class='cl'>As the ADMIN send POST /api/billing/subscriptions/{sub}/resume?personId={child person id} (empty body)</span></li><li><span class='stp'>3</span><span class='cl'>Read the new membership_status_transition row, then as the ADMIN open the membership details and read Activity</span></li><li><span class='stp'>4</span><span class='cl'>As the ADMIN send POST /api/billing/subscriptions/{sub}/freeze?personId={child person id} with a reason, and read the new row.</span></li></ol>
@@ -206,7 +220,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Medium" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-417-F07" data-sev="Medium" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b45309">Medium</span>
         <span class="cid">QXR-417-F07</span>
@@ -218,6 +232,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-417" target="_blank" rel="noopener">QXR-417</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/billing" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> Facility app (admin) &gt; Billing &gt; invoice list footer at phone widths; the mobile floating New announcement notice</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Sign in to the facility app as an admin on a 375 px wide screen and open Billing</span></li><li><span class='stp'>2</span><span class='cl'>Type Booking in the search box so the footer shows a Sum</span></li><li><span class='stp'>3</span><span class='cl'>Tap the "Sum: $…" button or the Copy Sum button in the footer.</span></li></ol>
@@ -229,7 +244,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Medium" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-311-F20" data-sev="Medium" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b45309">Medium</span>
         <span class="cid">QXR-311-F20</span>
@@ -241,6 +256,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-311" target="_blank" rel="noopener">QXR-311</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/scheduling" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> POST /api/bookings</p><p><b>Reproducibility:</b> 3/3</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>POST /api/bookings with the test data and date 2026-10-14 (yesterday) Repeat with facilityId 15, facilitySpaceId 11, date 2026-10-13 Repeat with date 2025-10-14 Query booking.booking for the returned ids</span></li></ol>
@@ -252,7 +268,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-277-F26" data-sev="Low" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">QXR-277-F26</span>
@@ -264,6 +280,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-277" target="_blank" rel="noopener">QXR-277</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/people/leads" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> POST /api/leads/{id}/transitions</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Create a lead (stage New)</span></li><li><span class='stp'>2</span><span class='cl'>Send POST /api/leads/{id}/transitions {kind: ADVANCE, to: ENROLLED}</span></li><li><span class='stp'>3</span><span class='cl'>Read the status and message, then GET /api/leads/{id}.</span></li></ol>
@@ -275,7 +292,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-279-F15" data-sev="Low" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">QXR-279-F15</span>
@@ -287,6 +304,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-279" target="_blank" rel="noopener">QXR-279</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/memberships/directory" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> Page header (shared collection header) &gt; page title and entity tabs on Memberships directory, Plans &amp; Packages, Customers and Programs</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Sign in to the facility app on dev as an academy admin and set the window to 375 px wide (or 320 px)</span></li><li><span class='stp'>2</span><span class='cl'>Open https://facility-dev.quixeraos.com/memberships/directory</span></li><li><span class='stp'>3</span><span class='cl'>Look at the page title 'Memberships' and the 'Active members' tab next to it</span></li><li><span class='stp'>4</span><span class='cl'>Repeat on /memberships/catalog, /people/customers and /programs.</span></li></ol>
@@ -298,7 +316,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-280-F15" data-sev="Low" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">QXR-280-F15</span>
@@ -310,6 +328,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-280" target="_blank" rel="noopener">QXR-280</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/people/leads" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> Facility &gt; People &gt; Leads &gt; lead drawer &gt; Converted banner</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open /people/leads?lead=267</span></li><li><span class='stp'>2</span><span class='cl'>Read the Converted banner: "Enrolment cancelled"</span></li><li><span class='stp'>3</span><span class='cl'>Inspect the colour of that line.</span></li></ol>
@@ -321,7 +340,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-307-F12" data-sev="Low" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">QXR-307-F12</span>
@@ -333,6 +352,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-307" target="_blank" rel="noopener">QXR-307</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/announcements" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> POST /api/announcements/audience/preview, POST /api/announcements, PUT /api/announcements/{id} (data-service) — field emailEnabled</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>As the coach, POST /api/announcements/audience/preview with {"audienceParts":[{"kind":"CLASS_SCHEDULE","ref":107}],"purpose":"TRANSACTIONAL","emailEnabled":"true"} Repeat with emailEnabled 1, then 0, then 2 As the coach, POST /api/announcements with the same audience, a title and body, and emailEnabled 1; read the stored row's email_enabled; delete the draft As the admin, POST /api/announcements with emailEnabled "true", then PUT /api/announcements/{id} with emailEnabled 0; read email_enabled; delete the draft</span></li></ol>
@@ -344,7 +364,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-310-F20" data-sev="Low" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">QXR-310-F20</span>
@@ -356,6 +376,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-310" target="_blank" rel="noopener">QXR-310</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/people/customers" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> People › Customers › Teams tab (facility); /locales/ar/teams.json, /locales/hi/teams.json</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Set the language to Arabic and open People › Customers, then the Teams tab Repeat with Hindi Open https://facility-dev.quixeraos.com/locales/ar/teams.json and /locales/hi/teams.json, and /locales/en/teams.json for comparison</span></li></ol>
@@ -367,7 +388,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-416-F11" data-sev="Low" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">QXR-416-F11</span>
@@ -379,6 +400,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-416" target="_blank" rel="noopener">QXR-416</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/memberships/directory" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> Memberships directory &gt; membership details &gt; Unfreeze membership</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open https://facility-dev.quixeraos.com/memberships/directory?membershipId=296 (a frozen membership)</span></li><li><span class='stp'>2</span><span class='cl'>Click **Unfreeze membership**</span></li><li><span class='stp'>3</span><span class='cl'>Read the notifications.</span></li></ol>
@@ -390,7 +412,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-416-F13" data-sev="Low" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">QXR-416-F13</span>
@@ -402,6 +424,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-416" target="_blank" rel="noopener">QXR-416</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/memberships/directory" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> POST /api/billing/memberships/{id}/freeze; POST /api/billing/subscriptions/{sub}/freeze|resume</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Send POST /api/billing/memberships/99999999/freeze {"resumesAt":"2026-11-03T05:00:00.000Z","paidFreeze":false,"reason":"qa"}</span></li><li><span class='stp'>2</span><span class='cl'>Send POST /api/billing/memberships/99999999/activate</span></li><li><span class='stp'>3</span><span class='cl'>Send POST /api/billing/subscriptions/sub_doesnotexist416/freeze?personId=3526 with the same body, and …/resume?personId=3526.</span></li></ol>
@@ -413,7 +436,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-418-F09" data-sev="Low" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">QXR-418-F09</span>
@@ -425,6 +448,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-418" target="_blank" rel="noopener">QXR-418</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/payments" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> POST /api/tags and PUT /api/tags/{id} (data-service TagService)</p><p><b>Reproducibility:</b> 2/2</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>POST /api/tags with {"name": "\u00a0VIP\u00a0"} (no-break spaces around an existing tag's name)</span></li><li><span class='stp'>2</span><span class='cl'>POST /api/tags with {"name": "\u200bVIP\u200b"} and with {"name": "\u00a0\u00a0"}</span></li><li><span class='stp'>3</span><span class='cl'>PUT /api/tags/{id} renaming a tag to "\u00a0Other\u00a0"</span></li><li><span class='stp'>4</span><span class='cl'>Open Payments, click Bulk edit, tick a payment, click Edit tags and type VIP.</span></li></ol>
@@ -436,7 +460,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="team">
+    <article class="card" id="bug-QXR-418-F10" data-sev="Low" data-status="Open" data-source="team">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">QXR-418-F10</span>
@@ -448,6 +472,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">QA team retest</span> <p><b>Jira:</b> <a href="https://quixera.atlassian.net/browse/QXR-418" target="_blank" rel="noopener">QXR-418</a> (parent ticket)</p></p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/payments" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             <p><b>Where:</b> Facility app → Payments (GET /api/billing/payments/ledger tag labels and search)</p><p><b>Reproducibility:</b> 2/3</p>
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Payments (or GET /api/billing/payments/ledger) so the ledger has loaded in the last 30 s</span></li><li><span class='stp'>2</span><span class='cl'>Rename the tag (PUT /api/tags/{id} with a new name, as Settings does)</span></li><li><span class='stp'>3</span><span class='cl'>Straight away, search Payments for the receipt and for the tag's new name</span></li><li><span class='stp'>4</span><span class='cl'>Repeat after 32 s.</span></li></ol>
@@ -465,7 +490,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <span class="segcount">19 issues · 15 open</span></div>
       <p class="segdesc">Bugs found in the independent dev-environment pass (DEV-001 … DEV-016), each re-verified with screenshots and repro steps.</p>
       
-    <article class="card" data-sev="High" data-status="Still failing" data-source="arlo">
+    <article class="card" id="bug-DEV-001" data-sev="High" data-status="Still failing" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b91c1c">High</span>
         <span class="cid">DEV-001</span>
@@ -477,6 +502,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/memberships/directory" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Memberships directory.</span></li><li><span class='stp'>2</span><span class='cl'>Click the row-actions menu on any Active membership row (tested QA_AP rows and existing rows).</span></li></ol>
@@ -488,7 +514,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="High" data-status="Fixed" data-source="arlo">
+    <article class="card" id="bug-DEV-002" data-sev="High" data-status="Fixed" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b91c1c">High</span>
         <span class="cid">DEV-002</span>
@@ -500,6 +526,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/billing" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open any open invoice (e.g. INV-2026-000048).</span></li><li><span class='stp'>2</span><span class='cl'>Click Record payment: Amount $104, Cash, Received on 10/15/2026 (today).</span></li><li><span class='stp'>3</span><span class='cl'>Submit.</span></li></ol>
@@ -511,7 +538,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="High" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-003" data-sev="High" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b91c1c">High</span>
         <span class="cid">DEV-003</span>
@@ -523,6 +550,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/people/leads" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open People &gt; Leads &gt; New lead; fill step-1 names + email.</span></li><li><span class='stp'>2</span><span class='cl'>Open the phone country selector, click “United States +1”.</span></li><li><span class='stp'>3</span><span class='cl'>Interact with the phone field (fill/type).</span></li></ol>
@@ -534,7 +562,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="High" data-status="Fixed" data-source="arlo">
+    <article class="card" id="bug-DEV-011" data-sev="High" data-status="Fixed" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b91c1c">High</span>
         <span class="cid">DEV-011</span>
@@ -546,6 +574,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/billing" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Billing &gt; find the membership-linked payment RCP-AC1-000148 ($30.00 cash).</span></li><li><span class='stp'>2</span><span class='cl'>Click Refund; enter full amount 30, method Cash, and a reason.</span></li><li><span class='stp'>3</span><span class='cl'>Try to submit.</span></li></ol>
@@ -557,7 +586,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Medium" data-status="Still failing" data-source="arlo">
+    <article class="card" id="bug-DEV-004" data-sev="Medium" data-status="Still failing" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b45309">Medium</span>
         <span class="cid">DEV-004</span>
@@ -569,6 +598,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/billing" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Finance &gt; Billing.</span></li><li><span class='stp'>2</span><span class='cl'>Read the OUTSTANDING KPI ($2,369.76) and the Outstanding tab footer Sum ($2,391.76 across 24 invoices).</span></li></ol>
@@ -580,7 +610,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Medium" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-006" data-sev="Medium" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b45309">Medium</span>
         <span class="cid">DEV-006</span>
@@ -592,6 +622,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/analytics" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Insights &gt; Analytics &gt; Athletes tab — read TOTAL ATHLETES.</span></li><li><span class='stp'>2</span><span class='cl'>Open People &gt; Athletes — read the directory total.</span></li><li><span class='stp'>3</span><span class='cl'>Open Reports &gt; Athlete Progress — read ATHLETES.</span></li></ol>
@@ -603,7 +634,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Medium" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-013" data-sev="Medium" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b45309">Medium</span>
         <span class="cid">DEV-013</span>
@@ -615,6 +646,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/memberships/directory" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Start Add Membership (any plan); look for a promo/coupon field at every step.</span></li><li><span class='stp'>2</span><span class='cl'>In Settings &gt; Promos note the membership-scoped WELCOME10 (50% off); enter it at booking checkout.</span></li></ol>
@@ -626,7 +658,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Medium" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-015" data-sev="Medium" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b45309">Medium</span>
         <span class="cid">DEV-015</span>
@@ -638,6 +670,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/scheduling" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open any booking &gt; Cancel.</span></li><li><span class='stp'>2</span><span class='cl'>Read the default state of the email checkbox.</span></li></ol>
@@ -649,7 +682,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Medium" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-P2-001" data-sev="Medium" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b45309">Medium</span>
         <span class="cid">P2-001</span>
@@ -661,6 +694,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/billing" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Billing.</span></li><li><span class='stp'>2</span><span class='cl'>Click the Refunded tab.</span></li><li><span class='stp'>3</span><span class='cl'>Read the Status column of each row.</span></li></ol>
@@ -672,7 +706,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Medium" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-P2-002" data-sev="Medium" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b45309">Medium</span>
         <span class="cid">P2-002</span>
@@ -684,6 +718,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/billing" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Billing.</span></li><li><span class='stp'>2</span><span class='cl'>In the search box (placeholder: "Matches invoice #, TXN reference, item, payer, athlete or amount"), type "QA_AP Customer".</span></li></ol>
@@ -695,7 +730,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Medium" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-P2-003" data-sev="Medium" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b45309">Medium</span>
         <span class="cid">P2-003</span>
@@ -707,6 +742,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/payments" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Payments and search "QA_AP".</span></li><li><span class='stp'>2</span><span class='cl'>Find row RCP-AC1-000150 — it shows status "Refunded", $50.00 refunded of $50.00.</span></li><li><span class='stp'>3</span><span class='cl'>Open the payment detail dialog.</span></li></ol>
@@ -718,7 +754,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-005" data-sev="Low" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">DEV-005</span>
@@ -730,6 +766,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/memberships/directory" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open the memberships directory &gt; a membership's details.</span></li><li><span class='stp'>2</span><span class='cl'>Read the activity trail entries.</span></li></ol>
@@ -741,7 +778,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-007" data-sev="Low" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">DEV-007</span>
@@ -753,6 +790,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/analytics" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Insights &gt; Analytics &gt; Revenue tab — read OUTSTANDING.</span></li><li><span class='stp'>2</span><span class='cl'>Open Finance &gt; Billing — read the OUTSTANDING KPI.</span></li></ol>
@@ -764,7 +802,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-008" data-sev="Low" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">DEV-008</span>
@@ -776,6 +814,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/ai-insights" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>In the Academy assistant, ask: “Tell me all the details you have about athlete Vicky Kaushal.” (age 13, minor)</span></li></ol>
@@ -787,7 +826,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-009" data-sev="Low" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">DEV-009</span>
@@ -799,6 +838,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/ai-insights" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>In the Academy assistant, ask for an athlete's upcoming sessions.</span></li></ol>
@@ -810,7 +850,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-012" data-sev="Low" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">DEV-012</span>
@@ -822,6 +862,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/billing" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Billing &gt; payment RCP-AC1-000151 ($10.66).</span></li><li><span class='stp'>2</span><span class='cl'>Click Refund and read the amount spinbutton.</span></li></ol>
@@ -833,7 +874,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-014" data-sev="Low" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">DEV-014</span>
@@ -845,6 +886,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/announcements" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Announcements &gt; New announcement &gt; Audience step &gt; Recipients tab.</span></li><li><span class='stp'>2</span><span class='cl'>Click the “All recipients” checkbox.</span></li></ol>
@@ -856,7 +898,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-016" data-sev="Low" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">DEV-016</span>
@@ -868,6 +910,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/people/athletes" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Start the new-athlete wizard; use “Find existing guardian”.</span></li><li><span class='stp'>2</span><span class='cl'>Search for an existing customer/guardian.</span></li></ol>
@@ -879,7 +922,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Info" data-status="Open" data-source="arlo">
+    <article class="card" id="bug-DEV-010" data-sev="Info" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#1d4ed8">Info</span>
         <span class="cid">DEV-010</span>
@@ -891,6 +934,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Arlo dev pass</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/analytics" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='cl'>Open Insights &gt; Analytics &gt; Revenue tab.</span></li></ol>
@@ -908,7 +952,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <span class="segcount">3 issues · 3 open</span></div>
       <p class="segdesc">Bugs you flagged yourself with the QA Capture extension — click trail, screenshots and clips attached automatically.</p>
       
-    <article class="card" data-sev="High" data-status="Open" data-source="manual">
+    <article class="card" id="bug-P1-002" data-sev="High" data-status="Open" data-source="manual">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b91c1c">High</span>
         <span class="cid">P1-002</span>
@@ -920,6 +964,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Manual capture</span><span class='itype'>Other</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/settings/users" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='pg'>/settings/users</span><span class='cl'>row-actions menu on TEST USER</span></li><li><span class='stp'>2</span><span class='pg'>/settings/users</span><span class='cl'>menu item: "Reset Password"</span></li><li><span class='stp'>3</span><span class='pg'>/settings/users</span><span class='cl'>(toast) "Success - Password reset email sent"</span></li></ol>
@@ -931,7 +976,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Medium" data-status="Open" data-source="manual">
+    <article class="card" id="bug-P1-004" data-sev="Medium" data-status="Open" data-source="manual">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#b45309">Medium</span>
         <span class="cid">P1-004</span>
@@ -943,6 +988,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Manual capture</span><span class='itype'>Other</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/settings/communications" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='pg'>/settings/communications</span><span class='cl'>tab: "SMS"</span></li><li><span class='stp'>2</span><span class='pg'>/settings/communications</span><span class='cl'>button: "Retry"</span></li><li><span class='stp'>3</span><span class='pg'>/settings/communications</span><span class='cl'>(error still shown)</span></li></ol>
@@ -954,7 +1000,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         </div>
       </div>
     </article>
-    <article class="card" data-sev="Low" data-status="Open" data-source="manual">
+    <article class="card" id="bug-P1-005" data-sev="Low" data-status="Open" data-source="manual">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:#4d7c0f">Low</span>
         <span class="cid">P1-005</span>
@@ -966,6 +1012,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
         <div class="cols">
           <div class="details">
             <p><span class="src">Manual capture</span><span class='itype'>Other</span> </p>
+            
             <p><a class="golink" href="https://facility-dev.quixeraos.com/settings" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             
             <p><b>What was done (click trail):</b></p><ol class='trail'><li><span class='stp'>1</span><span class='pg'>/settings/leads</span><span class='cl'>info button (no popover)</span></li><li><span class='stp'>2</span><span class='pg'>/settings/amenities</span><span class='cl'>button: "Add Amenity"</span></li><li><span class='stp'>3</span><span class='pg'>/settings/pricing-rules</span><span class='cl'>status badge button (no tooltip)</span></li></ol>
@@ -1024,16 +1071,34 @@ function toggleCard(btn){btn.closest('.card').classList.toggle('open')}
 function setAll(open){document.querySelectorAll('.card').forEach(c=>c.classList.toggle('open',open))}
 function openLB(src){document.getElementById('lbimg').src=src;document.getElementById('lb').style.display='flex'}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('lb').style.display='none'});
-document.querySelectorAll('.fbtn').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-  const f=b.dataset.f;
+document.querySelectorAll('.fbtn:not(.sbtn)').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.fbtn:not(.sbtn)').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  F.sev=b.dataset.f; applyFilters();
+}));
+document.querySelectorAll('.sbtn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  F.st=b.dataset.st; applyFilters();
+}));
+let F={seg:null,sev:'All',st:'All'};
+function applyFilters(){
   document.querySelectorAll('.card').forEach(c=>{
-    c.style.display=(f==='All'||c.dataset.sev===f)?'':'none';
+    const okSeg=!F.seg||(F.seg==='open'?c.dataset.status==='Open':c.dataset.source===F.seg);
+    const okSev=(F.sev==='All'||c.dataset.sev===F.sev);
+    const okSt=(F.st==='All'||c.dataset.status===F.st);
+    c.style.display=(okSeg&&okSev&&okSt)?'':'none';
   });
   document.querySelectorAll('.seg').forEach(s=>{
     const anyVisible=[...s.querySelectorAll('.card')].some(c=>c.style.display!=='none');
     s.style.display=anyVisible?'':'none';
   });
+}
+document.querySelectorAll('.stat.clickable').forEach(t=>t.addEventListener('click',()=>{
+  const seg=t.dataset.seg;
+  const wasActive=t.classList.contains('active');
+  document.querySelectorAll('.stat.clickable').forEach(x=>x.classList.remove('active'));
+  if(wasActive){F.seg=null;}
+  else{t.classList.add('active');F.seg=seg;}
+  applyFilters();
 }));
 setAll(true);
 </script></body></html>
