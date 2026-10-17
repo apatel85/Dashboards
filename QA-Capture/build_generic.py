@@ -28,14 +28,24 @@ def main():
     for b in bugs:
         counts[b.get("severity", "?")] = counts.get(b.get("severity", "?"), 0) + 1
 
-    def img_tag(b):
+    def img_tags(b):
+        tags = []
         for s in b.get("shots", []):
             p = os.path.join(proj, s)
             if os.path.exists(p):
                 with open(p, "rb") as f:
                     d64 = base64.b64encode(f.read()).decode()
-                return (f'<img src="data:image/jpeg;base64,{d64}" alt="screenshot" '
-                        f'onclick="this.classList.toggle(\'zoom\')">')
+                tags.append(
+                    f'<figure><img src="data:image/jpeg;base64,{d64}" alt="screenshot" '
+                    f'onclick="this.classList.toggle(\'zoom\')">'
+                    f'<figcaption>Screenshot {len(tags) + 1} of {len(b["shots"])}</figcaption></figure>')
+        return "".join(tags)
+
+    def clip_tag(b):
+        if b.get("clip"):
+            secs = f" ({b['clip_secs']}s)" if b.get("clip_secs") else ""
+            return (f"<figure><video controls preload='none' src='{esc(b['clip'])}'></video>"
+                    f"<figcaption>Screen recording{secs}</figcaption></figure>")
         return ""
 
     def trail_html(b):
@@ -50,17 +60,20 @@ def main():
     cards = []
     for b in bugs:
         sev = b.get("severity", "Medium")
+        itype = (f"<span class='itype'>{esc(b['issue_type'])}</span> "
+                 if b.get("issue_type") else "")
         cards.append(f"""
         <article class="card sev-{esc(sev)}" data-sev="{esc(sev)}">
           <div class="chead"><span class="pill">{esc(sev)}</span>
-            <span class="bid">{esc(b.get('id',''))}</span>
+            <span class="bid">{esc(b.get('id',''))}</span>{itype}
             <span class="when">{esc(b.get('created','')[:16].replace('T',' '))}</span></div>
           <h3>{esc(b.get('title',''))}</h3>
           <div class="meta">📄 {esc(b.get('page',''))}</div>
           {"<div class='exp'><b>Expected:</b> " + esc(b.get('expected')) + "</div>" if b.get('expected') else ""}
           {"<div class='act'><b>Actual:</b> " + esc(b.get('actual')) + "</div>" if b.get('actual') else ""}
           {trail_html(b)}
-          {img_tag(b)}
+          {clip_tag(b)}
+          {img_tags(b)}
         </article>""")
 
     chips = " ".join(
@@ -88,6 +101,9 @@ def main():
   .trail{{font-size:13px;color:#475569}} .trail li{{margin:4px 0}} .stp{{font-weight:700;color:#1e293b}} .pg{{color:#94a3b8;font-family:monospace;font-size:12px}}
   .card img{{max-width:100%;border-radius:8px;margin-top:10px;cursor:zoom-in;border:1px solid #e2e8f0}}
   .card img.zoom{{position:fixed;inset:5vh 5vw;max-width:90vw;max-height:90vh;z-index:99;cursor:zoom-out;box-shadow:0 20px 60px rgba(0,0,0,.5)}}
+  .card figure{{margin:14px 0 0}} .card figcaption{{font-size:12px;color:#94a3b8;margin-top:4px}}
+  .card video{{max-width:100%;border-radius:8px;margin-top:10px;background:#000}}
+  .itype{{font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;background:#fef3c7;color:#92400e}}
   .empty{{color:#94a3b8;text-align:center;padding:60px 0}}
 </style></head>
 <body>
@@ -96,7 +112,7 @@ def main():
 <div id="cards">
 {''.join(cards) if cards else '<p class="empty">No bugs filed yet. Flag one from the extension and it will appear here.</p>'}
 </div>
-<p class="sub">Last rebuilt {datetime.now().strftime('%Y-%m-%d %H:%M')} · QA Capture v2</p>
+<p class="sub">Last rebuilt {datetime.now().strftime('%Y-%m-%d %H:%M')} · QA Capture v3</p>
 <script>
 document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{{
   document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');
