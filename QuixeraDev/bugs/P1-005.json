@@ -1,0 +1,30 @@
+{
+  "id": "P1-005",
+  "source": "manual",
+  "project": "Quixera Dev",
+  "title": "Phase 1 sweep: 3 minor cosmetic notes (Leads info popovers, Amenity placeholder, Pricing Rules badges)",
+  "severity": "Low",
+  "page": "Settings > Leads / Amenities / Pricing Rules",
+  "url": "https://facility-dev.quixeraos.com/settings",
+  "expected": "Info buttons show popovers; placeholders and badges are contextual and consistent.",
+  "actual": "(a) Leads: 'About the stale threshold / closed window / stage labels' info buttons show no popover on click or hover. (b) Add Amenity placeholder reuses 'e.g., Crick Coaching'. (c) Pricing Rules status badge button shows no tooltip and the '+1' badge is inconsistent.",
+  "trail": [
+    {
+      "step": 1,
+      "page": "/settings/leads",
+      "clicked": "info button (no popover)"
+    },
+    {
+      "step": 2,
+      "page": "/settings/amenities",
+      "clicked": "button: \"Add Amenity\""
+    },
+    {
+      "step": 3,
+      "page": "/settings/pricing-rules",
+      "clicked": "status badge button (no tooltip)"
+    }
+  ],
+  "shots": [],
+  "created": "2026-10-17T10:05:00-04:00"
+}
