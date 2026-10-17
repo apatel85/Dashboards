@@ -12,6 +12,7 @@ import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import PremarketLine from '../components/PremarketLine';
 import { FuturesGamma, GexAlerts, TickerGamma, useWatchlist } from '../components/Gamma';
 import { LottoScanner } from '../components/Lotto';
+import { Playbook } from '../components/Playbook';
 import { fmtDate, fmtMoney, fmtTimeET } from '../lib/format';
 import type { ResearchIdea, SignalTicker, SignalsFile, GexChangesFile, GexFile, GexTicker, LottoFile } from '../types';
 
@@ -278,6 +279,7 @@ export default function SignalsTab() {
       <FuturesGamma gex={gex ?? null} />
       <GexAlerts changes={gexChanges ?? null} watched={watched} />
       <LottoScanner lotto={lotto} />
+      <Playbook />
 
       {merged.length > 0 ? (
         <>
