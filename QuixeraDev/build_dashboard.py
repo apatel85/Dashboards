@@ -3,8 +3,9 @@
 Data-driven: bugs live in data/base.json (QA team + Arlo) plus bugs/*.json (QA Capture).
 Three segments: QA team retest | Arlo dev pass | Manual captures.
 Re-run to regenerate. Reconciliation: when a fix lands, set status to "Fixed" (after re-verifying) and republish."""
-import base64, io, json, os
+import base64, io, json, os, re
 from datetime import date
+from urllib.parse import urlparse
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -57,6 +58,54 @@ def _load_bugs():
 
 BUGS, BACKLOG = _load_bugs()
 
+# ---- possible-duplicate detection for manual captures ----
+_DUP_STOP = {"the", "a", "an", "on", "in", "of", "to", "and", "or", "for",
+             "with", "is", "are", "was", "not", "no", "tab", "page", "button",
+             "click", "clicking", "open", "opens", "shows", "show", "new",
+             "when", "from", "with", "that", "this"}
+
+def _dup_words(t):
+    return {w for w in re.sub(r"[^a-z0-9 ]", " ", (t or "").lower()).split()
+            if len(w) > 3 and w not in _DUP_STOP}
+
+def _dup_path(b):
+    for k in ("page", "link"):
+        v = b.get(k) or ""
+        if v.startswith("/"):
+            return v.split("?")[0]
+        if v.startswith("http"):
+            try:
+                return urlparse(v).path
+            except Exception:
+                pass
+    return ""
+
+def _dup_match(manual, others):
+    mw = _dup_words(manual.get("title", ""))
+    mp = _dup_path(manual)
+    best, best_score = None, 0
+    for o in others:
+        if o.get("id") == manual.get("id"):
+            continue
+        s = 2 * len(mw & _dup_words(o.get("title", "")))
+        op = _dup_path(o)
+        if mp and op and mp == op:
+            s += 2
+        if (manual.get("issue_type") and manual["issue_type"] != "Other"
+                and o.get("issue_type") == manual["issue_type"]):
+            s += 3
+        if s > best_score:
+            best, best_score = o, s
+    return best if best_score >= 4 else None
+
+_DUP_SRC = {"arlo": "Arlo testing", "team": "QA team testing", "manual": "another manual capture"}
+for _m in BUGS:
+    if _m["source"] == "manual":
+        _hit = _dup_match(_m, BUGS)
+        if _hit:
+            _m["dup_of"] = {"id": _hit["id"],
+                            "src": _DUP_SRC.get(_hit.get("source"), "earlier testing")}
+
 SEV_ORDER = ["High", "Medium", "Low", "Info"]
 SEV_COLOR = {"High": "#b91c1c", "Medium": "#b45309", "Low": "#4d7c0f", "Info": "#1d4ed8"}
 STATUS_COLOR = {"Open": "#b91c1c", "Partly fixed": "#b45309", "Still failing": "#7f1d1d",
@@ -102,6 +151,11 @@ def card(b):
                 f"<figcaption>Screen recording{secs} — plays in the browser</figcaption></figure>")
     itype = (f"<span class='itype'>{esc(b['issue_type'])}</span>"
              if b["source"] == "manual" and b.get("issue_type") else "")
+    dup = ""
+    if b.get("dup_of"):
+        d = b["dup_of"]
+        dup = (f"<p class='dupwarn'>⚠️ Possible duplicate of "
+               f"<a href='#bug-{d['id']}'>{d['id']}</a> — already covered by {d['src']}.</p>")
     extra = ""
     if b.get("where"):
         extra += f"<p><b>Where:</b> {esc(b['where'])}</p>"
@@ -112,7 +166,7 @@ def card(b):
     fix = f"<div class=\"fix\"><b>Suggested fix:</b> {esc(b['fix'])}</div>" if b.get("fix") else ""
     jira = f"<p><b>Jira:</b> <a href=\"{b['jira']}\" target=\"_blank\" rel=\"noopener\">{esc(b['jira'].rstrip('/').split('/')[-1])}</a> (parent ticket)</p>" if b.get("jira") else ""
     return f"""
-    <article class="card" data-sev="{b['sev']}" data-status="{b['status']}" data-source="{b['source']}">
+    <article class="card" id="bug-{b['id']}" data-sev="{b['sev']}" data-status="{b['status']}" data-source="{b['source']}">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:{SEV_COLOR[b['sev']]}">{b['sev']}</span>
         <span class="cid">{b['id']}</span>
@@ -124,6 +178,7 @@ def card(b):
         <div class="cols">
           <div class="details">
             <p><span class="src">{SOURCE_LABEL[b['source']]}</span>{itype} {jira}</p>
+            {dup}
             <p><a class="golink" href="{b['link']}" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             {extra}
             <p><b>What was done (click trail):</b></p>{trail_html(b)}
@@ -161,6 +216,11 @@ for i in BACKLOG:
 counts = {s: sum(1 for b in BUGS if b["sev"] == s) for s in SEV_ORDER}
 n_open = sum(1 for b in BUGS if b["status"] == "Open")
 n_src = {k: sum(1 for b in BUGS if b["source"] == k) for k in SOURCE_LABEL}
+STATUSES = ["Open", "Partly fixed", "Still failing", "Blocked", "Fixed"]
+n_st = {s: sum(1 for b in BUGS if b["status"] == s) for s in STATUSES}
+st_btns = "".join(
+    f"""<button class="fbtn sbtn" data-st="{s}">{s} · {n_st[s]}</button>"""
+    for s in STATUSES if n_st[s])
 
 HTML = """<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
@@ -178,9 +238,15 @@ header p{color:#c3d2e5;font-size:14px}
 .stat{background:#fff;border-radius:10px;padding:12px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .stat .n{font-size:26px;font-weight:700}
 .stat .l{font-size:12px;color:#6b7280}
+.stat.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s}
+.stat.clickable:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.stat.clickable.active{outline:3px solid #1e3a5f}
+.dupwarn{background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:10px}
+.dupwarn a{font-weight:700;color:#b45309}
 .toolbar{position:sticky;top:0;z-index:50;background:#f1f4f8ee;backdrop-filter:blur(6px);padding:12px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-bottom:1px solid #e5e7eb;margin-bottom:18px}
 .fbtn{border:1px solid #d1d5db;background:#fff;border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer}
 .fbtn.active{background:#1e3a5f;color:#fff;border-color:#1e3a5f}
+.tsep{font-size:13px;color:#6b7280;margin-left:6px}
 .tbtn{margin-left:auto;border:1px solid #d1d5db;background:#fff;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
 .seg{margin-bottom:30px}
 .seghead{display:flex;align-items:center;gap:12px;margin-bottom:4px}
@@ -235,10 +301,10 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
 <p>https://facility-dev.quixeraos.com · QA team retest 2026-10-15 (186 fixes) + Arlo dev pass 2026-10-15 · Desktop 1440px, Chromium · Signed in as Ankit Patel (Admin) · QA_AP-labeled test records; no deletes / no outward-facing sends</p>
 <div class="recon"><b>How to reconcile:</b> when a fix lands, tell Arlo (e.g. “QXR-416-F10 is fixed on dev”) — he'll re-verify on dev and flip the card to <b>Fixed</b>. Statuses: Open · Partly fixed · Still failing · Blocked · Fixed.</div>
 <div class="grid">
-<div class="stat"><div class="n" style="color:#1e3a5f">""" + str(n_src["team"]) + """</div><div class="l">QA team</div></div>
-<div class="stat"><div class="n" style="color:#1e3a5f">""" + str(n_src["arlo"]) + """</div><div class="l">Arlo pass</div></div>
-<div class="stat"><div class="n" style="color:#1e3a5f">""" + str(n_src["manual"]) + """</div><div class="l">Manual captures</div></div>
-<div class="stat"><div class="n" style="color:#b91c1c">""" + str(n_open) + """</div><div class="l">Open now</div></div>
+<div class="stat clickable" data-seg="team" title="Show only QA team bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["team"]) + """</div><div class="l">🧪 QA team — tap to filter</div></div>
+<div class="stat clickable" data-seg="arlo" title="Show only Arlo bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["arlo"]) + """</div><div class="l">🤖 Arlo pass — tap to filter</div></div>
+<div class="stat clickable" data-seg="manual" title="Show only manual captures"><div class="n" style="color:#1e3a5f">""" + str(n_src["manual"]) + """</div><div class="l">🚩 Manual — tap to filter</div></div>
+<div class="stat clickable" data-seg="open" title="Show only open bugs"><div class="n" style="color:#b91c1c">""" + str(n_open) + """</div><div class="l">Open now — tap to filter</div></div>
 </div></header>
 <div class="toolbar">
 <button class="fbtn active" data-f="All">All severities</button>
@@ -246,6 +312,9 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
 <button class="fbtn" data-f="Medium">Medium · """ + str(counts["Medium"]) + """</button>
 <button class="fbtn" data-f="Low">Low · """ + str(counts["Low"]) + """</button>
 <button class="fbtn" data-f="Info">Info · """ + str(counts["Info"]) + """</button>
+<span class="tsep">Status:</span>
+<button class="fbtn sbtn active" data-st="All">All</button>
+""" + st_btns + """
 <button class="tbtn" onclick="setAll(true)">Expand all</button>
 <button class="tbtn" onclick="setAll(false)">Collapse all</button>
 </div>
@@ -296,16 +365,34 @@ function toggleCard(btn){btn.closest('.card').classList.toggle('open')}
 function setAll(open){document.querySelectorAll('.card').forEach(c=>c.classList.toggle('open',open))}
 function openLB(src){document.getElementById('lbimg').src=src;document.getElementById('lb').style.display='flex'}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('lb').style.display='none'});
-document.querySelectorAll('.fbtn').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-  const f=b.dataset.f;
+document.querySelectorAll('.fbtn:not(.sbtn)').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.fbtn:not(.sbtn)').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  F.sev=b.dataset.f; applyFilters();
+}));
+document.querySelectorAll('.sbtn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  F.st=b.dataset.st; applyFilters();
+}));
+let F={seg:null,sev:'All',st:'All'};
+function applyFilters(){
   document.querySelectorAll('.card').forEach(c=>{
-    c.style.display=(f==='All'||c.dataset.sev===f)?'':'none';
+    const okSeg=!F.seg||(F.seg==='open'?c.dataset.status==='Open':c.dataset.source===F.seg);
+    const okSev=(F.sev==='All'||c.dataset.sev===F.sev);
+    const okSt=(F.st==='All'||c.dataset.status===F.st);
+    c.style.display=(okSeg&&okSev&&okSt)?'':'none';
   });
   document.querySelectorAll('.seg').forEach(s=>{
     const anyVisible=[...s.querySelectorAll('.card')].some(c=>c.style.display!=='none');
     s.style.display=anyVisible?'':'none';
   });
+}
+document.querySelectorAll('.stat.clickable').forEach(t=>t.addEventListener('click',()=>{
+  const seg=t.dataset.seg;
+  const wasActive=t.classList.contains('active');
+  document.querySelectorAll('.stat.clickable').forEach(x=>x.classList.remove('active'));
+  if(wasActive){F.seg=null;}
+  else{t.classList.add('active');F.seg=seg;}
+  applyFilters();
 }));
 setAll(true);
 </script></body></html>"""
