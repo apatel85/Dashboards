@@ -222,9 +222,10 @@ st_btns = "".join(
     f"""<button class="fbtn sbtn" data-st="{s}">{s} · {n_st[s]}</button>"""
     for s in STATUSES if n_st[s])
 
-HTML = """<!DOCTYPE html>
+HEAD = """<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
 <title>Quixera DEV — Bug Tracker Dashboard</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -293,8 +294,16 @@ table.bl td,table.bl th{padding:8px 12px;border-bottom:1px solid #eef0f3;text-al
 table.bl th{background:#f8fafc;color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
 .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:nowrap}
 footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
-</style></head><body>
-<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=""></div>
+#gate{position:fixed;inset:0;background:#1e3a5f;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+#gate .gcard{background:#fff;border-radius:14px;padding:32px;width:380px;max-width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+#gate h2{margin-bottom:6px;font-size:20px;color:#1e3a5f}
+#gate p{font-size:13px;color:#6b7280;margin-bottom:16px}
+#gate input{width:100%;padding:14px;font-size:16px;border:1px solid #ccc;border-radius:10px;box-sizing:border-box;margin-bottom:12px}
+#gate button{width:100%;min-height:52px;font-size:16px;font-weight:700;border-radius:10px;border:none;background:#1e3a5f;color:#fff;cursor:pointer}
+#gateerr{color:#b91c1c;font-size:13px;min-height:20px;margin-top:10px}
+</style></head><body>"""
+
+INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=""></div>
 <div class="wrap">
 <header>
 <h1>Quixera DEV — Bug Tracker Dashboard</h1>
@@ -359,11 +368,50 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
 <li>Phase 2 sweep (2026-10-17): membership purchase for QA_AP Waitlist Athlete 1 — 121 Session Pack, $121.00 offline cash (RCP-AC1-000156, INV-2026-000189); plan “QA_AP P2 Test Plan” (5 credits, $5.00) created then deactivated to restore active-plan count.</li>
 </ul></details>
 <footer>Rebuilt """ + date.today().isoformat() + """ · Re-verify before flipping any status to Fixed · QA Capture v3</footer>
-</div>
+</div>"""
+
+GATE_HASH_FILE = os.path.join(HERE, ".gate_hash")
+if not os.path.exists(GATE_HASH_FILE):
+    raise SystemExit("gate hash missing — refusing to build an ungated dashboard")
+GATE_HASH = open(GATE_HASH_FILE).read().strip()
+PAYLOAD = base64.b64encode(INNER.encode("utf-8")).decode()
+
+HTML = HEAD + """
+<div id="gate"><div class="gcard">
+<h2>🔒 QA Dashboard</h2>
+<p>This bug tracker is private. Enter the password to view it.</p>
+<input type="password" id="gatepw" placeholder="Password" autocomplete="off">
+<button onclick="unlockGate()">Unlock</button>
+<div id="gateerr"></div>
+</div></div>
+<div id="locked"></div>
 <script>
+const GATE_SALT = "qxrcapture::v1::";
+const GATE_HASH = \"""" + GATE_HASH + """\";
+const PAYLOAD = \"""" + PAYLOAD + """\";
+async function sha256hex(s){
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+async function unlockGate(){
+  const v = document.getElementById("gatepw").value;
+  const h = await sha256hex(GATE_SALT + v);
+  if (h === GATE_HASH) { try{sessionStorage.setItem("qxr_gate","1");}catch(e){} showContent(); }
+  else document.getElementById("gateerr").textContent = "Wrong password \\u2014 try again.";
+}
+function showContent(){
+  document.getElementById("gate").style.display = "none";
+  const el = document.getElementById("locked");
+  if (!el.dataset.done) {
+    el.innerHTML = decodeURIComponent(escape(atob(PAYLOAD)));
+    el.dataset.done = "1";
+    initDashboard();
+  }
+}
 function toggleCard(btn){btn.closest('.card').classList.toggle('open')}
 function setAll(open){document.querySelectorAll('.card').forEach(c=>c.classList.toggle('open',open))}
 function openLB(src){document.getElementById('lbimg').src=src;document.getElementById('lb').style.display='flex'}
+function initDashboard(){
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('lb').style.display='none'});
 document.querySelectorAll('.fbtn:not(.sbtn)').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.fbtn:not(.sbtn)').forEach(x=>x.classList.remove('active'));b.classList.add('active');
@@ -395,6 +443,9 @@ document.querySelectorAll('.stat.clickable').forEach(t=>t.addEventListener('clic
   applyFilters();
 }));
 setAll(true);
+}
+document.getElementById("gatepw").addEventListener("keydown", e=>{ if(e.key==="Enter") unlockGate(); });
+try{ if(sessionStorage.getItem("qxr_gate")==="1") showContent(); }catch(e){}
 </script></body></html>"""
 
 with open(OUT, "w") as f:
