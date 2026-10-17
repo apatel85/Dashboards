@@ -64,19 +64,19 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
 <div class="recon"><b>How to reconcile:</b> when a fix lands, tell Arlo (e.g. “QXR-416-F10 is fixed on dev”) — he'll re-verify on dev and flip the card to <b>Fixed</b>. Statuses: Open · Partly fixed · Still failing · Blocked · Fixed.</div>
 <div class="grid">
 <div class="stat"><div class="n" style="color:#b91c1c">9</div><div class="l">High</div></div>
-<div class="stat"><div class="n" style="color:#b45309">8</div><div class="l">Medium</div></div>
+<div class="stat"><div class="n" style="color:#b45309">9</div><div class="l">Medium</div></div>
 <div class="stat"><div class="n" style="color:#4d7c0f">17</div><div class="l">Low</div></div>
-<div class="stat"><div class="n" style="color:#1e3a5f">35</div><div class="l">Open now</div></div>
+<div class="stat"><div class="n" style="color:#1e3a5f">36</div><div class="l">Open now</div></div>
 </div></header>
 <div class="toolbar">
-<button class="fbtn active" data-f="All">All · 35</button>
+<button class="fbtn active" data-f="All">All · 36</button>
 <button class="fbtn" data-f="High">High · 9</button>
-<button class="fbtn" data-f="Medium">Medium · 8</button>
+<button class="fbtn" data-f="Medium">Medium · 9</button>
 <button class="fbtn" data-f="Low">Low · 17</button>
 <button class="fbtn" data-f="Info">Info · 1</button>
 <button class="fbtn" data-f="team">QA team · 16</button>
 <button class="fbtn" data-f="arlo">Arlo pass · 16</button>
-<button class="fbtn" data-f="manual">Manual · 3</button>
+<button class="fbtn" data-f="manual">Manual · 4</button>
 <button class="tbtn" onclick="setAll(true)">Expand all</button>
 <button class="tbtn" onclick="setAll(false)">Collapse all</button>
 </div>
@@ -295,7 +295,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
     </section>
     <section class="sevsec" data-sev="Medium">
       <h2><span class="pill big" style="background:#b45309">Medium</span>
-      <span class="count">8 issues</span></h2>
+      <span class="count">9 issues</span></h2>
       
     <article class="card" data-sev="Medium" data-status="Open" data-source="arlo">
       <button class="card-head" onclick="toggleCard(this)">
@@ -452,6 +452,29 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
             <p><b>Steps to reproduce:</b></p><ol><li>POST /api/bookings with the test data and date 2026-10-14 (yesterday) Repeat with facilityId 15, facilitySpaceId 11, date 2026-10-13 Repeat with date 2025-10-14 Query booking.booking for the returned ids</li></ol>
             <p><b>Expected:</b> 400 — the date is before the facility's today, as the series API ("A series here can start no earlier than today") and the wizard enforce; nothing written.</p>
             <p><b>Actual:</b> 201 each time (bookings 2730, 2732, 2733). DB: status 9 (Confirmed), total_price null, dates 2026-10-14, 2026-10-13, 2025-10-14. Neighbour rules hold: 07:00 outside hours → 400, end before start → 400, blocked slot → 409.</p>
+            
+          </div>
+          <div class="shots"><div class="noshot">No screenshot attached.</div></div>
+        </div>
+      </div>
+    </article>
+    <article class="card" data-sev="Medium" data-status="Open" data-source="manual">
+      <button class="card-head" onclick="toggleCard(this)">
+        <span class="pill" style="background:#b45309">Medium</span>
+        <span class="cid">MAN-MVCSYZGE</span>
+        <span class="ctitle">Membership miscount</span>
+        <span class="status" style="background:#b91c1c">Open</span>
+        <span class="chev">▾</span>
+      </button>
+      <div class="card-body">
+        <div class="cols">
+          <div class="details">
+            <p><span class="src">Manual capture</span> </p>
+            <p><a class="golink" href="https://facility-dev.quixeraos.com/dashboard" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
+            
+            <p><b>Steps to reproduce:</b></p><ol><li>/memberships/directory — a: "Dashboard"</li><li>/dashboard — button: "View financials"</li><li>/dashboard — button: "🚩"</li><li>/dashboard — select: "Quixera Dev Quixera UAT"</li><li>/dashboard — select: "Quixera Dev Quixera UAT"</li><li>/dashboard — input: "e.g. Save button does nothing on Memberships"</li><li>/dashboard — select: "High Medium Low"</li><li>/dashboard — select: "High Medium Low"</li><li>/dashboard — select: "High Medium Low"</li><li>/dashboard — select: "High Medium Low"</li><li>/dashboard — textarea: "TEXTAREA"</li><li>/dashboard — textarea: "TEXTAREA"</li><li>/dashboard — button: "Capture &amp; send"</li></ol>
+            <p><b>Expected:</b> Count should match from Dashboard to individual page</p>
+            <p><b>Actual:</b> It doesn't match</p>
             
           </div>
           <div class="shots"><div class="noshot">No screenshot attached.</div></div>
