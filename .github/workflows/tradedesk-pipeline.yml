@@ -1,0 +1,64 @@
+name: TradeDesk Data Pipeline
+
+# Weekday pre-market refresh: 12:30 UTC = 8:30 AM ET (EST) / 7:30 AM ET (EDT).
+# NOTE: cron runs in UTC; during EDT this fires at 8:30am ET, during EST at 7:30am ET.
+on:
+  schedule:
+    - cron: '30 12 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      quick:
+        description: 'Quick mode: S&P 500 + Nasdaq-100 only (skip Russell 2000 scan)'
+        required: false
+        default: 'true'
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: Fetch keyless data & rebuild TradeDesk
+    runs-on: ubuntu-latest
+    # No secrets referenced anywhere in this workflow — all sources are keyless.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run data pipeline
+        working-directory: TradeDesk/pipeline
+        env:
+          # Contact email for SEC EDGAR fair-access User-Agent (plain variable, not a secret).
+          SEC_CONTACT_EMAIL: ${{ vars.SEC_CONTACT_EMAIL }}
+        run: |
+          chmod +x refresh.sh
+          if [ "${{ inputs.quick }}" = "false" ]; then
+            ./refresh.sh
+          else
+            ./refresh.sh --quick
+          fi
+
+      - name: Install & build app
+        working-directory: TradeDesk
+        run: |
+          npm ci
+          npm run build
+
+      - name: Commit data + dist
+        run: |
+          git config user.name "tradedesk-bot[bot]"
+          git config user.email "tradedesk-bot@noreply.github.com"
+          git add TradeDesk/public/data/
+          git add TradeDesk/dist/
+          if git diff --staged --quiet; then
+            echo "No data changes — skipping commit."
+          else
+            DATE=$(date -u +%Y-%m-%d)
+            git commit -m "auto: tradedesk data refresh ${DATE} [skip ci]"
+            git push
+            echo "Pushed refreshed TradeDesk data."
+          fi
