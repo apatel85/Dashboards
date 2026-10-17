@@ -44,12 +44,18 @@ export function Playbook() {
             <li>Time stop: nothing happens in 5–10 15m bars → exit, dead money</li>
             <li>Exit alarm: rejection wick + volume spike <em>against</em> you near target → take the rest off, don't wait for the print</li>
           </Block>
-          <Block title="5 · Skip the trade when">
+          <Block title="5 · Capitulation bottom — the SNDK setup (15m, liquid names only)">
+            <li>At a swing low or round number: RSI under 35 + volume ≥ 3× average + range ≥ 2× ATR + hammer or bull engulfing (body ≥ 60%)</li>
+            <li>Long at the bar's close, stop 0.5× ATR under the level, target 1R</li>
+            <li>Strict version (RSI under 25, 5× volume): rare — about twice a week across 60 liquid names — but tested at 84% wins</li>
+            <li>Liquid large-caps and indices only: the pattern washes out on thin names, and never prints on daily bars — it's intraday-only</li>
+          </Block>
+          <Block title="6 · Skip the trade when">
             <li>Dealer gamma is LONG into the zone (pinning headwind)</li>
             <li>The level already broke and reclaimed (stop hunt — stand aside)</li>
             <li>No volume on the touch — unconfirmed</li>
           </Block>
-          <Block title="6 · Continuation — major swing-high breakout (longs only)">
+          <Block title="7 · Continuation — major swing-high breakout (longs only)">
             <li>Close ≥ 0.3% beyond a <em>major</em> swing high + volume ≥ 1.5× + price above SMA200</li>
             <li>Enter next open, stop 0.5× ATR under the level, target 1.5R</li>
             <li>Breakdown shorts tested at −0.09R in bull regimes — skip them; longs tested +0.13R</li>
