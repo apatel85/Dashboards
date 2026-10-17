@@ -1,0 +1,30 @@
+{
+  "id": "P1-004",
+  "source": "manual",
+  "project": "Quixera Dev",
+  "title": "Settings > Communications > SMS: messaging status fails to load, Retry does not help",
+  "severity": "Medium",
+  "page": "Settings > Communications > SMS",
+  "url": "https://facility-dev.quixeraos.com/settings/communications",
+  "expected": "SMS sub-tab should load the messaging status, or Retry should recover from a transient failure.",
+  "actual": "\"We couldn't load your messaging status. Please try again.\" persists after clicking Retry. Email sub-tab on the same page works fine.",
+  "trail": [
+    {
+      "step": 1,
+      "page": "/settings/communications",
+      "clicked": "tab: \"SMS\""
+    },
+    {
+      "step": 2,
+      "page": "/settings/communications",
+      "clicked": "button: \"Retry\""
+    },
+    {
+      "step": 3,
+      "page": "/settings/communications",
+      "clicked": "(error still shown)"
+    }
+  ],
+  "shots": [],
+  "created": "2026-10-17T10:05:00-04:00"
+}
