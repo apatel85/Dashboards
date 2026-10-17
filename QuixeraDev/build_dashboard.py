@@ -287,6 +287,7 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
 <li>Tag “QA_AP Tag Test” (via Bulk edit on RCP-AC1-000136).</li>
 <li>Second pass (2026-10-15): athletes QA_AP Waitlist Athlete 1/2/3 (ATH-292/293/294); guardians qaap.waitlist@example.com / qaap.waitlist2@example.com / qaap.waitlist3@example.com; bookings BK-2743/44/45/46 (recurring series, all cancelled) and BK-2747 ($45.00 with promo QA_AP10, paid cash); promo QA_AP10 (10% off bookings); invoice INV-2026-000188 + receipt RCP-AC1-000153 ($45.00); FULL refund $50.00 on RCP-AC1-000150 (invoice INV-2026-000182 reopened); PARTIAL refund $5.00 on RCP-AC1-000151 (invoice INV-2026-000183 partially paid); announcement “QA_AP Test Announcement — Please Ignore” (id 563) sent in-app only to the 3 QA_AP guardians. Note: an accidental duplicate “QA_AP Customer” was created (qa_ap_customer@example.com) — no delete path exists.</li>
 <li>Lead “QA_AP Lead” (New → Contacted → Trial, 2 notes); Customer “QA_AP Customer”; Booking #BK-2742 ($50 Pay Later, Oct 16 9:00 AM, then paid).</li>
+<li>Phase 2 sweep (2026-10-17): membership purchase for QA_AP Waitlist Athlete 1 — 121 Session Pack, $121.00 offline cash (RCP-AC1-000156, INV-2026-000189); plan “QA_AP P2 Test Plan” (5 credits, $5.00) created then deactivated to restore active-plan count.</li>
 </ul></details>
 <footer>Rebuilt """ + date.today().isoformat() + """ · Re-verify before flipping any status to Fixed · QA Capture v3</footer>
 </div>
