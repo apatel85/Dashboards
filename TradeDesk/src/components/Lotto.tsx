@@ -46,6 +46,24 @@ function LottoCard({ c, rank }: { c: LottoCandidate; rank: number }) {
               <strong>Targets:</strong> {c.targets.map((t) => `$${t}`).join(' → ')}
             </div>
           ) : null}
+          {c.suggested_ticket ? (
+            <div className="thesis-line ticket-box">
+              <strong>🎟 Suggested ticket:</strong> {c.direction === 'CALL' ? 'call' : 'put'} ${c.suggested_ticket.strike}{' '}
+              @ ${c.suggested_ticket.premium} (Δ {c.suggested_ticket.delta})
+              <br />
+              <span className="muted">
+                Breakeven ${c.suggested_ticket.breakeven} ({c.suggested_ticket.breakeven_pct}% move needed) ·
+                target ${c.suggested_ticket.target} ({c.suggested_ticket.target_source}) →
+                ≈ ${c.suggested_ticket.value_at_target} intrinsic ({c.suggested_ticket.multiple_at_target}×)
+                · needs {c.suggested_ticket.move_for_2x_pct}% for a double
+              </span>
+            </div>
+          ) : null}
+          {c.gamma_0dte ? (
+            <div className="thesis-line small">
+              <strong>Γ 0DTE:</strong> <span className="muted">{c.gamma_0dte}</span>
+            </div>
+          ) : null}
           <div className="stat-grid">
             <Stat label="Spot" value={`$${c.spot}`} />
             {c.expiry_0dte ? <Stat label="0DTE exp" value={c.expiry_0dte.slice(5)} /> : null}

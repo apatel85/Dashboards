@@ -355,6 +355,14 @@ export interface LottoCandidate {
   iv_pct: number | null;
   rv20_pct: number | null;
   gamma_regime: string | null;
+  gamma_0dte: string | null;
+  suggested_ticket: {
+    strike: number; premium: number; delta: number;
+    breakeven: number; breakeven_pct: number;
+    target: number; target_source: string;
+    value_at_target: number; multiple_at_target: number | null;
+    move_for_2x_pct: number;
+  } | null;
   friday_pin: { strike: number; distPct: number } | null;
   notes: string[];
 }
