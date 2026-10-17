@@ -1,0 +1,80 @@
+{
+  "id": "MAN-MVCSYZGE",
+  "source": "manual",
+  "project": "Quixera Dev",
+  "title": "Membership miscount",
+  "severity": "Medium",
+  "page": "/dashboard",
+  "url": "https://facility-dev.quixeraos.com/dashboard",
+  "expected": "Count should match from Dashboard to individual page",
+  "actual": "It doesn't match",
+  "trail": [
+    {
+      "step": 1,
+      "page": "/memberships/directory",
+      "clicked": "a: \"Dashboard\""
+    },
+    {
+      "step": 2,
+      "page": "/dashboard",
+      "clicked": "button: \"View financials\""
+    },
+    {
+      "step": 3,
+      "page": "/dashboard",
+      "clicked": "button: \"🚩\""
+    },
+    {
+      "step": 4,
+      "page": "/dashboard",
+      "clicked": "select: \"Quixera Dev Quixera UAT\""
+    },
+    {
+      "step": 5,
+      "page": "/dashboard",
+      "clicked": "select: \"Quixera Dev Quixera UAT\""
+    },
+    {
+      "step": 6,
+      "page": "/dashboard",
+      "clicked": "input: \"e.g. Save button does nothing on Memberships\""
+    },
+    {
+      "step": 7,
+      "page": "/dashboard",
+      "clicked": "select: \"High Medium Low\""
+    },
+    {
+      "step": 8,
+      "page": "/dashboard",
+      "clicked": "select: \"High Medium Low\""
+    },
+    {
+      "step": 9,
+      "page": "/dashboard",
+      "clicked": "select: \"High Medium Low\""
+    },
+    {
+      "step": 10,
+      "page": "/dashboard",
+      "clicked": "select: \"High Medium Low\""
+    },
+    {
+      "step": 11,
+      "page": "/dashboard",
+      "clicked": "textarea: \"TEXTAREA\""
+    },
+    {
+      "step": 12,
+      "page": "/dashboard",
+      "clicked": "textarea: \"TEXTAREA\""
+    },
+    {
+      "step": 13,
+      "page": "/dashboard",
+      "clicked": "button: \"Capture & send\""
+    }
+  ],
+  "shots": [],
+  "created": "2026-10-17T19:41:58.152Z"
+}
