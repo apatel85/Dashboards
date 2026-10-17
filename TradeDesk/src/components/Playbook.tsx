@@ -49,6 +49,7 @@ export function Playbook() {
             <li>Long at the bar's close, stop 0.5× ATR under the level, target 1R</li>
             <li>Strict version (RSI under 25, 5× volume): rare — about twice a week across 60 liquid names — but tested at 84% wins</li>
             <li>Liquid large-caps and indices only: the pattern washes out on thin names, and never prints on daily bars — it's intraday-only</li>
+            <li>Timeframe matters: validated on <strong>15m</strong> (57% wins, +0.12R) and <strong>3m</strong> (85%, small sample); mild on 1h (+0.08R); <strong>fails on 10m</strong> (−0.27R — don't trade it there); never occurs on 4h</li>
           </Block>
           <Block title="6 · Skip the trade when">
             <li>Dealer gamma is LONG into the zone (pinning headwind)</li>
