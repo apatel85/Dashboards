@@ -1,880 +1,880 @@
 {
- "bugs": [
-  {
-   "id": "DEV-001",
-   "sev": "High",
-   "status": "Still failing",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/memberships/directory",
-   "title": "Freeze and Cancel membership actions permanently disabled on every row",
-   "steps": [
-    "Open Memberships directory.",
-    "Click the row-actions menu on any Active membership row (tested QA_AP rows and existing rows)."
-   ],
-   "expected": "Freeze enabled for Active memberships; Cancel enabled with a confirmation dialog.",
-   "actual": "Both “Freeze” and “Cancel membership” are greyed out/disabled on every row. The Frozen tab count is 0, suggesting freeze has never worked on dev. Because of this, freeze/unfreeze toast counts, cancel confirmation, and admin freeze/resume audit-trail attribution could not be tested. RE-CONFIRMED 2026-10-17 (Phase 2 sweep): Freeze/Cancel still disabled on Active, Pending, Cancelled, Expired rows and on the newly created QA_AP membership.",
-   "fix": "Enable Freeze for Active memberships and Cancel with confirmation; check the permission/plan-state gating that disables them.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": [
-    "data/shots/arlo-dev-freeze-cancel-disabled.jpg"
-   ]
-  },
-  {
-   "id": "DEV-002",
-   "sev": "High",
-   "status": "Fixed",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/billing",
-   "title": "Recording a payment with Received date = today fails in the evening (server UTC-date validation)",
-   "steps": [
-    "Open any open invoice (e.g. INV-2026-000048).",
-    "Click Record payment: Amount $104, Cash, Received on 10/15/2026 (today).",
-    "Submit."
-   ],
-   "expected": "Today's local date is accepted.",
-   "actual": "CONFIRMED by a second independent pass (2026-10-15): recording a payment with today's date failed again with the same error; backdating to 10/14/2026 worked. Original observation: toast “Error — receivedAt is required and may never be in the future.” The server appears to compare against the UTC date (already Oct 16). Workaround: backdating to 10/14/2026 succeeded (receipt RCP-AC1-000149). Note the Add Membership offline flow accepted 10/15/2026 the same evening — validation is inconsistent across flows. Blocks same-day payment recording ~5 hrs/day (19:00–24:00 ET). RE-VERIFIED 2026-10-17 (Phase 2 sweep): future date 12/31/2027 rejected with toast \"receivedAt is required and may never be in the future\"; malformed 13/99/2026 rejected inline with \"Enter a valid date.\" Nothing was committed.",
-   "fix": "Validate receivedAt against the facility's local date (America/New_York), not UTC; align validation across all payment flows.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": [
-    "data/shots/arlo-dev-payment-date-utc-error.jpg"
-   ]
-  },
-  {
-   "id": "DEV-003",
-   "sev": "High",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/people/leads",
-   "title": "New Lead dialog: phone country selector reverts to Brazil, blocking valid US numbers",
-   "steps": [
-    "Open People > Leads > New lead; fill step-1 names + email.",
-    "Open the phone country selector, click “United States +1”.",
-    "Interact with the phone field (fill/type)."
-   ],
-   "expected": "The selected country persists.",
-   "actual": "CONFIRMED by a second independent pass (2026-10-15): the phone input auto-detects country from leading digits — 555→Brazil, 212→Morocco, 415→Switzerland — so the selector mis-fires even without manual interaction; full international format (14155550132) works around it. Original observation: the selector reverts to Brazil (+55) on nearly every interaction; entering 5550101234 formats as “+55 (50) 10123-4” with “Invalid phone number for Brazil”. It persisted once after clicking Email to blur first, then reverted again on the next fill. Workaround: select US, blur, then type-append a valid NANP number (+1 (312) 456-7890). (The validator rejecting 555 area codes and 0/1 central-office codes is expected NANP behavior.)",
-   "fix": "Persist the selected country on the phone input's state; don't reset it on field interaction/blur.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": []
-  },
-  {
-   "id": "DEV-004",
-   "sev": "Medium",
-   "status": "Still failing",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/billing",
-   "title": "Billing “Outstanding” tab Sum ($2,391.76 across 24 invoices) does not match the OUTSTANDING KPI ($2,369.76)",
-   "steps": [
-    "Open Finance > Billing.",
-    "Read the OUTSTANDING KPI ($2,369.76) and the Outstanding tab footer Sum ($2,391.76 across 24 invoices)."
-   ],
-   "expected": "Both figures agree.",
-   "actual": "$22.00 gap. The tab appears to sum full invoice amounts while the KPI sums remaining balances (partially paid invoices). The dashboard OUTSTANDING KPI agrees with the Billing KPI ($2,369.76), so the tab's Sum is the outlier. RE-CONFIRMED 2026-10-17 (Phase 2 sweep): Outstanding tab now sums $2,452.42 (page 1 $2,425.76 + page-2 INV-2026-000009 $26.66) vs KPI $2,424.76 — gap is now $27.66 (was $22).",
-   "fix": "Make the tab Sum use remaining balances like the KPI, or label it clearly as gross invoice total.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": [
-    "data/shots/arlo-dev-billing-sum-mismatch.jpg"
-   ]
-  },
-  {
-   "id": "DEV-005",
-   "sev": "Low",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/memberships/directory",
-   "title": "Membership details activity/audit trail shows no actor attribution",
-   "steps": [
-    "Open the memberships directory > a membership's details.",
-    "Read the activity trail entries."
-   ],
-   "expected": "Each entry names the actor (staff member or member/family).",
-   "actual": "Entries (“Membership added (offline)”, “Payment recorded”, $30.00 Cash RCP-AC1-000148) carry no staff/member name, so an admin freeze/resume could not be attributed either way.",
-   "fix": "Record and display actor_type/actor on every membership activity entry.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": []
-  },
-  {
-   "id": "DEV-006",
-   "sev": "Medium",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/analytics",
-   "title": "Conflicting athlete totals: Analytics says 3045, Athletes directory says 200, Athlete Progress report says 67",
-   "steps": [
-    "Open Insights > Analytics > Athletes tab — read TOTAL ATHLETES.",
-    "Open People > Athletes — read the directory total.",
-    "Open Reports > Athlete Progress — read ATHLETES."
-   ],
-   "expected": "One consistent athlete total (or clearly labeled scopes).",
-   "actual": "Analytics > Athletes: “TOTAL ATHLETES 3045 — Registered in the system”. People > Athletes: “Total: 200 athletes”. Reports > Athlete Progress: “ATHLETES 67”. Three different totals for the same concept with no scope labels.",
-   "fix": "Use one definition per label, or label each scope (e.g. all-time registered vs facility roster vs active in period).",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": [
-    "data/shots/arlo-dev-analytics-athletes-3045.jpg"
-   ]
-  },
-  {
-   "id": "DEV-007",
-   "sev": "Low",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/analytics",
-   "title": "Analytics Revenue OUTSTANDING ($1,611.58) disagrees with Billing OUTSTANDING ($2,369.76)",
-   "steps": [
-    "Open Insights > Analytics > Revenue tab — read OUTSTANDING.",
-    "Open Finance > Billing — read the OUTSTANDING KPI."
-   ],
-   "expected": "The two agree, or the differing definitions are labeled.",
-   "actual": "Analytics Revenue: OUTSTANDING $1,611.58. Billing: OUTSTANDING $2,369.76. Unexplained definition difference.",
-   "fix": "Reconcile the two definitions or label them distinctly.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": []
-  },
-  {
-   "id": "DEV-008",
-   "sev": "Low",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/ai-insights",
-   "title": "Privacy review: chat discloses a minor athlete's medical flag and emergency contact, and invites health-detail follow-up",
-   "steps": [
-    "In the Academy assistant, ask: “Tell me all the details you have about athlete Vicky Kaushal.” (age 13, minor)"
-   ],
-   "expected": "Sensitive details about a child (medical flags, emergency contacts) need an extra check or a refusal; the assistant should not invite health-detail disclosure.",
-   "actual": "The assistant returned Status, Age group, Joined date, sport, coach, centre, “Medical flag: Yes”, “Emergency contact: Nayan Thacker (father)”, programs and upcoming sessions — plus a suggested follow-up “What's the medical flag for?” inviting health-detail disclosure. No phone/email/address was disclosed, and the requester is the facility admin, so this is a review item rather than a clear violation.",
-   "fix": "Review what minor-athlete fields the assistant may surface; require explicit confirmation before medical/emergency-contact details; remove health-detail follow-up suggestions for minors.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": [
-    "data/shots/arlo-dev-assistant-minor-disclosure.jpg"
-   ]
-  },
-  {
-   "id": "DEV-009",
-   "sev": "Low",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/ai-insights",
-   "title": "Academy assistant gave the wrong weekday (“Mon, Oct 20” — Oct 20, 2026 is a Tuesday)",
-   "steps": [
-    "In the Academy assistant, ask for an athlete's upcoming sessions."
-   ],
-   "expected": "Correct weekdays on dates.",
-   "actual": "Response listed “Mon, Oct 20 at 3:30 PM” — Oct 20, 2026 is a Tuesday (Oct 15 = Thursday per the dashboard). Minor date hallucination.",
-   "fix": "Ground weekday computation on a real calendar instead of the language model.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": [
-    "data/shots/arlo-dev-assistant-minor-disclosure.jpg"
-   ]
-  },
-  {
-   "id": "DEV-010",
-   "sev": "Info",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/analytics",
-   "title": "Analytics Revenue shows “REVENUE GROWTH 2362%” with no context",
-   "steps": [
-    "Open Insights > Analytics > Revenue tab."
-   ],
-   "expected": "Extreme growth figures carry context (e.g. the base period).",
-   "actual": "“REVENUE GROWTH 2362%” is shown with no context — the value comes from a near-zero base and reads as alarming without explanation.",
-   "fix": "Show the comparison base alongside extreme growth percentages, or cap/annotate them.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": []
-  },
-  {
-   "id": "DEV-011",
-   "sev": "High",
-   "status": "Fixed",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/billing",
-   "title": "Refund dialog submit stays disabled on a membership-linked payment — membership refunds cannot be submitted",
-   "steps": [
-    "Open Billing > find the membership-linked payment RCP-AC1-000148 ($30.00 cash).",
-    "Click Refund; enter full amount 30, method Cash, and a reason.",
-    "Try to submit."
-   ],
-   "expected": "The submit button enables with valid inputs and the refund processes.",
-   "actual": "The submit button stayed disabled despite valid inputs (full amount 30, Cash, reason filled). A partial refund on the same payment could not be submitted either. Refunds worked on non-membership payments (RCP-AC1-000150 full $50.00 refund; RCP-AC1-000151 partial $5.00 of $10.66 — ledger, invoice balances and the OUTSTANDING KPI all reconciled: $2,369.76 → $2,419.76 → $2,424.76). So money can be refunded everywhere except on membership-linked payments. RE-VERIFIED 2026-10-17 (Phase 2 sweep): refund dialog on QA_AP membership payment RCP-AC1-000156 opens correctly — prefills amount/method, advises \"Void it instead\" for same-day payments, requires Reason (submit disabled until filled), blocks over-refund with inline error. Void dialog requires a reason and has \"Adjust membership term\" on by default. Both cancelled without committing.",
-   "fix": "Fix the dialog validation gating for membership-linked payments; check what differs in their refund eligibility computation.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": []
-  },
-  {
-   "id": "DEV-012",
-   "sev": "Low",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/billing",
-   "title": "Refund amount field displays a raw float (10.65999984741211) instead of $10.66",
-   "steps": [
-    "Open Billing > payment RCP-AC1-000151 ($10.66).",
-    "Click Refund and read the amount spinbutton."
-   ],
-   "expected": "The amount shows 10.66.",
-   "actual": "The spinbutton displayed 10.65999984741211 — a raw IEEE float leak into the UI.",
-   "fix": "Round/format currency values at the display layer.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": []
-  },
-  {
-   "id": "DEV-013",
-   "sev": "Medium",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/memberships/directory",
-   "title": "No promo/discount field in the membership purchase flow; membership promo at booking checkout gives a misleading error",
-   "steps": [
-    "Start Add Membership (any plan); look for a promo/coupon field at every step.",
-    "In Settings > Promos note the membership-scoped WELCOME10 (50% off); enter it at booking checkout."
-   ],
-   "expected": "Discounts can be applied to memberships (competitors support member discounts); a wrong-scope code explains the scope.",
-   "actual": "The membership flow has no discount/coupon field at any step. Entering membership-scoped WELCOME10 at booking checkout returns a misleading “Promo code not found” (Settings > Promos documents the booking/membership scope split, but the checkout error does not). Booking-scoped promos work: QA_AP10 (10% off) took a $50.00 booking to $45.00 → invoice INV-2026-000188 → receipt RCP-AC1-000153, all reconciled. Caveat: promo codes only work with Offline/Pay Later (“Card checkout does not support promo codes yet”).",
-   "fix": "Add discount support to the membership flow; make the wrong-scope promo error name the scope (“This code is for memberships, not bookings”).",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": []
-  },
-  {
-   "id": "DEV-014",
-   "sev": "Low",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/announcements",
-   "title": "Announcement composer: the “All recipients” checkbox on the Recipients tab does not toggle",
-   "steps": [
-    "Open Announcements > New announcement > Audience step > Recipients tab.",
-    "Click the “All recipients” checkbox."
-   ],
-   "expected": "The checkbox toggles the full recipient selection.",
-   "actual": "The “All recipients” checkbox did not toggle. (Related: the composer defaults to “All Academy” (131); “All Academy” must be deselected on the Programs tab before individual Recipients selection works.)",
-   "fix": "Wire the checkbox to the recipient selection state.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": []
-  },
-  {
-   "id": "DEV-015",
-   "sev": "Medium",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/scheduling",
-   "title": "Booking cancellation dialog defaults “Email the customer about this cancellation” to ON",
-   "steps": [
-    "Open any booking > Cancel.",
-    "Read the default state of the email checkbox."
-   ],
-   "expected": "Destructive + outward-facing: the email option defaults OFF (or the dialog makes the send explicit).",
-   "actual": "“Email the customer about this cancellation” is checked by default — one hurried click sends a customer-facing email. The tester had to uncheck it on every cancellation.",
-   "fix": "Default the checkbox to OFF, or split “Cancel booking” from “Notify customer” into two explicit actions.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": []
-  },
-  {
-   "id": "DEV-016",
-   "sev": "Low",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/people/athletes",
-   "title": "Athlete wizard “Find existing guardian” returns “No guardians found” even for existing customers",
-   "steps": [
-    "Start the new-athlete wizard; use “Find existing guardian”.",
-    "Search for an existing customer/guardian."
-   ],
-   "expected": "Existing guardians are found and linkable.",
-   "actual": "“No guardians found at this academy” even for customers that exist (e.g. the QA_AP Customer created in the same session).",
-   "fix": "Fix the guardian lookup scope/filter.",
-   "env": "",
-   "where": "",
-   "repro": "",
-   "jira": null,
-   "shots": []
-  },
-  {
-   "id": "QXR-277-F26",
-   "sev": "Low",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/people/leads",
-   "title": "QXR-277 Lead stage moves: New to Enrolled refusal says \"use Convert\" instead of \"Move this lead to Contacted first\"",
-   "steps": [
-    "Create a lead (stage New)",
-    "Send POST /api/leads/{id}/transitions {kind: ADVANCE, to: ENROLLED}",
-    "Read the status and message, then GET /api/leads/{id}."
-   ],
-   "expected": "409 with \"Move this lead to Contacted first\" and the lead still at New (AC9).",
-   "actual": "409 \"Enrolled is set when the family enrols; use Convert\"; the lead stays at New. ADVANCE to Trial from New still says \"Move this lead to Contacted first\". The same Convert message is returned for Enrolled from Contacted, from Trial and for PARK with to=ENROLLED.",
-   "fix": "",
-   "env": "",
-   "where": "POST /api/leads/{id}/transitions",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-277",
-   "shots": []
-  },
-  {
-   "id": "QXR-279-F15",
-   "sev": "Low",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/memberships/directory",
-   "title": "QXR-279 List page headers at 375px: the centred tabs cover the page title instead of sitting below it",
-   "steps": [
-    "Sign in to the facility app on dev as an academy admin and set the window to 375 px wide (or 320 px)",
-    "Open https://facility-dev.quixeraos.com/memberships/directory",
-    "Look at the page title 'Memberships' and the 'Active members' tab next to it",
-    "Repeat on /memberships/catalog, /people/customers and /programs."
-   ],
-   "expected": "The title stays readable and the tabs sit on their own row below it, as the Leads page now does at the same width (the QXR-279-F13 fix).",
-   "actual": "The 'Active members' tab and the 'Run due renewals' action are drawn over the 'Memberships' title (60x29 and 148x29 px; the element at the title's centre is the action button). Same at 320 px. Plans & Packages: the Plans and Promo Codes tabs cover the title (57x29 / 46x29); Customers: the Individuals tab (67x29); Programs: the Class Schedules tab (57x29). Clear at 768 and 1280. Pre-existing: these screens keep the centred tab placement; only Leads was moved to the new responsive placement.",
-   "fix": "",
-   "env": "",
-   "where": "Page header (shared collection header) > page title and entity tabs on Memberships directory, Plans & Packages, Customers and Programs",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-279",
-   "shots": [
-    "data/shots/team-QXR-279-F15-0.jpg"
-   ]
-  },
-  {
-   "id": "QXR-280-F15",
-   "sev": "Low",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/people/leads",
-   "title": "QXR-280 Converted lead: \"Enrolment cancelled\" shows as red danger text instead of a neutral tone",
-   "steps": [
-    "Open /people/leads?lead=267",
-    "Read the Converted banner: \"Enrolment cancelled\"",
-    "Inspect the colour of that line."
-   ],
-   "expected": "\"Enrolment cancelled\" uses a neutral (or warning) tone, like the neutral \"No longer available\" pill (frontend standards §7; QXR-280-F14 fix note).",
-   "actual": "The line renders in red (rgb(220, 38, 38), class text-destructive) with a red cross icon. The \"No longer available\" interest pill is now neutral (grey).",
-   "fix": "",
-   "env": "",
-   "where": "Facility > People > Leads > lead drawer > Converted banner",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-280",
-   "shots": [
-    "data/shots/team-QXR-280-F15-0.jpg"
-   ]
-  },
-  {
-   "id": "QXR-307-F12",
-   "sev": "Low",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/announcements",
-   "title": "Announcement API: emailEnabled accepts \"true\" and numbers (1, 0, 2) instead of rejecting a non-boolean as invalid",
-   "steps": [
-    "As the coach, POST /api/announcements/audience/preview with {\"audienceParts\":[{\"kind\":\"CLASS_SCHEDULE\",\"ref\":107}],\"purpose\":\"TRANSACTIONAL\",\"emailEnabled\":\"true\"} Repeat with emailEnabled 1, then 0, then 2 As the coach, POST /api/announcements with the same audience, a title and body, and emailEnabled 1; read the stored row's email_enabled; delete the draft As the admin, POST /api/announcements with emailEnabled \"true\", then PUT /api/announcements/{id} with emailEnabled 0; read email_enabled; delete the draft"
-   ],
-   "expected": "400 INVALID_REQUEST_BODY for any emailEnabled that is not a JSON true or false (as for \"yes\" and \"1\", and as for a fractional ref or a numeric purpose on the same body); nothing is created or changed.",
-   "actual": "Coach preview with emailEnabled \"true\", 1 and 2 → 200 with emailReach 3 (treated as true); 0 → 200 treated as false; \"yes\" and \"1\" → 400. Coach create with emailEnabled 1 → 201, draft 492 stored email_enabled = true (deleted, 204). Admin preview with emailEnabled 1 → 200; admin create with \"true\" → 201; PUT of that draft with emailEnabled 0 → 200 and email_enabled = false (draft 495 deleted, 204).",
-   "fix": "",
-   "env": "",
-   "where": "POST /api/announcements/audience/preview, POST /api/announcements, PUT /api/announcements/{id} (data-service) — field emailEnabled",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-307",
-   "shots": []
-  },
-  {
-   "id": "QXR-310-F20",
-   "sev": "Low",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/people/customers",
-   "title": "QXR-310 Facility Teams (Arabic, Hindi): the teams screens show English text instead of translated text",
-   "steps": [
-    "Set the language to Arabic and open People › Customers, then the Teams tab Repeat with Hindi Open https://facility-dev.quixeraos.com/locales/ar/teams.json and /locales/hi/teams.json, and /locales/en/teams.json for comparison"
-   ],
-   "expected": "The Teams tab shows translated text in Arabic and Hindi, as the other facility screens do; ar and hi teams.json bundles exist like the 24 other namespaces.",
-   "actual": "ar/teams.json and hi/teams.json return 403 (not deployed; absent from the repo); en/teams.json returns 200. The Teams tab in Arabic (page dir rtl) and Hindi shows \"New Team\", \"Inactive\", \"Archived\" and \"teams\" in English.",
-   "fix": "",
-   "env": "",
-   "where": "People › Customers › Teams tab (facility); /locales/ar/teams.json, /locales/hi/teams.json",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-310",
-   "shots": [
-    "data/shots/team-QXR-310-F20-0.jpg",
-    "data/shots/team-QXR-310-F20-1.jpg"
-   ]
-  },
-  {
-   "id": "QXR-314-F12",
-   "sev": "High",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/memberships/directory",
-   "title": "QXR-314 Admin-assisted card payment: one Stripe charge recorded as two succeeded payments and two receipts instead of one",
-   "steps": [
-    "Open Memberships > Add Membership as an admin Pick the athlete, plan 'riz invite test 45', lane Online, press 'Pay $45.00 online', then 'Charge card' On Stripe pay with test card 4242 4242 4242 4242 Wait for 'Payment confirmed' on the reopened panel Open Finance > Payments and the athlete's Payments tab > the new invoice"
-   ],
-   "expected": "One succeeded payment row and one receipt for the one Stripe charge, linked to the invoice, carrying the card details and the Admin-assisted operator stamp.",
-   "actual": "Two SUCCEEDED $45 rows 300 ms apart: payment 225 'Credit pack purchase: riz invite test 45' (payment intent + card 4242, operator stamp, no invoice, RCP-AC1-000102) and payment 226 'Payment for invoice TGWM2TD3-0001' (invoice 393, no payment intent, no card, no operator, RCP-AC1-000103). Finance > Payments lists both receipts at $45; the invoice detail shows 'Payment method unavailable' with no Admin-assisted marker. Invoice amount_paid stays $45 and credits granted once (45). During that checkout POST /checkout/sessions/{id}/sync answered 503 ten times over 45 s before 200, so 'Payment confirmed' took 54 s. The next two identical checkouts recorded one row each.",
-   "fix": "",
-   "env": "",
-   "where": "Memberships > Add membership > Online > Charge card (Stripe webhooks) · Finance > Payments · invoice detail Payment breakdown",
-   "repro": "1/3",
-   "jira": "https://quixera.atlassian.net/browse/QXR-314",
-   "shots": [
-    "data/shots/team-QXR-314-F12-0.jpg",
-    "data/shots/team-QXR-314-F12-1.jpg"
-   ]
-  },
-  {
-   "id": "QXR-415-F16",
-   "sev": "High",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/memberships/directory",
-   "title": "Freeze membership: a freeze soon after online purchase leaves the Stripe subscription billing instead of pausing it",
-   "steps": [
-    "As ADMIN send POST /api/billing/checkout/link-requests {membershipPlanId: 56, athleteProfileId: 237, idempotencyKey: <new>} and open the returned checkoutUrl",
-    "Pay with test card 4242 4242 4242 4242 and wait until the new membership is Active (about 2 s)",
-    "Within 5 seconds, freeze it: POST /api/billing/memberships/<id>/freeze {\"resumesAt\": <now + 14 days>, \"paidFreeze\": false, \"reason\": \"…\"} (or Row actions > Freeze)",
-    "Wait 20 s; read membership.membership_status_transition and billing.processed_webhook_event for the subscription id from the checkout.session.completed event."
-   ],
-   "expected": "The Stripe subscription is paused (a customer.subscription.updated event with pause_collection arrives) and the freeze transition is driven by the subscription, exactly as for a freeze made later. Oracle: QXR-415-F04 family (cancel later than purchase reaches Stripe: 280/281 actor_id sub_…, customer.subscription.deleted); MembershipBillingService freeze path.",
-   "actual": "294 (plan 56) and 295 (plan 54): POST /freeze → 200 with an empty body; membership FROZEN via SYSTEM ADMIN_FROZE with actor_id \"offline:294\" / \"offline:295\"; no customer.subscription.* webhook for sub_1UQpse… / sub_1UQptl… in the next 3–4 minutes. A later admin cancel of the same memberships reached Stripe (customer.subscription.deleted), so the subscriptions were live and unpaused while the memberships showed Frozen.",
-   "fix": "",
-   "env": "",
-   "where": "Memberships directory > Row actions > Freeze; POST /api/billing/memberships/{id}/freeze",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-415",
-   "shots": [
-    "data/shots/team-QXR-415-F16-0.jpg"
-   ]
-  },
-  {
-   "id": "QXR-416-F10",
-   "sev": "High",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/memberships/directory",
-   "title": "Membership check-in: an unknown membership id returns 503 and blocks all check-ins for 30 s instead of a 404",
-   "steps": [
-    "As ADMIN of client 1 send POST /api/billing/check-in {\"personId\":3526,\"membershipId\":296,\"location\":\"qa\"} → note the answer (200, or 409 rate limit if already checked in)",
-    "Send POST /api/billing/check-in six times with membershipId 77777700…77777705 (ids that do not exist) — or send them as the client-3 ADMIN",
-    "Immediately repeat step 1",
-    "Wait 40 s and repeat step 1."
-   ],
-   "expected": "Step 2 → 404 \"Membership not found\" each (a client error, not counted as an outage); step 3 answers like step 1. Oracle: F09 fix note (check-in reads fail-closed only on a real outage; the state endpoint itself answers 404 for an unknown id).",
-   "actual": "Step 2 → 503 {\"message\":\"Membership state temporarily unavailable\"} ×6 in ~50 ms; step 3 → 503 for valid membership 296 while GET /api/membership-transitions/296/state answers 200; step 4 → back to normal (409 rate limit). Same when the six bad calls come from the client-3 ADMIN (another academy): client-1's check-in on 296 → 503.",
-   "fix": "",
-   "env": "",
-   "where": "POST /api/billing/check-in (CheckInService → MembershipStateClient, breaker membershipState)",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-416",
-   "shots": []
-  },
-  {
-   "id": "QXR-416-F12",
-   "sev": "High",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/memberships/directory",
-   "title": "Membership actions: bad cancel ids make all freezes, unfreezes and cancels fail with 503 for 30 s instead of a 404",
-   "steps": [
-    "As ADMIN of client 1 send POST /api/billing/memberships/296/activate (or a freeze) → note 200",
-    "Send POST /api/billing/memberships/99999800/cancel {\"immediate\":true,\"reason\":\"qa\"} six times with different unknown ids (or, as the client-3 ADMIN, cancel client-1 membership 296 and unknown ids)",
-    "Immediately repeat step 1",
-    "Wait 40 s and repeat step 1."
-   ],
-   "expected": "Each bad cancel → 404 (or 403) and nothing else changes; step 3 → 200 like step 1. Oracle: QXR-415-F13 fix (unknown/foreign cancel → 404); F09 note that a run of failed calls must not open the breaker guarding freeze, activate and cancel.",
-   "actual": "Step 2 → 404,404,404,404,404 then 503; step 3 → 503 \"Downstream dependency temporarily unavailable\" for valid 296; step 4 → 200. Client-3 ADMIN burst (unknown ids + client-1's 296) → 404,404,404,404,503,503, then client-1's own activate of 296 → 503 (40 s later 200). A legit freeze of 296 during an open window → 503 and 296 stayed ACTIVE.",
-   "fix": "",
-   "env": "",
-   "where": "POST /api/billing/memberships/{id}/cancel (billing → membership-service, breaker membershipService); affects /freeze, /activate",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-416",
-   "shots": []
-  },
-  {
-   "id": "QXR-416-F14",
-   "sev": "Medium",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/memberships/directory",
-   "title": "QXR-416 Member subscription resume: an admin's resume is recorded and shown as the member's instead of as a staff action",
-   "steps": [
-    "As the guardian send POST /api/billing/subscriptions/{sub}/freeze?personId={child person id} {\"resumesAt\":\"<future date>:00:00.000Z\",\"paidFreeze\":false,\"reason\":\"guardian freeze\"}; wait until the membership is FROZEN",
-    "As the ADMIN send POST /api/billing/subscriptions/{sub}/resume?personId={child person id} (empty body)",
-    "Read the new membership_status_transition row, then as the ADMIN open the membership details and read Activity",
-    "As the ADMIN send POST /api/billing/subscriptions/{sub}/freeze?personId={child person id} with a reason, and read the new row."
-   ],
-   "expected": "A staff call is refused (403, member self-serve path) or recorded as a staff action — ADMIN_UNFROZE / ADMIN_FROZE with the admin as actor — and Activity reads \"Resumed by an administrator\". Oracle: QXR-416-F06 fix (a freeze/resume row identifies who made it: reason code and actor) and the admin Mark active path.",
-   "actual": "Step 2 → 200, membership ACTIVE, Stripe pause cleared. Step 3 → row FROZEN→ACTIVE reason MEMBER_UNFROZE, actor_type SYSTEM, actor_id = the admin's uid; Activity \"Membership resumed — Resumed by the member\" (2/2, memberships 308 and earlier 302). Step 4 → 200, row ACTIVE→FROZEN reason MEMBER_FROZE, actor_id = the admin's uid.",
-   "fix": "",
-   "env": "",
-   "where": "POST /api/billing/subscriptions/{sub}/resume?personId (and /freeze?personId) with a staff token; Memberships directory > membership details > Activity",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-416",
-   "shots": [
-    "data/shots/team-QXR-416-F14-0.jpg"
-   ]
-  },
-  {
-   "id": "QXR-416-F11",
-   "sev": "Low",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/memberships/directory",
-   "title": "Membership details: Unfreeze membership shows two toasts instead of one",
-   "steps": [
-    "Open https://facility-dev.quixeraos.com/memberships/directory?membershipId=296 (a frozen membership)",
-    "Click **Unfreeze membership**",
-    "Read the notifications."
-   ],
-   "expected": "One success toast for one unfreeze (and one error toast on failure). Oracle: house A1.6 toast pattern (one action, one confirmation); the Freeze dialog shows one toast \"Membership frozen.\".",
-   "actual": "296 and 299: one POST /activate 200, toasts \"Success Membership resumed for QAAudit TestAthlete.\" and \"Success Membership reactivated.\". With /activate failing (500): \"Error Couldn't unfreeze this membership. Please try again.\" and \"Error Couldn't reactivate the membership. Please try again.\".",
-   "fix": "",
-   "env": "",
-   "where": "Memberships directory > membership details > Unfreeze membership",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-416",
-   "shots": [
-    "data/shots/team-QXR-416-F11-0.jpg",
-    "data/shots/team-QXR-416-F11-1.jpg",
-    "data/shots/team-QXR-416-F11-2.jpg"
-   ]
-  },
-  {
-   "id": "QXR-416-F13",
-   "sev": "Low",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/memberships/directory",
-   "title": "Freeze API: freezing an unknown membership or subscription returns 400 instead of 404",
-   "steps": [
-    "Send POST /api/billing/memberships/99999999/freeze {\"resumesAt\":\"2026-11-03T05:00:00.000Z\",\"paidFreeze\":false,\"reason\":\"qa\"}",
-    "Send POST /api/billing/memberships/99999999/activate",
-    "Send POST /api/billing/subscriptions/sub_doesnotexist416/freeze?personId=3526 with the same body, and …/resume?personId=3526."
-   ],
-   "expected": "404 \"Membership not found\" (or \"Subscription not found\") for each, like /activate and /cancel. Oracle: QXR-415-F13 fix (unknown id → 404).",
-   "actual": "Step 1 → 400 \"Membership 99999999 cannot be frozen from its current state\" (also 99999998, 99999997); step 2 → 404 \"Membership not found\"; step 3 → 400 \"Payment provider error\" for both freeze and resume.",
-   "fix": "",
-   "env": "",
-   "where": "POST /api/billing/memberships/{id}/freeze; POST /api/billing/subscriptions/{sub}/freeze|resume",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-416",
-   "shots": []
-  },
-  {
-   "id": "QXR-417-F07",
-   "sev": "Medium",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/billing",
-   "title": "Billing list footer: New announcement notice covers Sum and Copy Sum at 375 px instead of leaving them tappable",
-   "steps": [
-    "Sign in to the facility app as an admin on a 375 px wide screen and open Billing",
-    "Type Booking in the search box so the footer shows a Sum",
-    "Tap the \"Sum: $…\" button or the Copy Sum button in the footer."
-   ],
-   "expected": "The Sum menu opens (or the Sum is copied); the footer's Total, Sum, Copy and \"across N filtered invoices\" stay visible and tappable, with the page leaving room for the notice the way the instructor and guardian layouts do.",
-   "actual": "The notice (x 12-363, y 672-732, fixed, bottom-20) sits over the footer's stats row (y 708-756): the element at the centre of the Sum trigger (x 159, y 708, 136x28) and of Copy Sum is the notice, and a tap on Sum is intercepted by the notice. The pager row below (y 768-800) is clear. Same at 320 px and in the empty \"Sum: $0.00\" state; the notice also overlaps the footer summary on Athletes and Payments. Hidden at 1280 px (md:hidden).",
-   "fix": "",
-   "env": "",
-   "where": "Facility app (admin) > Billing > invoice list footer at phone widths; the mobile floating New announcement notice",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-417",
-   "shots": [
-    "data/shots/team-QXR-417-F07-0.jpg"
-   ]
-  },
-  {
-   "id": "QXR-418-F09",
-   "sev": "Low",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/payments",
-   "title": "Tags API: names padded with no-break or zero-width spaces are stored as look-alike tags instead of trimmed",
-   "steps": [
-    "POST /api/tags with {\"name\": \"\\u00a0VIP\\u00a0\"} (no-break spaces around an existing tag's name)",
-    "POST /api/tags with {\"name\": \"\\u200bVIP\\u200b\"} and with {\"name\": \"\\u00a0\\u00a0\"}",
-    "PUT /api/tags/{id} renaming a tag to \"\\u00a0Other\\u00a0\"",
-    "Open Payments, click Bulk edit, tick a payment, click Edit tags and type VIP."
-   ],
-   "expected": "Leading/trailing Unicode whitespace and invisible characters are trimmed like ASCII spaces, so the padded name is refused as a duplicate of \"VIP\" (400 \"Tag with name … already exists\") and a name with no visible character is refused as blank.",
-   "actual": "No-break-padded name → 201, stored with its U+00A0 padding as a second tag (2/2); zero-width-space and figure-space padding → 201; no-break-only name → 201; PUT with no-break padding → 200, stored padded. DB: booking.tag rows 72/79 start with U+00A0 (length 36 vs 34 for the real name), 81 is two U+00A0 only, 82/83 carry U+200B/U+2007. Edit tags then lists two entries that read the same (\"…-r2pad\" and \" …-r2pad \"). ASCII spaces and tabs are trimmed correctly (F02 fix holds).",
-   "fix": "",
-   "env": "",
-   "where": "POST /api/tags and PUT /api/tags/{id} (data-service TagService)",
-   "repro": "2/2",
-   "jira": "https://quixera.atlassian.net/browse/QXR-418",
-   "shots": [
-    "data/shots/team-QXR-418-F09-0.jpg"
-   ]
-  },
-  {
-   "id": "QXR-418-F10",
-   "sev": "Low",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/payments",
-   "title": "Payments ledger: a renamed or deleted tag keeps its old label and search for up to 30 s instead of updating",
-   "steps": [
-    "Open Payments (or GET /api/billing/payments/ledger) so the ledger has loaded in the last 30 s",
-    "Rename the tag (PUT /api/tags/{id} with a new name, as Settings does)",
-    "Straight away, search Payments for the receipt and for the tag's new name",
-    "Repeat after 32 s."
-   ],
-   "expected": "The ledger row shows the new tag name and a search by the new name finds the payment as soon as the rename returns, the way a tag created in Edit tags now shows at once (F08 fix).",
-   "actual": "Right after the 200: the row still shows the old name and search by the new name returns totalElements 0; after 32 s the new name shows and search returns 1 (2 of 3 attempts — depends on the 30 s per-tenant tag cache window). Same after DELETE /api/tags/{id} (204): the deleted tag still labels the row and search by its name still finds the payment until the cache expires.",
-   "fix": "",
-   "env": "",
-   "where": "Facility app → Payments (GET /api/billing/payments/ledger tag labels and search)",
-   "repro": "2/3",
-   "jira": "https://quixera.atlassian.net/browse/QXR-418",
-   "shots": [
-    "data/shots/team-QXR-418-F10-0.jpg"
-   ]
-  },
-  {
-   "id": "QXR-311-F20",
-   "sev": "Medium",
-   "status": "Open",
-   "source": "team",
-   "link": "https://facility-dev.quixeraos.com/scheduling",
-   "title": "Booking API: a single booking dated in the past is created instead of refused",
-   "steps": [
-    "POST /api/bookings with the test data and date 2026-10-14 (yesterday) Repeat with facilityId 15, facilitySpaceId 11, date 2026-10-13 Repeat with date 2025-10-14 Query booking.booking for the returned ids"
-   ],
-   "expected": "400 — the date is before the facility's today, as the series API (\"A series here can start no earlier than today\") and the wizard enforce; nothing written.",
-   "actual": "201 each time (bookings 2730, 2732, 2733). DB: status 9 (Confirmed), total_price null, dates 2026-10-14, 2026-10-13, 2025-10-14. Neighbour rules hold: 07:00 outside hours → 400, end before start → 400, blocked slot → 409.",
-   "fix": "",
-   "env": "",
-   "where": "POST /api/bookings",
-   "repro": "3/3",
-   "jira": "https://quixera.atlassian.net/browse/QXR-311",
-   "shots": []
-  },
-  {
-   "id": "P2-001",
-   "sev": "Medium",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/billing",
-   "title": "Billing Refunded tab lists invoices with non-refunded statuses",
-   "steps": [
-    "Open Billing.",
-    "Click the Refunded tab.",
-    "Read the Status column of each row."
-   ],
-   "expected": "The Refunded tab lists only invoices with a refunded status.",
-   "actual": "7 rows appear with statuses Paid, Past Due, and Partially Paid. No invoice with a Refunded status is findable, so the tab is misleading about what it contains.",
-   "fix": "Filter the Refunded tab to refunded invoices only, or relabel the tab to match its actual contents."
-  },
-  {
-   "id": "P2-002",
-   "sev": "Medium",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/billing",
-   "title": "Billing search ignores the payer column despite the placeholder saying it matches payer",
-   "steps": [
-    "Open Billing.",
-    "In the search box (placeholder: \"Matches invoice #, TXN reference, item, payer, athlete or amount\"), type \"QA_AP Customer\"."
-   ],
-   "expected": "Invoices whose payer is \"QA_AP Customer\" are returned, as the placeholder promises.",
-   "actual": "Result is \"No invoices match these filters\" even though visible rows show payer \"QA_AP Customer\". Searching \"Alice Test\" (athlete) works, so the payer column specifically is not searched.",
-   "fix": "Include the payer column in the billing search index, or correct the placeholder text."
-  },
-  {
-   "id": "P2-003",
-   "sev": "Medium",
-   "status": "Open",
-   "source": "arlo",
-   "link": "https://facility-dev.quixeraos.com/payments",
-   "title": "Payment detail dialog for a refunded payment shows a \"Succeeded\" badge and no refund breakdown",
-   "steps": [
-    "Open Payments and search \"QA_AP\".",
-    "Find row RCP-AC1-000150 — it shows status \"Refunded\", $50.00 refunded of $50.00.",
-    "Open the payment detail dialog."
-   ],
-   "expected": "The detail header reflects the refunded state and shows the refund breakdown (refunded amount, date, reason).",
-   "actual": "Header badge says \"Succeeded\" Cash; Amount $50.00, Applied $0.00, Unapplied $0.00; no refund information is shown anywhere in the dialog.",
-   "fix": "Show a Refunded badge and the refund details (amount, date, reason) in the payment detail dialog."
-  }
- ],
- "backlog": [
-  {
-   "id": "QXR-277-F03",
-   "title": "QXR-277 Lead stage moves: two simultaneous moves both succeed instead of one being refused",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-278-F07",
-   "title": "QXR-278 Park panel: the browser's today is refused as a past callback date instead of matching the academy's today",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-279-F07",
-   "title": "QXR-279 New lead verdict: double-clicking Add to existing lead attaches the source twice instead of once",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-280-F06",
-   "title": "QXR-280 Converted lead: a paid or cancelled self-service enrolment says \"Awaiting payment confirmation\" instead of its status",
-   "st": "BLOCKED"
-  },
-  {
-   "id": "QXR-305-F07",
-   "title": "QXR-305 Announcements list: a new send does not appear until reload instead of updating live",
-   "st": "STILL_FAILING"
-  },
-  {
-   "id": "QXR-306-F02",
-   "title": "QXR-306 Team announcement: a 14-year-old team member is messaged directly instead of only adults or their guardians",
-   "st": "STILL_FAILING"
-  },
-  {
-   "id": "QXR-306-F06",
-   "title": "QXR-306 Announcement composer: preview keeps a stale count for 30 s after the roster changes instead of the current count",
-   "st": "STILL_FAILING"
-  },
-  {
-   "id": "QXR-310-F03",
-   "title": "QXR-310 Announcement API: a numeric purpose is accepted as an enum position instead of rejected as invalid",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-310-F04",
-   "title": "QXR-310 Marketing consent API: unknown fields and an unknown notice id are accepted instead of rejected",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-310-F06",
-   "title": "QXR-310 Settings Communications: saving with marketing already on re-stamps the enabled time instead of keeping it",
-   "st": "BLOCKED"
-  },
-  {
-   "id": "QXR-442-F11",
-   "title": "QXR-442 Shared package: @quixera/shared gained announcement-domain modules instead of staying domain-free",
-   "st": "STILL_FAILING"
-  },
-  {
-   "id": "QXR-442-F08",
-   "title": "QXR-442 Announcement composer: dialog overflows at 375 and 768 px instead of fitting, hiding audience rows and Close",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-442-F18",
-   "title": "QXR-442 Announcements ledger: Status column needs horizontal scroll at 1440 px instead of fitting the table",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-442-F23",
-   "title": "QXR-442 Notifications Announcements tab: no announcements shows a no-results message instead of an empty state",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-415-F04",
-   "title": "Cancel membership: a cancel soon after online purchase leaves the Stripe subscription billing instead of cancelling it",
-   "st": "STILL_FAILING"
-  },
-  {
-   "id": "QXR-415-F03",
-   "title": "Cancel membership: a facility-billed membership keeps its renewal schedule active instead of stopping invoices",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-415-F07",
-   "title": "QXR-415 Cancel membership dialog: the reason list covers Back and Cancel membership instead of leaving them clickable",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-415-F10",
-   "title": "Cancel membership: no cancellation email is sent to the family instead of one \"Your membership has been cancelled\" email",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-417-F01",
-   "title": "QXR-417 Billing list footer: rows-per-page select covers the Sum value at 375 px instead of leaving it readable",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-417-F04",
-   "title": "Billing list: invoice dates and date-range totals use the UTC day instead of the academy's local day",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-435-F04",
-   "title": "Billing list: a rate-limited load keeps showing the previous unfiltered invoices instead of the load error",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-311-F17",
-   "title": "Preferences Devices: no 'Last active' date is shown for any device instead of each device's last activity",
-   "st": "STILL_FAILING"
-  },
-  {
-   "id": "QXR-311-F06",
-   "title": "QXR-311 Recurring booking API: a frequency outside 1–12 is accepted instead of refused with a field error",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-311-F07",
-   "title": "QXR-311 Review & Create: a series whose prices differ by date shows 'Lane hire N × $50.00' instead of 'prices vary'",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-311-F11",
-   "title": "QXR-311 Review & Create: the session-count heading is grey on grey at 4.34:1 instead of at least 4.5:1",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-362-F06",
-   "title": "QXR-362 Review & Create: an applied series code is named four times instead of once, and Academy codes has no label",
-   "st": "CHANGED"
-  },
-  {
-   "id": "QXR-447-F05",
-   "title": "QXR-447 Stock by date: capped short dates are styled as errors (red, aria-invalid) instead of as a warning",
-   "st": "CHANGED"
-  }
- ]
+  "bugs": [
+    {
+      "id": "DEV-001",
+      "sev": "High",
+      "status": "Partly fixed",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/memberships/directory",
+      "title": "Freeze and Cancel membership actions permanently disabled on every row",
+      "steps": [
+        "Open Memberships directory.",
+        "Click the row-actions menu on any Active membership row (tested QA_AP rows and existing rows)."
+      ],
+      "expected": "Freeze enabled for Active memberships; Cancel enabled with a confirmation dialog.",
+      "actual": "Both \u201cFreeze\u201d and \u201cCancel membership\u201d are greyed out/disabled on every row. The Frozen tab count is 0, suggesting freeze has never worked on dev. Because of this, freeze/unfreeze toast counts, cancel confirmation, and admin freeze/resume audit-trail attribution could not be tested. RE-CONFIRMED 2026-10-17 (Phase 2 sweep): Freeze/Cancel still disabled on Active, Pending, Cancelled, Expired rows and on the newly created QA_AP membership. RECHECK 2026-10-18: Freeze/Cancel now ENABLED on Active subscription rows (dialog opens and works). Still greyed out on session-pack rows.",
+      "fix": "Enable Freeze for Active memberships and Cancel with confirmation; check the permission/plan-state gating that disables them.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": [
+        "data/shots/arlo-dev-freeze-cancel-disabled.jpg"
+      ]
+    },
+    {
+      "id": "DEV-002",
+      "sev": "High",
+      "status": "Fixed",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/billing",
+      "title": "Recording a payment with Received date = today fails in the evening (server UTC-date validation)",
+      "steps": [
+        "Open any open invoice (e.g. INV-2026-000048).",
+        "Click Record payment: Amount $104, Cash, Received on 10/15/2026 (today).",
+        "Submit."
+      ],
+      "expected": "Today's local date is accepted.",
+      "actual": "CONFIRMED by a second independent pass (2026-10-15): recording a payment with today's date failed again with the same error; backdating to 10/14/2026 worked. Original observation: toast \u201cError \u2014 receivedAt is required and may never be in the future.\u201d The server appears to compare against the UTC date (already Oct 16). Workaround: backdating to 10/14/2026 succeeded (receipt RCP-AC1-000149). Note the Add Membership offline flow accepted 10/15/2026 the same evening \u2014 validation is inconsistent across flows. Blocks same-day payment recording ~5 hrs/day (19:00\u201324:00 ET). RE-VERIFIED 2026-10-17 (Phase 2 sweep): future date 12/31/2027 rejected with toast \"receivedAt is required and may never be in the future\"; malformed 13/99/2026 rejected inline with \"Enter a valid date.\" Nothing was committed.",
+      "fix": "Validate receivedAt against the facility's local date (America/New_York), not UTC; align validation across all payment flows.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": [
+        "data/shots/arlo-dev-payment-date-utc-error.jpg"
+      ]
+    },
+    {
+      "id": "DEV-003",
+      "sev": "High",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/people/leads",
+      "title": "New Lead dialog: phone country selector reverts to Brazil, blocking valid US numbers",
+      "steps": [
+        "Open People > Leads > New lead; fill step-1 names + email.",
+        "Open the phone country selector, click \u201cUnited States +1\u201d.",
+        "Interact with the phone field (fill/type)."
+      ],
+      "expected": "The selected country persists.",
+      "actual": "CONFIRMED by a second independent pass (2026-10-15): the phone input auto-detects country from leading digits \u2014 555\u2192Brazil, 212\u2192Morocco, 415\u2192Switzerland \u2014 so the selector mis-fires even without manual interaction; full international format (14155550132) works around it. Original observation: the selector reverts to Brazil (+55) on nearly every interaction; entering 5550101234 formats as \u201c+55 (50) 10123-4\u201d with \u201cInvalid phone number for Brazil\u201d. It persisted once after clicking Email to blur first, then reverted again on the next fill. Workaround: select US, blur, then type-append a valid NANP number (+1 (312) 456-7890). (The validator rejecting 555 area codes and 0/1 central-office codes is expected NANP behavior.)",
+      "fix": "Persist the selected country on the phone input's state; don't reset it on field interaction/blur.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": []
+    },
+    {
+      "id": "DEV-004",
+      "sev": "Medium",
+      "status": "Still failing",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/billing",
+      "title": "Billing \u201cOutstanding\u201d tab Sum ($2,391.76 across 24 invoices) does not match the OUTSTANDING KPI ($2,369.76)",
+      "steps": [
+        "Open Finance > Billing.",
+        "Read the OUTSTANDING KPI ($2,369.76) and the Outstanding tab footer Sum ($2,391.76 across 24 invoices)."
+      ],
+      "expected": "Both figures agree.",
+      "actual": "$22.00 gap. The tab appears to sum full invoice amounts while the KPI sums remaining balances (partially paid invoices). The dashboard OUTSTANDING KPI agrees with the Billing KPI ($2,369.76), so the tab's Sum is the outlier. RE-CONFIRMED 2026-10-17 (Phase 2 sweep): Outstanding tab now sums $2,452.42 (page 1 $2,425.76 + page-2 INV-2026-000009 $26.66) vs KPI $2,424.76 \u2014 gap is now $27.66 (was $22).",
+      "fix": "Make the tab Sum use remaining balances like the KPI, or label it clearly as gross invoice total.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": [
+        "data/shots/arlo-dev-billing-sum-mismatch.jpg"
+      ]
+    },
+    {
+      "id": "DEV-005",
+      "sev": "Low",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/memberships/directory",
+      "title": "Membership details activity/audit trail shows no actor attribution",
+      "steps": [
+        "Open the memberships directory > a membership's details.",
+        "Read the activity trail entries."
+      ],
+      "expected": "Each entry names the actor (staff member or member/family).",
+      "actual": "Entries (\u201cMembership added (offline)\u201d, \u201cPayment recorded\u201d, $30.00 Cash RCP-AC1-000148) carry no staff/member name, so an admin freeze/resume could not be attributed either way.",
+      "fix": "Record and display actor_type/actor on every membership activity entry.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": []
+    },
+    {
+      "id": "DEV-006",
+      "sev": "Medium",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/analytics",
+      "title": "Conflicting athlete totals: Analytics says 3045, Athletes directory says 200, Athlete Progress report says 67",
+      "steps": [
+        "Open Insights > Analytics > Athletes tab \u2014 read TOTAL ATHLETES.",
+        "Open People > Athletes \u2014 read the directory total.",
+        "Open Reports > Athlete Progress \u2014 read ATHLETES."
+      ],
+      "expected": "One consistent athlete total (or clearly labeled scopes).",
+      "actual": "Analytics > Athletes: \u201cTOTAL ATHLETES 3045 \u2014 Registered in the system\u201d. People > Athletes: \u201cTotal: 200 athletes\u201d. Reports > Athlete Progress: \u201cATHLETES 67\u201d. Three different totals for the same concept with no scope labels.",
+      "fix": "Use one definition per label, or label each scope (e.g. all-time registered vs facility roster vs active in period).",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": [
+        "data/shots/arlo-dev-analytics-athletes-3045.jpg"
+      ]
+    },
+    {
+      "id": "DEV-007",
+      "sev": "Low",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/analytics",
+      "title": "Analytics Revenue OUTSTANDING ($1,611.58) disagrees with Billing OUTSTANDING ($2,369.76)",
+      "steps": [
+        "Open Insights > Analytics > Revenue tab \u2014 read OUTSTANDING.",
+        "Open Finance > Billing \u2014 read the OUTSTANDING KPI."
+      ],
+      "expected": "The two agree, or the differing definitions are labeled.",
+      "actual": "Analytics Revenue: OUTSTANDING $1,611.58. Billing: OUTSTANDING $2,369.76. Unexplained definition difference.",
+      "fix": "Reconcile the two definitions or label them distinctly.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": []
+    },
+    {
+      "id": "DEV-008",
+      "sev": "Low",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/ai-insights",
+      "title": "Privacy review: chat discloses a minor athlete's medical flag and emergency contact, and invites health-detail follow-up",
+      "steps": [
+        "In the Academy assistant, ask: \u201cTell me all the details you have about athlete Vicky Kaushal.\u201d (age 13, minor)"
+      ],
+      "expected": "Sensitive details about a child (medical flags, emergency contacts) need an extra check or a refusal; the assistant should not invite health-detail disclosure.",
+      "actual": "The assistant returned Status, Age group, Joined date, sport, coach, centre, \u201cMedical flag: Yes\u201d, \u201cEmergency contact: Nayan Thacker (father)\u201d, programs and upcoming sessions \u2014 plus a suggested follow-up \u201cWhat's the medical flag for?\u201d inviting health-detail disclosure. No phone/email/address was disclosed, and the requester is the facility admin, so this is a review item rather than a clear violation.",
+      "fix": "Review what minor-athlete fields the assistant may surface; require explicit confirmation before medical/emergency-contact details; remove health-detail follow-up suggestions for minors.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": [
+        "data/shots/arlo-dev-assistant-minor-disclosure.jpg"
+      ]
+    },
+    {
+      "id": "DEV-009",
+      "sev": "Low",
+      "status": "Fixed",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/ai-insights",
+      "title": "Academy assistant gave the wrong weekday (\u201cMon, Oct 20\u201d \u2014 Oct 20, 2026 is a Tuesday)",
+      "steps": [
+        "In the Academy assistant, ask for an athlete's upcoming sessions."
+      ],
+      "expected": "Correct weekdays on dates.",
+      "actual": "Response listed \u201cMon, Oct 20 at 3:30 PM\u201d \u2014 Oct 20, 2026 is a Tuesday (Oct 15 = Thursday per the dashboard). Minor date hallucination. RECHECK 2026-10-18: assistant now says \"Tue, Oct 20\" \u2014 correct weekday.",
+      "fix": "Ground weekday computation on a real calendar instead of the language model.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": [
+        "data/shots/arlo-dev-assistant-minor-disclosure.jpg"
+      ]
+    },
+    {
+      "id": "DEV-010",
+      "sev": "Info",
+      "status": "Fixed",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/analytics",
+      "title": "Analytics Revenue shows \u201cREVENUE GROWTH 2362%\u201d with no context",
+      "steps": [
+        "Open Insights > Analytics > Revenue tab."
+      ],
+      "expected": "Extreme growth figures carry context (e.g. the base period).",
+      "actual": "\u201cREVENUE GROWTH 2362%\u201d is shown with no context \u2014 the value comes from a near-zero base and reads as alarming without explanation. RECHECK 2026-10-18: now shows \"444%\" labeled \"vs same period last month\"; YTD shows \"No prior period to compare\".",
+      "fix": "Show the comparison base alongside extreme growth percentages, or cap/annotate them.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": []
+    },
+    {
+      "id": "DEV-011",
+      "sev": "High",
+      "status": "Fixed",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/billing",
+      "title": "Refund dialog submit stays disabled on a membership-linked payment \u2014 membership refunds cannot be submitted",
+      "steps": [
+        "Open Billing > find the membership-linked payment RCP-AC1-000148 ($30.00 cash).",
+        "Click Refund; enter full amount 30, method Cash, and a reason.",
+        "Try to submit."
+      ],
+      "expected": "The submit button enables with valid inputs and the refund processes.",
+      "actual": "The submit button stayed disabled despite valid inputs (full amount 30, Cash, reason filled). A partial refund on the same payment could not be submitted either. Refunds worked on non-membership payments (RCP-AC1-000150 full $50.00 refund; RCP-AC1-000151 partial $5.00 of $10.66 \u2014 ledger, invoice balances and the OUTSTANDING KPI all reconciled: $2,369.76 \u2192 $2,419.76 \u2192 $2,424.76). So money can be refunded everywhere except on membership-linked payments. RE-VERIFIED 2026-10-17 (Phase 2 sweep): refund dialog on QA_AP membership payment RCP-AC1-000156 opens correctly \u2014 prefills amount/method, advises \"Void it instead\" for same-day payments, requires Reason (submit disabled until filled), blocks over-refund with inline error. Void dialog requires a reason and has \"Adjust membership term\" on by default. Both cancelled without committing.",
+      "fix": "Fix the dialog validation gating for membership-linked payments; check what differs in their refund eligibility computation.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": []
+    },
+    {
+      "id": "DEV-012",
+      "sev": "Low",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/billing",
+      "title": "Refund amount field displays a raw float (10.65999984741211) instead of $10.66",
+      "steps": [
+        "Open Billing > payment RCP-AC1-000151 ($10.66).",
+        "Click Refund and read the amount spinbutton."
+      ],
+      "expected": "The amount shows 10.66.",
+      "actual": "The spinbutton displayed 10.65999984741211 \u2014 a raw IEEE float leak into the UI.",
+      "fix": "Round/format currency values at the display layer.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": []
+    },
+    {
+      "id": "DEV-013",
+      "sev": "Medium",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/memberships/directory",
+      "title": "No promo/discount field in the membership purchase flow; membership promo at booking checkout gives a misleading error",
+      "steps": [
+        "Start Add Membership (any plan); look for a promo/coupon field at every step.",
+        "In Settings > Promos note the membership-scoped WELCOME10 (50% off); enter it at booking checkout."
+      ],
+      "expected": "Discounts can be applied to memberships (competitors support member discounts); a wrong-scope code explains the scope.",
+      "actual": "The membership flow has no discount/coupon field at any step. Entering membership-scoped WELCOME10 at booking checkout returns a misleading \u201cPromo code not found\u201d (Settings > Promos documents the booking/membership scope split, but the checkout error does not). Booking-scoped promos work: QA_AP10 (10% off) took a $50.00 booking to $45.00 \u2192 invoice INV-2026-000188 \u2192 receipt RCP-AC1-000153, all reconciled. Caveat: promo codes only work with Offline/Pay Later (\u201cCard checkout does not support promo codes yet\u201d).",
+      "fix": "Add discount support to the membership flow; make the wrong-scope promo error name the scope (\u201cThis code is for memberships, not bookings\u201d).",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": []
+    },
+    {
+      "id": "DEV-014",
+      "sev": "Low",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/announcements",
+      "title": "Announcement composer: the \u201cAll recipients\u201d checkbox on the Recipients tab does not toggle",
+      "steps": [
+        "Open Announcements > New announcement > Audience step > Recipients tab.",
+        "Click the \u201cAll recipients\u201d checkbox."
+      ],
+      "expected": "The checkbox toggles the full recipient selection.",
+      "actual": "The \u201cAll recipients\u201d checkbox did not toggle. (Related: the composer defaults to \u201cAll Academy\u201d (131); \u201cAll Academy\u201d must be deselected on the Programs tab before individual Recipients selection works.)",
+      "fix": "Wire the checkbox to the recipient selection state.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": []
+    },
+    {
+      "id": "DEV-015",
+      "sev": "Medium",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/scheduling",
+      "title": "Booking cancellation dialog defaults \u201cEmail the customer about this cancellation\u201d to ON",
+      "steps": [
+        "Open any booking > Cancel.",
+        "Read the default state of the email checkbox."
+      ],
+      "expected": "Destructive + outward-facing: the email option defaults OFF (or the dialog makes the send explicit).",
+      "actual": "\u201cEmail the customer about this cancellation\u201d is checked by default \u2014 one hurried click sends a customer-facing email. The tester had to uncheck it on every cancellation.",
+      "fix": "Default the checkbox to OFF, or split \u201cCancel booking\u201d from \u201cNotify customer\u201d into two explicit actions.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": []
+    },
+    {
+      "id": "DEV-016",
+      "sev": "Low",
+      "status": "Fixed",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/people/athletes",
+      "title": "Athlete wizard \u201cFind existing guardian\u201d returns \u201cNo guardians found\u201d even for existing customers",
+      "steps": [
+        "Start the new-athlete wizard; use \u201cFind existing guardian\u201d.",
+        "Search for an existing customer/guardian."
+      ],
+      "expected": "Existing guardians are found and linkable.",
+      "actual": "\u201cNo guardians found at this academy\u201d even for customers that exist (e.g. the QA_AP Customer created in the same session). RECHECK 2026-10-18: \"Find existing guardian\" search now returns matches (e.g. Payment Test account) and links.",
+      "fix": "Fix the guardian lookup scope/filter.",
+      "env": "",
+      "where": "",
+      "repro": "",
+      "jira": null,
+      "shots": []
+    },
+    {
+      "id": "QXR-277-F26",
+      "sev": "Low",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/people/leads",
+      "title": "QXR-277 Lead stage moves: New to Enrolled refusal says \"use Convert\" instead of \"Move this lead to Contacted first\"",
+      "steps": [
+        "Create a lead (stage New)",
+        "Send POST /api/leads/{id}/transitions {kind: ADVANCE, to: ENROLLED}",
+        "Read the status and message, then GET /api/leads/{id}."
+      ],
+      "expected": "409 with \"Move this lead to Contacted first\" and the lead still at New (AC9).",
+      "actual": "409 \"Enrolled is set when the family enrols; use Convert\"; the lead stays at New. ADVANCE to Trial from New still says \"Move this lead to Contacted first\". The same Convert message is returned for Enrolled from Contacted, from Trial and for PARK with to=ENROLLED.",
+      "fix": "",
+      "env": "",
+      "where": "POST /api/leads/{id}/transitions",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-277",
+      "shots": []
+    },
+    {
+      "id": "QXR-279-F15",
+      "sev": "Low",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/memberships/directory",
+      "title": "QXR-279 List page headers at 375px: the centred tabs cover the page title instead of sitting below it",
+      "steps": [
+        "Sign in to the facility app on dev as an academy admin and set the window to 375 px wide (or 320 px)",
+        "Open https://facility-dev.quixeraos.com/memberships/directory",
+        "Look at the page title 'Memberships' and the 'Active members' tab next to it",
+        "Repeat on /memberships/catalog, /people/customers and /programs."
+      ],
+      "expected": "The title stays readable and the tabs sit on their own row below it, as the Leads page now does at the same width (the QXR-279-F13 fix).",
+      "actual": "The 'Active members' tab and the 'Run due renewals' action are drawn over the 'Memberships' title (60x29 and 148x29 px; the element at the title's centre is the action button). Same at 320 px. Plans & Packages: the Plans and Promo Codes tabs cover the title (57x29 / 46x29); Customers: the Individuals tab (67x29); Programs: the Class Schedules tab (57x29). Clear at 768 and 1280. Pre-existing: these screens keep the centred tab placement; only Leads was moved to the new responsive placement.",
+      "fix": "",
+      "env": "",
+      "where": "Page header (shared collection header) > page title and entity tabs on Memberships directory, Plans & Packages, Customers and Programs",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-279",
+      "shots": [
+        "data/shots/team-QXR-279-F15-0.jpg"
+      ]
+    },
+    {
+      "id": "QXR-280-F15",
+      "sev": "Low",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/people/leads",
+      "title": "QXR-280 Converted lead: \"Enrolment cancelled\" shows as red danger text instead of a neutral tone",
+      "steps": [
+        "Open /people/leads?lead=267",
+        "Read the Converted banner: \"Enrolment cancelled\"",
+        "Inspect the colour of that line."
+      ],
+      "expected": "\"Enrolment cancelled\" uses a neutral (or warning) tone, like the neutral \"No longer available\" pill (frontend standards \u00a77; QXR-280-F14 fix note).",
+      "actual": "The line renders in red (rgb(220, 38, 38), class text-destructive) with a red cross icon. The \"No longer available\" interest pill is now neutral (grey).",
+      "fix": "",
+      "env": "",
+      "where": "Facility > People > Leads > lead drawer > Converted banner",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-280",
+      "shots": [
+        "data/shots/team-QXR-280-F15-0.jpg"
+      ]
+    },
+    {
+      "id": "QXR-307-F12",
+      "sev": "Low",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/announcements",
+      "title": "Announcement API: emailEnabled accepts \"true\" and numbers (1, 0, 2) instead of rejecting a non-boolean as invalid",
+      "steps": [
+        "As the coach, POST /api/announcements/audience/preview with {\"audienceParts\":[{\"kind\":\"CLASS_SCHEDULE\",\"ref\":107}],\"purpose\":\"TRANSACTIONAL\",\"emailEnabled\":\"true\"} Repeat with emailEnabled 1, then 0, then 2 As the coach, POST /api/announcements with the same audience, a title and body, and emailEnabled 1; read the stored row's email_enabled; delete the draft As the admin, POST /api/announcements with emailEnabled \"true\", then PUT /api/announcements/{id} with emailEnabled 0; read email_enabled; delete the draft"
+      ],
+      "expected": "400 INVALID_REQUEST_BODY for any emailEnabled that is not a JSON true or false (as for \"yes\" and \"1\", and as for a fractional ref or a numeric purpose on the same body); nothing is created or changed.",
+      "actual": "Coach preview with emailEnabled \"true\", 1 and 2 \u2192 200 with emailReach 3 (treated as true); 0 \u2192 200 treated as false; \"yes\" and \"1\" \u2192 400. Coach create with emailEnabled 1 \u2192 201, draft 492 stored email_enabled = true (deleted, 204). Admin preview with emailEnabled 1 \u2192 200; admin create with \"true\" \u2192 201; PUT of that draft with emailEnabled 0 \u2192 200 and email_enabled = false (draft 495 deleted, 204).",
+      "fix": "",
+      "env": "",
+      "where": "POST /api/announcements/audience/preview, POST /api/announcements, PUT /api/announcements/{id} (data-service) \u2014 field emailEnabled",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-307",
+      "shots": []
+    },
+    {
+      "id": "QXR-310-F20",
+      "sev": "Low",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/people/customers",
+      "title": "QXR-310 Facility Teams (Arabic, Hindi): the teams screens show English text instead of translated text",
+      "steps": [
+        "Set the language to Arabic and open People \u203a Customers, then the Teams tab Repeat with Hindi Open https://facility-dev.quixeraos.com/locales/ar/teams.json and /locales/hi/teams.json, and /locales/en/teams.json for comparison"
+      ],
+      "expected": "The Teams tab shows translated text in Arabic and Hindi, as the other facility screens do; ar and hi teams.json bundles exist like the 24 other namespaces.",
+      "actual": "ar/teams.json and hi/teams.json return 403 (not deployed; absent from the repo); en/teams.json returns 200. The Teams tab in Arabic (page dir rtl) and Hindi shows \"New Team\", \"Inactive\", \"Archived\" and \"teams\" in English.",
+      "fix": "",
+      "env": "",
+      "where": "People \u203a Customers \u203a Teams tab (facility); /locales/ar/teams.json, /locales/hi/teams.json",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-310",
+      "shots": [
+        "data/shots/team-QXR-310-F20-0.jpg",
+        "data/shots/team-QXR-310-F20-1.jpg"
+      ]
+    },
+    {
+      "id": "QXR-314-F12",
+      "sev": "High",
+      "status": "Fixed",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/memberships/directory",
+      "title": "QXR-314 Admin-assisted card payment: one Stripe charge recorded as two succeeded payments and two receipts instead of one",
+      "steps": [
+        "Open Memberships > Add Membership as an admin Pick the athlete, plan 'riz invite test 45', lane Online, press 'Pay $45.00 online', then 'Charge card' On Stripe pay with test card 4242 4242 4242 4242 Wait for 'Payment confirmed' on the reopened panel Open Finance > Payments and the athlete's Payments tab > the new invoice"
+      ],
+      "expected": "One succeeded payment row and one receipt for the one Stripe charge, linked to the invoice, carrying the card details and the Admin-assisted operator stamp.",
+      "actual": "Two SUCCEEDED $45 rows 300 ms apart: payment 225 'Credit pack purchase: riz invite test 45' (payment intent + card 4242, operator stamp, no invoice, RCP-AC1-000102) and payment 226 'Payment for invoice TGWM2TD3-0001' (invoice 393, no payment intent, no card, no operator, RCP-AC1-000103). Finance > Payments lists both receipts at $45; the invoice detail shows 'Payment method unavailable' with no Admin-assisted marker. Invoice amount_paid stays $45 and credits granted once (45). During that checkout POST /checkout/sessions/{id}/sync answered 503 ten times over 45 s before 200, so 'Payment confirmed' took 54 s. The next two identical checkouts recorded one row each. RECHECK 2026-10-18: single $45 Stripe test charge produced exactly ONE succeeded payment (RCP-AC1-000157, invoice MYW6SEI3-0007, membership #344).",
+      "fix": "",
+      "env": "",
+      "where": "Memberships > Add membership > Online > Charge card (Stripe webhooks) \u00b7 Finance > Payments \u00b7 invoice detail Payment breakdown",
+      "repro": "1/3",
+      "jira": "https://quixera.atlassian.net/browse/QXR-314",
+      "shots": [
+        "data/shots/team-QXR-314-F12-0.jpg",
+        "data/shots/team-QXR-314-F12-1.jpg"
+      ]
+    },
+    {
+      "id": "QXR-415-F16",
+      "sev": "High",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/memberships/directory",
+      "title": "Freeze membership: a freeze soon after online purchase leaves the Stripe subscription billing instead of pausing it",
+      "steps": [
+        "As ADMIN send POST /api/billing/checkout/link-requests {membershipPlanId: 56, athleteProfileId: 237, idempotencyKey: <new>} and open the returned checkoutUrl",
+        "Pay with test card 4242 4242 4242 4242 and wait until the new membership is Active (about 2 s)",
+        "Within 5 seconds, freeze it: POST /api/billing/memberships/<id>/freeze {\"resumesAt\": <now + 14 days>, \"paidFreeze\": false, \"reason\": \"\u2026\"} (or Row actions > Freeze)",
+        "Wait 20 s; read membership.membership_status_transition and billing.processed_webhook_event for the subscription id from the checkout.session.completed event."
+      ],
+      "expected": "The Stripe subscription is paused (a customer.subscription.updated event with pause_collection arrives) and the freeze transition is driven by the subscription, exactly as for a freeze made later. Oracle: QXR-415-F04 family (cancel later than purchase reaches Stripe: 280/281 actor_id sub_\u2026, customer.subscription.deleted); MembershipBillingService freeze path.",
+      "actual": "294 (plan 56) and 295 (plan 54): POST /freeze \u2192 200 with an empty body; membership FROZEN via SYSTEM ADMIN_FROZE with actor_id \"offline:294\" / \"offline:295\"; no customer.subscription.* webhook for sub_1UQpse\u2026 / sub_1UQptl\u2026 in the next 3\u20134 minutes. A later admin cancel of the same memberships reached Stripe (customer.subscription.deleted), so the subscriptions were live and unpaused while the memberships showed Frozen.",
+      "fix": "",
+      "env": "",
+      "where": "Memberships directory > Row actions > Freeze; POST /api/billing/memberships/{id}/freeze",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-415",
+      "shots": [
+        "data/shots/team-QXR-415-F16-0.jpg"
+      ]
+    },
+    {
+      "id": "QXR-416-F10",
+      "sev": "High",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/memberships/directory",
+      "title": "Membership check-in: an unknown membership id returns 503 and blocks all check-ins for 30 s instead of a 404",
+      "steps": [
+        "As ADMIN of client 1 send POST /api/billing/check-in {\"personId\":3526,\"membershipId\":296,\"location\":\"qa\"} \u2192 note the answer (200, or 409 rate limit if already checked in)",
+        "Send POST /api/billing/check-in six times with membershipId 77777700\u202677777705 (ids that do not exist) \u2014 or send them as the client-3 ADMIN",
+        "Immediately repeat step 1",
+        "Wait 40 s and repeat step 1."
+      ],
+      "expected": "Step 2 \u2192 404 \"Membership not found\" each (a client error, not counted as an outage); step 3 answers like step 1. Oracle: F09 fix note (check-in reads fail-closed only on a real outage; the state endpoint itself answers 404 for an unknown id).",
+      "actual": "Step 2 \u2192 503 {\"message\":\"Membership state temporarily unavailable\"} \u00d76 in ~50 ms; step 3 \u2192 503 for valid membership 296 while GET /api/membership-transitions/296/state answers 200; step 4 \u2192 back to normal (409 rate limit). Same when the six bad calls come from the client-3 ADMIN (another academy): client-1's check-in on 296 \u2192 503.",
+      "fix": "",
+      "env": "",
+      "where": "POST /api/billing/check-in (CheckInService \u2192 MembershipStateClient, breaker membershipState)",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-416",
+      "shots": []
+    },
+    {
+      "id": "QXR-416-F12",
+      "sev": "High",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/memberships/directory",
+      "title": "Membership actions: bad cancel ids make all freezes, unfreezes and cancels fail with 503 for 30 s instead of a 404",
+      "steps": [
+        "As ADMIN of client 1 send POST /api/billing/memberships/296/activate (or a freeze) \u2192 note 200",
+        "Send POST /api/billing/memberships/99999800/cancel {\"immediate\":true,\"reason\":\"qa\"} six times with different unknown ids (or, as the client-3 ADMIN, cancel client-1 membership 296 and unknown ids)",
+        "Immediately repeat step 1",
+        "Wait 40 s and repeat step 1."
+      ],
+      "expected": "Each bad cancel \u2192 404 (or 403) and nothing else changes; step 3 \u2192 200 like step 1. Oracle: QXR-415-F13 fix (unknown/foreign cancel \u2192 404); F09 note that a run of failed calls must not open the breaker guarding freeze, activate and cancel.",
+      "actual": "Step 2 \u2192 404,404,404,404,404 then 503; step 3 \u2192 503 \"Downstream dependency temporarily unavailable\" for valid 296; step 4 \u2192 200. Client-3 ADMIN burst (unknown ids + client-1's 296) \u2192 404,404,404,404,503,503, then client-1's own activate of 296 \u2192 503 (40 s later 200). A legit freeze of 296 during an open window \u2192 503 and 296 stayed ACTIVE.",
+      "fix": "",
+      "env": "",
+      "where": "POST /api/billing/memberships/{id}/cancel (billing \u2192 membership-service, breaker membershipService); affects /freeze, /activate",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-416",
+      "shots": []
+    },
+    {
+      "id": "QXR-416-F14",
+      "sev": "Medium",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/memberships/directory",
+      "title": "QXR-416 Member subscription resume: an admin's resume is recorded and shown as the member's instead of as a staff action",
+      "steps": [
+        "As the guardian send POST /api/billing/subscriptions/{sub}/freeze?personId={child person id} {\"resumesAt\":\"<future date>:00:00.000Z\",\"paidFreeze\":false,\"reason\":\"guardian freeze\"}; wait until the membership is FROZEN",
+        "As the ADMIN send POST /api/billing/subscriptions/{sub}/resume?personId={child person id} (empty body)",
+        "Read the new membership_status_transition row, then as the ADMIN open the membership details and read Activity",
+        "As the ADMIN send POST /api/billing/subscriptions/{sub}/freeze?personId={child person id} with a reason, and read the new row."
+      ],
+      "expected": "A staff call is refused (403, member self-serve path) or recorded as a staff action \u2014 ADMIN_UNFROZE / ADMIN_FROZE with the admin as actor \u2014 and Activity reads \"Resumed by an administrator\". Oracle: QXR-416-F06 fix (a freeze/resume row identifies who made it: reason code and actor) and the admin Mark active path.",
+      "actual": "Step 2 \u2192 200, membership ACTIVE, Stripe pause cleared. Step 3 \u2192 row FROZEN\u2192ACTIVE reason MEMBER_UNFROZE, actor_type SYSTEM, actor_id = the admin's uid; Activity \"Membership resumed \u2014 Resumed by the member\" (2/2, memberships 308 and earlier 302). Step 4 \u2192 200, row ACTIVE\u2192FROZEN reason MEMBER_FROZE, actor_id = the admin's uid.",
+      "fix": "",
+      "env": "",
+      "where": "POST /api/billing/subscriptions/{sub}/resume?personId (and /freeze?personId) with a staff token; Memberships directory > membership details > Activity",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-416",
+      "shots": [
+        "data/shots/team-QXR-416-F14-0.jpg"
+      ]
+    },
+    {
+      "id": "QXR-416-F11",
+      "sev": "Low",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/memberships/directory",
+      "title": "Membership details: Unfreeze membership shows two toasts instead of one",
+      "steps": [
+        "Open https://facility-dev.quixeraos.com/memberships/directory?membershipId=296 (a frozen membership)",
+        "Click **Unfreeze membership**",
+        "Read the notifications."
+      ],
+      "expected": "One success toast for one unfreeze (and one error toast on failure). Oracle: house A1.6 toast pattern (one action, one confirmation); the Freeze dialog shows one toast \"Membership frozen.\".",
+      "actual": "296 and 299: one POST /activate 200, toasts \"Success Membership resumed for QAAudit TestAthlete.\" and \"Success Membership reactivated.\". With /activate failing (500): \"Error Couldn't unfreeze this membership. Please try again.\" and \"Error Couldn't reactivate the membership. Please try again.\".",
+      "fix": "",
+      "env": "",
+      "where": "Memberships directory > membership details > Unfreeze membership",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-416",
+      "shots": [
+        "data/shots/team-QXR-416-F11-0.jpg",
+        "data/shots/team-QXR-416-F11-1.jpg",
+        "data/shots/team-QXR-416-F11-2.jpg"
+      ]
+    },
+    {
+      "id": "QXR-416-F13",
+      "sev": "Low",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/memberships/directory",
+      "title": "Freeze API: freezing an unknown membership or subscription returns 400 instead of 404",
+      "steps": [
+        "Send POST /api/billing/memberships/99999999/freeze {\"resumesAt\":\"2026-11-03T05:00:00.000Z\",\"paidFreeze\":false,\"reason\":\"qa\"}",
+        "Send POST /api/billing/memberships/99999999/activate",
+        "Send POST /api/billing/subscriptions/sub_doesnotexist416/freeze?personId=3526 with the same body, and \u2026/resume?personId=3526."
+      ],
+      "expected": "404 \"Membership not found\" (or \"Subscription not found\") for each, like /activate and /cancel. Oracle: QXR-415-F13 fix (unknown id \u2192 404).",
+      "actual": "Step 1 \u2192 400 \"Membership 99999999 cannot be frozen from its current state\" (also 99999998, 99999997); step 2 \u2192 404 \"Membership not found\"; step 3 \u2192 400 \"Payment provider error\" for both freeze and resume.",
+      "fix": "",
+      "env": "",
+      "where": "POST /api/billing/memberships/{id}/freeze; POST /api/billing/subscriptions/{sub}/freeze|resume",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-416",
+      "shots": []
+    },
+    {
+      "id": "QXR-417-F07",
+      "sev": "Medium",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/billing",
+      "title": "Billing list footer: New announcement notice covers Sum and Copy Sum at 375 px instead of leaving them tappable",
+      "steps": [
+        "Sign in to the facility app as an admin on a 375 px wide screen and open Billing",
+        "Type Booking in the search box so the footer shows a Sum",
+        "Tap the \"Sum: $\u2026\" button or the Copy Sum button in the footer."
+      ],
+      "expected": "The Sum menu opens (or the Sum is copied); the footer's Total, Sum, Copy and \"across N filtered invoices\" stay visible and tappable, with the page leaving room for the notice the way the instructor and guardian layouts do.",
+      "actual": "The notice (x 12-363, y 672-732, fixed, bottom-20) sits over the footer's stats row (y 708-756): the element at the centre of the Sum trigger (x 159, y 708, 136x28) and of Copy Sum is the notice, and a tap on Sum is intercepted by the notice. The pager row below (y 768-800) is clear. Same at 320 px and in the empty \"Sum: $0.00\" state; the notice also overlaps the footer summary on Athletes and Payments. Hidden at 1280 px (md:hidden).",
+      "fix": "",
+      "env": "",
+      "where": "Facility app (admin) > Billing > invoice list footer at phone widths; the mobile floating New announcement notice",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-417",
+      "shots": [
+        "data/shots/team-QXR-417-F07-0.jpg"
+      ]
+    },
+    {
+      "id": "QXR-418-F09",
+      "sev": "Low",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/payments",
+      "title": "Tags API: names padded with no-break or zero-width spaces are stored as look-alike tags instead of trimmed",
+      "steps": [
+        "POST /api/tags with {\"name\": \"\\u00a0VIP\\u00a0\"} (no-break spaces around an existing tag's name)",
+        "POST /api/tags with {\"name\": \"\\u200bVIP\\u200b\"} and with {\"name\": \"\\u00a0\\u00a0\"}",
+        "PUT /api/tags/{id} renaming a tag to \"\\u00a0Other\\u00a0\"",
+        "Open Payments, click Bulk edit, tick a payment, click Edit tags and type VIP."
+      ],
+      "expected": "Leading/trailing Unicode whitespace and invisible characters are trimmed like ASCII spaces, so the padded name is refused as a duplicate of \"VIP\" (400 \"Tag with name \u2026 already exists\") and a name with no visible character is refused as blank.",
+      "actual": "No-break-padded name \u2192 201, stored with its U+00A0 padding as a second tag (2/2); zero-width-space and figure-space padding \u2192 201; no-break-only name \u2192 201; PUT with no-break padding \u2192 200, stored padded. DB: booking.tag rows 72/79 start with U+00A0 (length 36 vs 34 for the real name), 81 is two U+00A0 only, 82/83 carry U+200B/U+2007. Edit tags then lists two entries that read the same (\"\u2026-r2pad\" and \" \u2026-r2pad \"). ASCII spaces and tabs are trimmed correctly (F02 fix holds).",
+      "fix": "",
+      "env": "",
+      "where": "POST /api/tags and PUT /api/tags/{id} (data-service TagService)",
+      "repro": "2/2",
+      "jira": "https://quixera.atlassian.net/browse/QXR-418",
+      "shots": [
+        "data/shots/team-QXR-418-F09-0.jpg"
+      ]
+    },
+    {
+      "id": "QXR-418-F10",
+      "sev": "Low",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/payments",
+      "title": "Payments ledger: a renamed or deleted tag keeps its old label and search for up to 30 s instead of updating",
+      "steps": [
+        "Open Payments (or GET /api/billing/payments/ledger) so the ledger has loaded in the last 30 s",
+        "Rename the tag (PUT /api/tags/{id} with a new name, as Settings does)",
+        "Straight away, search Payments for the receipt and for the tag's new name",
+        "Repeat after 32 s."
+      ],
+      "expected": "The ledger row shows the new tag name and a search by the new name finds the payment as soon as the rename returns, the way a tag created in Edit tags now shows at once (F08 fix).",
+      "actual": "Right after the 200: the row still shows the old name and search by the new name returns totalElements 0; after 32 s the new name shows and search returns 1 (2 of 3 attempts \u2014 depends on the 30 s per-tenant tag cache window). Same after DELETE /api/tags/{id} (204): the deleted tag still labels the row and search by its name still finds the payment until the cache expires.",
+      "fix": "",
+      "env": "",
+      "where": "Facility app \u2192 Payments (GET /api/billing/payments/ledger tag labels and search)",
+      "repro": "2/3",
+      "jira": "https://quixera.atlassian.net/browse/QXR-418",
+      "shots": [
+        "data/shots/team-QXR-418-F10-0.jpg"
+      ]
+    },
+    {
+      "id": "QXR-311-F20",
+      "sev": "Medium",
+      "status": "Open",
+      "source": "team",
+      "link": "https://facility-dev.quixeraos.com/scheduling",
+      "title": "Booking API: a single booking dated in the past is created instead of refused",
+      "steps": [
+        "POST /api/bookings with the test data and date 2026-10-14 (yesterday) Repeat with facilityId 15, facilitySpaceId 11, date 2026-10-13 Repeat with date 2025-10-14 Query booking.booking for the returned ids"
+      ],
+      "expected": "400 \u2014 the date is before the facility's today, as the series API (\"A series here can start no earlier than today\") and the wizard enforce; nothing written.",
+      "actual": "201 each time (bookings 2730, 2732, 2733). DB: status 9 (Confirmed), total_price null, dates 2026-10-14, 2026-10-13, 2025-10-14. Neighbour rules hold: 07:00 outside hours \u2192 400, end before start \u2192 400, blocked slot \u2192 409.",
+      "fix": "",
+      "env": "",
+      "where": "POST /api/bookings",
+      "repro": "3/3",
+      "jira": "https://quixera.atlassian.net/browse/QXR-311",
+      "shots": []
+    },
+    {
+      "id": "P2-001",
+      "sev": "Medium",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/billing",
+      "title": "Billing Refunded tab lists invoices with non-refunded statuses",
+      "steps": [
+        "Open Billing.",
+        "Click the Refunded tab.",
+        "Read the Status column of each row."
+      ],
+      "expected": "The Refunded tab lists only invoices with a refunded status.",
+      "actual": "7 rows appear with statuses Paid, Past Due, and Partially Paid. No invoice with a Refunded status is findable, so the tab is misleading about what it contains.",
+      "fix": "Filter the Refunded tab to refunded invoices only, or relabel the tab to match its actual contents."
+    },
+    {
+      "id": "P2-002",
+      "sev": "Medium",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/billing",
+      "title": "Billing search ignores the payer column despite the placeholder saying it matches payer",
+      "steps": [
+        "Open Billing.",
+        "In the search box (placeholder: \"Matches invoice #, TXN reference, item, payer, athlete or amount\"), type \"QA_AP Customer\"."
+      ],
+      "expected": "Invoices whose payer is \"QA_AP Customer\" are returned, as the placeholder promises.",
+      "actual": "Result is \"No invoices match these filters\" even though visible rows show payer \"QA_AP Customer\". Searching \"Alice Test\" (athlete) works, so the payer column specifically is not searched.",
+      "fix": "Include the payer column in the billing search index, or correct the placeholder text."
+    },
+    {
+      "id": "P2-003",
+      "sev": "Medium",
+      "status": "Open",
+      "source": "arlo",
+      "link": "https://facility-dev.quixeraos.com/payments",
+      "title": "Payment detail dialog for a refunded payment shows a \"Succeeded\" badge and no refund breakdown",
+      "steps": [
+        "Open Payments and search \"QA_AP\".",
+        "Find row RCP-AC1-000150 \u2014 it shows status \"Refunded\", $50.00 refunded of $50.00.",
+        "Open the payment detail dialog."
+      ],
+      "expected": "The detail header reflects the refunded state and shows the refund breakdown (refunded amount, date, reason).",
+      "actual": "Header badge says \"Succeeded\" Cash; Amount $50.00, Applied $0.00, Unapplied $0.00; no refund information is shown anywhere in the dialog.",
+      "fix": "Show a Refunded badge and the refund details (amount, date, reason) in the payment detail dialog."
+    }
+  ],
+  "backlog": [
+    {
+      "id": "QXR-277-F03",
+      "title": "QXR-277 Lead stage moves: two simultaneous moves both succeed instead of one being refused",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-278-F07",
+      "title": "QXR-278 Park panel: the browser's today is refused as a past callback date instead of matching the academy's today",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-279-F07",
+      "title": "QXR-279 New lead verdict: double-clicking Add to existing lead attaches the source twice instead of once",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-280-F06",
+      "title": "QXR-280 Converted lead: a paid or cancelled self-service enrolment says \"Awaiting payment confirmation\" instead of its status",
+      "st": "BLOCKED"
+    },
+    {
+      "id": "QXR-305-F07",
+      "title": "QXR-305 Announcements list: a new send does not appear until reload instead of updating live",
+      "st": "STILL_FAILING"
+    },
+    {
+      "id": "QXR-306-F02",
+      "title": "QXR-306 Team announcement: a 14-year-old team member is messaged directly instead of only adults or their guardians",
+      "st": "STILL_FAILING"
+    },
+    {
+      "id": "QXR-306-F06",
+      "title": "QXR-306 Announcement composer: preview keeps a stale count for 30 s after the roster changes instead of the current count",
+      "st": "STILL_FAILING"
+    },
+    {
+      "id": "QXR-310-F03",
+      "title": "QXR-310 Announcement API: a numeric purpose is accepted as an enum position instead of rejected as invalid",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-310-F04",
+      "title": "QXR-310 Marketing consent API: unknown fields and an unknown notice id are accepted instead of rejected",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-310-F06",
+      "title": "QXR-310 Settings Communications: saving with marketing already on re-stamps the enabled time instead of keeping it",
+      "st": "BLOCKED"
+    },
+    {
+      "id": "QXR-442-F11",
+      "title": "QXR-442 Shared package: @quixera/shared gained announcement-domain modules instead of staying domain-free",
+      "st": "STILL_FAILING"
+    },
+    {
+      "id": "QXR-442-F08",
+      "title": "QXR-442 Announcement composer: dialog overflows at 375 and 768 px instead of fitting, hiding audience rows and Close",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-442-F18",
+      "title": "QXR-442 Announcements ledger: Status column needs horizontal scroll at 1440 px instead of fitting the table",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-442-F23",
+      "title": "QXR-442 Notifications Announcements tab: no announcements shows a no-results message instead of an empty state",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-415-F04",
+      "title": "Cancel membership: a cancel soon after online purchase leaves the Stripe subscription billing instead of cancelling it",
+      "st": "STILL_FAILING"
+    },
+    {
+      "id": "QXR-415-F03",
+      "title": "Cancel membership: a facility-billed membership keeps its renewal schedule active instead of stopping invoices",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-415-F07",
+      "title": "QXR-415 Cancel membership dialog: the reason list covers Back and Cancel membership instead of leaving them clickable",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-415-F10",
+      "title": "Cancel membership: no cancellation email is sent to the family instead of one \"Your membership has been cancelled\" email",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-417-F01",
+      "title": "QXR-417 Billing list footer: rows-per-page select covers the Sum value at 375 px instead of leaving it readable",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-417-F04",
+      "title": "Billing list: invoice dates and date-range totals use the UTC day instead of the academy's local day",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-435-F04",
+      "title": "Billing list: a rate-limited load keeps showing the previous unfiltered invoices instead of the load error",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-311-F17",
+      "title": "Preferences Devices: no 'Last active' date is shown for any device instead of each device's last activity",
+      "st": "STILL_FAILING"
+    },
+    {
+      "id": "QXR-311-F06",
+      "title": "QXR-311 Recurring booking API: a frequency outside 1\u201312 is accepted instead of refused with a field error",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-311-F07",
+      "title": "QXR-311 Review & Create: a series whose prices differ by date shows 'Lane hire N \u00d7 $50.00' instead of 'prices vary'",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-311-F11",
+      "title": "QXR-311 Review & Create: the session-count heading is grey on grey at 4.34:1 instead of at least 4.5:1",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-362-F06",
+      "title": "QXR-362 Review & Create: an applied series code is named four times instead of once, and Academy codes has no label",
+      "st": "CHANGED"
+    },
+    {
+      "id": "QXR-447-F05",
+      "title": "QXR-447 Stock by date: capped short dates are styled as errors (red, aria-invalid) instead of as a warning",
+      "st": "CHANGED"
+    }
+  ]
 }
