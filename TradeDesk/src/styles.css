@@ -967,10 +967,14 @@ code {
 
 .dte-title {
   font-size: 13px;
-  margin: 0 0 10px;
+  margin: 18px 0 8px;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.dte-title:first-of-type {
+  margin-top: 4px;
 }
 
 .dte-card {
@@ -1590,14 +1594,27 @@ code {
   text-decoration: underline;
 }
 
-.tv-ext {
-  font-size: 10px;
-  color: var(--text-faint);
-  text-decoration: none;
+.tv-link {
+  padding: 6px 4px;
+  margin: -6px -4px;
 }
 
-.tv-link:hover .tv-ext {
+.tv-pill {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--accent);
+  border: 1px solid rgba(63, 169, 245, 0.4);
+  background: rgba(63, 169, 245, 0.08);
+  border-radius: 4px;
+  padding: 3px 7px;
+  margin-left: 5px;
+  white-space: nowrap;
+}
+
+.tv-link:hover .tv-pill {
+  background: rgba(63, 169, 245, 0.18);
 }
 
 /* ── Unusual-options chips ─────────────────────────────────────── */

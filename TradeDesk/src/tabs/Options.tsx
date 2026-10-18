@@ -26,23 +26,21 @@ export default function OptionsTab() {
   return (
     <section className="tab">
       <SectionHead title="0DTE / 1DTE focus" sub="High-liquidity names · options lens" />
+      <h4 className="dte-title">0DTE — expires today</h4>
       <div className="dte-grid">
-        <div>
-          <h4 className="dte-title">0DTE — expires today</h4>
-          {brief.dte_focus.zero_dte.length > 0 ? (
-            brief.dte_focus.zero_dte.map((p) => <DteCard key={p.ticker} p={p} />)
-          ) : (
-            <p className="muted">No 0DTE names flagged.</p>
-          )}
-        </div>
-        <div>
-          <h4 className="dte-title">1DTE — expires tomorrow</h4>
-          {brief.dte_focus.one_dte.length > 0 ? (
-            brief.dte_focus.one_dte.map((p) => <DteCard key={p.ticker} p={p} />)
-          ) : (
-            <p className="muted">No 1DTE names flagged.</p>
-          )}
-        </div>
+        {brief.dte_focus.zero_dte.length > 0 ? (
+          brief.dte_focus.zero_dte.map((p) => <DteCard key={`0-${p.ticker}`} p={p} />)
+        ) : (
+          <p className="muted">No 0DTE names flagged.</p>
+        )}
+      </div>
+      <h4 className="dte-title">1DTE — expires tomorrow</h4>
+      <div className="dte-grid">
+        {brief.dte_focus.one_dte.length > 0 ? (
+          brief.dte_focus.one_dte.map((p) => <DteCard key={`1-${p.ticker}`} p={p} />)
+        ) : (
+          <p className="muted">No 1DTE names flagged.</p>
+        )}
       </div>
 
       <LottoScanner lotto={lotto} />

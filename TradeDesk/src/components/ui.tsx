@@ -118,8 +118,8 @@ export function TvLink({ ticker, className }: { ticker: string; className?: stri
       onClick={(e) => e.stopPropagation()}
     >
       <span className="ticker">{ticker}</span>
-      <span className="tv-ext" aria-hidden="true">
-        ↗
+      <span className="tv-pill">
+        Chart <span aria-hidden="true">↗</span>
       </span>
     </a>
   );
