@@ -40,8 +40,14 @@ Live at **https://apatel85.github.io/Dashboards/KineticMusic/**
   there for typing your own.
 - **🗣️ Real Voice** — a real spoken voice via the device's built-in
   text-to-speech (free, no account): it speaks each line clearly while the
-  piano carries the tune underneath. Honest label: it talks, it doesn't
-  sing — for true singing, the karaoke mic is still king.
+  piano carries the tune underneath. Three flavors: auto, **male**, and
+  **kid** (pitched-up). Each mood also gives the voice its own character —
+  Sleepy is low and slow, Silly is high and fast. Honest label: it talks,
+  it doesn't sing — for true singing, the karaoke mic is still king.
+- **Two tabs, no overlap** — **🎵 Note Music** (stage + orbs + sheet music)
+  and **🎤 Lyrics → Song** (the full lyric studio). Switching tabs stops
+  the other side cold: orbs freeze and the metronome dies going to Lyrics;
+  the song, spoken voice and karaoke die going back to Notes.
 - **Performance mode** — while a song or lyric performance plays, the
   stage/orbs bounce silently and the metronome pauses, so the band plays
   alone. Everything resumes when the song ends.

@@ -53,6 +53,14 @@
     transform:translateX(calc(100% + 30px));transition:transform .32s cubic-bezier(.16,1,.3,1);z-index:15;box-shadow:0 20px 50px rgba(0,0,0,.5);
     overflow-y:auto;overscroll-behavior:contain}
   .lyric-drawer.open{transform:translateX(0)}
+  /* ---- View tabs: Note Music | Lyrics -> Song ---- */
+  #tabBar{display:flex;gap:8px;padding:10px 14px 2px;max-width:1100px;margin:0 auto}
+  .tab{flex:1;padding:11px 8px;border-radius:12px;border:1px solid var(--border);background:var(--panel);
+    color:var(--text);font-size:14px;font-weight:700;cursor:pointer}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#08130e}
+  #lyricsView{max-width:1100px;margin:0 auto;padding:6px 14px 14px}
+  #lyricsView .lyric-drawer{position:static;transform:none;width:auto;max-width:720px;margin:6px auto;box-shadow:none}
+  #notesView{position:relative}
   .drawer-header{display:flex;justify-content:space-between;align-items:center;gap:8px}
   .drawer-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .badge-safe{font-size:10px;background:rgba(110,231,183,.14);color:var(--accent);padding:2px 8px;border-radius:999px;border:1px solid rgba(110,231,183,.3);white-space:nowrap}
@@ -151,7 +159,13 @@
   </div>
 </header>
 
+<nav id="tabBar" aria-label="App views">
+  <button class="tab active" id="tabNotesBtn">🎵 Note Music</button>
+  <button class="tab" id="tabLyricsBtn">🎤 Lyrics → Song</button>
+</nav>
+
 <main>
+  <div id="notesView">
   <canvas id="stageCanvas"></canvas>
   <div class="stage-hint">Drag across shapes to strum · drag shapes to rearrange · orbs pluck on contact</div>
   <div id="karaoke" aria-live="polite"></div>
@@ -161,11 +175,13 @@
     <button class="btn-ghost" id="replayBtn" title="Replay recorded performance">▶ Replay</button>
   </div>
   <div class="speed-inline"><span>Orb speed</span><input type="range" id="orbSpeed" min="20" max="220" value="90" aria-label="Orb speed" /></div>
+  </div>
 
+  <div id="lyricsView" hidden>
   <aside class="lyric-drawer" id="lyricDrawer" aria-label="Lyric to song studio">
     <div class="drawer-header">
-      <div class="drawer-title">Lyric-to-Song Synthesizer <span class="badge-safe">100% royalty-free voices</span></div>
-      <button id="closeDrawerBtn" style="padding:4px 10px" aria-label="Close lyric studio">✕</button>
+      <div class="drawer-title">Lyric-to-Song Studio <span class="badge-safe">100% royalty-free voices</span></div>
+      <button id="closeDrawerBtn" style="padding:4px 10px" aria-label="Back to Note Music">✕</button>
     </div>
     <div class="field" style="flex:none">
       <label for="lyricsInput">Your lyrics — each syllable becomes a sung note</label>
@@ -191,13 +207,15 @@
     <div class="studio-grid">
       <div class="field"><label for="voiceArchetype">Voice style (original, royalty-free)</label>
         <select id="voiceArchetype">
-          <option value="real" selected>Real Voice 🗣️ · device spoken guide</option>
-          <option value="pop">Pop Star · bright &amp; airy</option>
-          <option value="rnb">R&amp;B Silk · smooth runs</option>
-          <option value="hiphop">Hip-Hop Flow · punchy</option>
-          <option value="rock">Rock Belt · gritty power</option>
-          <option value="country">Country Twang · nasal &amp; bright</option>
-          <option value="choir">Ethereal Choir · layered air</option>
+          <option value="real" selected>Real Voice 🗣️ · device (auto)</option>
+          <option value="real-male">Real Voice 👨 · device male</option>
+          <option value="real-kid">Real Voice 🧒 · device kid voice</option>
+          <option value="pop">Pop Star · bright &amp; airy (synth)</option>
+          <option value="rnb">R&amp;B Silk · smooth runs (synth)</option>
+          <option value="hiphop">Hip-Hop Flow · punchy (synth)</option>
+          <option value="rock">Rock Belt · gritty power (synth)</option>
+          <option value="country">Country Twang · nasal &amp; bright (synth)</option>
+          <option value="choir">Ethereal Choir · layered air (synth)</option>
         </select>
       </div>
       <div class="field"><label for="melodyPattern">Melody shape</label>
@@ -241,6 +259,7 @@
       <button class="btn-ghost" id="stopLyricsBtn">■ Stop</button>
     </div>
   </aside>
+  </div>
 </main>
 
 <footer>
@@ -286,7 +305,7 @@ const INST_NAMES  = { guitar:'Guitar', piano:'Piano', violin:'Violin', drums:'Dr
 
 const state = {
   instrument:'guitar', scaleKey:'major', bpm:110,
-  orbSpeed:90, metronome:false,
+  orbSpeed:90, metronome:false, orbsPaused:false,
   recording:false, recEvents:[], recStart:0,
   lyricPlaying:false, lyricTimers:[],
 };
@@ -735,10 +754,28 @@ function addOrb(){
 }
 function removeOrb(){ if(orbs.length) orbs.pop(); }
 
+function switchTab(which){
+  const toLyrics = which === 'lyrics';
+  document.getElementById('tabNotesBtn').classList.toggle('active', !toLyrics);
+  document.getElementById('tabLyricsBtn').classList.toggle('active', toLyrics);
+  document.getElementById('notesView').hidden = toLyrics;
+  document.getElementById('lyricsView').hidden = !toLyrics;
+  if(toLyrics){
+    // Note Music stops: freeze orbs, silence metronome
+    state.orbsPaused = true;
+    state._metroResume = false;
+    setMetronome(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    // Lyrics stop: kill the song, spoken voice and karaoke
+    stopSong();
+    stopLyricPlayback();
+    state.orbsPaused = false;
+  }
+}
 function lyricStudioActive(){
   if(state.lyricPlaying || state.songPlaying) return true;
-  const d = document.getElementById('lyricDrawer');
-  return !!(d && d.classList.contains('open'));
+  return !document.getElementById('lyricsView').hidden;
 }
 function performanceActive(){ return state.songPlaying || state.lyricPlaying; }
 function pluckShape(idx, velocity, lyric){
@@ -811,7 +848,9 @@ function stageLoop(t){
     sctx.beginPath(); sctx.moveTo(0,y); sctx.lineTo(SW,y); sctx.stroke(); }
 
   // orbs: move, bounce off walls + shapes, pluck on contact
+  // (frozen while the Lyrics tab is active — Note Music fully stops)
   const nowMs = performance.now();
+  if(!state.orbsPaused)
   for(const o of orbs){
     o.x += o.vx*dt; o.y += o.vy*dt;
     if(o.x < o.r){ o.x = o.r; o.vx = Math.abs(o.vx); }
@@ -1225,8 +1264,9 @@ function playLyrics(){
   const pattern = document.getElementById('melodyPattern').value;
   const beatsPerSyl = parseFloat(document.getElementById('syllableBeats').value) || 1;
   const beatSec = 60 / state.bpm;
-  const voiceKey = document.getElementById('voiceArchetype').value;
-  const useTts = voiceKey === 'real';
+  const voiceSel = document.getElementById('voiceArchetype').value;
+  const useTts = voiceSel.indexOf('real') === 0;
+  const ttsP = useTts ? ttsParams(voiceSel, null) : null;
   const blend = (parseInt(document.getElementById('voiceBlend').value, 10) || 45) / 100;
   const oct = parseFloat(document.getElementById('octaveShift').value) || 1;
   const lines = text.split('\n').map(s => s.trim()).filter(s => s && !/^\[.*\]$/.test(s));
@@ -1247,7 +1287,7 @@ function playLyrics(){
     const syllables = splitSyllables(line);
     const lineDur = syllables.length * beatsPerSyl * beatSec;
     if(useTts && syllables.length)
-      state.lyricTimers.push(setTimeout(() => speakLine(line, lineDur), t * 1000));
+      state.lyricTimers.push(setTimeout(() => speakLine(line, lineDur, ttsP), t * 1000));
     syllables.forEach(syl => {
       const degree = degrees[si++];
       const midi = SCALES[state.scaleKey].midis[((degree % 8)+8)%8];
@@ -1258,7 +1298,7 @@ function playLyrics(){
           // Real spoken guide voice + soft piano carries the tune underneath
           playMidiNote(midi, 'piano', { velocity: 0.4, duration: Math.min(dur, 1.1) });
         } else {
-          try{ singSyllable(syl, midi, voiceKey, blend, oct, dur, 0); }
+          try{ singSyllable(syl, midi, voiceSel, blend, oct, dur, 0); }
           catch(err){
             if(!voiceErrorShown){
               voiceErrorShown = true;
@@ -1358,9 +1398,11 @@ function wireUI(){
     state.orbSpeed = parseInt(e.target.value, 10);
   });
 
-  const drawer = document.getElementById('lyricDrawer');
-  document.getElementById('toggleLyricBtn').addEventListener('click', ()=>{ initAudio(); drawer.classList.toggle('open'); });
-  document.getElementById('closeDrawerBtn').addEventListener('click', ()=>drawer.classList.remove('open'));
+  // ---- View tabs: switching stops the other tab's music ----
+  document.getElementById('tabNotesBtn').addEventListener('click', ()=>switchTab('notes'));
+  document.getElementById('tabLyricsBtn').addEventListener('click', ()=>{ initAudio(); switchTab('lyrics'); });
+  document.getElementById('toggleLyricBtn').addEventListener('click', ()=>{ initAudio(); switchTab('lyrics'); });
+  document.getElementById('closeDrawerBtn').addEventListener('click', ()=>switchTab('notes'));
   document.getElementById('playLyricsBtn').addEventListener('click', playLyrics);
   document.getElementById('stopLyricsBtn').addEventListener('click', ()=>{
     stopLyricPlayback();
@@ -1473,7 +1515,7 @@ async function toggleMic(){
     micNodes = [src, mg];
     micOn = true;
     btn.classList.add('active');
-    toast('Mic on — sing along! Open the Lyric Studio and hit Sing.');
+    toast('Mic on — sing along! Switch to the Lyrics → Song tab and hit Sing.');
   }catch(e){
     toast('Microphone blocked — allow mic access, then tap 🎤 again');
   }
@@ -1529,7 +1571,7 @@ function stopAudioRecord(){
 
 // ---- Wire up ----
 (function initExtras(){
-  const APP_VERSION = '3.1';
+  const APP_VERSION = '3.2';
   const vp = document.getElementById('verPill');
   if(vp) vp.textContent = 'v' + APP_VERSION;
   // Self update-check: if the server has a newer version.json, offer one-tap refresh
@@ -1644,30 +1686,49 @@ function generateLyrics(){
   toast('New ' + moodName + ' lyrics ready — hit 🎵 Make My Song, then 🎤 Mic to sing along!');
 }
 
-// --- Real device voice (text-to-speech). Free, built-in, no signup. ---
-let ttsVoice = null;
-function pickTtsVoice(){
+// --- Real device voices (text-to-speech). Free, built-in, no signup. ---
+// Device TTS speaks the lines clearly; it does not sing — the piano carries
+// the tune underneath while it talks.
+const ttsVoices = { auto:null, male:null, female:null };
+function pickTtsVoices(){
   try{
     const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().indexOf('en') === 0);
-    ttsVoice = vs.find(v => /google us english/i.test(v.name))
-            || vs.find(v => /natural|neural|samantha|zira/i.test(v.name))
-            || vs.find(v => /en[-_]us/i.test(v.lang))
-            || vs[0] || null;
-  }catch(e){ ttsVoice = null; }
+    if(!vs.length) return;
+    const female = vs.find(v => /female|samantha|zira|karen|moira|tessa|fiona|veena|kate\b|anna\b/i.test(v.name));
+    const male = vs.find(v => !/female/i.test(v.name) && /male|david|daniel|james|george|fred|alex|john|paul|mike|\btom\b|ryan|brian|kevin/i.test(v.name));
+    const us = vs.find(v => /en[-_]us/i.test(v.lang));
+    ttsVoices.female = female || us || vs[0];
+    ttsVoices.male = male || vs.find(v => v !== ttsVoices.female) || vs[0];
+    ttsVoices.auto = vs.find(v => /google us english/i.test(v.name)) || ttsVoices.female;
+  }catch(e){}
 }
 if(typeof speechSynthesis !== 'undefined'){
-  pickTtsVoice();
-  try{ speechSynthesis.onvoiceschanged = pickTtsVoice; }catch(e){}
+  pickTtsVoices();
+  try{ speechSynthesis.onvoiceschanged = pickTtsVoices; }catch(e){}
 }
-function speakLine(text, durSec){
+// voiceSel: 'real' | 'real-male' | 'real-kid'. Mood gives each song its own
+// voice character (pitch/rate); kid voice is a pitched-up female voice.
+function ttsParams(voiceSel, mood){
+  const p = { voice: ttsVoices.auto, pitch: 1.1, rate: 1 };
+  if(voiceSel === 'real-male'){ p.voice = ttsVoices.male; p.pitch = 0.9; }
+  else if(voiceSel === 'real-kid'){ p.voice = ttsVoices.female; p.pitch = 1.7; p.rate = 1.05; }
+  if(mood && mood.tts){
+    p.pitch = voiceSel === 'real-kid' ? Math.min(1.9, mood.tts.pitch * 1.45) : mood.tts.pitch;
+    p.rate = mood.tts.rate;
+  }
+  return p;
+}
+function speakLine(text, durSec, opts){
+  opts = opts || {};
   if(typeof speechSynthesis === 'undefined') return false;
   try{
     speechSynthesis.cancel(); // one line at a time, always in sync
     const u = new SpeechSynthesisUtterance(text);
-    if(ttsVoice) u.voice = ttsVoice;
+    if(opts.voice) u.voice = opts.voice;
     const words = text.trim().split(/\s+/).length;
-    u.rate = Math.min(1.6, Math.max(0.7, (words / Math.max(0.6, durSec)) / 2.6));
-    u.pitch = 1.1;
+    const fit = Math.min(1.6, Math.max(0.7, (words / Math.max(0.6, durSec)) / 2.6));
+    u.rate = Math.min(1.8, Math.max(0.5, fit * (opts.rate || 1)));
+    u.pitch = opts.pitch || 1.1;
     u.volume = 1.0;
     speechSynthesis.speak(u);
     return true;
@@ -1683,18 +1744,18 @@ function stopTts(){ try{ if(typeof speechSynthesis !== 'undefined') speechSynthe
 state.songPlaying = false;
 
 const MOODS = {
-  happy: { bpm:120, scale:'major',      prog:[0,4,5,3], drums:'pop',    voice:'pop',    bass:'roots',   energy:1.0 },
-  brave: { bpm:100, scale:'minor',      prog:[0,5,2,6], drums:'march',  voice:'rock',    bass:'roots',   energy:1.0 },
-  sleepy:{ bpm:76,  scale:'major',      prog:[3,0,4,0], drums:'soft',   voice:'choir',   bass:'roots',   energy:0.6 },
-  silly: { bpm:132, scale:'pentatonic', prog:[0,0,4,4], drums:'bounce', voice:'hiphop', bass:'octaves', energy:1.15 },
-  sad:   { bpm:84,  scale:'minor',      prog:[5,3,0,4], drums:'soft',   voice:'rnb',     bass:'roots',   energy:0.7 },
+  happy: { bpm:124, scale:'major',      prog:[0,4,5,3], drums:'pop',    voice:'pop',    bass:'roots',   energy:1.0,  tts:{pitch:1.15, rate:1.0} },
+  brave: { bpm:100, scale:'minor',      prog:[0,5,2,6], drums:'march',  voice:'rock',    bass:'roots',   energy:1.05, tts:{pitch:0.9,  rate:0.95} },
+  sleepy:{ bpm:72,  scale:'major',      prog:[3,0,4,0], drums:'soft',   voice:'choir',   bass:'roots',   energy:0.55, tts:{pitch:0.8,  rate:0.85} },
+  silly: { bpm:140, scale:'pentatonic', prog:[0,0,4,4], drums:'bounce', voice:'hiphop', bass:'octaves', energy:1.2,  tts:{pitch:1.45, rate:1.1} },
+  sad:   { bpm:80,  scale:'minor',      prog:[5,3,0,4], drums:'soft',   voice:'rnb',     bass:'roots',   energy:0.65, tts:{pitch:0.85, rate:0.9} },
 };
 // [sixteenth-step, drum piece (0 kick, 1 snare, 2 hat, 3 tom), velocity]
 const DRUM_PATTERNS = {
-  pop:    [[0,0,.50],[4,1,.32],[8,0,.45],[12,1,.32],[0,2,.14],[2,2,.14],[4,2,.14],[6,2,.14],[8,2,.14],[10,2,.14],[12,2,.14],[14,2,.14]],
-  march:  [[0,0,.50],[4,0,.40],[8,0,.50],[12,0,.40],[4,1,.32],[12,1,.32],[0,2,.12],[4,2,.12],[8,2,.12],[12,2,.12]],
-  soft:   [[0,0,.35],[8,1,.20],[0,2,.08],[4,2,.08],[8,2,.08],[12,2,.08]],
-  bounce: [[0,0,.50],[6,0,.40],[8,0,.45],[4,1,.30],[12,1,.30],[0,2,.14],[2,2,.14],[4,2,.14],[6,2,.14],[8,2,.14],[10,2,.14],[12,2,.14],[14,2,.20]],
+  pop:    [[0,0,.62],[4,1,.42],[8,0,.55],[12,1,.42],[0,2,.20],[2,2,.20],[4,2,.20],[6,2,.20],[8,2,.20],[10,2,.20],[12,2,.20],[14,2,.20]],
+  march:  [[0,0,.62],[4,0,.50],[8,0,.62],[12,0,.50],[4,1,.42],[12,1,.42],[0,2,.18],[4,2,.18],[8,2,.18],[12,2,.18]],
+  soft:   [[0,0,.45],[8,1,.28],[0,2,.12],[4,2,.12],[8,2,.12],[12,2,.12]],
+  bounce: [[0,0,.62],[6,0,.50],[8,0,.55],[4,1,.40],[12,1,.40],[0,2,.20],[2,2,.20],[4,2,.20],[6,2,.20],[8,2,.20],[10,2,.20],[12,2,.20],[14,2,.26]],
 };
 
 function parseSong(text){
@@ -1780,7 +1841,10 @@ function makeSong(){
   btn.classList.add('playing');
   btn.innerHTML = '■ Stop the song';
   clearSheet();
-  toast(instrumental ? 'Playing your instrumental 🎹' : 'Playing your song! 🎵');
+  const moodName = document.getElementById('moodSelect').selectedOptions[0].textContent.trim();
+  toast(instrumental
+    ? 'Playing your ' + moodName + ' instrumental at ' + mood.bpm + ' BPM 🎹'
+    : 'Playing your ' + moodName + ' song at ' + mood.bpm + ' BPM! 🎵');
 
   let t = 0.1, beatCursor = 0, chordPtr = 0;
   const after = (sec, fn) => songTimers.push(setTimeout(fn, Math.max(0, sec) * 1000));
@@ -1808,25 +1872,27 @@ function makeSong(){
         const barT = t + b * 4 * beatSec;
         pat.forEach(([step, piece, vel]) => drumAt(piece, barT + step * (beatSec/4), vel * energy));
         if(mood.bass === 'octaves'){
-          playMidiNote(triad[0]-24, 'bass', { delay: barT, velocity: 0.32, duration: 1.2 });
-          playMidiNote(triad[0]-12, 'bass', { delay: barT + 2*beatSec, velocity: 0.30, duration: 1.0 });
+          playMidiNote(triad[0]-24, 'bass', { delay: barT, velocity: 0.44, duration: 1.2 });
+          playMidiNote(triad[0]-12, 'bass', { delay: barT + 2*beatSec, velocity: 0.42, duration: 1.0 });
         } else {
-          playMidiNote(triad[0]-24, 'bass', { delay: barT, velocity: 0.32, duration: 2.5 });
-          playMidiNote(triad[0]-24, 'bass', { delay: barT + 2*beatSec, velocity: 0.28, duration: 1.6 });
+          playMidiNote(triad[0]-24, 'bass', { delay: barT, velocity: 0.44, duration: 2.5 });
+          playMidiNote(triad[0]-24, 'bass', { delay: barT + 2*beatSec, velocity: 0.40, duration: 1.6 });
         }
-        triad.forEach(m => playMidiNote(m, 'piano', { delay: barT, velocity: 0.13, duration: beatSec*3.8 }));
+        triad.forEach(m => playMidiNote(m, 'piano', { delay: barT, velocity: 0.18, duration: beatSec*3.8 }));
         if(instrumental){
           const arpNotes = [triad[0]+12, triad[1]+12, triad[2]+12, triad[1]+12];
           for(let s=0;s<8;s++)
-            playMidiNote(arpNotes[s % 4], 'marimba', { delay: barT + s*(beatSec/2), velocity: 0.20, duration: 0.5 });
+            playMidiNote(arpNotes[s % 4], 'marimba', { delay: barT + s*(beatSec/2), velocity: 0.26, duration: 0.5 });
         }
       }
 
       // Vocal melody walking on chord tones (exact beat positions keep staff aligned)
       const mel = songMelody(syllables.length, chordDeg);
-      const voiceKey = document.getElementById('voiceArchetype').value === 'real' ? 'real' : mood.voice;
-      if(voiceKey === 'real' && !instrumental)
-        after(t, () => speakLine(line, syllables.length * spb * beatSec));
+      const voiceSel = document.getElementById('voiceArchetype').value;
+      const useTts = voiceSel.indexOf('real') === 0;
+      const ttsP = useTts ? ttsParams(voiceSel, mood) : null;
+      if(useTts && !instrumental)
+        after(t, () => speakLine(line, syllables.length * spb * beatSec, ttsP));
       syllables.forEach((syl, i) => {
         const midi = degToMidi(mel[i]);
         const atBeat = beatCursor + i * spb;
@@ -1838,10 +1904,10 @@ function makeSong(){
         } else {
           const dur = Math.min(spb * beatSec * 1.02, 2.4);
           after(t + i * spb * beatSec, () => {
-            if(voiceKey === 'real'){
+            if(useTts){
               playMidiNote(midi, 'piano', { velocity: 0.42, duration: Math.min(dur, 1.0) });
             } else {
-              try{ singSyllable(syl, midi, voiceKey, blend, oct, dur, 0); }catch(e){}
+              try{ singSyllable(syl, midi, voiceSel, blend, oct, dur, 0); }catch(e){}
             }
             addSheetNote({ midi, inst:'piano', degree:0, lyric:syl, beats:spb, atBeat });
             disp.textContent = '♪ ' + syl;
