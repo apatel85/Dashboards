@@ -30,7 +30,9 @@
   }));
   document.getElementById("undo").addEventListener("click", () => { drawings.pop(); redraw(); });
   document.getElementById("clear").addEventListener("click", () => { drawings = []; redraw(); });
-  document.getElementById("cancel").addEventListener("click", () => window.close());
+  document.getElementById("cancel").addEventListener("click", () => {
+    chrome.runtime.sendMessage({ type: "editorCancel", t: T });
+  });
   document.getElementById("done").addEventListener("click", async () => {
     const out = document.createElement("canvas");
     out.width = img.width; out.height = img.height;
@@ -38,7 +40,8 @@
     g.drawImage(img, 0, 0);
     paint(g, img.width / cv.width);   // scale display coords -> full res
     await chrome.storage.session.set({ [KEY]: out.toDataURL("image/jpeg", 0.85) });
-    chrome.runtime.sendMessage({ type: "editorDone", t: T, i: I }, () => window.close());
+    // v3.4: the background closes this tab and returns focus to the tested tab
+    chrome.runtime.sendMessage({ type: "editorDone", t: T, i: I });
   });
 
   function pos(e) {
