@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.14'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.27.15'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
@@ -324,7 +324,7 @@ async function refreshSession() {
   S.user = session?.user || null;
   renderAuth();
   if (S.user) {
-    await claimHousehold(); await loadSubjects(); await loadCareTables(); await loadData();
+    await claimHousehold(); await loadSubjects(); await retryPendingSubjectWrites(); await loadCareTables(); await loadData();
     if (S._needsOnboard) { S._needsOnboard = false; openOnboard(false); }  // v2.1 first-run profile
     else maybeWeightPrompt();                                              // v2.1 monthly check-in
   }
@@ -2172,6 +2172,47 @@ function buildEditPatch(prev, f) {
   return patch;
 }
 /* Update one event by id — Supabase when synced, local queue/caches when offline. */
+/** v3.27.15 — robust subject field save (Ankit 2026-10-18: weight update didn't
+    persist). Surfaces server errors instead of failing silently, and queues failed
+    writes for retry on next load. */
+async function saveSubjectFields(fields) {
+  if (S.subject) Object.assign(S.subject, fields); // optimistic
+  if (S.subject && sbReady()) {
+    const { error } = await S.sb.from('subjects').update(fields).eq('id', S.subject.id);
+    if (error) {
+      console.warn('subject save failed', error);
+      toast('Saved on device — will sync to server when possible');
+      try {
+        const q = JSON.parse(localStorage.getItem('st_subject_pending') || '[]');
+        q.push({ id: S.subject.id, fields, ts: Date.now() });
+        localStorage.setItem('st_subject_pending', JSON.stringify(q));
+      } catch (e) {}
+      return false;
+    }
+    // Clear any pending writes for these fields
+    try {
+      const q = JSON.parse(localStorage.getItem('st_subject_pending') || '[]');
+      const keys = Object.keys(fields);
+      const rest = q.filter(p => !(p.id === S.subject.id && keys.some(k => k in p.fields)));
+      localStorage.setItem('st_subject_pending', JSON.stringify(rest));
+    } catch (e) {}
+    return true;
+  }
+  return true;
+}
+/** v3.27.15 — retry pending subject writes on load. */
+async function retryPendingSubjectWrites() {
+  if (!sbReady()) return;
+  let q = [];
+  try { q = JSON.parse(localStorage.getItem('st_subject_pending') || '[]'); } catch (e) { return; }
+  if (!q.length) return;
+  const rest = [];
+  for (const p of q) {
+    const { error } = await S.sb.from('subjects').update(p.fields).eq('id', p.id);
+    if (error) { console.warn('pending subject write retry failed', error); rest.push(p); }
+  }
+  try { localStorage.setItem('st_subject_pending', JSON.stringify(rest)); } catch (e) {}
+}
 async function updateEvent(id, patch) {
   // v3.27.14 — strip local-only fields (Ankit 2026-10-16: "_optimistic column" error —
   // the flag leaked into the Supabase update payload).
@@ -2257,10 +2298,7 @@ async function saveSheet() {
     ev.category = 'Weight'; ev.status_outcome = `Weight: ${lbs} lbs`;
     const kg = +(lbs / 2.20462).toFixed(2);
     localStorage.setItem('st_weight', String(kg)); // offline fallback
-    if (S.subject && sbReady()) {
-      await S.sb.from('subjects').update({ current_weight_kg: kg }).eq('id', S.subject.id);
-      S.subject.current_weight_kg = kg;
-    }
+    await saveSubjectFields({ current_weight_kg: kg });
   } else if (kind === 'WeightPrompt') {
     // v2.1 — monthly check-in
     const lbs = parseFloat($('wpLbs').value);
@@ -2269,10 +2307,7 @@ async function saveSheet() {
     if (isFinite(lbs) && lbs > 0) {
       const kg = +(lbs / 2.20462).toFixed(2);
       localStorage.setItem('st_weight', String(kg));
-      if (S.subject && sbReady()) {
-        await S.sb.from('subjects').update({ current_weight_kg: kg }).eq('id', S.subject.id);
-        S.subject.current_weight_kg = kg;
-      }
+      await saveSubjectFields({ current_weight_kg: kg });
       await saveEvent({ category: 'Weight', status_outcome: `Weight: ${lbs} lbs` });
       await loadData(); renderCockpit();
       toast('Weight updated \u2713');
