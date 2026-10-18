@@ -7,13 +7,14 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.27.15'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.28.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
   WATER_CUTOFF: '20:15',              // hard water cutoff (local time HH:MM)
   BEDTIME: '22:00',                   // v3.10 — master-log median lockdown 9:57 PM (was 21:45)
   PRE_BED_DRAIN_MIN: 10,              // pre-bed lawn drain = bedtime - this many min
+  EVENING_PEE: '21:15',               // v3.28 — evening pee anchor (Ankit 2026-10-18: holds to ~9:15, 8ish outing is opportunistic not need-driven)
   TARGET_AWAKE_HOLD: 75,              // v3.10 — master-log median awake hold (was 80)
   MEAL_WINDOW_MIN: 15,                // 15-minute dish pickup rule
   KCAL_PER_TBSP: { Chicken: 26.94, Salmon: 25.31, Blend: 26.13 }, // legacy; v3.6 uses FOODS
@@ -1432,7 +1433,12 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       // v3.25.4 — expire stale pee windows (Ankit 2026-10-07: 10:35 AM window still
       // showing at 7 PM). A hold-based window older than 3h is clutter, not signal —
       // the newer predictions (from recent pees) carry the schedule.
-      if (nowMs < pwEnd + 3 * 3600000)
+      // v3.28 — suppress the hold window 8:00–9:15 PM when the evening pee anchor is
+      // upcoming (Ankit 2026-10-18: the 8ish outing is opportunistic; 9:15 is the
+      // scheduled one). Avoids double-prompting.
+      const epAnchorMs = atHM(...hmParts(CFG.EVENING_PEE)).getTime();
+      const inEveningGap = pwStart >= atHM(20, 0).getTime() && pwStart < epAnchorMs && nowMs < epAnchorMs;
+      if (nowMs < pwEnd + 3 * 3600000 && !inEveningGap)
         items.push(mk('pee-window', '🚻', 'Pee window', new Date(pwStart), new Date(pwEnd), why, done));
     }
   }
@@ -1492,6 +1498,15 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   if (nowMs < wc.getTime() + 30 * 60000)
     items.push(mk('water-cutoff', '💧', 'Hard water cutoff ' + fmtClock(CFG.WATER_CUTOFF), wc, wc,
       'shut down renal inflow for the night — pull the bowls', false));
+  // 5b. evening pee anchor — v3.28 (Ankit 2026-10-18): he holds to ~9:15 PM;
+  // the ~8ish hold-window outing is opportunistic, not need-driven. Explicit anchor
+  // at 9:15 PM; the hold-based window is suppressed 8:00–9:15 PM when this is upcoming.
+  const [eph, epm] = hmParts(CFG.EVENING_PEE), epAnchor = atHM(eph, epm);
+  const epStart = new Date(epAnchor.getTime() - 15 * 60000), epEnd = new Date(epAnchor.getTime() + 15 * 60000);
+  const epDone = today.some(e => isPee(e) && peeAt(e) > epStart.getTime() - 30 * 60000);
+  if (nowMs < epEnd.getTime())
+    items.push(mk('evening-pee', '🌆', 'Evening pee', epStart, epEnd,
+      'scheduled 9:15 PM outing (your history: holds to ~9:15)', epDone));
   // 6. pre-bed drain + 7. crate lockdown
   const drain = new Date(bed.getTime() - CFG.PRE_BED_DRAIN_MIN * 60000);
   if (nowMs < bed.getTime())
@@ -1557,7 +1572,7 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   // must not be absorbed by the habit block.)
   // v3.18 — ✕ "didn't go" skips on pee/poop rows. The hold-based pee window
   // re-anchors above; clock-based ones show greyed as skipped for today.
-  const SKIP_RE = /^(pee-window|meal-intercept|nappee-\d+|nappoop-\d+|poop[12]|dinner-poop|pee-block-\d+)$/;
+  const SKIP_RE = /^(pee-window|evening-pee|meal-intercept|nappee-\d+|nappoop-\d+|poop[12]|dinner-poop|pee-block-\d+)$/;
   items.forEach(a => {
     a.skippable = SKIP_RE.test(a.id);
     a.skipped = a.skippable && a.id !== 'pee-window' && !!(skipMap || {})[a.id];
