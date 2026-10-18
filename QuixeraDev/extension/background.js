@@ -87,6 +87,17 @@ async function commitFile(repoPath, b64, message, token) {
 
 const b64encode = (str) => btoa(unescape(encodeURIComponent(str)));
 
+/* ---------- offscreen clip recorder (v3.3) ---------- */
+let recordingTab = null; // tabId currently being recorded, or null
+async function ensureOffscreen() {
+  if (await chrome.offscreen.hasDocument()) return;
+  await chrome.offscreen.createDocument({
+    url: "offscreen.html",
+    reasons: ["USER_MEDIA"],
+    justification: "Record a QA clip of the tab being tested"
+  });
+}
+
 /* ---------- pending filing state per tab ---------- */
 const pending = {}; // tabId -> { shots: [dataUrl], clip: {dataUrl, secs} | null }
 function pend(tabId) {
@@ -329,11 +340,39 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         } catch (e) {}
         sendResponse({ ok: true });
       } else if (msg.type === "startRecord") {
-        await chrome.tabs.create({ url: chrome.runtime.getURL("recorder.html") + `?src=${tabId}` });
+        // v3.3: record in place via the offscreen document (desktopCapture tab
+        // picker is the consent UI). No recorder tab is opened anymore.
+        if (recordingTab !== null && recordingTab !== tabId) {
+          sendResponse({ ok: false, error: "Already recording another tab." });
+          return;
+        }
+        recordingTab = tabId;
+        try {
+          await ensureOffscreen();
+        } catch (e) {
+          recordingTab = null;
+          throw new Error("Could not start the recorder: " + e.message);
+        }
+        chrome.runtime.sendMessage({ target: "offscreen", type: "offscreenStart", tabId });
+        sendResponse({ ok: true, recording: true });
+      } else if (msg.type === "stopRecord") {
+        chrome.runtime.sendMessage({ target: "offscreen", type: "offscreenStop" });
         sendResponse({ ok: true });
-      } else if (msg.type === "clipDone") {
-        pend(tabId).clip = { dataUrl: msg.dataUrl, secs: msg.secs };
-        try { chrome.tabs.sendMessage(tabId, { type: "clipReady", secs: msg.secs, kb: dataUrlSizeKB(msg.dataUrl) }).catch(() => {}); } catch (e) {}
+      } else if (msg.type === "offscreenRecording") {
+        recordingTab = msg.tabId;
+        try { chrome.tabs.sendMessage(msg.tabId, { type: "clipRecording" }).catch(() => {}); } catch (e) {}
+        sendResponse({ ok: true });
+      } else if (msg.type === "offscreenClipDone") {
+        pend(msg.tabId).clip = { dataUrl: msg.dataUrl, secs: msg.secs };
+        recordingTab = null;
+        try {
+          chrome.tabs.sendMessage(msg.tabId, { type: "clipReady", secs: msg.secs, kb: dataUrlSizeKB(msg.dataUrl) }).catch(() => {});
+          chrome.tabs.sendMessage(msg.tabId, { type: "clipStopped" }).catch(() => {});
+        } catch (e) {}
+        sendResponse({ ok: true });
+      } else if (msg.type === "offscreenClipError") {
+        recordingTab = null;
+        try { chrome.tabs.sendMessage(msg.tabId, { type: "clipError", error: msg.error }).catch(() => {}); } catch (e) {}
         sendResponse({ ok: true });
       } else if (msg.type === "discardClip") {
         pend(tabId).clip = null;
