@@ -82,6 +82,30 @@
     });
   }
 
+  // v3.1.1: single-flight capture with quota retry. The form auto-captures on
+  // open, so a quick manual tap used to fire a second capture inside Chrome's
+  // quota window ("This request exceeds the MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND
+  // quota") while the first failure stayed invisible.
+  let capturing = false;
+  function doCapture() {
+    if (capturing) return;
+    capturing = true;
+    const btn = $("qa-addshot");
+    if (btn) btn.disabled = true;
+    $("qa-status").textContent = "Capturing…";
+    chrome.runtime.sendMessage({ type: "captureShot" }, (r) => {
+      capturing = false;
+      const btn2 = $("qa-addshot");
+      if (btn2) btn2.disabled = false;
+      if (r && r.ok) { $("qa-status").textContent = ""; refreshShots(); }
+      else if (r && r.error && /exceeds/i.test(r.error)) {
+        $("qa-status").textContent = "Capture is busy — retrying…";
+        setTimeout(doCapture, 1500);
+      }
+      else $("qa-status").textContent = "❌ " + ((r && r.error) || "capture failed");
+    });
+  }
+
   function renderShots() {
     const wrap = $("qa-shots");
     if (!wrap) return;
@@ -96,13 +120,7 @@
     wrap.querySelectorAll("[data-x]").forEach(b => b.addEventListener("click", () => {
       chrome.runtime.sendMessage({ type: "removeShot", index: Number(b.dataset.x) }, refreshShots);
     }));
-    $("qa-addshot").addEventListener("click", () => {
-      $("qa-status").textContent = "Capturing…";
-      chrome.runtime.sendMessage({ type: "captureShot" }, (r) => {
-        if (r && r.ok) { $("qa-status").textContent = ""; refreshShots(); }
-        else $("qa-status").textContent = "❌ " + ((r && r.error) || "capture failed");
-      });
-    });
+    $("qa-addshot").addEventListener("click", doCapture);
   }
 
   function renderClip() {
@@ -126,10 +144,8 @@
 
   function openForm() {
     if ($("qa-overlay")) return;
-    // fresh filing state, then auto-capture first screenshot
-    chrome.runtime.sendMessage({ type: "resetPending" }, () => {
-      chrome.runtime.sendMessage({ type: "captureShot" }, refreshShots);
-    });
+    // fresh filing state, then auto-capture first screenshot (errors shown, not swallowed)
+    chrome.runtime.sendMessage({ type: "resetPending" }, () => { doCapture(); });
     trail = trail.slice(); // keep trail across filings in this page
     const projOpts = allProjects.map(p =>
       `<option value="${esc(p.id)}" ${p.id === project.id ? "selected" : ""}>${esc(p.name)}</option>`).join("");
