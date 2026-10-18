@@ -127,7 +127,7 @@ function SectorTable({ rows, emptyText }: { rows: SectorPerf[]; emptyText?: stri
           {rows.map((s) => (
             <tr key={s.sector}>
               <td>
-                {s.sector} <span className="subname">{s.etf}</span>
+                {s.sector} <TvLink ticker={s.etf} />
               </td>
               <td className={`r num ${s.perf_1d_pct != null ? (s.perf_1d_pct >= 0 ? 'up' : 'down') : ''}`}>
                 {fmtPct(s.perf_1d_pct)}

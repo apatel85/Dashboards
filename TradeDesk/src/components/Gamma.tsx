@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Badge, Chip, SectionHead } from './ui';
+import { Badge, Chip, SectionHead, TvLink } from './ui';
 import { fmtDate } from '../lib/format';
 import type { GexChange, GexChangesFile, GexFile, GexTicker } from '../types';
 
@@ -149,12 +149,15 @@ export function FuturesGamma({ gex }: { gex: GexFile | null }) {
     <section className="panel futures-gamma">
       <div className="futures-head">
         <SectionHead title="Index gamma — futures lens" sub="ES via SPX · NQ via QQQ×40" />
-        <div className="seg" role="tablist" aria-label="Futures">
-          {(['ES', 'NQ'] as const).map((f) => (
-            <button key={f} className={which === f ? 'active' : ''} onClick={() => setWhich(f)}>
-              {f}
-            </button>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <TvLink ticker={which} />
+          <div className="seg" role="tablist" aria-label="Futures">
+            {(['ES', 'NQ'] as const).map((f) => (
+              <button key={f} className={which === f ? 'active' : ''} onClick={() => setWhich(f)}>
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       {e ? (

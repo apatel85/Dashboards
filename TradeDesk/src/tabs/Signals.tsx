@@ -6,6 +6,7 @@ import {
   SectionHead,
   LoadingPanel,
   ErrorPanel,
+  TvLink,
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
@@ -72,10 +73,18 @@ function SignalCard({
   const lp = useLivePrice(sig.ticker, null);
   return (
     <article className={`panel signal-card${open ? ' open' : ''}`}>
-      <button className="signal-main" onClick={() => setOpen((o) => !o)}>
+      <div
+        className="signal-main"
+        role="button"
+        tabIndex={0}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') setOpen((o) => !o);
+        }}
+      >
         <span className="signal-top">
           <span>
-            <span className="ticker big">{sig.ticker}</span>
+            <TvLink ticker={sig.ticker} className="big" />
             <span className="subname">{sig.asset_name}</span>
           </span>
           <span className="signal-dir">
@@ -119,7 +128,7 @@ function SignalCard({
           Net {fmtFlow(sig.net_flow)} · {sig.officials} official{sig.officials === 1 ? '' : 's'} ·{' '}
           {sig.buy_trades + sig.sell_trades} trades · latest {fmtDate(sig.latest_ref_date)}
         </span>
-      </button>
+      </div>
       {open && (
         <div className="signal-detail">
           {idea ? (

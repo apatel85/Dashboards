@@ -91,6 +91,8 @@ export function Chip({ children }: { children: ReactNode }) {
 const TV_SYMBOL_MAP: Record<string, string> = {
   'ES=F': 'CME:ES1!',
   'NQ=F': 'CME:NQ1!',
+  'ES': 'CME:ES1!',
+  'NQ': 'CME:NQ1!',
   'YM=F': 'CBOT:YM1!',
   'RTY=F': 'CME:RTY1!',
   '^SPX': 'SP:SPX',

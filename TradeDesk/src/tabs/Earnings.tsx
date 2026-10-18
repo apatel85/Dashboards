@@ -8,6 +8,7 @@ import {
   SectionHead,
   LoadingPanel,
   ErrorPanel,
+  TvLink,
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
@@ -47,7 +48,7 @@ function EarningsRow({ e }: { e: EarningsEntry }) {
     <>
       <tr className="clickable" onClick={() => setOpen((o) => !o)} title="Click for detail">
         <td data-th="Ticker">
-          <span className="ticker">{e.ticker}</span>
+          <TvLink ticker={e.ticker} />
           <span className="subname">{e.name}</span>
         </td>
         <td data-th="Reports">

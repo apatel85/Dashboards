@@ -1719,3 +1719,16 @@ body {
 .dtable.slim td {
   padding: 7px 8px;
 }
+
+/* ── Performance tab ─────────────────────────────────────────────── */
+.perf-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+/* TvLink size variant: <TvLink className="big"> matches .ticker.big */
+.tv-link.big .ticker {
+  font-size: 20px;
+}

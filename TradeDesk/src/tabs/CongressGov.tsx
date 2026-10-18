@@ -4,6 +4,7 @@ import {
   SectionHead,
   LoadingPanel,
   ErrorPanel,
+  TvLink,
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { fmtDate, fmtInt, fmtCompactMoney } from '../lib/format';
@@ -90,7 +91,7 @@ function TradeRow({ t }: { t: CongressTrade }) {
         <td data-th="Asset">
           {t.ticker ? (
             <>
-              <span className="ticker">{t.ticker}</span>
+              <TvLink ticker={t.ticker} />
               <span className="subname" title={t.asset_name}>
                 {trunc(t.asset_name)}
               </span>
@@ -179,7 +180,7 @@ function AggRowView({ r, onSelect }: { r: AggRow; onSelect: (r: AggRow) => void 
       <td data-th="Asset">
         {r.ticker ? (
           <>
-            <span className="ticker">{r.ticker}</span>
+            <TvLink ticker={r.ticker} />
             {r.name !== r.ticker ? (
               <span className="subname" title={r.name}>{trunc(r.name, 30)}</span>
             ) : null}
@@ -205,9 +206,17 @@ function NotableRow({ item }: { item: NotableItem }) {
   const whenLabel = byFiling ? 'disclosed' : 'traded';
   return (
     <div className={`notable-card${open ? ' open' : ''}`}>
-      <button className="notable-main" onClick={() => setOpen((o) => !o)}>
+      <div
+        className="notable-main"
+        role="button"
+        tabIndex={0}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') setOpen((o) => !o);
+        }}
+      >
         <span className="notable-top">
-          {t.ticker ? <span className="ticker">{t.ticker}</span> : <span className="assetname">{trunc(t.asset_name, 34)}</span>}
+          {t.ticker ? <TvLink ticker={t.ticker} /> : <span className="assetname">{trunc(t.asset_name, 34)}</span>}
           <Badge tone={TYPE_TONE[t.trade_type] ?? 'dim'}>{t.trade_type}</Badge>
           <span className="notable-amt num">{t.amount_range}</span>
         </span>
@@ -220,7 +229,7 @@ function NotableRow({ item }: { item: NotableItem }) {
         {t.ticker ? (
           <span className="subname" title={t.asset_name}>{trunc(t.asset_name, 60)}</span>
         ) : null}
-      </button>
+      </div>
       {open && (
         <div className="notable-detail">
           <div className="mgrid">

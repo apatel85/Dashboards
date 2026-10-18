@@ -326,7 +326,7 @@ export interface GexChangesFile {
 
 /* ── tabs ───────────────────────────────────────────────────────── */
 
-export type TabId = 'brief' | 'options' | 'earnings' | 'congress' | 'research' | 'signals';
+export type TabId = 'brief' | 'options' | 'earnings' | 'congress' | 'research' | 'signals' | 'performance';
 
 export interface TabDef {
   id: TabId;
@@ -387,4 +387,26 @@ export interface LottoFile {
   candidates_considered: number;
   validation_summary: Record<string, LottoValidationSummary>;
   candidates: LottoCandidate[];
+}
+
+/* ── recommendation performance tracker ─────────────────────────── */
+
+export interface PerformanceItem {
+  ticker: string;
+  name: string;
+  recommended_at: string | null;
+  recommended_date: string | null;
+  rec_price: number | null;
+  current_price: number | null;
+  pct_change: number | null;
+  p_up: number | null;
+  score: number | null;
+}
+
+export interface PerformanceFile {
+  as_of: string;
+  source: string;
+  count: number;
+  quotes_as_of: string | null;
+  items: PerformanceItem[];
 }

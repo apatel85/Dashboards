@@ -8,6 +8,7 @@ import {
   PassFail,
   LoadingPanel,
   ErrorPanel,
+  TvLink,
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { fmtMoney, fmtPct, fmtTimeET, prettify } from '../lib/format';
@@ -18,7 +19,7 @@ function IdeaCard({ idea }: { idea: ResearchIdea }) {
     <article className="panel idea-card">
       <header className="idea-head">
         <div>
-          <span className="ticker big">{idea.ticker}</span>
+          <TvLink ticker={idea.ticker} className="big" />
           <span className="subname">{idea.name}</span>
           <div className="idea-sub">
             {idea.sector} · {idea.subsector} <IndexBadges items={idea.index_membership} />
