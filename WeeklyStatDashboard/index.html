@@ -56,6 +56,29 @@
   .meta-row{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--ink-3);font-size:13.5px;margin-top:8px}
   .meta-row span b{color:var(--ink-2);font-weight:600}
 
+  /* ---------- publish strip ---------- */
+  .publish{
+    display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:16px;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    box-shadow:var(--shadow);padding:12px 16px;font-size:14.5px;
+  }
+  .publish .item{display:flex;align-items:baseline;gap:8px;min-width:0}
+  .publish .k{
+    font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--accent);white-space:nowrap;
+  }
+  .publish .v{color:var(--ink-2)}
+  .publish .v b{color:var(--ink);font-weight:600}
+  .publish code{
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13px;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--ink);
+  }
+  .publish .v{overflow-wrap:anywhere}
+  .publish a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+  @media (max-width:680px){
+    .publish{flex-direction:column;gap:10px}
+    .publish .item{flex-direction:column;gap:2px}
+  }
+
   /* ---------- controls ---------- */
   .controls{
     position:sticky; top:0; z-index:20; margin:18px -16px 0; padding:12px 16px;
@@ -194,6 +217,17 @@
       <span><b>Data through:</b> Week 5</span>
       <span><b>Injuries verified:</b> Sun Oct 18 AM</span>
       <span><b>Model:</b> backtest-calibrated (see below)</span>
+      <span><b>Weekly job:</b> runs every Wednesday — projections for the upcoming week's games</span>
+    </div>
+    <div class="publish" role="note" aria-label="Publication and refresh">
+      <div class="item">
+        <span class="k">Live on GitHub</span>
+        <span class="v">Published as a static page in the <b>Dashboards</b> repo at <code>WeeklyStatDashboard/index.html</code>, served by GitHub Pages at <a href="https://apatel85.github.io/Dashboards/WeeklyStatDashboard/" target="_blank" rel="noopener"><b>apatel85.github.io/Dashboards/WeeklyStatDashboard/</b></a> — reachable from any device, no sign-in needed.</span>
+      </div>
+      <div class="item">
+        <span class="k">Weekly refresh</span>
+        <span class="v">A job runs <b>every Wednesday</b> to rebuild these boards with projections for the upcoming week's games and republish the GitHub copy.</span>
+      </div>
     </div>
   </header>
 
@@ -316,9 +350,10 @@
   </section>
 
   <footer>
-    <p><b>Snapshot:</b> Week 6 boards as computed Sunday, Oct 18, 2026. This page is a static file — to publish it on GitHub Pages,
-       drop it into your Dashboards repo (e.g. as <i>WeeklyStats/index.html</i>) and it will be reachable at your
-       apatel85.github.io/Dashboards address. Use the Download button above to save the file.</p>
+    <p><b>Snapshot:</b> Week 6 boards as computed Sunday, Oct 18, 2026, published as a static page on GitHub Pages
+       (Dashboards repo, <i>WeeklyStatDashboard/index.html</i> → apatel85.github.io/Dashboards/WeeklyStatDashboard/). A weekly job runs
+       every Wednesday to rebuild these boards with projections for the upcoming week's games and republish the GitHub copy.
+       Use the Download button above to save this file locally.</p>
     <p>Sources: Pro-Football-Reference 2026 (player and opponent tables), StatMuse, FantasyPros, StatChasers (fantasy points allowed),
        NBC Sports / Rotoworld, ESPN, Schefter &amp; Rapoport reporting. Statistical analysis only — not betting advice.</p>
   </footer>
