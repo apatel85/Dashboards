@@ -28,6 +28,13 @@ Live at **https://apatel85.github.io/Dashboards/KineticMusic/**
   (you or the kids!) sings along into the microphone.
 - **⬇ Audio download** — tap Audio to capture everything (instruments +
   synth voice + mic) and download it as a `.webm` song file.
+- **🎵 Song Builder** (Mureka-style, free) — pick a kid-friendly mood (Happy,
+  Brave, Sleepy, Silly, Sad) and hit **Make My Song**: the app sets tempo,
+  scale, chord progression, drum groove and voice, then plays your lyrics as
+  a full song with an auto backing band (drums + bass + chord pads) and
+  chord symbols on the staff. Write `[Verse]` / `[Chorus]` / `[Bridge]` on
+  their own lines to structure it. **🎹 Instrumental** toggle = band only,
+  no singing (with a sparkle arpeggio filling the vocal space).
 - **🧒 Kids mode** — bigger buttons, bigger note shapes, giant karaoke
   words, friendlier colors. Persists across visits.
 

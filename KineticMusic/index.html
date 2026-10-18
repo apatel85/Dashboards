@@ -80,6 +80,13 @@
     transition:all .25s;pointer-events:none;z-index:50;max-width:90vw;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .ver-pill{font-size:9px;font-weight:600;letter-spacing:.08em;color:var(--muted);border:1px solid var(--border);padding:2px 7px;border-radius:999px;white-space:nowrap}
+  .song-builder{display:flex;gap:10px;align-items:flex-end}
+  .song-builder .field{flex:1}
+  #instrumentalBtn{flex:none}
+  #instrumentalBtn.on{background:rgba(110,231,183,.15);border-color:rgba(110,231,183,.5);color:var(--accent)}
+  #makeSongBtn{font-size:14px;padding:12px 16px}
+  #makeSongBtn.playing{background:#fb7185;color:#28060c}
+  .song-tip{font-size:11px;color:var(--muted);text-align:center;line-height:1.4}
   #karaoke{position:absolute;left:50%;top:36%;transform:translate(-50%,-50%) scale(.92);font-size:clamp(44px,10vw,104px);
     font-weight:800;color:#fff;text-shadow:0 4px 34px rgba(110,231,183,.55);opacity:0;transition:opacity .18s,transform .18s;
     pointer-events:none;z-index:14;text-align:center;max-width:92vw;line-height:1.1}
@@ -164,6 +171,20 @@
       <label for="lyricsInput">Your lyrics — each syllable becomes a sung note</label>
       <textarea id="lyricsInput" spellcheck="false"></textarea>
     </div>
+    <div class="song-builder">
+      <div class="field"><label for="moodSelect">Song mood</label>
+        <select id="moodSelect">
+          <option value="happy">Happy 😊</option>
+          <option value="brave">Brave 🦁</option>
+          <option value="sleepy">Sleepy 🌙</option>
+          <option value="silly">Silly 🤪</option>
+          <option value="sad">Sad 💧</option>
+        </select>
+      </div>
+      <button class="btn-ghost" id="instrumentalBtn" title="No singing — backing band only">🎹 Instrumental</button>
+    </div>
+    <button class="btn-primary" id="makeSongBtn">🎵 Make My Song</button>
+    <div class="song-tip">Tip: write [Verse] and [Chorus] on their own lines to structure your song</div>
     <div class="studio-grid">
       <div class="field"><label for="voiceArchetype">Voice style (original, royalty-free)</label>
         <select id="voiceArchetype">
@@ -711,7 +732,7 @@ function addOrb(){
 function removeOrb(){ if(orbs.length) orbs.pop(); }
 
 function lyricStudioActive(){
-  if(state.lyricPlaying) return true;
+  if(state.lyricPlaying || state.songPlaying) return true;
   const d = document.getElementById('lyricDrawer');
   return !!(d && d.classList.contains('open'));
 }
@@ -865,15 +886,16 @@ function stageLoop(t){
 const sheet = document.getElementById('sheetCanvas');
 const gtx = sheet.getContext('2d');
 let sheetNotes = [];   // {midi, inst, degree, lyric, beats, t}
+let chordMarks = [];   // {atBeat, name} — chord symbols above the staff
 let sheetBeats = 0;    // running beat position
 let sheetScrollX = 0, sheetTargetScrollX = 0;
 const PX_PER_BEAT = 46;
 
 function addSheetNote(n){
   const beats = n.beats || 1;
-  sheetNotes.push({ midi:n.midi, inst:n.inst, degree:n.degree, lyric:n.lyric||null, beats, atBeat:sheetBeats });
-  if(n.midi == null){ sheetBeats += beats; } // drums still advance time
-  else sheetBeats += beats;
+  const at = (n.atBeat != null) ? n.atBeat : sheetBeats;
+  sheetNotes.push({ midi:n.midi, inst:n.inst, degree:n.degree, lyric:n.lyric||null, beats, atBeat:at });
+  sheetBeats = Math.max(sheetBeats, at + beats);
   if(sheetNotes.length > 400){ sheetNotes.splice(0, sheetNotes.length - 400); }
   const el = document.getElementById('sheetCount');
   el.textContent = sheetNotes.filter(x=>x.midi!=null).length + ' notes · ' + Math.ceil(sheetBeats/4) + ' bars — play the stage or sing lyrics';
@@ -941,6 +963,14 @@ function drawSheet(){
     gtx.beginPath(); gtx.moveTo(x, topY); gtx.lineTo(x, topY+lineGap*4); gtx.stroke();
   }
 
+  // chord symbols above the staff (lead-sheet style)
+  gtx.fillStyle = 'rgba(110,231,183,0.92)'; gtx.font = '700 11px -apple-system, sans-serif'; gtx.textAlign = 'left';
+  for(const c of chordMarks){
+    const x = ox + c.atBeat * PX_PER_BEAT;
+    if(x < 44 || x > W + 10) continue;
+    gtx.fillText(c.name, x + 3, topY - 9);
+  }
+
   // notes
   for(const n of sheetNotes){ if(n.flash > 0) n.flash = Math.max(0, n.flash - 0.035); }
   for(const n of sheetNotes){
@@ -1002,7 +1032,7 @@ function drawSheet(){
   requestAnimationFrame(drawSheet);
 }
 function clearSheet(){
-  sheetNotes = []; sheetBeats = 0; sheetTargetScrollX = 0;
+  sheetNotes = []; sheetBeats = 0; chordMarks = []; sheetTargetScrollX = 0;
   document.getElementById('sheetCount').textContent = '0 notes — play the stage or sing lyrics';
 }
 
@@ -1359,7 +1389,7 @@ function sRadius(s){
 
 // Karaoke banner: shows the currently sung syllable nice and big.
 function showKaraoke(syl){
-  if(!micOn && !document.body.classList.contains('kids')) return;
+  if(!micOn && !state.songPlaying && !document.body.classList.contains('kids')) return;
   const k = document.getElementById('karaoke');
   k.textContent = '♪ ' + syl + ' ♪';
   k.classList.remove('show');
@@ -1464,7 +1494,7 @@ function stopAudioRecord(){
 
 // ---- Wire up ----
 (function initExtras(){
-  const APP_VERSION = '2.4';
+  const APP_VERSION = '3.0';
   const vp = document.getElementById('verPill');
   if(vp) vp.textContent = 'v' + APP_VERSION;
   // Self update-check: if the server has a newer version.json, offer one-tap refresh
@@ -1489,6 +1519,201 @@ function stopAudioRecord(){
   document.getElementById('micBtn').addEventListener('click', toggleMic);
   document.getElementById('audioRecBtn').addEventListener('click', toggleAudioRecord);
   if(kids) setKids(true);
+})();
+</script>
+<script>
+"use strict";
+/* ---------- 14. SONG BUILDER: lyrics -> full song (Mureka-style, free) ----------
+   Pick a mood -> tempo/scale/chord progression/drum groove/voice are set.
+   [Verse]/[Chorus]/[Bridge] tags structure the song (or one verse by default).
+   Auto backing band (drums + bass + chord pads) plays under the vocal melody,
+   which walks on chord tones. Instrumental mode = band only + sparkle arp. */
+state.songPlaying = false;
+
+const MOODS = {
+  happy: { bpm:120, scale:'major',      prog:[0,4,5,3], drums:'pop',    voice:'pop',    bass:'roots',   energy:1.0 },
+  brave: { bpm:100, scale:'minor',      prog:[0,5,2,6], drums:'march',  voice:'rock',    bass:'roots',   energy:1.0 },
+  sleepy:{ bpm:76,  scale:'major',      prog:[3,0,4,0], drums:'soft',   voice:'choir',   bass:'roots',   energy:0.6 },
+  silly: { bpm:132, scale:'pentatonic', prog:[0,0,4,4], drums:'bounce', voice:'hiphop', bass:'octaves', energy:1.15 },
+  sad:   { bpm:84,  scale:'minor',      prog:[5,3,0,4], drums:'soft',   voice:'rnb',     bass:'roots',   energy:0.7 },
+};
+// [sixteenth-step, drum piece (0 kick, 1 snare, 2 hat, 3 tom), velocity]
+const DRUM_PATTERNS = {
+  pop:    [[0,0,.50],[4,1,.32],[8,0,.45],[12,1,.32],[0,2,.14],[2,2,.14],[4,2,.14],[6,2,.14],[8,2,.14],[10,2,.14],[12,2,.14],[14,2,.14]],
+  march:  [[0,0,.50],[4,0,.40],[8,0,.50],[12,0,.40],[4,1,.32],[12,1,.32],[0,2,.12],[4,2,.12],[8,2,.12],[12,2,.12]],
+  soft:   [[0,0,.35],[8,1,.20],[0,2,.08],[4,2,.08],[8,2,.08],[12,2,.08]],
+  bounce: [[0,0,.50],[6,0,.40],[8,0,.45],[4,1,.30],[12,1,.30],[0,2,.14],[2,2,.14],[4,2,.14],[6,2,.14],[8,2,.14],[10,2,.14],[12,2,.14],[14,2,.20]],
+};
+
+function parseSong(text){
+  const sections = [];
+  let cur = { tag:'verse', lines:[] };
+  for(const raw of String(text).split('\n')){
+    const line = raw.trim();
+    if(!line) continue;
+    const m = line.match(/^\[(verse|chorus|bridge|intro|outro)\]/i);
+    if(m){ if(cur.lines.length) sections.push(cur); cur = { tag:m[1].toLowerCase(), lines:[] }; continue; }
+    if(line.startsWith('[') && line.endsWith(']')) continue;
+    cur.lines.push(line);
+  }
+  if(cur.lines.length) sections.push(cur);
+  return sections;
+}
+function degToMidi(d){
+  const m = SCALES[state.scaleKey].midis;
+  const dd = ((d % 8) + 8) % 8;
+  return m[dd] + (d >= 8 ? 12 : 0) + (d < 0 ? -12 : 0);
+}
+function triadMidis(deg){ return [degToMidi(deg), degToMidi(deg+2), degToMidi(deg+4)]; }
+function chordName(deg){
+  const root = degToMidi(deg), third = degToMidi(deg+2);
+  const iv = ((third - root) % 12 + 12) % 12;
+  return NOTE_NAMES[((root % 12) + 12) % 12] + (iv === 3 ? 'm' : '');
+}
+function drumAt(piece, delaySec, vel){
+  initAudio();
+  playDrum(piece, audioCtx.currentTime + Math.max(0, delaySec), vel == null ? 0.9 : vel);
+}
+// Chord-tone melody walk: wanders the triad, resolves to the root at line end
+function songMelody(count, deg){
+  const tones = [deg, deg+2, deg+4];
+  const seq = []; let p = 0;
+  for(let i=0;i<count;i++){
+    const r = Math.random();
+    if(r < 0.5) p = (p + 1) % 3;
+    else if(r < 0.75) p = (p + 2) % 3;
+    seq.push(tones[p]);
+  }
+  if(count > 1) seq[count-1] = tones[0];
+  return seq;
+}
+
+let songTimers = [];
+function stopSong(){
+  songTimers.forEach(clearTimeout);
+  songTimers = [];
+  if(state.songPlaying){
+    state.songPlaying = false;
+    hideKaraoke();
+    const b = document.getElementById('makeSongBtn');
+    b.classList.remove('playing');
+    b.innerHTML = '🎵 Make My Song';
+  }
+}
+
+function makeSong(){
+  initAudio(); stopLyricPlayback(); stopSong();
+  const text = document.getElementById('lyricsInput').value.trim();
+  if(!text){ toast('Write some lyrics first — then make your song!'); return; }
+  const mood = MOODS[document.getElementById('moodSelect').value] || MOODS.happy;
+  const instrumental = document.getElementById('instrumentalBtn').classList.contains('on');
+  const sections = parseSong(text);
+  if(!sections.length){ toast('Write some lyrics first — then make your song!'); return; }
+
+  // Mood sets the musical world
+  state.bpm = mood.bpm;
+  document.getElementById('bpmSlider').value = mood.bpm;
+  document.getElementById('bpmValue').textContent = mood.bpm + ' BPM';
+  state.scaleKey = mood.scale;
+  document.getElementById('scaleSelect').value = mood.scale;
+  const beatSec = 60 / state.bpm;
+  const spb = parseFloat(document.getElementById('syllableBeats').value) || 1;
+  const blend = (parseInt(document.getElementById('voiceBlend').value, 10) || 45) / 100;
+  const oct = parseFloat(document.getElementById('octaveShift').value) || 1;
+
+  state.songPlaying = true;
+  const btn = document.getElementById('makeSongBtn');
+  btn.classList.add('playing');
+  btn.innerHTML = '■ Stop the song';
+  clearSheet();
+  toast(instrumental ? 'Playing your instrumental 🎹' : 'Playing your song! 🎵');
+
+  let t = 0.1, beatCursor = 0, chordPtr = 0;
+  const after = (sec, fn) => songTimers.push(setTimeout(fn, Math.max(0, sec) * 1000));
+  const disp = document.getElementById('currentLyricDisplay');
+  const noteDisp = document.getElementById('currentNoteDisplay');
+
+  // Count-in: 4 hat clicks so kids feel the beat
+  for(let i=0;i<4;i++) drumAt(2, t + i * beatSec, 0.22);
+  t += 4 * beatSec; beatCursor += 4;
+
+  sections.forEach(sec => {
+    const energy = (sec.tag === 'chorus' ? 1.15 : sec.tag === 'bridge' ? 0.85 : 1.0) * mood.energy;
+    sec.lines.forEach(line => {
+      const chordDeg = mood.prog[chordPtr++ % mood.prog.length];
+      const triad = triadMidis(chordDeg);
+      const syllables = splitSyllables(line);
+      if(!syllables.length) return;
+      const lineBeats = Math.max(4, Math.ceil(syllables.length * spb / 4) * 4);
+      const bars = lineBeats / 4;
+      chordMarks.push({ atBeat: beatCursor, name: chordName(chordDeg) });
+
+      // Backing band, bar by bar (t values are seconds-from-now delays)
+      const pat = DRUM_PATTERNS[mood.drums];
+      for(let b=0;b<bars;b++){
+        const barT = t + b * 4 * beatSec;
+        pat.forEach(([step, piece, vel]) => drumAt(piece, barT + step * (beatSec/4), vel * energy));
+        if(mood.bass === 'octaves'){
+          playMidiNote(triad[0]-24, 'bass', { delay: barT, velocity: 0.32, duration: 1.2 });
+          playMidiNote(triad[0]-12, 'bass', { delay: barT + 2*beatSec, velocity: 0.30, duration: 1.0 });
+        } else {
+          playMidiNote(triad[0]-24, 'bass', { delay: barT, velocity: 0.32, duration: 2.5 });
+          playMidiNote(triad[0]-24, 'bass', { delay: barT + 2*beatSec, velocity: 0.28, duration: 1.6 });
+        }
+        triad.forEach(m => playMidiNote(m, 'piano', { delay: barT, velocity: 0.13, duration: beatSec*3.8 }));
+        if(instrumental){
+          const arpNotes = [triad[0]+12, triad[1]+12, triad[2]+12, triad[1]+12];
+          for(let s=0;s<8;s++)
+            playMidiNote(arpNotes[s % 4], 'marimba', { delay: barT + s*(beatSec/2), velocity: 0.20, duration: 0.5 });
+        }
+      }
+
+      // Vocal melody walking on chord tones (exact beat positions keep staff aligned)
+      const mel = songMelody(syllables.length, chordDeg);
+      syllables.forEach((syl, i) => {
+        const midi = degToMidi(mel[i]);
+        const atBeat = beatCursor + i * spb;
+        if(instrumental){
+          after(t + i * spb * beatSec, () => {
+            addSheetNote({ midi, inst:'piano', degree:0, lyric:null, beats:spb, atBeat });
+            showKaraoke(syl);
+          });
+        } else {
+          const dur = Math.min(spb * beatSec * 1.02, 2.4);
+          after(t + i * spb * beatSec, () => {
+            try{ singSyllable(syl, midi, mood.voice, blend, oct, dur, 0); }catch(e){}
+            addSheetNote({ midi, inst:'piano', degree:0, lyric:syl, beats:spb, atBeat });
+            disp.textContent = '♪ ' + syl;
+            noteDisp.textContent = midiName(midi);
+            showKaraoke(syl);
+          });
+        }
+      });
+
+      t += lineBeats * beatSec;
+      beatCursor += lineBeats;
+    });
+  });
+
+  after(t + 0.4, () => {
+    stopSong();
+    disp.textContent = 'Done! Change the mood and make it again 🎵';
+    noteDisp.textContent = '';
+  });
+  sheetTargetScrollX = 0;
+}
+
+(function initSongBuilder(){
+  document.getElementById('makeSongBtn').addEventListener('click', () => {
+    if(state.songPlaying) stopSong();
+    else makeSong();
+  });
+  document.getElementById('instrumentalBtn').addEventListener('click', function(){
+    this.classList.toggle('on');
+    toast(this.classList.contains('on') ? 'Instrumental mode — band only, no singing' : 'Vocal mode — lyrics will be sung');
+  });
+  const stopBtn = document.getElementById('stopLyricsBtn');
+  if(stopBtn) stopBtn.addEventListener('click', stopSong);
 })();
 </script>
 </body>

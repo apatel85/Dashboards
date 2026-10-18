@@ -20,11 +20,16 @@ Kinetic music, body and soul
 
 ## 2. "Paper Satellites" (verse + chorus — tests longer phrasing)
 
+*Tip: this one already uses `[Verse]` / `[Chorus]` tags — paste it as-is and
+hit **🎵 Make My Song** with the Happy mood to hear the full-band version.*
+
+[Verse]
 We folded all our plans like paper planes
 And watched them catch the evening rain
 The city hums a frequency we know
 A quiet signal telling us to go
 
+[Chorus]
 So light the satellites, let them climb
 We're broadcasting on borrowed time
 Every static burst becomes a song
