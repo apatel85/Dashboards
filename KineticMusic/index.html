@@ -79,6 +79,7 @@
     border:1px solid var(--border);color:var(--text);font-size:12px;padding:8px 16px;border-radius:999px;opacity:0;
     transition:all .25s;pointer-events:none;z-index:50;max-width:90vw;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .ver-pill{font-size:9px;font-weight:600;letter-spacing:.08em;color:var(--muted);border:1px solid var(--border);padding:2px 7px;border-radius:999px;white-space:nowrap}
   #karaoke{position:absolute;left:50%;top:36%;transform:translate(-50%,-50%) scale(.92);font-size:clamp(44px,10vw,104px);
     font-weight:800;color:#fff;text-shadow:0 4px 34px rgba(110,231,183,.55);opacity:0;transition:opacity .18s,transform .18s;
     pointer-events:none;z-index:14;text-align:center;max-width:92vw;line-height:1.1}
@@ -111,7 +112,7 @@
 <body>
 
 <header>
-  <div class="brand"><span class="brand-dot" id="pulseDot"></span>KINETIC // STUDIO</div>
+  <div class="brand"><span class="brand-dot" id="pulseDot"></span>KINETIC // STUDIO <span class="ver-pill" id="verPill"></span></div>
   <div class="pill-group" id="instrumentGroup" role="tablist" aria-label="Instruments">
     <button class="inst-btn active" data-inst="guitar" role="tab">Guitar</button>
     <button class="inst-btn" data-inst="piano" role="tab">Piano</button>
@@ -1258,6 +1259,7 @@ function toggleMetronome(){
 /* ---------- 11. UI WIRING ---------- */
 function toast(msg){
   const el = document.getElementById('toast');
+  delete el.dataset.pin; el.style.pointerEvents = ''; el.onclick = null;
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(toast._t);
@@ -1462,6 +1464,25 @@ function stopAudioRecord(){
 
 // ---- Wire up ----
 (function initExtras(){
+  const APP_VERSION = '2.4';
+  const vp = document.getElementById('verPill');
+  if(vp) vp.textContent = 'v' + APP_VERSION;
+  // Self update-check: if the server has a newer version.json, offer one-tap refresh
+  setTimeout(async () => {
+    try{
+      const r = await fetch('version.json', { cache: 'no-store' });
+      if(!r.ok) return;
+      const j = await r.json();
+      if(j.version && j.version !== APP_VERSION){
+        const el = document.getElementById('toast');
+        el.innerHTML = 'New version v' + j.version + ' is live — <u>tap here to update</u>';
+        el.dataset.pin = '1';
+        el.classList.add('show');
+        el.style.pointerEvents = 'auto';
+        el.onclick = () => { location.href = location.pathname + '?v=' + Date.now() + location.hash; };
+      }
+    }catch(e){/* offline or file:// — ignore */}
+  }, 4000);
   let kids = false;
   try{ kids = localStorage.getItem('kinetic-kids') === '1'; }catch(e){}
   document.getElementById('kidsBtn').addEventListener('click', () => setKids(!document.body.classList.contains('kids')));
