@@ -6,7 +6,7 @@ const SEED_PROJECTS = [
   { id: "qdev", name: "Quixera Dev", slug: "QuixeraDev", dir: "QuixeraDev",
     hosts: ["facility-dev.quixeraos.com"] },
   { id: "quat", name: "Quixera UAT", slug: "QuixeraUAT", dir: "QuixeraUAT",
-    hosts: ["facility.quixeraos.com"] }
+    hosts: ["facility-uat.quixeraos.com"] },
 ];
 const DEFAULT_REPO = "apatel85/Dashboards";
 const BRANCH = "main";
@@ -17,6 +17,14 @@ chrome.runtime.onInstalled.addListener(async () => {
   const cur = await chrome.storage.local.get(["projects", "ghRepo"]);
   const patch = {};
   if (!cur.projects) patch.projects = SEED_PROJECTS;
+  else {
+    // v3.1.1 migration: the seeded UAT host was wrong (facility.quixeraos.com
+    // is not UAT). Patch existing installs that still carry the old value.
+    const fixed = cur.projects.map(p =>
+      (p.id === "quat" && (p.hosts || []).join(",") === "facility.quixeraos.com")
+        ? { ...p, hosts: ["facility-uat.quixeraos.com"] } : p);
+    if (JSON.stringify(fixed) !== JSON.stringify(cur.projects)) patch.projects = fixed;
+  }
   if (!cur.ghRepo) patch.ghRepo = DEFAULT_REPO;
   if (Object.keys(patch).length) await chrome.storage.local.set(patch);
 });
