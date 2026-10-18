@@ -21,6 +21,13 @@ Live at **https://apatel85.github.io/Dashboards/KineticMusic/**
   (major / minor / pentatonic / dorian / blues), **MIDI export** (open the
   song in any DAW), and **share links** (song encoded in the URL hash —
   anyone opening the link replays your composition).
+- **🎤 Karaoke mode** — tap Mic, open the Lyric Studio and hit Sing: the app
+  plays the melody and shows each syllable big on stage while a real human
+  (you or the kids!) sings along into the microphone.
+- **⬇ Audio download** — tap Audio to capture everything (instruments +
+  synth voice + mic) and download it as a `.webm` song file.
+- **🧒 Kids mode** — bigger buttons, bigger note shapes, giant karaoke
+  words, friendlier colors. Persists across visits.
 
 ## Tech
 

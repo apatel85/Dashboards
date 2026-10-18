@@ -79,6 +79,25 @@
     border:1px solid var(--border);color:var(--text);font-size:12px;padding:8px 16px;border-radius:999px;opacity:0;
     transition:all .25s;pointer-events:none;z-index:50;max-width:90vw;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #karaoke{position:absolute;left:50%;top:36%;transform:translate(-50%,-50%) scale(.92);font-size:clamp(44px,10vw,104px);
+    font-weight:800;color:#fff;text-shadow:0 4px 34px rgba(110,231,183,.55);opacity:0;transition:opacity .18s,transform .18s;
+    pointer-events:none;z-index:14;text-align:center;max-width:92vw;line-height:1.1}
+  #karaoke.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  /* Kid-friendly mode: bigger touch targets, friendlier type */
+  body.kids{--accent:#ffd166}
+  body.kids .brand{font-size:14px}
+  body.kids button{font-size:14px;padding:9px 16px}
+  body.kids .btn-ghost{padding:9px 15px;font-size:14px}
+  body.kids .control-inline{font-size:14px}
+  body.kids select{font-size:14px;padding:8px 12px}
+  body.kids input[type="range"]{width:110px;height:6px}
+  body.kids input[type="range"]::-webkit-slider-thumb{width:18px;height:18px}
+  body.kids .stage-hint{font-size:13px}
+  body.kids .lyric-drawer .field label{font-size:12px}
+  body.kids textarea{font-size:15px}
+  body.kids .btn-primary{font-size:15px;padding:13px 16px}
+  body.kids #kidsBtn{background:rgba(255,209,102,.16);border-color:rgba(255,209,102,.5);color:var(--accent)}
+  body.kids #karaoke{color:var(--accent);text-shadow:0 4px 34px rgba(255,209,102,.5)}
   @media (max-width:760px){
     header{gap:8px;padding:8px 10px}
     .top-controls{margin-left:0}
@@ -117,6 +136,9 @@
     </div>
     <button class="btn-ghost" id="metroBtn" title="Metronome">𝅘𝅥 Metro</button>
     <button class="btn-ghost" id="recBtn" title="Record performance">● Rec</button>
+    <button class="btn-ghost" id="micBtn" title="Sing along with the microphone (karaoke)">🎤 Mic</button>
+    <button class="btn-ghost" id="audioRecBtn" title="Record everything and download as an audio file">⬇ Audio</button>
+    <button class="btn-ghost" id="kidsBtn" title="Kid-friendly big-button mode">🧒 Kids</button>
     <button class="btn-ghost" id="toggleLyricBtn" style="border-color:rgba(110,231,183,.4);color:var(--accent)">Lyric-to-Song Studio</button>
   </div>
 </header>
@@ -124,6 +146,7 @@
 <main>
   <canvas id="stageCanvas"></canvas>
   <div class="stage-hint">Drag across shapes to strum · drag shapes to rearrange · orbs pluck on contact</div>
+  <div id="karaoke" aria-live="polite"></div>
   <div class="orb-controls">
     <button class="btn-ghost" id="addOrbBtn">+ Orb</button>
     <button class="btn-ghost" id="removeOrbBtn">− Orb</button>
@@ -483,6 +506,20 @@ function singSyllable(syllable, midi, archetypeKey, blend, octaveMult, durSec, d
   o1.connect(F1); o2.connect(F1); o1.connect(F2); o2.connect(F2);
   F1.connect(g); F2.connect(g); g.connect(masterGain);
   [o1,o2,vib].forEach(o=>{ o.start(now); o.stop(now + durSec); });
+
+  // Breath: a whisper of filtered noise so vowels feel sung, not beeped
+  const nbLen = Math.max(1, Math.floor(audioCtx.sampleRate * durSec));
+  const nb = audioCtx.createBuffer(1, nbLen, audioCtx.sampleRate);
+  const nd = nb.getChannelData(0);
+  for(let i=0;i<nbLen;i++) nd[i] = (Math.random()*2-1) * 0.5;
+  const ns = audioCtx.createBufferSource(); ns.buffer = nb;
+  const nf = audioCtx.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 2800; nf.Q.value = 0.8;
+  const ng = audioCtx.createGain();
+  ng.gain.setValueAtTime(0.0001, now);
+  ng.gain.linearRampToValueAtTime(0.022, now + 0.06);
+  ng.gain.exponentialRampToValueAtTime(0.0008, now + durSec*0.95);
+  ns.connect(nf); nf.connect(ng); ng.connect(masterGain);
+  ns.start(now); ns.stop(now + durSec);
   return baseFreq;
 }
 
@@ -544,7 +581,7 @@ function drawShapePath(c, kind, x, y, r){
 }
 function shapeContains(s, x, y){
   const dx = x - s.x, dy = y - s.y;
-  return Math.hypot(dx, dy) <= s.r * 1.25;
+  return Math.hypot(dx, dy) <= sRadius(s) * 1.25;
 }
 function addOrb(){
   const a = Math.random()*Math.PI*2;
@@ -634,13 +671,14 @@ function stageLoop(t){
     o.vx *= want/cur; o.vy *= want/cur;
 
     shapes.forEach((s, si) => {
+      const rr = sRadius(s);
       const d = Math.hypot(o.x-s.x, o.y-s.y);
-      if(d < s.r + o.r + 4){
+      if(d < rr + o.r + 4){
         // bounce
         const nx = (o.x-s.x)/(d||1), ny = (o.y-s.y)/(d||1);
         const dot = o.vx*nx + o.vy*ny;
         o.vx -= 2*dot*nx; o.vy -= 2*dot*ny;
-        o.x = s.x + nx*(s.r+o.r+5); o.y = s.y + ny*(s.r+o.r+5);
+        o.x = s.x + nx*(rr+o.r+5); o.y = s.y + ny*(rr+o.r+5);
         const last = o.lastHit.get(si) || 0;
         if(nowMs - last > 420){ o.lastHit.set(si, nowMs); pluckShape(si, 0.85); }
       }
@@ -661,12 +699,13 @@ function stageLoop(t){
   shapes.forEach((s, i) => {
     s.hit = Math.max(0, s.hit - dt*2.4);
     const pulse = s.hit;
+    const R = sRadius(s);
     sctx.save();
     if(pulse > 0){ sctx.shadowColor = color; sctx.shadowBlur = 26*pulse; }
     sctx.lineWidth = 2 + pulse*2.5;
     sctx.strokeStyle = color;
     sctx.fillStyle = `rgba(255,255,255,${0.03 + pulse*0.22})`;
-    drawShapePath(sctx, s.kind, s.x, s.y, s.r + pulse*7);
+    drawShapePath(sctx, s.kind, s.x, s.y, R + pulse*7);
     sctx.fill(); sctx.stroke();
     sctx.restore();
     // note label
@@ -1010,6 +1049,7 @@ function stopLyricPlayback(){
   state.lyricTimers.forEach(clearTimeout);
   state.lyricTimers = [];
   state.lyricPlaying = false;
+  hideKaraoke();
   const btn = document.getElementById('playLyricsBtn');
   btn.classList.remove('playing');
   btn.innerHTML = '▶ Sing lyrics → sheet music';
@@ -1047,6 +1087,7 @@ function playLyrics(){
       addSheetNote({ midi, inst: state.instrument, degree, lyric: syl, beats: beatsPerSyl });
       disp.textContent = '♪ ' + syl;
       noteDisp.textContent = midiName(midi);
+      showKaraoke(syl);
       if(state.recording) state.recEvents.push({ t:(performance.now()-state.recStart)/1000, degree, inst:state.instrument, lyric:syl });
     }, t*1000);
     state.lyricTimers.push(id);
@@ -1173,6 +1214,130 @@ function init(){
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
+</script>
+<script>
+"use strict";
+/* ---------- 13. KIDS MODE, KARAOKE MIC, AUDIO DOWNLOAD ---------- */
+
+// Shape radius grows in kids mode so little fingers can hit notes.
+function sRadius(s){
+  return s.r * (document.body.classList.contains('kids') ? 1.35 : 1);
+}
+
+// Karaoke banner: shows the currently sung syllable nice and big.
+function showKaraoke(syl){
+  if(!micOn && !document.body.classList.contains('kids')) return;
+  const k = document.getElementById('karaoke');
+  k.textContent = '♪ ' + syl + ' ♪';
+  k.classList.remove('show');
+  void k.offsetWidth; // restart the pop animation
+  k.classList.add('show');
+}
+function hideKaraoke(){
+  document.getElementById('karaoke').classList.remove('show');
+}
+
+// ---- Kids mode ----
+function setKids(on){
+  document.body.classList.toggle('kids', on);
+  try{ localStorage.setItem('kinetic-kids', on ? '1' : '0'); }catch(e){}
+  const b = document.getElementById('kidsBtn');
+  b.classList.toggle('active', on);
+  if(on) toast('Kids mode — big buttons, big shapes, big sing-along words');
+}
+
+// ---- Microphone karaoke ----
+let micOn = false, micStream = null, micNodes = [];
+async function toggleMic(){
+  initAudio();
+  const btn = document.getElementById('micBtn');
+  if(micOn){
+    micNodes.forEach(n => { try{ n.disconnect(); }catch(e){} });
+    micNodes = [];
+    if(micStream){ micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+    micOn = false;
+    btn.classList.remove('active');
+    hideKaraoke();
+    toast('Mic off');
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    toast('This browser cannot access the microphone');
+    return;
+  }
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+    const src = audioCtx.createMediaStreamSource(micStream);
+    const mg = audioCtx.createGain(); mg.gain.value = 1.1;
+    src.connect(mg); mg.connect(masterGain); // mic joins the mix (and the recording)
+    micNodes = [src, mg];
+    micOn = true;
+    btn.classList.add('active');
+    toast('Mic on — sing along! Open the Lyric Studio and hit Sing.');
+  }catch(e){
+    toast('Microphone blocked — allow mic access, then tap 🎤 again');
+  }
+}
+
+// ---- Audio capture + download ----
+let mediaDest = null, audioRec = null, audioChunks = [];
+function ensureMediaDest(){
+  initAudio();
+  if(!mediaDest){
+    mediaDest = audioCtx.createMediaStreamDestination();
+    masterGain.connect(mediaDest); // everything you hear gets captured
+  }
+  return mediaDest;
+}
+function toggleAudioRecord(){
+  ensureMediaDest();
+  const btn = document.getElementById('audioRecBtn');
+  if(audioRec && audioRec.state !== 'inactive'){ stopAudioRecord(); return; }
+  if(typeof MediaRecorder === 'undefined'){
+    toast('Audio recording is not supported in this browser');
+    return;
+  }
+  audioChunks = [];
+  const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+  try{ audioRec = new MediaRecorder(mediaDest.stream, { mimeType: mime }); }
+  catch(e){ toast('Could not start audio recording'); return; }
+  audioRec.ondataavailable = e => { if(e.data && e.data.size) audioChunks.push(e.data); };
+  audioRec.onstop = () => {
+    btn.classList.remove('rec-on');
+    btn.innerHTML = '⬇ Audio';
+    if(!audioChunks.length){ toast('Nothing was recorded'); return; }
+    const blob = new Blob(audioChunks, { type: 'audio/webm' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'kinetic-song.webm';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    toast('Song downloaded — play it anywhere 🎧');
+  };
+  audioRec.start(250);
+  btn.classList.add('rec-on');
+  btn.innerHTML = '■ Stop & save';
+  toast('Recording audio — play, sing, then tap again to download');
+}
+function stopAudioRecord(){
+  if(audioRec && audioRec.state !== 'inactive') audioRec.stop();
+  else {
+    const btn = document.getElementById('audioRecBtn');
+    btn.classList.remove('rec-on'); btn.innerHTML = '⬇ Audio';
+  }
+}
+
+// ---- Wire up ----
+(function initExtras(){
+  let kids = false;
+  try{ kids = localStorage.getItem('kinetic-kids') === '1'; }catch(e){}
+  document.getElementById('kidsBtn').addEventListener('click', () => setKids(!document.body.classList.contains('kids')));
+  document.getElementById('micBtn').addEventListener('click', toggleMic);
+  document.getElementById('audioRecBtn').addEventListener('click', toggleAudioRecord);
+  if(kids) setKids(true);
+})();
 </script>
 </body>
 </html>
