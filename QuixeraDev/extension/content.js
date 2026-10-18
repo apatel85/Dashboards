@@ -33,7 +33,7 @@
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === "openForm") openForm();
     else if (msg.type === "shotsUpdated") refreshShots();
-    else if (msg.type === "clipReady") { clip = { secs: msg.secs, kb: msg.kb }; renderClip(); }
+    else if (msg.type === "clipReady") { clip = { secs: msg.secs, kb: msg.kb }; renderClip(); updateMinibar(); }
   });
 
   function labelFor(el) {
@@ -45,7 +45,7 @@
 
   function activate() {
     document.addEventListener("click", (e) => {
-      if (e.target.closest("#qa-overlay,#qa-flag-btn")) return;
+      if (e.target.closest("#qa-overlay,#qa-flag-btn,#qa-minibar")) return;
       const el = e.target.closest("button, a, input, select, textarea, [role=button], [onclick]");
       trail.push({ step: trail.length + 1, page: location.pathname + location.search,
                    clicked: labelFor(el || e.target) });
@@ -82,27 +82,82 @@
     });
   }
 
-  // v3.1.1: single-flight capture with quota retry. The form auto-captures on
-  // open, so a quick manual tap used to fire a second capture inside Chrome's
-  // quota window ("This request exceeds the MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND
-  // quota") while the first failure stayed invisible.
+  // v3.2: Snipping-Tool-style capture. Tapping capture/record minimizes the form
+  // into a small floating bar, so screenshots come out clean (no overlay) and
+  // the page stays usable while framing the shot.
   let capturing = false;
-  function doCapture() {
-    if (capturing) return;
+  function setStatus(t) {
+    const s = $("qa-status"); if (s) s.textContent = t;
+    const m = $("qa-mb-status"); if (m) m.textContent = t;
+  }
+  function doCapture(onDone) {
+    if (capturing) { if (onDone) onDone(false); return; }
     capturing = true;
-    const btn = $("qa-addshot");
-    if (btn) btn.disabled = true;
-    $("qa-status").textContent = "Capturing…";
+    setStatus("Capturing…");
     chrome.runtime.sendMessage({ type: "captureShot" }, (r) => {
       capturing = false;
-      const btn2 = $("qa-addshot");
-      if (btn2) btn2.disabled = false;
-      if (r && r.ok) { $("qa-status").textContent = ""; refreshShots(); }
-      else if (r && r.error && /exceeds/i.test(r.error)) {
-        $("qa-status").textContent = "Capture is busy — retrying…";
-        setTimeout(doCapture, 1500);
+      if (r && r.ok) {
+        setStatus(""); refreshShots(); updateMinibar();
+        if (onDone) onDone(true);
+      } else if (r && r.error && /exceeds/i.test(r.error)) {
+        setStatus("Capture is busy — retrying…");
+        setTimeout(() => doCapture(onDone), 1500);
+      } else {
+        setStatus("❌ " + ((r && r.error) || "capture failed"));
+        if (onDone) onDone(false);
       }
-      else $("qa-status").textContent = "❌ " + ((r && r.error) || "capture failed");
+    });
+  }
+
+  function inCaptureMode() { return !!$("qa-minibar"); }
+  function enterCaptureMode() {
+    if (inCaptureMode()) return;
+    const ov = $("qa-overlay"), flag = $("qa-flag-btn");
+    if (ov) ov.style.display = "none";
+    if (flag) flag.style.display = "none";
+    const bar = document.createElement("div");
+    bar.id = "qa-minibar";
+    bar.innerHTML =
+      '<span class="qa-mb-title">QA</span>' +
+      '<button id="qa-mb-shot" title="Capture screenshot">📷</button>' +
+      '<button id="qa-mb-rec" title="Record a clip (up to 60s)">⏺</button>' +
+      '<button id="qa-mb-x" title="Back to the form">✕</button>' +
+      '<span id="qa-mb-status"></span>';
+    document.body.appendChild(bar);
+    updateMinibar();
+    $("qa-mb-shot").addEventListener("click", (e) => { e.stopPropagation(); doCapture(); });
+    $("qa-mb-rec").addEventListener("click", (e) => {
+      e.stopPropagation();
+      chrome.runtime.sendMessage({ type: "startRecord" });
+      const rb = $("qa-mb-rec");
+      if (rb) { rb.classList.add("live"); rb.title = "Recording… finish in the recorder tab, then come back"; }
+      setStatus("Recording… finish in the recorder tab.");
+    });
+    $("qa-mb-x").addEventListener("click", (e) => { e.stopPropagation(); exitCaptureMode(); });
+    document.addEventListener("keydown", mbEscKey, true);
+  }
+  function mbEscKey(e) {
+    if (e.key === "Escape" && inCaptureMode()) { e.stopPropagation(); exitCaptureMode(); }
+  }
+  function exitCaptureMode() {
+    const bar = $("qa-minibar");
+    if (!bar) return;
+    bar.remove();
+    document.removeEventListener("keydown", mbEscKey, true);
+    const ov = $("qa-overlay"), flag = $("qa-flag-btn");
+    if (ov) ov.style.display = "";
+    if (flag) flag.style.display = "";
+    refreshShots();
+  }
+  function updateMinibar() {
+    if (!inCaptureMode()) return;
+    chrome.runtime.sendMessage({ type: "getPending" }, (r) => {
+      if (chrome.runtime.lastError || !r || !inCaptureMode()) return;
+      const t = [];
+      if (r.shots) t.push("📷 " + r.shots);
+      if (r.clip) t.push("🎬 " + r.clip.secs + "s");
+      const st = $("qa-mb-status");
+      if (st && !capturing) st.textContent = t.join(" · ");
     });
   }
 
@@ -120,7 +175,7 @@
     wrap.querySelectorAll("[data-x]").forEach(b => b.addEventListener("click", () => {
       chrome.runtime.sendMessage({ type: "removeShot", index: Number(b.dataset.x) }, refreshShots);
     }));
-    $("qa-addshot").addEventListener("click", doCapture);
+    $("qa-addshot").addEventListener("click", () => enterCaptureMode());
   }
 
   function renderClip() {
@@ -134,18 +189,20 @@
       });
     } else {
       wrap.innerHTML = `<button id="qa-rec" type="button">⏺ Record a clip (up to 60s)</button>
-        <span class="qa-hint">Opens a recorder tab — do the steps there, then Stop.</span>`;
-      $("qa-rec").addEventListener("click", () => {
-        chrome.runtime.sendMessage({ type: "startRecord" });
-        wrap.innerHTML = `<span class="qa-chip rec">● Recording… finish in the recorder tab, then come back here.</span>`;
-      });
+        <span class="qa-hint">Minimizes into a small bar — capture or record, then ✕ to return.</span>`;
+      $("qa-rec").addEventListener("click", () => enterCaptureMode());
     }
   }
 
   function openForm() {
     if ($("qa-overlay")) return;
-    // fresh filing state, then auto-capture first screenshot (errors shown, not swallowed)
-    chrome.runtime.sendMessage({ type: "resetPending" }, () => { doCapture(); });
+    // fresh filing state, then auto-capture a clean first screenshot
+    // (overlay hidden so the form doesn't appear in its own screenshot)
+    chrome.runtime.sendMessage({ type: "resetPending" }, () => {
+      const ov0 = $("qa-overlay");
+      if (ov0) ov0.style.display = "none";
+      doCapture(() => { if (ov0) ov0.style.display = ""; });
+    });
     trail = trail.slice(); // keep trail across filings in this page
     const projOpts = allProjects.map(p =>
       `<option value="${esc(p.id)}" ${p.id === project.id ? "selected" : ""}>${esc(p.name)}</option>`).join("");
@@ -261,7 +318,20 @@
     @media (max-width:520px){
       #qa-overlay{padding:0;align-items:stretch}
       #qa-card{width:100%;border-radius:0;max-height:100vh}
-    }`;
+    }
+    #qa-minibar{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:2147483647;
+      display:flex;align-items:center;gap:6px;background:#1f2937;color:#fff;border-radius:999px;
+      padding:8px 14px;box-shadow:0 6px 20px rgba(0,0,0,.45);
+      font-family:system-ui,-apple-system,sans-serif}
+    #qa-minibar button{width:44px;height:44px;border-radius:50%;border:none;background:#374151;color:#fff;
+      font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+    #qa-minibar button:active{background:#4b5563}
+    #qa-mb-x{font-size:16px}
+    #qa-mb-rec.live{background:#c0392b;animation:qapulse 1.2s infinite}
+    @keyframes qapulse{50%{opacity:.55}}
+    .qa-mb-title{font-size:12px;font-weight:800;letter-spacing:.5px;color:#9ca3af;padding:0 4px}
+    #qa-mb-status{font-size:12px;color:#d1d5db;max-width:200px;white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis}`;
   const style = document.createElement("style");
   style.textContent = css;
   document.documentElement.appendChild(style);
