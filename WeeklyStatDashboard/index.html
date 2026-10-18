@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Weekly Stat Dashboard — NFL Week 6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f4f5f2; --surface:#ffffff; --surface-2:#eceee8;
+    --ink:#17201a; --ink-2:#4c584f; --ink-3:#7d8a80;
+    --line:#d8dcd2;
+    --accent:#1e6b3c; --accent-ink:#ffffff;
+    --hot:#b3540e; --bar:#2e8b4f; --bar-track:#e2e7de;
+    --chip:#e7eae2; --chip-on:#17201a; --chip-on-ink:#f4f5f2;
+    --warn-bg:#fdf0e2; --warn-ink:#8a4a08; --warn-line:#eec894;
+    --shadow:0 1px 2px rgba(23,32,26,.06),0 4px 14px rgba(23,32,26,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#101511; --surface:#181e19; --surface-2:#1f2720;
+      --ink:#e8ede6; --ink-2:#a9b5aa; --ink-3:#7c8a7e;
+      --line:#2c362d;
+      --accent:#3fae66; --accent-ink:#0c130d;
+      --hot:#e08a3c; --bar:#3fae66; --bar-track:#263026;
+      --chip:#232b24; --chip-on:#e8ede6; --chip-on-ink:#101511;
+      --warn-bg:#2e2113; --warn-ink:#eda855; --warn-line:#5c431d;
+      --shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.25);
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:16px; line-height:1.45;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:20px 16px 56px}
+
+  /* ---------- header ---------- */
+  header.top{padding:6px 0 4px}
+  .weekline{
+    font-family:"Barlow Condensed",sans-serif; font-weight:600;
+    letter-spacing:.14em; text-transform:uppercase; font-size:13px; color:var(--accent);
+  }
+  h1{
+    font-family:"Barlow Condensed",sans-serif; font-weight:700;
+    font-size:clamp(34px,6vw,52px); line-height:.98; margin:4px 0 8px; letter-spacing:.01em;
+  }
+  .sub{color:var(--ink-2); max-width:66ch; margin:0 0 6px}
+  .sub b{color:var(--ink)}
+  .meta-row{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--ink-3);font-size:13.5px;margin-top:8px}
+  .meta-row span b{color:var(--ink-2);font-weight:600}
+
+  /* ---------- controls ---------- */
+  .controls{
+    position:sticky; top:0; z-index:20; margin:18px -16px 0; padding:12px 16px;
+    background:color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .controls-inner{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+  .search-row{display:flex;gap:10px;align-items:center}
+  .search{
+    flex:1; display:flex; align-items:center; gap:8px;
+    background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:0 12px;
+  }
+  .search svg{flex:none;color:var(--ink-3)}
+  .search input{
+    flex:1; min-width:0; border:0; background:transparent; color:var(--ink);
+    font:inherit; font-size:16px; padding:10px 0; outline:none;
+  }
+  .dl{
+    flex:none; display:inline-flex; align-items:center; gap:7px;
+    background:var(--accent); color:var(--accent-ink); border:0; border-radius:10px;
+    font:inherit; font-weight:600; font-size:14.5px; padding:11px 14px; cursor:pointer;
+  }
+  .dl:active{transform:translateY(1px)}
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .chip-row .sep{width:1px;height:20px;background:var(--line);margin:0 2px}
+  .chip{
+    border:1px solid var(--line); background:var(--chip); color:var(--ink);
+    font:inherit; font-size:14px; font-weight:600; padding:6px 13px; border-radius:999px; cursor:pointer;
+  }
+  .chip[aria-pressed="true"]{background:var(--chip-on); color:var(--chip-on-ink); border-color:var(--chip-on)}
+  .chip-label{font-size:12.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+
+  /* ---------- boards ---------- */
+  section.board{margin-top:30px}
+  .board-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .board-head h2{
+    font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:27px; margin:0; letter-spacing:.01em;
+  }
+  .board-head .rule{font-size:13.5px;color:var(--ink-3)}
+  .board-note{color:var(--ink-2);font-size:14.5px;margin:0 0 12px;max-width:72ch}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .row{
+    display:grid; grid-template-columns:30px minmax(0,1fr) auto 118px;
+    gap:6px 14px; align-items:center; padding:12px 16px;
+  }
+  .row + .row{border-top:1px solid var(--line)}
+  .rank{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:17px;color:var(--ink-3);text-align:right}
+  .who{min-width:0}
+  .name{font-weight:700;font-size:16.5px;line-height:1.2}
+  .name .qbtag{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--accent);border:1px solid var(--accent);border-radius:5px;padding:1px 5px;vertical-align:2px;margin-left:6px}
+  .detail{color:var(--ink-2);font-size:13.5px;margin-top:2px}
+  .detail b{color:var(--ink);font-weight:600}
+  .flag{
+    display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.03em;
+    background:var(--warn-bg);color:var(--warn-ink);border:1px solid var(--warn-line);
+    border-radius:5px;padding:0 5px;margin-left:6px;vertical-align:1px;
+  }
+  .maxbox{text-align:right}
+  .maxnum{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:30px;line-height:1}
+  .maxlbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  .prob{min-width:0}
+  .prob-pct{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:22px;line-height:1;text-align:right}
+  .prob-lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:600;text-align:right;margin-bottom:5px}
+  .bar{height:6px;border-radius:3px;background:var(--bar-track);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--bar);border-radius:3px}
+  .lam{font-size:12.5px;color:var(--ink-3);text-align:right;margin-top:4px}
+  .near{
+    margin-top:10px;font-size:14px;color:var(--ink-2);
+    background:var(--surface-2);border:1px dashed var(--line);border-radius:10px;padding:9px 14px;
+  }
+  .near b{color:var(--ink)}
+  .empty{
+    display:none;margin-top:30px;text-align:center;color:var(--ink-2);
+    background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:28px 16px;
+  }
+
+  /* ---------- info sections ---------- */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px}
+  .panel h3{font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:700;margin:0 0 10px}
+  .panel h4{font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:14px 0 6px;font-weight:700}
+  .panel h4:first-of-type{margin-top:0}
+  .deflist{list-style:none;margin:0;padding:0}
+  .deflist li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line);font-size:15px}
+  .deflist li:last-child{border-bottom:0}
+  .deflist .tm{font-weight:700}
+  .deflist .vl{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:17px;color:var(--ink-2)}
+  .inj{list-style:none;margin:0;padding:0}
+  .inj li{padding:7px 0;border-bottom:1px solid var(--line);font-size:15px}
+  .inj li:last-child{border-bottom:0}
+  .inj b{font-weight:700}
+  .inj .st{font-weight:700;color:var(--hot)}
+  section.info{margin-top:34px}
+  section.info > h2{font-family:"Barlow Condensed",sans-serif;font-size:27px;font-weight:700;margin:0 0 4px}
+  .method p{margin:0 0 10px;color:var(--ink-2);font-size:15px;max-width:76ch}
+  .method p b{color:var(--ink)}
+  .method code{
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13.5px;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--ink);
+  }
+  .bt-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0 4px}
+  .bt{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+  .bt .n{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:30px;line-height:1}
+  .bt .d{font-size:13px;color:var(--ink-2);margin-top:4px}
+  footer{margin-top:36px;border-top:1px solid var(--line);padding-top:14px;color:var(--ink-3);font-size:13.5px}
+  footer p{margin:0 0 6px;max-width:78ch}
+
+  @media (max-width:680px){
+    .row{grid-template-columns:24px minmax(0,1fr) auto;grid-template-rows:auto auto}
+    .prob{grid-column:2 / -1;display:flex;align-items:center;gap:10px}
+    .prob-lbl{display:none}
+    .prob-pct{font-size:19px;order:2}
+    .bar{flex:1;order:1}
+    .lam{order:3;margin-top:0}
+    .maxnum{font-size:26px}
+    .grid2{grid-template-columns:1fr}
+    .bt-stats{grid-template-columns:1fr}
+    .dl span.lbl{display:none}
+    .dl{padding:11px 12px}
+  }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="weekline">NFL · Week 6 · Sun–Mon, Oct 18–19, 2026</div>
+    <h1>Weekly Stat Dashboard</h1>
+    <p class="sub">Matchup-adjusted stat boards for this week's slate. Every probability blends a player's
+      own per-game production with what the defense he's facing actually surrenders — then gets
+      <b>calibrated by the Weeks 2–5 backtest</b>, so small samples and extreme matchups no longer run hot.</p>
+    <div class="meta-row">
+      <span><b>Byes:</b> CIN · DET · MIA · MIN</span>
+      <span><b>Data through:</b> Week 5</span>
+      <span><b>Injuries verified:</b> Sun Oct 18 AM</span>
+      <span><b>Model:</b> backtest-calibrated (see below)</span>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="controls-inner">
+      <div class="search-row">
+        <label class="search">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
+          <input id="q" type="search" placeholder="Search a player or team…" aria-label="Search players or teams" />
+        </label>
+        <button class="dl" id="download" type="button" title="Download this page as a single HTML file">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m6 11 6 6 6-6"/><path d="M4 21h16"/></svg>
+          <span class="lbl">Download .html</span>
+        </button>
+      </div>
+      <div class="chip-row" role="group" aria-label="Board filter">
+        <button class="chip" data-board="all" aria-pressed="true">All boards</button>
+        <button class="chip" data-board="rush" aria-pressed="false">60+ Rushing</button>
+        <button class="chip" data-board="rec" aria-pressed="false">60+ Receiving</button>
+        <button class="chip" data-board="td1" aria-pressed="false">1+ TD</button>
+        <button class="chip" data-board="td2" aria-pressed="false">2+ TD</button>
+        <span class="sep" aria-hidden="true"></span>
+        <span class="chip-label">Pos</span>
+        <button class="chip" data-pos="all" aria-pressed="true">All</button>
+        <button class="chip" data-pos="QB" aria-pressed="false">QB</button>
+        <button class="chip" data-pos="RB" aria-pressed="false">RB</button>
+        <button class="chip" data-pos="WR" aria-pressed="false">WR</button>
+        <button class="chip" data-pos="TE" aria-pressed="false">TE</button>
+      </div>
+    </div>
+  </div>
+
+  <main id="boards"></main>
+  <div class="empty" id="empty">No players match that search and filter. Clear the search or pick a different position.</div>
+
+  <section class="info" id="defenses">
+    <h2>Defensive extremes this week</h2>
+    <p class="board-note">Season-to-date yards and TDs allowed per game (through Week 5) for the defenses in action. These are the numbers driving every matchup adjustment above.</p>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Run defense</h3>
+        <h4>Softest — most rush yards allowed</h4>
+        <ul class="deflist">
+          <li><span class="tm">DAL Cowboys</span><span class="vl">168.4 /g</span></li>
+          <li><span class="tm">CAR Panthers</span><span class="vl">156.5 /g</span></li>
+          <li><span class="tm">NO Saints</span><span class="vl">148.8 /g</span></li>
+          <li><span class="tm">LV Raiders</span><span class="vl">140.6 /g</span></li>
+        </ul>
+        <h4>Toughest — fewest rush yards allowed</h4>
+        <ul class="deflist">
+          <li><span class="tm">JAX Jaguars</span><span class="vl">63.8 /g</span></li>
+          <li><span class="tm">TB Buccaneers</span><span class="vl">72.8 /g</span></li>
+          <li><span class="tm">HOU Texans</span><span class="vl">78.4 /g</span></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Pass defense</h3>
+        <h4>Softest — most pass yards allowed</h4>
+        <ul class="deflist">
+          <li><span class="tm">BUF Bills</span><span class="vl">280.4 /g</span></li>
+          <li><span class="tm">JAX Jaguars</span><span class="vl">266.2 /g</span></li>
+          <li><span class="tm">WAS Commanders</span><span class="vl">255.0 /g</span></li>
+        </ul>
+        <h4>Toughest — fewest pass yards allowed</h4>
+        <ul class="deflist">
+          <li><span class="tm">LA Rams</span><span class="vl">156.8 /g</span></li>
+          <li><span class="tm">NY Jets</span><span class="vl">175.0 /g</span></li>
+          <li><span class="tm">GB Packers</span><span class="vl">181.0 /g</span></li>
+        </ul>
+        <h4>Touchdown extremes</h4>
+        <ul class="deflist">
+          <li><span>WAS &amp; ARI — pass TDs allowed</span><span class="vl">2.80 /g</span></li>
+          <li><span>NO — rush TDs allowed</span><span class="vl">2.00 /g</span></li>
+          <li><span>CLE — rush TDs allowed (fades Henry)</span><span class="vl">0.20 /g</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="info" id="injuries">
+    <h2>Injury watch</h2>
+    <p class="board-note">Verified Sunday morning, Oct 18. Players ruled out, doubtful, or on IR are already excluded from every board; questionable players are flagged on their rows.</p>
+    <div class="panel">
+      <ul class="inj">
+        <li><b>Jalen Hurts</b> — <span class="st">IR</span> (blood clot, out at least 4 games). Tanner McKee starts for PHI vs CAR — DeVonta Smith's number carries backup-QB risk.</li>
+        <li><b>Lamar Jackson</b> — <span class="st">OUT</span> (ankle). Tyler Huntley starts for BAL @ CLE — Zay Flowers' number carries backup-QB risk.</li>
+        <li><b>Baker Mayfield</b> — <span class="st">OUT</span> (thumb). Jalon Daniels starts for TB vs PIT.</li>
+        <li><b>Jaxson Dart</b> — <span class="st">out for the season</span> (knee). Jameis Winston starts for NYG vs NO.</li>
+        <li><b>Breece Hall</b> — <span class="st">OUT</span> (quad). Braelon Allen starts for NYJ @ NE.</li>
+        <li><b>Jeremiyah Love</b> — <span class="st">OUT</span> (ankle). Tyler Allgeier starts for ARI @ LAR.</li>
+        <li><b>Saquon Barkley</b> — <span class="st">OUT</span> (hamstring); <b>Will Shipley</b> — <span class="st">IR</span> (plantar fascia). PHI backfield is down to thin samples.</li>
+        <li><b>A.J. Brown</b> — activated off IR, expected to play but eased in; one-game sample, so he doesn't clear any board.</li>
+        <li><b>Chris Olave</b> — questionable (illness), expected to play per Rapoport. <b>Mike Evans</b> — questionable (ribs/Achilles). <b>Tyler Warren</b> — questionable (groin), a game-time decision.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="info method" id="method">
+    <h2>How the numbers are built — and backtested</h2>
+    <p><b>Expected yards.</b> Each player's per-game rate is first regressed toward his position's average
+       (<code>blended = (games × rate + 2 × position avg) ÷ (games + 2)</code>), then scaled by this week's matchup with the
+       multiplier shrunk halfway back to neutral (<code>mult′ = 1 + 0.5 × (opp allowed ÷ league avg − 1)</code>).
+       League baselines through Week 5: 112.0 rush yards and 219.9 pass yards allowed per game.</p>
+    <p><b>Comfortable max</b> is that expected number itself — his average outcome in <i>this</i> game against <i>this</i> defense,
+       rounded to whole yards. It is not a season ceiling or a best-case tail. <b>P(60+)</b> uses a normal approximation with
+       σ = 0.65 × expected yards; "likely" means P ≥ 55%.</p>
+    <p><b>Touchdowns count physical scorers only</b> — a QB's passing TDs never count; a QB who runs it in does (Josh Allen is the
+       only QB on the TD boards, on rushing TDs alone). TD rates get stronger regression (weight 4) than yardage rates, and a player
+       needs at least 3 games of data to make the 1+ TD board. <code>P(1+) = 1 − e^(−λ)</code>, <code>P(2+) = 1 − e^(−λ)(1 + λ)</code>;
+       "likely 1+ TD" means P ≥ 50%. Every row shows its games sample — thin samples are the main reason the raw model used to overpromise.</p>
+    <div class="bt-stats">
+      <div class="bt"><div class="n">299</div><div class="d">player-weeks backtested (Weeks 2–5, strict no-lookahead — each week predicted only from data available before it)</div></div>
+      <div class="bt"><div class="n">−10% / −17%</div><div class="d">prediction error (Brier) cut on the rushing and TD boards by the two calibration tweaks vs the raw model</div></div>
+      <div class="bt"><div class="n">50% → 60%</div><div class="d">"likely" flag quality on the rushing board after calibration; the comfortable-max definition itself tested unbiased (average miss 3–7 yards) and was left unchanged</div></div>
+    </div>
+    <p><b>Honest limits.</b> The TD board was the weakest output in the backtest (its "likely" flags hit 36% against 74% predicted
+       before calibration) — that's why it gets the strictest treatment here, and why the 2+ TD board is a ranked watch list, not a
+       promise: multi-TD games are rare and nobody is a lock. Four weeks of backtest data is a small sample, and the live model uses
+       fuller game windows than the backtest could, so real-world calibration should run a bit better than the backtest showed.</p>
+  </section>
+
+  <footer>
+    <p><b>Snapshot:</b> Week 6 boards as computed Sunday, Oct 18, 2026. This page is a static file — to publish it on GitHub Pages,
+       drop it into your Dashboards repo (e.g. as <i>WeeklyStats/index.html</i>) and it will be reachable at your
+       apatel85.github.io/Dashboards address. Use the Download button above to save the file.</p>
+    <p>Sources: Pro-Football-Reference 2026 (player and opponent tables), StatMuse, FantasyPros, StatChasers (fantasy points allowed),
+       NBC Sports / Rotoworld, ESPN, Schefter &amp; Rapoport reporting. Statistical analysis only — not betting advice.</p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+var DATA = {
+  rush: {
+    title: "60+ rushing yards",
+    rule: "Likely = P(60+) ≥ 55%",
+    note: "Comfortable max is the matchup-adjusted expectation for this game: his rushing average, regressed for sample size, scaled for the run defense he faces.",
+    kind: "yards",
+    rows: [
+      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"vs LAC", g:4, avg:134.2, allowed:118.6, max:107, p:75},
+      {n:"James Cook III", pos:"RB", team:"BUF", opp:"@ LV", g:5, avg:106.4, allowed:140.6, max:100, p:73},
+      {n:"Bijan Robinson", pos:"RB", team:"ATL", opp:"vs CHI", g:5, avg:116.0, allowed:96.0, max:88, p:69},
+      {n:"Derrick Henry", pos:"RB", team:"BAL", opp:"@ CLE", g:5, avg:95.2, allowed:117.4, max:82, p:66},
+      {n:"Jonathan Taylor", pos:"RB", team:"IND", opp:"vs TEN", g:5, avg:79.6, allowed:114.0, max:70, p:59},
+      {n:"Bucky Irving", pos:"RB", team:"TB", opp:"vs PIT", g:5, avg:81.2, allowed:103.4, max:68, p:57},
+      {n:"Chuba Hubbard", pos:"RB", team:"CAR", opp:"@ PHI", g:4, avg:76.5, allowed:118.0, max:67, p:57},
+      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"vs ARI", g:5, avg:68.6, allowed:126.6, max:65, p:55}
+    ],
+    near: "<b>Just below the cut:</b> Cam Skattebo (NYG vs NO) 53% · comfortable max 63 — the Saints' soft run D isn't enough after calibration. Tony Pollard and Javonte Williams also dropped off this board under the recalibrated model."
+  },
+  rec: {
+    title: "60+ receiving yards",
+    rule: "Likely = P(60+) ≥ 55%",
+    note: "Same build as the rushing board, against pass defenses. Buffalo's league-worst pass defense (280.4 yds/g allowed) is doing heavy lifting at the top.",
+    kind: "yards",
+    rows: [
+      {n:"Brock Bowers", pos:"TE", team:"LV", opp:"vs BUF", g:3, avg:104.0, allowed:280.4, max:90, p:70, note:"3-game sample — regression already pulled his raw 133 projection down to 90"},
+      {n:"Puka Nacua", pos:"WR", team:"LAR", opp:"vs ARI", g:3, avg:112.3, allowed:236.8, max:89, p:69},
+      {n:"Chris Olave", pos:"WR", team:"NO", opp:"@ NYG", g:5, avg:107.4, allowed:199.4, max:85, p:68, flag:"Q — illness, expected to play"},
+      {n:"Drake London", pos:"WR", team:"ATL", opp:"vs CHI", g:5, avg:97.6, allowed:215.4, max:82, p:66},
+      {n:"Zay Flowers", pos:"WR", team:"BAL", opp:"@ CLE", g:4, avg:101.2, allowed:216.6, max:82, p:66, note:"Tyler Huntley at QB (Lamar out)"},
+      {n:"Tetairoa McMillan", pos:"WR", team:"CAR", opp:"@ PHI", g:4, avg:96.2, allowed:238.8, max:83, p:66},
+      {n:"Christian Watson", pos:"WR", team:"GB", opp:"vs DAL", g:5, avg:94.8, allowed:227.0, max:82, p:66},
+      {n:"Davante Adams", pos:"WR", team:"LAR", opp:"vs ARI", g:5, avg:88.2, allowed:236.8, max:79, p:64},
+      {n:"CeeDee Lamb", pos:"WR", team:"DAL", opp:"@ GB", g:5, avg:101.4, allowed:181.0, max:78, p:64, note:"does it on volume — Green Bay allows the 3rd-fewest pass yards"},
+      {n:"Nico Collins", pos:"WR", team:"HOU", opp:"vs JAX", g:3, avg:83.0, allowed:266.2, max:75, p:62},
+      {n:"Matthew Golden", pos:"WR", team:"GB", opp:"vs DAL", g:5, avg:79.4, allowed:227.0, max:71, p:59},
+      {n:"DeVonta Smith", pos:"WR", team:"PHI", opp:"vs CAR", g:3, avg:78.3, allowed:230.8, max:67, p:56, note:"Tanner McKee at QB (Hurts on IR)"},
+      {n:"Jalen Coker", pos:"WR", team:"CAR", opp:"@ PHI", g:3, avg:74.0, allowed:238.8, max:65, p:55},
+      {n:"Parker Washington", pos:"WR", team:"JAX", opp:"@ HOU", g:5, avg:70.4, allowed:234.0, max:65, p:55}
+    ],
+    near: "<b>Just below the cut:</b> Garrett Wilson (NYJ @ NE) 54% · max 64, and Mike Evans (SF vs WAS) 54% · max 64 — Evans is also questionable (ribs/Achilles)."
+  },
+  td1: {
+    title: "Score a touchdown",
+    rule: "Likely = P(1+ TD) ≥ 50% · minimum 3 games",
+    note: "Physical scorers only — rushing and receiving TDs. No QB passing TDs; Josh Allen appears on rushing TDs alone. TD rates get the strongest regression in the model after the backtest showed this board running hottest.",
+    kind: "td",
+    rows: [
+      {n:"Javonte Williams", pos:"RB", team:"DAL", opp:"@ GB", g:5, lam:1.22, p:71, p2:35},
+      {n:"Josh Allen", pos:"QB", team:"BUF", opp:"@ LV", g:5, lam:1.12, p:67, p2:31, qbrush:true},
+      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"vs LAC", g:4, lam:1.11, p:67, p2:30},
+      {n:"Chuba Hubbard", pos:"RB", team:"CAR", opp:"@ PHI", g:4, lam:0.94, p:61, p2:24},
+      {n:"Christian Watson", pos:"WR", team:"GB", opp:"vs DAL", g:5, lam:0.91, p:60, p2:23},
+      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"vs ARI", g:5, lam:0.88, p:59, p2:22},
+      {n:"Jonathan Taylor", pos:"RB", team:"IND", opp:"vs TEN", g:5, lam:0.87, p:58, p2:22},
+      {n:"Brock Bowers", pos:"TE", team:"LV", opp:"vs BUF", g:3, lam:0.86, p:58, p2:21},
+      {n:"George Kittle", pos:"TE", team:"SF", opp:"vs WAS", g:5, lam:0.86, p:58, p2:21},
+      {n:"James Cook III", pos:"RB", team:"BUF", opp:"@ LV", g:5, lam:0.84, p:57, p2:21},
+      {n:"Davante Adams", pos:"WR", team:"LAR", opp:"vs ARI", g:5, lam:0.80, p:55, p2:19},
+      {n:"Bijan Robinson", pos:"RB", team:"ATL", opp:"vs CHI", g:5, lam:0.75, p:53, p2:17},
+      {n:"Derrick Henry", pos:"RB", team:"BAL", opp:"@ CLE", g:5, lam:0.74, p:52, p2:17, note:"yardage play, not a TD play — Cleveland has allowed 0.20 rush TD/g all season"}
+    ],
+    near: "<b>Just below the cut:</b> Brian Robinson Jr. 48% · Christian McCaffrey 47% · Mike Evans 47% (questionable) · Cody White 46% · Isaiah Likely 46%. Under the old uncalibrated model this board ran to 88% at the top; it now tops out at 71%."
+  },
+  td2: {
+    title: "Score 2+ touchdowns",
+    rule: "Top 10, ranked — nobody is a lock",
+    note: "Multi-TD games are rare even in the best spots: in the backtest, top-10 lists like this one produced a 2+ TD game about 1 time in 6. Read this as a ranking of the best shots, not a set of predictions.",
+    kind: "td2",
+    rows: [
+      {n:"Javonte Williams", pos:"RB", team:"DAL", opp:"@ GB", g:5, lam:1.22, p:35},
+      {n:"Josh Allen", pos:"QB", team:"BUF", opp:"@ LV", g:5, lam:1.12, p:31, qbrush:true},
+      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"vs LAC", g:4, lam:1.11, p:30},
+      {n:"Chuba Hubbard", pos:"RB", team:"CAR", opp:"@ PHI", g:4, lam:0.94, p:24},
+      {n:"Christian Watson", pos:"WR", team:"GB", opp:"vs DAL", g:5, lam:0.91, p:23},
+      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"vs ARI", g:5, lam:0.88, p:22},
+      {n:"Jonathan Taylor", pos:"RB", team:"IND", opp:"vs TEN", g:5, lam:0.87, p:22},
+      {n:"Brock Bowers", pos:"TE", team:"LV", opp:"vs BUF", g:3, lam:0.86, p:21},
+      {n:"George Kittle", pos:"TE", team:"SF", opp:"vs WAS", g:5, lam:0.86, p:21},
+      {n:"James Cook III", pos:"RB", team:"BUF", opp:"@ LV", g:5, lam:0.84, p:21}
+    ],
+    near: "Jonathan Taylor makes this list under the calibrated model. Just outside: Davante Adams 19% and Derrick Henry 17% — Henry's TD path runs into Cleveland's 0.20 rush TD/g allowed, the stingiest mark in the league."
+  }
+};
+</script>
+<script>
+"use strict";
+var ORDER = ["rush", "rec", "td1", "td2"];
+var state = { board: "all", pos: "all", q: "" };
+
+function fmt1(x){ return (Math.round(x * 10) / 10).toFixed(1); }
+
+function rowHTML(board, r, i){
+  var posLabel = r.qbrush ? "QB · rush only" : r.pos;
+  var search = (r.n + " " + r.team + " " + r.opp + " " + r.pos).toLowerCase();
+  var flag = r.flag ? '<span class="flag">' + r.flag + "</span>" : "";
+  var note = r.note ? ' · <span>' + r.note + "</span>" : "";
+  var head =
+    '<div class="rank">' + (i + 1) + "</div>" +
+    '<div class="who"><div class="name">' + r.n +
+      (r.qbrush ? '<span class="qbtag">RUSH ONLY</span>' : "") + flag + "</div>";
+  var tail = "";
+  if (board.kind === "yards"){
+    tail =
+      '<div class="detail">' + posLabel + " · " + r.team + " " + r.opp + " · " + r.g + " games · " +
+      "<b>" + fmt1(r.avg) + "</b> yds/g avg · " + r.opp.replace(/^(@|vs)\s*/, "") + " allows <b>" + fmt1(r.allowed) + "</b>/g" + note + "</div></div>" +
+      '<div class="maxbox"><div class="maxnum">' + r.max + '</div><div class="maxlbl">Comfortable max</div></div>' +
+      '<div class="prob"><div class="prob-lbl">P(60+ yds)</div><div class="prob-pct">' + r.p + '%</div>' +
+      '<div class="bar"><i style="width:' + r.p + '%"></i></div></div>';
+  } else {
+    var lbl = board.kind === "td2" ? "P(2+ TD)" : "P(1+ TD)";
+    var sub = board.kind === "td" ? ('<div class="lam">λ ' + r.lam.toFixed(2) + " · P(2+) " + r.p2 + "%</div>") :
+              ('<div class="lam">λ ' + r.lam.toFixed(2) + " expected TDs</div>");
+    tail =
+      '<div class="detail">' + posLabel + " · " + r.team + " " + r.opp + " · " + r.g + " games" + note + "</div></div>" +
+      '<div class="maxbox"><div class="maxnum">' + r.lam.toFixed(2) + '</div><div class="maxlbl">Expected TDs (λ)</div></div>' +
+      '<div class="prob"><div class="prob-lbl">' + lbl + '</div><div class="prob-pct">' + r.p + "%</div>" +
+      '<div class="bar"><i style="width:' + r.p + '%"></i></div>' + sub + "</div>";
+  }
+  return '<div class="row" data-pos="' + r.pos + '" data-search="' + search + '">' + head + tail + "</div>";
+}
+
+function render(){
+  var main = document.getElementById("boards");
+  var html = "";
+  ORDER.forEach(function(key){
+    var b = DATA[key];
+    html += '<section class="board" data-board="' + key + '">' +
+      '<div class="board-head"><h2>' + b.title + '</h2><span class="rule">' + b.rule + "</span></div>" +
+      '<p class="board-note">' + b.note + "</p>" +
+      '<div class="card">' + b.rows.map(function(r, i){ return rowHTML(b, r, i); }).join("") + "</div>" +
+      '<div class="near">' + b.near + "</div></section>";
+  });
+  main.innerHTML = html;
+  applyFilters();
+}
+
+function applyFilters(){
+  var q = state.q.trim().toLowerCase();
+  var anyVisible = false;
+  ORDER.forEach(function(key){
+    var sec = document.querySelector('section.board[data-board="' + key + '"]');
+    if (!sec) return;
+    var boardVisible = (state.board === "all" || state.board === key);
+    var rowsVisible = 0;
+    sec.querySelectorAll(".row").forEach(function(row){
+      var ok = boardVisible &&
+        (state.pos === "all" || row.getAttribute("data-pos") === state.pos) &&
+        (q === "" || row.getAttribute("data-search").indexOf(q) !== -1);
+      row.style.display = ok ? "" : "none";
+      if (ok) rowsVisible++;
+    });
+    var near = sec.querySelector(".near");
+    if (near) near.style.display = (boardVisible && rowsVisible > 0 && q === "") ? "" : "none";
+    sec.style.display = (boardVisible && rowsVisible > 0) ? "" : "none";
+    if (boardVisible && rowsVisible > 0) anyVisible = true;
+  });
+  document.getElementById("empty").style.display = anyVisible ? "none" : "block";
+}
+
+function wireChips(attr, key){
+  document.querySelectorAll("[data-" + attr + "]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll("[data-" + attr + "]").forEach(function(b){ b.setAttribute("aria-pressed", "false"); });
+      btn.setAttribute("aria-pressed", "true");
+      state[key] = btn.getAttribute("data-" + attr);
+      applyFilters();
+    });
+  });
+}
+
+document.getElementById("q").addEventListener("input", function(e){
+  state.q = e.target.value;
+  applyFilters();
+});
+wireChips("board", "board");
+wireChips("pos", "pos");
+
+document.getElementById("download").addEventListener("click", function(){
+  var html = "<!doctype html>\n" + document.documentElement.outerHTML;
+  var blob = new Blob([html], { type: "text/html" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "weekly-stat-dashboard-week6.html";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+});
+
+render();
+</script>
+</body>
+</html>
