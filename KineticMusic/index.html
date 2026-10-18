@@ -504,6 +504,35 @@ function splitSyllables(text){
   }
   return out.slice(0, 220); // safety cap
 }
+// Consonant attack: a burst of shaped noise (hiss) or a transient (pop)
+// right before the vowel starts. This is what makes words distinguishable.
+function playConsonant(syllable, vowelTime, durSec, out){
+  const s = syllable.toLowerCase();
+  let freq = 0, dur = 0.1, gain = 0.11, ftype = 'bandpass';
+  if(/^sh/.test(s))      { freq = 2600; dur = 0.13; }
+  else if(/^th/.test(s)) { freq = 5200; dur = 0.09; ftype = 'highpass'; }
+  else if(/^ch/.test(s)) { freq = 2200; dur = 0.07; gain = 0.13; }
+  else if(/^[sz]/.test(s)){ freq = 5400; dur = 0.11; ftype = 'highpass'; }
+  else if(/^[fv]/.test(s)){ freq = 4200; dur = 0.09; ftype = 'highpass'; gain = 0.07; }
+  else if(/^h/.test(s))  { freq = 1500; dur = 0.08; gain = 0.06; }
+  else if(/^[ptkbdg]/.test(s)){ freq = 1700; dur = 0.045; gain = 0.13; }
+  else return; // vowels, m/n/l/r/w/y glide in on the pitch scoop instead
+  dur = Math.min(dur, durSec * 0.45); // never eat the whole vowel on fast notes
+  const t0 = Math.max(audioCtx.currentTime, vowelTime - dur - 0.015);
+  const len = Math.max(16, Math.floor(audioCtx.sampleRate * (dur + 0.03)));
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const ch = buf.getChannelData(0);
+  for(let i=0;i<len;i++) ch[i] = (Math.random()*2-1) * (1 - i/len);
+  const src = audioCtx.createBufferSource(); src.buffer = buf;
+  const f = audioCtx.createBiquadFilter(); f.type = ftype; f.frequency.value = freq;
+  if(ftype === 'bandpass') f.Q.value = 1.1;
+  const gg = audioCtx.createGain();
+  gg.gain.setValueAtTime(0.0001, t0);
+  gg.gain.linearRampToValueAtTime(gain, t0 + 0.012);
+  gg.gain.exponentialRampToValueAtTime(0.0008, t0 + dur);
+  src.connect(f); f.connect(gg); gg.connect(out);
+  src.start(t0); src.stop(t0 + dur + 0.03);
+}
 function singSyllable(syllable, midi, styleKey, blend, octaveMult, durSec, delay){
   initAudio(); ensureReverb();
   const now = audioCtx.currentTime + (delay || 0);
@@ -567,23 +596,30 @@ function singSyllable(syllable, midi, styleKey, blend, octaveMult, durSec, delay
   F1.type='bandpass'; F2.type='bandpass';
   F1.frequency.value = f1 * (0.85 + blend*0.4) * S.bright;
   F2.frequency.value = f2 * (0.85 + blend*0.4) * S.bright;
-  F1.Q.value = 4.2; F2.Q.value = 5.2;
   preFormant.connect(F1); preFormant.connect(F2);
+  F1.Q.value = 3.2; F2.Q.value = 3.8;
+  // Presence lift: a gentle high-shelf so the voice cuts through the mix
+  const presence = audioCtx.createBiquadFilter();
+  presence.type = 'highshelf'; presence.frequency.value = 4200; presence.gain.value = 4;
+  F1.connect(presence); F2.connect(presence);
 
   const g = audioCtx.createGain();
   const atk = S.punch ? 0.02 : 0.05;
   g.gain.setValueAtTime(0.0001, now);
-  g.gain.linearRampToValueAtTime(0.30, now + atk);
-  g.gain.setValueAtTime(0.30, now + Math.max(atk, durSec*0.7));
+  g.gain.linearRampToValueAtTime(0.32, now + atk);
+  g.gain.setValueAtTime(0.32, now + Math.max(atk, durSec*0.7));
   g.gain.exponentialRampToValueAtTime(0.0008, now + durSec*0.98);
-  F1.connect(g); F2.connect(g);
+  presence.connect(g);
   g.connect(masterGain);
-  // room reverb send
-  const send = audioCtx.createGain(); send.gain.value = S.reverb * 0.55;
+  // room reverb send (kept modest so words stay intelligible)
+  const send = audioCtx.createGain(); send.gain.value = S.reverb * 0.45;
   g.connect(send); send.connect(convolver);
 
   const all = o3 ? [o1, o2, o3, ...vibNodes] : [o1, o2, ...vibNodes];
   all.forEach(o => { o.start(now); o.stop(now + durSec + 0.05); });
+
+  // Consonant attack just before the vowel — this is what makes words clear
+  try{ playConsonant(syllable, now, durSec, masterGain); }catch(e){}
 
   // Breath: a whisper of filtered noise so vowels feel sung, not beeped
   const nbLen = Math.max(1, Math.floor(audioCtx.sampleRate * durSec));
@@ -673,6 +709,11 @@ function addOrb(){
 }
 function removeOrb(){ if(orbs.length) orbs.pop(); }
 
+function lyricStudioActive(){
+  if(state.lyricPlaying) return true;
+  const d = document.getElementById('lyricDrawer');
+  return !!(d && d.classList.contains('open'));
+}
 function pluckShape(idx, velocity, lyric){
   const s = shapes[idx]; if(!s) return;
   s.hit = 1;
@@ -683,7 +724,9 @@ function pluckShape(idx, velocity, lyric){
     ? ['KICK','SNARE','HAT','TOM'][((s.degree%4)+4)%4]
     : midiName(SCALES[state.scaleKey].midis[s.degree]));
   floaters.push({ x:s.x, y:s.y - s.r - 14, text:label, color, alpha:1, vy:-34 });
-  addSheetNote({ midi, inst:state.instrument, degree:s.degree, lyric: lyric || null, beats:1 });
+  // While the Lyric Studio is open or singing, the stage stays audible but
+  // stops writing to the staff — so the lyric transcription stays clean.
+  if(!lyricStudioActive()) addSheetNote({ midi, inst:state.instrument, degree:s.degree, lyric: lyric || null, beats:1 });
   if(state.recording){
     state.recEvents.push({ t:(performance.now()-state.recStart)/1000, degree:s.degree, inst:state.instrument, lyric: lyric || null });
   }
@@ -1087,6 +1130,7 @@ function replaySheet(){
 <script>
 "use strict";
 /* ---------- 9. LYRIC-TO-SONG PLAYBACK ---------- */
+let voiceErrorShown = false;
 const LYRIC_PRESETS = {
   starlight: `Starlight falls across the quiet strings
 We build a melody from moving shapes
@@ -1160,8 +1204,17 @@ function playLyrics(){
     const midi = SCALES[state.scaleKey].midis[((degree % 8)+8)%8];
     const dur = Math.min(beatsPerSyl * beatSec * 1.02, 2.4);
     const id = setTimeout(()=>{
-      singSyllable(syl, midi, archetype, blend, oct, dur, 0);
-      playNote(degree, state.instrument, { velocity:0.32, duration:0.7 }); // soft backing
+      try{
+        singSyllable(syl, midi, archetype, blend, oct, dur, 0);
+      }catch(err){
+        if(!voiceErrorShown){
+          voiceErrorShown = true;
+          stopLyricPlayback();
+          toast('Voice could not start on this device — try the karaoke mic instead');
+          return;
+        }
+      }
+      playNote(degree, state.instrument, { velocity:0.15, duration:0.5 }); // ducked backing
       addSheetNote({ midi, inst: state.instrument, degree, lyric: syl, beats: beatsPerSyl });
       disp.textContent = '♪ ' + syl;
       noteDisp.textContent = midiName(midi);
