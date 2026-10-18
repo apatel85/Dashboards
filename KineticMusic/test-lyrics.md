@@ -14,7 +14,7 @@ Every shape becomes a stepping stone
 Tap the drum and let the bassline roll
 Kinetic music, body and soul
 
-*Try: 110 BPM → Quarter notes → Melodic wave → Velvet Indie*
+*Try: 110 BPM → Quarter notes → Melodic wave → Pop Star*
 
 ---
 
@@ -30,8 +30,8 @@ We're broadcasting on borrowed time
 Every static burst becomes a song
 We've been the signal all along
 
-*Try: 92 BPM → Half notes → Rising anthem → Ethereal Choir,
-then 128 BPM → Eighth notes → Rhythmic hook → Neon Vocoder.
+*Try: 92 BPM → Half notes → Rising anthem → R&B Silk,
+then 128 BPM → Eighth notes → Rhythmic hook → Hip-Hop Flow.
 Same words, completely different song.*
 
 ---
@@ -49,7 +49,7 @@ Play it low, play it slow, let it ring
 The gravel road gospel makes you sing
 
 *Try: scale = C Blues, 84 BPM → Quarter notes → Chord arpeggio →
-Acoustic Storyteller, vocal octave Low.*
+Country Twang, vocal octave Low. For attitude, switch to Rock Belt.*
 
 ---
 

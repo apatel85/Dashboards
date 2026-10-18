@@ -164,12 +164,14 @@
       <textarea id="lyricsInput" spellcheck="false"></textarea>
     </div>
     <div class="studio-grid">
-      <div class="field"><label for="voiceArchetype">Voice (original synth)</label>
+      <div class="field"><label for="voiceArchetype">Voice style (original, royalty-free)</label>
         <select id="voiceArchetype">
-          <option value="indie">Velvet Indie · warm alto</option>
-          <option value="cyber">Neon Vocoder · synth pop</option>
-          <option value="folk">Acoustic Storyteller · baritone</option>
-          <option value="ethereal">Ethereal Choir · airy soprano</option>
+          <option value="pop" selected>Pop Star · bright &amp; airy</option>
+          <option value="rnb">R&amp;B Silk · smooth runs</option>
+          <option value="hiphop">Hip-Hop Flow · punchy</option>
+          <option value="rock">Rock Belt · gritty power</option>
+          <option value="country">Country Twang · nasal &amp; bright</option>
+          <option value="choir">Ethereal Choir · layered air</option>
         </select>
       </div>
       <div class="field"><label for="melodyPattern">Melody shape</label>
@@ -443,16 +445,45 @@ function playDrum(d, now, vel){
 </script>
 <script>
 "use strict";
-/* ---------- 3. ROYALTY-FREE PROCEDURAL VOICE ----------
-   No samples, no artist imitation — a formant synthesizer.
-   Vowel resonances are estimated from the syllable's letters,
-   so different words genuinely sound different. */
-const VOICE_ARCHETYPES = {
-  indie:    { o1:'sawtooth', o2:'sine',     vib:3.2, sub:1.0,  bright:0.9, label:'Velvet Indie' },
-  cyber:    { o1:'square',   o2:'sawtooth', vib:0.6, sub:1.0,  bright:1.5, label:'Neon Vocoder' },
-  folk:     { o1:'sawtooth', o2:'triangle', vib:2.4, sub:0.5,  bright:0.7, label:'Acoustic Storyteller' },
-  ethereal: { o1:'triangle', o2:'sine',     vib:5.0, sub:2.0,  bright:1.1, label:'Ethereal Choir' },
+/* ---------- 3. ROYALTY-FREE PROCEDURAL VOICES ----------
+   No samples, no artist cloning — formant synthesizers styled after
+   popular GENRES (never a real person's voice). Vowel resonances are
+   estimated from each syllable's letters, so words sound distinct.
+   Pro-production touches: generated room reverb, harmony doubling,
+   pitch scoops, R&B melisma runs, and grit. */
+const VOICE_STYLES = {
+  pop:     { label:'Pop Star',      o1:'sawtooth', o2:'triangle', vibRate:6.2, vibDepth:4.0, bright:1.25, scoop:3, harmony:0.14, reverb:0.35, grit:0,    melisma:0,    nasal:0 },
+  rnb:     { label:'R&B Silk',      o1:'sawtooth', o2:'sine',     vibRate:5.0, vibDepth:5.0, bright:1.05, scoop:2, harmony:0.12, reverb:0.42, grit:0,    melisma:0.40, nasal:0 },
+  rock:    { label:'Rock Belt',     o1:'sawtooth', o2:'square',   vibRate:5.4, vibDepth:6.0, bright:1.15, scoop:1, harmony:0,    reverb:0.25, grit:0.55, melisma:0,    nasal:0 },
+  hiphop:  { label:'Hip-Hop Flow',  o1:'square',   o2:'sawtooth', vibRate:0,   vibDepth:0,   bright:1.30, scoop:0, harmony:0,    reverb:0.14, grit:0.40, melisma:0,    nasal:0, punch:1 },
+  country: { label:'Country Twang', o1:'sawtooth', o2:'triangle', vibRate:6.8, vibDepth:5.0, bright:1.35, scoop:2, harmony:0.09, reverb:0.30, grit:0,    melisma:0.15, nasal:1 },
+  choir:   { label:'Ethereal Choir',o1:'triangle', o2:'sine',     vibRate:5.2, vibDepth:5.0, bright:1.10, scoop:0, harmony:0.20, reverb:0.50, grit:0,    melisma:0,    nasal:0, airy:1 },
 };
+// Generated room reverb (impulse response synthesized on the fly — no files)
+let convolver = null;
+function ensureReverb(){
+  initAudio();
+  if(convolver) return convolver;
+  const len = Math.floor(audioCtx.sampleRate * 1.8);
+  const ir = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+  for(let ch=0; ch<2; ch++){
+    const d = ir.getChannelData(ch);
+    for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.6);
+  }
+  convolver = audioCtx.createConvolver();
+  convolver.buffer = ir;
+  const wet = audioCtx.createGain(); wet.gain.value = 0.9;
+  convolver.connect(wet); wet.connect(masterGain);
+  return convolver;
+}
+const _gritCache = {};
+function gritCurve(amount){
+  const key = amount.toFixed(2);
+  if(_gritCache[key]) return _gritCache[key];
+  const n = 256, curve = new Float32Array(n);
+  for(let i=0;i<n;i++){ const x = i/(n-1)*2-1; curve[i] = Math.tanh(x * (1 + amount*7)); }
+  return _gritCache[key] = curve;
+}
 function vowelFormants(syllable){
   const s = syllable.toLowerCase();
   let f1 = 620, f2 = 1220;                       // "ah" default
@@ -473,39 +504,86 @@ function splitSyllables(text){
   }
   return out.slice(0, 220); // safety cap
 }
-function singSyllable(syllable, midi, archetypeKey, blend, octaveMult, durSec, delay){
-  initAudio();
+function singSyllable(syllable, midi, styleKey, blend, octaveMult, durSec, delay){
+  initAudio(); ensureReverb();
   const now = audioCtx.currentTime + (delay || 0);
-  const A = VOICE_ARCHETYPES[archetypeKey] || VOICE_ARCHETYPES.indie;
+  const S = VOICE_STYLES[styleKey] || VOICE_STYLES.pop;
   const baseFreq = midiFreq(midi) * octaveMult;
-  const [f1, f2] = vowelFormants(syllable);
+  let [f1, f2] = vowelFormants(syllable);
+  if(S.nasal){ f1 *= 1.35; f2 *= 1.12; }   // twang: raised, nasal resonances
+  if(S.airy){ f1 *= 0.9; f2 *= 1.15; }
 
   const o1 = audioCtx.createOscillator(), o2 = audioCtx.createOscillator();
-  o1.type = A.o1; o2.type = A.o2;
-  o1.frequency.setValueAtTime(baseFreq * A.sub, now);
-  o2.frequency.setValueAtTime(baseFreq * (1 + blend * 0.006), now);
+  o1.type = S.o1; o2.type = S.o2;
+  let o3 = null; // octave harmony shimmer, created below
+  const detune = 1 + blend * 0.006;
+  const setAll = (f, t) => {
+    o1.frequency.setValueAtTime(f, t);
+    o2.frequency.setValueAtTime(f * detune, t);
+    if(o3) o3.frequency.setValueAtTime(f * 2, t);
+  };
+  // Pop/R&B scoop: slide up into the note from below
+  const startF = S.scoop ? baseFreq * Math.pow(2, -S.scoop/12) : baseFreq;
+  setAll(startF, now);
+  if(S.scoop){
+    o1.frequency.exponentialRampToValueAtTime(baseFreq, now + 0.09);
+    o2.frequency.exponentialRampToValueAtTime(baseFreq * detune, now + 0.09);
+  }
+  // R&B melisma: turn a long syllable into a little run
+  if(S.melisma > 0 && durSec > 0.3 && Math.random() < S.melisma){
+    const run = [0, 2, 4, 2];
+    const t0 = now + 0.1, span = Math.max(0.1, durSec - 0.16);
+    run.forEach((st, i) => setAll(baseFreq * Math.pow(2, st/12), t0 + span * (i/run.length)));
+  }
+  // Harmony doubling (soft octave-up, very "produced pop")
+  if(S.harmony > 0){
+    o3 = audioCtx.createOscillator(); o3.type = 'sine';
+    o3.frequency.setValueAtTime(startF * 2, now);
+    if(S.scoop) o3.frequency.exponentialRampToValueAtTime(baseFreq * 2, now + 0.09);
+  }
+  // Vibrato that fades in (pros never start a note already wobbling)
+  let vibNodes = [];
+  if(S.vibDepth > 0){
+    const vib = audioCtx.createOscillator(), vg = audioCtx.createGain();
+    vib.frequency.setValueAtTime(S.vibRate, now);
+    vg.gain.setValueAtTime(0.0001, now);
+    vg.gain.linearRampToValueAtTime(S.vibDepth, now + Math.min(0.28, durSec * 0.45));
+    vib.connect(vg); vg.connect(o1.frequency); vg.connect(o2.frequency);
+    if(o3) vg.connect(o3.frequency);
+    vibNodes = [vib];
+  }
 
-  const vib = audioCtx.createOscillator(), vg = audioCtx.createGain();
-  vib.frequency.setValueAtTime(5.4, now);
-  vg.gain.setValueAtTime(A.vib, now);
-  vib.connect(vg); vg.connect(o1.frequency); vg.connect(o2.frequency);
-
-  // Vocal tract: two bandpass formants + a breathy high shelf
+  // Voice chain: oscs -> mix -> [grit] -> formants -> envelope -> out + reverb send
+  const mix = audioCtx.createGain();
+  o1.connect(mix); o2.connect(mix);
+  let hg = null;
+  if(o3){ hg = audioCtx.createGain(); hg.gain.value = S.harmony; o3.connect(hg); hg.connect(mix); }
+  let preFormant = mix;
+  if(S.grit > 0){
+    const ws = audioCtx.createWaveShaper(); ws.curve = gritCurve(S.grit);
+    mix.connect(ws); preFormant = ws;
+  }
   const F1 = audioCtx.createBiquadFilter(), F2 = audioCtx.createBiquadFilter();
   F1.type='bandpass'; F2.type='bandpass';
-  F1.frequency.value = f1 * (0.85 + blend*0.4) * A.bright;
-  F2.frequency.value = f2 * (0.85 + blend*0.4) * A.bright;
+  F1.frequency.value = f1 * (0.85 + blend*0.4) * S.bright;
+  F2.frequency.value = f2 * (0.85 + blend*0.4) * S.bright;
   F1.Q.value = 4.2; F2.Q.value = 5.2;
+  preFormant.connect(F1); preFormant.connect(F2);
 
   const g = audioCtx.createGain();
+  const atk = S.punch ? 0.02 : 0.05;
   g.gain.setValueAtTime(0.0001, now);
-  g.gain.linearRampToValueAtTime(0.30, now + 0.05);
-  g.gain.setValueAtTime(0.30, now + Math.max(0.05, durSec*0.7));
+  g.gain.linearRampToValueAtTime(0.30, now + atk);
+  g.gain.setValueAtTime(0.30, now + Math.max(atk, durSec*0.7));
   g.gain.exponentialRampToValueAtTime(0.0008, now + durSec*0.98);
+  F1.connect(g); F2.connect(g);
+  g.connect(masterGain);
+  // room reverb send
+  const send = audioCtx.createGain(); send.gain.value = S.reverb * 0.55;
+  g.connect(send); send.connect(convolver);
 
-  o1.connect(F1); o2.connect(F1); o1.connect(F2); o2.connect(F2);
-  F1.connect(g); F2.connect(g); g.connect(masterGain);
-  [o1,o2,vib].forEach(o=>{ o.start(now); o.stop(now + durSec); });
+  const all = o3 ? [o1, o2, o3, ...vibNodes] : [o1, o2, ...vibNodes];
+  all.forEach(o => { o.start(now); o.stop(now + durSec + 0.05); });
 
   // Breath: a whisper of filtered noise so vowels feel sung, not beeped
   const nbLen = Math.max(1, Math.floor(audioCtx.sampleRate * durSec));
@@ -516,7 +594,7 @@ function singSyllable(syllable, midi, archetypeKey, blend, octaveMult, durSec, d
   const nf = audioCtx.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 2800; nf.Q.value = 0.8;
   const ng = audioCtx.createGain();
   ng.gain.setValueAtTime(0.0001, now);
-  ng.gain.linearRampToValueAtTime(0.022, now + 0.06);
+  ng.gain.linearRampToValueAtTime(S.airy ? 0.035 : 0.022, now + 0.06);
   ng.gain.exponentialRampToValueAtTime(0.0008, now + durSec*0.95);
   ns.connect(nf); nf.connect(ng); ng.connect(masterGain);
   ns.start(now); ns.stop(now + durSec);

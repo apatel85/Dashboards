@@ -14,8 +14,10 @@ Live at **https://apatel85.github.io/Dashboards/KineticMusic/**
   real treble staff (ledger lines, stems, bar lines, sharps, lyric syllables)
   scrolling along the bottom dock.
 - **Lyric-to-Song Studio** — paste lyrics; each syllable is sung as a pitched
-  note by one of 4 original royalty-free formant-synth voices (Velvet Indie,
-  Neon Vocoder, Acoustic Storyteller, Ethereal Choir). Control tempo (BPM),
+  note by one of 6 original royalty-free genre-styled voices (Pop Star,
+  R&B Silk, Hip-Hop Flow, Rock Belt, Country Twang, Ethereal Choir) with
+  pro-production touches: generated room reverb, harmony doubling,
+  pitch scoops, R&B melisma runs, and grit. Control tempo (BPM),
   note length per syllable, melody shape, timbre mix, and vocal octave.
 - **Extras** — metronome, performance recorder + replay, 5 scales
   (major / minor / pentatonic / dorian / blues), **MIDI export** (open the
