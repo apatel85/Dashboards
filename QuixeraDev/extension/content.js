@@ -33,7 +33,10 @@
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === "openForm") openForm();
     else if (msg.type === "shotsUpdated") refreshShots();
-    else if (msg.type === "clipReady") { clip = { secs: msg.secs, kb: msg.kb }; renderClip(); updateMinibar(); }
+    else if (msg.type === "clipReady") { clip = { secs: msg.secs, kb: msg.kb }; renderClip(); resetRecUI(); updateMinibar(); }
+    else if (msg.type === "clipRecording") { recStartedUI(); }
+    else if (msg.type === "clipStopped") { resetRecUI(); }
+    else if (msg.type === "clipError") { resetRecUI(); setStatus("❌ " + (msg.error || "recording failed")); }
   });
 
   function labelFor(el) {
@@ -109,6 +112,39 @@
     });
   }
 
+  // v3.3: in-place clip recording. ⏺ toggles start/stop; the tab picker is
+  // Chrome's own UI, then recording runs in the minibar — no extra tab.
+  let recording = false, recTimer = null, recT0 = 0;
+  function fmtClock(s) { return Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0"); }
+  function recStartedUI() {
+    recording = true; recT0 = Date.now();
+    const rb = $("qa-mb-rec");
+    if (rb) { rb.classList.add("live"); rb.textContent = "⏹"; rb.title = "Stop recording"; }
+    if (recTimer) clearInterval(recTimer);
+    recTimer = setInterval(() => {
+      const s = Math.floor((Date.now() - recT0) / 1000);
+      setStatus("● " + fmtClock(s));
+      if (s >= 60) stopRec();
+    }, 500);
+    setStatus("● 0:00");
+  }
+  function resetRecUI() {
+    recording = false;
+    if (recTimer) { clearInterval(recTimer); recTimer = null; }
+    const rb = $("qa-mb-rec");
+    if (rb) { rb.classList.remove("live"); rb.textContent = "⏺"; rb.title = "Record a clip (up to 60s)"; }
+  }
+  function startRec() {
+    setStatus("Pick the tab in the dialog…");
+    chrome.runtime.sendMessage({ type: "startRecord" }, (r) => {
+      if (r && !r.ok) setStatus("❌ " + (r.error || "could not start recording"));
+    });
+  }
+  function stopRec() {
+    if (!recording) return;
+    setStatus("Finishing…");
+    chrome.runtime.sendMessage({ type: "stopRecord" });
+  }
   function inCaptureMode() { return !!$("qa-minibar"); }
   function enterCaptureMode() {
     if (inCaptureMode()) return;
@@ -128,10 +164,7 @@
     $("qa-mb-shot").addEventListener("click", (e) => { e.stopPropagation(); doCapture(); });
     $("qa-mb-rec").addEventListener("click", (e) => {
       e.stopPropagation();
-      chrome.runtime.sendMessage({ type: "startRecord" });
-      const rb = $("qa-mb-rec");
-      if (rb) { rb.classList.add("live"); rb.title = "Recording… finish in the recorder tab, then come back"; }
-      setStatus("Recording… finish in the recorder tab.");
+      if (recording) stopRec(); else startRec();
     });
     $("qa-mb-x").addEventListener("click", (e) => { e.stopPropagation(); exitCaptureMode(); });
     document.addEventListener("keydown", mbEscKey, true);
@@ -142,6 +175,8 @@
   function exitCaptureMode() {
     const bar = $("qa-minibar");
     if (!bar) return;
+    if (recording) stopRec();
+    resetRecUI();
     bar.remove();
     document.removeEventListener("keydown", mbEscKey, true);
     const ov = $("qa-overlay"), flag = $("qa-flag-btn");
