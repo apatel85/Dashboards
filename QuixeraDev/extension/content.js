@@ -93,21 +93,38 @@
     const s = $("qa-status"); if (s) s.textContent = t;
     const m = $("qa-mb-status"); if (m) m.textContent = t;
   }
+  let captureQueued = false, queuedDone = null;
   function doCapture(onDone) {
-    if (capturing) { if (onDone) onDone(false); return; }
+    if (capturing) {
+      // v3.4: queue one follow-up instead of silently dropping the tap
+      captureQueued = true;
+      queuedDone = onDone || queuedDone;
+      setStatus("Capturing…");
+      return;
+    }
     capturing = true;
     setStatus("Capturing…");
-    chrome.runtime.sendMessage({ type: "captureShot" }, (r) => {
+    const finish = (ok) => {
       capturing = false;
+      if (captureQueued) {
+        captureQueued = false;
+        const qd = queuedDone; queuedDone = null;
+        doCapture(qd);
+      } else if (onDone) onDone(ok);
+    };
+    chrome.runtime.sendMessage({ type: "captureShot" }, (r) => {
       if (r && r.ok) {
         setStatus(""); refreshShots(); updateMinibar();
-        if (onDone) onDone(true);
+        finish(true);
       } else if (r && r.error && /exceeds/i.test(r.error)) {
         setStatus("Capture is busy — retrying…");
+        capturing = false;
+        // the retry below absorbs any queued tap; clear it to avoid a duplicate
+        captureQueued = false; queuedDone = null;
         setTimeout(() => doCapture(onDone), 1500);
       } else {
         setStatus("❌ " + ((r && r.error) || "capture failed"));
-        if (onDone) onDone(false);
+        finish(false);
       }
     });
   }
