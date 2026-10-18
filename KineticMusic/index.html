@@ -171,6 +171,11 @@
       <label for="lyricsInput">Your lyrics — each syllable becomes a sung note</label>
       <textarea id="lyricsInput" spellcheck="false"></textarea>
     </div>
+    <div class="btn-row" style="margin-top:2px">
+      <button class="btn-ghost" id="genLyricsBtn" style="flex:1;justify-content:center">✨ New lyrics</button>
+      <button class="btn-primary" id="makeSongBtn" style="flex:2">🎵 Make My Song</button>
+    </div>
+    <div class="song-tip">✨ writes lyrics for the mood · 🎵 turns them into a full song · [Verse]/[Chorus] tags structure it</div>
     <div class="song-builder">
       <div class="field"><label for="moodSelect">Song mood</label>
         <select id="moodSelect">
@@ -183,12 +188,11 @@
       </div>
       <button class="btn-ghost" id="instrumentalBtn" title="No singing — backing band only">🎹 Instrumental</button>
     </div>
-    <button class="btn-primary" id="makeSongBtn">🎵 Make My Song</button>
-    <div class="song-tip">Tip: write [Verse] and [Chorus] on their own lines to structure your song</div>
     <div class="studio-grid">
       <div class="field"><label for="voiceArchetype">Voice style (original, royalty-free)</label>
         <select id="voiceArchetype">
-          <option value="pop" selected>Pop Star · bright &amp; airy</option>
+          <option value="real" selected>Real Voice 🗣️ · device spoken guide</option>
+          <option value="pop">Pop Star · bright &amp; airy</option>
           <option value="rnb">R&amp;B Silk · smooth runs</option>
           <option value="hiphop">Hip-Hop Flow · punchy</option>
           <option value="rock">Rock Belt · gritty power</option>
@@ -736,10 +740,14 @@ function lyricStudioActive(){
   const d = document.getElementById('lyricDrawer');
   return !!(d && d.classList.contains('open'));
 }
+function performanceActive(){ return state.songPlaying || state.lyricPlaying; }
 function pluckShape(idx, velocity, lyric){
   const s = shapes[idx]; if(!s) return;
   s.hit = 1;
-  const midi = playNote(s.degree, state.instrument, { velocity: velocity || 0.9 });
+  // During a song/lyric performance the band plays alone: shapes still flash
+  // when orbs bounce off them, but make no sound of their own.
+  const silent = performanceActive();
+  const midi = silent ? null : playNote(s.degree, state.instrument, { velocity: velocity || 0.9 });
   const color = INST_COLORS[state.instrument];
   ripples.push({ x:s.x, y:s.y, r:s.r*0.6, alpha:0.85, color });
   const label = lyric || (state.instrument==='drums'
@@ -1203,6 +1211,8 @@ function stopLyricPlayback(){
   state.lyricTimers = [];
   state.lyricPlaying = false;
   hideKaraoke();
+  stopTts();
+  performanceEnd();
   const btn = document.getElementById('playLyricsBtn');
   btn.classList.remove('playing');
   btn.innerHTML = '▶ Sing lyrics → sheet music';
@@ -1211,51 +1221,65 @@ function playLyrics(){
   initAudio();
   stopLyricPlayback();
   const text = document.getElementById('lyricsInput').value.trim();
-  if(!text){ toast('Write some lyrics first'); return; }
-  const syllables = splitSyllables(text);
-  if(!syllables.length){ toast('Write some lyrics first'); return; }
+  if(!text){ toast('Write some lyrics first — or tap ✨ New lyrics'); return; }
   const pattern = document.getElementById('melodyPattern').value;
-  const beatsPerSyl = parseFloat(document.getElementById('syllableBeats').value);
+  const beatsPerSyl = parseFloat(document.getElementById('syllableBeats').value) || 1;
   const beatSec = 60 / state.bpm;
-  const archetype = document.getElementById('voiceArchetype').value;
-  const blend = parseInt(document.getElementById('voiceBlend').value, 10) / 100;
-  const oct = parseFloat(document.getElementById('octaveShift').value);
-  const degrees = buildMelody(syllables.length, pattern);
+  const voiceKey = document.getElementById('voiceArchetype').value;
+  const useTts = voiceKey === 'real';
+  const blend = (parseInt(document.getElementById('voiceBlend').value, 10) || 45) / 100;
+  const oct = parseFloat(document.getElementById('octaveShift').value) || 1;
+  const lines = text.split('\n').map(s => s.trim()).filter(s => s && !/^\[.*\]$/.test(s));
+  if(!lines.length){ toast('Write some lyrics first — or tap ✨ New lyrics'); return; }
+  const totalSyl = lines.reduce((a, l) => a + splitSyllables(l).length, 0);
+  const degrees = buildMelody(totalSyl, pattern);
   const disp = document.getElementById('currentLyricDisplay');
   const noteDisp = document.getElementById('currentNoteDisplay');
 
   state.lyricPlaying = true;
+  performanceBegin();
   const btn = document.getElementById('playLyricsBtn');
   btn.classList.add('playing');
   btn.innerHTML = '■ Singing… tap to restart';
 
-  let t = 0.08;
-  syllables.forEach((syl, i)=>{
-    const degree = degrees[i];
-    const midi = SCALES[state.scaleKey].midis[((degree % 8)+8)%8];
-    const dur = Math.min(beatsPerSyl * beatSec * 1.02, 2.4);
-    const id = setTimeout(()=>{
-      try{
-        singSyllable(syl, midi, archetype, blend, oct, dur, 0);
-      }catch(err){
-        if(!voiceErrorShown){
-          voiceErrorShown = true;
-          stopLyricPlayback();
-          toast('Voice could not start on this device — try the karaoke mic instead');
-          return;
+  let t = 0.08, si = 0;
+  lines.forEach(line => {
+    const syllables = splitSyllables(line);
+    const lineDur = syllables.length * beatsPerSyl * beatSec;
+    if(useTts && syllables.length)
+      state.lyricTimers.push(setTimeout(() => speakLine(line, lineDur), t * 1000));
+    syllables.forEach(syl => {
+      const degree = degrees[si++];
+      const midi = SCALES[state.scaleKey].midis[((degree % 8)+8)%8];
+      const dur = Math.min(beatsPerSyl * beatSec * 1.02, 2.4);
+      const at = t;
+      state.lyricTimers.push(setTimeout(() => {
+        if(useTts){
+          // Real spoken guide voice + soft piano carries the tune underneath
+          playMidiNote(midi, 'piano', { velocity: 0.4, duration: Math.min(dur, 1.1) });
+        } else {
+          try{ singSyllable(syl, midi, voiceKey, blend, oct, dur, 0); }
+          catch(err){
+            if(!voiceErrorShown){
+              voiceErrorShown = true;
+              stopLyricPlayback();
+              toast('Voice could not start on this device — try the karaoke mic instead');
+              return;
+            }
+          }
+          playNote(degree, state.instrument, { velocity:0.15, duration:0.5 }); // ducked backing
         }
-      }
-      playNote(degree, state.instrument, { velocity:0.15, duration:0.5 }); // ducked backing
-      addSheetNote({ midi, inst: state.instrument, degree, lyric: syl, beats: beatsPerSyl });
-      disp.textContent = '♪ ' + syl;
-      noteDisp.textContent = midiName(midi);
-      showKaraoke(syl);
-      if(state.recording) state.recEvents.push({ t:(performance.now()-state.recStart)/1000, degree, inst:state.instrument, lyric:syl });
-    }, t*1000);
-    state.lyricTimers.push(id);
-    t += beatsPerSyl * beatSec;
+        addSheetNote({ midi, inst: state.instrument, degree, lyric: syl, beats: beatsPerSyl });
+        disp.textContent = '♪ ' + syl;
+        noteDisp.textContent = midiName(midi);
+        showKaraoke(syl);
+        if(state.recording) state.recEvents.push({ t:(performance.now()-state.recStart)/1000, degree, inst:state.instrument, lyric:syl });
+      }, at * 1000));
+      t += beatsPerSyl * beatSec;
+    });
+    t += beatSec * 0.5; // breath between lines
   });
-  state.lyricTimers.push(setTimeout(()=>{
+  state.lyricTimers.push(setTimeout(() => {
     stopLyricPlayback();
     disp.textContent = 'Done — tweak tempo or voice and sing it again';
     noteDisp.textContent = '';
@@ -1264,26 +1288,37 @@ function playLyrics(){
 
 /* ---------- 10. METRONOME ---------- */
 let metroTimer = null, metroBeat = 0;
-function toggleMetronome(){
-  state.metronome = !state.metronome;
-  const btn = document.getElementById('metroBtn');
-  btn.classList.toggle('active', state.metronome);
+function metroClick(accent){
+  const now = audioCtx.currentTime;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = 'square'; o.frequency.value = accent ? 1568 : 1046;
+  g.gain.setValueAtTime(accent ? 0.16 : 0.10, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+  o.connect(g); g.connect(masterGain); o.start(now); o.stop(now + 0.06);
+}
+function setMetronome(on){
+  if(state.metronome === on) return;
+  state.metronome = on;
+  document.getElementById('metroBtn').classList.toggle('active', on);
   if(metroTimer){ clearInterval(metroTimer); metroTimer = null; }
-  if(state.metronome){
+  if(on){
     initAudio();
-    const click = (accent) => {
-      const now = audioCtx.currentTime;
-      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-      o.type = 'square'; o.frequency.value = accent ? 1568 : 1046;
-      g.gain.setValueAtTime(accent ? 0.16 : 0.10, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-      o.connect(g); g.connect(masterGain); o.start(now); o.stop(now + 0.06);
-    };
     metroBeat = 0;
-    click(true);
-    metroTimer = setInterval(()=>{ metroBeat = (metroBeat+1)%4; click(metroBeat===0); }, 60000/state.bpm);
-    toast('Metronome on — ' + state.bpm + ' BPM');
+    metroClick(true);
+    metroTimer = setInterval(()=>{ metroBeat = (metroBeat+1)%4; metroClick(metroBeat===0); }, 60000/state.bpm);
   }
+}
+function toggleMetronome(){
+  setMetronome(!state.metronome);
+  if(state.metronome) toast('Metronome on — ' + state.bpm + ' BPM');
+}
+// Performances pause the metronome (the song has its own count-in) and resume it after.
+function performanceBegin(){
+  state._metroResume = state.metronome;
+  setMetronome(false);
+}
+function performanceEnd(){
+  if(state._metroResume){ state._metroResume = false; setMetronome(true); }
 }
 
 /* ---------- 11. UI WIRING ---------- */
@@ -1308,7 +1343,7 @@ function wireUI(){
   bpmSlider.addEventListener('input', ()=>{
     state.bpm = parseInt(bpmSlider.value, 10);
     document.getElementById('bpmValue').textContent = state.bpm + ' BPM';
-    if(state.metronome) toggleMetronome(), toggleMetronome(); // re-sync
+    if(state.metronome){ setMetronome(false); setMetronome(true); } // re-sync interval
   });
   document.getElementById('scaleSelect').addEventListener('change', e=>{
     state.scaleKey = e.target.value;
@@ -1494,7 +1529,7 @@ function stopAudioRecord(){
 
 // ---- Wire up ----
 (function initExtras(){
-  const APP_VERSION = '3.0';
+  const APP_VERSION = '3.1';
   const vp = document.getElementById('verPill');
   if(vp) vp.textContent = 'v' + APP_VERSION;
   // Self update-check: if the server has a newer version.json, offer one-tap refresh
@@ -1523,6 +1558,123 @@ function stopAudioRecord(){
 </script>
 <script>
 "use strict";
+/* ---------- 13. MOOD LYRICS GENERATOR + REAL DEVICE VOICE ----------
+   Kid-friendly original lyrics per mood (offline, instant, free), and a
+   real spoken voice via the device's built-in text-to-speech (no account,
+   no cost). Note: device TTS speaks the lines clearly; it does not sing —
+   the piano carries the tune underneath while it talks. */
+const LYRICS_BANK = {
+  happy: {
+    verse: [
+      "I woke up smiling at the morning light",
+      "The sun is shining oh so bright",
+      "I put my shoes on, I'm ready to play",
+      "It's gonna be a happy day",
+    ],
+    chorus: [
+      "La la la, come sing with me",
+      "Happy as a kid can be",
+      "Clap your hands and stomp your feet",
+      "Dancing to the happy beat",
+    ],
+  },
+  brave: {
+    verse: [
+      "I am brave, I'm standing tall",
+      "I can do it, I won't fall",
+      "When the thunder starts to roar",
+      "I am braver than before",
+    ],
+    chorus: [
+      "Roar like a lion, strong and loud",
+      "I'm the bravest in the crowd",
+      "Nothing scary, nothing wrong",
+      "I am brave and I am strong",
+    ],
+  },
+  sleepy: {
+    verse: [
+      "Close your eyes, the stars are bright",
+      "The moon is watching through the night",
+      "Drift away on clouds so deep",
+      "Time to snuggle into sleep",
+    ],
+    chorus: [
+      "Hush now baby, don't you cry",
+      "Dreamland's waiting in the sky",
+      "Soft and sleepy, calm and slow",
+      "Off to dreamland we will go",
+    ],
+  },
+  silly: {
+    verse: [
+      "I put my socks upon my ears",
+      "And wiggled till I shed some tears",
+      "A pickle hat upon my head",
+      "I brushed my teeth with jam instead",
+    ],
+    chorus: [
+      "Silly silly, quack quack quack",
+      "Wibble wobble, front to back",
+      "Giggle wiggle, hop and spin",
+      "Let the silly games begin",
+    ],
+  },
+  sad: {
+    verse: [
+      "Sometimes I feel a little blue",
+      "And that's okay for me and you",
+      "A rainy day will pass you by",
+      "The sun is waiting in the sky",
+    ],
+    chorus: [
+      "It's okay to cry a while",
+      "Soon you'll wear a happy smile",
+      "Hug someone you love today",
+      "And the sad will drift away",
+    ],
+  },
+};
+function generateLyrics(){
+  const moodKey = document.getElementById('moodSelect').value || 'happy';
+  const bank = LYRICS_BANK[moodKey] || LYRICS_BANK.happy;
+  document.getElementById('lyricsInput').value =
+    '[Verse]\n' + bank.verse.join('\n') + '\n\n[Chorus]\n' + bank.chorus.join('\n');
+  const moodName = document.getElementById('moodSelect').selectedOptions[0].textContent.trim();
+  toast('New ' + moodName + ' lyrics ready — hit 🎵 Make My Song, then 🎤 Mic to sing along!');
+}
+
+// --- Real device voice (text-to-speech). Free, built-in, no signup. ---
+let ttsVoice = null;
+function pickTtsVoice(){
+  try{
+    const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().indexOf('en') === 0);
+    ttsVoice = vs.find(v => /google us english/i.test(v.name))
+            || vs.find(v => /natural|neural|samantha|zira/i.test(v.name))
+            || vs.find(v => /en[-_]us/i.test(v.lang))
+            || vs[0] || null;
+  }catch(e){ ttsVoice = null; }
+}
+if(typeof speechSynthesis !== 'undefined'){
+  pickTtsVoice();
+  try{ speechSynthesis.onvoiceschanged = pickTtsVoice; }catch(e){}
+}
+function speakLine(text, durSec){
+  if(typeof speechSynthesis === 'undefined') return false;
+  try{
+    speechSynthesis.cancel(); // one line at a time, always in sync
+    const u = new SpeechSynthesisUtterance(text);
+    if(ttsVoice) u.voice = ttsVoice;
+    const words = text.trim().split(/\s+/).length;
+    u.rate = Math.min(1.6, Math.max(0.7, (words / Math.max(0.6, durSec)) / 2.6));
+    u.pitch = 1.1;
+    u.volume = 1.0;
+    speechSynthesis.speak(u);
+    return true;
+  }catch(e){ return false; }
+}
+function stopTts(){ try{ if(typeof speechSynthesis !== 'undefined') speechSynthesis.cancel(); }catch(e){} }
+
 /* ---------- 14. SONG BUILDER: lyrics -> full song (Mureka-style, free) ----------
    Pick a mood -> tempo/scale/chord progression/drum groove/voice are set.
    [Verse]/[Chorus]/[Bridge] tags structure the song (or one verse by default).
@@ -1592,6 +1744,8 @@ let songTimers = [];
 function stopSong(){
   songTimers.forEach(clearTimeout);
   songTimers = [];
+  stopTts();
+  performanceEnd();
   if(state.songPlaying){
     state.songPlaying = false;
     hideKaraoke();
@@ -1602,13 +1756,13 @@ function stopSong(){
 }
 
 function makeSong(){
-  initAudio(); stopLyricPlayback(); stopSong();
+  initAudio(); stopLyricPlayback(); stopSong(); performanceBegin();
   const text = document.getElementById('lyricsInput').value.trim();
-  if(!text){ toast('Write some lyrics first — then make your song!'); return; }
+  if(!text){ toast('Write some lyrics first — or tap ✨ New lyrics!'); return; }
   const mood = MOODS[document.getElementById('moodSelect').value] || MOODS.happy;
   const instrumental = document.getElementById('instrumentalBtn').classList.contains('on');
   const sections = parseSong(text);
-  if(!sections.length){ toast('Write some lyrics first — then make your song!'); return; }
+  if(!sections.length){ toast('Write some lyrics first — or tap ✨ New lyrics!'); return; }
 
   // Mood sets the musical world
   state.bpm = mood.bpm;
@@ -1670,6 +1824,9 @@ function makeSong(){
 
       // Vocal melody walking on chord tones (exact beat positions keep staff aligned)
       const mel = songMelody(syllables.length, chordDeg);
+      const voiceKey = document.getElementById('voiceArchetype').value === 'real' ? 'real' : mood.voice;
+      if(voiceKey === 'real' && !instrumental)
+        after(t, () => speakLine(line, syllables.length * spb * beatSec));
       syllables.forEach((syl, i) => {
         const midi = degToMidi(mel[i]);
         const atBeat = beatCursor + i * spb;
@@ -1681,7 +1838,11 @@ function makeSong(){
         } else {
           const dur = Math.min(spb * beatSec * 1.02, 2.4);
           after(t + i * spb * beatSec, () => {
-            try{ singSyllable(syl, midi, mood.voice, blend, oct, dur, 0); }catch(e){}
+            if(voiceKey === 'real'){
+              playMidiNote(midi, 'piano', { velocity: 0.42, duration: Math.min(dur, 1.0) });
+            } else {
+              try{ singSyllable(syl, midi, voiceKey, blend, oct, dur, 0); }catch(e){}
+            }
             addSheetNote({ midi, inst:'piano', degree:0, lyric:syl, beats:spb, atBeat });
             disp.textContent = '♪ ' + syl;
             noteDisp.textContent = midiName(midi);
@@ -1708,6 +1869,7 @@ function makeSong(){
     if(state.songPlaying) stopSong();
     else makeSong();
   });
+  document.getElementById('genLyricsBtn').addEventListener('click', generateLyrics);
   document.getElementById('instrumentalBtn').addEventListener('click', function(){
     this.classList.toggle('on');
     toast(this.classList.contains('on') ? 'Instrumental mode — band only, no singing' : 'Vocal mode — lyrics will be sung');

@@ -35,6 +35,16 @@ Live at **https://apatel85.github.io/Dashboards/KineticMusic/**
   chord symbols on the staff. Write `[Verse]` / `[Chorus]` / `[Bridge]` on
   their own lines to structure it. **🎹 Instrumental** toggle = band only,
   no singing (with a sparkle arpeggio filling the vocal space).
+- **✨ New lyrics** — one tap writes original kid-friendly verse + chorus
+  lyrics for the selected mood (offline, instant). The textarea is always
+  there for typing your own.
+- **🗣️ Real Voice** — a real spoken voice via the device's built-in
+  text-to-speech (free, no account): it speaks each line clearly while the
+  piano carries the tune underneath. Honest label: it talks, it doesn't
+  sing — for true singing, the karaoke mic is still king.
+- **Performance mode** — while a song or lyric performance plays, the
+  stage/orbs bounce silently and the metronome pauses, so the band plays
+  alone. Everything resumes when the song ends.
 - **🧒 Kids mode** — bigger buttons, bigger note shapes, giant karaoke
   words, friendlier colors. Persists across visits.
 
