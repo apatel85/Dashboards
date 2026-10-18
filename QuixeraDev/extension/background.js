@@ -87,7 +87,7 @@ async function commitFile(repoPath, b64, message, token) {
 
 const b64encode = (str) => btoa(unescape(encodeURIComponent(str)));
 
-/* ---------- offscreen clip recorder (v3.3) ---------- */
+/* ---------- offscreen clip recorder (v3.4) ---------- */
 let recordingTab = null; // tabId currently being recorded, or null
 async function ensureOffscreen() {
   if (await chrome.offscreen.hasDocument()) return;
@@ -95,6 +95,53 @@ async function ensureOffscreen() {
     url: "offscreen.html",
     reasons: ["USER_MEDIA"],
     justification: "Record a QA clip of the tab being tested"
+  });
+}
+
+// v3.4: the tab picker runs here in the service worker (a reliable context).
+function pickTab() {
+  return new Promise((resolve) => {
+    try {
+      chrome.desktopCapture.chooseDesktopMedia(["tab"], (streamId) => {
+        resolve(streamId || null);
+      });
+    } catch (e) {
+      resolve(null);
+    }
+  });
+}
+
+// Send a message to the offscreen document with an ack/retry handshake.
+// createDocument() can resolve before the document's listener is registered,
+// and without this the start-recording message could be lost silently
+// (which is exactly what v3.3.0 did).
+function sendToOffscreen(msg, tries = 5) {
+  return new Promise((resolve, reject) => {
+    const reqId = "q" + Math.random().toString(36).slice(2);
+    let attempts = 0, done = false, timer = null;
+    const onAck = (m) => {
+      if (m && m.type === "offscreenAck" && m.reqId === reqId && !done) {
+        done = true;
+        if (timer) clearTimeout(timer);
+        chrome.runtime.onMessage.removeListener(onAck);
+        resolve();
+      }
+    };
+    chrome.runtime.onMessage.addListener(onAck);
+    const attempt = () => {
+      if (done) return;
+      attempts++;
+      if (attempts > tries) {
+        chrome.runtime.onMessage.removeListener(onAck);
+        reject(new Error("Recorder did not respond."));
+        return;
+      }
+      try {
+        chrome.runtime.sendMessage({ ...msg, reqId });
+      } catch (e) { /* will retry */ }
+      timer = setTimeout(attempt, 1200);
+    };
+    attempt();
   });
 }
 
@@ -327,21 +374,29 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         await chrome.storage.session.set({ ["edit_" + tabId + "_" + msg.index]: p.shots[msg.index] });
         await chrome.tabs.create({ url: chrome.runtime.getURL("editor.html") + `?t=${tabId}&i=${msg.index}` });
         sendResponse({ ok: true });
-      } else if (msg.type === "editorDone") {
-        const key = `edit_${msg.t}_${msg.i}`;
-        const stored = await chrome.storage.session.get([key]);
-        if (stored[key]) {
-          pend(Number(msg.t)).shots[Number(msg.i)] = stored[key];
-          await chrome.storage.session.remove([key]);
+      } else if (msg.type === "editorDone" || msg.type === "editorCancel") {
+        // v3.4: we close the editor tab ourselves and return focus to the tab
+        // being tested (msg.t) — the old code left focus on a random tab.
+        const origTabId = Number(msg.t);
+        if (msg.type === "editorDone") {
+          const key = `edit_${msg.t}_${msg.i}`;
+          const stored = await chrome.storage.session.get([key]);
+          if (stored[key]) {
+            pend(origTabId).shots[Number(msg.i)] = stored[key];
+            await chrome.storage.session.remove([key]);
+          }
         }
-        try {
-          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-          if (tab) chrome.tabs.sendMessage(tab.id, { type: "shotsUpdated" }).catch(() => {});
-        } catch (e) {}
+        try { await chrome.tabs.update(origTabId, { active: true }); } catch (e) {}
+        if (msg.type === "editorDone") {
+          try { chrome.tabs.sendMessage(origTabId, { type: "shotsUpdated" }).catch(() => {}); } catch (e) {}
+        }
+        try { if (sender.tab && sender.tab.id) await chrome.tabs.remove(sender.tab.id); } catch (e) {}
         sendResponse({ ok: true });
       } else if (msg.type === "startRecord") {
-        // v3.3: record in place via the offscreen document (desktopCapture tab
-        // picker is the consent UI). No recorder tab is opened anymore.
+        // v3.4: the tab picker runs in the service worker (reliable context);
+        // the offscreen document only handles getUserMedia + recording.
+        // Delivery uses an ack/retry handshake so a not-yet-ready document
+        // can never swallow the start silently.
         if (recordingTab !== null && recordingTab !== tabId) {
           sendResponse({ ok: false, error: "Already recording another tab." });
           return;
@@ -349,15 +404,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         recordingTab = tabId;
         try {
           await ensureOffscreen();
+          const streamId = await pickTab();
+          if (!streamId) {
+            recordingTab = null;
+            try { chrome.tabs.sendMessage(tabId, { type: "clipError", error: "Picker closed — no tab chosen." }).catch(() => {}); } catch (e) {}
+            sendResponse({ ok: true });
+            return;
+          }
+          await sendToOffscreen({ target: "offscreen", type: "offscreenStart", tabId, streamId });
+          sendResponse({ ok: true, recording: true });
         } catch (e) {
           recordingTab = null;
-          throw new Error("Could not start the recorder: " + e.message);
+          throw new Error("Could not start recording: " + (e.message || e));
         }
-        chrome.runtime.sendMessage({ target: "offscreen", type: "offscreenStart", tabId });
-        sendResponse({ ok: true, recording: true });
       } else if (msg.type === "stopRecord") {
         chrome.runtime.sendMessage({ target: "offscreen", type: "offscreenStop" });
         sendResponse({ ok: true });
+      } else if (msg.type === "offscreenAck") {
+        sendResponse({ ok: true }); // consumed by the awaiting sendToOffscreen listener
       } else if (msg.type === "offscreenRecording") {
         recordingTab = msg.tabId;
         try { chrome.tabs.sendMessage(msg.tabId, { type: "clipRecording" }).catch(() => {}); } catch (e) {}
