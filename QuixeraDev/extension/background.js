@@ -87,64 +87,6 @@ async function commitFile(repoPath, b64, message, token) {
 
 const b64encode = (str) => btoa(unescape(encodeURIComponent(str)));
 
-/* ---------- offscreen clip recorder (v3.4) ---------- */
-let recordingTab = null; // tabId currently being recorded, or null
-async function ensureOffscreen() {
-  if (await chrome.offscreen.hasDocument()) return;
-  await chrome.offscreen.createDocument({
-    url: "offscreen.html",
-    reasons: ["USER_MEDIA"],
-    justification: "Record a QA clip of the tab being tested"
-  });
-}
-
-// v3.4: the tab picker runs here in the service worker (a reliable context).
-function pickTab() {
-  return new Promise((resolve) => {
-    try {
-      chrome.desktopCapture.chooseDesktopMedia(["tab"], (streamId) => {
-        resolve(streamId || null);
-      });
-    } catch (e) {
-      resolve(null);
-    }
-  });
-}
-
-// Send a message to the offscreen document with an ack/retry handshake.
-// createDocument() can resolve before the document's listener is registered,
-// and without this the start-recording message could be lost silently
-// (which is exactly what v3.3.0 did).
-function sendToOffscreen(msg, tries = 5) {
-  return new Promise((resolve, reject) => {
-    const reqId = "q" + Math.random().toString(36).slice(2);
-    let attempts = 0, done = false, timer = null;
-    const onAck = (m) => {
-      if (m && m.type === "offscreenAck" && m.reqId === reqId && !done) {
-        done = true;
-        if (timer) clearTimeout(timer);
-        chrome.runtime.onMessage.removeListener(onAck);
-        resolve();
-      }
-    };
-    chrome.runtime.onMessage.addListener(onAck);
-    const attempt = () => {
-      if (done) return;
-      attempts++;
-      if (attempts > tries) {
-        chrome.runtime.onMessage.removeListener(onAck);
-        reject(new Error("Recorder did not respond."));
-        return;
-      }
-      try {
-        chrome.runtime.sendMessage({ ...msg, reqId });
-      } catch (e) { /* will retry */ }
-      timer = setTimeout(attempt, 1200);
-    };
-    attempt();
-  });
-}
-
 /* ---------- pending filing state per tab ---------- */
 const pending = {}; // tabId -> { shots: [dataUrl], clip: {dataUrl, secs} | null }
 function pend(tabId) {
@@ -392,51 +334,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
         try { if (sender.tab && sender.tab.id) await chrome.tabs.remove(sender.tab.id); } catch (e) {}
         sendResponse({ ok: true });
-      } else if (msg.type === "startRecord") {
-        // v3.4: the tab picker runs in the service worker (reliable context);
-        // the offscreen document only handles getUserMedia + recording.
-        // Delivery uses an ack/retry handshake so a not-yet-ready document
-        // can never swallow the start silently.
-        if (recordingTab !== null && recordingTab !== tabId) {
-          sendResponse({ ok: false, error: "Already recording another tab." });
-          return;
-        }
-        recordingTab = tabId;
-        try {
-          await ensureOffscreen();
-          const streamId = await pickTab();
-          if (!streamId) {
-            recordingTab = null;
-            try { chrome.tabs.sendMessage(tabId, { type: "clipError", error: "Picker closed — no tab chosen." }).catch(() => {}); } catch (e) {}
-            sendResponse({ ok: true });
-            return;
-          }
-          await sendToOffscreen({ target: "offscreen", type: "offscreenStart", tabId, streamId });
-          sendResponse({ ok: true, recording: true });
-        } catch (e) {
-          recordingTab = null;
-          throw new Error("Could not start recording: " + (e.message || e));
-        }
-      } else if (msg.type === "stopRecord") {
-        chrome.runtime.sendMessage({ target: "offscreen", type: "offscreenStop" });
-        sendResponse({ ok: true });
-      } else if (msg.type === "offscreenAck") {
-        sendResponse({ ok: true }); // consumed by the awaiting sendToOffscreen listener
-      } else if (msg.type === "offscreenRecording") {
-        recordingTab = msg.tabId;
-        try { chrome.tabs.sendMessage(msg.tabId, { type: "clipRecording" }).catch(() => {}); } catch (e) {}
-        sendResponse({ ok: true });
-      } else if (msg.type === "offscreenClipDone") {
-        pend(msg.tabId).clip = { dataUrl: msg.dataUrl, secs: msg.secs };
-        recordingTab = null;
-        try {
-          chrome.tabs.sendMessage(msg.tabId, { type: "clipReady", secs: msg.secs, kb: dataUrlSizeKB(msg.dataUrl) }).catch(() => {});
-          chrome.tabs.sendMessage(msg.tabId, { type: "clipStopped" }).catch(() => {});
-        } catch (e) {}
-        sendResponse({ ok: true });
-      } else if (msg.type === "offscreenClipError") {
-        recordingTab = null;
-        try { chrome.tabs.sendMessage(msg.tabId, { type: "clipError", error: msg.error }).catch(() => {}); } catch (e) {}
+      } else if (msg.type === "clipData") {
+        // v3.5: the content script records the clip itself (getDisplayMedia)
+        // and hands the finished data URL here for the pending bug.
+        pend(tabId).clip = { dataUrl: msg.dataUrl, secs: msg.secs };
         sendResponse({ ok: true });
       } else if (msg.type === "discardClip") {
         pend(tabId).clip = null;
