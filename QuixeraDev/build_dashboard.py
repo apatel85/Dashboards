@@ -58,7 +58,12 @@ def _load_bugs():
 
 BUGS, BACKLOG = _load_bugs()
 
-# ---- possible-duplicate detection for manual captures ----
+# ---- potential-duplicate detection for manual captures ----
+# Policy (2026-10-18, Ankit): an identical title alone NEVER flags a bug.
+# A bug is flagged only as a *potential* duplicate when title similarity is
+# corroborated by details (same page, same category, or similar
+# expected/actual). Nothing is ever removed automatically — the dashboard
+# shows a side-by-side compare popup so he can confirm duplicate vs different.
 _DUP_STOP = {"the", "a", "an", "on", "in", "of", "to", "and", "or", "for",
              "with", "is", "are", "was", "not", "no", "tab", "page", "button",
              "click", "clicking", "open", "opens", "shows", "show", "new",
@@ -81,30 +86,45 @@ def _dup_path(b):
     return ""
 
 def _dup_match(manual, others):
+    """Return (best_other, reasons). Title similarity alone never flags —
+    at least one corroborating detail (same page, same category, or similar
+    expected/actual) is required."""
     mw = _dup_words(manual.get("title", ""))
     mp = _dup_path(manual)
-    best, best_score = None, 0
+    mexp = _dup_words((manual.get("expected") or "") + " " + (manual.get("actual") or ""))
+    best, best_score, best_reasons = None, 0, []
     for o in others:
         if o.get("id") == manual.get("id"):
             continue
-        s = 2 * len(mw & _dup_words(o.get("title", "")))
+        s, reasons = 0, []
+        tw = mw & _dup_words(o.get("title", ""))
+        if tw:
+            s += 2 * len(tw)
+            reasons.append("similar title")
         op = _dup_path(o)
         if mp and op and mp == op:
-            s += 2
+            s += 3
+            reasons.append("same page")
         if (manual.get("issue_type") and manual["issue_type"] != "Other"
                 and o.get("issue_type") == manual["issue_type"]):
+            s += 2
+            reasons.append("same category")
+        ew = mexp & _dup_words((o.get("expected") or "") + " " + (o.get("actual") or ""))
+        if len(ew) >= 2:
             s += 3
-        if s > best_score:
-            best, best_score = o, s
-    return best if best_score >= 4 else None
+            reasons.append("similar details")
+        corroborated = any(r in reasons for r in ("same page", "same category", "similar details"))
+        if corroborated and s > best_score:
+            best, best_score, best_reasons = o, s, reasons
+    if best_score >= 6:
+        return best, best_reasons
+    return None, []
 
-_DUP_SRC = {"arlo": "Arlo testing", "team": "QA team testing", "manual": "another manual capture"}
 for _m in BUGS:
     if _m["source"] == "manual":
-        _hit = _dup_match(_m, BUGS)
+        _hit, _reasons = _dup_match(_m, BUGS)
         if _hit:
-            _m["dup_of"] = {"id": _hit["id"],
-                            "src": _DUP_SRC.get(_hit.get("source"), "earlier testing")}
+            _m["dup_of"] = {"id": _hit["id"], "reasons": _reasons}
 
 SEV_ORDER = ["High", "Medium", "Low", "Info"]
 SEV_COLOR = {"High": "#b91c1c", "Medium": "#b45309", "Low": "#4d7c0f", "Info": "#1d4ed8"}
@@ -123,15 +143,81 @@ SEGMENTS = [
 def esc(s):
     return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
+# v3.6: human-readable click trails. The extension records raw DOM clicks
+# (tag + label + page); this turns them into plain-English steps the way a
+# human QA note would read, e.g. Click "View" on the dashboard.
+PAGE_NAMES = [
+    ("/memberships/directory", "the Memberships directory"),
+    ("/memberships", "Memberships"),
+    ("/people/leads", "the Leads page"),
+    ("/billing", "the Billing page"),
+    ("/analytics", "Analytics"),
+    ("/ai-insights", "AI Insights"),
+    ("/dashboard", "the dashboard"),
+    ("/messages", "Messages"),
+    ("/settings", "Settings"),
+    ("/teams", "Teams"),
+    ("/bookings", "Bookings"),
+    ("/customers", "Customers"),
+    ("/programs", "Programs"),
+]
+
+def friendly_page(page):
+    p = (page or "").split("?")[0].rstrip("/") or "/"
+    for prefix, name in PAGE_NAMES:
+        if p == prefix or p.startswith(prefix + "/"):
+            return name
+    seg = p.strip("/").split("/")[-1].replace("-", " ").replace("_", " ") if p.strip("/") else ""
+    return "the " + seg[0].upper() + seg[1:] if seg else "the page"
+
+def humanize_step(t):
+    page = t.get("page", "") or ""
+    clicked = re.sub(r"\s+", " ", (t.get("clicked", "") or "").strip())
+    pg = friendly_page(page)
+    if clicked == "(page background)":
+        return "Click on the page background (%s)." % pg
+    m = re.match(r'^([^:]+):\s*"(.*)"$', clicked, re.S)
+    tag = m.group(1).strip().lower() if m else ""
+    text = re.sub(r"\s+", " ", m.group(2).strip()) if m else clicked
+    if len(text) > 60:
+        text = text[:57].rsplit(" ", 1)[0] + "…"
+    if tag == "input":
+        verb = "Click into"
+    elif tag == "select":
+        verb = "Choose from"
+    elif tag == "textarea":
+        verb = "Type in"
+    else:
+        verb = "Click"
+    label = '"%s"' % text if text else ("a " + tag if tag else "an item")
+    return "%s %s on %s." % (verb, label, pg)
+
+def humanize_trail(trail):
+    steps = []
+    for t in trail or []:
+        s = humanize_step(t)
+        if not s:
+            continue
+        if steps and steps[-1][0] == s:
+            steps[-1][1] += 1
+        else:
+            steps.append([s, 1])
+    return [s + (" (×%d)" % n if n > 1 else "") for s, n in steps]
+
 def trail_html(b):
     trail = b.get("trail")
     if isinstance(trail, list) and trail and isinstance(trail[0], dict):
+        steps = humanize_trail(trail)
         items = "".join(
-            f"<li><span class='stp'>{t.get('step', i + 1)}</span>"
-            f"<span class='pg'>{esc(t.get('page', ''))}</span>"
+            f"<li><span class='stp'>{i + 1}</span><span class='cl'>{esc(x)}</span></li>"
+            for i, x in enumerate(steps)) or "<li>No steps recorded.</li>"
+        raw = "".join(
+            f"<li><span class='pg'>{esc(t.get('page', ''))}</span> "
             f"<span class='cl'>{esc(t.get('clicked', ''))}</span></li>"
-            for i, t in enumerate(trail))
-        return f"<ol class='trail'>{items}</ol>"
+            for t in trail)
+        return (f"<ol class='trail'>{items}</ol>"
+                f"<details class='rawtrail'><summary>Raw click data</summary>"
+                f"<ol class='trail'>{raw}</ol></details>")
     steps = "".join(f"<li><span class='stp'>{i + 1}</span><span class='cl'>{esc(x)}</span></li>"
                     for i, x in enumerate(b.get("steps", [])))
     return f"<ol class='trail'>{steps}</ol>"
@@ -154,8 +240,11 @@ def card(b):
     dup = ""
     if b.get("dup_of"):
         d = b["dup_of"]
-        dup = (f"<p class='dupwarn'>⚠️ Possible duplicate of "
-               f"<a href='#bug-{d['id']}'>{d['id']}</a> — already covered by {d['src']}.</p>")
+        why = ", ".join(d["reasons"])
+        dup = (f"<p class='dupwarn'>⚠️ <b>Potential duplicate</b> of "
+               f"<button class='duplink' onclick=\"openDupCmp('{b['id']}','{d['id']}')\">{d['id']}</button>"
+               f" <span class='dupwhy'>(flagged for: {esc(why)})</span><br>"
+               f"<span class='dupnote'>Tap the ID to compare side-by-side. Nothing is removed automatically.</span></p>")
     extra = ""
     if b.get("where"):
         extra += f"<p><b>Where:</b> {esc(b['where'])}</p>"
@@ -244,6 +333,22 @@ header p{color:#c3d2e5;font-size:14px}
 .stat.clickable.active{outline:3px solid #1e3a5f}
 .dupwarn{background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:10px}
 .dupwarn a{font-weight:700;color:#b45309}
+.duplink{background:none;border:none;color:#b45309;font-weight:700;font-size:14px;cursor:pointer;text-decoration:underline;padding:0;font-family:ui-monospace,Menlo,monospace}
+.dupwhy{color:#6b7280;font-size:12px}
+.dupnote{color:#6b7280;font-size:12px}
+#dupmodal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+#dupmodal.open{display:flex}
+.dupbox{background:#fff;border-radius:14px;max-width:960px;width:100%;max-height:90vh;overflow:auto;padding:24px;position:relative;text-align:left}
+.dupclose{position:absolute;top:12px;right:12px;border:1px solid #d1d5db;background:#fff;border-radius:8px;width:36px;height:36px;font-size:15px;cursor:pointer}
+.dupbox h3{margin-bottom:4px;font-size:18px}
+.dupsub{font-size:13px;color:#6b7280;margin-bottom:14px}
+.dupcols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.dupcols{grid-template-columns:1fr}}
+.dupcol{border:1px solid #e5e7eb;border-radius:10px;padding:14px;font-size:14px}
+.dupcol h4{font-size:15px;margin-bottom:8px;font-family:ui-monospace,Menlo,monospace;color:#1e3a5f}
+.dupcol p{margin-bottom:10px}
+.dupcol .k{color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.dupcol .pg{white-space:normal;max-width:none}
 .toolbar{position:sticky;top:0;z-index:50;background:#f1f4f8ee;backdrop-filter:blur(6px);padding:12px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-bottom:1px solid #e5e7eb;margin-bottom:18px}
 .fbtn{border:1px solid #d1d5db;background:#fff;border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer}
 .fbtn.active{background:#1e3a5f;color:#fff;border-color:#1e3a5f}
@@ -275,6 +380,8 @@ header p{color:#c3d2e5;font-size:14px}
 .stp{flex:none;min-width:26px;height:26px;border-radius:50%;background:#1e3a5f;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
 .pg{flex:none;font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#f3f4f6;border-radius:6px;padding:3px 8px;color:#4b5563;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cl{flex:1}
+.rawtrail{margin:-4px 0 12px;font-size:13px;color:#6b7280}
+.rawtrail summary{cursor:pointer;color:#1d4ed8;font-weight:600}
 .fix{background:#fef9c3;border:1px solid #fde047;border-radius:10px;padding:12px 14px;font-size:14px;margin-top:6px}
 .src{display:inline-block;background:#e0e7ff;color:#3730a3;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;margin-right:6px}
 .golink{display:inline-block;background:#1e3a5f;color:#fff!important;text-decoration:none;font-size:13px;font-weight:600;border-radius:8px;padding:6px 14px;margin:2px 0 4px}
@@ -303,7 +410,34 @@ footer{color:#6b7280;font-size:13px;margin-top:30px;text-align:center}
 #gateerr{color:#b91c1c;font-size:13px;min-height:20px;margin-top:10px}
 </style></head><body>"""
 
+# Comparison data for the potential-duplicate popup
+dupdata = {}
+for b in BUGS:
+    tr = b.get("trail")
+    ntrail = len(tr) if isinstance(tr, list) else len(b.get("steps", []) or [])
+    dupdata[b["id"]] = {
+        "id": b["id"],
+        "title": b.get("title", ""),
+        "sev": b.get("sev", ""),
+        "status": b.get("status", ""),
+        "page": _dup_path(b) or b.get("page", "") or b.get("link", ""),
+        "itype": b.get("issue_type", ""),
+        "expected": b.get("expected", ""),
+        "actual": b.get("actual", ""),
+        "shots": len(b.get("imgs", [])),
+        "trail": ntrail,
+        "src": SOURCE_LABEL.get(b.get("source"), ""),
+    }
+
 INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=""></div>
+<div id="dupmodal" onclick="if(event.target===this)closeDupCmp()">
+  <div class="dupbox">
+    <button class="dupclose" onclick="closeDupCmp()" title="Close">✕</button>
+    <h3>Potential duplicate — compare</h3>
+    <p class="dupsub">Review the details and decide whether these are the same bug or different ones. Nothing is removed automatically.</p>
+    <div class="dupcols" id="dupcols"></div>
+  </div>
+</div>
 <div class="wrap">
 <header>
 <h1>Quixera DEV — Bug Tracker Dashboard</h1>
@@ -377,6 +511,7 @@ GATE_HASH = open(GATE_HASH_FILE).read().strip()
 PAYLOAD = base64.b64encode(INNER.encode("utf-8")).decode()
 
 HTML = HEAD + """
+<script>const DUPDATA = """ + json.dumps(dupdata) + """;</script>
 <div id="gate"><div class="gcard">
 <h2>🔒 QA Dashboard</h2>
 <p>This bug tracker is private. Enter the password to view it.</p>
@@ -411,8 +546,28 @@ function showContent(){
 function toggleCard(btn){btn.closest('.card').classList.toggle('open')}
 function setAll(open){document.querySelectorAll('.card').forEach(c=>c.classList.toggle('open',open))}
 function openLB(src){document.getElementById('lbimg').src=src;document.getElementById('lb').style.display='flex'}
+function escH(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function dupCol(d){
+  return "<div class='dupcol'><h4>"+escH(d.id)+"</h4>"
+  +"<p><span class='k'>Title</span><br>"+escH(d.title)+"</p>"
+  +"<p><span class='k'>Severity · Status · Source</span><br>"+escH(d.sev)+" · "+escH(d.status)+" · "+escH(d.src)+"</p>"
+  +"<p><span class='k'>Page</span><br><span class='pg'>"+escH(d.page||'—')+"</span></p>"
+  +"<p><span class='k'>Category</span><br>"+escH(d.itype||'—')+"</p>"
+  +"<p><span class='k'>Expected</span><br>"+escH(d.expected||'—')+"</p>"
+  +"<p><span class='k'>Actual</span><br>"+escH(d.actual||'—')+"</p>"
+  +"<p><span class='k'>Evidence</span><br>"+d.shots+" screenshot(s) · "+d.trail+" trail step(s)</p>"
+  +"<p><a href='#bug-"+escH(d.id)+"' onclick='closeDupCmp()'>Jump to this card ↓</a></p></div>";
+}
+function openDupCmp(a,b){
+  const da=(typeof DUPDATA!=='undefined')?DUPDATA[a]:null;
+  const db=(typeof DUPDATA!=='undefined')?DUPDATA[b]:null;
+  if(!da||!db) return;
+  document.getElementById('dupcols').innerHTML=dupCol(da)+dupCol(db);
+  document.getElementById('dupmodal').classList.add('open');
+}
+function closeDupCmp(){document.getElementById('dupmodal').classList.remove('open')}
 function initDashboard(){
-document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('lb').style.display='none'});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('lb').style.display='none';closeDupCmp();}});
 document.querySelectorAll('.fbtn:not(.sbtn)').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.fbtn:not(.sbtn)').forEach(x=>x.classList.remove('active'));b.classList.add('active');
   F.sev=b.dataset.f; applyFilters();
