@@ -23,7 +23,7 @@ All filed bug reports (click trail, screenshot, and your notes) are committed to
 ## Permissions used and why
 
 - **tabs / activeTab** — to capture the screenshot of the tab you are filing a bug from.
-- **desktopCapture / offscreen** — to record a short clip (max 60s) of the tab you are testing, only when you tap the record button and choose the tab in Chrome's own picker dialog.
+- **Screen recording** — uses your browser's built-in "share this tab" picker (no special extension permission): it appears only when you tap the record button, records at most 60 seconds, and the clip is attached to your bug report.
 - **storage** — to keep your Settings (projects, GitHub token, repo name) on your device.
 - **Host access (`<all_urls>`)** — the extension is a generic QA tool for any site you test. Its content script loads on pages but stays completely dormant unless the site matches a project you configured in Settings.
 - **api.github.com** — the only network destination besides your configured repository host: used solely to commit your bug reports.
