@@ -342,6 +342,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       } else if (msg.type === "discardClip") {
         pend(tabId).clip = null;
         sendResponse({ ok: true });
+      } else if (msg.type === "ping") {
+        // v3.6 keep-alive: the content script pings every 20s while the form
+        // or minibar is open so the MV3 worker (and its in-memory pending
+        // shots/clip) can't fall asleep mid-filing.
+        sendResponse({ ok: true });
       } else if (msg.type === "getPending") {
         const p = pend(tabId);
         sendResponse({ shots: p.shots.length, clip: p.clip ? { secs: p.clip.secs, kb: dataUrlSizeKB(p.clip.dataUrl) } : null });
