@@ -90,6 +90,11 @@
     const m = $("qa-mb-status"); if (m) m.textContent = t;
   }
   let captureQueued = false, queuedDone = null;
+  let captureWatchdog = null, captureRetries = 0;
+  const CAPTURE_TIMEOUT_MS = 12000, CAPTURE_MAX_RETRIES = 3;
+  function disarmWatchdog() {
+    if (captureWatchdog) { clearTimeout(captureWatchdog); captureWatchdog = null; }
+  }
   function doCapture(onDone) {
     if (capturing) {
       // v3.4: queue one follow-up instead of silently dropping the tap
@@ -101,18 +106,37 @@
     capturing = true;
     setStatus("Capturing…");
     const finish = (ok) => {
+      disarmWatchdog();
       capturing = false;
+      captureRetries = 0;
       if (captureQueued) {
         captureQueued = false;
         const qd = queuedDone; queuedDone = null;
         doCapture(qd);
       } else if (onDone) onDone(ok);
     };
+    // v3.6 watchdog: if the worker never answers (killed mid-capture, message
+    // port dropped), force-clear the flag instead of wedging captures for the
+    // rest of the page. This was the "screenshots silently stop working" bug:
+    // one lost response left `capturing` true forever, so every later tap queued
+    // behind nothing — while clips (a separate path) kept working fine.
+    disarmWatchdog();
+    captureWatchdog = setTimeout(() => {
+      captureWatchdog = null;
+      capturing = false; captureQueued = false; queuedDone = null;
+      setStatus("❌ Capture timed out — tap 📷 again.");
+      if (onDone) { try { onDone(false); } catch (e) {} }
+    }, CAPTURE_TIMEOUT_MS);
     chrome.runtime.sendMessage({ type: "captureShot" }, (r) => {
-      if (r && r.ok) {
+      disarmWatchdog();
+      if (chrome.runtime.lastError) {
+        setStatus("❌ " + chrome.runtime.lastError.message);
+        finish(false);
+      } else if (r && r.ok) {
         setStatus(""); refreshShots(); updateMinibar();
         finish(true);
-      } else if (r && r.error && /exceeds/i.test(r.error)) {
+      } else if (r && r.error && /exceed|busy|throttl|quota/i.test(r.error) && captureRetries < CAPTURE_MAX_RETRIES) {
+        captureRetries++;
         setStatus("Capture is busy — retrying…");
         capturing = false;
         // the retry below absorbs any queued tap; clear it to avoid a duplicate
@@ -123,6 +147,22 @@
         finish(false);
       }
     });
+  }
+
+  // v3.6: MV3 workers sleep after ~30s idle, and the pending screenshots + clip
+  // live in worker memory — a slow filing session could lose captures between
+  // tap and "send". Ping every 20s while the form or minibar is open so the
+  // worker stays awake for the whole session.
+  let keepAliveTimer = null;
+  function startKeepAlive() {
+    if (keepAliveTimer) return;
+    keepAliveTimer = setInterval(() => {
+      try { chrome.runtime.sendMessage({ type: "ping" }, () => { void chrome.runtime.lastError; }); }
+      catch (e) {}
+    }, 20000);
+  }
+  function stopKeepAlive() {
+    if (keepAliveTimer) { clearInterval(keepAliveTimer); keepAliveTimer = null; }
   }
 
   // v3.5: in-place clip recording via getDisplayMedia, called right here in the
@@ -251,6 +291,7 @@
       '<span id="qa-mb-status"></span>';
     document.body.appendChild(bar);
     updateMinibar();
+    startKeepAlive();
     $("qa-mb-shot").addEventListener("click", (e) => { e.stopPropagation(); doCapture(); });
     $("qa-mb-rec").addEventListener("click", (e) => {
       e.stopPropagation();
@@ -272,6 +313,7 @@
     const ov = $("qa-overlay"), flag = $("qa-flag-btn");
     if (ov) ov.style.display = "";
     if (flag) flag.style.display = "";
+    if (!$("qa-overlay")) stopKeepAlive();
     refreshShots();
   }
   function updateMinibar() {
@@ -352,6 +394,7 @@
       </div>`;
     document.body.appendChild(ov);
     const st = $("qa-status");
+    startKeepAlive();
     renderShots(); renderClip();
     $("qa-type").addEventListener("change", (e) => {
       if (e.target.value !== "Other" && !$("qa-title").value.trim())
@@ -370,7 +413,7 @@
           page: location.pathname + location.search }, (r) => {
           const box = $("qa-dup");
           if (r && r.hit) {
-            box.innerHTML = `<div class="qa-dupwarn">⚠️ Possible duplicate of <b>${esc(r.hit.id)}</b> — “${esc(r.hit.title)}” (already covered by ${esc(r.hit.src)}). You can still file below.</div>`;
+            box.innerHTML = `<div class="qa-dupwarn">⚠️ <b>Potential duplicate</b> of <b>${esc(r.hit.id)}</b> — “${esc(r.hit.title)}” (already covered by ${esc(r.hit.src)}). Review the details and compare side-by-side from the card's badge on the dashboard before filing. You can still file below.</div>`;
           } else box.innerHTML = "";
         });
       }, 700);
@@ -378,9 +421,10 @@
     $("qa-title").addEventListener("input", scheduleDupCheck);
     $("qa-cancel").addEventListener("click", () => {
       chrome.runtime.sendMessage({ type: "resetPending" });
+      stopKeepAlive();
       ov.remove();
     });
-    ov.addEventListener("click", (e) => { if (e.target === ov) { chrome.runtime.sendMessage({ type: "resetPending" }); ov.remove(); } });
+    ov.addEventListener("click", (e) => { if (e.target === ov) { chrome.runtime.sendMessage({ type: "resetPending" }); stopKeepAlive(); ov.remove(); } });
     $("qa-send").addEventListener("click", () => {
       const title = $("qa-title").value.trim();
       if (!title) { st.textContent = "Please add a title."; return; }
@@ -406,6 +450,7 @@
         if (resp && resp.ok) {
           st.textContent = "✅ Filed as " + resp.id + " — on the dashboard shortly.";
           trail = [];
+          stopKeepAlive();
           setTimeout(() => ov.remove(), 2500);
         } else st.textContent = "❌ " + ((resp && resp.error) || "failed");
       });
