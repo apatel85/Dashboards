@@ -33,10 +33,6 @@
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === "openForm") openForm();
     else if (msg.type === "shotsUpdated") refreshShots();
-    else if (msg.type === "clipReady") { clip = { secs: msg.secs, kb: msg.kb }; renderClip(); resetRecUI(); updateMinibar(); }
-    else if (msg.type === "clipRecording") { recStartedUI(); }
-    else if (msg.type === "clipStopped") { resetRecUI(); }
-    else if (msg.type === "clipError") { resetRecUI(); setStatus("❌ " + (msg.error || "recording failed")); }
   });
 
   function labelFor(el) {
@@ -129,9 +125,12 @@
     });
   }
 
-  // v3.3: in-place clip recording. ⏺ toggles start/stop; the tab picker is
-  // Chrome's own UI, then recording runs in the minibar — no extra tab.
+  // v3.5: in-place clip recording via getDisplayMedia, called right here in the
+  // content script (works per Chrome's docs; the ⏺ click is the user gesture).
+  // No offscreen document, no special permissions, no picker races. Chrome
+  // shows its own "share this tab" picker, pre-selected to the current tab.
   let recording = false, recTimer = null, recT0 = 0;
+  let clipStream = null, clipRec = null, clipChunks = [], clipMaxTimer = null;
   function fmtClock(s) { return Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0"); }
   function recStartedUI() {
     recording = true; recT0 = Date.now();
@@ -151,16 +150,90 @@
     const rb = $("qa-mb-rec");
     if (rb) { rb.classList.remove("live"); rb.textContent = "⏺"; rb.title = "Record a clip (up to 60s)"; }
   }
-  function startRec() {
-    setStatus("Pick the tab in the dialog…");
-    chrome.runtime.sendMessage({ type: "startRecord" }, (r) => {
-      if (r && !r.ok) setStatus("❌ " + (r.error || "could not start recording"));
-    });
+  async function pickDisplay() {
+    const gdm = navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia;
+    if (!gdm) throw new Error("Screen sharing is not available in this browser.");
+    try {
+      return await gdm.call(navigator.mediaDevices, {
+        video: { displaySurface: "browser" },
+        audio: false,
+        preferCurrentTab: true,
+        selfBrowserSurface: "include",
+        surfaceSwitching: "exclude"
+      });
+    } catch (e) {
+      // Constraint not understood here? Fall back to a plain request —
+      // but never re-prompt after the user closed the picker.
+      if (e && (e.name === "TypeError" || e.name === "OverconstrainedError")) {
+        return await gdm.call(navigator.mediaDevices, { video: true, audio: false });
+      }
+      throw e;
+    }
+  }
+  async function startRec() {
+    // NOTE: getDisplayMedia must run inside this click's user gesture —
+    // nothing may be awaited before it.
+    setStatus("Choose the tab to record…");
+    let stream;
+    try {
+      stream = await pickDisplay();
+    } catch (e) {
+      if (e && e.name === "NotAllowedError") setStatus("Picker closed — no tab chosen.");
+      else setStatus("❌ " + ((e && e.message) || "could not start recording"));
+      return;
+    }
+    clipStream = stream;
+    clipChunks = [];
+    const mime = (window.MediaRecorder && MediaRecorder.isTypeSupported("video/webm;codecs=vp9"))
+      ? "video/webm;codecs=vp9" : "video/webm";
+    try {
+      clipRec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 2_500_000 });
+    } catch (e) {
+      setStatus("❌ Recorder failed: " + e.message);
+      stream.getTracks().forEach(t => t.stop());
+      clipStream = null;
+      return;
+    }
+    clipRec.ondataavailable = (e) => { if (e.data && e.data.size) clipChunks.push(e.data); };
+    clipRec.onstop = finishClip;
+    const vtrack = stream.getVideoTracks()[0];
+    if (vtrack) vtrack.onended = () => { if (recording) stopRec(); }; // stopped from browser UI
+    clipRec.start(500);
+    clipMaxTimer = setTimeout(() => stopRec(), 60 * 1000);
+    recStartedUI();
   }
   function stopRec() {
-    if (!recording) return;
+    if (!recording || !clipRec) return;
     setStatus("Finishing…");
-    chrome.runtime.sendMessage({ type: "stopRecord" });
+    try { clipRec.stop(); } catch (e) { finishClipError(e); }
+  }
+  function finishClipError(e) {
+    resetRecUI();
+    if (clipMaxTimer) { clearTimeout(clipMaxTimer); clipMaxTimer = null; }
+    if (clipStream) { clipStream.getTracks().forEach(t => t.stop()); clipStream = null; }
+    clipRec = null;
+    setStatus("❌ " + ((e && e.message) || "recording failed"));
+  }
+  function finishClip() {
+    resetRecUI();
+    if (clipMaxTimer) { clearTimeout(clipMaxTimer); clipMaxTimer = null; }
+    const secs = Math.max(1, Math.round((Date.now() - recT0) / 1000));
+    const blob = new Blob(clipChunks, { type: "video/webm" });
+    if (clipStream) { clipStream.getTracks().forEach(t => t.stop()); clipStream = null; }
+    clipRec = null;
+    const rd = new FileReader();
+    rd.onload = () => {
+      chrome.runtime.sendMessage({ type: "clipData", dataUrl: rd.result, secs }, (r) => {
+        if (r && r.ok) {
+          clip = { secs, kb: dataUrlSizeKB(rd.result) };
+          renderClip(); updateMinibar();
+        } else {
+          setStatus("❌ " + ((r && r.error) || "could not attach clip"));
+        }
+      });
+    };
+    rd.onerror = () => setStatus("❌ Could not read the recording.");
+    rd.readAsDataURL(blob);
   }
   function inCaptureMode() { return !!$("qa-minibar"); }
   function enterCaptureMode() {
