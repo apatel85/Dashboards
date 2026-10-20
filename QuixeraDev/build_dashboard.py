@@ -677,7 +677,11 @@ async function dashSetStatus(sel){
     const pill=card.querySelector('.status');
     if(pill){ pill.textContent=sel.value; pill.style.background=STATUS_BG[sel.value]||'#6b7280'; }
     note.textContent='✅ Saved — logged in Activity';
-  } else note.textContent='❌ '+((r&&r.error)||'failed');
+  } else {
+    let err=(r&&r.error)||'failed';
+    if(err.indexOf('404')!==-1) err='This bug was already deleted — the dashboard refreshes on its next rebuild.';
+    note.textContent='❌ '+err;
+  }
 }
 async function dashDelete(btn){
   const wrap=btn.closest('.manage'), card=btn.closest('.card'), note=wrap.querySelector('.mnote');
@@ -685,7 +689,11 @@ async function dashDelete(btn){
   note.textContent='Deleting…';
   const r=await qaAsk('dashDelete',{file:wrap.dataset.file});
   if(r && r.ok){ card.remove(); }
-  else { note.textContent='❌ '+((r&&r.error)||'failed'); btn.dataset.arm=''; btn.textContent='🗑 Delete'; }
+  else {
+    let err=(r&&r.error)||'failed';
+    if(err.indexOf('404')!==-1){ card.remove(); return; } // already gone — drop the stale card
+    note.textContent='❌ '+err; btn.dataset.arm=''; btn.textContent='🗑 Delete';
+  }
 }
 function dashWireIdentity(){
   qaAsk('dashWhoami',{}).then(r=>{
