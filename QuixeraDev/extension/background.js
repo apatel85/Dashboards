@@ -119,11 +119,40 @@ async function scaffoldProject(project, token) {
 }
 
 /* ---------- bug filing ---------- */
+// v3.7: readable ids — MAN-MMDD-HHMM-CAT (local time, category abbreviation),
+// e.g. MAN-1020-1137-BL for a Broken link filed Oct 20 at 11:37 AM.
+const CAT_ABBR = {
+  "Broken link": "BL", "Button not working": "BTN",
+  "Page not loading / blank page": "PL",
+  "Miscount between summary and detail": "MC",
+  "Wrong data displayed": "WD", "Missing validation": "MV",
+  "UI / layout issue": "UI", "Slow performance": "SP", "Other": "OT"
+};
+function newBugId(issueType) {
+  const d = new Date(), p2 = (n) => String(n).padStart(2, "0");
+  const stamp = p2(d.getMonth() + 1) + p2(d.getDate()) + "-" +
+                p2(d.getHours()) + p2(d.getMinutes());
+  return "MAN-" + stamp + "-" + (CAT_ABBR[issueType] || "OT");
+}
+
 async function fileBug(project, bug, sender) {
-  const { token } = await cfg();
+  const { token, repo } = await cfg();
   if (!token) throw new Error("No GitHub token set. Open the extension Settings and paste your token.");
   const dir = project.dir || project.slug;
-  const id = "MAN-" + Date.now().toString(36).toUpperCase();
+  // collision guard: two filings in the same minute + category get -2, -3…
+  const baseId = newBugId(bug.issue_type);
+  let id = baseId;
+  for (let suffix = 2; ; suffix++) {
+    try {
+      await gh(`/repos/${repo}/contents/${dir}/bugs/${id}.json?ref=${BRANCH}`, "GET", null, token);
+      id = `${baseId}-${suffix}`; // exists — try the next suffix
+    } catch (e) {
+      if (!/GitHub 404/.test(String(e.message || e))) {
+        id = `${baseId}-${Date.now().toString(36).slice(-3).toUpperCase()}`;
+      }
+      break;
+    }
+  }
   const shots = [];
   for (let i = 0; i < bug.shots.length; i++) {
     const b64 = bug.shots[i].split(",")[1];
