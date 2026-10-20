@@ -274,18 +274,6 @@ def card(b):
     stamp, ts = filed_stamp(b)
     filed = f"<p class='filed'>🕐 Filed {stamp}</p>" if stamp else ""
     _CARD_SEQ[0] += 1
-    manage = ""
-    if b["source"] == "manual":
-        opts = "".join(
-            f"<option{' selected' if s == b['status'] else ''}>{s}</option>"
-            for s in CARD_STATUSES)
-        manage = (f"<div class='manage' data-file='{b['id']}.json' "
-                  f"data-shots='{','.join(b.get('shots') or [])}' "
-                  f"data-clip='{esc(b.get('clip') or '')}'>"
-                  f"<span class='mk'>Manage:</span>"
-                  f"<select class='mstatus' onchange='setBugStatus(this)'>{opts}</select>"
-                  f"<button class='mdel' onclick='deleteBug(this)'>🗑 Delete</button>"
-                  f"<span class='mnote'></span></div>")
     return f"""
     <article class="card" id="bug-{b['id']}" data-sev="{b['sev']}" data-status="{b['status']}" data-source="{b['source']}" data-ts="{ts}" data-orig="{_CARD_SEQ[0]}">
       <button class="card-head" onclick="toggleCard(this)">
@@ -299,7 +287,7 @@ def card(b):
         <div class="cols">
           <div class="details">
             <p><span class="src">{SOURCE_LABEL[b['source']]}</span>{itype} {jira}</p>
-            {filed}{manage}
+            {filed}
             {dup}
             <p><a class="golink" href="{b['link']}" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             {extra}
@@ -482,7 +470,7 @@ INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=
 <header>
 <h1>Quixera DEV — Bug Tracker Dashboard</h1>
 <p>https://facility-dev.quixeraos.com · QA team retest 2026-10-15 (186 fixes) + Arlo dev pass 2026-10-15 · Desktop 1440px, Chromium · Signed in as Ankit Patel (Admin) · QA_AP-labeled test records; no deletes / no outward-facing sends</p>
-<div class="recon"><b>How to reconcile:</b> when a fix lands, tell Arlo (e.g. “QXR-416-F10 is fixed on dev”) — he'll re-verify on dev and flip the card to <b>Fixed</b>. Manual captures can also be status-changed or deleted right on the card (Manage row — asks for your GitHub token once, stored only in this browser). Statuses: Open · Partly fixed · Still failing · Blocked · Fixed.</div>
+<div class="recon"><b>How to reconcile:</b> when a fix lands, tell Arlo (e.g. “QXR-416-F10 is fixed on dev”) — he'll re-verify on dev and flip the card to <b>Fixed</b>. Manual captures can be edited or deleted from the QA Capture extension's issue log. Statuses: Open · Partly fixed · Still failing · Blocked · Fixed.</div>
 <div class="grid">
 <div class="stat clickable" data-seg="team" title="Show only QA team bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["team"]) + """</div><div class="l">🧪 QA team — tap to filter</div></div>
 <div class="stat clickable" data-seg="arlo" title="Show only Arlo bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["arlo"]) + """</div><div class="l">🤖 Arlo pass — tap to filter</div></div>
@@ -612,8 +600,6 @@ function openDupCmp(a,b){
   document.getElementById('dupmodal').classList.add('open');
 }
 function closeDupCmp(){document.getElementById('dupmodal').classList.remove('open')}
-const GH_REPO="apatel85/Dashboards", GH_DIR="QuixeraDev";
-const STATUS_BG={"Open":"#b91c1c","Partly fixed":"#b45309","Still failing":"#7f1d1d","Blocked":"#6b7280","Fixed":"#15803d"};
 function sortCards(mode){
   document.querySelectorAll('.seg').forEach(sec=>{
     const cards=[...sec.querySelectorAll('.card')];
@@ -621,58 +607,6 @@ function sortCards(mode){
     else cards.sort((a,b)=> mode==='new' ? (+b.dataset.ts||0)-(+a.dataset.ts||0) : (+a.dataset.ts||0)-(+b.dataset.ts||0));
     cards.forEach(c=>sec.appendChild(c));
   });
-}
-function ghTok(){
-  let t=null; try{ t=localStorage.getItem("qaDashTok"); }catch(e){}
-  if(!t){
-    t=prompt("Paste your GitHub token to manage bugs from the dashboard. It is stored only in this browser.");
-    if(t){ try{ localStorage.setItem("qaDashTok",t); }catch(e){} }
-  }
-  return t;
-}
-async function ghApi(path, method, body){
-  const t=ghTok(); if(!t) throw new Error("No token given");
-  const r=await fetch("https://api.github.com/repos/"+GH_REPO+"/contents/"+path,{
-    method:method||"GET",
-    headers:{Accept:"application/vnd.github+json",Authorization:"Bearer "+t,"Content-Type":"application/json"},
-    body: body?JSON.stringify(body):undefined});
-  if(r.status===401||r.status===403){ try{localStorage.removeItem("qaDashTok");}catch(e){} throw new Error("Token rejected — paste it again next time."); }
-  if(r.status===404) return null;
-  if(!r.ok) throw new Error("GitHub "+r.status);
-  return r.status===204?null:r.json();
-}
-async function setBugStatus(sel){
-  const wrap=sel.closest(".manage"), card=sel.closest(".card"), note=wrap.querySelector(".mnote");
-  const status=sel.value; note.textContent="Saving…";
-  try{
-    const cur=await ghApi(GH_DIR+"/bugs/"+wrap.dataset.file);
-    if(!cur) throw new Error("Bug file not found");
-    const bug=JSON.parse(decodeURIComponent(escape(atob(cur.content.replace(/\s/g,"")))));
-    bug.status=status; bug.updated=new Date().toISOString();
-    await ghApi(GH_DIR+"/bugs/"+wrap.dataset.file,"PUT",{message:"Dashboard: status "+bug.id+" -> "+status,content:btoa(unescape(encodeURIComponent(JSON.stringify(bug,null,2)))),sha:cur.sha,branch:"main"});
-    card.dataset.status=status;
-    const pill=card.querySelector(".status"); if(pill){ pill.textContent=status; pill.style.background=STATUS_BG[status]||"#6b7280"; }
-    note.textContent="✅ Saved — fully reflected on next rebuild";
-  }catch(e){ note.textContent="❌ "+e.message; }
-}
-async function deleteBug(btn){
-  const wrap=btn.closest(".manage"), card=btn.closest(".card"), note=wrap.querySelector(".mnote");
-  if(!btn.dataset.arm){
-    btn.dataset.arm="1"; btn.textContent="Tap again to delete";
-    setTimeout(()=>{ btn.dataset.arm=""; btn.textContent="🗑 Delete"; },3500);
-    return;
-  }
-  note.textContent="Deleting…";
-  try{
-    const paths=[GH_DIR+"/bugs/"+wrap.dataset.file];
-    (wrap.dataset.shots||"").split(",").filter(Boolean).forEach(s=>paths.push(GH_DIR+"/"+s));
-    if(wrap.dataset.clip) paths.push(GH_DIR+"/"+wrap.dataset.clip);
-    for(const p of paths){
-      const f=await ghApi(p); if(!f) continue;
-      await ghApi(p,"DELETE",{message:"Dashboard: delete "+p.split("/").pop(),sha:f.sha,branch:"main"});
-    }
-    card.remove();
-  }catch(e){ note.textContent="❌ "+e.message; }
 }
 function initDashboard(){
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('lb').style.display='none';closeDupCmp();}});
