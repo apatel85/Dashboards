@@ -10,6 +10,7 @@ QA Capture is a browser extension for QA testers. It records what you click on w
 - **Screenshots** — a screenshot of the current browser tab is captured **only when you click "Capture & send"**, and only if the "Include screenshot" box is checked.
 - **Bug details you type** — title, severity, expected vs. actual behavior.
 - **Your GitHub personal access token** — stored only in the browser's local extension storage on your device. It is sent only to `api.github.com` to file your bug reports into your repository. It is never sent anywhere else.
+- **Your GitHub username** — looked up from GitHub (`/user`) and stamped on the bug reports you file (`filed_by`), and recorded in the repository's audit log (`data/audit.json`) when you change a bug's status or delete one of your own filings, together with the date and time. This is how the team can tell who filed, changed, or deleted a report.
 
 All filed bug reports (click trail, screenshot, and your notes) are committed to **your own GitHub repository** that you configure in Settings.
 
@@ -23,7 +24,6 @@ All filed bug reports (click trail, screenshot, and your notes) are committed to
 ## Permissions used and why
 
 - **tabs / activeTab** — to capture the screenshot of the tab you are filing a bug from.
-- **Screen recording** — uses your browser's built-in "share this tab" picker (no special extension permission): it appears only when you tap the record button, records at most 60 seconds, and the clip is attached to your bug report.
 - **storage** — to keep your Settings (projects, GitHub token, repo name) on your device.
 - **Host access (`<all_urls>`)** — the extension is a generic QA tool for any site you test. Its content script loads on pages but stays completely dormant unless the site matches a project you configured in Settings.
 - **api.github.com** — the only network destination besides your configured repository host: used solely to commit your bug reports.
