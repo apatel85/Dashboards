@@ -283,7 +283,15 @@ async function updateIssue(projectId, file, patch) {
   const { token, repo, projects } = await cfg();
   const p = projects.find(x => x.id === projectId);
   const dir = p.dir || p.slug;
-  const cur = await gh(`/repos/${repo}/contents/${dir}/bugs/${file}?ref=${BRANCH}`, "GET", null, token);
+  let cur;
+  try {
+    cur = await gh(`/repos/${repo}/contents/${dir}/bugs/${file}?ref=${BRANCH}`, "GET", null, token);
+  } catch (e) {
+    if (String(e.message).includes("GitHub 404")) {
+      throw new Error("This bug no longer exists — it was already deleted. The dashboard refreshes on its next rebuild.");
+    }
+    throw e;
+  }
   const b = JSON.parse(decodeURIComponent(escape(atob(cur.content))));
   const oldStatus = b.status || "Open";
   for (const k of ["title", "severity", "issue_type", "expected", "actual", "status"]) {
@@ -306,7 +314,15 @@ async function deleteIssue(projectId, file) {
   const { token, repo, projects } = await cfg();
   const p = projects.find(x => x.id === projectId);
   const dir = p.dir || p.slug;
-  const cur = await gh(`/repos/${repo}/contents/${dir}/bugs/${file}?ref=${BRANCH}`, "GET", null, token);
+  let cur;
+  try {
+    cur = await gh(`/repos/${repo}/contents/${dir}/bugs/${file}?ref=${BRANCH}`, "GET", null, token);
+  } catch (e) {
+    // v3.9.1: deleting a bug that's already gone (e.g. a stale dashboard
+    // card) is a clean outcome, not an error.
+    if (String(e.message).includes("GitHub 404")) return { ok: true, alreadyGone: true };
+    throw e;
+  }
   const b = JSON.parse(decodeURIComponent(escape(atob(cur.content))));
   // v3.8: only the person who filed a bug may delete it. Bugs filed before
   // filed_by existed count as the repo owner's.
