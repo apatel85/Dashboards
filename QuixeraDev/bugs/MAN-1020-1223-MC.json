@@ -1,0 +1,38 @@
+{
+  "id": "MAN-1020-1223-MC",
+  "source": "manual",
+  "project": "Quixera Dev",
+  "issue_type": "Miscount between summary and detail",
+  "title": "[Miscount between summary and detail]",
+  "severity": "Medium",
+  "page": "/billing",
+  "url": "https://facility-dev.quixeraos.com/billing",
+  "expected": "Upon clicking total revenue, it should show me detail for 24,149.59",
+  "actual": "Takes me to outstanding tab.",
+  "trail": [
+    {
+      "step": 1,
+      "page": "/analytics?tab=revenue",
+      "clicked": "a: \"View →\""
+    },
+    {
+      "step": 2,
+      "page": "/billing",
+      "clicked": "a: \"Analytics\""
+    },
+    {
+      "step": 3,
+      "page": "/analytics",
+      "clicked": "button: \"Revenue\""
+    },
+    {
+      "step": 4,
+      "page": "/analytics?tab=revenue",
+      "clicked": "a: \"View →\""
+    }
+  ],
+  "shots": [],
+  "clip": "bugs/clips/MAN-1020-1223-MC.webm",
+  "clip_secs": 5,
+  "created": "2026-10-20T16:23:39.220Z"
+}
