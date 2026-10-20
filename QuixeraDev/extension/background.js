@@ -87,6 +87,61 @@ async function commitFile(repoPath, b64, message, token) {
 
 const b64encode = (str) => btoa(unescape(encodeURIComponent(str)));
 
+/* ---------- identity + audit (v3.8) ----------
+   Each person uses their OWN GitHub credential in the extension, so
+   GET /user tells us who is acting. Filings are stamped with filed_by.
+   Rules: anyone signed in may change a bug's status; only the person who
+   filed a bug may delete it (pre-filed_by bugs count as the repo owner's).
+   Every status change and delete is appended to <dir>/data/audit.json. */
+async function whoami() {
+  const { token } = await cfg();
+  if (!token) return null;
+  const c = await chrome.storage.local.get(["ghLogin", "ghLoginTok"]);
+  if (c.ghLogin && c.ghLoginTok === token) return c.ghLogin;
+  try {
+    const u = await gh("/user", "GET", null, token);
+    if (u && u.login) {
+      await chrome.storage.local.set({ ghLogin: u.login, ghLoginTok: token });
+      return u.login;
+    }
+  } catch (e) { /* token may be fine-grained without /user scope — stay null */ }
+  return null;
+}
+
+async function repoOwner() {
+  const { repo } = await cfg();
+  return (repo || "").split("/")[0] || "";
+}
+
+async function audit(dir, entry, token) {
+  const path = `${dir}/data/audit.json`;
+  const { repo } = await cfg();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let doc = { entries: [] }, sha = null;
+    try {
+      const cur = await gh(`/repos/${repo}/contents/${path}?ref=${BRANCH}`, "GET", null, token);
+      sha = cur.sha;
+      doc = JSON.parse(decodeURIComponent(escape(atob(cur.content))));
+      if (!Array.isArray(doc.entries)) doc = { entries: [] };
+    } catch (e) { /* first entry — file does not exist yet */ }
+    doc.entries.push(entry);
+    try {
+      const payload = { message: `QA Capture: audit ${entry.action} ${entry.bug}`,
+                        content: b64encode(JSON.stringify(doc, null, 2)), branch: BRANCH };
+      if (sha) payload.sha = sha;
+      await gh(`/repos/${repo}/contents/${path}`, "PUT", payload, token);
+      return;
+    } catch (e) {
+      if (attempt === 1) throw e; // conflict twice — give up loudly
+    }
+  }
+}
+
+async function auditStamp(dir, partial, token) {
+  const me = await whoami();
+  await audit(dir, { ts: new Date().toISOString(), user: me || "(unknown)", ...partial }, token);
+}
+
 /* ---------- pending filing state per tab ---------- */
 const pending = {}; // tabId -> { shots: [dataUrl], clip: {dataUrl, secs} | null }
 function pend(tabId) {
@@ -182,6 +237,7 @@ async function fileBug(project, bug, sender) {
     shots,
     clip,
     clip_secs: clipSecs,
+    filed_by: (await whoami()) || undefined,
     created: new Date().toISOString()
   };
   await commitFile(`${dir}/bugs/${id}.json`, b64encode(JSON.stringify(record, null, 2)),
@@ -196,6 +252,8 @@ async function listIssues(projectId, limit) {
   const p = projects.find(x => x.id === projectId);
   if (!p) throw new Error("Unknown project");
   const dir = p.dir || p.slug;
+  const me = await whoami();
+  const owner = await repoOwner();
   const entries = await gh(`/repos/${repo}/contents/${dir}/bugs?ref=${BRANCH}`, "GET", null, token);
   const files = entries.filter(e => e.type === "file" && e.name.endsWith(".json"))
     .map(e => e.name).sort().reverse().slice(0, limit || 50);
@@ -204,12 +262,15 @@ async function listIssues(projectId, limit) {
     try {
       const f = await gh(`/repos/${repo}/contents/${dir}/bugs/${name}?ref=${BRANCH}`, "GET", null, token);
       const b = JSON.parse(decodeURIComponent(escape(atob(f.content))));
+      const filer = b.filed_by || owner;
       out.push({ id: b.id, title: b.title, severity: b.severity,
                  issue_type: b.issue_type || "Other", created: b.created,
+                 status: b.status || "Open", filed_by: b.filed_by || null,
+                 can_delete: !!me && me === filer,
                  expected: b.expected || "", actual: b.actual || "", _file: name });
     } catch (e) { /* skip unreadable */ }
   }
-  return out;
+  return { issues: out, me };
 }
 
 async function updateIssue(projectId, file, patch) {
@@ -218,7 +279,8 @@ async function updateIssue(projectId, file, patch) {
   const dir = p.dir || p.slug;
   const cur = await gh(`/repos/${repo}/contents/${dir}/bugs/${file}?ref=${BRANCH}`, "GET", null, token);
   const b = JSON.parse(decodeURIComponent(escape(atob(cur.content))));
-  for (const k of ["title", "severity", "issue_type", "expected", "actual"]) {
+  const oldStatus = b.status || "Open";
+  for (const k of ["title", "severity", "issue_type", "expected", "actual", "status"]) {
     if (patch[k] !== undefined) b[k] = patch[k];
   }
   b.updated = new Date().toISOString();
@@ -226,6 +288,11 @@ async function updateIssue(projectId, file, patch) {
     message: `QA Capture: edit ${b.id}`, content: b64encode(JSON.stringify(b, null, 2)),
     sha: cur.sha, branch: BRANCH
   }, token);
+  // v3.8: status changes are audited with who + when
+  if (patch.status !== undefined && patch.status !== oldStatus) {
+    await auditStamp(dir, { bug: b.id, title: b.title || "", action: "status",
+                            from: oldStatus, to: patch.status }, token);
+  }
   return { ok: true };
 }
 
@@ -235,6 +302,13 @@ async function deleteIssue(projectId, file) {
   const dir = p.dir || p.slug;
   const cur = await gh(`/repos/${repo}/contents/${dir}/bugs/${file}?ref=${BRANCH}`, "GET", null, token);
   const b = JSON.parse(decodeURIComponent(escape(atob(cur.content))));
+  // v3.8: only the person who filed a bug may delete it. Bugs filed before
+  // filed_by existed count as the repo owner's.
+  const me = await whoami();
+  const filer = b.filed_by || (await repoOwner());
+  if (!me || me !== filer) {
+    throw new Error(`Only the person who filed this can delete it (filed by ${filer}). You are ${me || "not signed in"}.`);
+  }
   // delete screenshots + clip first, then the bug file
   for (const s of (b.shots || [])) {
     try {
@@ -252,6 +326,8 @@ async function deleteIssue(projectId, file) {
   }
   await gh(`/repos/${repo}/contents/${dir}/bugs/${file}`, "DELETE", {
     message: `QA Capture: delete issue ${b.id}`, sha: cur.sha, branch: BRANCH }, token);
+  await auditStamp(dir, { bug: b.id, title: b.title || "", action: "delete",
+                          from: b.status || "Open", to: null }, token);
   return { ok: true };
 }
 
@@ -401,11 +477,25 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const url = await scaffoldProject(pr, c.token);
         sendResponse({ ok: true, url });
       } else if (msg.type === "listIssues") {
-        sendResponse({ ok: true, issues: await listIssues(msg.projectId) });
+        const r = await listIssues(msg.projectId);
+        sendResponse({ ok: true, issues: r.issues, me: r.me });
       } else if (msg.type === "updateIssue") {
         sendResponse(await updateIssue(msg.projectId, msg.file, msg.patch));
       } else if (msg.type === "deleteIssue") {
         sendResponse(await deleteIssue(msg.projectId, msg.file));
+      } else if (msg.type === "dashWhoami") {
+        // v3.8 dashboard bridge: the dashboard page asks (via the content
+        // script) who the extension is signed in as — no token ever touches
+        // the web page.
+        sendResponse({ ok: true, login: await whoami() });
+      } else if (msg.type === "dashSetStatus" || msg.type === "dashDelete") {
+        const pr = projects.find(x => (x.dir || x.slug) === msg.dir);
+        if (!pr) throw new Error("Unknown dashboard");
+        if (msg.type === "dashSetStatus") {
+          sendResponse(await updateIssue(pr.id, msg.file, { status: msg.status }));
+        } else {
+          sendResponse(await deleteIssue(pr.id, msg.file));
+        }
       } else if (msg.type === "checkDup") {
         const bugs = await projectBugs(msg.projectId);
         const hit = dupMatch({ title: msg.title, issue_type: msg.issue_type,
