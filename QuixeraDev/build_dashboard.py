@@ -51,7 +51,9 @@ def _load_bugs():
         for fn in sorted(os.listdir(bugs_dir)):
             if fn.endswith(".json"):
                 with open(os.path.join(bugs_dir, fn)) as f:
-                    bugs.append(_normalize(json.load(f)))
+                    nb = _normalize(json.load(f))
+                    nb["_file_backed"] = True  # lives in bugs/<id>.json → manageable
+                    bugs.append(nb)
     for b in bugs:
         b["imgs"] = [os.path.join(HERE, s) for s in b.get("shots", []) if os.path.exists(os.path.join(HERE, s))]
     return bugs, backlog
@@ -272,8 +274,19 @@ def card(b):
     fix = f"<div class=\"fix\"><b>Suggested fix:</b> {esc(b['fix'])}</div>" if b.get("fix") else ""
     jira = f"<p><b>Jira:</b> <a href=\"{b['jira']}\" target=\"_blank\" rel=\"noopener\">{esc(b['jira'].rstrip('/').split('/')[-1])}</a> (parent ticket)</p>" if b.get("jira") else ""
     stamp, ts = filed_stamp(b)
-    filed = f"<p class='filed'>🕐 Filed {stamp}</p>" if stamp else ""
+    filer = b.get("filed_by") or "apatel85"  # pre-filed_by bugs were all Ankit's
+    filed = f"<p class='filed'>🕐 Filed {stamp} · by {esc(filer)}</p>" if stamp else ""
     _CARD_SEQ[0] += 1
+    manage = ""
+    if b["source"] == "manual" and b.get("_file_backed"):
+        opts = "".join(
+            f"<option{' selected' if s == b['status'] else ''}>{s}</option>"
+            for s in CARD_STATUSES)
+        manage = (f"<div class='manage' data-file='{b['id']}.json' data-filedby='{esc(filer)}'>"
+                  f"<span class='mk'>Manage:</span>"
+                  f"<select class='mstatus' onchange='dashSetStatus(this)'>{opts}</select>"
+                  f"<button class='mdel' onclick='dashDelete(this)'>🗑 Delete</button>"
+                  f"<span class='mnote'></span></div>")
     return f"""
     <article class="card" id="bug-{b['id']}" data-sev="{b['sev']}" data-status="{b['status']}" data-source="{b['source']}" data-ts="{ts}" data-orig="{_CARD_SEQ[0]}">
       <button class="card-head" onclick="toggleCard(this)">
@@ -287,7 +300,7 @@ def card(b):
         <div class="cols">
           <div class="details">
             <p><span class="src">{SOURCE_LABEL[b['source']]}</span>{itype} {jira}</p>
-            {filed}
+            {filed}{manage}
             {dup}
             <p><a class="golink" href="{b['link']}" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             {extra}
@@ -457,6 +470,42 @@ for b in BUGS:
         "src": SOURCE_LABEL.get(b.get("source"), ""),
     }
 
+# ---------- Activity (audit log) ----------
+# Status changes + deletes are appended by the extension to data/audit.json
+# (who + when + from/to). Rendered newest-first, capped at 60 rows.
+AUDIT = []
+try:
+    _ap = os.path.join(HERE, "data", "audit.json")
+    if os.path.exists(_ap):
+        AUDIT = json.load(open(_ap)).get("entries", [])
+except Exception:
+    AUDIT = []
+
+def _audit_section():
+    head = ("<details class=\"note\"><summary style=\"cursor:pointer;font-weight:600\">"
+            "🕘 Activity — who changed what (audit log)</summary>")
+    if not AUDIT:
+        return (head + "<p style=\"margin-top:8px;color:#6b7280\">No status changes or deletes "
+                "logged yet. Changes made from this dashboard or the extension's issue log "
+                "appear here with who made them and when.</p></details>")
+    rows = ""
+    for e in list(reversed(AUDIT))[:60]:
+        stamp, _ = filed_stamp({"created": e.get("ts")})
+        if e.get("action") == "status":
+            what = f"status: {esc(e.get('from') or '?')} → {esc(e.get('to') or '?')}"
+        elif e.get("action") == "delete":
+            what = "🗑 deleted the bug"
+        else:
+            what = esc(e.get("action") or "")
+        rows += (f"<tr><td class='mono'>{esc(stamp)}</td><td>{esc(e.get('user') or '')}</td>"
+                 f"<td class='mono'>{esc(e.get('bug') or '')}</td>"
+                 f"<td>{esc(e.get('title') or '')}</td><td>{what}</td></tr>")
+    return (head + "<div style=\"overflow-x:auto;margin-top:10px\"><table class=\"bl\">"
+            "<tr><th>When</th><th>Who</th><th>Bug</th><th>Title</th><th>Change</th></tr>"
+            + rows + "</table></div></details>")
+
+AUDIT_SECTION = _audit_section()
+
 INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=""></div>
 <div id="dupmodal" onclick="if(event.target===this)closeDupCmp()">
   <div class="dupbox">
@@ -470,7 +519,7 @@ INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=
 <header>
 <h1>Quixera DEV — Bug Tracker Dashboard</h1>
 <p>https://facility-dev.quixeraos.com · QA team retest 2026-10-15 (186 fixes) + Arlo dev pass 2026-10-15 · Desktop 1440px, Chromium · Signed in as Ankit Patel (Admin) · QA_AP-labeled test records; no deletes / no outward-facing sends</p>
-<div class="recon"><b>How to reconcile:</b> when a fix lands, tell Arlo (e.g. “QXR-416-F10 is fixed on dev”) — he'll re-verify on dev and flip the card to <b>Fixed</b>. Manual captures can be edited or deleted from the QA Capture extension's issue log. Statuses: Open · Partly fixed · Still failing · Blocked · Fixed.</div>
+<div class="recon"><b>How to reconcile:</b> when a fix lands, tell Arlo (e.g. “QXR-416-F10 is fixed on dev”) — he'll re-verify on dev and flip the card to <b>Fixed</b>. Manual captures have a <b>Manage</b> row: anyone on the team can change the status, but only the person who filed a bug can delete it — every change is logged in the <b>Activity</b> section below with who made it and when. Manage actions run through your QA Capture extension (signed in as you) — no token is entered on this page. Statuses: Open · Partly fixed · Still failing · Blocked · Fixed.</div>
 <div class="grid">
 <div class="stat clickable" data-seg="team" title="Show only QA team bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["team"]) + """</div><div class="l">🧪 QA team — tap to filter</div></div>
 <div class="stat clickable" data-seg="arlo" title="Show only Arlo bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["arlo"]) + """</div><div class="l">🤖 Arlo pass — tap to filter</div></div>
@@ -492,10 +541,11 @@ INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=
 <option value="new">Newest first</option>
 <option value="old">Oldest first</option>
 </select>
+<span class="tsep" id="dashwho"></span>
 <button class="tbtn" onclick="setAll(true)">Expand all</button>
 <button class="tbtn" onclick="setAll(false)">Collapse all</button>
 </div>
-""" + segments + """
+""" + segments + AUDIT_SECTION + """
 <details class="note"><summary style="cursor:pointer;font-weight:600">Retest backlog — 19 partly fixed + 6 still failing + 2 blocked (from the QA team retest of 186 fixes)</summary>
 <div style="overflow-x:auto;margin-top:10px"><table class="bl">
 <tr><th>ID</th><th>Title</th><th>Status</th></tr>
@@ -545,7 +595,7 @@ GATE_HASH = open(GATE_HASH_FILE).read().strip()
 PAYLOAD = base64.b64encode(INNER.encode("utf-8")).decode()
 
 HTML = HEAD + """
-<script>const DUPDATA = """ + json.dumps(dupdata) + """;</script>
+<script>const DASH_DIR = \"""" + os.path.basename(HERE) + """\"; const DUPDATA = """ + json.dumps(dupdata) + """;</script>
 <div id="gate"><div class="gcard">
 <h2>🔒 QA Dashboard</h2>
 <p>This bug tracker is private. Enter the password to view it.</p>
@@ -600,6 +650,58 @@ function openDupCmp(a,b){
   document.getElementById('dupmodal').classList.add('open');
 }
 function closeDupCmp(){document.getElementById('dupmodal').classList.remove('open')}
+const STATUS_BG={"Open":"#b91c1c","Partly fixed":"#b45309","Still failing":"#7f1d1d","Blocked":"#6b7280","Fixed":"#15803d"};
+/* v3.8 manage bridge: the page holds NO credential. Requests are posted to
+   the QA Capture content script on this page, which relays them to the
+   extension; the write runs under the signed-in user's own identity and is
+   audit-logged by the worker. Delete is filer-only (enforced in the worker
+   AND reflected in the UI once identity is known). */
+let _qaSeq=0; const _qaPending={};
+window.addEventListener('message',e=>{
+  const d=e.data;
+  if(d && d.qaDashResp && _qaPending[d.id]){ const f=_qaPending[d.id]; delete _qaPending[d.id]; f(d.resp); }
+});
+function qaAsk(req,payload){
+  return new Promise(res=>{
+    const id=++_qaSeq; _qaPending[id]=res;
+    window.postMessage(Object.assign({qaDash:1,req:req,id:id,dir:DASH_DIR},payload||{}),location.origin);
+    setTimeout(()=>{ if(_qaPending[id]){ delete _qaPending[id]; res({ok:false,error:"QA Capture extension didn't respond — it must be installed, with your GitHub token set in its Settings."}); } },9000);
+  });
+}
+async function dashSetStatus(sel){
+  const wrap=sel.closest('.manage'), card=sel.closest('.card'), note=wrap.querySelector('.mnote');
+  note.textContent='Saving…';
+  const r=await qaAsk('dashSetStatus',{file:wrap.dataset.file,status:sel.value});
+  if(r && r.ok){
+    card.dataset.status=sel.value;
+    const pill=card.querySelector('.status');
+    if(pill){ pill.textContent=sel.value; pill.style.background=STATUS_BG[sel.value]||'#6b7280'; }
+    note.textContent='✅ Saved — logged in Activity';
+  } else note.textContent='❌ '+((r&&r.error)||'failed');
+}
+async function dashDelete(btn){
+  const wrap=btn.closest('.manage'), card=btn.closest('.card'), note=wrap.querySelector('.mnote');
+  if(!btn.dataset.arm){ btn.dataset.arm='1'; btn.textContent='Tap again to delete'; setTimeout(()=>{btn.dataset.arm='';btn.textContent='🗑 Delete';},3500); return; }
+  note.textContent='Deleting…';
+  const r=await qaAsk('dashDelete',{file:wrap.dataset.file});
+  if(r && r.ok){ card.remove(); }
+  else { note.textContent='❌ '+((r&&r.error)||'failed'); btn.dataset.arm=''; btn.textContent='🗑 Delete'; }
+}
+function dashWireIdentity(){
+  qaAsk('dashWhoami',{}).then(r=>{
+    if(r && r.ok && r.login){
+      const tw=document.getElementById('dashwho');
+      if(tw) tw.textContent='Managing as @'+r.login;
+      document.querySelectorAll('.manage').forEach(w=>{
+        const fb=w.dataset.filedby;
+        if(fb && fb!==r.login){
+          const b=w.querySelector('.mdel');
+          if(b){ b.disabled=true; b.title='Only '+fb+' can delete this bug'; b.textContent='🔒 filed by '+fb; }
+        }
+      });
+    }
+  });
+}
 function sortCards(mode){
   document.querySelectorAll('.seg').forEach(sec=>{
     const cards=[...sec.querySelectorAll('.card')];
@@ -640,6 +742,7 @@ document.querySelectorAll('.stat.clickable').forEach(t=>t.addEventListener('clic
   applyFilters();
 }));
 setAll(true);
+dashWireIdentity();
 }
 document.getElementById("gatepw").addEventListener("keydown", e=>{ if(e.key==="Enter") unlockGate(); });
 try{ if(sessionStorage.getItem("qxr_gate")==="1") showContent(); }catch(e){}
