@@ -27,8 +27,32 @@
       project = resp.project;
       allProjects = resp.projects || [];
       activate();
+    } else {
+      installDashBridge();
     }
   });
+
+  // v3.8: on the dashboards themselves (apatel85.github.io/Dashboards/…),
+  // relay manage requests from the page to the background worker via
+  // postMessage. The page never sees a token; every write runs under the
+  // extension's own signed-in identity and is audited in the worker.
+  function installDashBridge() {
+    if (location.hostname !== "apatel85.github.io") return;
+    if (!location.pathname.startsWith("/Dashboards/")) return;
+    window.addEventListener("message", (e) => {
+      if (e.source !== window || e.origin !== location.origin) return;
+      const d = e.data;
+      if (!d || d.qaDash !== 1 || !d.req || !d.id) return;
+      chrome.runtime.sendMessage(
+        { type: d.req, dir: d.dir, file: d.file, status: d.status },
+        (r) => {
+          window.postMessage(
+            { qaDashResp: 1, id: d.id,
+              resp: r || { ok: false, error: chrome.runtime.lastError ? chrome.runtime.lastError.message : "no response" } },
+            location.origin);
+        });
+    });
+  }
 
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === "openForm") openForm();
