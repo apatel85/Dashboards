@@ -87,6 +87,33 @@
     render();
   });
 
+  /* ---------- GitHub token: save & verify (v3.9 onboarding) ---------- */
+  async function refreshTokState() {
+    const el = $("tok-state");
+    const r = await chrome.runtime.sendMessage({ type: "setupState" }).catch(() => null);
+    if (!el) return;
+    if (r && r.hasToken && r.login) el.textContent = `✅ Signed in as @${r.login}`;
+    else if (r && r.hasToken) el.textContent = "Token saved (identity not verified yet).";
+    else el.textContent = "No token saved yet — add yours above to start filing.";
+  }
+  $("tok-save").addEventListener("click", async () => {
+    const el = $("tok-state");
+    const t = $("token").value.trim();
+    if (!t) { el.textContent = "Paste your token first."; return; }
+    el.textContent = "Verifying…";
+    const r = await chrome.runtime.sendMessage({ type: "saveToken", token: t }).catch(e => ({ ok: false, error: String(e) }));
+    if (r && r.ok && r.verified) {
+      el.textContent = `✅ Signed in as @${r.login} — you're ready to file.`;
+      $("token").value = "";
+      $("token").placeholder = "•••••• saved — paste a new one to replace";
+    } else if (r && r.ok) {
+      el.textContent = "⚠️ Token saved, but GitHub didn't confirm your identity — double-check it has Contents access to the Dashboards repo.";
+      $("token").value = "";
+    } else {
+      el.textContent = "❌ " + ((r && r.error) || "failed");
+    }
+  });
+
   (async function init() {
     const c = await chrome.storage.local.get(["ghToken", "ghRepo", "projects"]);
     projects = c.projects || [];
@@ -94,6 +121,7 @@
     $("repo").value = repo;
     if (c.ghToken) $("token").placeholder = "•••••• saved — paste a new one to replace";
     render();
+    refreshTokState();
     initIssues();
   })();
 
