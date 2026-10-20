@@ -13,7 +13,7 @@ const BRANCH = "main";
 const MAX_SHOTS = 5;
 const MAX_CLIP_SECS = 60;
 
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   const cur = await chrome.storage.local.get(["projects", "ghRepo"]);
   const patch = {};
   if (!cur.projects) patch.projects = SEED_PROJECTS;
@@ -27,6 +27,12 @@ chrome.runtime.onInstalled.addListener(async () => {
   }
   if (!cur.ghRepo) patch.ghRepo = DEFAULT_REPO;
   if (Object.keys(patch).length) await chrome.storage.local.set(patch);
+  // v3.9: first install → open the setup page so the very first thing a new
+  // user is asked for is their own GitHub token (with instructions).
+  if (details && details.reason === "install") {
+    const { ghToken } = await chrome.storage.local.get(["ghToken"]);
+    if (!ghToken) { try { chrome.runtime.openOptionsPage(); } catch (e) {} }
+  }
 });
 
 async function cfg() {
@@ -406,6 +412,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       } else if (msg.type === "listProjects") {
         const c = await cfg();
         sendResponse({ projects: c.projects, repo: c.repo, hasToken: !!c.token });
+      } else if (msg.type === "setupState") {
+        // v3.9 onboarding: does this install have a token, and whose is it?
+        const { token } = await cfg();
+        sendResponse({ ok: true, hasToken: !!token, login: token ? await whoami() : null });
+      } else if (msg.type === "saveToken") {
+        const t = (msg.token || "").trim();
+        if (!t) throw new Error("Paste your GitHub token first.");
+        await chrome.storage.local.set({ ghToken: t });
+        await chrome.storage.local.remove(["ghLogin", "ghLoginTok"]);
+        const login = await whoami();
+        sendResponse({ ok: true, login, verified: !!login });
       } else if (msg.type === "captureShot") {
         const p = pend(tabId);
         if (p.shots.length >= MAX_SHOTS) throw new Error(`Max ${MAX_SHOTS} screenshots per bug.`);
