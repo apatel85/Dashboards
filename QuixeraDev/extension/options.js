@@ -114,16 +114,32 @@
       if (!r || !r.ok) { list.innerHTML = `<p class='hint'>❌ ${(r && r.error) || "failed"}</p>`; return; }
       issueCache = r.issues;
       if (!issueCache.length) { list.innerHTML = "<p class='hint'>No issues filed yet.</p>"; return; }
+      const STATUSES = ["Open", "Partly fixed", "Still failing", "Blocked", "Fixed"];
       list.innerHTML = issueCache.map((b, i) => `
         <div class="card" style="margin:8px 0;padding:10px 12px">
           <b style="font-family:monospace">${esc(b.id)}</b>
           <span class="hint">[${esc(b.issue_type)} · ${esc(b.severity)}]</span><br>
           ${esc(b.title)}<br>
-          <span class="hint">${esc((b.created||"").slice(0,16).replace("T"," "))}</span>
-          <div class="row"><button data-e="${i}">✏️ Edit</button><button data-d="${i}" style="color:#b91c1c">🗑 Delete</button></div>
+          <span class="hint">${esc((b.created||"").slice(0,16).replace("T"," "))}${b.filed_by ? " · filed by " + esc(b.filed_by) : ""}</span>
+          <div class="row">
+            <label style="flex:1">Status <select data-s="${i}" style="width:100%;min-height:40px">${STATUSES.map(s => `<option ${s === (b.status || "Open") ? "selected" : ""}>${s}</option>`).join("")}</select></label>
+          </div>
+          <div class="row"><button data-e="${i}">✏️ Edit</button>${b.can_delete
+            ? `<button data-d="${i}" style="color:#b91c1c">🗑 Delete</button>`
+            : `<span class="hint">🔒 Only ${esc(b.filed_by || "the person who filed it")} can delete this</span>`}</div>
+          <span class="hint" data-m="${i}"></span>
         </div>`).join("");
       list.querySelectorAll("[data-e]").forEach(btn => btn.addEventListener("click", () => editIssue(Number(btn.dataset.e))));
       list.querySelectorAll("[data-d]").forEach(btn => btn.addEventListener("click", () => deleteIssueUI(Number(btn.dataset.d), btn)));
+      list.querySelectorAll("[data-s]").forEach(sel => sel.addEventListener("change", async () => {
+        const i = Number(sel.dataset.s), b = issueCache[i];
+        const m = list.querySelector(`[data-m="${i}"]`);
+        const r = await chrome.runtime.sendMessage({ type: "updateIssue",
+          projectId: $("issue-proj").value,
+          file: b._file, patch: { status: sel.value } });
+        if (r && r.ok) { b.status = sel.value; if (m) m.textContent = "✅ Status saved — logged in the audit trail."; }
+        else if (m) m.textContent = "❌ " + ((r && r.error) || "failed");
+      }));
     });
   }
 
