@@ -22,12 +22,25 @@
   <h1>🚩 QA Capture — Settings</h1>
   <div id="msg"></div>
 
-  <h2>GitHub</h2>
+  <h2>Step 1 — Connect your GitHub</h2>
   <div class="card">
-    <label>Personal access token (Contents read &amp; write on your Dashboards repo)
-      <input type="password" id="token" placeholder="ghp_…" autocomplete="off"></label>
+    <p style="margin-top:0">QA Capture files bugs into the team's dashboard repo on GitHub. Your token is how GitHub knows it's <b>you</b> — your name goes on everything you file, and you can only delete your own bugs. The token stays on this device and is only ever sent to GitHub.</p>
+    <p><b>Create your token (about 2 minutes):</b></p>
+    <ol style="font-size:14px;line-height:1.7;margin:6px 0 6px 18px;padding:0">
+      <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Open GitHub's token page ↗</a> and sign in.</li>
+      <li>Name it <b>QA Capture</b>.</li>
+      <li>Under <b>Repository access</b>, choose <b>Only select repositories</b> → <b>Dashboards</b>. <span class="hint">(Don't see it? Ask Ankit to add you as a collaborator on that repo first.)</span></li>
+      <li>Under <b>Repository permissions</b>, set <b>Contents</b> to <b>Read and write</b>.</li>
+      <li>Click <b>Generate token</b>, copy it, and paste it here:</li>
+    </ol>
+    <label>Your GitHub token
+      <input type="password" id="token" placeholder="github_pat_…" autocomplete="off"></label>
+    <div class="row">
+      <button class="primary" id="tok-save">Save &amp; verify token</button>
+      <span class="hint" id="tok-state" style="align-self:center"></span>
+    </div>
     <label>Repo <input type="text" id="repo" placeholder="apatel85/Dashboards"></label>
-    <p class="hint">The token is stored only in this browser (extension storage). It is never sent anywhere except api.github.com.</p>
+    <p class="hint">The repo is pre-filled with the team dashboard repo — leave it as is unless your admin tells you otherwise. Bugs you file appear on the dashboard automatically after its next refresh.</p>
   </div>
 
   <h2>Projects → dashboards</h2>
@@ -40,7 +53,7 @@
 
   <h2>Filed issues</h2>
   <div class="card">
-    <p class="hint">View and edit bugs previously filed with the extension. Edits update the bug file in the repo; the dashboard rebuilds within ~10 minutes.</p>
+    <p class="hint">View and edit bugs previously filed with the extension. Edits save to the repo immediately; the dashboard view catches up on its next refresh.</p>
     <div class="row">
       <select id="issue-proj" style="flex:1;min-height:48px;font-size:15px;border-radius:10px;border:1px solid #ccc;padding:0 12px"></select>
       <button id="issue-load">Load issues</button>
