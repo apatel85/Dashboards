@@ -292,7 +292,19 @@
     document.body.appendChild(bar);
     updateMinibar();
     startKeepAlive();
-    $("qa-mb-shot").addEventListener("click", (e) => { e.stopPropagation(); doCapture(); });
+    $("qa-mb-shot").addEventListener("click", (e) => {
+      e.stopPropagation();
+      // v3.7: a deliberately taken screenshot opens straight in the annotation
+      // editor, so it can be marked up and saved before filing. (The automatic
+      // first screenshot at form-open does not — it isn't a deliberate take.)
+      doCapture((ok) => {
+        if (!ok) return;
+        chrome.runtime.sendMessage({ type: "getPending" }, (r) => {
+          if (r && r.shots > 0)
+            chrome.runtime.sendMessage({ type: "annotateShot", index: r.shots - 1 });
+        });
+      });
+    });
     $("qa-mb-rec").addEventListener("click", (e) => {
       e.stopPropagation();
       if (recording) stopRec(); else startRec();
@@ -363,8 +375,13 @@
 
   function openForm() {
     if ($("qa-overlay")) return;
-    // fresh filing state, then auto-capture a clean first screenshot
-    // (overlay hidden so the form doesn't appear in its own screenshot)
+    // v3.7: every filing starts clean. The local shot/clip mirrors are reset
+    // too — before, a fresh form kept showing the previous filing's chips
+    // (evidence that was no longer attached), which misled the filer.
+    shots = []; clip = null; captureRetries = 0;
+    // fresh filing state in the worker, then auto-capture a clean first
+    // screenshot (overlay not yet in the DOM, so it can't appear in its own
+    // screenshot)
     chrome.runtime.sendMessage({ type: "resetPending" }, () => {
       const ov0 = $("qa-overlay");
       if (ov0) ov0.style.display = "none";
