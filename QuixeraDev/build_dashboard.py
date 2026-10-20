@@ -222,6 +222,23 @@ def trail_html(b):
                     for i, x in enumerate(b.get("steps", [])))
     return f"<ol class='trail'>{steps}</ol>"
 
+CARD_STATUSES = ["Open", "Partly fixed", "Still failing", "Blocked", "Fixed"]
+_CARD_SEQ = [0]
+
+def filed_stamp(b):
+    """'created' ISO -> ('Oct 20, 2026 · 11:21 AM EDT', epoch) in Ankit's tz."""
+    c = b.get("created")
+    if not c:
+        return "", 0
+    try:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        dt = datetime.fromisoformat(str(c).replace("Z", "+00:00"))
+        return (dt.astimezone(ZoneInfo("America/New_York")).strftime("%b %d, %Y · %I:%M %p %Z"),
+                int(dt.timestamp()))
+    except Exception:
+        return "", 0
+
 def card(b):
     if b["imgs"]:
         shots = "".join(
@@ -254,8 +271,23 @@ def card(b):
         extra += f"<p><b>Environment:</b> {esc(b['env'])}</p>"
     fix = f"<div class=\"fix\"><b>Suggested fix:</b> {esc(b['fix'])}</div>" if b.get("fix") else ""
     jira = f"<p><b>Jira:</b> <a href=\"{b['jira']}\" target=\"_blank\" rel=\"noopener\">{esc(b['jira'].rstrip('/').split('/')[-1])}</a> (parent ticket)</p>" if b.get("jira") else ""
+    stamp, ts = filed_stamp(b)
+    filed = f"<p class='filed'>🕐 Filed {stamp}</p>" if stamp else ""
+    _CARD_SEQ[0] += 1
+    manage = ""
+    if b["source"] == "manual":
+        opts = "".join(
+            f"<option{' selected' if s == b['status'] else ''}>{s}</option>"
+            for s in CARD_STATUSES)
+        manage = (f"<div class='manage' data-file='{b['id']}.json' "
+                  f"data-shots='{','.join(b.get('shots') or [])}' "
+                  f"data-clip='{esc(b.get('clip') or '')}'>"
+                  f"<span class='mk'>Manage:</span>"
+                  f"<select class='mstatus' onchange='setBugStatus(this)'>{opts}</select>"
+                  f"<button class='mdel' onclick='deleteBug(this)'>🗑 Delete</button>"
+                  f"<span class='mnote'></span></div>")
     return f"""
-    <article class="card" id="bug-{b['id']}" data-sev="{b['sev']}" data-status="{b['status']}" data-source="{b['source']}">
+    <article class="card" id="bug-{b['id']}" data-sev="{b['sev']}" data-status="{b['status']}" data-source="{b['source']}" data-ts="{ts}" data-orig="{_CARD_SEQ[0]}">
       <button class="card-head" onclick="toggleCard(this)">
         <span class="pill" style="background:{SEV_COLOR[b['sev']]}">{b['sev']}</span>
         <span class="cid">{b['id']}</span>
@@ -267,6 +299,7 @@ def card(b):
         <div class="cols">
           <div class="details">
             <p><span class="src">{SOURCE_LABEL[b['source']]}</span>{itype} {jira}</p>
+            {filed}{manage}
             {dup}
             <p><a class="golink" href="{b['link']}" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             {extra}
@@ -382,6 +415,13 @@ header p{color:#c3d2e5;font-size:14px}
 .cl{flex:1}
 .rawtrail{margin:-4px 0 12px;font-size:13px;color:#6b7280}
 .rawtrail summary{cursor:pointer;color:#1d4ed8;font-weight:600}
+.filed{color:#6b7280;font-size:13px;margin-bottom:8px}
+.manage{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:13px}
+.manage .mk{font-weight:700;color:#374151}
+.mstatus{padding:6px 8px;border-radius:6px;border:1px solid #d1d5db;font-size:13px;background:#fff}
+.mdel{border:1px solid #fecaca;background:#fef2f2;color:#b91c1c;border-radius:6px;padding:6px 10px;font-size:13px;cursor:pointer}
+.mnote{color:#6b7280;font-size:12px}
+#sortsel{padding:6px 8px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;background:#fff}
 .fix{background:#fef9c3;border:1px solid #fde047;border-radius:10px;padding:12px 14px;font-size:14px;margin-top:6px}
 .src{display:inline-block;background:#e0e7ff;color:#3730a3;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;margin-right:6px}
 .golink{display:inline-block;background:#1e3a5f;color:#fff!important;text-decoration:none;font-size:13px;font-weight:600;border-radius:8px;padding:6px 14px;margin:2px 0 4px}
@@ -442,7 +482,7 @@ INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=
 <header>
 <h1>Quixera DEV — Bug Tracker Dashboard</h1>
 <p>https://facility-dev.quixeraos.com · QA team retest 2026-10-15 (186 fixes) + Arlo dev pass 2026-10-15 · Desktop 1440px, Chromium · Signed in as Ankit Patel (Admin) · QA_AP-labeled test records; no deletes / no outward-facing sends</p>
-<div class="recon"><b>How to reconcile:</b> when a fix lands, tell Arlo (e.g. “QXR-416-F10 is fixed on dev”) — he'll re-verify on dev and flip the card to <b>Fixed</b>. Statuses: Open · Partly fixed · Still failing · Blocked · Fixed.</div>
+<div class="recon"><b>How to reconcile:</b> when a fix lands, tell Arlo (e.g. “QXR-416-F10 is fixed on dev”) — he'll re-verify on dev and flip the card to <b>Fixed</b>. Manual captures can also be status-changed or deleted right on the card (Manage row — asks for your GitHub token once, stored only in this browser). Statuses: Open · Partly fixed · Still failing · Blocked · Fixed.</div>
 <div class="grid">
 <div class="stat clickable" data-seg="team" title="Show only QA team bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["team"]) + """</div><div class="l">🧪 QA team — tap to filter</div></div>
 <div class="stat clickable" data-seg="arlo" title="Show only Arlo bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["arlo"]) + """</div><div class="l">🤖 Arlo pass — tap to filter</div></div>
@@ -458,6 +498,12 @@ INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=
 <span class="tsep">Status:</span>
 <button class="fbtn sbtn active" data-st="All">All</button>
 """ + st_btns + """
+<span class="tsep">Sort:</span>
+<select id="sortsel" onchange="sortCards(this.value)">
+<option value="sev" selected>By severity</option>
+<option value="new">Newest first</option>
+<option value="old">Oldest first</option>
+</select>
 <button class="tbtn" onclick="setAll(true)">Expand all</button>
 <button class="tbtn" onclick="setAll(false)">Collapse all</button>
 </div>
@@ -566,6 +612,68 @@ function openDupCmp(a,b){
   document.getElementById('dupmodal').classList.add('open');
 }
 function closeDupCmp(){document.getElementById('dupmodal').classList.remove('open')}
+const GH_REPO="apatel85/Dashboards", GH_DIR="QuixeraDev";
+const STATUS_BG={"Open":"#b91c1c","Partly fixed":"#b45309","Still failing":"#7f1d1d","Blocked":"#6b7280","Fixed":"#15803d"};
+function sortCards(mode){
+  document.querySelectorAll('.seg').forEach(sec=>{
+    const cards=[...sec.querySelectorAll('.card')];
+    if(mode==='sev') cards.sort((a,b)=>(+a.dataset.orig||0)-(+b.dataset.orig||0));
+    else cards.sort((a,b)=> mode==='new' ? (+b.dataset.ts||0)-(+a.dataset.ts||0) : (+a.dataset.ts||0)-(+b.dataset.ts||0));
+    cards.forEach(c=>sec.appendChild(c));
+  });
+}
+function ghTok(){
+  let t=null; try{ t=localStorage.getItem("qaDashTok"); }catch(e){}
+  if(!t){
+    t=prompt("Paste your GitHub token to manage bugs from the dashboard. It is stored only in this browser.");
+    if(t){ try{ localStorage.setItem("qaDashTok",t); }catch(e){} }
+  }
+  return t;
+}
+async function ghApi(path, method, body){
+  const t=ghTok(); if(!t) throw new Error("No token given");
+  const r=await fetch("https://api.github.com/repos/"+GH_REPO+"/contents/"+path,{
+    method:method||"GET",
+    headers:{Accept:"application/vnd.github+json",Authorization:"Bearer "+t,"Content-Type":"application/json"},
+    body: body?JSON.stringify(body):undefined});
+  if(r.status===401||r.status===403){ try{localStorage.removeItem("qaDashTok");}catch(e){} throw new Error("Token rejected — paste it again next time."); }
+  if(r.status===404) return null;
+  if(!r.ok) throw new Error("GitHub "+r.status);
+  return r.status===204?null:r.json();
+}
+async function setBugStatus(sel){
+  const wrap=sel.closest(".manage"), card=sel.closest(".card"), note=wrap.querySelector(".mnote");
+  const status=sel.value; note.textContent="Saving…";
+  try{
+    const cur=await ghApi(GH_DIR+"/bugs/"+wrap.dataset.file);
+    if(!cur) throw new Error("Bug file not found");
+    const bug=JSON.parse(decodeURIComponent(escape(atob(cur.content.replace(/\s/g,"")))));
+    bug.status=status; bug.updated=new Date().toISOString();
+    await ghApi(GH_DIR+"/bugs/"+wrap.dataset.file,"PUT",{message:"Dashboard: status "+bug.id+" -> "+status,content:btoa(unescape(encodeURIComponent(JSON.stringify(bug,null,2)))),sha:cur.sha,branch:"main"});
+    card.dataset.status=status;
+    const pill=card.querySelector(".status"); if(pill){ pill.textContent=status; pill.style.background=STATUS_BG[status]||"#6b7280"; }
+    note.textContent="✅ Saved — fully reflected on next rebuild";
+  }catch(e){ note.textContent="❌ "+e.message; }
+}
+async function deleteBug(btn){
+  const wrap=btn.closest(".manage"), card=btn.closest(".card"), note=wrap.querySelector(".mnote");
+  if(!btn.dataset.arm){
+    btn.dataset.arm="1"; btn.textContent="Tap again to delete";
+    setTimeout(()=>{ btn.dataset.arm=""; btn.textContent="🗑 Delete"; },3500);
+    return;
+  }
+  note.textContent="Deleting…";
+  try{
+    const paths=[GH_DIR+"/bugs/"+wrap.dataset.file];
+    (wrap.dataset.shots||"").split(",").filter(Boolean).forEach(s=>paths.push(GH_DIR+"/"+s));
+    if(wrap.dataset.clip) paths.push(GH_DIR+"/"+wrap.dataset.clip);
+    for(const p of paths){
+      const f=await ghApi(p); if(!f) continue;
+      await ghApi(p,"DELETE",{message:"Dashboard: delete "+p.split("/").pop(),sha:f.sha,branch:"main"});
+    }
+    card.remove();
+  }catch(e){ note.textContent="❌ "+e.message; }
+}
 function initDashboard(){
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('lb').style.display='none';closeDupCmp();}});
 document.querySelectorAll('.fbtn:not(.sbtn)').forEach(b=>b.addEventListener('click',()=>{
