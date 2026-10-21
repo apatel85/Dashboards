@@ -676,7 +676,9 @@ async function dashSetStatus(sel){
     card.dataset.status=sel.value;
     const pill=card.querySelector('.status');
     if(pill){ pill.textContent=sel.value; pill.style.background=STATUS_BG[sel.value]||'#6b7280'; }
-    note.textContent='✅ Saved — logged in Activity';
+    note.textContent= r.auditWarning
+      ? '✅ Saved — the audit log hit a conflict; that one entry may not have recorded.'
+      : '✅ Saved — logged in Activity';
   } else {
     let err=(r&&r.error)||'failed';
     if(err.indexOf('404')!==-1) err='This bug was already deleted — the dashboard refreshes on its next rebuild.';
