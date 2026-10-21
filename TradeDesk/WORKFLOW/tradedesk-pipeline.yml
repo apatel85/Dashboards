@@ -1,10 +1,10 @@
 name: TradeDesk Data Pipeline
 
-# Weekday pre-market refresh: 12:30 UTC = 8:30 AM ET (EST) / 7:30 AM ET (EDT).
-# NOTE: cron runs in UTC; during EDT this fires at 8:30am ET, during EST at 7:30am ET.
+# Weekday pre-market refresh: 05:00 UTC = 1:00 AM ET (EDT) / 12:00 AM ET (EST).
+# NOTE: cron runs in UTC; during EDT this fires at 1am ET, during EST at midnight ET.
 on:
   schedule:
-    - cron: '30 12 * * 1-5'
+    - cron: '0 5 * * 1-5'
   workflow_dispatch:
     inputs:
       quick:
