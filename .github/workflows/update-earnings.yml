@@ -64,6 +64,7 @@ jobs:
           else
             DATE=$(date -u +%Y-%m-%d)
             git commit -m "auto: refresh earnings calendar ${DATE} [skip ci]"
+            git pull --rebase origin main
             git push
             echo "Pushed updated earnings data."
           fi
