@@ -133,6 +133,21 @@ async function main() {
       pct_change: pct,
       p_up: idea.p_up ?? null,
       score: idea.score ?? null,
+      // Snapshot of WHY this was picked — the raw material for attribution.
+      // research.json gets merged/overwritten, so without this snapshot the
+      // reasons behind a pick would be lost by the time we judge it.
+      reasons: {
+        score_breakdown: idea.score_breakdown || null,
+        congress_buys: idea.congress_buys ?? null,
+        insider_clusters: idea.insider_clusters ?? null,
+        unusual_options: idea.unusual_options ?? null,
+        sentiment: idea.sentiment ?? null,
+        trend_template_pass: idea.trend_template_pass ?? null,
+        stage: idea.stage ?? null,
+        quality_flags: idea.quality_flags || null,
+        thesis: typeof idea.thesis === 'string' ? idea.thesis.slice(0, 500) : null,
+        invalidation: typeof idea.invalidation === 'string' ? idea.invalidation.slice(0, 300) : null,
+      },
     });
   }
 
