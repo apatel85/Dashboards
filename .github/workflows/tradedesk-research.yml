@@ -20,7 +20,7 @@ on:
       max_tickers:
         description: 'Max tickers for a full run'
         required: false
-        default: '12'
+        default: '4'
 
 permissions:
   contents: write
@@ -85,6 +85,7 @@ jobs:
             echo "No changes — skipping commit."
           else
             git commit -m "auto: research agent $(date -u +%Y-%m-%d) [skip ci]"
+            git pull --rebase origin main
             git push
             echo "Pushed updated research.json."
           fi
