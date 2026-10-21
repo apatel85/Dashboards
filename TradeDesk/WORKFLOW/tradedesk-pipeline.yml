@@ -52,7 +52,7 @@ jobs:
         run: |
           git config user.name "tradedesk-bot[bot]"
           git config user.email "tradedesk-bot@noreply.github.com"
-          git add TradeDesk/public/data/
+          git add -A TradeDesk/
           git add -f TradeDesk/dist/
           if git diff --staged --quiet; then
             echo "No data changes — skipping commit."
