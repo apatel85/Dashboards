@@ -122,7 +122,12 @@ async function repoOwner() {
 async function audit(dir, entry, token) {
   const path = `${dir}/data/audit.json`;
   const { repo } = await cfg();
-  for (let attempt = 0; attempt < 2; attempt++) {
+  // v3.9.2: rapid-fire deletes/status changes from several tabs or people
+  // can all race on audit.json — GitHub rejects stale shas with 409.
+  // Re-read + retry with backoff so the entry (almost) never gets lost.
+  const waits = [300, 700, 1500, 2500, 4000];
+  let lastErr = null;
+  for (let attempt = 0; attempt <= waits.length; attempt++) {
     let doc = { entries: [] }, sha = null;
     try {
       const cur = await gh(`/repos/${repo}/contents/${path}?ref=${BRANCH}`, "GET", null, token);
@@ -138,9 +143,15 @@ async function audit(dir, entry, token) {
       await gh(`/repos/${repo}/contents/${path}`, "PUT", payload, token);
       return;
     } catch (e) {
-      if (attempt === 1) throw e; // conflict twice — give up loudly
+      lastErr = e;
+      if (String(e.message).includes("GitHub 409") && attempt < waits.length) {
+        await new Promise(r => setTimeout(r, waits[attempt]));
+        continue; // re-read the latest log and try again
+      }
+      throw e;
     }
   }
+  throw lastErr;
 }
 
 async function auditStamp(dir, partial, token) {
@@ -302,12 +313,16 @@ async function updateIssue(projectId, file, patch) {
     message: `QA Capture: edit ${b.id}`, content: b64encode(JSON.stringify(b, null, 2)),
     sha: cur.sha, branch: BRANCH
   }, token);
-  // v3.8: status changes are audited with who + when
+  // v3.8: status changes are audited with who + when.
+  // v3.9.2: a failing audit must never fail the edit itself.
+  let auditWarning = false;
   if (patch.status !== undefined && patch.status !== oldStatus) {
-    await auditStamp(dir, { bug: b.id, title: b.title || "", action: "status",
-                            from: oldStatus, to: patch.status }, token);
+    try {
+      await auditStamp(dir, { bug: b.id, title: b.title || "", action: "status",
+                              from: oldStatus, to: patch.status }, token);
+    } catch (e) { console.warn("QA Capture: audit write failed:", e); auditWarning = true; }
   }
-  return { ok: true };
+  return { ok: true, auditWarning };
 }
 
 async function deleteIssue(projectId, file) {
@@ -348,9 +363,13 @@ async function deleteIssue(projectId, file) {
   }
   await gh(`/repos/${repo}/contents/${dir}/bugs/${file}`, "DELETE", {
     message: `QA Capture: delete issue ${b.id}`, sha: cur.sha, branch: BRANCH }, token);
-  await auditStamp(dir, { bug: b.id, title: b.title || "", action: "delete",
-                          from: b.status || "Open", to: null }, token);
-  return { ok: true };
+  // v3.9.2: a failing audit must never fail the delete itself.
+  let auditWarning = false;
+  try {
+    await auditStamp(dir, { bug: b.id, title: b.title || "", action: "delete",
+                            from: b.status || "Open", to: null }, token);
+  } catch (e) { console.warn("QA Capture: audit write failed:", e); auditWarning = true; }
+  return { ok: true, auditWarning };
 }
 
 /* ---------- possible-duplicate matching (mirrors dashboard builder) ---------- */
