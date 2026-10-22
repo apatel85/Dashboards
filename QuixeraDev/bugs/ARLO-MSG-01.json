@@ -1,6 +1,6 @@
 {
   "id": "ARLO-MSG-01",
-  "source": "manual",
+  "source": "arlo",
   "project": "Quixera Dev",
   "issue_type": "UI / layout issue",
   "title": "Role switch drops your current page",
@@ -9,7 +9,11 @@
   "url": "https://facility-dev.quixeraos.com/dashboard",
   "expected": "Stay on the page you were on (or a sensible equivalent) after switching roles",
   "actual": "Admin\u2192Coach always lands on /instructor/home; switching back lands on /scheduling. Mid-task context is lost every time; coach home also flashes a blank 'Loading...' screen.",
-  "steps": "Switch Admin\u2192Coach\u2192Admin via the header role menu",
+  "steps": [
+    "Switch Admin",
+    "Coach",
+    "Admin via the header role menu"
+  ],
   "trail": [],
   "shots": [],
   "clip": null,
