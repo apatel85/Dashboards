@@ -1,6 +1,6 @@
 {
   "id": "ARLO-MSG-09",
-  "source": "manual",
+  "source": "arlo",
   "project": "Quixera Dev",
   "issue_type": "Missing validation",
   "title": "Privacy: coach with zero athletes can 1:1 any coach in the directory",
@@ -9,7 +9,11 @@
   "url": "https://facility-dev.quixeraos.com/messages",
   "expected": "Staff-to-staff reach should be scoped (own academy staff is fine, but consider limiting 1:1 initiation to relevant staff/roles)",
   "actual": "A coach with no classes and no athletes can open 1:1 chats with every coach in the academy. Family-side scoping is correctly tight (no family reachable), staff-side is wide open.",
-  "steps": "Switch to Coach role (0 enrolled athletes) \u2192 New message \u2192 Coaches",
+  "steps": [
+    "Switch to Coach role (0 enrolled athletes)",
+    "New message",
+    "Coaches"
+  ],
   "trail": [],
   "shots": [],
   "clip": null,
