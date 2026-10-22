@@ -5,6 +5,12 @@
 - Free APIs only; LLM chain Gemini → Groq → OpenRouter with automatic fallback.
 - Keys live in the user's browser only — never in the repo.
 
+## 2026-10-21 — v1.0.2 cache strategy
+- **Request:** "not seeing new update" — phone held v1.0.0 despite v1.0.1 live (Pages build verified 23:05 ET).
+- **Change:** service worker now network-first for HTML (updates appear on next load), cache-first for other assets. Version pill v1.0.2.
+- **Version:** v1.0.2.
+- **Verified:** no — needs his cache clear + reload to confirm pill shows v1.0.2.
+
 ## 2026-10-21 — v1.0.1 model fix
 - **Request:** app failed after pasting Gemini + AssemblyAI keys.
 - **Change:** default Gemini model gemini-2.5-flash → gemini-3.5-flash-lite (2.5-flash returns 404 for new free keys since Oct 2026); one-time migration of the stored value; settings now autosave on input so pasted keys survive even if Save is never tapped.
