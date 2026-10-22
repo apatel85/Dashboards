@@ -1,5 +1,5 @@
 import type { FundamentalMetrics } from '../types';
-import { useFundamentals } from '../lib/useFundamentals';
+import { useFundamentals, peerTone } from '../lib/useFundamentals';
 
 function fmtPct(v: number | null): string {
   return v == null ? '—' : `${(v * 100).toFixed(1)}%`;
@@ -17,43 +17,66 @@ function fmtCap(v: number | null): string {
   return `$${v.toFixed(0)}`;
 }
 
+const TONE_CLASS: Record<string, string> = {
+  good: 'fund-good',
+  bad: 'fund-bad',
+  neutral: '',
+};
+
 /**
- * Compact fundamentals panel for a ticker. Renders nothing when no data.
- * Drop inside any expanded/detail view: <Fundamentals ticker={t} />
+ * Compact fundamentals panel for a ticker, colored vs sector peers:
+ * green = better than peers, red = worse, uncolored = in line / neutral metric.
+ * Renders nothing when no data. Drop inside any expanded/detail view:
+ * <Fundamentals ticker={t} />
  */
 export function Fundamentals({ ticker }: { ticker: string }) {
-  const { get } = useFundamentals();
+  const { get, peerStats } = useFundamentals();
   const f: FundamentalMetrics | null = get(ticker);
   if (!f) return null;
+  const stats = peerStats(ticker);
 
-  const rows: [string, string][] = [
-    ['P/E (TTM)', fmtNum(f.pe_trailing)],
-    ['Fwd P/E', fmtNum(f.pe_forward)],
-    ['PEG', fmtNum(f.peg)],
-    ['P/B', fmtNum(f.pb)],
-    ['P/S', fmtNum(f.ps)],
-    ['ROE', fmtPct(f.roe)],
-    ['Profit margin', fmtPct(f.profit_margin)],
-    ['Beta', fmtNum(f.beta)],
-    ['Div yield', fmtPct(f.div_yield)],
-    ['Mkt cap', fmtCap(f.market_cap)],
+  const rows: [string, string, string][] = [
+    ['pe_trailing', 'P/E (TTM)', fmtNum(f.pe_trailing)],
+    ['pe_forward', 'Fwd P/E', fmtNum(f.pe_forward)],
+    ['peg', 'PEG', fmtNum(f.peg)],
+    ['pb', 'P/B', fmtNum(f.pb)],
+    ['ps', 'P/S', fmtNum(f.ps)],
+    ['roe', 'ROE', fmtPct(f.roe)],
+    ['profit_margin', 'Profit margin', fmtPct(f.profit_margin)],
+    ['debt_equity', 'Debt/Equity', fmtNum(f.debt_equity)],
+    ['beta', 'Beta', fmtNum(f.beta)],
+    ['div_yield', 'Div yield', fmtPct(f.div_yield)],
+    ['market_cap', 'Mkt cap', fmtCap(f.market_cap)],
   ];
 
   return (
     <div className="fundamentals">
-      <span className="detail-label">Fundamentals</span>
+      <span className="detail-label">
+        Fundamentals
+        {stats && stats.peerCount > 0 ? (
+          <span className="muted"> · vs {stats.peerCount} {f.sector} peers</span>
+        ) : null}
+      </span>
       <div className="fundamentals-name">
         {f.name}
         {f.sector ? <span className="muted"> · {f.sector}</span> : null}
         {f.subsector ? <span className="muted"> · {f.subsector}</span> : null}
       </div>
       <div className="fundamentals-grid">
-        {rows.map(([label, value]) => (
-          <div className="fundamentals-cell" key={label}>
-            <span className="fundamentals-label">{label}</span>
-            <span className="fundamentals-value num">{value}</span>
-          </div>
-        ))}
+        {rows.map(([key, label, value]) => {
+          const rawVal = (f as unknown as Record<string, unknown>)[key];
+          const tone = peerTone(
+            key,
+            typeof rawVal === 'number' ? rawVal : null,
+            stats
+          );
+          return (
+            <div className="fundamentals-cell" key={key}>
+              <span className="fundamentals-label">{label}</span>
+              <span className={`fundamentals-value num ${TONE_CLASS[tone]}`}>{value}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -16,10 +16,11 @@ function dirTone(d: string): 'green' | 'red' | 'amber' {
   return d === 'CALL' ? 'green' : d === 'PUT' ? 'red' : 'amber';
 }
 
-function LottoCard({ c, rank }: { c: LottoCandidate; rank: number }) {
+function LottoCard({ c, rank, forceOpen }: { c: LottoCandidate; rank: number; forceOpen: boolean | null }) {
   const [open, setOpen] = useState(rank < 3);
+  const isOpen = forceOpen ?? open;
   return (
-    <div className={`signal-card${open ? ' open' : ''}`}>
+    <div className={`signal-card${isOpen ? ' open' : ''}`}>
       <div
         className="signal-head"
         role="button"
@@ -36,14 +37,14 @@ function LottoCard({ c, rank }: { c: LottoCandidate; rank: number }) {
           {c.setup_validated ? '✓ validated' : c.setup_validated === false ? 'experimental' : 'unscored'}
         </Badge>
         <span className="score num">{c.score}</span>
-        <span className="chev">{open ? '▾' : '▸'}</span>
+        <span className="chev">{isOpen ? '▾' : '▸'}</span>
       </div>
       <div className="signal-sub muted small">
         {SETUP_LABEL[c.setup] ?? c.setup}
         {c.expected_move_pct != null ? ` · 0DTE expected ±${c.expected_move_pct}%` : ''}
         {c.iv_pct != null ? ` · IV ${c.iv_pct}%` : ''}
       </div>
-      {open && (
+      {isOpen && (
         <div className="signal-body">
           <div className="thesis-line">
             <strong>Trigger:</strong> {c.entry_trigger}
@@ -114,6 +115,7 @@ function LottoCard({ c, rank }: { c: LottoCandidate; rank: number }) {
 }
 
 export function LottoScanner({ lotto }: { lotto: LottoFile | null }) {
+  const [forceOpen, setForceOpen] = useState<boolean | null>(null);
   if (!lotto) return null;
   const vs = lotto.validation_summary ?? {};
   const keys = Object.keys(vs);
@@ -123,6 +125,11 @@ export function LottoScanner({ lotto }: { lotto: LottoFile | null }) {
         title={`🎰 Lotto scanner — top 25 ${lotto.is_friday ? 'Friday 0DTE' : '0DTE/1DTE'}`}
         sub={`as of ${lotto.as_of} · ${lotto.candidates_considered} names scored · tap a card for trigger, invalidation and targets`}
       />
+      <div className="collapse-row">
+        <button className="link-btn" onClick={() => setForceOpen(true)}>Expand all</button>
+        <span className="muted"> · </span>
+        <button className="link-btn" onClick={() => setForceOpen(false)}>Collapse all</button>
+      </div>
       {keys.length > 0 && (
         <div className="chip-row">
           {keys.map((k) => (
@@ -134,7 +141,7 @@ export function LottoScanner({ lotto }: { lotto: LottoFile | null }) {
       )}
       <div className="signal-list">
         {lotto.candidates.map((c, i) => (
-          <LottoCard key={c.ticker} c={c} rank={i} />
+          <LottoCard key={c.ticker} c={c} rank={i} forceOpen={forceOpen} />
         ))}
       </div>
       <p className="muted small footnote-line">

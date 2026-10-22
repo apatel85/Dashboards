@@ -62,18 +62,21 @@ function SignalCard({
   gexAt,
   watched,
   onToggleWatch,
+  forceOpen,
 }: {
   m: Merged;
   gex: GexTicker | null;
   gexAt?: string;
   watched: boolean;
   onToggleWatch: () => void;
+  forceOpen: boolean | null;
 }) {
   const [open, setOpen] = useState(false);
+  const isOpen = forceOpen ?? open;
   const { sig, idea } = m;
   const lp = useLivePrice(sig.ticker, null);
   return (
-    <article className={`panel signal-card${open ? ' open' : ''}`}>
+    <article className={`panel signal-card${isOpen ? ' open' : ''}`}>
       <div
         className="signal-main"
         role="button"
@@ -130,7 +133,7 @@ function SignalCard({
           {sig.buy_trades + sig.sell_trades} trades · latest {fmtDate(sig.latest_ref_date)}
         </span>
       </div>
-      {open && (
+      {isOpen && (
         <div className="signal-detail">
           {idea ? (
             <>
@@ -191,6 +194,7 @@ export default function SignalsTab() {
   const [dir, setDir] = useState<DirFilter>('all');
   const [sort, setSort] = useState<SortKey>('signal');
   const [query, setQuery] = useState('');
+  const [forceOpen, setForceOpen] = useState<boolean | null>(null);
 
   const gexByTicker = useMemo(() => {
     const m = new Map<string, GexTicker>();
@@ -295,6 +299,11 @@ export default function SignalsTab() {
             title={dir === 'all' ? 'Ranked signals' : DIR_LABEL[dir]}
             sub="Tap a card for the thesis, levels and flow detail"
           />
+          <div className="collapse-row">
+            <button className="link-btn" onClick={() => setForceOpen(true)}>Expand all</button>
+            <span className="muted"> · </span>
+            <button className="link-btn" onClick={() => setForceOpen(false)}>Collapse all</button>
+          </div>
           <div className="signal-list">
             {merged.slice(0, 60).map((m) => (
               <SignalCard
@@ -304,6 +313,7 @@ export default function SignalsTab() {
                 gexAt={gex?.computed_at}
                 watched={watched.includes(m.sig.ticker)}
                 onToggleWatch={() => toggleWatch(m.sig.ticker)}
+                forceOpen={forceOpen}
               />
             ))}
           </div>
