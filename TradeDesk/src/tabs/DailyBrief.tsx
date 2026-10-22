@@ -14,6 +14,7 @@ import {
 import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import PremarketLine from '../components/PremarketLine';
+import { Fundamentals } from '../components/Fundamentals';
 import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, prettify, prettifyOptions } from '../lib/format';
 import type { DailyBrief, BreakoutCandidate, SectorPerf, MarketRegime } from '../types';
 
@@ -100,6 +101,7 @@ function BreakoutRow({ c }: { c: BreakoutCandidate }) {
                   </div>
                 </div>
               </div>
+              <Fundamentals ticker={c.ticker} />
             </div>
           </td>
         </tr>

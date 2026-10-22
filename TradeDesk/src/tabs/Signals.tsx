@@ -13,6 +13,7 @@ import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import PremarketLine from '../components/PremarketLine';
 import { FuturesGamma, GexAlerts, TickerGamma, useWatchlist } from '../components/Gamma';
 import { Playbook } from '../components/Playbook';
+import { Fundamentals } from '../components/Fundamentals';
 import { fmtDate, fmtMoney, fmtTimeET } from '../lib/format';
 import type { ResearchIdea, SignalTicker, SignalsFile, GexChangesFile, GexFile, GexTicker } from '../types';
 
@@ -173,6 +174,7 @@ function SignalCard({
               <TickerGamma g={gex} computedAt={gexAt} />
             </div>
           ) : null}
+          <Fundamentals ticker={sig.ticker} />
         </div>
       )}
     </article>

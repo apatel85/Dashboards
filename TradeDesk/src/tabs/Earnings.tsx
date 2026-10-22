@@ -13,6 +13,7 @@ import {
 import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import PremarketLine from '../components/PremarketLine';
+import { Fundamentals } from '../components/Fundamentals';
 import { fmtMoney, fmtNum, fmtPct, fmtDayLabel, fmtTimeET, prettify } from '../lib/format';
 import type { EarningsEntry, EarningsQuarter } from '../types';
 
@@ -156,6 +157,7 @@ function EarningsRow({ e }: { e: EarningsEntry }) {
                 )}
               </div>
             </div>
+            <Fundamentals ticker={e.ticker} />
           </td>
         </tr>
       )}

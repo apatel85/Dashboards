@@ -1,5 +1,6 @@
 import { SignalBadge, Chip, Stat, TvLink } from './ui';
 import PremarketLine from './PremarketLine';
+import { Fundamentals } from './Fundamentals';
 import { useLivePrice } from '../lib/quotes';
 import { fmtMoney, fmtPct, fmtOcc, fmtK, splitThesis, prettifyOptions } from '../lib/format';
 import type { DtePick } from '../types';
@@ -55,6 +56,7 @@ export function DteCard({ p }: { p: DtePick }) {
           </div>
         </div>
       ) : null}
+      <Fundamentals ticker={p.ticker} />
     </div>
   );
 }

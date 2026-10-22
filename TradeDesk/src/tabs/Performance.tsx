@@ -8,6 +8,7 @@ import {
   ErrorPanel,
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
+import { Fundamentals } from '../components/Fundamentals';
 import { fmtMoney, fmtPct, fmtDate } from '../lib/format';
 import type { PerformanceFile, PerformanceItem } from '../types';
 
@@ -20,28 +21,42 @@ function pctTone(p: number | null): string {
 }
 
 function PerfRow({ item }: { item: PerformanceItem }) {
+  const [open, setOpen] = useState(false);
   return (
-    <tr>
-      <td data-th="Ticker">
-        <TvLink ticker={item.ticker} />
-        <span className="subname">{item.name}</span>
-      </td>
-      <td data-th="Recommended" className="num">
-        {item.recommended_date ? fmtDate(item.recommended_date) : '—'}
-      </td>
-      <td data-th="At rec." className="num">
-        {item.rec_price != null ? fmtMoney(item.rec_price) : '—'}
-      </td>
-      <td data-th="Now" className="num">
-        {item.current_price != null ? fmtMoney(item.current_price) : '—'}
-      </td>
-      <td data-th="% since rec." className={`num ${pctTone(item.pct_change)}`}>
-        <b>{item.pct_change != null ? fmtPct(item.pct_change / 100) : '—'}</b>
-      </td>
-      <td data-th="P(up 30d)">
-        {item.p_up != null ? <Badge tone={item.p_up >= 60 ? 'green' : item.p_up >= 50 ? 'dim' : 'red'}>{item.p_up}%</Badge> : '—'}
-      </td>
-    </tr>
+    <>
+      <tr
+        onClick={() => setOpen((o) => !o)}
+        style={{ cursor: 'pointer' }}
+        title="Tap for fundamentals"
+      >
+        <td data-th="Ticker">
+          <TvLink ticker={item.ticker} />
+          <span className="subname">{item.name}</span>
+        </td>
+        <td data-th="Recommended" className="num">
+          {item.recommended_date ? fmtDate(item.recommended_date) : '—'}
+        </td>
+        <td data-th="At rec." className="num">
+          {item.rec_price != null ? fmtMoney(item.rec_price) : '—'}
+        </td>
+        <td data-th="Now" className="num">
+          {item.current_price != null ? fmtMoney(item.current_price) : '—'}
+        </td>
+        <td data-th="% since rec." className={`num ${pctTone(item.pct_change)}`}>
+          <b>{item.pct_change != null ? fmtPct(item.pct_change / 100) : '—'}</b>
+        </td>
+        <td data-th="P(up 30d)">
+          {item.p_up != null ? <Badge tone={item.p_up >= 60 ? 'green' : item.p_up >= 50 ? 'dim' : 'red'}>{item.p_up}%</Badge> : '—'}
+        </td>
+      </tr>
+      {open && (
+        <tr className="detail-row">
+          <td colSpan={6}>
+            <Fundamentals ticker={item.ticker} />
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
 

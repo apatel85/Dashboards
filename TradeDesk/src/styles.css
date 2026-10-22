@@ -1732,3 +1732,38 @@ body {
 .tv-link.big .ticker {
   font-size: 20px;
 }
+
+/* Fundamentals panel */
+.fundamentals {
+  margin-top: 10px;
+}
+.fundamentals-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 4px 0 8px;
+}
+.fundamentals-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .fundamentals-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.fundamentals-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fundamentals-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+.fundamentals-value {
+  font-size: 13px;
+  font-weight: 600;
+}

@@ -12,6 +12,7 @@ import {
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { fmtMoney, fmtPct, fmtTimeET, prettify } from '../lib/format';
+import { Fundamentals } from '../components/Fundamentals';
 import type { ResearchIdea } from '../types';
 
 function IdeaCard({ idea }: { idea: ResearchIdea }) {
@@ -113,6 +114,7 @@ function IdeaCard({ idea }: { idea: ResearchIdea }) {
       )}
 
       <div className="muted small">Updated {fmtTimeET(idea.updated_at)}</div>
+      <Fundamentals ticker={idea.ticker} />
     </article>
   );
 }

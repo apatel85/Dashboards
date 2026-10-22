@@ -410,3 +410,31 @@ export interface PerformanceFile {
   quotes_as_of: string | null;
   items: PerformanceItem[];
 }
+
+/* ── fundamentals.json ──────────────────────────────────────────── */
+
+export interface FundamentalMetrics {
+  name: string;
+  sector: string | null;
+  subsector: string | null;
+  market_cap: number | null;
+  pe_trailing: number | null;
+  pe_forward: number | null;
+  peg: number | null;
+  pb: number | null;
+  ps: number | null;
+  profit_margin: number | null;
+  roe: number | null;
+  debt_equity: number | null;
+  beta: number | null;
+  div_yield: number | null;
+  eps_trailing: number | null;
+  eps_forward: number | null;
+}
+
+export interface FundamentalsFile {
+  as_of: string;
+  source: string;
+  count: number;
+  fundamentals: Record<string, FundamentalMetrics>;
+}

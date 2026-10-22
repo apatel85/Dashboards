@@ -7,6 +7,7 @@ import {
   TvLink,
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
+import { Fundamentals } from '../components/Fundamentals';
 import { fmtDate, fmtInt, fmtCompactMoney } from '../lib/format';
 import type { CongressTrade } from '../types';
 
@@ -167,6 +168,7 @@ function TradeRow({ t }: { t: CongressTrade }) {
                 ) : null}
               </div>
             </div>
+            <Fundamentals ticker={t.ticker} />
           </td>
         </tr>
       )}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Badge, SectionHead, Stat, TvLink } from './ui';
+import { Fundamentals } from './Fundamentals';
 import { prettifyOptions } from '../lib/format';
 import type { LottoCandidate, LottoFile } from '../types';
 
@@ -105,6 +106,7 @@ function LottoCard({ c, rank }: { c: LottoCandidate; rank: number }) {
           <p className="muted small footnote-line">
             Educational research only — not financial advice. 0DTE options can go to zero the same day.
           </p>
+          <Fundamentals ticker={c.ticker} />
         </div>
       )}
     </div>
