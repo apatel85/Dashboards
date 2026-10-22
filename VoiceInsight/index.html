@@ -60,7 +60,7 @@ td{padding:.35rem;border-bottom:1px solid #2a1c4d;vertical-align:top}
 <body>
 <header>
   <h1>🎙️ VoiceInsight</h1>
-  <span class="pill" id="ver">v1.0.0</span>
+  <span class="pill" id="ver">v1.0.1</span>
   <button class="iconbtn" id="settingsBtn" aria-label="Settings">⚙️</button>
 </header>
 <main>
@@ -147,7 +147,7 @@ td{padding:.35rem;border-bottom:1px solid #2a1c4d;vertical-align:top}
     <div class="prov"><span class="nm">Groq</span><input type="password" id="k_groq" placeholder="free: console.groq.com API key"></div>
     <div class="prov"><span class="nm">OpenRouter</span><input type="password" id="k_openrouter" placeholder="free tier: openrouter.ai API key"></div>
     <label>Gemini model</label>
-    <input type="text" id="m_gemini" value="gemini-2.5-flash">
+    <input type="text" id="m_gemini" value="gemini-3.5-flash-lite">
     <div class="btnrow">
       <div style="flex:1"><label>Groq model</label><input type="text" id="m_groq" value="llama-3.3-70b-versatile"></div>
       <div style="flex:1"><label>OpenRouter model</label><input type="text" id="m_openrouter" value="meta-llama/llama-3.3-70b-instruct:free"></div>
@@ -177,19 +177,25 @@ function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";cle
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 
 /* ---------- settings ---------- */
-const DEF={m_gemini:"gemini-2.5-flash",m_groq:"llama-3.3-70b-versatile",m_openrouter:"meta-llama/llama-3.3-70b-instruct:free"};
+const DEF={m_gemini:"gemini-3.5-flash-lite",m_groq:"llama-3.3-70b-versatile",m_openrouter:"meta-llama/llama-3.3-70b-instruct:free"};
 function loadSettings(){
   ["k_gemini","k_groq","k_openrouter","k_assembly"].forEach(k=>{$(k).value=store.get(k,"")||""});
   ["m_gemini","m_groq","m_openrouter"].forEach(k=>{$(k).value=store.get(k,DEF[k])||DEF[k]});
 }
-function saveSettings(){
+function saveSettings(quiet){
   ["k_gemini","k_groq","k_openrouter","k_assembly"].forEach(k=>store.set(k,$(k).value.trim()));
   ["m_gemini","m_groq","m_openrouter"].forEach(k=>store.set(k,$(k).value.trim()||DEF[k]));
-  toast("Settings saved — keys never leave this browser");
+  if(!quiet)toast("Settings saved — keys never leave this browser");
 }
+/* autosave as you type/paste — keys are kept even if Save is never tapped */
+["k_gemini","k_groq","k_openrouter","k_assembly","m_gemini","m_groq","m_openrouter"].forEach(k=>{
+  $(k).addEventListener("input",()=>{clearTimeout($(k)._t);$(k)._t=setTimeout(()=>saveSettings(true),800)});
+});
+/* one-time migration: gemini-2.5-flash 404s for new free keys (Oct 2026) */
+if(store.get("m_gemini","")==="gemini-2.5-flash")store.set("m_gemini","gemini-3.5-flash-lite");
 $("settingsBtn").onclick=()=>{loadSettings();$("settingsModal").classList.add("open")};
 $("setClose").onclick=()=>$("settingsModal").classList.remove("open");
-$("setSave").onclick=()=>{saveSettings();$("settingsModal").classList.remove("open")};
+$("setSave").onclick=()=>{saveSettings(false);$("settingsModal").classList.remove("open")};
 $("setClear").onclick=()=>{["k_gemini","k_groq","k_openrouter","k_assembly"].forEach(k=>{store.del(k);$(k).value=""});toast("Keys erased")};
 $("settingsModal").addEventListener("click",e=>{if(e.target===$("settingsModal"))$("settingsModal").classList.remove("open")});
 
