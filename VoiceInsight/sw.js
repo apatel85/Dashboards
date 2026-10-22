@@ -1,5 +1,5 @@
-/* VoiceInsight sw v1.0.3 — network-first HTML (updates appear immediately), cache-first assets */
-const CACHE="voiceinsight-v1-0-3";
+/* VoiceInsight sw v1.0.4 — network-first HTML (updates appear immediately), cache-first assets */
+const CACHE="voiceinsight-v1-0-4";
 const ASSETS=[".","index.html","manifest.json","icon.svg"];
 self.addEventListener("install",e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
