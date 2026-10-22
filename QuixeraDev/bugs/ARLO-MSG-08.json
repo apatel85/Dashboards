@@ -1,6 +1,6 @@
 {
   "id": "ARLO-MSG-08",
-  "source": "manual",
+  "source": "arlo",
   "project": "Quixera Dev",
   "issue_type": "Other",
   "title": "Privacy: admin can read all coach\u2194family 1:1s incl. read states and hidden media",
@@ -9,7 +9,10 @@
   "url": "https://facility-dev.quixeraos.com/messages",
   "expected": "If full oversight is intended, parents/coaches should be told plainly that staff admins can read all chats and retrieve hidden attachments",
   "actual": "Admin sees every coach\u2194family 1:1 with per-coach read states ('Not read by the coach yet') and can 'View original' on media hidden as Inappropriate. Expected for oversight, but undisclosed to parents.",
-  "steps": "Messages as Admin \u2192 open any guardian's coach 1:1 thread",
+  "steps": [
+    "Messages as Admin",
+    "open any guardian's coach 1:1 thread"
+  ],
   "trail": [],
   "shots": [],
   "clip": null,
