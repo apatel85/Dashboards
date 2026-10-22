@@ -232,6 +232,7 @@ async function main() {
             prevClose: prev.c, gapPct: ((spot - prev.c) / prev.c) * 100,
             atrPct: atr * 100, rv20: +(rv20 * 100).toFixed(1), rvRank: +rvRank.toFixed(2),
             hi20: Math.max(...w20.map((b) => b.h)), lo20: Math.min(...w20.map((b) => b.l)),
+            prevHigh: last.h, prevLow: last.l,
             rangeExp: ((last.h - last.l) / last.c) / atr,
             posInRange: (last.c - last.l) / Math.max(last.h - last.l, 1e-9),
             relVol: last.v / (w20.reduce((s, b) => s + b.v, 0) / 20),
@@ -288,8 +289,20 @@ async function main() {
       const v = setupKey ? validation.setups?.[setupKey] : null;
       const validated = v ? !!v.validated : null;
 
-      // entry trigger text
-      const trigLvl = direction === 'CALL' ? (ctx ? Math.max(spot, ctx.hi20) : spot) : direction === 'PUT' ? (ctx ? Math.min(spot, ctx.lo20) : spot) : spot;
+      // Entry trigger: a NEARBY level whose break confirms momentum — never a
+      // distant 20-day extreme. For CALLs: yesterday's high if it's within 3%
+      // above spot (close resistance); otherwise spot + 0.5% (continuation).
+      // For PUTs: mirror with yesterday's low.
+      let trigLvl;
+      if (direction === 'CALL' && ctx) {
+        trigLvl = (ctx.prevHigh > spot && ctx.prevHigh <= spot * 1.03)
+          ? ctx.prevHigh : spot * 1.005;
+      } else if (direction === 'PUT' && ctx) {
+        trigLvl = (ctx.prevLow < spot && ctx.prevLow >= spot * 0.97)
+          ? ctx.prevLow : spot * 0.995;
+      } else {
+        trigLvl = spot;
+      }
       const tgtUp = g?.levels?.filter((l) => l.price > spot).slice(0, 2).map((l) => l.price) || [];
       const tgtDn = g?.levels?.filter((l) => l.price < spot).slice(0, 2).map((l) => l.price) || [];
 
