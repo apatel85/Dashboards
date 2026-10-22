@@ -14,6 +14,7 @@
     "Missing validation",
     "UI / layout issue",
     "Slow performance",
+    "QA tooling", // v3.9.5: capture/extension problems, tracked separately from product bugs
     "Other"
   ];
 
