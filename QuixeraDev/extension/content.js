@@ -66,15 +66,21 @@
     return (el.tagName.toLowerCase() + ': "' + t.slice(0, 70) + '"');
   }
 
+  let trailListenerOn = false; // v3.9.3: guard against double-registration
   function activate() {
-    document.addEventListener("click", (e) => {
+    if (!trailListenerOn) {
+      document.addEventListener("click", recordClick, true);
+      trailListenerOn = true;
+    }
+    injectButton();
+  }
+
+  function recordClick(e) {
       if (e.target.closest("#qa-overlay,#qa-flag-btn,#qa-minibar")) return;
       const el = e.target.closest("button, a, input, select, textarea, [role=button], [onclick]");
       trail.push({ step: trail.length + 1, page: location.pathname + location.search,
                    clicked: labelFor(el || e.target) });
       if (trail.length > 300) trail.shift();
-    }, true);
-    injectButton();
   }
 
   function injectButton() {
@@ -484,7 +490,7 @@
           severity: $("qa-sev").value,
           expected: $("qa-exp").value.trim(), actual: $("qa-act").value.trim(),
           page: location.pathname + location.search, url: location.href,
-          trail: trail.slice()
+          trail: trail.slice(-40) // v3.9.3: file the 40 most recent steps; older ones are noise
         }
       }, (resp) => {
         if (chrome.runtime.lastError) { st.textContent = "Error: " + chrome.runtime.lastError.message; return; }
