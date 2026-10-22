@@ -60,7 +60,7 @@ td{padding:.35rem;border-bottom:1px solid #2a1c4d;vertical-align:top}
 <body>
 <header>
   <h1>🎙️ VoiceInsight</h1>
-  <span class="pill" id="ver">v1.0.2</span>
+  <span class="pill" id="ver">v1.0.3</span>
   <button class="iconbtn" id="settingsBtn" aria-label="Settings">⚙️</button>
 </header>
 <main>
@@ -93,6 +93,9 @@ td{padding:.35rem;border-bottom:1px solid #2a1c4d;vertical-align:top}
     <button class="btn" id="pasteBtn">Use this text</button>
   </div>
 
+  <label>Custom vocabulary <span class="small">(optional — Indian names, terms)</span></label>
+  <textarea id="vocabTx" rows="2" style="min-height:54px" placeholder="One per line or comma-separated, e.g. Ankit, Quixera, CricMax"></textarea>
+  <div class="hint">Sent to AssemblyAI as keyterm hints for 📁 Upload, and used by the ✨ Polish step to fix misheard names. Saved on this device.</div>
   <label>Working transcript</label>
   <textarea id="rawTx" placeholder="Your transcript will appear here. You can also type directly."></textarea>
 </div>
@@ -166,7 +169,7 @@ td{padding:.35rem;border-bottom:1px solid #2a1c4d;vertical-align:top}
 <div id="toast"></div>
 <script>
 "use strict";
-/* VoiceInsight v1.0.2 — free voice → polished transcript → summary → email */
+/* VoiceInsight v1.0.3 — free voice → polished transcript → summary → email */
 const $=id=>document.getElementById(id);
 const store={
   get(k,d){try{const v=localStorage.getItem("vi_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
@@ -250,6 +253,14 @@ function asJSON(text){
   return null;
 }
 
+/* ---------- custom vocabulary (Indian names/terms etc.) ---------- */
+function getVocab(){
+  const raw=$("vocabTx").value||"";
+  return [...new Set(raw.split(/[\n,]+/).map(s=>s.trim()).filter(Boolean))].slice(0,200);
+}
+$("vocabTx").value=store.get("vocab","");
+$("vocabTx").addEventListener("input",()=>{clearTimeout($("vocabTx")._t);$("vocabTx")._t=setTimeout(()=>store.set("vocab",$("vocabTx").value),800)});
+
 /* ---------- 1a. record via Web Speech API ---------- */
 let rec=null,recOn=false,finalTx="";
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -278,6 +289,7 @@ $("recBtn").onclick=()=>{
 $("upBtn").onclick=async()=>{
   const f=$("audioFile").files[0];
   const key=store.get("k_assembly","");
+  const vocab=getVocab();
   if(!f){toast("Pick an audio file first.");return}
   if(!key){toast("Add your AssemblyAI key in ⚙️ Settings (free tier, no card).");return}
   const btn=$("upBtn");btn.disabled=true;
@@ -289,7 +301,7 @@ $("upBtn").onclick=async()=>{
     bar.style.width="25%";
     const tr=await fetch("https://api.assemblyai.com/v2/transcript",{method:"POST",
       headers:{authorization:key,"Content-Type":"application/json"},
-      body:JSON.stringify({audio_url,speaker_labels:true})});
+      body:JSON.stringify(Object.assign({audio_url,speaker_labels:true},vocab.length?{keyterms_prompt:vocab}:{}))});
     if(!tr.ok)throw new Error("transcript-"+tr.status);
     const id=(await tr.json()).id;
     bar.style.width="40%";
@@ -335,7 +347,9 @@ $("polishBtn").onclick=async()=>{
   if(!raw){toast("Get a transcript first (step 1).");return}
   const btn=$("polishBtn");btn.disabled=true;btn.textContent="Polishing…";
   try{
-    const r=await llm("You are a transcript editor. Clean up this raw speech-to-text transcript: remove filler words (um, uh, like, you know), fix punctuation and capitalization, merge run-on sentences, keep every fact, name, number and decision EXACTLY as stated. Do not add anything that was not said. Return ONLY the polished transcript, no commentary.\n\nTranscript:\n"+raw);
+    const vocab=getVocab();
+    const vh=vocab.length?"\n\nThe speaker uses Indian English. These proper nouns/terms may appear in the audio: "+vocab.join(", ")+". If the transcript contains a word phonetically close to one of these, prefer the listed spelling. Do not invent names that are not supported by what was said.":"";
+    const r=await llm("You are a transcript editor. Clean up this raw speech-to-text transcript: remove filler words (um, uh, like, you know), fix punctuation and capitalization, merge run-on sentences, keep every fact, name, number and decision EXACTLY as stated. Do not add anything that was not said."+vh+" Return ONLY the polished transcript, no commentary.\n\nTranscript:\n"+raw);
     $("polishedTx").value=r.text.trim();
     $("polishModel").textContent="via "+r.label;
     toast("Polished ✓");
