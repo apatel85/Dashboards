@@ -1,6 +1,6 @@
 {
   "id": "ARLO-MSG-02",
-  "source": "manual",
+  "source": "arlo",
   "project": "Quixera Dev",
   "issue_type": "UI / layout issue",
   "title": "'Start group' button offered for a single recipient",
@@ -9,7 +9,11 @@
   "url": "https://facility-dev.quixeraos.com/messages",
   "expected": "Button should read 'Start chat' (or only offer 'Start group' when 2+ recipients are selected)",
   "actual": "With one recipient selected, the button still says 'Start group', promising a group chat that is never created.",
-  "steps": "Messages \u2192 New message \u2192 select exactly one coach",
+  "steps": [
+    "Messages",
+    "New message",
+    "select exactly one coach"
+  ],
   "trail": [],
   "shots": [],
   "clip": null,
