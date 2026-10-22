@@ -1,6 +1,6 @@
 {
   "id": "ARLO-MSG-03",
-  "source": "manual",
+  "source": "arlo",
   "project": "Quixera Dev",
   "issue_type": "UI / layout issue",
   "title": "Coach names render redundantly in the recipient picker",
@@ -9,7 +9,11 @@
   "url": "https://facility-dev.quixeraos.com/messages",
   "expected": "Each coach listed once, e.g. 'Arjun Sharma \u2014 Coach, U12'",
   "actual": "Entries read like 'Coach Arjun Coach Coach' \u2014 the title is duplicated with the role label and looks broken.",
-  "steps": "Messages \u2192 New message \u2192 browse the Coaches directory",
+  "steps": [
+    "Messages",
+    "New message",
+    "browse the Coaches directory"
+  ],
   "trail": [],
   "shots": [],
   "clip": null,
