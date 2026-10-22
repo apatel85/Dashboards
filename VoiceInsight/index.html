@@ -60,7 +60,7 @@ td{padding:.35rem;border-bottom:1px solid #2a1c4d;vertical-align:top}
 <body>
 <header>
   <h1>🎙️ VoiceInsight</h1>
-  <span class="pill" id="ver">v1.0.3</span>
+  <span class="pill" id="ver">v1.0.4</span>
   <button class="iconbtn" id="settingsBtn" aria-label="Settings">⚙️</button>
 </header>
 <main>
@@ -96,6 +96,9 @@ td{padding:.35rem;border-bottom:1px solid #2a1c4d;vertical-align:top}
   <label>Custom vocabulary <span class="small">(optional — Indian names, terms)</span></label>
   <textarea id="vocabTx" rows="2" style="min-height:54px" placeholder="One per line or comma-separated, e.g. Ankit, Quixera, CricMax"></textarea>
   <div class="hint">Sent to AssemblyAI as keyterm hints for 📁 Upload, and used by the ✨ Polish step to fix misheard names. Saved on this device.</div>
+  <label>Auto-corrections <span class="small">(optional — Wispr-style replacements)</span></label>
+  <textarea id="fixTx" rows="2" style="min-height:54px" placeholder="One per line: wrong => right&#10;crickmax => CricMax&#10;recieve => receive"></textarea>
+  <div class="hint">Applied automatically after every ✨ Polish — guaranteed replacements, saved on this device.</div>
   <label>Working transcript</label>
   <textarea id="rawTx" placeholder="Your transcript will appear here. You can also type directly."></textarea>
 </div>
@@ -169,7 +172,7 @@ td{padding:.35rem;border-bottom:1px solid #2a1c4d;vertical-align:top}
 <div id="toast"></div>
 <script>
 "use strict";
-/* VoiceInsight v1.0.3 — free voice → polished transcript → summary → email */
+/* VoiceInsight v1.0.4 — free voice → polished transcript → summary → email */
 const $=id=>document.getElementById(id);
 const store={
   get(k,d){try{const v=localStorage.getItem("vi_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
@@ -261,6 +264,27 @@ function getVocab(){
 $("vocabTx").value=store.get("vocab","");
 $("vocabTx").addEventListener("input",()=>{clearTimeout($("vocabTx")._t);$("vocabTx")._t=setTimeout(()=>store.set("vocab",$("vocabTx").value),800)});
 
+/* ---------- auto-corrections: deterministic wrong => right pairs ---------- */
+function getFixes(){
+  const out=[];
+  (($("fixTx").value||"").split("\n")).forEach(line=>{
+    const i=line.indexOf("=>");
+    if(i<0)return;
+    const from=line.slice(0,i).trim(),to=line.slice(i+2).trim();
+    if(from&&to)out.push([from,to]);
+  });
+  return out;
+}
+function applyFixes(t){
+  getFixes().forEach(([from,to])=>{
+    const esc=from.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    t=t.replace(new RegExp("\\b"+esc+"\\b","gi"),to);
+  });
+  return t;
+}
+$("fixTx").value=store.get("fixes","");
+$("fixTx").addEventListener("input",()=>{clearTimeout($("fixTx")._t);$("fixTx")._t=setTimeout(()=>store.set("fixes",$("fixTx").value),800)});
+
 /* ---------- 1a. record via Web Speech API ---------- */
 let rec=null,recOn=false,finalTx="";
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -349,8 +373,8 @@ $("polishBtn").onclick=async()=>{
   try{
     const vocab=getVocab();
     const vh=vocab.length?"\n\nThe speaker uses Indian English. These proper nouns/terms may appear in the audio: "+vocab.join(", ")+". If the transcript contains a word phonetically close to one of these, prefer the listed spelling. Do not invent names that are not supported by what was said.":"";
-    const r=await llm("You are a transcript editor. Clean up this raw speech-to-text transcript: remove filler words (um, uh, like, you know), fix punctuation and capitalization, merge run-on sentences, keep every fact, name, number and decision EXACTLY as stated. Do not add anything that was not said."+vh+" Return ONLY the polished transcript, no commentary.\n\nTranscript:\n"+raw);
-    $("polishedTx").value=r.text.trim();
+    const r=await llm("You are a transcript editor in the style of Wispr Flow: turn spoken words into clean written prose.\n- Remove filler words (um, uh, like, you know, basically, actually, right?, I mean), false starts, and repeated words.\n- Fix obvious typos, grammar mistakes, and misheard words using context.\n- Organize scattered thoughts into clear, coherent sentences and paragraphs. You may merge fragments and reorder clauses within a sentence, but preserve the speaker's original order of ideas.\n- Keep every fact, name, number, and decision EXACTLY as stated. Do not add anything that was not said."+vh+" Return ONLY the polished transcript, no commentary.\n\nTranscript:\n"+raw);
+    $("polishedTx").value=applyFixes(r.text.trim());
     $("polishModel").textContent="via "+r.label;
     toast("Polished ✓");
   }catch(e){toast(e.message)}
