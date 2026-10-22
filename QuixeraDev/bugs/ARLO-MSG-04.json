@@ -1,6 +1,6 @@
 {
   "id": "ARLO-MSG-04",
-  "source": "manual",
+  "source": "arlo",
   "project": "Quixera Dev",
   "issue_type": "Wrong data displayed",
   "title": "Duplicate / near-duplicate coaches in the directory",
@@ -9,7 +9,11 @@
   "url": "https://facility-dev.quixeraos.com/messages",
   "expected": "One entry per person (dedupe; merge near-duplicates like bhavangri/bhavnagru)",
   "actual": "'bhavangri' and 'bhavnagru' both listed; 'Saurav Ganguly' appears twice. A coach could easily message the wrong person.",
-  "steps": "Messages \u2192 New message \u2192 Coaches directory",
+  "steps": [
+    "Messages",
+    "New message",
+    "Coaches directory"
+  ],
   "trail": [],
   "shots": [],
   "clip": null,
