@@ -425,6 +425,7 @@
     ov.id = "qa-overlay";
     ov.innerHTML = `
       <div id="qa-card">
+        <button id="qa-x" title="Close without filing">✕</button>
         <h2>🚩 Flag an issue</h2>
         <label>Dashboard project <select id="qa-project">${projOpts}</select></label>
         <label>Issue type <select id="qa-type">${typeOpts}</select></label>
@@ -466,12 +467,15 @@
       }, 700);
     }
     $("qa-title").addEventListener("input", scheduleDupCheck);
-    $("qa-cancel").addEventListener("click", () => {
+    $("qa-cancel").addEventListener("click", closeForm);
+    $("qa-x").addEventListener("click", closeForm);
+    function closeForm() {
       chrome.runtime.sendMessage({ type: "resetPending" });
       stopKeepAlive();
       ov.remove();
-    });
-    ov.addEventListener("click", (e) => { if (e.target === ov) { chrome.runtime.sendMessage({ type: "resetPending" }); stopKeepAlive(); ov.remove(); } });
+    }
+    // v3.9.4: clicking the dimmed backdrop no longer dismisses the form —
+    // the only way out is ✕ / Cancel (explicit) or a successful filing.
     $("qa-send").addEventListener("click", () => {
       const title = $("qa-title").value.trim();
       if (!title) { st.textContent = "Please add a title."; return; }
@@ -507,9 +511,12 @@
   const css = `
     #qa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2147483647;
       display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
-    #qa-card{background:#fff;border-radius:14px;padding:22px;width:470px;max-width:100%;
+    #qa-card{position:relative;background:#fff;border-radius:14px;padding:22px;width:470px;max-width:100%;
       max-height:94vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.4);
       font-family:system-ui,-apple-system,sans-serif;color:#222;box-sizing:border-box}
+    #qa-x{position:absolute;top:10px;right:12px;border:none;background:none;
+      font-size:20px;cursor:pointer;color:#6b7280;padding:8px;line-height:1}
+    #qa-x:hover{color:#111}
     #qa-card h2{margin:0 0 6px;font-size:20px}
     #qa-card label{display:block;margin:10px 0;font-size:14px;font-weight:600}
     #qa-card input:not([type=checkbox]),#qa-card textarea,#qa-card select{
