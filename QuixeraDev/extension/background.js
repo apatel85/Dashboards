@@ -255,6 +255,7 @@ async function fileBug(project, bug, sender) {
     clip,
     clip_secs: clipSecs,
     filed_by: (await whoami()) || undefined,
+    qa_version: chrome.runtime.getManifest().version, // v3.9.5: attribute capture quality to the filing version
     created: new Date().toISOString()
   };
   await commitFile(`${dir}/bugs/${id}.json`, b64encode(JSON.stringify(record, null, 2)),
