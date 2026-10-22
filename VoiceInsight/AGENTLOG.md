@@ -5,6 +5,12 @@
 - Free APIs only; LLM chain Gemini → Groq → OpenRouter with automatic fallback.
 - Keys live in the user's browser only — never in the repo.
 
+## 2026-10-22 — v1.0.4 Wispr-style editing
+- **Request:** integrate Wispr Flow elements — AI filler filtering, thought organization, typo/name correction.
+- **Change:** (1) Polish prompt rewritten Wispr-style: fillers + false starts + repetitions removed, typos/grammar/mishearings fixed from context, scattered thoughts organized into clean paragraphs, original order of ideas preserved. (2) New "Auto-corrections" field: `wrong => right` pairs applied deterministically after every polish (Wispr's replacements dictionary). Both saved on-device.
+- **Version:** v1.0.4.
+- **Verified:** no — awaiting his on-phone test.
+
 ## 2026-10-21 — v1.0.3 custom vocabulary
 - **Request:** primary English with Indian names/terms — model should handle accent + name variations.
 - **Change:** new "Custom vocabulary" field (step 1): sent to AssemblyAI as `keyterms_prompt` (up to 200 terms) for Upload transcription, and fed to the Polish step so misheard names get corrected to listed spellings. Saved on-device.
