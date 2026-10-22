@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VoiceInsight — Meeting Summarizer</title>
+<meta name="theme-color" content="#1c0837">
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--bg:#0f0a1e;--card:#1c0837;--card2:#251245;--gold:#e6c22d;--txt:#f2ecff;--mut:#b9a8e0;--ok:#3ddc84;--err:#ff6b6b;--line:#3a2560}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;padding-bottom:4rem}
+header{position:sticky;top:0;background:rgba(15,10,30,.95);backdrop-filter:blur(8px);padding:.8rem 1rem;display:flex;align-items:center;gap:.6rem;border-bottom:1px solid var(--line);z-index:10}
+header h1{font-size:1.05rem;flex:1}
+.pill{font-size:.68rem;background:var(--card2);border:1px solid var(--line);border-radius:99px;padding:.2rem .6rem;color:var(--mut)}
+.iconbtn{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:.45rem .7rem;font-size:.9rem;cursor:pointer}
+main{max-width:720px;margin:0 auto;padding:1rem;display:flex;flex-direction:column;gap:1rem}
+.step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1rem}
+.step h2{font-size:.95rem;margin-bottom:.7rem;color:var(--gold);display:flex;align-items:center;gap:.5rem}
+.step h2 .n{background:var(--gold);color:#1c0837;width:1.4rem;height:1.4rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+.tabs{display:flex;gap:.4rem;margin-bottom:.8rem}
+.tabs button{flex:1;background:var(--card2);border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:.55rem .2rem;font-size:.82rem;cursor:pointer}
+.tabs button.active{color:var(--txt);border-color:var(--gold);background:#2c1653}
+textarea,input[type=text],input[type=password],select{width:100%;background:#120b28;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:.65rem;font-size:.9rem;font-family:inherit}
+textarea{min-height:120px;resize:vertical}
+label{font-size:.78rem;color:var(--mut);display:block;margin:.6rem 0 .3rem}
+.btn{background:var(--gold);color:#1c0837;border:none;border-radius:10px;padding:.7rem 1.1rem;font-weight:700;font-size:.9rem;cursor:pointer;width:100%;margin-top:.7rem}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.sec{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btnrow{display:flex;gap:.5rem}.btnrow .btn{margin-top:.7rem}
+.recbtn{font-size:1rem}
+.recording{animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.out{background:#120b28;border:1px solid var(--line);border-radius:10px;padding:.7rem;font-size:.88rem;white-space:pre-wrap;margin-top:.6rem;max-height:320px;overflow:auto}
+.out:empty{display:none}
+.modeltag{font-size:.7rem;color:var(--mut);margin-top:.4rem}
+.modeltag:empty{display:none}
+.card{background:#120b28;border:1px solid var(--line);border-radius:10px;padding:.7rem;margin-top:.5rem}
+.card h3{font-size:.82rem;color:var(--gold);margin-bottom:.4rem}
+.card ul{margin-left:1.1rem;font-size:.86rem}.card li{margin:.25rem 0}
+table{width:100%;border-collapse:collapse;font-size:.84rem;margin-top:.4rem}
+th{text-align:left;color:var(--gold);font-weight:600;padding:.35rem;border-bottom:1px solid var(--line)}
+td{padding:.35rem;border-bottom:1px solid #2a1c4d;vertical-align:top}
+#toast{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);background:#2c1653;border:1px solid var(--gold);color:var(--txt);padding:.7rem 1.1rem;border-radius:12px;font-size:.86rem;display:none;z-index:50;max-width:90vw;text-align:center}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;z-index:40;padding:1rem;overflow:auto}
+.modal.open{display:flex}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.2rem;width:100%;max-width:520px;margin-top:4vh}
+.sheet h2{margin-bottom:.8rem;font-size:1rem}
+.prov{display:flex;gap:.5rem;align-items:center;margin-top:.5rem}
+.prov input{flex:1}
+.prov .nm{font-size:.8rem;width:5.5rem;color:var(--mut)}
+.hint{font-size:.75rem;color:var(--mut);margin-top:.35rem;line-height:1.45}
+.progress{height:6px;background:#120b28;border-radius:99px;margin-top:.6rem;overflow:hidden;display:none}
+.progress i{display:block;height:100%;background:var(--gold);width:0;transition:width .3s}
+.small{font-size:.76rem;color:var(--mut)}
+.live{border:1px dashed var(--line);border-radius:10px;padding:.6rem;font-size:.85rem;min-height:3rem;margin-top:.6rem;color:var(--mut)}
+.live:empty{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎙️ VoiceInsight</h1>
+  <span class="pill" id="ver">v1.0.0</span>
+  <button class="iconbtn" id="settingsBtn" aria-label="Settings">⚙️</button>
+</header>
+<main>
+
+<div class="step">
+  <h2><span class="n">1</span> Get the audio in</h2>
+  <div class="tabs">
+    <button data-tab="rec" class="active">🎤 Record</button>
+    <button data-tab="up">📁 Upload</button>
+    <button data-tab="paste">📋 Paste</button>
+  </div>
+
+  <div id="tab-rec">
+    <button class="btn recbtn" id="recBtn">● Start recording</button>
+    <div class="live" id="liveTx" placeholder="Live transcript appears here…"></div>
+    <div class="hint">Free, on-device via your browser's speech recognition. Best in Chrome/Edge on Android. Speak naturally — pauses are fine.</div>
+  </div>
+
+  <div id="tab-up" style="display:none">
+    <label>Audio file (mp3, m4a, wav, ogg)</label>
+    <input type="file" id="audioFile" accept="audio/*">
+    <div class="hint">Uses your AssemblyAI key (free tier, no card) from ⚙️ Settings. File is transcribed in their cloud, then deleted from this page's memory.</div>
+    <button class="btn" id="upBtn">Transcribe file</button>
+    <div class="progress" id="upProg"><i></i></div>
+  </div>
+
+  <div id="tab-paste" style="display:none">
+    <label>Paste a transcript (Zoom, Teams, Wispr Flow, notes…)</label>
+    <textarea id="pasteTx" placeholder="Paste raw transcript here — or Share text to this app from any app and it lands here automatically."></textarea>
+    <button class="btn" id="pasteBtn">Use this text</button>
+  </div>
+
+  <label>Working transcript</label>
+  <textarea id="rawTx" placeholder="Your transcript will appear here. You can also type directly."></textarea>
+</div>
+
+<div class="step">
+  <h2><span class="n">2</span> Polish it</h2>
+  <div class="hint" style="margin:0 0 .2rem">Removes filler words, fixes punctuation, structures it — keeps every fact, name and number.</div>
+  <button class="btn" id="polishBtn">✨ Polish transcript</button>
+  <div class="modeltag" id="polishModel"></div>
+  <label>Polished transcript (editable)</label>
+  <textarea id="polishedTx" placeholder="Polished version appears here…"></textarea>
+</div>
+
+<div class="step">
+  <h2><span class="n">3</span> Summarize the meeting</h2>
+  <button class="btn" id="sumBtn">🧠 Summarize</button>
+  <div class="modeltag" id="sumModel"></div>
+  <div id="sumOut"></div>
+</div>
+
+<div class="step">
+  <h2><span class="n">4</span> Draft the follow-up email</h2>
+  <div class="btnrow">
+    <div style="flex:1">
+      <label style="margin-top:0">Tone</label>
+      <select id="toneSel">
+        <option>Professional</option>
+        <option>Friendly</option>
+        <option>Concise</option>
+        <option>Formal</option>
+      </select>
+    </div>
+    <div style="flex:1">
+      <label style="margin-top:0">To (optional)</label>
+      <input type="text" id="emailTo" placeholder="the team">
+    </div>
+  </div>
+  <label>Custom tone instruction (optional)</label>
+  <input type="text" id="toneCustom" placeholder="e.g. warm but firm, no jargon">
+  <button class="btn" id="emailBtn">✉️ Draft email</button>
+  <div class="modeltag" id="emailModel"></div>
+  <div id="emailOut"></div>
+</div>
+
+</main>
+
+<div class="modal" id="settingsModal">
+  <div class="sheet">
+    <h2>⚙️ Settings <span class="small">— keys stay in this browser only</span></h2>
+    <label>LLM fallback chain (tried top → bottom, first success wins)</label>
+    <div class="prov"><span class="nm">Gemini</span><input type="password" id="k_gemini" placeholder="free: aistudio.google.com API key"></div>
+    <div class="prov"><span class="nm">Groq</span><input type="password" id="k_groq" placeholder="free: console.groq.com API key"></div>
+    <div class="prov"><span class="nm">OpenRouter</span><input type="password" id="k_openrouter" placeholder="free tier: openrouter.ai API key"></div>
+    <label>Gemini model</label>
+    <input type="text" id="m_gemini" value="gemini-2.5-flash">
+    <div class="btnrow">
+      <div style="flex:1"><label>Groq model</label><input type="text" id="m_groq" value="llama-3.3-70b-versatile"></div>
+      <div style="flex:1"><label>OpenRouter model</label><input type="text" id="m_openrouter" value="meta-llama/llama-3.3-70b-instruct:free"></div>
+    </div>
+    <label>AssemblyAI key (for 📁 Upload transcription — free tier, no card)</label>
+    <input type="password" id="k_assembly" placeholder="assemblyai.com API key">
+    <div class="hint">Get free keys: <b>Gemini</b> aistudio.google.com · <b>Groq</b> console.groq.com · <b>OpenRouter</b> openrouter.ai · <b>AssemblyAI</b> assemblyai.com. Nothing is sent anywhere except the provider you call, only when you tap a button.</div>
+    <div class="btnrow">
+      <button class="btn sec" id="setClose">Close</button>
+      <button class="btn" id="setSave">Save</button>
+    </div>
+    <button class="btn sec" id="setClear" style="margin-top:.5rem">Erase all keys</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script>
+"use strict";
+/* VoiceInsight v1.0.0 — free voice → polished transcript → summary → email */
+const $=id=>document.getElementById(id);
+const store={
+  get(k,d){try{const v=localStorage.getItem("vi_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem("vi_"+k,JSON.stringify(v))}catch(e){}},
+  del(k){try{localStorage.removeItem("vi_"+k)}catch(e){}}
+};
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",3200)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+/* ---------- settings ---------- */
+const DEF={m_gemini:"gemini-2.5-flash",m_groq:"llama-3.3-70b-versatile",m_openrouter:"meta-llama/llama-3.3-70b-instruct:free"};
+function loadSettings(){
+  ["k_gemini","k_groq","k_openrouter","k_assembly"].forEach(k=>{$(k).value=store.get(k,"")||""});
+  ["m_gemini","m_groq","m_openrouter"].forEach(k=>{$(k).value=store.get(k,DEF[k])||DEF[k]});
+}
+function saveSettings(){
+  ["k_gemini","k_groq","k_openrouter","k_assembly"].forEach(k=>store.set(k,$(k).value.trim()));
+  ["m_gemini","m_groq","m_openrouter"].forEach(k=>store.set(k,$(k).value.trim()||DEF[k]));
+  toast("Settings saved — keys never leave this browser");
+}
+$("settingsBtn").onclick=()=>{loadSettings();$("settingsModal").classList.add("open")};
+$("setClose").onclick=()=>$("settingsModal").classList.remove("open");
+$("setSave").onclick=()=>{saveSettings();$("settingsModal").classList.remove("open")};
+$("setClear").onclick=()=>{["k_gemini","k_groq","k_openrouter","k_assembly"].forEach(k=>{store.del(k);$(k).value=""});toast("Keys erased")};
+$("settingsModal").addEventListener("click",e=>{if(e.target===$("settingsModal"))$("settingsModal").classList.remove("open")});
+
+/* ---------- tabs ---------- */
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  ["rec","up","paste"].forEach(t=>$("tab-"+t).style.display=t===b.dataset.tab?"block":"none");
+});
+
+/* ---------- free LLM chain: Gemini → Groq → OpenRouter ---------- */
+async function callGemini(prompt){
+  const key=store.get("k_gemini",""),model=store.get("m_gemini",DEF.m_gemini);
+  if(!key)throw new Error("no-key");
+  const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+":generateContent?key="+encodeURIComponent(key),
+    {method:"POST",headers:{"Content-Type":"application/json"},
+     body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.4}})});
+  if(!r.ok)throw new Error("gemini-"+r.status);
+  const d=await r.json();
+  const t=d?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("");
+  if(!t)throw new Error("gemini-empty");
+  return {text:t,label:"Gemini "+model};
+}
+async function callOpenAICompat(url,key,model,prompt,extraHeaders,label){
+  if(!key)throw new Error("no-key");
+  const r=await fetch(url,{method:"POST",
+    headers:Object.assign({"Content-Type":"application/json","Authorization":"Bearer "+key},extraHeaders||{}),
+    body:JSON.stringify({model,messages:[{role:"user",content:prompt}],temperature:0.4})});
+  if(!r.ok)throw new Error(label+"-"+r.status);
+  const d=await r.json();
+  const t=d?.choices?.[0]?.message?.content;
+  if(!t)throw new Error(label+"-empty");
+  return {text:t,label:label+" "+model};
+}
+async function llm(prompt){
+  const errs=[];
+  const chain=[
+    ()=>callGemini(prompt),
+    ()=>callOpenAICompat("https://api.groq.com/openai/v1/chat/completions",store.get("k_groq",""),store.get("m_groq",DEF.m_groq),prompt,null,"Groq"),
+    ()=>callOpenAICompat("https://openrouter.ai/api/v1/chat/completions",store.get("k_openrouter",""),store.get("m_openrouter",DEF.m_openrouter),prompt,{"HTTP-Referer":location.href,"X-Title":"VoiceInsight"},"OpenRouter")
+  ];
+  for(const fn of chain){
+    try{return await fn()}catch(e){errs.push(e.message)}
+  }
+  const missing=errs.every(e=>e==="no-key");
+  throw new Error(missing?"Add at least one free API key in ⚙️ Settings (Gemini, Groq, or OpenRouter).":"All providers failed: "+errs.join(", ")+". Check keys in ⚙️ Settings.");
+}
+function asJSON(text){
+  try{return JSON.parse(text)}catch(e){}
+  const m=text.match(/\{[\s\S]*\}/);
+  if(m){try{return JSON.parse(m[0])}catch(e){}}
+  return null;
+}
+
+/* ---------- 1a. record via Web Speech API ---------- */
+let rec=null,recOn=false,finalTx="";
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+$("recBtn").onclick=()=>{
+  if(!SR){toast("Speech recognition isn't supported in this browser — try Chrome/Edge on Android, or use 📋 Paste.");return}
+  if(recOn){recOn=false;try{rec.stop()}catch(e){}$("recBtn").textContent="● Start recording";$("recBtn").classList.remove("recording");return}
+  finalTx=$("rawTx").value?$("rawTx").value+"\n":"";
+  rec=new SR();rec.continuous=true;rec.interimResults=true;rec.lang="en-US";
+  rec.onresult=e=>{
+    let interim="";
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i][0].transcript;
+      if(e.results[i].isFinal)finalTx+=t+" ";else interim+=t;
+    }
+    $("liveTx").textContent=interim||"Listening…";
+    $("rawTx").value=finalTx.trim();
+  };
+  rec.onerror=e=>{if(e.error==="not-allowed")toast("Mic blocked — allow microphone access and try again.")};
+  rec.onend=()=>{if(recOn){try{rec.start()}catch(e){}}};
+  recOn=true;rec.start();
+  $("recBtn").textContent="■ Stop recording";$("recBtn").classList.add("recording");
+  toast("Recording — tap Stop when done");
+};
+
+/* ---------- 1b. upload → AssemblyAI ---------- */
+$("upBtn").onclick=async()=>{
+  const f=$("audioFile").files[0];
+  const key=store.get("k_assembly","");
+  if(!f){toast("Pick an audio file first.");return}
+  if(!key){toast("Add your AssemblyAI key in ⚙️ Settings (free tier, no card).");return}
+  const btn=$("upBtn");btn.disabled=true;
+  const prog=$("upProg");prog.style.display="block";const bar=prog.querySelector("i");bar.style.width="8%";
+  try{
+    const up=await fetch("https://api.assemblyai.com/v2/upload",{method:"POST",headers:{authorization:key},body:f});
+    if(!up.ok)throw new Error("upload-"+up.status);
+    const audio_url=(await up.json()).upload_url;
+    bar.style.width="25%";
+    const tr=await fetch("https://api.assemblyai.com/v2/transcript",{method:"POST",
+      headers:{authorization:key,"Content-Type":"application/json"},
+      body:JSON.stringify({audio_url,speaker_labels:true})});
+    if(!tr.ok)throw new Error("transcript-"+tr.status);
+    const id=(await tr.json()).id;
+    bar.style.width="40%";
+    for(let i=0;i<60;i++){
+      await new Promise(r=>setTimeout(r,3000));
+      const p=await fetch("https://api.assemblyai.com/v2/transcript/"+id,{headers:{authorization:key}});
+      const j=await p.json();
+      bar.style.width=(40+Math.min(55,i*2))+"%";
+      if(j.status==="completed"){
+        let text=j.text||"";
+        if(j.utterances&&j.utterances.length)
+          text=j.utterances.map(u=>"Speaker "+u.speaker+": "+u.text).join("\n");
+        $("rawTx").value=text;toast("Transcribed ✓");break;
+      }
+      if(j.status==="error")throw new Error("transcription failed: "+(j.error||"unknown"));
+    }
+  }catch(e){toast("Upload failed: "+e.message)}
+  btn.disabled=false;prog.style.display="none";
+};
+
+/* ---------- 1c. paste ---------- */
+$("pasteBtn").onclick=()=>{
+  const t=$("pasteTx").value.trim();
+  if(!t){toast("Paste a transcript first.");return}
+  $("rawTx").value=t;toast("Transcript loaded ✓");
+};
+
+/* ---------- share-target: text shared from any app lands here ---------- */
+(function(){
+  const q=new URLSearchParams(location.search);
+  const shared=[q.get("title"),q.get("text"),q.get("url")].filter(Boolean).join("\n");
+  if(shared){
+    $("pasteTx").value=shared;$("rawTx").value=shared;
+    document.querySelector('[data-tab="paste"]').click();
+    toast("Shared text received ✓ — polish it below");
+    history.replaceState(null,"",location.pathname);
+  }
+})();
+
+/* ---------- 2. polish ---------- */
+$("polishBtn").onclick=async()=>{
+  const raw=$("rawTx").value.trim();
+  if(!raw){toast("Get a transcript first (step 1).");return}
+  const btn=$("polishBtn");btn.disabled=true;btn.textContent="Polishing…";
+  try{
+    const r=await llm("You are a transcript editor. Clean up this raw speech-to-text transcript: remove filler words (um, uh, like, you know), fix punctuation and capitalization, merge run-on sentences, keep every fact, name, number and decision EXACTLY as stated. Do not add anything that was not said. Return ONLY the polished transcript, no commentary.\n\nTranscript:\n"+raw);
+    $("polishedTx").value=r.text.trim();
+    $("polishModel").textContent="via "+r.label;
+    toast("Polished ✓");
+  }catch(e){toast(e.message)}
+  btn.disabled=false;btn.textContent="✨ Polish transcript";
+};
+
+/* ---------- 3. summarize ---------- */
+$("sumBtn").onclick=async()=>{
+  const tx=$("polishedTx").value.trim()||$("rawTx").value.trim();
+  if(!tx){toast("Need a transcript first (steps 1–2).");return}
+  const btn=$("sumBtn");btn.disabled=true;btn.textContent="Summarizing…";
+  try{
+    const r=await llm('Analyze this meeting transcript and return ONLY valid JSON, no markdown fences, no commentary:\n{"summary":"3-5 sentence overview","decisions":["each decision made"],"action_items":[{"item":"what","owner":"who or null","deadline":"when or null"}],"key_topics":["..."]}\n\nTranscript:\n'+tx);
+    const j=asJSON(r.text);
+    $("sumModel").textContent="via "+r.label;
+    if(!j){$("sumOut").innerHTML='<div class="card"><h3>Summary</h3><div class="out" style="display:block;max-height:none">'+esc(r.text)+"</div></div>";}
+    else{
+      let h='<div class="card"><h3>Overview</h3><div style="font-size:.88rem">'+esc(j.summary||"")+"</div></div>";
+      if(j.decisions&&j.decisions.length)h+='<div class="card"><h3>Decisions</h3><ul>'+j.decisions.map(d=>"<li>"+esc(d)+"</li>").join("")+"</ul></div>";
+      if(j.action_items&&j.action_items.length)h+='<div class="card"><h3>Action items</h3><table><tr><th>Item</th><th>Owner</th><th>Deadline</th></tr>'+
+        j.action_items.map(a=>"<tr><td>"+esc(a.item)+"</td><td>"+esc(a.owner||"—")+"</td><td>"+esc(a.deadline||"—")+"</td></tr>").join("")+"</table></div>";
+      if(j.key_topics&&j.key_topics.length)h+='<div class="card"><h3>Key topics</h3><ul>'+j.key_topics.map(t=>"<li>"+esc(t)+"</li>").join("")+"</ul></div>";
+      $("sumOut").innerHTML=h;
+    }
+    store.set("last_summary",$("sumOut").innerText);
+    toast("Summarized ✓");
+  }catch(e){toast(e.message)}
+  btn.disabled=false;btn.textContent="🧠 Summarize";
+};
+
+/* ---------- 4. email draft ---------- */
+$("emailBtn").onclick=async()=>{
+  const tx=$("polishedTx").value.trim()||$("rawTx").value.trim();
+  if(!tx){toast("Need a transcript first.");return}
+  const tone=$("toneCustom").value.trim()||$("toneSel").value;
+  const to=$("emailTo").value.trim()||"the team";
+  const btn=$("emailBtn");btn.disabled=true;btn.textContent="Drafting…";
+  try{
+    const r=await llm('Based on this meeting transcript, draft a follow-up email in a '+tone+' tone to '+to+'. Keep it concise and human — no filler. Return ONLY valid JSON, no markdown fences, no commentary: {"subject":"...","body":"..."}\n\nTranscript:\n'+tx);
+    const j=asJSON(r.text)||{subject:"Meeting follow-up",body:r.text};
+    $("emailModel").textContent="via "+r.label;
+    const sub=esc(j.subject||"Meeting follow-up"),body=esc(j.body||"");
+    $("emailOut").innerHTML='<div class="card"><h3>Subject</h3><div style="font-size:.88rem">'+sub+'</div></div>'+
+      '<div class="card"><h3>Body</h3><div class="out" style="display:block;max-height:none">'+body+'</div>'+
+      '<div class="btnrow"><button class="btn sec" id="copyEmail">Copy email</button>'+
+      '<a class="btn sec" style="text-decoration:none;text-align:center" id="mailtoLink" href="mailto:?subject='+encodeURIComponent(j.subject||"")+"&body="+encodeURIComponent(j.body||"")+'">Open in mail app</a></div></div>';
+    $("copyEmail").onclick=()=>{navigator.clipboard.writeText("Subject: "+(j.subject||"")+"\n\n"+(j.body||"")).then(()=>toast("Email copied ✓")).catch(()=>toast("Copy blocked — select the text manually."))};
+    toast("Email drafted ✓");
+  }catch(e){toast(e.message)}
+  btn.disabled=false;btn.textContent="✉️ Draft email";
+};
+
+/* service worker for installability */
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>
