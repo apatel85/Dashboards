@@ -40,50 +40,54 @@ const r2 = (v) => {
   return typeof n === 'number' && Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
 };
 
-/** Gather every ticker the app displays, from all data files. */
+/** Gather every ticker the app displays, from all data files.
+ * Returns { hot: Set (display tickers, refreshed daily),
+ *           warm: Set (all congress tickers, backfilled over days) }. */
 function collectTickers() {
-  const set = new Set();
-  const add = (t) => {
+  const hot = new Set();
+  const warm = new Set();
+  const addHot = (t) => {
     t = String(t || '').toUpperCase().trim();
-    if (t && !t.startsWith('^')) set.add(t);
+    if (t && !t.startsWith('^')) hot.add(t);
+  };
+  const addWarm = (t) => {
+    t = String(t || '').toUpperCase().trim();
+    if (t && !t.startsWith('^')) warm.add(t);
   };
 
   const research = readJson('research.json');
-  if (Array.isArray(research)) for (const i of research) add(i.ticker);
+  if (Array.isArray(research)) for (const i of research) addHot(i.ticker);
 
   const signals = readJson('signals.json');
   const sigList = Array.isArray(signals) ? signals : signals?.signals || signals?.items || [];
-  if (Array.isArray(sigList)) for (const s of sigList) add(s.ticker);
+  if (Array.isArray(sigList)) for (const s of sigList) addHot(s.ticker);
 
   const brief = readJson('daily-brief.json');
   const cands = brief?.breakout_candidates || brief?.candidates || [];
-  if (Array.isArray(cands)) for (const c of cands) add(c.ticker || c.symbol);
+  if (Array.isArray(cands)) for (const c of cands) addHot(c.ticker || c.symbol);
 
   const lotto = readJson('lotto.json');
   const lcands = lotto?.candidates || lotto?.top25 || [];
-  if (Array.isArray(lcands)) for (const c of lcands) add(c.ticker);
+  if (Array.isArray(lcands)) for (const c of lcands) addHot(c.ticker);
 
   const earnings = readJson('earnings.json');
   const elist = Array.isArray(earnings) ? earnings : earnings?.entries || earnings?.items || [];
-  if (Array.isArray(elist)) for (const e of elist) add(e.ticker);
+  if (Array.isArray(elist)) for (const e of elist) addHot(e.ticker);
 
   const congress = readJson('congress.json');
   const clist = Array.isArray(congress) ? congress : congress?.trades || congress?.items || [];
-  if (Array.isArray(clist)) {
-    const counts = new Map();
-    for (const t of clist) {
-      const k = String(t.ticker || t.symbol || '').toUpperCase().trim();
-      if (k) counts.set(k, (counts.get(k) || 0) + 1);
-    }
-    // Congress file is huge — take the top 100 by trade count. The tickers
-    // the user actually browses (signals/brief/lotto/earnings/research)
-    // are already collected above.
-    const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 100);
-    for (const [k] of top) add(k);
-  }
+  if (Array.isArray(clist)) for (const t of clist) addWarm(t.ticker || t.symbol);
 
-  return [...set];
+  // Warm tickers already hot don't need double handling.
+  for (const t of hot) warm.delete(t);
+  return { hot: [...hot], warm: [...warm] };
 }
+
+// Max Yahoo calls per run to bound runtime (~1.5s each).
+const MAX_FETCH_PER_RUN = 250;
+// Hot tickers refresh daily; warm tickers refresh every 14 days.
+const HOT_STALE_MS = 24 * 3600 * 1000;
+const WARM_STALE_MS = 14 * 24 * 3600 * 1000;
 
 const MODULES = ['price', 'summaryDetail', 'defaultKeyStatistics', 'financialData', 'assetProfile', 'incomeStatementHistory'];
 
@@ -195,23 +199,39 @@ function enrichWithPeers(fundamentals) {
 }
 
 async function main() {
-  const tickers = collectTickers();
-  console.log(`[fundamentals] ${tickers.length} unique tickers to enrich`);
-  const fundamentals = {};
+  const { hot, warm } = collectTickers();
+  const prev = readJson('fundamentals.json');
+  const fundamentals = prev?.fundamentals || {};
+  const nowMs = Date.now();
+
+  // Decide what to (re)fetch: hot tickers stale >24h, warm tickers missing or
+  // stale >14d. Hot first, then missing warm, then stale warm — capped.
+  const isStale = (t, staleMs) => {
+    const f = fundamentals[t];
+    if (!f?.fetched_at) return true;
+    return nowMs - new Date(f.fetched_at).getTime() > staleMs;
+  };
+  const queue = [
+    ...hot.filter((t) => isStale(t, HOT_STALE_MS)),
+    ...warm.filter((t) => !fundamentals[t]),
+    ...warm.filter((t) => fundamentals[t] && isStale(t, WARM_STALE_MS)),
+  ].slice(0, MAX_FETCH_PER_RUN);
+
+  console.log(`[fundamentals] hot=${hot.length} warm=${warm.length} cached=${Object.keys(fundamentals).length} to_fetch=${queue.length}`);
   let ok = 0, fail = 0;
-  for (let i = 0; i < tickers.length; i++) {
-    const t = tickers[i];
+  for (let i = 0; i < queue.length; i++) {
+    const t = queue[i];
     try {
       const qs = await yahooQuoteSummary(t, MODULES);
       const f = extract(t, qs);
-      if (f) { fundamentals[t] = f; ok++; }
+      if (f) { f.fetched_at = new Date().toISOString(); fundamentals[t] = f; ok++; }
       else fail++;
     } catch (e) {
       fail++;
       console.warn(`[fundamentals] ${t}: ${e.message}`);
     }
-    if ((i + 1) % 10 === 0) {
-      console.log(`[fundamentals] ${i + 1}/${tickers.length} (ok=${ok} fail=${fail})`);
+    if ((i + 1) % 25 === 0) {
+      console.log(`[fundamentals] ${i + 1}/${queue.length} (ok=${ok} fail=${fail})`);
       await sleep(500);
     }
   }
@@ -221,10 +241,10 @@ async function main() {
   writeFileSync(join(OUT_DIR, 'fundamentals.json'), JSON.stringify({
     as_of: new Date().toISOString(),
     source: 'Yahoo Finance quoteSummary (delayed)',
-    count: ok,
+    count: Object.keys(fundamentals).length,
     fundamentals,
   }));
-  console.log(`[fundamentals] wrote ${ok} enriched, ${fail} failed`);
+  console.log(`[fundamentals] total=${Object.keys(fundamentals).length} (fetched ${ok}, failed ${fail} this run)`);
 }
 
 main().catch((e) => { console.error(`[fundamentals] FATAL: ${e.message}`); process.exit(1); });
