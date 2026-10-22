@@ -85,7 +85,22 @@ function collectTickers() {
   return [...set];
 }
 
-const MODULES = ['price', 'summaryDetail', 'defaultKeyStatistics', 'financialData', 'assetProfile'];
+const MODULES = ['price', 'summaryDetail', 'defaultKeyStatistics', 'financialData', 'assetProfile', 'incomeStatementHistory'];
+
+function growthRates(incomeHist) {
+  // incomeStatementHistory: annual statements, oldest first (usually 4).
+  const revs = (incomeHist || [])
+    .map((s) => raw(s.totalRevenue))
+    .filter((v) => typeof v === 'number' && v > 0);
+  if (revs.length < 2) return { revenue_growth_yoy: null, revenue_cagr_3y: null };
+  const yoy = (revs[revs.length - 1] - revs[revs.length - 2]) / revs[revs.length - 2];
+  let cagr = null;
+  if (revs.length >= 4) {
+    cagr = Math.pow(revs[revs.length - 1] / revs[0], 1 / (revs.length - 1)) - 1;
+  }
+  const r2 = (v) => (Number.isFinite(v) ? Math.round(v * 1000) / 1000 : null);
+  return { revenue_growth_yoy: r2(yoy), revenue_cagr_3y: r2(cagr) };
+}
 
 function extract(ticker, qs) {
   if (!qs) return null;
@@ -94,11 +109,31 @@ function extract(ticker, qs) {
   const ks = qs.defaultKeyStatistics || {};
   const fd = qs.financialData || {};
   const ap = qs.assetProfile || {};
+  const px = raw(price.regularMarketPrice);
+  const epsT = raw(ks.trailingEps);
+  const epsF = raw(ks.forwardEps);
+  const bv = raw(ks.bookValue);
+  const { revenue_growth_yoy, revenue_cagr_3y } = growthRates(qs.incomeStatementHistory?.incomeStatementHistory);
+
+  // Expected EPS growth from trailing -> forward estimates.
+  let eps_growth_exp = null;
+  if (typeof epsT === 'number' && typeof epsF === 'number' && epsT > 0) {
+    eps_growth_exp = Math.round(((epsF - epsT) / epsT) * 1000) / 1000;
+  }
+
+  // Graham number: sqrt(22.5 * EPS * book value) — a conservative deep-value
+  // floor, not a price target. Only meaningful when EPS and BV are positive.
+  let graham = null;
+  if (typeof epsT === 'number' && epsT > 0 && typeof bv === 'number' && bv > 0) {
+    graham = Math.round(Math.sqrt(22.5 * epsT * bv) * 100) / 100;
+  }
+
   return {
     name: price.longName || price.shortName || ticker,
     sector: ap.sector || null,
     subsector: ap.industry || null,
     market_cap: raw(price.marketCap),
+    price: typeof px === 'number' ? Math.round(px * 100) / 100 : null,
     pe_trailing: r2(sd.trailingPE),
     pe_forward: r2(sd.forwardPE),
     peg: r2(ks.pegRatio),
@@ -109,9 +144,54 @@ function extract(ticker, qs) {
     debt_equity: r2(fd.debtToEquity),
     beta: r2(ks.beta),
     div_yield: r2(sd.trailingAnnualDividendYield ?? sd.dividendYield),
-    eps_trailing: r2(ks.trailingEps),
-    eps_forward: r2(ks.forwardEps),
+    eps_trailing: r2(epsT),
+    eps_forward: r2(epsF),
+    book_value: r2(bv),
+    revenue_growth_yoy,
+    revenue_cagr_3y,
+    eps_growth_expected: eps_growth_exp,
+    graham_number: graham,
+    // graham_upside_pct + peer fair value computed in second pass below
   };
+}
+
+/** Second pass: peer-relative fair value + Graham upside (needs full map). */
+function enrichWithPeers(fundamentals) {
+  // Sector median forward P/E per sector.
+  const bySector = new Map();
+  for (const [t, f] of Object.entries(fundamentals)) {
+    if (!f.sector) continue;
+    if (!bySector.has(f.sector)) bySector.set(f.sector, []);
+    if (typeof f.pe_forward === 'number' && f.pe_forward > 0 && f.pe_forward < 200) {
+      bySector.get(f.sector).push(f.pe_forward);
+    }
+  }
+  const medFwdPE = new Map();
+  for (const [sec, vals] of bySector) {
+    if (!vals.length) continue;
+    const s = [...vals].sort((a, b) => a - b);
+    medFwdPE.set(sec, s.length % 2 ? s[s.length >> 1] : (s[(s.length >> 1) - 1] + s[s.length >> 1]) / 2);
+  }
+  for (const f of Object.values(fundamentals)) {
+    // Peer-implied fair value: what it'd be worth at the sector's median multiple.
+    const medPE = f.sector ? medFwdPE.get(f.sector) : null;
+    if (medPE != null && typeof f.eps_forward === 'number' && f.eps_forward > 0) {
+      f.peer_fair_value = Math.round(f.eps_forward * medPE * 100) / 100;
+      f.sector_median_fwd_pe = Math.round(medPE * 100) / 100;
+    } else {
+      f.peer_fair_value = null;
+      f.sector_median_fwd_pe = null;
+    }
+    if (typeof f.price === 'number' && f.price > 0) {
+      f.peer_upside_pct = f.peer_fair_value != null
+        ? Math.round(((f.peer_fair_value - f.price) / f.price) * 1000) / 10 : null;
+      f.graham_upside_pct = f.graham_number != null
+        ? Math.round(((f.graham_number - f.price) / f.price) * 1000) / 10 : null;
+    } else {
+      f.peer_upside_pct = null;
+      f.graham_upside_pct = null;
+    }
+  }
 }
 
 async function main() {
@@ -137,6 +217,7 @@ async function main() {
   }
 
   mkdirSync(OUT_DIR, { recursive: true });
+  enrichWithPeers(fundamentals);
   writeFileSync(join(OUT_DIR, 'fundamentals.json'), JSON.stringify({
     as_of: new Date().toISOString(),
     source: 'Yahoo Finance quoteSummary (delayed)',
