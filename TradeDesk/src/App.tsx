@@ -8,6 +8,7 @@ import CongressGovTab from './tabs/CongressGov';
 import ResearchTab from './tabs/Research';
 import SignalsTab from './tabs/Signals';
 import PerformanceTab from './tabs/Performance';
+import ScreenerTab from './tabs/Screener';
 import { supabase } from './lib/supabase';
 import type { TabDef, TabId } from './types';
 
@@ -19,6 +20,7 @@ const TABS: TabDef[] = [
   { id: 'congress', label: 'Congress & Gov', dataFile: 'congress.json' },
   { id: 'research', label: 'Research', dataFile: 'research.json' },
   { id: 'performance', label: 'Performance', dataFile: 'performance.json' },
+  { id: 'screener', label: 'Screener', dataFile: 'fundamentals.json' },
 ];
 
 function Shell() {
@@ -65,6 +67,7 @@ function Shell() {
         {active === 'congress' && <CongressGovTab />}
         {active === 'research' && <ResearchTab />}
         {active === 'performance' && <PerformanceTab />}
+        {active === 'screener' && <ScreenerTab />}
       </main>
 
       <footer className="footer">

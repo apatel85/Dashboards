@@ -44,10 +44,16 @@ export function Fundamentals({ ticker }: { ticker: string }) {
     ['roe', 'ROE', fmtPct(f.roe)],
     ['profit_margin', 'Profit margin', fmtPct(f.profit_margin)],
     ['debt_equity', 'Debt/Equity', fmtNum(f.debt_equity)],
+    ['revenue_growth_yoy', 'Rev growth YoY', fmtPct(f.revenue_growth_yoy)],
+    ['revenue_cagr_3y', 'Rev 3Y CAGR', fmtPct(f.revenue_cagr_3y)],
+    ['eps_growth_expected', 'EPS growth (est)', fmtPct(f.eps_growth_expected)],
     ['beta', 'Beta', fmtNum(f.beta)],
     ['div_yield', 'Div yield', fmtPct(f.div_yield)],
     ['market_cap', 'Mkt cap', fmtCap(f.market_cap)],
   ];
+
+  const upsideTone = (v: number | null) =>
+    v == null ? '' : v > 5 ? 'fund-good' : v < -5 ? 'fund-bad' : '';
 
   return (
     <div className="fundamentals">
@@ -78,6 +84,44 @@ export function Fundamentals({ ticker }: { ticker: string }) {
           );
         })}
       </div>
+      {(f.graham_number != null || f.peer_fair_value != null) && (
+        <div className="valuation-block">
+          <span className="detail-label">Intrinsic value vs price</span>
+          <div className="valuation-rows">
+            {f.graham_number != null && (
+              <div className="valuation-row">
+                <span>Graham number (deep-value floor)</span>
+                <span className="num">
+                  ${f.graham_number.toFixed(2)}{' '}
+                  <b className={upsideTone(f.graham_upside_pct)}>
+                    {f.graham_upside_pct != null ? `${f.graham_upside_pct > 0 ? '+' : ''}${f.graham_upside_pct}%` : '—'}
+                  </b>
+                </span>
+              </div>
+            )}
+            {f.peer_fair_value != null && (
+              <div className="valuation-row">
+                <span>
+                  Peer fair value
+                  {f.sector_median_fwd_pe != null ? (
+                    <span className="muted"> · sector fwd P/E {f.sector_median_fwd_pe.toFixed(1)}×</span>
+                  ) : null}
+                </span>
+                <span className="num">
+                  ${f.peer_fair_value.toFixed(2)}{' '}
+                  <b className={upsideTone(f.peer_upside_pct)}>
+                    {f.peer_upside_pct != null ? `${f.peer_upside_pct > 0 ? '+' : ''}${f.peer_upside_pct}%` : '—'}
+                  </b>
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="muted small">
+            Graham = √(22.5 × EPS × book value), a conservative floor. Peer fair value =
+            forward EPS × sector median forward P/E. Estimates, not targets.
+          </div>
+        </div>
+      )}
     </div>
   );
 }

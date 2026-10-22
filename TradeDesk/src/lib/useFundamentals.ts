@@ -17,6 +17,11 @@ export const METRIC_DIRECTION: Record<string, boolean | null> = {
   market_cap: null,
   eps_trailing: null,
   eps_forward: null,
+  revenue_growth_yoy: true,
+  revenue_cagr_3y: true,
+  eps_growth_expected: true,
+  graham_upside_pct: true,
+  peer_upside_pct: true,
 };
 
 export interface PeerStats {

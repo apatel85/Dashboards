@@ -326,7 +326,7 @@ export interface GexChangesFile {
 
 /* ── tabs ───────────────────────────────────────────────────────── */
 
-export type TabId = 'brief' | 'options' | 'earnings' | 'congress' | 'research' | 'signals' | 'performance';
+export type TabId = 'brief' | 'options' | 'earnings' | 'congress' | 'research' | 'signals' | 'performance' | 'screener';
 
 export interface TabDef {
   id: TabId;
@@ -418,6 +418,7 @@ export interface FundamentalMetrics {
   sector: string | null;
   subsector: string | null;
   market_cap: number | null;
+  price: number | null;
   pe_trailing: number | null;
   pe_forward: number | null;
   peg: number | null;
@@ -430,6 +431,15 @@ export interface FundamentalMetrics {
   div_yield: number | null;
   eps_trailing: number | null;
   eps_forward: number | null;
+  book_value: number | null;
+  revenue_growth_yoy: number | null;
+  revenue_cagr_3y: number | null;
+  eps_growth_expected: number | null;
+  graham_number: number | null;
+  graham_upside_pct: number | null;
+  peer_fair_value: number | null;
+  peer_upside_pct: number | null;
+  sector_median_fwd_pe: number | null;
 }
 
 export interface FundamentalsFile {
