@@ -1,6 +1,6 @@
 {
   "id": "ARLO-MSG-05",
-  "source": "manual",
+  "source": "arlo",
   "project": "Quixera Dev",
   "issue_type": "Missing validation",
   "title": "Messages search ignores message text",
@@ -9,7 +9,10 @@
   "url": "https://facility-dev.quixeraos.com/messages",
   "expected": "Search matches message content as well as chat/participant names",
   "actual": "Search only matches chat and participant names. Users cannot find text they wrote or saw.",
-  "steps": "Messages \u2192 search for a word you know appears in a message body",
+  "steps": [
+    "Messages",
+    "search for a word you know appears in a message body"
+  ],
   "trail": [],
   "shots": [],
   "clip": null,
