@@ -21,7 +21,9 @@ export function useJsonData<T>(file: string): JsonDataState<T> {
   useEffect(() => {
     let cancelled = false;
     const url = `${import.meta.env.BASE_URL}data/${file}`;
-    fetch(url)
+    // no-cache: the pipeline rewrites these files daily and the old "stale
+    // data" bugs were partly the browser serving cached JSON. Always revalidate.
+    fetch(url, { cache: 'no-cache' })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

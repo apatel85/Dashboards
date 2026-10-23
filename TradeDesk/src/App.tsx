@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AuthGate from './auth/AuthGate';
 import LiveQuoteButton from './components/LiveQuoteButton';
+import { TabErrorBoundary } from './components/ErrorBoundary';
 import DailyBriefTab from './tabs/DailyBrief';
 import OptionsTab from './tabs/Options';
 import EarningsTab from './tabs/Earnings';
@@ -23,8 +24,32 @@ const TABS: TabDef[] = [
   { id: 'screener', label: 'Screener', dataFile: 'fundamentals.json' },
 ];
 
+const TAB_IDS = TABS.map((t) => t.id);
+
+/** Build version — bump on every push so we can confirm what's live. */
+export const BUILD_VERSION = '2026-10-23c';
+
+/** Read the active tab from the URL hash (#options), defaulting to brief. */
+function tabFromHash(): TabId {
+  const h = window.location.hash.replace('#', '') as TabId;
+  return (TAB_IDS as string[]).includes(h) ? h : 'brief';
+}
+
 function Shell() {
-  const [active, setActive] = useState<TabId>('brief');
+  const [active, setActive] = useState<TabId>(tabFromHash);
+
+  // Keep the URL hash in sync so refresh stays on the same tab.
+  // Listen for hash changes too (back/forward buttons).
+  useEffect(() => {
+    const onHash = () => setActive(tabFromHash());
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  const select = (id: TabId) => {
+    setActive(id);
+    window.location.hash = id === 'brief' ? '' : id;
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -52,7 +77,7 @@ function Shell() {
             role="tab"
             aria-selected={active === t.id}
             className={`tabbtn${active === t.id ? ' active' : ''}`}
-            onClick={() => setActive(t.id)}
+            onClick={() => select(t.id)}
           >
             {t.label}
           </button>
@@ -60,18 +85,35 @@ function Shell() {
       </nav>
 
       <main className="content">
-        {active === 'brief' && <DailyBriefTab />}
-        {active === 'options' && <OptionsTab />}
-        {active === 'signals' && <SignalsTab />}
-        {active === 'earnings' && <EarningsTab />}
-        {active === 'congress' && <CongressGovTab />}
-        {active === 'research' && <ResearchTab />}
-        {active === 'performance' && <PerformanceTab />}
-        {active === 'screener' && <ScreenerTab />}
+        <TabErrorBoundary tabName="Daily Brief" key={`brief-${active}`}>
+          {active === 'brief' && <DailyBriefTab />}
+        </TabErrorBoundary>
+        <TabErrorBoundary tabName="Options" key={`options-${active}`}>
+          {active === 'options' && <OptionsTab />}
+        </TabErrorBoundary>
+        <TabErrorBoundary tabName="Signals" key={`signals-${active}`}>
+          {active === 'signals' && <SignalsTab />}
+        </TabErrorBoundary>
+        <TabErrorBoundary tabName="Earnings" key={`earnings-${active}`}>
+          {active === 'earnings' && <EarningsTab />}
+        </TabErrorBoundary>
+        <TabErrorBoundary tabName="Congress & Gov" key={`congress-${active}`}>
+          {active === 'congress' && <CongressGovTab />}
+        </TabErrorBoundary>
+        <TabErrorBoundary tabName="Research" key={`research-${active}`}>
+          {active === 'research' && <ResearchTab />}
+        </TabErrorBoundary>
+        <TabErrorBoundary tabName="Performance" key={`performance-${active}`}>
+          {active === 'performance' && <PerformanceTab />}
+        </TabErrorBoundary>
+        <TabErrorBoundary tabName="Screener" key={`screener-${active}`}>
+          {active === 'screener' && <ScreenerTab />}
+        </TabErrorBoundary>
       </main>
 
       <footer className="footer">
         TradeDesk — research and education only, not financial advice.
+        <span className="muted"> · v{BUILD_VERSION}</span>
       </footer>
     </div>
   );
