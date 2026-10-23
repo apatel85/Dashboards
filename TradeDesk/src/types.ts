@@ -440,6 +440,8 @@ export interface FundamentalMetrics {
   peer_fair_value: number | null;
   peer_upside_pct: number | null;
   sector_median_fwd_pe: number | null;
+  /** ISO timestamp of when this ticker was last fetched. */
+  fetched_at?: string | null;
 }
 
 export interface FundamentalsFile {

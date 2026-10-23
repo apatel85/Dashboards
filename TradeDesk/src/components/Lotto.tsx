@@ -81,8 +81,8 @@ function LottoCard({ c, rank, forceOpen }: { c: LottoCandidate; rank: number; fo
             {c.expiry_1dte ? <Stat label="1DTE exp" value={c.expiry_1dte.slice(5)} /> : null}
             <Stat
               label="Day vol / OI"
-              value={`${c.unusual.vol_oi_ratio}×`}
-              accent={c.unusual.vol_oi_ratio >= 1 ? 'up' : undefined}
+              value={`${c.unusual?.vol_oi_ratio ?? '—'}×`}
+              accent={c.unusual?.vol_oi_ratio != null && c.unusual.vol_oi_ratio >= 1 ? 'up' : undefined}
             />
             {c.rv20_pct != null ? <Stat label="20d realized" value={`${c.rv20_pct}%`} /> : null}
             {c.gamma_regime ? <Stat label="Gamma" value={c.gamma_regime} /> : null}

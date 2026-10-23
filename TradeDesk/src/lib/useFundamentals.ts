@@ -55,9 +55,10 @@ export function useFundamentals() {
   const peerStats = (ticker: string): PeerStats | null => {
     const f = get(ticker);
     if (!f?.sector) return null;
-    const peers = Object.values(map).filter(
-      (p) => p.sector === f.sector && p.ticker !== ticker.toUpperCase()
-    );
+    const upper = ticker.toUpperCase();
+    const peers = Object.entries(map).filter(
+      ([t, p]) => p.sector === f.sector && t !== upper
+    ).map(([, p]) => p);
     // include self so the median is stable with small peer sets
     const all = [...peers, f];
     const medians: Record<string, number | null> = {};
