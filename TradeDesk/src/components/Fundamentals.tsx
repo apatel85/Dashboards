@@ -1,16 +1,20 @@
 import type { FundamentalMetrics } from '../types';
 import { useFundamentals, peerTone } from '../lib/useFundamentals';
 
+function isNum(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v);
+}
+
 function fmtPct(v: number | null): string {
-  return v == null ? '—' : `${(v * 100).toFixed(1)}%`;
+  return isNum(v) ? `${(v * 100).toFixed(1)}%` : '—';
 }
 
 function fmtNum(v: number | null, digits = 2): string {
-  return v == null ? '—' : v.toFixed(digits);
+  return isNum(v) ? v.toFixed(digits) : '—';
 }
 
 function fmtCap(v: number | null): string {
-  if (v == null) return '—';
+  if (!isNum(v)) return '—';
   if (v >= 1e12) return `$${(v / 1e12).toFixed(2)}T`;
   if (v >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
   if (v >= 1e6) return `$${(v / 1e6).toFixed(0)}M`;
@@ -53,7 +57,11 @@ export function Fundamentals({ ticker }: { ticker: string }) {
   ];
 
   const upsideTone = (v: number | null) =>
-    v == null ? '' : v > 5 ? 'fund-good' : v < -5 ? 'fund-bad' : '';
+    !isNum(v) ? '' : v > 5 ? 'fund-good' : v < -5 ? 'fund-bad' : '';
+
+  const fmtMoney2 = (v: number | null) => (isNum(v) ? `$${v.toFixed(2)}` : '—');
+  const fmtUpside = (v: number | null) =>
+    isNum(v) ? `${v > 0 ? '+' : ''}${v}%` : '—';
 
   return (
     <div className="fundamentals">
@@ -84,33 +92,33 @@ export function Fundamentals({ ticker }: { ticker: string }) {
           );
         })}
       </div>
-      {(f.graham_number != null || f.peer_fair_value != null) && (
+      {(isNum(f.graham_number) || isNum(f.peer_fair_value)) && (
         <div className="valuation-block">
           <span className="detail-label">Intrinsic value vs price</span>
           <div className="valuation-rows">
-            {f.graham_number != null && (
+            {isNum(f.graham_number) && (
               <div className="valuation-row">
                 <span>Graham number (deep-value floor)</span>
                 <span className="num">
-                  ${f.graham_number.toFixed(2)}{' '}
+                  {fmtMoney2(f.graham_number)}{' '}
                   <b className={upsideTone(f.graham_upside_pct)}>
-                    {f.graham_upside_pct != null ? `${f.graham_upside_pct > 0 ? '+' : ''}${f.graham_upside_pct}%` : '—'}
+                    {fmtUpside(f.graham_upside_pct)}
                   </b>
                 </span>
               </div>
             )}
-            {f.peer_fair_value != null && (
+            {isNum(f.peer_fair_value) && (
               <div className="valuation-row">
                 <span>
                   Peer fair value
-                  {f.sector_median_fwd_pe != null ? (
+                  {isNum(f.sector_median_fwd_pe) ? (
                     <span className="muted"> · sector fwd P/E {f.sector_median_fwd_pe.toFixed(1)}×</span>
                   ) : null}
                 </span>
                 <span className="num">
-                  ${f.peer_fair_value.toFixed(2)}{' '}
+                  {fmtMoney2(f.peer_fair_value)}{' '}
                   <b className={upsideTone(f.peer_upside_pct)}>
-                    {f.peer_upside_pct != null ? `${f.peer_upside_pct > 0 ? '+' : ''}${f.peer_upside_pct}%` : '—'}
+                    {fmtUpside(f.peer_upside_pct)}
                   </b>
                 </span>
               </div>
