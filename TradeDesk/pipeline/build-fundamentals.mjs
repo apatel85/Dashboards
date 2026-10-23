@@ -132,11 +132,13 @@ function extract(ticker, qs) {
     graham = Math.round(Math.sqrt(22.5 * epsT * bv) * 100) / 100;
   }
 
+  const mc = raw(price.marketCap);
   return {
     name: price.longName || price.shortName || ticker,
     sector: ap.sector || null,
     subsector: ap.industry || null,
-    market_cap: raw(price.marketCap),
+    // Yahoo sometimes returns {} for ETF market caps — sanitize to null.
+    market_cap: typeof mc === 'number' && Number.isFinite(mc) ? mc : null,
     price: typeof px === 'number' ? Math.round(px * 100) / 100 : null,
     pe_trailing: r2(sd.trailingPE),
     pe_forward: r2(sd.forwardPE),
