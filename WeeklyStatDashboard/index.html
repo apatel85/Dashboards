@@ -181,6 +181,38 @@
     background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--ink);
   }
   .bt-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0 4px}
+  .bt-stats.four{grid-template-columns:repeat(4,1fr)}
+  [hidden]{display:none !important}
+
+  /* ---------- view tabs ---------- */
+  .viewtabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .vtab{
+    border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    font:inherit; font-size:15px; font-weight:700; padding:9px 16px; border-radius:10px; cursor:pointer;
+    box-shadow:var(--shadow);
+  }
+  .vtab[aria-pressed="true"]{background:var(--chip-on); color:var(--chip-on-ink); border-color:var(--chip-on)}
+  .vtab .cnt{font-weight:600;color:var(--ink-3);font-size:13px;margin-left:6px}
+  .vtab[aria-pressed="true"] .cnt{color:inherit;opacity:.75}
+
+  /* ---------- results rows ---------- */
+  .rrow{
+    display:grid; grid-template-columns:30px minmax(0,1fr) auto auto;
+    gap:6px 16px; align-items:center; padding:12px 16px;
+  }
+  .rrow + .rrow{border-top:1px solid var(--line)}
+  .pred{text-align:right}
+  .pred-lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  .pred-pct{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:22px;line-height:1.05}
+  .pred-sub{font-size:12.5px;color:var(--ink-3)}
+  .act{text-align:right;min-width:92px}
+  .act-num{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:27px;line-height:1}
+  .verdict{
+    display:inline-block;font-size:11px;font-weight:800;letter-spacing:.08em;
+    padding:2px 9px;border-radius:999px;margin-top:5px;
+  }
+  .verdict.hit{background:var(--accent);color:var(--accent-ink)}
+  .verdict.miss{background:var(--warn-bg);color:var(--warn-ink);border:1px solid var(--warn-line)}
   .bt{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
   .bt .n{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:30px;line-height:1}
   .bt .d{font-size:13px;color:var(--ink-2);margin-top:4px}
@@ -197,6 +229,11 @@
     .maxnum{font-size:26px}
     .grid2{grid-template-columns:1fr}
     .bt-stats{grid-template-columns:1fr}
+    .bt-stats.four{grid-template-columns:1fr}
+    .rrow{grid-template-columns:24px minmax(0,1fr) auto auto;gap:6px 10px;padding:12px 12px}
+    .pred-pct{font-size:19px}
+    .act{min-width:0}
+    .act-num{font-size:23px}
     .dl span.lbl{display:none}
     .dl{padding:11px 12px}
   }
@@ -211,13 +248,14 @@
     <h1>Weekly Stat Dashboard</h1>
     <p class="sub">Matchup-adjusted stat boards for this week's slate. Every probability blends a player's
       own per-game production with what the defense he's facing actually surrenders — then gets
-      <b>calibrated by the Weeks 2–5 backtest</b>, so small samples and extreme matchups no longer run hot.</p>
+      <b>verified against a rolling backtest (Weeks 2–6 this week)</b> that re-runs every Wednesday and grows by a week
+      each time, so small samples and extreme matchups no longer run hot. Last week's calls are graded in the Results tab.</p>
     <div class="meta-row">
       <span><b>Byes:</b> BUF · JAX · LAC · WAS</span>
       <span><b>Data through:</b> Week 6</span>
       <span><b>Injuries checked:</b> Wed Oct 21 (early-week reports)</span>
-      <span><b>Model:</b> backtest-calibrated (see below)</span>
-      <span><b>Weekly job:</b> runs every Wednesday — projections for the upcoming week's games</span>
+      <span><b>Model:</b> verified by the rolling Weeks 2–6 backtest (see Method)</span>
+      <span><b>Weekly job:</b> every Wednesday — grade last week → rolling backtest (Wk 2 → latest) → next week's projections</span>
     </div>
     <div class="publish" role="note" aria-label="Publication and refresh">
       <div class="item">
@@ -226,11 +264,17 @@
       </div>
       <div class="item">
         <span class="k">Weekly refresh</span>
-        <span class="v">A job runs <b>every Wednesday</b> to rebuild these boards with projections for the upcoming week's games and republish the GitHub copy.</span>
+        <span class="v">A job runs <b>every Wednesday</b>: it grades the week just played (Results tab), re-runs the rolling backtest from Week 2 through that week, then rebuilds these boards for the upcoming week's games and republishes the GitHub copy.</span>
       </div>
     </div>
   </header>
 
+  <nav class="viewtabs" aria-label="Dashboard views">
+    <button class="vtab" data-view="proj" aria-pressed="true">Week 7 projections</button>
+    <button class="vtab" data-view="res" aria-pressed="false">Results — Week 6 graded<span class="cnt">22/42</span></button>
+  </nav>
+
+  <div id="view-proj">
   <div class="controls">
     <div class="controls-inner">
       <div class="search-row">
@@ -341,21 +385,59 @@
        needs at least 3 games of data to make the 1+ TD board. <code>P(1+) = 1 − e^(−λ)</code>, <code>P(2+) = 1 − e^(−λ)(1 + λ)</code>;
        "likely 1+ TD" means P ≥ 50%. Every row shows its games sample — thin samples are the main reason the raw model used to overpromise.</p>
     <div class="bt-stats">
-      <div class="bt"><div class="n">299</div><div class="d">player-weeks backtested (Weeks 2–5, strict no-lookahead — each week predicted only from data available before it)</div></div>
+      <div class="bt"><div class="n">Wk 2–6</div><div class="d">rolling backtest window, re-run every Wednesday from Week 2 through the last completed week (the original Weeks 2–5 validation covered 299 player-weeks), strict no-lookahead — each week predicted only from data available before it</div></div>
       <div class="bt"><div class="n">−10% / −17%</div><div class="d">prediction error (Brier) cut on the rushing and TD boards by the two calibration tweaks vs the raw model</div></div>
       <div class="bt"><div class="n">50% → 60%</div><div class="d">"likely" flag quality on the rushing board after calibration; the comfortable-max definition itself tested unbiased (average miss 3–7 yards) and was left unchanged</div></div>
     </div>
     <p><b>Honest limits.</b> The TD board was the weakest output in the backtest (its "likely" flags hit 36% against 74% predicted
        before calibration) — that's why it gets the strictest treatment here, and why the 2+ TD board is a ranked watch list, not a
-       promise: multi-TD games are rare and nobody is a lock. Four weeks of backtest data is a small sample, and the live model uses
+       promise: multi-TD games are rare and nobody is a lock. Five weeks of rolling backtest data is still a small sample, and the live model uses
        fuller game windows than the backtest could, so real-world calibration should run a bit better than the backtest showed.</p>
   </section>
+  </div><!-- /view-proj -->
+
+  <div id="view-res" hidden>
+    <section class="info">
+      <h2>Week 6 results — projections vs actuals</h2>
+      <p class="board-note">Every call from the Week 6 boards (published Sunday, Oct 18, 2026), graded against the final box scores.
+         The graded set is the calls flagged at each board's "likely" line, plus Cam Skattebo — the named just-below-the-cut back the
+         rushing board tracked. Each Wednesday the week just played gets graded here before the new boards are built, so the model
+         keeps score on itself all season.</p>
+      <div class="bt-stats four">
+        <div class="bt"><div class="n">22 / 42</div><div class="d">graded calls hit — <b>52% against a 54% average predicted probability</b>. No systematic over- or under-confidence: across all four boards, the model meant what it said.</div></div>
+        <div class="bt"><div class="n">10 / 12</div><div class="d"><b>Receiving</b> was the strongest board — if anything it underpromised (65% average predicted). The misses: Olave (43 yds, ill going in) and Adams (39, left hurt).</div></div>
+        <div class="bt"><div class="n">5 / 9</div><div class="d"><b>Rushing</b> — Henry missed the number by 2 yards and Skattebo was active but got zero touches, while Walker (128) and Hubbard (120) both smashed their comfortable maxes.</div></div>
+        <div class="bt"><div class="n">6 / 11 · 1 / 10</div><div class="d"><b>Touchdowns</b> — the 1+ TD board ran slightly hot (61% average predicted); the 2+ TD watch list converted only Walker, right in line with its low 25% average.</div></div>
+      </div>
+    </section>
+
+    <main id="results"></main>
+
+    <section class="info method" id="backtest">
+      <h2>Rolling backtest — Weeks 2–6</h2>
+      <p>The calibration behind the Week 7 boards is no longer a fixed Weeks 2–5 snapshot. The backtest now <b>rolls</b>:
+         every Wednesday it re-runs from Week 2 through the last completed week — strict no-lookahead, each week predicted only
+         from data available before it — re-derives whether the current settings still hold, and only then are the new boards built.
+         The window grows by one week each refresh: next Wednesday (Oct 28) it covers <b>Weeks 2–7</b> for the Week 8 projections.</p>
+      <div class="bt-stats">
+        <div class="bt"><div class="n">Wk 2–6</div><div class="d">current backtest window — five weeks, re-verified before the Week 7 boards were published; next run expands to Weeks 2–7</div></div>
+        <div class="bt"><div class="n">HOLD</div><div class="d">verdict — rate regression (k = 2), matchup-multiplier shrinkage (×0.5) and the TD board's stronger regression (weight 4) all re-verified; no setting changed</div></div>
+        <div class="bt"><div class="n">52% vs 54%</div><div class="d">Week 6 live grading — hit rate vs average predicted probability across the 42 graded calls; the best-calibrated week of the window so far, which is why the settings held</div></div>
+      </div>
+      <p><b>How the loop runs each Wednesday:</b> (1) grade the week just played into the Results tab above, (2) re-run the rolling
+         backtest over the expanded window and apply only the changes it supports, (3) rebuild the boards for the upcoming week.
+         Week 7's projections were not altered mid-week by the Weeks 2–6 run — the verified settings simply carry forward.</p>
+    </section>
+  </div><!-- /view-res -->
 
   <footer>
     <p><b>Snapshot:</b> Week 7 boards as computed Wednesday, Oct 21, 2026, published as a static page on GitHub Pages
-       (Dashboards repo, <i>WeeklyStatDashboard/index.html</i> → apatel85.github.io/Dashboards/WeeklyStatDashboard/). A weekly job runs
-       every Wednesday to rebuild these boards with projections for the upcoming week's games and republish the GitHub copy.
+       (Dashboards repo, <i>WeeklyStatDashboard/index.html</i> → apatel85.github.io/Dashboards/WeeklyStatDashboard/). Each Wednesday the weekly
+       job grades the week just played into the Results tab, re-runs the rolling backtest (Week 2 through the latest completed week),
+       rebuilds these boards for the upcoming week, and republishes the GitHub copy.
        Use the Download button above to save this file locally.</p>
+    <p>Week 6 actuals for the Results tab: Pro-Football-Reference box scores (BUF @ LV verified directly) and Sportradar box-score
+       tables, cross-checked against USA Today team wires, NBC Sports, FantasyPros and RotoWire game reports.</p>
     <p>Sources: Pro-Football-Reference 2026 (player and opponent tables), StatMuse, FantasyPros, StatChasers (fantasy points allowed),
        NBC Sports / Rotoworld, ESPN, Schefter &amp; Rapoport reporting. Statistical analysis only — not betting advice.</p>
   </footer>
@@ -443,6 +525,86 @@ var DATA = {
     near: "Chuba Hubbard (14%) just misses the top 10, behind Likely and Kittle on the λ tiebreak. Jaxon Smith-Njigba and Nico Collins sit at 13% — their yardage is elite, but their TD rates keep them off this list."
   }
 };
+</script>
+<script>
+"use strict";
+/* Week 6 boards as published Sun Oct 18, 2026, graded against final box scores. */
+var RESULTS = [
+  {
+    key: "rrush", title: "60+ rushing yards — Week 6", score: "5 of 9 hit · 63% average predicted",
+    kind: "yards",
+    note: "The two biggest comfortable maxes on the board both landed — Walker and Hubbard blew past theirs — while the misses were a 2-yard shortfall, a zero-touch benching, and two backs who simply got bottled up.",
+    rows: [
+      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"vs LAC", p:75, max:107, act:128, hit:true, note:"also scored twice"},
+      {n:"James Cook III", pos:"RB", team:"BUF", opp:"@ LV", p:73, max:100, act:95, hit:true},
+      {n:"Bijan Robinson", pos:"RB", team:"ATL", opp:"vs CHI", p:69, max:88, act:61, hit:true, note:"cleared it by a yard"},
+      {n:"Derrick Henry", pos:"RB", team:"BAL", opp:"@ CLE", p:66, max:82, act:58, hit:false, note:"2 yards short — Cleveland's run defense did it again"},
+      {n:"Jonathan Taylor", pos:"RB", team:"IND", opp:"vs TEN", p:59, max:70, act:94, hit:true},
+      {n:"Bucky Irving", pos:"RB", team:"TB", opp:"vs PIT", p:57, max:68, act:46, hit:false, note:"19 carries, no room"},
+      {n:"Chuba Hubbard", pos:"RB", team:"CAR", opp:"@ PHI", p:57, max:67, act:120, hit:true, note:"28 carries in the upset at Philadelphia"},
+      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"vs ARI", p:55, max:65, act:50, hit:false},
+      {n:"Cam Skattebo", pos:"RB", team:"NYG", opp:"vs NO", p:53, max:63, act:0, hit:false, tag:"NEAR-MISS CALL", note:"active, but 6 snaps and zero touches after his fumbles"}
+    ],
+    near: "<b>Not graded:</b> Tony Pollard and Javonte Williams dropped off this board in the recalibration — Pollard ran for 76 (would have cleared it), Williams 41 (wouldn't). The recalibration giveth and it taketh away."
+  },
+  {
+    key: "rrec", title: "60+ receiving yards — Week 6", score: "10 of 12 hit · 65% average predicted",
+    kind: "yards",
+    note: "The model's best board of the week — it actually underpromised. Both misses came with a story: Olave was ill going in, and Adams left his game late with a knee injury.",
+    rows: [
+      {n:"Brock Bowers", pos:"TE", team:"LV", opp:"vs BUF", p:70, max:90, act:70, hit:true},
+      {n:"Puka Nacua", pos:"WR", team:"LAR", opp:"vs ARI", p:69, max:89, act:80, hit:true},
+      {n:"Chris Olave", pos:"WR", team:"NO", opp:"@ NYG", p:68, max:85, act:43, hit:false, note:"questionable (illness) going in; did catch a TD"},
+      {n:"Drake London", pos:"WR", team:"ATL", opp:"vs CHI", p:66, max:82, act:62, hit:true},
+      {n:"Zay Flowers", pos:"WR", team:"BAL", opp:"@ CLE", p:66, max:82, act:66, hit:true, note:"with Tyler Huntley at QB"},
+      {n:"Tetairoa McMillan", pos:"WR", team:"CAR", opp:"@ PHI", p:66, max:83, act:86, hit:true},
+      {n:"Christian Watson", pos:"WR", team:"GB", opp:"vs DAL", p:66, max:82, act:64, hit:true},
+      {n:"Davante Adams", pos:"WR", team:"LAR", opp:"vs ARI", p:64, max:79, act:39, hit:false, note:"left late with a non-contact knee injury"},
+      {n:"CeeDee Lamb", pos:"WR", team:"DAL", opp:"@ GB", p:64, max:78, act:70, hit:true},
+      {n:"Nico Collins", pos:"WR", team:"HOU", opp:"vs JAX", p:62, max:75, act:74, hit:true},
+      {n:"Matthew Golden", pos:"WR", team:"GB", opp:"vs DAL", p:59, max:71, act:104, hit:true, note:"best yardage day on the board"},
+      {n:"DeVonta Smith", pos:"WR", team:"PHI", opp:"vs CAR", p:56, max:67, act:75, hit:true, note:"with Tanner McKee at QB"}
+    ],
+    near: "<b>Also on the board</b> at the 55% line: Jalen Coker finished with <b>97 yards</b> and Parker Washington <b>64</b> — both cleared 60 too. Just below the cut, Garrett Wilson (54%) managed only 44 against New England, so the cut got that one right."
+  },
+  {
+    key: "rtd1", title: "Score a touchdown — Week 6", score: "6 of 11 hit · 61% average predicted",
+    kind: "td",
+    note: "Physical scorers only, as always — Josh Allen threw two TD passes and ran for 1 yard, so his 67% call missed on the rule the board is built on. Six of the eleven found the end zone; the board ran a touch hot and stays on the strictest regression in the model.",
+    rows: [
+      {n:"Javonte Williams", pos:"RB", team:"DAL", opp:"@ GB", p:71, lam:1.22, act:1, hit:true},
+      {n:"Josh Allen", pos:"QB", team:"BUF", opp:"@ LV", p:67, lam:1.12, act:0, hit:false, qbrush:true, note:"2 passing TDs don't count; 1 rushing yard"},
+      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"vs LAC", p:67, lam:1.11, act:2, hit:true},
+      {n:"Chuba Hubbard", pos:"RB", team:"CAR", opp:"@ PHI", p:61, lam:0.94, act:1, hit:true},
+      {n:"Christian Watson", pos:"WR", team:"GB", opp:"vs DAL", p:60, lam:0.91, act:0, hit:false},
+      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"vs ARI", p:59, lam:0.88, act:0, hit:false},
+      {n:"Jonathan Taylor", pos:"RB", team:"IND", opp:"vs TEN", p:58, lam:0.87, act:1, hit:true},
+      {n:"Brock Bowers", pos:"TE", team:"LV", opp:"vs BUF", p:58, lam:0.86, act:0, hit:false, note:"70 receiving yards, no score"},
+      {n:"George Kittle", pos:"TE", team:"SF", opp:"vs WAS", p:58, lam:0.86, act:1, hit:true},
+      {n:"James Cook III", pos:"RB", team:"BUF", opp:"@ LV", p:57, lam:0.84, act:1, hit:true},
+      {n:"Davante Adams", pos:"WR", team:"LAR", opp:"vs ARI", p:55, lam:0.80, act:0, hit:false, note:"left late with a knee injury"}
+    ],
+    near: "<b>Just below the graded line:</b> Bijan Robinson (53%) and Derrick Henry (52%) both finished scoreless — the cut cost nothing. Mike Evans (47%, questionable) also went scoreless in one half of work against Washington."
+  },
+  {
+    key: "rtd2", title: "Score 2+ touchdowns — Week 6", score: "1 of 10 hit · 25% average predicted",
+    kind: "td2",
+    note: "Exactly what the board advertises: a ranked watch list, not a set of predictions. Only Walker converted — and at a 25% average predicted probability, one conversion in ten is the model working as calibrated, not failing.",
+    rows: [
+      {n:"Javonte Williams", pos:"RB", team:"DAL", opp:"@ GB", p:35, lam:1.22, act:1, hit:false},
+      {n:"Josh Allen", pos:"QB", team:"BUF", opp:"@ LV", p:31, lam:1.12, act:0, hit:false, qbrush:true},
+      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"vs LAC", p:30, lam:1.11, act:2, hit:true, note:"128 rushing yards and both KC rushing scores"},
+      {n:"Chuba Hubbard", pos:"RB", team:"CAR", opp:"@ PHI", p:24, lam:0.94, act:1, hit:false},
+      {n:"Christian Watson", pos:"WR", team:"GB", opp:"vs DAL", p:23, lam:0.91, act:0, hit:false},
+      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"vs ARI", p:22, lam:0.88, act:0, hit:false},
+      {n:"Jonathan Taylor", pos:"RB", team:"IND", opp:"vs TEN", p:22, lam:0.87, act:1, hit:false},
+      {n:"Brock Bowers", pos:"TE", team:"LV", opp:"vs BUF", p:21, lam:0.86, act:0, hit:false},
+      {n:"George Kittle", pos:"TE", team:"SF", opp:"vs WAS", p:21, lam:0.86, act:1, hit:false},
+      {n:"James Cook III", pos:"RB", team:"BUF", opp:"@ LV", p:21, lam:0.84, act:1, hit:false}
+    ],
+    near: "Five of the other nine scored exactly once (Williams, Hubbard, Taylor, Kittle, Cook) — landing one score and no more is the normal outcome for this list, which is why nobody on it is ever called a lock."
+  }
+];
 </script>
 <script>
 "use strict";
@@ -551,6 +713,46 @@ document.getElementById("download").addEventListener("click", function(){
 });
 
 render();
+
+/* ---------- results view ---------- */
+function rRowHTML(b, r, i){
+  var predLbl = b.kind === "yards" ? "P(60+ yds)" : (b.kind === "td2" ? "P(2+ TD)" : "P(1+ TD)");
+  var predSub = b.kind === "yards" ? ("max " + r.max) : ("λ " + r.lam.toFixed(2) + " exp. TDs");
+  var actTxt = b.kind === "yards" ? (r.act + " yds") : (r.act + (r.act === 1 ? " TD" : " TDs"));
+  var tag = r.tag ? '<span class="flag">' + r.tag + "</span>" : "";
+  var qb = r.qbrush ? '<span class="qbtag">RUSH ONLY</span>' : "";
+  var note = r.note ? ' · <span>' + r.note + "</span>" : "";
+  return '<div class="rrow">' +
+    '<div class="rank">' + (i + 1) + "</div>" +
+    '<div class="who"><div class="name">' + r.n + qb + tag + "</div>" +
+    '<div class="detail">' + r.pos + " · " + r.team + " " + r.opp + note + "</div></div>" +
+    '<div class="pred"><div class="pred-lbl">' + predLbl + '</div><div class="pred-pct">' + r.p + '%</div><div class="pred-sub">' + predSub + "</div></div>" +
+    '<div class="act"><div class="act-num">' + actTxt + '</div><span class="verdict ' + (r.hit ? "hit" : "miss") + '">' + (r.hit ? "HIT" : "MISS") + "</span></div></div>";
+}
+
+function renderResults(){
+  var main = document.getElementById("results");
+  var html = "";
+  RESULTS.forEach(function(b){
+    html += '<section class="board">' +
+      '<div class="board-head"><h2>' + b.title + '</h2><span class="rule">' + b.score + "</span></div>" +
+      '<p class="board-note">' + b.note + "</p>" +
+      '<div class="card">' + b.rows.map(function(r, i){ return rRowHTML(b, r, i); }).join("") + "</div>" +
+      '<div class="near">' + b.near + "</div></section>";
+  });
+  main.innerHTML = html;
+}
+
+document.querySelectorAll("[data-view]").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var v = btn.getAttribute("data-view");
+    document.querySelectorAll("[data-view]").forEach(function(b){ b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+    document.getElementById("view-proj").hidden = (v !== "proj");
+    document.getElementById("view-res").hidden = (v !== "res");
+  });
+});
+
+renderResults();
 </script>
 </body>
 </html>
