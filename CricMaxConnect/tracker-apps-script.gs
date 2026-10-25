@@ -16,10 +16,12 @@
  * ENDPOINTS (called by the dashboard, no Google sign-in needed):
  * - GET  ?action=ping&callback=fn        → JSONP {ok:true} (bridge health check)
  * - POST {action:'updateStatus', taskId, status, token?}
+ * - POST {action:'updateDue', taskId, due, token?}
  * - POST {action:'addTask', workstream, title, owner, priority, due, details, token?}
  * Writes go to the workstream tab AND to Master Tracker when a matching clean
  * row exists there (new tasks are appended to both). Edits are visible in the
- * sheet's version history.
+ * sheet's version history. Due dates are free text (e.g. "31 Oct 2026");
+ * only real dates power the dashboard's overdue / due-soon reminders.
  */
 
 var SHEET_ID = '1JL8nit7_f-Xp_F9Pa0R8te56h8HZvG0IMdQoANd3h2A';
@@ -58,6 +60,7 @@ function doPost(e) {
     var data = JSON.parse(e.postData.contents);
     if (!checkToken(data)) return jsonOut({ ok: false, error: 'bad token' });
     if (data.action === 'updateStatus') return jsonOut(updateStatus(data));
+    if (data.action === 'updateDue') return jsonOut(updateDue(data));
     if (data.action === 'addTask') return jsonOut(addTask(data));
     return jsonOut({ ok: false, error: 'unknown action' });
   } catch (err) {
@@ -91,6 +94,25 @@ function updateStatus(data) {
     }
   });
   return { ok: updated.length > 0, updated: updated, taskId: data.taskId, status: data.status };
+}
+
+function updateDue(data) {
+  var ss = sheet();
+  var updated = [];
+  var tabName = PREFIX_TO_TAB[String(data.taskId).split('-')[0].toUpperCase()];
+  var targets = [];
+  if (tabName) targets.push(tabName);
+  targets.push('Master Tracker');
+  targets.forEach(function (name) {
+    var tab = ss.getSheetByName(name);
+    if (!tab) return;
+    var row = findRowById(tab, data.taskId);
+    if (row > 0) {
+      tab.getRange(row, 7).setValue(data.due || ''); // column G = Due / Timing
+      updated.push(name);
+    }
+  });
+  return { ok: updated.length > 0, updated: updated, taskId: data.taskId, due: data.due || '' };
 }
 
 function nextId(tab, prefix) {
