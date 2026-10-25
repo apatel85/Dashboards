@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ankit x Arpit | Task & Project Tracker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #131c2e;
+      --surface-hover: #1b273f;
+      --border: #23324d;
+      --text: #f1f5f9;
+      --text-muted: #8fa0bc;
+      --accent: #38bdf8;
+      --done: #10b981;
+      --progress: #f59e0b;
+      --blocked: #ef4444;
+      --not-started: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    h1 { font-size: 1.4rem; font-weight: 700; }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--done);
+      box-shadow: 0 0 8px var(--done);
+    }
+    .btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+    .kpi-title { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+    .kpi-value { font-size: 1.8rem; font-weight: 700; margin-top: 4px; }
+
+    .workstream-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .tab-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #04101f;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .controls-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    input, select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    input[type="text"] { flex-grow: 1; min-width: 220px; }
+
+    .table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+    th {
+      background: #0f1625;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface-hover); }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .st-done { background: rgba(16, 185, 129, 0.15); color: var(--done); }
+    .st-progress { background: rgba(245, 158, 11, 0.15); color: var(--progress); }
+    .st-blocked { background: rgba(239, 68, 68, 0.15); color: var(--blocked); }
+    .st-notstarted { background: rgba(100, 116, 139, 0.15); color: var(--not-started); }
+    
+    .pr-high { color: #f87171; font-weight: 600; }
+    .pr-medium { color: #fbbf24; font-weight: 500; }
+    .pr-low { color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Ankit Patel x Arpit Shah — Task Tracker</h1>
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span id="sync-status">Connecting to live Google Sheet...</span>
+        </div>
+      </div>
+      <div>
+        <button class="btn" onclick="syncData()">↻ Force Sync</button>
+      </div>
+    </header>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Total Tasks</div>
+        <div class="kpi-value" id="kpi-total">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Done</div>
+        <div class="kpi-value" style="color: var(--done);" id="kpi-done">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">In Progress</div>
+        <div class="kpi-value" style="color: var(--progress);" id="kpi-progress">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Blocked</div>
+        <div class="kpi-value" style="color: var(--blocked);" id="kpi-blocked">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Not Started</div>
+        <div class="kpi-value" style="color: var(--not-started);" id="kpi-notstarted">0</div>
+      </div>
+    </div>
+
+    <div class="workstream-tabs" id="tabs-container">
+      <button class="tab-btn active" onclick="setWorkstream('ALL', this)">All Workstreams</button>
+      <button class="tab-btn" onclick="setWorkstream('Social Media', this)">Social Media</button>
+      <button class="tab-btn" onclick="setWorkstream('Quixera', this)">Quixera</button>
+      <button class="tab-btn" onclick="setWorkstream('CricMax Connect', this)">CricMax Connect</button>
+    </div>
+
+    <div class="controls-bar">
+      <input type="text" id="search-box" placeholder="Search tasks, deliverables, or owners..." oninput="filterData()" />
+      <select id="filter-status" onchange="filterData()">
+        <option value="ALL">All Statuses</option>
+        <option value="Not Started">Not Started</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Blocked">Blocked</option>
+        <option value="Done">Done</option>
+      </select>
+      <select id="filter-priority" onchange="filterData()">
+        <option value="ALL">All Priorities</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Workstream</th>
+            <th>Task & Details</th>
+            <th>Owner</th>
+            <th>Priority</th>
+            <th>Due / Timing</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="task-tbody">
+          <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">Loading live records...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Adapted 2026-10-25 for the live "Master Tracker" sheet: the sheet has no
+    // Workstream column and its first row is an aggregate cell block (all S/Q/C
+    // IDs crammed into one row), so rows are parsed positionally, the aggregate
+    // row is skipped, and workstream is derived from the Task ID prefix
+    // (S = Social Media, Q = Quixera, C = CricMax Connect). If the sheet's
+    // first row is ever expanded into one row per task, those rows will parse
+    // automatically with no code change.
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1JL8nit7_f-Xp_F9Pa0R8te56h8HZvG0IMdQoANd3h2A/gviz/tq?tqx=out:csv&sheet=Master%20Tracker';
+    let allRows = [];
+    let currentWorkstream = 'ALL';
+
+    // Columns in the sheet: Task ID | Task | Details | Owner | Priority |
+    // Status | Due / Timing | Dependencies / Notes
+    function normalizeRow(cols) {
+      if (!cols || !cols.length) return null;
+      const cells = cols.map(c => (c || '').trim());
+      const id = cells[0] || '';
+      if (!/^[A-Za-z]+-\d+$/.test(id)) return null; // skips the aggregate row
+      const prefix = id.split('-')[0].toUpperCase();
+      const workstream = prefix === 'S' ? 'Social Media' : prefix === 'Q' ? 'Quixera' : prefix === 'C' ? 'CricMax Connect' : 'General';
+      return {
+        'Task ID': id,
+        'Workstream': workstream,
+        'Task': cells[1] || '',
+        'Details': cells[2] || '',
+        'Owner': cells[3] || '',
+        'Priority': cells[4] || '',
+        'Status': cells[5] || 'Not Started',
+        'Due / Timing': cells[6] || '',
+        'Dependencies / Notes': cells[7] || ''
+      };
+    }
+
+    async function syncData() {
+      const statusEl = document.getElementById('sync-status');
+      statusEl.innerText = 'Syncing...';
+      try {
+        const timestampedUrl = `${SHEET_URL}&_nocache=${Date.now()}`;
+        const resp = await fetch(timestampedUrl);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const csv = await resp.text();
+
+        Papa.parse(csv, {
+          header: false,
+          skipEmptyLines: true,
+          complete: (results) => {
+            allRows = results.data.map(normalizeRow).filter(Boolean);
+            updateMetrics(allRows);
+            filterData();
+            statusEl.innerText = `Connected (Last updated: ${new Date().toLocaleTimeString()})`;
+          }
+        });
+      } catch (err) {
+        statusEl.innerText = 'Connection error (retrying in 30s)';
+        console.error(err);
+      }
+    }
+
+    function setWorkstream(ws, btn) {
+      currentWorkstream = ws;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterData();
+    }
+
+    function updateMetrics(rows) {
+      document.getElementById('kpi-total').innerText = rows.length;
+      document.getElementById('kpi-done').innerText = rows.filter(r => getField(r, ['Status']) === 'Done').length;
+      document.getElementById('kpi-progress').innerText = rows.filter(r => getField(r, ['Status']) === 'In Progress').length;
+      document.getElementById('kpi-blocked').innerText = rows.filter(r => getField(r, ['Status']) === 'Blocked').length;
+      document.getElementById('kpi-notstarted').innerText = rows.filter(r => getField(r, ['Status']) === 'Not Started').length;
+    }
+
+    function getField(row, candidates) {
+      for (const k of Object.keys(row)) {
+        for (const c of candidates) {
+          if (k.trim().toLowerCase() === c.toLowerCase()) return (row[k] || '').trim();
+        }
+      }
+      return '';
+    }
+
+    function filterData() {
+      const q = document.getElementById('search-box').value.toLowerCase();
+      const statusVal = document.getElementById('filter-status').value;
+      const priorityVal = document.getElementById('filter-priority').value;
+
+      const filtered = allRows.filter(row => {
+        const ws = getField(row, ['Workstream', 'Category', 'Section']);
+        const status = getField(row, ['Status']);
+        const priority = getField(row, ['Priority']);
+        const taskText = Object.values(row).join(' ').toLowerCase();
+
+        const matchWs = currentWorkstream === 'ALL' || ws.toLowerCase().includes(currentWorkstream.toLowerCase());
+        const matchStatus = statusVal === 'ALL' || status.toLowerCase() === statusVal.toLowerCase();
+        const matchPriority = priorityVal === 'ALL' || priority.toLowerCase() === priorityVal.toLowerCase();
+        const matchQuery = !q || taskText.includes(q);
+
+        return matchWs && matchStatus && matchPriority && matchQuery;
+      });
+
+      renderTable(filtered);
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('task-tbody');
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">No matching tasks found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => {
+        const ws = getField(r, ['Workstream', 'Category']) || 'General';
+        const task = getField(r, ['Task', 'Action', 'Deliverable', 'Item']);
+        const owner = getField(r, ['Owner', 'Assignee', 'Who']) || '—';
+        const priority = getField(r, ['Priority']) || '—';
+        const due = getField(r, ['Due / Timing', 'Due Date', 'Timing', 'Due']) || '—';
+        const status = getField(r, ['Status']) || 'Not Started';
+
+        let stClass = 'st-notstarted';
+        if (status === 'Done') stClass = 'st-done';
+        else if (status === 'In Progress') stClass = 'st-progress';
+        else if (status === 'Blocked') stClass = 'st-blocked';
+
+        let prClass = 'pr-low';
+        if (priority === 'High') prClass = 'pr-high';
+        else if (priority === 'Medium') prClass = 'pr-medium';
+
+        return `
+          <tr>
+            <td><strong>${ws}</strong></td>
+            <td>${task}</td>
+            <td>${owner}</td>
+            <td><span class="${prClass}">${priority}</span></td>
+            <td>${due}</td>
+            <td><span class="tag ${stClass}">${status}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Auto-fetch immediately, then background poll every 45 seconds
+    syncData();
+    setInterval(syncData, 45000);
+  </script>
+</body>
+</html>
