@@ -1,5 +1,13 @@
 # AGENTLOG — CricMaxConnect
 
+## 2026-10-25 — Task tracker v2: all tabs, reminders, two-way bridge (replaces v1)
+- Rebuilt task-tracker.html from the sheet's real structure: reads all 6 tabs (Cover, Master Tracker, Social Media, Quixera, CricMax Connect, Decisions & Notes) and aggregates into one view — 30 tasks (S-01..S-10, Q-01..Q-10, C-01..C-10), KPIs 30/1/1/0/28, Decisions in 3 sections (8/3/4).
+- Workstream tabs are canonical; Master Tracker merged by ID. C-01..C-03 exist only in Master's summary row 1, so they are shown from a verified reconstruction (badge 'Recovered') until that row is expanded in the sheet.
+- Refresh: fresh fetch on every visit, auto-refresh every 24h while open, refresh on tab return, Force Refresh button, last-synced stamp. No AI agent involved.
+- Reminders: in-page Overdue / Due-soon (7d) / Upcoming alerts from real due dates + optional browser notifications. Daily email digest via Apps Script trigger (code in tracker-apps-script.gs).
+- Two-way sync: status dropdowns + add-task form write through an Apps Script web app bridge (updateStatus/addTask; writes workstream tab + Master Tracker). Dashboard ships bridge-ready but read-only until the script URL is pasted in About & Setup (one-time deploy by a sheet editor; see setup steps in the dashboard).
+- Verification: dashboard JS unit-tested in Node against live sheet CSVs (19 assertions: counts, KPIs, alerts, decisions, cover); Pages verified 200 with v2 markers. Existing index.html untouched.
+
 ## 2026-10-25 — Ankit x Arpit sheets task tracker (new)
 - Request: upload the Gemini-built task tracker dashboard into the CricMaxConnect folder and make it accessible, synced to the Google Sheet.
 - Added: `CricMaxConnect/task-tracker.html` — live at https://apatel85.github.io/Dashboards/CricMaxConnect/task-tracker.html
