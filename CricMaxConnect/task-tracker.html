@@ -1,392 +1,568 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ankit x Arpit | Task & Project Tracker</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <style>
-    :root {
-      --bg: #090d16;
-      --surface: #131c2e;
-      --surface-hover: #1b273f;
-      --border: #23324d;
-      --text: #f1f5f9;
-      --text-muted: #8fa0bc;
-      --accent: #38bdf8;
-      --done: #10b981;
-      --progress: #f59e0b;
-      --blocked: #ef4444;
-      --not-started: #64748b;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding: 24px;
-      line-height: 1.5;
-    }
-    .container { max-width: 1280px; margin: 0 auto; }
-    
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-    h1 { font-size: 1.4rem; font-weight: 700; }
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--done);
-      box-shadow: 0 0 8px var(--done);
-    }
-    .btn {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn:hover { border-color: var(--accent); color: var(--accent); }
-
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-    .kpi-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
-      text-align: center;
-    }
-    .kpi-title { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
-    .kpi-value { font-size: 1.8rem; font-weight: 700; margin-top: 4px; }
-
-    .workstream-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-    }
-    .tab-btn {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .tab-btn.active {
-      background: var(--accent);
-      color: #04101f;
-      border-color: var(--accent);
-      font-weight: 600;
-    }
-
-    .controls-bar {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-    input, select {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      outline: none;
-    }
-    input:focus, select:focus { border-color: var(--accent); }
-    input[type="text"] { flex-grow: 1; min-width: 220px; }
-
-    .table-wrapper {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow-x: auto;
-    }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
-    th {
-      background: #0f1625;
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--surface-hover); }
-
-    .tag {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .st-done { background: rgba(16, 185, 129, 0.15); color: var(--done); }
-    .st-progress { background: rgba(245, 158, 11, 0.15); color: var(--progress); }
-    .st-blocked { background: rgba(239, 68, 68, 0.15); color: var(--blocked); }
-    .st-notstarted { background: rgba(100, 116, 139, 0.15); color: var(--not-started); }
-    
-    .pr-high { color: #f87171; font-weight: 600; }
-    .pr-medium { color: #fbbf24; font-weight: 500; }
-    .pr-low { color: #94a3b8; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ankit x Arpit | Task & Project Tracker v2</title>
+<style>
+  :root {
+    --bg: #090d16; --surface: #131c2e; --surface-hover: #1b273f; --border: #23324d;
+    --text: #f1f5f9; --muted: #8fa0bc; --accent: #38bdf8;
+    --done: #10b981; --progress: #f59e0b; --blocked: #ef4444; --not-started: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 24px; line-height: 1.5; }
+  .container { max-width: 1280px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+  h1 { font-size: 1.4rem; font-weight: 700; }
+  h2 { font-size: 1.05rem; margin: 22px 0 12px; }
+  h3 { font-size: 0.95rem; margin: 16px 0 8px; color: var(--accent); }
+  .sync-line { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--done); box-shadow: 0 0 8px var(--done); margin-right: 6px; }
+  .dot.warn { background: var(--progress); box-shadow: 0 0 8px var(--progress); }
+  .dot.bad { background: var(--blocked); box-shadow: 0 0 8px var(--blocked); }
+  .btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { border-color: var(--accent); color: var(--accent); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .view-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
+  .tab-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
+  .tab-btn.active { background: var(--accent); color: #04101f; border-color: var(--accent); font-weight: 600; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 8px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+  .kpi-title { font-size: 0.72rem; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .kpi-value { font-size: 1.8rem; font-weight: 700; margin-top: 4px; }
+  .alert-box { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin: 14px 0; background: var(--surface); }
+  .alert-box.overdue { border-color: var(--blocked); }
+  .alert-box.soon { border-color: var(--progress); }
+  .alert-box ul { margin: 8px 0 0 18px; font-size: 0.88rem; }
+  .alert-box li { margin-bottom: 4px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; }
+  .bar-row .lbl { width: 150px; color: var(--muted); }
+  .bar-track { flex: 1; height: 8px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); border-radius: 99px; }
+  .bar-fill.done { background: var(--done); }
+  .controls-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  input, select, textarea { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input[type="text"] { flex-grow: 1; min-width: 220px; }
+  .table-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+  th { background: #0f1625; padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .details { color: var(--muted); font-size: 0.82rem; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+  .details.expanded { display: block; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+  .st-done { background: rgba(16,185,129,.15); color: var(--done); }
+  .st-progress { background: rgba(245,158,11,.15); color: var(--progress); }
+  .st-blocked { background: rgba(239,68,68,.15); color: var(--blocked); }
+  .st-notstarted { background: rgba(100,116,139,.15); color: var(--not-started); }
+  .pr-high { color: #f87171; font-weight: 600; }
+  .pr-medium { color: #fbbf24; font-weight: 500; }
+  .pr-low { color: #94a3b8; }
+  .badge-rec { font-size: 0.68rem; border: 1px solid var(--progress); color: var(--progress); border-radius: 8px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1b273f; border: 1px solid var(--accent); color: var(--text); padding: 10px 18px; border-radius: 8px; font-size: 0.88rem; display: none; z-index: 50; max-width: 90vw; text-align: center; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+  .card p, .card li { font-size: 0.88rem; color: var(--text); }
+  .card ul, .card ol { margin: 8px 0 0 18px; }
+  .card li { margin-bottom: 6px; }
+  .muted { color: var(--muted); font-size: 0.85rem; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .form-grid textarea { grid-column: 1 / -1; min-height: 70px; }
+  code { background: #0f1625; padding: 1px 6px; border-radius: 4px; font-size: 0.82rem; }
+  a { color: var(--accent); }
+</style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>Ankit Patel x Arpit Shah — Task Tracker</h1>
-        <div class="status-badge">
-          <span class="status-dot"></span>
-          <span id="sync-status">Connecting to live Google Sheet...</span>
-        </div>
-      </div>
-      <div>
-        <button class="btn" onclick="syncData()">↻ Force Sync</button>
-      </div>
-    </header>
-
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-title">Total Tasks</div>
-        <div class="kpi-value" id="kpi-total">0</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-title">Done</div>
-        <div class="kpi-value" style="color: var(--done);" id="kpi-done">0</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-title">In Progress</div>
-        <div class="kpi-value" style="color: var(--progress);" id="kpi-progress">0</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-title">Blocked</div>
-        <div class="kpi-value" style="color: var(--blocked);" id="kpi-blocked">0</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-title">Not Started</div>
-        <div class="kpi-value" style="color: var(--not-started);" id="kpi-notstarted">0</div>
-      </div>
+<div class="container">
+  <header>
+    <div>
+      <h1>Ankit Patel x Arpit Shah — Task Tracker</h1>
+      <div class="sync-line"><span id="sync-dot" class="dot"></span><span id="sync-status">Connecting to live Google Sheet…</span></div>
+      <div class="sync-line" id="sync-meta"></div>
     </div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="syncAll(true)">↻ Force Refresh</button>
+      <button class="btn" id="notify-btn" onclick="enableNotifications()">🔔 Enable reminders</button>
+    </div>
+  </header>
 
-    <div class="workstream-tabs" id="tabs-container">
+  <div class="view-tabs" id="view-tabs">
+    <button class="tab-btn active" onclick="setView('overview', this)">Overview</button>
+    <button class="tab-btn" onclick="setView('tasks', this)">All Tasks</button>
+    <button class="tab-btn" onclick="setView('decisions', this)">Decisions &amp; Notes</button>
+    <button class="tab-btn" onclick="setView('setup', this)">About &amp; Setup</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="view-overview">
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-title">Total Tasks</div><div class="kpi-value" id="kpi-total">0</div></div>
+      <div class="kpi-card"><div class="kpi-title">Done</div><div class="kpi-value" style="color:var(--done)" id="kpi-done">0</div></div>
+      <div class="kpi-card"><div class="kpi-title">In Progress</div><div class="kpi-value" style="color:var(--progress)" id="kpi-progress">0</div></div>
+      <div class="kpi-card"><div class="kpi-title">Blocked</div><div class="kpi-value" style="color:var(--blocked)" id="kpi-blocked">0</div></div>
+      <div class="kpi-card"><div class="kpi-title">Not Started</div><div class="kpi-value" style="color:var(--not-started)" id="kpi-notstarted">0</div></div>
+      <div class="kpi-card"><div class="kpi-title">Overdue</div><div class="kpi-value" style="color:var(--blocked)" id="kpi-overdue">0</div></div>
+      <div class="kpi-card"><div class="kpi-title">Due Soon (7d)</div><div class="kpi-value" style="color:var(--progress)" id="kpi-soon">0</div></div>
+    </div>
+    <div id="alerts"></div>
+    <h2>Progress by workstream</h2>
+    <div id="ws-bars"></div>
+    <h2>Tasks by owner</h2>
+    <div id="owner-bars"></div>
+  </div>
+
+  <!-- TASKS -->
+  <div id="view-tasks" style="display:none">
+    <div class="view-tabs" id="ws-tabs">
       <button class="tab-btn active" onclick="setWorkstream('ALL', this)">All Workstreams</button>
       <button class="tab-btn" onclick="setWorkstream('Social Media', this)">Social Media</button>
       <button class="tab-btn" onclick="setWorkstream('Quixera', this)">Quixera</button>
       <button class="tab-btn" onclick="setWorkstream('CricMax Connect', this)">CricMax Connect</button>
     </div>
-
     <div class="controls-bar">
-      <input type="text" id="search-box" placeholder="Search tasks, deliverables, or owners..." oninput="filterData()" />
+      <input type="text" id="search-box" placeholder="Search tasks, details, or owners…" oninput="filterData()" />
       <select id="filter-status" onchange="filterData()">
-        <option value="ALL">All Statuses</option>
-        <option value="Not Started">Not Started</option>
-        <option value="In Progress">In Progress</option>
-        <option value="Blocked">Blocked</option>
-        <option value="Done">Done</option>
+        <option value="ALL">All Statuses</option><option>Not Started</option><option>In Progress</option><option>Blocked</option><option>Done</option>
       </select>
       <select id="filter-priority" onchange="filterData()">
-        <option value="ALL">All Priorities</option>
-        <option value="High">High</option>
-        <option value="Medium">Medium</option>
-        <option value="Low">Low</option>
+        <option value="ALL">All Priorities</option><option>High</option><option>Medium</option><option>Low</option>
+      </select>
+      <select id="filter-owner" onchange="filterData()">
+        <option value="ALL">All Owners</option><option>Ankit Patel</option><option>Arpit Shah</option><option>Group</option>
       </select>
     </div>
-
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Workstream</th>
-            <th>Task & Details</th>
-            <th>Owner</th>
-            <th>Priority</th>
-            <th>Due / Timing</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="task-tbody">
-          <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">Loading live records...</td></tr>
-        </tbody>
-      </table>
+    <div class="table-wrapper"><table>
+      <thead><tr><th>ID</th><th>Task &amp; Details</th><th>Owner</th><th>Priority</th><th>Due / Timing</th><th>Status</th></tr></thead>
+      <tbody id="task-tbody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">Loading live records…</td></tr></tbody>
+    </table></div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-top:0">Add a task <span class="muted" id="add-note"></span></h3>
+      <div class="form-grid">
+        <select id="add-ws"><option>Social Media</option><option>Quixera</option><option>CricMax Connect</option></select>
+        <select id="add-owner"><option>Ankit Patel</option><option>Arpit Shah</option><option>Group</option></select>
+        <select id="add-priority"><option>High</option><option>Medium</option><option>Low</option></select>
+        <input type="text" id="add-due" placeholder="Due / Timing (e.g. 31 Oct 2026)" />
+        <input type="text" id="add-title" placeholder="Task title" style="grid-column:1/-1" />
+        <textarea id="add-details" placeholder="Details / context (optional)"></textarea>
+      </div>
+      <div style="margin-top:12px"><button class="btn primary" onclick="addTask()">Add task to sheet</button></div>
     </div>
   </div>
 
-  <script>
-    // Adapted 2026-10-25 for the live "Master Tracker" sheet: the sheet has no
-    // Workstream column and its first row is an aggregate cell block (all S/Q/C
-    // IDs crammed into one row), so rows are parsed positionally, the aggregate
-    // row is skipped, and workstream is derived from the Task ID prefix
-    // (S = Social Media, Q = Quixera, C = CricMax Connect). If the sheet's
-    // first row is ever expanded into one row per task, those rows will parse
-    // automatically with no code change.
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1JL8nit7_f-Xp_F9Pa0R8te56h8HZvG0IMdQoANd3h2A/gviz/tq?tqx=out:csv&sheet=Master%20Tracker';
-    let allRows = [];
-    let currentWorkstream = 'ALL';
+  <!-- DECISIONS -->
+  <div id="view-decisions" style="display:none"><div id="decisions-body"></div></div>
 
-    // Columns in the sheet: Task ID | Task | Details | Owner | Priority |
-    // Status | Due / Timing | Dependencies / Notes
-    function normalizeRow(cols) {
-      if (!cols || !cols.length) return null;
-      const cells = cols.map(c => (c || '').trim());
-      const id = cells[0] || '';
-      if (!/^[A-Za-z]+-\d+$/.test(id)) return null; // skips the aggregate row
-      const prefix = id.split('-')[0].toUpperCase();
-      const workstream = prefix === 'S' ? 'Social Media' : prefix === 'Q' ? 'Quixera' : prefix === 'C' ? 'CricMax Connect' : 'General';
-      return {
-        'Task ID': id,
-        'Workstream': workstream,
-        'Task': cells[1] || '',
-        'Details': cells[2] || '',
-        'Owner': cells[3] || '',
-        'Priority': cells[4] || '',
-        'Status': cells[5] || 'Not Started',
-        'Due / Timing': cells[6] || '',
-        'Dependencies / Notes': cells[7] || ''
-      };
+  <!-- SETUP -->
+  <div id="view-setup" style="display:none">
+    <div class="card">
+      <h3 style="margin-top:0">How this tracker stays fresh — no AI agent needed</h3>
+      <ul>
+        <li><b>Reads the sheet on every visit</b> (cache-busted fetch of all 6 tabs), plus an <b>automatic refresh every 24 hours</b> while the page stays open, plus a refresh whenever you return to the tab. <b>Force Refresh</b> re-reads everything immediately.</li>
+        <li><b>Reminders in the page:</b> Overdue and Due-soon (7 days) alerts on the Overview, computed from real due dates in the sheet. <b>Enable reminders</b> also turns on browser notifications while the page is open.</li>
+        <li><b>Daily email digest (optional):</b> the companion Apps Script sends an overdue + due-soon email every morning — set it up once (steps below) and it runs on Google's servers, not here.</li>
+        <li><b>Two-way editing</b> works through the same Apps Script, deployed once as a web app. Until it is connected, this page is read-only and editing controls are disabled.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Two-way sync bridge</h3>
+      <p id="bridge-status" class="muted">Bridge: not configured (read-only mode).</p>
+      <div class="controls-bar" style="margin-top:12px">
+        <input type="text" id="bridge-url" placeholder="Paste deployed Apps Script web app URL…" style="flex-grow:1" />
+        <button class="btn primary" onclick="saveBridgeUrl()">Save &amp; test</button>
+      </div>
+      <ol>
+        <li>Open the sheet → Extensions → Apps Script. Copy in <a href="tracker-apps-script.gs">tracker-apps-script.gs</a> (in this same folder on GitHub).</li>
+        <li>Set the recipient emails at the top of the script, and optionally a <code>BRIDGE_TOKEN</code> in Script Properties for a shared secret.</li>
+        <li>Deploy → New deployment → Web app → Execute as: <b>Me</b>, Who has access: <b>Anyone</b>. Copy the <code>/exec</code> URL and paste it above.</li>
+        <li>For the daily email: in Apps Script → Triggers → Add trigger → <code>sendDailyDigest</code> → Time-driven → Day timer → 8am–9am.</li>
+      </ol>
+      <p class="muted">Note: the bridge URL is visible to anyone who opens this page, so it is protected by obscurity, not real security. Do not put sensitive personal data in this tracker. Every edit is recorded in the sheet's version history.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">About this tracker</h3>
+      <div id="cover-body" class="muted"></div>
+      <p class="muted" style="margin-top:12px">Sources read live: Cover, Master Tracker, Social Media, Quixera, CricMax Connect, Decisions &amp; Notes. Workstream tabs are the canonical task source; Master Tracker rows are merged by Task ID. Three CricMax tasks (C-01–C-03) exist only inside the Master Tracker's first summary row, so they are shown from a verified reconstruction (marked “Recovered”) until that row is expanded into one row per task in the sheet.</p>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const SHEET_ID = '1JL8nit7_f-Xp_F9Pa0R8te56h8HZvG0IMdQoANd3h2A';
+const GVIZ = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv';
+const SOURCES = [
+  { key: 'cover', label: 'Cover', url: GVIZ + '&gid=0' },
+  { key: 'master', label: 'Master Tracker', url: GVIZ + '&sheet=Master%20Tracker' },
+  { key: 'social', label: 'Social Media', url: GVIZ + '&sheet=Social%20Media' },
+  { key: 'quixera', label: 'Quixera', url: GVIZ + '&sheet=Quixera' },
+  { key: 'cricmax', label: 'CricMax Connect', url: GVIZ + '&sheet=CricMax%20Connect' },
+  { key: 'decisions', label: 'Decisions & Notes', url: GVIZ + '&sheet=Decisions%20%26%20Notes' }
+];
+const WS_FROM_PREFIX = { S: 'Social Media', Q: 'Quixera', C: 'CricMax Connect' };
+// C-01..C-03 exist ONLY inside the Master Tracker's first summary row (all 23
+// tasks crammed into single cells). Reconstructed 2026-10-25 from that row and
+// cross-checked against the clean workstream tabs (owners, priorities and the
+// single In Progress status all align positionally). Marked "Recovered" in the
+// UI; dropped automatically if clean rows with these IDs ever appear.
+const RECOVERED = [
+  { id: 'C-01', workstream: 'CricMax Connect', task: 'Reverse-engineer Knight Riders website', details: 'Install the repository and use Claude to replicate the Knight Riders cricket website.', owner: 'Group', priority: 'High', status: 'Not Started', due: '', notes: 'Gemini Next Step — Group', recovered: true },
+  { id: 'C-02', workstream: 'CricMax Connect', task: 'Review Knight Riders Academy website', details: 'Evaluate the current Knight Riders Cricket Academy website for necessary design and functional revamping.', owner: 'Ankit Patel', priority: 'High', status: 'Not Started', due: '', notes: '', recovered: true },
+  { id: 'C-03', workstream: 'CricMax Connect', task: 'Schedule academy communication cadence', details: 'Organise recurring monthly academy owner group calls and quarterly coaching sessions, beginning in December.', owner: 'Arpit Shah', priority: 'High', status: 'Not Started', due: 'Starting December 2026', notes: 'Agreed in meeting', recovered: true }
+];
+let allTasks = [], allDecisions = [], coverLines = [];
+let currentView = 'overview', currentWorkstream = 'ALL';
+let lastSyncMs = 0, lastAlertSig = '';
+let bridgeUrl = '';
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+// Minimal CSV parser: quoted fields, escaped quotes, embedded commas/newlines.
+function parseCSV(text) {
+  const rows = []; let row = [], cur = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+      else cur += c;
+    } else if (c === '"') inQ = true;
+    else if (c === ',') { row.push(cur); cur = ''; }
+    else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+    else if (c !== '\r') cur += c;
+  }
+  if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim() !== ''));
+}
+function isSingleId(cell) { return /^[A-Za-z]+-\d+$/.test((cell || '').trim()); }
+function isMegaRow(row) { const c = (row[0] || '').trim(); return c.indexOf('Task ID ') === 0 && c.split(/\s+/).length > 3; }
+
+function taskFromRow(cells, workstream) {
+  const c = cells.map(x => (x || '').trim());
+  return { id: c[0], workstream: workstream, task: c[1] || '', details: c[2] || '', owner: c[3] || '', priority: c[4] || '', status: c[5] || 'Not Started', due: c[6] || '', notes: c[7] || '', recovered: false };
+}
+// Clean task rows from a workstream tab (first cell = header or single ID).
+function parseTaskSheet(csvText, workstream) {
+  const out = [];
+  for (const row of parseCSV(csvText)) {
+    if (isSingleId(row[0])) out.push(taskFromRow(row, workstream));
+  }
+  return out;
+}
+// Master Tracker: clean rows only, workstream derived from the ID prefix.
+function parseMaster(csvText) {
+  const out = [];
+  for (const row of parseCSV(csvText)) {
+    if (isSingleId(row[0])) {
+      const t = taskFromRow(row, WS_FROM_PREFIX[row[0].trim().split('-')[0].toUpperCase()] || 'General');
+      out.push(t);
     }
-
-    async function syncData() {
-      const statusEl = document.getElementById('sync-status');
-      statusEl.innerText = 'Syncing...';
-      try {
-        const timestampedUrl = `${SHEET_URL}&_nocache=${Date.now()}`;
-        const resp = await fetch(timestampedUrl);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const csv = await resp.text();
-
-        Papa.parse(csv, {
-          header: false,
-          skipEmptyLines: true,
-          complete: (results) => {
-            allRows = results.data.map(normalizeRow).filter(Boolean);
-            updateMetrics(allRows);
-            filterData();
-            statusEl.innerText = `Connected (Last updated: ${new Date().toLocaleTimeString()})`;
-          }
-        });
-      } catch (err) {
-        statusEl.innerText = 'Connection error (retrying in 30s)';
-        console.error(err);
-      }
+  }
+  return out;
+}
+function mergeAll(parts) {
+  const byId = new Map();
+  for (const t of RECOVERED) byId.set(t.id, t);
+  for (const t of parts.master) if (!byId.has(t.id) || byId.get(t.id).recovered) byId.set(t.id, t);
+  for (const t of parts.social.concat(parts.quixera, parts.cricmax)) byId.set(t.id, t);
+  return Array.from(byId.values()).sort((a, b) => a.id.localeCompare(b.id));
+}
+function parseDecisions(csvText) {
+  const sections = []; let cur = null;
+  for (const row of parseCSV(csvText)) {
+    const cells = row.map(x => (x || '').trim());
+    const nonEmpty = cells.filter(Boolean);
+    if (nonEmpty.length === 0) continue;
+    if (nonEmpty.length === 1 && /^[A-Z][A-Z /&]+$/.test(nonEmpty[0]) && nonEmpty[0].length > 4 && !nonEmpty[0].includes('MEETING')) {
+      cur = { title: nonEmpty[0], items: [] }; sections.push(cur); continue;
     }
+    if (nonEmpty.length >= 2 && cur) cur.items.push({ topic: nonEmpty[0], text: nonEmpty.slice(1).join(' ') });
+  }
+  return sections;
+}
+function parseCover(csvText) {
+  return parseCSV(csvText).map(r => (r[0] || '').trim()).filter(Boolean);
+}
+const MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+function parseDeadline(due) {
+  const re = /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/gi;
+  let m, last = null;
+  while ((m = re.exec(due || '')) !== null) last = m;
+  if (!last) return null;
+  return new Date(parseInt(last[3], 10), MONTHS[last[2].toLowerCase()], parseInt(last[1], 10));
+}
+function fmtDate(d) { return d ? d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : ''; }
+function computeKPIs(tasks) {
+  const k = { total: tasks.length, done: 0, progress: 0, blocked: 0, notstarted: 0 };
+  for (const t of tasks) {
+    if (t.status === 'Done') k.done++;
+    else if (t.status === 'In Progress') k.progress++;
+    else if (t.status === 'Blocked') k.blocked++;
+    else k.notstarted++;
+  }
+  return k;
+}
+function computeAlerts(tasks, today) {
+  const day = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const soonEnd = new Date(day); soonEnd.setDate(soonEnd.getDate() + 7);
+  const overdue = [], dueSoon = [], upcoming = [];
+  for (const t of tasks) {
+    if (t.status === 'Done') continue;
+    const d = parseDeadline(t.due);
+    if (d && d < day) overdue.push({ t, d });
+    else if (d && d <= soonEnd) dueSoon.push({ t, d });
+    else if (!d && t.due) upcoming.push(t);
+  }
+  return { overdue, dueSoon, upcoming };
+}
+function stClass(s) { return s === 'Done' ? 'st-done' : s === 'In Progress' ? 'st-progress' : s === 'Blocked' ? 'st-blocked' : 'st-notstarted'; }
+function prClass(p) { return p === 'High' ? 'pr-high' : p === 'Medium' ? 'pr-medium' : 'pr-low'; }
 
-    function setWorkstream(ws, btn) {
-      currentWorkstream = ws;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      filterData();
-    }
-
-    function updateMetrics(rows) {
-      document.getElementById('kpi-total').innerText = rows.length;
-      document.getElementById('kpi-done').innerText = rows.filter(r => getField(r, ['Status']) === 'Done').length;
-      document.getElementById('kpi-progress').innerText = rows.filter(r => getField(r, ['Status']) === 'In Progress').length;
-      document.getElementById('kpi-blocked').innerText = rows.filter(r => getField(r, ['Status']) === 'Blocked').length;
-      document.getElementById('kpi-notstarted').innerText = rows.filter(r => getField(r, ['Status']) === 'Not Started').length;
-    }
-
-    function getField(row, candidates) {
-      for (const k of Object.keys(row)) {
-        for (const c of candidates) {
-          if (k.trim().toLowerCase() === c.toLowerCase()) return (row[k] || '').trim();
-        }
-      }
-      return '';
-    }
-
-    function filterData() {
-      const q = document.getElementById('search-box').value.toLowerCase();
-      const statusVal = document.getElementById('filter-status').value;
-      const priorityVal = document.getElementById('filter-priority').value;
-
-      const filtered = allRows.filter(row => {
-        const ws = getField(row, ['Workstream', 'Category', 'Section']);
-        const status = getField(row, ['Status']);
-        const priority = getField(row, ['Priority']);
-        const taskText = Object.values(row).join(' ').toLowerCase();
-
-        const matchWs = currentWorkstream === 'ALL' || ws.toLowerCase().includes(currentWorkstream.toLowerCase());
-        const matchStatus = statusVal === 'ALL' || status.toLowerCase() === statusVal.toLowerCase();
-        const matchPriority = priorityVal === 'ALL' || priority.toLowerCase() === priorityVal.toLowerCase();
-        const matchQuery = !q || taskText.includes(q);
-
-        return matchWs && matchStatus && matchPriority && matchQuery;
+function setView(v, btn) {
+  currentView = v;
+  document.querySelectorAll('#view-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['overview', 'tasks', 'decisions', 'setup'].forEach(x => document.getElementById('view-' + x).style.display = x === v ? '' : 'none');
+  if (v === 'tasks') filterData();
+  if (v === 'decisions') renderDecisions();
+  if (v === 'setup') renderCover();
+}
+function setWorkstream(ws, btn) {
+  currentWorkstream = ws;
+  document.querySelectorAll('#ws-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterData();
+}
+function statusCell(t) {
+  if (bridgeUrl) {
+    const opts = ['Not Started', 'In Progress', 'Blocked', 'Done'].map(s => '<option' + (s === t.status ? ' selected' : '') + '>' + s + '</option>').join('');
+    return '<select onchange="updateStatus(\'' + esc(t.id) + '\', this.value)">' + opts + '</select>';
+  }
+  return '<span class="tag ' + stClass(t.status) + '">' + esc(t.status) + '</span>';
+}
+function filterData() {
+  const q = (document.getElementById('search-box').value || '').toLowerCase();
+  const sv = document.getElementById('filter-status').value;
+  const pv = document.getElementById('filter-priority').value;
+  const ov = document.getElementById('filter-owner').value;
+  const rows = allTasks.filter(t => {
+    const hay = (t.id + ' ' + t.task + ' ' + t.details + ' ' + t.owner + ' ' + t.notes).toLowerCase();
+    return (currentWorkstream === 'ALL' || t.workstream === currentWorkstream) &&
+      (sv === 'ALL' || t.status === sv) && (pv === 'ALL' || t.priority === pv) &&
+      (ov === 'ALL' || t.owner === ov) && (!q || hay.includes(q));
+  });
+  const tb = document.getElementById('task-tbody');
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">No matching tasks found.</td></tr>'; return; }
+  tb.innerHTML = rows.map(t => '<tr>' +
+    '<td><strong>' + esc(t.id) + '</strong></td>' +
+    '<td><strong>' + esc(t.task) + '</strong>' + (t.recovered ? '<span class="badge-rec">Recovered</span>' : '') +
+    (t.details ? '<div class="details" onclick="this.classList.toggle(\'expanded\')">' + esc(t.details) + '</div>' : '') +
+    (t.notes ? '<div class="muted" style="margin-top:4px">Note: ' + esc(t.notes) + '</div>' : '') + '</td>' +
+    '<td>' + esc(t.owner || '—') + '</td>' +
+    '<td><span class="' + prClass(t.priority) + '">' + esc(t.priority || '—') + '</span></td>' +
+    '<td>' + esc(t.due || '—') + '</td>' +
+    '<td>' + statusCell(t) + '</td></tr>').join('');
+}
+function renderOverview() {
+  const k = computeKPIs(allTasks);
+  const a = computeAlerts(allTasks, new Date());
+  document.getElementById('kpi-total').innerText = k.total;
+  document.getElementById('kpi-done').innerText = k.done;
+  document.getElementById('kpi-progress').innerText = k.progress;
+  document.getElementById('kpi-blocked').innerText = k.blocked;
+  document.getElementById('kpi-notstarted').innerText = k.notstarted;
+  document.getElementById('kpi-overdue').innerText = a.overdue.length;
+  document.getElementById('kpi-soon').innerText = a.dueSoon.length;
+  let html = '';
+  if (a.overdue.length) html += '<div class="alert-box overdue"><strong>⚠ Overdue (' + a.overdue.length + ')</strong><ul>' + a.overdue.map(x => '<li><b>' + esc(x.t.id) + '</b> — ' + esc(x.t.task) + ' (was due ' + fmtDate(x.d) + ', ' + esc(x.t.owner) + ')</li>').join('') + '</ul></div>';
+  if (a.dueSoon.length) html += '<div class="alert-box soon"><strong>⏰ Due within 7 days (' + a.dueSoon.length + ')</strong><ul>' + a.dueSoon.map(x => '<li><b>' + esc(x.t.id) + '</b> — ' + esc(x.t.task) + ' (due ' + fmtDate(x.d) + ', ' + esc(x.t.owner) + ')</li>').join('') + '</ul></div>';
+  if (!a.overdue.length && !a.dueSoon.length) html += '<div class="alert-box"><strong>✓ Nothing overdue or due this week.</strong></div>';
+  if (a.upcoming.length) html += '<div class="alert-box"><strong>Upcoming (no fixed date)</strong><ul>' + a.upcoming.map(t => '<li><b>' + esc(t.id) + '</b> — ' + esc(t.task) + ' (' + esc(t.due) + ', ' + esc(t.owner) + ')</li>').join('') + '</ul></div>';
+  document.getElementById('alerts').innerHTML = html;
+  const wsOrder = ['Social Media', 'Quixera', 'CricMax Connect'];
+  document.getElementById('ws-bars').innerHTML = wsOrder.map(ws => {
+    const ts = allTasks.filter(t => t.workstream === ws);
+    const done = ts.filter(t => t.status === 'Done').length;
+    const pct = ts.length ? Math.round(done / ts.length * 100) : 0;
+    return '<div class="bar-row"><span class="lbl">' + ws + '</span><div class="bar-track"><div class="bar-fill done" style="width:' + pct + '%"></div></div><span>' + done + '/' + ts.length + ' done</span></div>';
+  }).join('');
+  const owners = ['Ankit Patel', 'Arpit Shah', 'Group'];
+  document.getElementById('owner-bars').innerHTML = owners.map(o => {
+    const ts = allTasks.filter(t => t.owner === o);
+    const done = ts.filter(t => t.status === 'Done').length;
+    const pct = ts.length ? Math.round(done / ts.length * 100) : 0;
+    return '<div class="bar-row"><span class="lbl">' + o + '</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div><span>' + ts.length + ' tasks · ' + done + ' done</span></div>';
+  }).join('');
+}
+function renderDecisions() {
+  const el = document.getElementById('decisions-body');
+  if (!allDecisions.length) { el.innerHTML = '<p class="muted">Decisions &amp; Notes did not load — try Force Refresh.</p>'; return; }
+  el.innerHTML = allDecisions.map(s => '<div class="card"><h3 style="margin-top:0">' + esc(s.title) + '</h3><ul>' +
+    s.items.map(i => '<li><b>' + esc(i.topic) + ':</b> ' + esc(i.text) + '</li>').join('') + '</ul></div>').join('');
+}
+function renderCover() {
+  document.getElementById('cover-body').innerHTML = coverLines.map(l => '<p style="margin-bottom:6px">' + esc(l) + '</p>').join('');
+}
+function toast(msg, ms) {
+  const el = document.getElementById('toast');
+  el.innerText = msg; el.style.display = 'block';
+  clearTimeout(el._h); el._h = setTimeout(() => el.style.display = 'none', ms || 4000);
+}
+function setSyncStatus(ok, detail) {
+  document.getElementById('sync-dot').className = 'dot' + (ok ? '' : ' warn');
+  document.getElementById('sync-status').innerText = detail;
+}
+function maybeNotify(alerts) {
+  try {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+    const sig = alerts.overdue.map(x => x.t.id).join(',') + '|' + alerts.dueSoon.map(x => x.t.id).join(',');
+    if (sig === lastAlertSig || (!alerts.overdue.length && !alerts.dueSoon.length)) return;
+    lastAlertSig = sig;
+    new Notification('Task Tracker: ' + alerts.overdue.length + ' overdue, ' + alerts.dueSoon.length + ' due soon', {
+      body: alerts.overdue.concat(alerts.dueSoon).slice(0, 5).map(x => x.t.id + ' — ' + x.t.task).join('\n')
+    });
+  } catch (e) { /* notifications unavailable */ }
+}
+async function syncAll(force) {
+  setSyncStatus(true, 'Syncing…');
+  const stamp = '_nocache=' + Date.now();
+  const jobs = SOURCES.map(async s => {
+    try {
+      const r = await fetch(s.url + '&' + stamp);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return { key: s.key, label: s.label, ok: true, text: await r.text() };
+    } catch (e) { return { key: s.key, label: s.label, ok: false, text: '' }; }
+  });
+  const results = await Promise.all(jobs);
+  const byKey = {}; results.forEach(r => byKey[r.key] = r);
+  const okCount = results.filter(r => r.ok).length;
+  if (byKey.social.ok) {
+    const parts = {
+      master: byKey.master.ok ? parseMaster(byKey.master.text) : [],
+      social: parseTaskSheet(byKey.social.text, 'Social Media'),
+      quixera: byKey.quixera.ok ? parseTaskSheet(byKey.quixera.text, 'Quixera') : [],
+      cricmax: byKey.cricmax.ok ? parseTaskSheet(byKey.cricmax.text, 'CricMax Connect') : []
+    };
+    allTasks = mergeAll(parts);
+    if (byKey.decisions.ok) allDecisions = parseDecisions(byKey.decisions.text);
+    if (byKey.cover.ok) coverLines = parseCover(byKey.cover.text);
+    lastSyncMs = Date.now();
+    try { localStorage.setItem('krca_last_sync', String(lastSyncMs)); } catch (e) {}
+    renderOverview(); filterData(); renderDecisions(); renderCover();
+    maybeNotify(computeAlerts(allTasks, new Date()));
+  }
+  const when = new Date(lastSyncMs || Date.now()).toLocaleTimeString();
+  setSyncStatus(okCount === results.length, okCount === results.length
+    ? 'Connected — last synced ' + when + ' · auto-refresh daily'
+    : 'Partial sync (' + okCount + '/' + results.length + ' tabs) — last good sync ' + when);
+  document.getElementById('sync-meta').innerText = allTasks.length + ' tasks · ' +
+    results.map(r => r.label + (r.ok ? ' ✓' : ' ✗')).join(' · ');
+  document.getElementById('add-note').innerText = bridgeUrl ? '' : '(requires the Apps Script bridge — see About & Setup)';
+}
+function enableNotifications() {
+  if (typeof Notification === 'undefined') { toast('Browser notifications are not supported here.'); return; }
+  Notification.requestPermission().then(p => {
+    toast(p === 'granted' ? 'Reminders on — you will be notified of overdue / due-soon tasks while this page is open.' : 'Notifications not enabled.');
+    if (p === 'granted') maybeNotify(computeAlerts(allTasks, new Date()));
+  });
+}
+async function postBridge(payload) {
+  await fetch(bridgeUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
+}
+async function updateStatus(id, status) {
+  const t = allTasks.find(x => x.id === id);
+  const prev = t ? t.status : '';
+  if (t) t.status = status;
+  renderOverview(); filterData();
+  try {
+    await postBridge({ action: 'updateStatus', taskId: id, status: status });
+    setTimeout(async () => {
+      const before = allTasks.length;
+      await syncAll(false);
+      const now = allTasks.find(x => x.id === id);
+      toast(now && now.status === status ? '✓ ' + id + ' saved to the sheet.' : 'Saved — but the sheet does not show it yet. Hit Force Refresh in a few seconds.');
+    }, 2500);
+  } catch (e) {
+    if (t) t.status = prev;
+    renderOverview(); filterData();
+    toast('Could not reach the bridge — change not saved.');
+  }
+}
+async function addTask() {
+  if (!bridgeUrl) { toast('Connect the Apps Script bridge first (About & Setup tab).'); return; }
+  const title = document.getElementById('add-title').value.trim();
+  if (!title) { toast('Enter a task title first.'); return; }
+  const payload = {
+    action: 'addTask',
+    workstream: document.getElementById('add-ws').value,
+    title: title,
+    owner: document.getElementById('add-owner').value,
+    priority: document.getElementById('add-priority').value,
+    due: document.getElementById('add-due').value.trim(),
+    details: document.getElementById('add-details').value.trim()
+  };
+  try {
+    await postBridge(payload);
+    toast('Task sent — refreshing to confirm…');
+    setTimeout(() => syncAll(false), 2500);
+    document.getElementById('add-title').value = '';
+    document.getElementById('add-details').value = '';
+    document.getElementById('add-due').value = '';
+  } catch (e) { toast('Could not reach the bridge — task not saved.'); }
+}
+function testBridge(url) {
+  return new Promise(resolve => {
+    const cb = '__bridgeCb_' + Date.now();
+    const s = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); resolve(false); }, 9000);
+    function cleanup() { clearTimeout(timer); try { delete window[cb]; } catch (e) {} if (s.parentNode) s.parentNode.removeChild(s); }
+    window[cb] = d => { cleanup(); resolve(d && d.ok === true); };
+    s.onerror = () => { cleanup(); resolve(false); };
+    s.src = url + (url.includes('?') ? '&' : '?') + 'action=ping&callback=' + cb;
+    document.head.appendChild(s);
+  });
+}
+async function saveBridgeUrl() {
+  const url = document.getElementById('bridge-url').value.trim();
+  if (!url) { toast('Paste the deployed web app URL first.'); return; }
+  document.getElementById('bridge-status').innerText = 'Bridge: testing…';
+  const ok = await testBridge(url);
+  if (ok) {
+    bridgeUrl = url;
+    try { localStorage.setItem('krca_bridge_url', url); } catch (e) {}
+    document.getElementById('bridge-status').innerText = 'Bridge: connected ✓ — status edits and new tasks now write to the sheet.';
+    filterData();
+    toast('Bridge connected.');
+  } else {
+    document.getElementById('bridge-status').innerText = 'Bridge: could not verify that URL. Check the deployment (Execute as: Me, access: Anyone) and try again.';
+  }
+}
+if (typeof document !== 'undefined' && document.addEventListener) {
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      bridgeUrl = localStorage.getItem('krca_bridge_url') || '';
+      const ls = localStorage.getItem('krca_last_sync');
+      if (ls) lastSyncMs = parseInt(ls, 10);
+    } catch (e) {}
+    if (bridgeUrl) {
+      document.getElementById('bridge-url').value = bridgeUrl;
+      document.getElementById('bridge-status').innerText = 'Bridge: saved — testing…';
+      testBridge(bridgeUrl).then(ok => {
+        document.getElementById('bridge-status').innerText = ok
+          ? 'Bridge: connected ✓ — status edits and new tasks now write to the sheet.'
+          : 'Bridge: saved but not reachable. Check the deployment and re-save.';
+        if (ok) filterData();
       });
-
-      renderTable(filtered);
     }
-
-    function renderTable(rows) {
-      const tbody = document.getElementById('task-tbody');
-      if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">No matching tasks found.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = rows.map(r => {
-        const ws = getField(r, ['Workstream', 'Category']) || 'General';
-        const task = getField(r, ['Task', 'Action', 'Deliverable', 'Item']);
-        const owner = getField(r, ['Owner', 'Assignee', 'Who']) || '—';
-        const priority = getField(r, ['Priority']) || '—';
-        const due = getField(r, ['Due / Timing', 'Due Date', 'Timing', 'Due']) || '—';
-        const status = getField(r, ['Status']) || 'Not Started';
-
-        let stClass = 'st-notstarted';
-        if (status === 'Done') stClass = 'st-done';
-        else if (status === 'In Progress') stClass = 'st-progress';
-        else if (status === 'Blocked') stClass = 'st-blocked';
-
-        let prClass = 'pr-low';
-        if (priority === 'High') prClass = 'pr-high';
-        else if (priority === 'Medium') prClass = 'pr-medium';
-
-        return `
-          <tr>
-            <td><strong>${ws}</strong></td>
-            <td>${task}</td>
-            <td>${owner}</td>
-            <td><span class="${prClass}">${priority}</span></td>
-            <td>${due}</td>
-            <td><span class="tag ${stClass}">${status}</span></td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    // Auto-fetch immediately, then background poll every 45 seconds
-    syncData();
-    setInterval(syncData, 45000);
-  </script>
+    syncAll(false);
+    setInterval(() => syncAll(false), 24 * 60 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && Date.now() - lastSyncMs > 60 * 60 * 1000) syncAll(false);
+    });
+  });
+}
+if (typeof globalThis !== 'undefined') {
+  globalThis.__tracker = { parseCSV, parseTaskSheet, parseMaster, mergeAll, parseDecisions, parseCover, parseDeadline, computeKPIs, computeAlerts, RECOVERED, isSingleId, isMegaRow };
+}
+</script>
 </body>
 </html>
