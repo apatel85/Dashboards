@@ -1,5 +1,12 @@
 # AGENTLOG — CricMaxConnect
 
+## 2026-10-25 — Tracker v2.1: ID width, sorting, Timeline, due-date editing
+- Fixed ID column wrapping (C-01 split across lines) with nowrap + fixed width; owner column also no-wrap.
+- Sorting control on All Tasks: Due date (soonest first, default), ID, Priority. Due sort = open work first, dated ascending, then relative-due, then no due, Done sinks to bottom; choice persists per browser. Due chips added (in Xd / overdue Xd / due today).
+- New Timeline view: tasks grouped Overdue / Due within 7 days / Due within 30 days / Later / No fixed date; tap a task to jump to it in All Tasks.
+- Due-date editing: Due column becomes an editable field when the bridge is connected; updateDue bridge action writes column G to the workstream tab + Master Tracker clean row (same pattern as updateStatus). Editing banner on Tasks view explains the bridge requirement while unconnected.
+- Verification: Node tests against live sheet CSVs (sort orders, buckets, chips, KPIs) all pass; Pages verified 200 with v2.1 markers.
+
 ## 2026-10-25 — Task tracker v2: all tabs, reminders, two-way bridge (replaces v1)
 - Rebuilt task-tracker.html from the sheet's real structure: reads all 6 tabs (Cover, Master Tracker, Social Media, Quixera, CricMax Connect, Decisions & Notes) and aggregates into one view — 30 tasks (S-01..S-10, Q-01..Q-10, C-01..C-10), KPIs 30/1/1/0/28, Decisions in 3 sections (8/3/4).
 - Workstream tabs are canonical; Master Tracker merged by ID. C-01..C-03 exist only in Master's summary row 1, so they are shown from a verified reconstruction (badge 'Recovered') until that row is expanded in the sheet.
