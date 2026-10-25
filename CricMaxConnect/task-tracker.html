@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ankit x Arpit | Task & Project Tracker v2</title>
+<title>Ankit x Arpit | Task & Project Tracker v2.1</title>
 <style>
   :root {
     --bg: #090d16; --surface: #131c2e; --surface-hover: #1b273f; --border: #23324d;
@@ -48,6 +48,8 @@
   input[type="text"] { flex-grow: 1; min-width: 220px; }
   .table-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+  #task-tbody td:first-child, thead th:first-child { white-space: nowrap; width: 58px; }
+  #task-tbody td:nth-child(3), thead th:nth-child(3) { white-space: nowrap; }
   th { background: #0f1625; padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
   td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
   tr:last-child td { border-bottom: none; }
@@ -62,6 +64,11 @@
   .pr-medium { color: #fbbf24; font-weight: 500; }
   .pr-low { color: #94a3b8; }
   .badge-rec { font-size: 0.68rem; border: 1px solid var(--progress); color: var(--progress); border-radius: 8px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
+  .due-chip { display: block; font-size: 0.72rem; margin-top: 3px; font-weight: 600; }
+  .due-chip.over { color: var(--blocked); }
+  .due-chip.soon { color: var(--progress); }
+  .due-chip.ok { color: var(--muted); font-weight: 400; }
+  .due-input { width: 138px; padding: 6px 8px; }
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1b273f; border: 1px solid var(--accent); color: var(--text); padding: 10px 18px; border-radius: 8px; font-size: 0.88rem; display: none; z-index: 50; max-width: 90vw; text-align: center; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 14px; }
   .card p, .card li { font-size: 0.88rem; color: var(--text); }
@@ -91,6 +98,7 @@
   <div class="view-tabs" id="view-tabs">
     <button class="tab-btn active" onclick="setView('overview', this)">Overview</button>
     <button class="tab-btn" onclick="setView('tasks', this)">All Tasks</button>
+    <button class="tab-btn" onclick="setView('timeline', this)">Timeline</button>
     <button class="tab-btn" onclick="setView('decisions', this)">Decisions &amp; Notes</button>
     <button class="tab-btn" onclick="setView('setup', this)">About &amp; Setup</button>
   </div>
@@ -115,6 +123,7 @@
 
   <!-- TASKS -->
   <div id="view-tasks" style="display:none">
+    <div class="alert-box" id="edit-banner" style="display:none">✏️ <b>Editing is off</b> — connect the Apps Script bridge once (About &amp; Setup tab) to change status and due dates here. Changes then write straight to the sheet.</div>
     <div class="view-tabs" id="ws-tabs">
       <button class="tab-btn active" onclick="setWorkstream('ALL', this)">All Workstreams</button>
       <button class="tab-btn" onclick="setWorkstream('Social Media', this)">Social Media</button>
@@ -131,6 +140,9 @@
       </select>
       <select id="filter-owner" onchange="filterData()">
         <option value="ALL">All Owners</option><option>Ankit Patel</option><option>Arpit Shah</option><option>Group</option>
+      </select>
+      <select id="sort-by" onchange="setSort(this.value)">
+        <option value="due">Sort: Due date (soonest first)</option><option value="id">Sort: ID</option><option value="priority">Sort: Priority</option>
       </select>
     </div>
     <div class="table-wrapper"><table>
@@ -149,6 +161,12 @@
       </div>
       <div style="margin-top:12px"><button class="btn primary" onclick="addTask()">Add task to sheet</button></div>
     </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div id="view-timeline" style="display:none">
+    <p class="muted">Tasks grouped by when they are due — soonest first. Tap any task to jump to it in All Tasks.</p>
+    <div id="timeline-body" style="margin-top:14px"></div>
   </div>
 
   <!-- DECISIONS -->
@@ -213,7 +231,11 @@ const RECOVERED = [
 let allTasks = [], allDecisions = [], coverLines = [];
 let currentView = 'overview', currentWorkstream = 'ALL';
 let lastSyncMs = 0, lastAlertSig = '';
+// Paste the deployed Apps Script /exec URL here to enable editing for
+// everyone on every device. Leave empty to set it per-browser in About & Setup.
+const BRIDGE_URL_DEFAULT = '';
 let bridgeUrl = '';
+let currentSort = 'due';
 
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
@@ -315,14 +337,67 @@ function computeAlerts(tasks, today) {
   return { overdue, dueSoon, upcoming };
 }
 function stClass(s) { return s === 'Done' ? 'st-done' : s === 'In Progress' ? 'st-progress' : s === 'Blocked' ? 'st-blocked' : 'st-notstarted'; }
+const PRI_RANK = { High: 0, Medium: 1, Low: 2 };
+function dayStart(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+// Timeline bucket for one task. Explicit dates win; a few relative phrases
+// are mapped conservatively; anything else has no fixed date.
+function dueBucket(t, today) {
+  const day = dayStart(today);
+  const d = parseDeadline(t.due);
+  if (d) {
+    const diff = Math.round((dayStart(d) - day) / 86400000);
+    if (diff < 0) return 'Overdue';
+    if (diff <= 7) return 'Due within 7 days';
+    if (diff <= 30) return 'Due within 30 days';
+    return 'Later';
+  }
+  const s = (t.due || '').toLowerCase();
+  if (/week|october/.test(s)) return 'Due within 30 days';
+  if (/december|year/.test(s)) return 'Later';
+  return 'No fixed date';
+}
+function chipLabel(t, today) {
+  const d = parseDeadline(t.due);
+  if (!d || t.status === 'Done') return null;
+  const diff = Math.round((dayStart(d) - dayStart(today)) / 86400000);
+  if (diff < 0) return { text: '⚠ overdue ' + (-diff) + 'd', cls: 'over' };
+  if (diff === 0) return { text: 'due today', cls: 'soon' };
+  if (diff <= 7) return { text: 'in ' + diff + 'd', cls: 'soon' };
+  return { text: 'in ' + diff + 'd', cls: 'ok' };
+}
+function dueKey(t) {
+  const d = parseDeadline(t.due);
+  if (d) return [0, d.getTime()];
+  if ((t.due || '').trim()) return [1, 0];
+  return [2, 0];
+}
+function sortTasks(rows, sortKey, today) {
+  const out = rows.slice();
+  const doneLast = t => (t.status === 'Done' ? 1 : 0);
+  if (sortKey === 'id') return out.sort((a, b) => a.id.localeCompare(b.id));
+  if (sortKey === 'priority') return out.sort((a, b) =>
+    (doneLast(a) - doneLast(b)) ||
+    ((PRI_RANK[a.priority] ?? 3) - (PRI_RANK[b.priority] ?? 3)) ||
+    (dueKey(a)[0] - dueKey(b)[0]) || ((dueKey(a)[1] || 0) - (dueKey(b)[1] || 0)) ||
+    a.id.localeCompare(b.id));
+  // Default: due date — open work first (Done sinks to the bottom), dated
+  // soonest first, then relative-due, then no due; ties break by priority, then ID.
+  return out.sort((a, b) => {
+    const ka = dueKey(a), kb = dueKey(b);
+    return (doneLast(a) - doneLast(b)) || (ka[0] - kb[0]) || (ka[1] - kb[1]) ||
+      ((PRI_RANK[a.priority] ?? 3) - (PRI_RANK[b.priority] ?? 3)) ||
+      a.id.localeCompare(b.id);
+  });
+}
 function prClass(p) { return p === 'High' ? 'pr-high' : p === 'Medium' ? 'pr-medium' : 'pr-low'; }
 
 function setView(v, btn) {
   currentView = v;
   document.querySelectorAll('#view-tabs .tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  ['overview', 'tasks', 'decisions', 'setup'].forEach(x => document.getElementById('view-' + x).style.display = x === v ? '' : 'none');
+  ['overview', 'tasks', 'timeline', 'decisions', 'setup'].forEach(x => document.getElementById('view-' + x).style.display = x === v ? '' : 'none');
   if (v === 'tasks') filterData();
+  if (v === 'timeline') renderTimeline();
   if (v === 'decisions') renderDecisions();
   if (v === 'setup') renderCover();
 }
@@ -331,6 +406,45 @@ function setWorkstream(ws, btn) {
   document.querySelectorAll('#ws-tabs .tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   filterData();
+}
+function dueCell(t) {
+  const chip = chipLabel(t, new Date());
+  const chipHtml = chip ? '<span class="due-chip ' + chip.cls + '">' + esc(chip.text) + '</span>' : '';
+  if (bridgeUrl) {
+    return '<input class="due-input" type="text" value="' + esc(t.due || '') + '" placeholder="e.g. 31 Oct 2026" onchange="updateDue(\'' + esc(t.id) + '\', this.value)" />' + chipHtml;
+  }
+  return esc(t.due || '—') + chipHtml;
+}
+function setSort(v) {
+  currentSort = v;
+  try { localStorage.setItem('krca_sort', v); } catch (e) {}
+  filterData();
+}
+function jumpToTask(id) {
+  document.querySelectorAll('#view-tabs .tab-btn')[1].click();
+  document.getElementById('search-box').value = id;
+  filterData();
+}
+function renderTimeline() {
+  const order = ['Overdue', 'Due within 7 days', 'Due within 30 days', 'Later', 'No fixed date'];
+  const today = new Date();
+  const groups = {};
+  order.forEach(b => groups[b] = []);
+  allTasks.forEach(t => groups[dueBucket(t, today)].push(t));
+  const el = document.getElementById('timeline-body');
+  el.innerHTML = order.map(b => {
+    const ts = sortTasks(groups[b], 'due', today);
+    if (!ts.length) return '';
+    return '<div class="card"><h3 style="margin-top:0">' + b + ' (' + ts.length + ')</h3><ul>' +
+      ts.map(t => '<li style="cursor:pointer" onclick="jumpToTask(\'' + esc(t.id) + '\')"><b>' + esc(t.id) + '</b> — ' + esc(t.task) +
+        ' <span class="muted">(' + esc(t.owner || '') + ' · ' + esc(t.due || 'no date') + ' · </span><span class="tag ' + stClass(t.status) + '">' + esc(t.status) + '</span></li>').join('') + '</ul></div>';
+  }).join('') || '<p class="muted">No tasks loaded yet.</p>';
+}
+function refreshEditBanner() {
+  const el = document.getElementById('edit-banner');
+  if (el) el.style.display = bridgeUrl ? 'none' : '';
+  const note = document.getElementById('add-note');
+  if (note) note.innerText = bridgeUrl ? '' : '(requires the Apps Script bridge — see About & Setup)';
 }
 function statusCell(t) {
   if (bridgeUrl) {
@@ -350,16 +464,17 @@ function filterData() {
       (sv === 'ALL' || t.status === sv) && (pv === 'ALL' || t.priority === pv) &&
       (ov === 'ALL' || t.owner === ov) && (!q || hay.includes(q));
   });
+  const sorted = sortTasks(rows, currentSort, new Date());
   const tb = document.getElementById('task-tbody');
-  if (!rows.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">No matching tasks found.</td></tr>'; return; }
-  tb.innerHTML = rows.map(t => '<tr>' +
+  if (!sorted.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">No matching tasks found.</td></tr>'; return; }
+  tb.innerHTML = sorted.map(t => '<tr>' +
     '<td><strong>' + esc(t.id) + '</strong></td>' +
     '<td><strong>' + esc(t.task) + '</strong>' + (t.recovered ? '<span class="badge-rec">Recovered</span>' : '') +
     (t.details ? '<div class="details" onclick="this.classList.toggle(\'expanded\')">' + esc(t.details) + '</div>' : '') +
     (t.notes ? '<div class="muted" style="margin-top:4px">Note: ' + esc(t.notes) + '</div>' : '') + '</td>' +
     '<td>' + esc(t.owner || '—') + '</td>' +
     '<td><span class="' + prClass(t.priority) + '">' + esc(t.priority || '—') + '</span></td>' +
-    '<td>' + esc(t.due || '—') + '</td>' +
+    '<td>' + dueCell(t) + '</td>' +
     '<td>' + statusCell(t) + '</td></tr>').join('');
 }
 function renderOverview() {
@@ -456,7 +571,7 @@ async function syncAll(force) {
     : 'Partial sync (' + okCount + '/' + results.length + ' tabs) — last good sync ' + when);
   document.getElementById('sync-meta').innerText = allTasks.length + ' tasks · ' +
     results.map(r => r.label + (r.ok ? ' ✓' : ' ✗')).join(' · ');
-  document.getElementById('add-note').innerText = bridgeUrl ? '' : '(requires the Apps Script bridge — see About & Setup)';
+  refreshEditBanner();
 }
 function enableNotifications() {
   if (typeof Notification === 'undefined') { toast('Browser notifications are not supported here.'); return; }
@@ -483,6 +598,24 @@ async function updateStatus(id, status) {
     }, 2500);
   } catch (e) {
     if (t) t.status = prev;
+    renderOverview(); filterData();
+    toast('Could not reach the bridge — change not saved.');
+  }
+}
+async function updateDue(id, due) {
+  const t = allTasks.find(x => x.id === id);
+  const prev = t ? t.due : '';
+  if (t) t.due = due;
+  renderOverview(); filterData();
+  try {
+    await postBridge({ action: 'updateDue', taskId: id, due: due });
+    setTimeout(async () => {
+      await syncAll(false);
+      const now = allTasks.find(x => x.id === id);
+      toast(now && now.due === due ? '✓ Due date for ' + id + ' saved to the sheet.' : 'Saved — but the sheet does not show it yet. Hit Force Refresh in a few seconds.');
+    }, 2500);
+  } catch (e) {
+    if (t) t.due = prev;
     renderOverview(); filterData();
     toast('Could not reach the bridge — change not saved.');
   }
@@ -530,6 +663,7 @@ async function saveBridgeUrl() {
     bridgeUrl = url;
     try { localStorage.setItem('krca_bridge_url', url); } catch (e) {}
     document.getElementById('bridge-status').innerText = 'Bridge: connected ✓ — status edits and new tasks now write to the sheet.';
+    refreshEditBanner();
     filterData();
     toast('Bridge connected.');
   } else {
@@ -539,10 +673,14 @@ async function saveBridgeUrl() {
 if (typeof document !== 'undefined' && document.addEventListener) {
   document.addEventListener('DOMContentLoaded', () => {
     try {
-      bridgeUrl = localStorage.getItem('krca_bridge_url') || '';
+      bridgeUrl = localStorage.getItem('krca_bridge_url') || BRIDGE_URL_DEFAULT;
+      currentSort = localStorage.getItem('krca_sort') || 'due';
+      const sortSel = document.getElementById('sort-by');
+      if (sortSel) sortSel.value = currentSort;
       const ls = localStorage.getItem('krca_last_sync');
       if (ls) lastSyncMs = parseInt(ls, 10);
     } catch (e) {}
+    refreshEditBanner();
     if (bridgeUrl) {
       document.getElementById('bridge-url').value = bridgeUrl;
       document.getElementById('bridge-status').innerText = 'Bridge: saved — testing…';
@@ -561,7 +699,7 @@ if (typeof document !== 'undefined' && document.addEventListener) {
   });
 }
 if (typeof globalThis !== 'undefined') {
-  globalThis.__tracker = { parseCSV, parseTaskSheet, parseMaster, mergeAll, parseDecisions, parseCover, parseDeadline, computeKPIs, computeAlerts, RECOVERED, isSingleId, isMegaRow };
+  globalThis.__tracker = { parseCSV, parseTaskSheet, parseMaster, mergeAll, parseDecisions, parseCover, parseDeadline, computeKPIs, computeAlerts, sortTasks, dueBucket, chipLabel, RECOVERED, isSingleId, isMegaRow };
 }
 </script>
 </body>
