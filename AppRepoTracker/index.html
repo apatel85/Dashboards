@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>App Repo — Everything we've built</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f6f6f4;
+    --surface:#ffffff;
+    --surface-2:#efefec;
+    --ink:#191c20;
+    --ink-2:#454c55;
+    --muted:#6b7280;
+    --line:#e2e2dc;
+    --accent:#0e7a6d;
+    --accent-ink:#0a5c53;
+    --accent-soft:#e3f2ef;
+    --flag-bg:#fdf3e1;
+    --flag-line:#e8a33d;
+    --flag-ink:#7a4a06;
+    --locked-bg:#e3f2ef;
+    --locked-ink:#0a5c53;
+    --chip-bg:#efefec;
+    --shadow:0 1px 2px rgba(20,22,25,.05),0 4px 14px rgba(20,22,25,.04);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#121416;
+      --surface:#1b1e21;
+      --surface-2:#23262a;
+      --ink:#eceef0;
+      --ink-2:#c3c9cf;
+      --muted:#98a0a9;
+      --line:#2e3237;
+      --accent:#3ec6b4;
+      --accent-ink:#7fe0d2;
+      --accent-soft:#17332f;
+      --flag-bg:#33270f;
+      --flag-line:#b07d24;
+      --flag-ink:#f2c979;
+      --locked-bg:#17332f;
+      --locked-ink:#7fe0d2;
+      --chip-bg:#26292e;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Libre Franklin",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:15.5px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:28px 18px 64px}
+
+  /* ---------- Header ---------- */
+  header.top{padding:10px 0 4px}
+  h1{
+    font-size:clamp(28px,5.4vw,40px);
+    font-weight:800;
+    letter-spacing:-0.02em;
+    line-height:1.12;
+    margin:0 0 8px;
+  }
+  .lede{color:var(--ink-2);font-size:16px;margin:0 0 18px;max-width:62ch}
+  .rule{
+    background:var(--accent-soft);
+    border:1px solid var(--accent);
+    border-radius:10px;
+    padding:13px 16px;
+    font-size:14.5px;
+    color:var(--ink);
+    margin:0 0 18px;
+  }
+  .rule strong{color:var(--accent-ink)}
+  .thread-note{font-size:13.5px;color:var(--ink-2);margin:0 0 18px}
+  .thread-note strong{color:var(--ink)}
+  .counts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 6px}
+  .count-chip{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:5px 12px;
+    font-size:13px;
+    color:var(--ink-2);
+    box-shadow:var(--shadow);
+  }
+  .count-chip b{color:var(--ink);font-weight:700}
+  .count-chip.warn b{color:var(--flag-ink)}
+
+  /* ---------- Controls ---------- */
+  .controls{
+    position:sticky;top:0;z-index:20;
+    background:var(--bg);
+    padding:14px 0 10px;
+    margin-top:10px;
+  }
+  .search-row{display:flex;gap:8px;align-items:stretch}
+  .search-box{
+    flex:1;display:flex;align-items:center;gap:8px;
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:10px;padding:0 12px;box-shadow:var(--shadow);
+  }
+  .search-box svg{flex:none;color:var(--muted)}
+  .search-box input{
+    flex:1;border:0;background:transparent;color:var(--ink);
+    font:inherit;font-size:15px;padding:11px 0;outline:none;min-width:0;
+  }
+  .search-box input::placeholder{color:var(--muted)}
+  .toggle-btn{
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+    border-radius:10px;padding:0 14px;font:inherit;font-size:13.5px;font-weight:600;
+    cursor:pointer;box-shadow:var(--shadow);white-space:nowrap;
+  }
+  .toggle-btn[aria-pressed="true"]{
+    background:var(--flag-bg);border-color:var(--flag-line);color:var(--flag-ink);
+  }
+  .nav-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .nav-row a{
+    color:var(--ink-2);text-decoration:none;font-size:13px;font-weight:600;
+    background:var(--surface);border:1px solid var(--line);
+    padding:5px 11px;border-radius:999px;
+  }
+  .nav-row a:hover{color:var(--accent-ink);border-color:var(--accent)}
+  .no-results{
+    display:none;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:22px 18px;text-align:center;color:var(--muted);
+    margin-top:16px;
+  }
+
+  /* ---------- Sections ---------- */
+  section{margin-top:34px}
+  .sec-head{display:flex;align-items:baseline;gap:10px;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:6px}
+  .sec-head h2{font-size:20px;font-weight:800;letter-spacing:-0.01em;margin:0}
+  .sec-head .n{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--muted)}
+  .sec-note{color:var(--muted);font-size:13.5px;margin:6px 0 14px}
+
+  /* ---------- Entries ---------- */
+  .entry{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px 14px;
+    margin-bottom:10px;
+    box-shadow:var(--shadow);
+  }
+  .entry.hidden{display:none}
+  .entry-top{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .entry h3{font-size:17px;font-weight:700;margin:0;letter-spacing:-0.01em;line-height:1.3}
+  .entry h3 a{color:var(--ink);text-decoration:none}
+  .entry h3 a:hover{color:var(--accent-ink);text-decoration:underline}
+  .ext{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:12.5px;font-weight:600;color:var(--accent-ink);
+    background:var(--accent-soft);border-radius:6px;padding:3px 8px;
+    text-decoration:none;white-space:nowrap;margin-left:auto;
+  }
+  .ext:hover{text-decoration:underline}
+  .badge{
+    font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    border-radius:5px;padding:3px 7px;white-space:nowrap;
+  }
+  .badge.locked{background:var(--locked-bg);color:var(--locked-ink)}
+  .badge.local{background:var(--chip-bg);color:var(--ink-2)}
+  .desc{color:var(--ink-2);margin:8px 0 0;font-size:14.5px}
+  .meta{
+    display:flex;flex-wrap:wrap;gap:6px 18px;
+    margin-top:11px;padding-top:10px;border-top:1px solid var(--line);
+    font-size:13px;color:var(--muted);
+  }
+  .meta .k{font-weight:600;color:var(--ink-2)}
+  .meta .mono{font-family:"IBM Plex Mono",monospace;font-size:12.5px;word-break:break-all}
+  .loc{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .copy-btn{
+    border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);
+    font:inherit;font-size:11.5px;font-weight:600;border-radius:6px;
+    padding:2px 8px;cursor:pointer;
+  }
+  .copy-btn:hover{color:var(--accent-ink);border-color:var(--accent)}
+  .flag{
+    display:flex;gap:9px;align-items:flex-start;
+    background:var(--flag-bg);
+    border:1px solid var(--flag-line);
+    border-radius:9px;
+    padding:9px 12px;
+    margin-top:11px;
+    font-size:13.5px;color:var(--flag-ink);
+  }
+  .flag svg{flex:none;margin-top:2px}
+  .flag b{font-weight:700}
+  .status-note{
+    display:flex;gap:9px;align-items:flex-start;
+    background:var(--surface-2);
+    border-radius:9px;padding:9px 12px;margin-top:11px;
+    font-size:13.5px;color:var(--ink-2);
+  }
+  .status-note svg{flex:none;margin-top:2px;color:var(--muted)}
+
+  /* ---------- Exclusion ---------- */
+  .exclusion{
+    margin-top:40px;
+    border:1.5px dashed var(--flag-line);
+    background:var(--flag-bg);
+    border-radius:12px;
+    padding:18px;
+    color:var(--flag-ink);
+    font-size:14.5px;
+  }
+  .exclusion h2{font-size:16px;margin:0 0 8px;font-weight:800}
+  .exclusion p{margin:0 0 8px}
+  .exclusion p:last-child{margin-bottom:0}
+  .exclusion a{color:var(--flag-ink);font-weight:600;word-break:break-all}
+  footer{margin-top:26px;color:var(--muted);font-size:12.5px;text-align:center}
+  @media (max-width:520px){
+    .wrap{padding:20px 13px 52px}
+    .entry{padding:14px 14px 12px}
+    .ext{margin-left:0}
+    .search-row{flex-direction:column}
+    .toggle-btn{padding:10px 14px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>App Repo — Everything we've built</h1>
+    <p class="lede">One place listing every app, dashboard, mock, and document built for Ankit, with a link for each — so nothing gets lost.</p>
+    <p class="rule"><strong>Standing rule:</strong> every new app or dashboard gets an entry here by default, with a brief description of what it includes, its last-updated date, and its source. Each future update also records the Muse thread it came from.</p>
+    <p class="thread-note"><strong>About “Updated from”:</strong> Muse threads are private to the owner's Muse account — there is no public link into a thread. This field names the thread (chat name + date) so it can be found in the Muse chat list; it is not a clickable public URL and never exposes thread content.</p>
+    <div class="counts">
+      <span class="count-chip"><b>33</b> entries</span>
+      <span class="count-chip"><b>16</b> live apps</span>
+      <span class="count-chip"><b>8</b> mocks / demos</span>
+      <span class="count-chip"><b>8</b> documents / plans</span>
+      <span class="count-chip"><b>1</b> automation</span>
+      <span class="count-chip warn"><b id="flagCount">–</b> with open flags</span>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="search-row">
+      <label class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search" type="search" placeholder="Search apps, slugs, paths…" autocomplete="off" />
+      </label>
+      <button class="toggle-btn" id="flagToggle" aria-pressed="false" type="button">Flagged only</button>
+    </div>
+    <nav class="nav-row" aria-label="Sections">
+      <a href="#live">Live Apps</a>
+      <a href="#mocks">Mocks / Demos</a>
+      <a href="#docs">Documents / Plans</a>
+      <a href="#automations">Automations</a>
+      <a href="#exclusion">Not ours</a>
+    </nav>
+  </div>
+
+  <p class="no-results" id="noResults">No entries match that search.</p>
+
+  <!-- ================= LIVE APPS ================= -->
+  <section id="live">
+    <div class="sec-head"><h2>Live Apps</h2><span class="n">16</span></div>
+    <p class="sec-note">Shipped and reachable. Click through to open.</p>
+
+    <article class="entry">
+      <div class="entry-top">
+        <h3>Quixera Startup Programs Action Dashboard</h3>
+        <span class="badge local">Muse artifact</span>
+      </div>
+      <p class="desc">Dashboard of the 16 Priority-sheet startup programs as cards with numbered action steps, owners, deadlines, and status pills, plus a flagged section for live deadlines missing from the workbook (a16z speedrun, SBIR, UEFA, FIFA, Nebius, OVHcloud, Akamai, DigitalOcean Hatch, Plug and Play).</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-27</span>
+        <span><span class="k">Updated from</span> Quixera Enhancement — Oct 27, 2026</span>
+        <span><span class="k">Source</span> Workbook Quixera_Startup_Resource_Sweep_v3_0_Oct2026__1___1.xlsx (Oct 27, 2026) Priority sheet + verified NJIF verdict</span>
+        <span class="loc"><span class="k">Slug</span> <span class="mono">quixera-startup-programs-action-dashboard</span> <button class="copy-btn" type="button" data-copy="quixera-startup-programs-action-dashboard">Copy</button></span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top">
+        <h3>App Repo Tracker</h3>
+        <span class="badge local">Muse artifact</span>
+      </div>
+      <p class="desc">Master registry of every app, dashboard, mock, document, and automation built for Ankit, with links, descriptions, last-updated dates, sources, and status flags. This page itself.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-27</span>
+        <span><span class="k">Updated from</span> Quixera Enhancement — Oct 27, 2026</span>
+        <span class="loc"><span class="k">Slug</span> <span class="mono">app-repo-tracker</span> <button class="copy-btn" type="button" data-copy="app-repo-tracker">Copy</button></span>
+      </div>
+    </article>
+
+    <article class="entry" data-flag="1">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/WagWise/" target="_blank" rel="noopener">WagWise</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/WagWise/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">Simba's PWA care app: logging dock + voice parsing, bladder model + risk gauge, learned-schedule alerts, countdown cards, 7/30/90-day trends, clinical-audit generator, export, meds + vaccination tracking, GPS walks, multi-pet, streaks, import, white-label config, offline + Google/email auth.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-17 (v3.27.14)</span>
+        <span><span class="k">Updated from</span> WagWise App Development — Oct 17, 2026</span>
+        <span><span class="k">Source</span> Built from Ankit's spec + Supabase backend</span>
+      </div>
+      <div class="flag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Status:</b> quick-log persistence bug unconfirmed; Google Sign-In disabled server-side.</span></div>
+    </article>
+
+    <article class="entry" data-flag="1">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/TradeDesk/" target="_blank" rel="noopener">TradeDesk</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/TradeDesk/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">Stock research hub: Daily Brief, Options, Signals, Earnings, Congress &amp; Gov, Research tabs; Yahoo ~15-min quotes; ES/NQ gamma (GEX engine), Congress/WH flow signals, earnings calendar.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-15 (v1 live); Options tab v2026-10-23c unconfirmed on-phone</span>
+        <span><span class="k">Updated from</span> Build stock trading research app — Oct 15, 2026</span>
+        <span><span class="k">Source</span> Ankit's trading playbook + free data sources</span>
+      </div>
+      <div class="flag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Status:</b> Research tab empty (Oct 21/25 runs cancelled mid-flight).</span></div>
+    </article>
+
+    <article class="entry" data-flag="1">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/CricMaxConnect/" target="_blank" rel="noopener">CricMax Connect</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/CricMaxConnect/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">Task tracker synced to Google Sheet: Supabase auth, offline localStorage, Sheets Tracker v2.1 (sort, Timeline view, due chips, status/due editing via Apps Script bridge).</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-25 (v2.1)</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span><span class="k">Source</span> Shared sheet with Arpit Shah</span>
+      </div>
+      <div class="flag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Status:</b> bridge needs one-time deploy by a sheet editor before edits reach the sheet; auto-watch cron paused.</span></div>
+    </article>
+
+    <article class="entry" data-flag="1">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/PLDashboard/" target="_blank" rel="noopener">P&amp;L Dashboard v9</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/PLDashboard/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">Client P&amp;L dashboard: customer's own Google Sheet as data store, magic-link auth + license-key redemption, Free (1 business) / Pro $79 one-time, Lemon Squeezy payments.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-07 (v9.0.0 released)</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span><span class="k">Source</span> Copy of public repo apatel85/pl-dashboard v8.12.1 (original never touched)</span>
+      </div>
+      <div class="flag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Status — needs Ankit:</b> SQL migration, Auth redirect URLs, Google OAuth test, Lemon Squeezy store, live test checklist.</span></div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/KineticMusic/" target="_blank" rel="noopener">KINETIC // Studio</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/KineticMusic/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">Shape-driven music instrument + lyric-to-song studio: Note Music + Lyrics-to-Song tabs, Song Builder with chord symbols, karaoke mic sing-along, kids mode, audio download, MIDI export.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-18 (v3.2)</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span><span class="k">Source</span> Draft pasted by Ankit from another AI</span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/SimbaTelemetry/" target="_blank" rel="noopener">Simba Telemetry</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/SimbaTelemetry/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">Simba health/activity telemetry dashboard.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-18 (version unconfirmed)</span>
+        <span><span class="k">Updated from</span> —</span>
+      </div>
+    </article>
+
+    <article class="entry" data-flag="1">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/TrainAPuppyV2/" target="_blank" rel="noopener">TrainAPuppyV2</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/TrainAPuppyV2/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">Puppy training app (session logs + progress).</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-09-28</span>
+        <span><span class="k">Updated from</span> —</span>
+      </div>
+      <div class="flag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Status:</b> merge with foundation-training-app later optional.</span></div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top">
+        <h3>Simba Foundation Training App</h3>
+        <span class="badge local">Muse artifact</span>
+      </div>
+      <p class="desc">Foundation training session logs + progress, saves across devices. Opens in Muse by artifact slug.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-13</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span class="loc"><span class="k">Slug</span> <span class="mono">foundation-training-app</span> <button class="copy-btn" type="button" data-copy="foundation-training-app">Copy</button></span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/InvestIQV2/" target="_blank" rel="noopener">InvestIQ V2</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/InvestIQV2/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">Live property listings app.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> Date/version unconfirmed</span>
+        <span><span class="k">Updated from</span> —</span>
+      </div>
+    </article>
+
+    <article class="entry" data-flag="1">
+      <div class="entry-top">
+        <h3>VoiceInsight</h3>
+        <span class="badge local">Local only</span>
+      </div>
+      <p class="desc">Voice-to-insight meeting summarizer PWA: record/upload/paste → summary → toned email; Gemini→Groq→OpenRouter chain.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-21 (v1.0.0)</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span class="loc"><span class="k">Workspace</span> <span class="mono">meeting-summarizer</span> <button class="copy-btn" type="button" data-copy="meeting-summarizer">Copy</button></span>
+      </div>
+      <div class="flag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Status:</b> not yet published.</span></div>
+    </article>
+
+    <article class="entry" data-flag="1">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/QuixeraDev/" target="_blank" rel="noopener">Quixera QA Dashboard (QuixeraDev)</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/QuixeraDev/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">QA bug dashboard: QA-team/Manual/Arlo segments, plain-English click trails, issue badges, video support, status filter — view-only, holds no credential.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-27 (37 bugs after Oct 27 QA run)</span>
+        <span><span class="k">Updated from</span> Quixera QA Testing — Oct 27, 2026</span>
+      </div>
+      <div class="flag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Status:</b> dashboard watcher cron paused 2026-10-24; updates ad-hoc only.</span></div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/QuixeraUAT/" target="_blank" rel="noopener">Quixera UAT dashboard</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/QuixeraUAT/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">UAT testing dashboard for Quixera.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> Unconfirmed</span>
+        <span><span class="k">Updated from</span> —</span>
+      </div>
+    </article>
+
+    <article class="entry" data-flag="1">
+      <div class="entry-top">
+        <h3>QA Capture extension</h3>
+        <span class="badge local">Chrome Web Store</span>
+      </div>
+      <p class="desc">Quixera QA browser extension: annotated screenshots, tab-clip recording, multi-screenshot bugs, issue-type dropdown, filed-issue log.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-20 (v3.9.0)</span>
+        <span><span class="k">Updated from</span> Quixera QA Testing — Oct 27, 2026</span>
+        <span><span class="k">Where</span> Chrome Web Store (Unlisted, approved)</span>
+      </div>
+      <div class="flag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Status:</b> popup-open capture failure still open; on-phone confirmation pending.</span></div>
+    </article>
+
+    <article class="entry" data-flag="1">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/WeeklyStatDashboard/" target="_blank" rel="noopener">Weekly Stat Dashboard</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/WeeklyStatDashboard/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">Fantasy football weekly projections + Results tab (auto-grades vs actuals); Week 7 projections live here.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> Week 7 boards (Oct 2026)</span>
+        <span><span class="k">Updated from</span> —</span>
+      </div>
+      <div class="flag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Status:</b> split state — private fullstack dashboard holds only Week 6 boards; Wed Oct 28 refresh expected to build Week 8 from through-Week-7 stats.</span></div>
+    </article>
+  </section>
+
+  <!-- ================= MOCKS / DEMOS ================= -->
+  <section id="mocks">
+    <div class="sec-head"><h2>Mocks / Demos</h2><span class="n">8</span></div>
+    <p class="sec-note">Concepts only, not live products. Platform artifacts open in Muse by slug.</p>
+
+    <article class="entry">
+      <div class="entry-top">
+        <h3>KRCA Tracker — Unified Sidebar Layout</h3>
+        <span class="badge locked">Locked direction</span>
+      </div>
+      <p class="desc">Live tracker mock: header academy context switcher, academy-scoped KPI strip, Progress Status section (3 columns, numbered tasks, completed sink to bottom crossed out, red overdue treatment, Columns/Timeline toggle with proportional 7-stage timeline, SLA ticks, red overruns, milestone dots), pipeline kanban, Money/Activity pages, 8 seeded academies.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-22</span>
+        <span><span class="k">Updated from</span> Quixera Enhancement — Oct 22, 2026</span>
+        <span class="loc"><span class="k">Slug</span> <span class="mono">krca-tracker-unified-sidebar-layout</span> <button class="copy-btn" type="button" data-copy="krca-tracker-unified-sidebar-layout">Copy</button></span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>KRCA Tracker Mock V1 — Pipeline Command Center</h3></div>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-21</span>
+        <span><span class="k">Updated from</span> Quixera Enhancement — Oct 21, 2026</span>
+        <span class="loc"><span class="k">Slug</span> <span class="mono">krca-tracker-mock-v1-pipeline-command-center</span> <button class="copy-btn" type="button" data-copy="krca-tracker-mock-v1-pipeline-command-center">Copy</button></span>
+      </div>
+      <div class="status-note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg><span><b>Status:</b> superseded by sidebar layout.</span></div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>KRCA Tracker Mock V2 — Academy 360</h3></div>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-21</span>
+        <span><span class="k">Updated from</span> Quixera Enhancement — Oct 21, 2026</span>
+        <span class="loc"><span class="k">Slug</span> <span class="mono">krca-tracker-mock-v2-academy-360</span> <button class="copy-btn" type="button" data-copy="krca-tracker-mock-v2-academy-360">Copy</button></span>
+      </div>
+      <div class="status-note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg><span><b>Status:</b> superseded.</span></div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>KRCA Tracker Mock V3 — Executive Pulse</h3></div>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-21</span>
+        <span><span class="k">Updated from</span> Quixera Enhancement — Oct 21, 2026</span>
+        <span class="loc"><span class="k">Slug</span> <span class="mono">krca-tracker-mock-v3-executive-pulse</span> <button class="copy-btn" type="button" data-copy="krca-tracker-mock-v3-executive-pulse">Copy</button></span>
+      </div>
+      <div class="status-note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg><span><b>Status:</b> superseded.</span></div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>KRCA Tracker — Unified Dashboard (tabbed)</h3></div>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-21</span>
+        <span><span class="k">Updated from</span> Quixera Enhancement — Oct 21, 2026</span>
+        <span class="loc"><span class="k">Slug</span> <span class="mono">krca-tracker-unified-dashboard</span> <button class="copy-btn" type="button" data-copy="krca-tracker-unified-dashboard">Copy</button></span>
+      </div>
+      <div class="status-note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg><span><b>Status:</b> alternative layout, not the locked direction.</span></div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>KRCA Tracker — Unified Command Feed (single-scroll)</h3></div>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-21</span>
+        <span><span class="k">Updated from</span> Quixera Enhancement — Oct 21, 2026</span>
+        <span class="loc"><span class="k">Slug</span> <span class="mono">krca-tracker-unified-command-feed-layout</span> <button class="copy-btn" type="button" data-copy="krca-tracker-unified-command-feed-layout">Copy</button></span>
+      </div>
+      <div class="status-note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg><span><b>Status:</b> alternative layout.</span></div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top">
+        <h3><a href="https://apatel85.github.io/Dashboards/QuixeraDemo/" target="_blank" rel="noopener">QuixeraDemo (demo replica)</a></h3>
+        <a class="ext" href="https://apatel85.github.io/Dashboards/QuixeraDemo/" target="_blank" rel="noopener">Open <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      </div>
+      <p class="desc">Faithful replica of the live Quixera Academy Admin Dashboard + redesign toggle — enhancements ONLY here, never the live app.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-08</span>
+        <span><span class="k">Updated from</span> —</span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>Owner-view redesign demos D1–D9</h3></div>
+      <p class="desc">Academy owner-view concepts: D1 The Cockpit (Ankit's favorite), D2 Morning Briefing, D3 In Conversation, D4 Business Health Check, D5 Week in Motion, D6 Flow Board, D7 Mission Control, D8 Inbox Zero, D9 Messages Rethought.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-21</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span class="loc"><span class="k">Slugs</span> <span class="mono">academy-owner-view-redesign-concept</span> (D1) · <span class="mono">owner-demo-2-the-morning-briefing</span> … <span class="mono">owner-demo-8-inbox-zero</span> · D9 Messages</span>
+      </div>
+      <div class="status-note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg><span><b>Status:</b> concepts only; awaiting team pick.</span></div>
+    </article>
+  </section>
+
+  <!-- ================= DOCUMENTS / PLANS ================= -->
+  <section id="docs">
+    <div class="sec-head"><h2>Documents / Plans</h2><span class="n">8</span></div>
+    <p class="sec-note">Files in the workspace — paths shown so each one can be found again.</p>
+
+    <article class="entry" data-flag="1">
+      <div class="entry-top"><h3>KRCA Tracker Execution Plan (20-page PDF)</h3></div>
+      <p class="desc">Supabase + GitHub Pages architecture, 12 tables + audit, xlsx migration, DocuSign-vs-PandaDoc, phases P0–P4, stage gates, 8 onboarding gates, money mechanics, cadence views, payment-received module, ERP as post-P4 phase.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-22</span>
+        <span><span class="k">Updated from</span> Quixera Enhancement — Oct 21–22, 2026</span>
+        <span class="loc"><span class="k">Workspace</span> <span class="mono">your_files/krca-tracker-execution-plan/krca-tracker-execution-plan.pdf</span> <button class="copy-btn" type="button" data-copy="your_files/krca-tracker-execution-plan/krca-tracker-execution-plan.pdf">Copy</button></span>
+      </div>
+      <div class="flag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Status:</b> Progress Status structure changes not yet carried into this plan.</span></div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>KRCA Two-Month Posting Plan</h3></div>
+      <p class="desc">24 feed posts, Mon/Wed/Fri Nov 9 2026 – Jan 3 2027, "From First Session to First Cap" arc.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-24</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span class="loc"><span class="k">Workspace</span> <span class="mono">quixerea/two-month-posting-plan.md</span> <button class="copy-btn" type="button" data-copy="quixerea/two-month-posting-plan.md">Copy</button></span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>Simba Foundation Training Guide (PDF v1.0)</h3></div>
+      <p class="desc">Marker language, attention/recall/leave-it/drop-it/loose-leash/place/settle, 4-week progression, troubleshooting, scorecard.</p>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-13</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span class="loc"><span class="k">Workspace</span> <span class="mono">your_files/simba-foundation-training-guide/simba-foundation-training-guide.pdf</span> <button class="copy-btn" type="button" data-copy="your_files/simba-foundation-training-guide/simba-foundation-training-guide.pdf">Copy</button></span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>EWRSD 2026–2027 School Calendar (ICS, 24 events)</h3></div>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-10</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span class="loc"><span class="k">Workspace</span> <span class="mono">your_files/EWRSD-2026-2027-school-calendar.ics</span> <button class="copy-btn" type="button" data-copy="your_files/EWRSD-2026-2027-school-calendar.ics">Copy</button></span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>Project Cards deck</h3></div>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-21</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span class="loc"><span class="k">Workspace</span> <span class="mono">your_files/project-cards.md</span> <button class="copy-btn" type="button" data-copy="your_files/project-cards.md">Copy</button></span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>Prompt Playbook</h3></div>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-21</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span class="loc"><span class="k">Workspace</span> <span class="mono">your_files/prompt-playbook.md</span> <button class="copy-btn" type="button" data-copy="your_files/prompt-playbook.md">Copy</button></span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>Global Directives</h3></div>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-24</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span class="loc"><span class="k">Workspace</span> <span class="mono">your_files/global-directives.md</span> <button class="copy-btn" type="button" data-copy="your_files/global-directives.md">Copy</button></span>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-top"><h3>Quixera–KRCA Website Evaluation Brief</h3></div>
+      <div class="meta">
+        <span><span class="k">Updated</span> 2026-10-25</span>
+        <span><span class="k">Updated from</span> —</span>
+        <span class="loc"><span class="k">Workspace</span> <span class="mono">your_files/quixera-krca-website-evaluation-brief.md</span> <button class="copy-btn" type="button" data-copy="your_files/quixera-krca-website-evaluation-brief.md">Copy</button></span>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= AUTOMATIONS ================= -->
+  <section id="automations">
+    <div class="sec-head"><h2>Automations</h2><span class="n">1</span></div>
+    <p class="sec-note">Not apps — tracked here for completeness.</p>
+
+    <article class="entry">
+      <div class="entry-top"><h3>NJ business deal watch</h3></div>
+      <p class="desc">scan.py + daily cron nj-business-deal-scan (~8:24am ET), alerts in main chat on new central-NJ matches.</p>
+      <div class="meta">
+        <span><span class="k">Updated from</span> —</span>
+        <span class="loc"><span class="k">Workspace</span> <span class="mono">deal-hunter/scan.py</span> <button class="copy-btn" type="button" data-copy="deal-hunter/scan.py">Copy</button></span>
+      </div>
+    </article>
+  </section>
+
+  <!-- ================= EXCLUSION ================= -->
+  <div class="exclusion" id="exclusion">
+    <h2>Not built by us — do not list as ours</h2>
+    <p>The live Quixera app (<a href="https://quixera-app.vercel.app/" target="_blank" rel="noopener">https://quixera-app.vercel.app/</a>) is the client's production app; our work there is read-only review or the GitHub demo replica above.</p>
+    <p>This tracker itself gets a new entry whenever a new app/dashboard is created, by default.</p>
+  </div>
+
+  <footer>App Repo Tracker · Snapshot as built — entries change only when this page is rebuilt.</footer>
+</div>
+
+<script>
+(function(){
+  var entries = Array.prototype.slice.call(document.querySelectorAll('.entry'));
+  var flagged = entries.filter(function(e){ return e.getAttribute('data-flag') === '1'; });
+  document.getElementById('flagCount').textContent = flagged.length;
+
+  var search = document.getElementById('search');
+  var toggle = document.getElementById('flagToggle');
+  var noResults = document.getElementById('noResults');
+  var flagOnly = false;
+
+  function applyFilter(){
+    var q = (search.value || '').trim().toLowerCase();
+    var visible = 0;
+    entries.forEach(function(e){
+      var matchText = !q || e.textContent.toLowerCase().indexOf(q) !== -1;
+      var matchFlag = !flagOnly || e.getAttribute('data-flag') === '1';
+      var show = matchText && matchFlag;
+      e.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    document.querySelectorAll('section').forEach(function(s){
+      var any = s.querySelectorAll('.entry:not(.hidden)').length > 0;
+      s.style.display = any ? '' : 'none';
+    });
+    noResults.style.display = visible === 0 ? 'block' : 'none';
+  }
+  search.addEventListener('input', applyFilter);
+  toggle.addEventListener('click', function(){
+    flagOnly = !flagOnly;
+    toggle.setAttribute('aria-pressed', flagOnly ? 'true' : 'false');
+    applyFilter();
+  });
+
+  document.querySelectorAll('.copy-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var text = btn.getAttribute('data-copy');
+      function done(){
+        var old = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(function(){ btn.textContent = old; }, 1400);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch(e){}
+        document.body.removeChild(ta); done();
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
