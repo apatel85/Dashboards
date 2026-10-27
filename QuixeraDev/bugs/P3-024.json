@@ -1,0 +1,25 @@
+{
+  "id": "P3-024",
+  "source": "arlo",
+  "project": "QuixeraDev",
+  "issue_type": "Bug",
+  "title": "Closing New Program with X silently creates a draft program (no warning, wrong set-up step)",
+  "severity": "Medium",
+  "page": "/programs",
+  "url": "https://facility-dev.quixeraos.com/programs",
+  "expected": "Closing without Save draft / Save program discards the work, or asks 'Keep as draft or discard?'. If a draft is kept, its recorded set-up step matches how far the user got.",
+  "actual": "2026-10-27 documentation pass: the New Program dialog was closed with X without clicking Save draft or Save program and with no confirmation \u2014 yet 'Programs not running now' rose from 31 to 32 programs with a new row 'DOC TEST PROGRAM \u2014 DO NOT SAVE' (Cricket \u00b7 Ages 10\u201316, 'Draft \u00b7 set-up step 2', NEXT STEP Continue). The dialog had reached step 4, so the recorded step 2 is also wrong. Closing the New Class wizard with X did NOT create a class draft, so the two flows behave inconsistently.",
+  "steps": [
+    "Open /programs \u2192 New program.",
+    "Fill any fields (steps 1\u20134).",
+    "Close with X without saving.",
+    "Open 'Programs not running now' and look for the new draft row."
+  ],
+  "trail": [],
+  "shots": [],
+  "clip": null,
+  "clip_secs": 0,
+  "filed_by": "Arlo",
+  "status": "Open",
+  "created": "2026-10-27"
+}
