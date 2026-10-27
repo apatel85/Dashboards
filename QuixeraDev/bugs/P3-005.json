@@ -1,0 +1,23 @@
+{
+  "id": "P3-005",
+  "source": "arlo",
+  "project": "QuixeraDev",
+  "issue_type": "Bug",
+  "title": "Announcements header counts do not reconcile with tab counts",
+  "severity": "Medium",
+  "page": "/announcements",
+  "url": "https://facility-dev.quixeraos.com/announcements",
+  "expected": "One consistent set of totals across header and tabs.",
+  "actual": "2026-10-26: Header 'ANNOUNCEMENTS SENT 222 \u2014 All time \u00b7 incl. 179 archived' vs tabs All 56 + Archived 191 = 247; header archived 179 \u2260 Archived tab 191. 'Needs attention 7' (6 drafts + 1 sent) overlaps Drafts/Sent, so tabs double-count if summed.",
+  "steps": [
+    "Open /announcements.",
+    "Compare header stats with All/Drafts/Sent/Needs attention/Archived tab counts."
+  ],
+  "trail": [],
+  "shots": [],
+  "clip": null,
+  "clip_secs": 0,
+  "filed_by": "Arlo",
+  "status": "Open",
+  "created": "2026-10-26"
+}
