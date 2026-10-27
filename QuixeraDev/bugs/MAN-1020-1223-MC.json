@@ -8,12 +8,12 @@
   "page": "/billing",
   "url": "https://facility-dev.quixeraos.com/billing",
   "expected": "Upon clicking total revenue, it should show me detail for 24,149.59",
-  "actual": "Takes me to outstanding tab.",
+  "actual": "RECHECK 2026-10-26: STILL FAILING \u2014 Analytics total revenue $26,233.59, but 'View \u2192' lands on Billing All Invoices (THIS MONTH $49,568.53, OUTSTANDING $2,374.76, YTD $38,690.98) \u2014 none match $26,233.59.",
   "trail": [
     {
       "step": 1,
       "page": "/analytics?tab=revenue",
-      "clicked": "a: \"View →\""
+      "clicked": "a: \"View \u2192\""
     },
     {
       "step": 2,
@@ -28,11 +28,12 @@
     {
       "step": 4,
       "page": "/analytics?tab=revenue",
-      "clicked": "a: \"View →\""
+      "clicked": "a: \"View \u2192\""
     }
   ],
   "shots": [],
   "clip": "bugs/clips/MAN-1020-1223-MC.webm",
   "clip_secs": 5,
-  "created": "2026-10-20T16:23:39.220Z"
+  "created": "2026-10-20T16:23:39.220Z",
+  "status": "Open"
 }
