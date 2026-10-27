@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Quixera Startup Programs — Action Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f5f2; --surface:#ffffff; --surface2:#eceee9; --ink:#191d1a; --ink2:#4c554e; --muted:#758078;
+    --line:#dde1da; --line2:#c9cec4;
+    --red:#b42318; --red-bg:#fdf0ee; --red-line:#f0c4be; --red-ink:#7a1a12;
+    --amber:#9a5b00; --amber-bg:#fdf6e0; --amber-line:#ecd9a0; --amber-ink:#6b4200;
+    --teal:#0e6b5e; --teal-bg:#e6f3f0;
+    --blue:#1d4f91; --blue-bg:#eaf1fa;
+    --grey-bg:#eef0ec; --grey-ink:#5c665e;
+    --shadow:0 1px 2px rgba(20,28,22,.05),0 8px 24px rgba(20,28,22,.05);
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#121512; --surface:#1b1f1b; --surface2:#232824; --ink:#e9ede8; --ink2:#b4bcb2; --muted:#8b948a;
+      --line:#2e342e; --line2:#3d443d;
+      --red:#f08a80; --red-bg:#331d1a; --red-line:#5c2e28; --red-ink:#f5b8b0;
+      --amber:#eec26a; --amber-bg:#332a12; --amber-line:#5c4c1e; --amber-ink:#f2d48a;
+      --teal:#5ec9b6; --teal-bg:#173029;
+      --blue:#8db8ee; --blue-bg:#1a2a3f;
+      --grey-bg:#262b26; --grey-ink:#a7b0a5;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--blue);text-underline-offset:2px}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 64px}
+
+  /* ---------- Header ---------- */
+  header.top{padding:6px 0 20px;border-bottom:2px solid var(--ink)}
+  .kicker{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin:0 0 10px}
+  h1{font-size:clamp(28px,4.5vw,42px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:700;max-width:18ch}
+  .lede{font-size:16px;color:var(--ink2);max-width:68ch;margin:0 0 18px}
+  .lede strong{color:var(--ink)}
+  .sourcebar{display:flex;flex-wrap:wrap;gap:8px 22px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:13px}
+  .sourcebar div{display:flex;gap:8px;align-items:baseline;min-width:0}
+  .sourcebar dt{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .sourcebar dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+  .sourcebar dd.normal{font-weight:500;color:var(--ink2)}
+
+  /* ---------- Alert banner ---------- */
+  .alert{margin-top:20px;background:var(--red-bg);border:1px solid var(--red-line);border-radius:var(--radius);padding:18px 20px}
+  .alert h2{margin:0 0 4px;font-size:17px;color:var(--red-ink);display:flex;align-items:center;gap:9px}
+  .alert h2 svg{flex:none}
+  .alert p.sub{margin:0 0 14px;font-size:13.5px;color:var(--red-ink);opacity:.85}
+  .alert-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .alert-item{background:var(--surface);border:1px solid var(--red-line);border-radius:10px;padding:13px 14px}
+  .alert-item .tag{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--red);display:block;margin-bottom:5px}
+  .alert-item p{margin:0;font-size:13.5px;line-height:1.45}
+  .alert-item p strong{display:block;font-size:14px;margin-bottom:2px}
+
+  /* ---------- Stats + controls ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+  .stat .n{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:12.5px;color:var(--ink2);margin-top:6px;line-height:1.35}
+  .stat.red .n{color:var(--red)} .stat.amber .n{color:var(--amber)} .stat.teal .n{color:var(--teal)}
+
+  .controls{position:sticky;top:0;z-index:20;background:var(--bg);padding:16px 0 10px;margin-top:8px}
+  .controls-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .search{flex:1 1 220px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line2);border-radius:999px;padding:9px 14px}
+  .search svg{flex:none;color:var(--muted)}
+  .search input{border:0;background:transparent;color:var(--ink);font:inherit;font-size:14px;width:100%;outline:none}
+  .search input::placeholder{color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line2);background:var(--surface);color:var(--ink2);border-radius:999px;padding:8px 14px;cursor:pointer}
+  .chip:hover{border-color:var(--ink2);color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .count-line{font-size:13px;color:var(--muted);margin:10px 2px 0}
+  .count-line strong{color:var(--ink)}
+
+  /* ---------- Sections ---------- */
+  section.group{margin-top:34px}
+  .group-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line2)}
+  .group-letter{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none;align-self:center}
+  .gA .group-letter{background:var(--red);color:#fff}
+  .gB .group-letter{background:var(--amber);color:#fff}
+  .gC .group-letter{background:var(--teal);color:#fff}
+  .gD .group-letter{background:var(--grey-ink);color:#fff}
+  .gE .group-letter{background:var(--blue);color:#fff}
+  .group-head h2{font-size:21px;margin:0;letter-spacing:-.01em}
+  .group-head p{margin:0;font-size:13.5px;color:var(--ink2);flex:1 1 260px}
+  .group-count{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted)}
+
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:16px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+  .card.hidden{display:none}
+  .card-top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+  .card h3{font-size:16.5px;line-height:1.3;margin:0;letter-spacing:-.01em}
+  .card h3 .ref{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:var(--muted);display:block;letter-spacing:.08em;margin-bottom:3px}
+  .value{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;white-space:nowrap;background:var(--surface2);border-radius:8px;padding:5px 9px;text-align:right;line-height:1.3}
+  .value small{display:block;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .meta{display:flex;flex-wrap:wrap;gap:6px 18px;margin:12px 0 0;padding:11px 0;border-top:1px dashed var(--line2);border-bottom:1px dashed var(--line2);font-size:13px}
+  .meta div{display:flex;gap:7px;align-items:baseline}
+  .meta dt{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .meta dd{margin:0;font-weight:600}
+  .meta dd.deadline-red{color:var(--red)}
+  .meta dd.deadline-amber{color:var(--amber)}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.02em;border-radius:999px;padding:4px 11px;margin-top:12px;align-self:flex-start}
+  .pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+  .pill.red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-line)}
+  .pill.amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-line)}
+  .pill.teal{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal)}
+  .pill.grey{background:var(--grey-bg);color:var(--grey-ink);border:1px solid var(--line2)}
+  .pill.blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue)}
+  ol.steps{margin:13px 0 0;padding:0;list-style:none;counter-reset:step}
+  ol.steps li{counter-increment:step;position:relative;padding:0 0 10px 34px;font-size:14px;line-height:1.5;color:var(--ink2)}
+  ol.steps li:last-child{padding-bottom:2px}
+  ol.steps li::before{content:counter(step);position:absolute;left:0;top:1px;width:22px;height:22px;border-radius:50%;background:var(--surface2);border:1px solid var(--line2);color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  ol.steps li strong{color:var(--ink)}
+  .note{margin:12px 0 0;font-size:14px;line-height:1.55;color:var(--ink2)}
+  .note strong{color:var(--ink)}
+  .nextstep{margin:13px 0 0;font-size:14px;line-height:1.5;color:var(--ink2);background:var(--surface2);border-radius:9px;padding:10px 12px}
+  .nextstep strong{color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;display:block;margin-bottom:3px}
+
+  /* E section emphasis */
+  .gE .card{border-color:var(--blue)}
+  .urgent{outline:2px solid var(--red);outline-offset:-1px}
+  .urgent-badge{font-size:11px;font-weight:700;color:#fff;background:var(--red);border-radius:999px;padding:3px 9px;white-space:nowrap}
+
+  .empty{display:none;background:var(--surface);border:1px dashed var(--line2);border-radius:var(--radius);padding:26px;text-align:center;color:var(--muted);font-size:14px;margin-top:16px}
+  .empty.show{display:block}
+
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line2);font-size:13px;color:var(--muted);line-height:1.6}
+  footer strong{color:var(--ink2)}
+
+  @media (max-width:860px){
+    .alert-grid{grid-template-columns:1fr}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .cards{grid-template-columns:1fr}
+    .controls{position:static}
+  }
+  @media (max-width:420px){
+    .wrap{padding:20px 14px 48px}
+    .card-top{flex-direction:column}
+    .value{text-align:left}
+  }
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <p class="kicker">Quixera · Startup Programs</p>
+    <h1>Action Dashboard</h1>
+    <p class="lede">Every program from the Priority sheet, with the owner, deadline, and exact next steps for each — <strong>plus two verified updates applied after the file was saved</strong>: NJ Innovation Fellows is dropped for Quixera, and the four Oct 24 items are now past their dates.</p>
+    <dl class="sourcebar">
+      <div><dt>Source</dt><dd>Quixera_Startup_Resource_Sweep_v3_0_Oct2026__1___1.xlsx</dd></div>
+      <div><dt>Sheet</dt><dd>7. Priority (22 Oct)</dd></div>
+      <div><dt>As of</dt><dd>Tue, Oct 27, 2026</dd></div>
+      <div><dt>Updates</dt><dd class="normal">NJEDA FAQ check (updated Sep 8, 2026) · Oct 21 v3.1 re-verification gaps</dd></div>
+    </dl>
+  </header>
+
+  <div class="alert" role="alert">
+    <h2><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Read this first — three things changed</h2>
+    <p class="sub">These override what the workbook itself says.</p>
+    <div class="alert-grid">
+      <div class="alert-item">
+        <span class="tag">Overdue on paper</span>
+        <p><strong>Items A1–A4 carried Fri Oct 24 deadlines.</strong> That date has passed. They are flagged overdue-on-paper below — the work may be done, but the file was never updated to say so.</p>
+      </div>
+      <div class="alert-item">
+        <span class="tag">Dropped · $400K</span>
+        <p><strong>NJ Innovation Fellows does not fund Quixera.</strong> Per NJEDA's FAQ, the program funds unformed business ideas only — an existing entity is ineligible. See card A1 before spending anything.</p>
+      </div>
+      <div class="alert-item">
+        <span class="tag">Not in the workbook</span>
+        <p><strong>Three live deadlines are missing from the file:</strong> a16z speedrun closes <strong style="display:inline">Nov 1</strong>, NSF SBIR Phase I is <strong style="display:inline">Nov 4</strong>, UEFA EURO 2028 Innovation runs to <strong style="display:inline">Nov 14</strong>. Full list in Section E.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats" aria-label="Summary">
+    <div class="stat red"><div class="n">4</div><div class="l">items past their Oct 24 date — 1 dropped, 3 overdue-on-paper</div></div>
+    <div class="stat amber"><div class="n">Oct 31</div><div class="l">next hard deadline — COPPA note, Deepgram, ElevenLabs</div></div>
+    <div class="stat teal"><div class="n">9</div><div class="l">live programs flagged that are not in the workbook at all</div></div>
+    <div class="stat"><div class="n">$400K</div><div class="l">removed from Quixera's plans — NJ Innovation Fellows ineligibility</div></div>
+  </div>
+
+  <div class="controls">
+    <div class="controls-row">
+      <label class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" id="q" placeholder="Search programs, owners, steps…" aria-label="Search programs" />
+      </label>
+      <div class="chips" role="group" aria-label="Filter by group">
+        <button class="chip" data-filter="all" aria-pressed="true">All</button>
+        <button class="chip" data-filter="A" aria-pressed="false">A · Act now</button>
+        <button class="chip" data-filter="B" aria-pressed="false">B · End of Oct</button>
+        <button class="chip" data-filter="C" aria-pressed="false">C · If needed</button>
+        <button class="chip" data-filter="D" aria-pressed="false">D · Skip</button>
+        <button class="chip" data-filter="E" aria-pressed="false">E · Not in file</button>
+      </div>
+    </div>
+    <p class="count-line" id="countLine">Showing <strong>25</strong> of 25 items</p>
+  </div>
+
+  <!-- ================= A ================= -->
+  <section class="group gA" data-group="A" id="group-A">
+    <div class="group-head">
+      <span class="group-letter">A</span>
+      <h2>Act now / overdue</h2>
+      <p>These four carried Fri Oct 24 deadlines that have now passed. A1 is closed out as a drop; A2–A4 still need doing.</p>
+      <span class="group-count">4 items</span>
+    </div>
+    <div class="cards">
+
+      <article class="card" data-group="A" data-search="nj innovation fellows njeda 400k drop as valeria">
+        <div class="card-top">
+          <h3><span class="ref">A1</span>NJ Innovation Fellows</h3>
+          <div class="value"><small>Value</small>up to $400K</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>AS (Valeria drafts)</dd></div>
+          <div><dt>Deadline</dt><dd class="deadline-red">Was Fri Oct 24</dd></div>
+        </dl>
+        <span class="pill red">DROP for Quixera</span>
+        <ol class="steps">
+          <li><strong>Remove the $400K from Quixera's plans</strong> — an existing entity is ineligible. Do not pay the $250 application fee for Quixera as-is.</li>
+          <li>Only revisit for a <strong>distinct new venture idea</strong> (not Quixera, not a branch) with a 3+ entrepreneur team and an operating address in an eligible NJ municipality. Note: <strong>East Windsor is NOT on the eligible list.</strong></li>
+          <li>If pursued, confirm in writing with NJEDA at <a href="mailto:njinnovationfellows@njeda.gov">njinnovationfellows@njeda.gov</a> before applying.</li>
+          <li><strong>Do NOT pre-register that new venture</strong> — per the FAQ, if not selected, a registered business cannot be re-applied in future rounds.</li>
+        </ol>
+      </article>
+
+      <article class="card" data-group="A" data-search="sam.gov registration renewal uei valeria federal">
+        <div class="card-top">
+          <h3><span class="ref">A2</span>SAM.gov registration check / renewal</h3>
+          <div class="value"><small>Value</small>—</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>Valeria</dd></div>
+          <div><dt>Deadline</dt><dd class="deadline-red">Was Fri Oct 24</dd></div>
+        </dl>
+        <span class="pill red">Overdue on paper</span>
+        <ol class="steps">
+          <li>Log in to sam.gov and check registration status and expiry date.</li>
+          <li>Renew if expired or expiring soon — <strong>renewal takes weeks</strong>.</li>
+          <li>Confirm the UEI matches all grant profiles.</li>
+        </ol>
+      </article>
+
+      <article class="card" data-group="A" data-search="aws activate investor email anthropic partner vc valeria as">
+        <div class="card-top">
+          <h3><span class="ref">A3</span>AWS Activate investor email</h3>
+          <div class="value"><small>Value</small>up to $200K tier</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>Valeria drafts, AS sends</dd></div>
+          <div><dt>Deadline</dt><dd class="deadline-red">Was Fri Oct 24</dd></div>
+        </dl>
+        <span class="pill red">Overdue on paper</span>
+        <ol class="steps">
+          <li>Draft one email to investors asking: <strong>are you an AWS Activate Provider?</strong></li>
+          <li>Same email: <strong>are you an Anthropic partner VC?</strong></li>
+          <li>AS sends.</li>
+          <li>Once a provider is confirmed, apply via Activate for the $100K base / $200K provider tier.</li>
+        </ol>
+      </article>
+
+      <article class="card" data-group="A" data-search="cpa session incubyte r&d credit expensing nj loss sale valeria as">
+        <div class="card-top">
+          <h3><span class="ref">A4</span>CPA session</h3>
+          <div class="value"><small>Value</small>—</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>Valeria books, AS attends</dd></div>
+          <div><dt>Deadline</dt><dd class="deadline-red">Book by Fri Oct 24</dd></div>
+        </dl>
+        <span class="pill red">Overdue on paper</span>
+        <ol class="steps">
+          <li>Book the session.</li>
+          <li>Bring Incubyte hours and spend records.</li>
+          <li>Agenda: R&amp;D credit, expensing, NJ loss sale, NJ-hours rule. <strong>CSIT grant is OFF the agenda.</strong></li>
+          <li>Meet before signing the next Incubyte work order.</li>
+        </ol>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= B ================= -->
+  <section class="group gB" data-group="B" id="group-B">
+    <div class="group-head">
+      <span class="group-letter">B</span>
+      <h2>By end of October</h2>
+      <p>Three items land Fri Oct 31; the Anthropic program is closed and only needs a weekly check.</p>
+      <span class="group-count">4 items</span>
+    </div>
+    <div class="cards">
+
+      <article class="card" data-group="B" data-search="anthropic claude for startups closed partner vc valeria weekly">
+        <div class="card-top">
+          <h3><span class="ref">B1</span>Anthropic Claude for Startups</h3>
+          <div class="value"><small>Status</small>Closed Oct 13</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>Valeria</dd></div>
+          <div><dt>Cadence</dt><dd>Weekly check</dd></div>
+        </dl>
+        <span class="pill amber">Closed to new applicants since Oct 13</span>
+        <ol class="steps">
+          <li>Weekly check of the program page.</li>
+          <li>Only remaining route is via an Anthropic partner VC (see A3, the AWS investor email).</li>
+        </ol>
+      </article>
+
+      <article class="card" data-group="B" data-search="ftc coppa note lawyer valeria go-live">
+        <div class="card-top">
+          <h3><span class="ref">B2</span>FTC COPPA note for lawyer</h3>
+          <div class="value"><small>Value</small>—</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>Valeria → lawyer</dd></div>
+          <div><dt>Deadline</dt><dd class="deadline-amber">Fri Oct 31</dd></div>
+        </dl>
+        <span class="pill amber">Due Fri Oct 31</span>
+        <ol class="steps">
+          <li>Valeria prepares the COPPA note.</li>
+          <li>Send to lawyer before go-live.</li>
+        </ol>
+      </article>
+
+      <article class="card" data-group="B" data-search="deepgram for startups credits project id valeria speech">
+        <div class="card-top">
+          <h3><span class="ref">B3</span>Deepgram for Startups</h3>
+          <div class="value"><small>Value</small>up to $100K credits</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>Valeria</dd></div>
+          <div><dt>Deadline</dt><dd class="deadline-amber">Fri Oct 31</dd></div>
+          <div><dt>Term</dt><dd>12 months</dd></div>
+        </dl>
+        <span class="pill amber">Due Fri Oct 31</span>
+        <ol class="steps">
+          <li>Create a Deepgram account to obtain a Project ID.</li>
+          <li>Apply — new customers only, under $10M raised, in production or launching within 6 months.</li>
+          <li>Add to the lawyer's list before go-live.</li>
+        </ol>
+      </article>
+
+      <article class="card" data-group="B" data-search="elevenlabs startup grant under-18 exclusion valeria as voice">
+        <div class="card-top">
+          <h3><span class="ref">B4</span>ElevenLabs startup grant</h3>
+          <div class="value"><small>Value</small>~$5,500</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>Valeria drafts, AS sends</dd></div>
+          <div><dt>Deadline</dt><dd class="deadline-amber">Fri Oct 31</dd></div>
+        </dl>
+        <span class="pill amber">Due Fri Oct 31</span>
+        <ol class="steps">
+          <li>Draft email asking whether the under-18 exclusion applies when users are staff / coaches / parents, not children.</li>
+          <li>AS sends.</li>
+          <li>If the answer is yes, Deepgram covers both features instead.</li>
+        </ol>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= C ================= -->
+  <section class="group gC" data-group="C" id="group-C">
+    <div class="group-head">
+      <span class="group-letter">C</span>
+      <h2>Only if needed</h2>
+      <p>Real programs, but each one is gated on a decision or a condition. Nothing here is urgent.</p>
+      <span class="group-count">5 items</span>
+    </div>
+    <div class="cards">
+
+      <article class="card" data-group="C" data-search="nsf ed sbir grants phase i research question as deadlines">
+        <div class="card-top">
+          <h3><span class="ref">C1</span>NSF / ED SBIR grants</h3>
+          <div class="value"><small>Value</small>$250–305K Phase I</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>AS</dd></div>
+          <div><dt>Decide by</dt><dd>Feb 2027</dd></div>
+        </dl>
+        <span class="pill teal">Decision parked to Feb 2027</span>
+        <ol class="steps">
+          <li>Decide by Feb 2027 whether Quixera has a genuine research question.</li>
+          <li>Note NSF Phase I deadlines: <strong>Nov 4, 2026 / Mar 4, 2027 / Jul 7, 2027</strong>.</li>
+          <li>Do not force an application without a real research question.</li>
+        </ol>
+      </article>
+
+      <article class="card" data-group="C" data-search="csit r&d voucher university lab valeria new jersey">
+        <div class="card-top">
+          <h3><span class="ref">C2</span>CSIT R&amp;D Voucher</h3>
+          <div class="value"><small>Value</small>up to $40K</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>Valeria</dd></div>
+          <div><dt>Deadline</dt><dd>Open year-round</dd></div>
+        </dl>
+        <span class="pill teal">Open year-round</span>
+        <ol class="steps">
+          <li>Define a project a NJ university lab can execute — <strong>the voucher pays labs, not engineers</strong>.</li>
+          <li>Apply — open year-round.</li>
+        </ol>
+      </article>
+
+      <article class="card" data-group="C" data-search="assemblyai startup program stt credits deepgram valeria">
+        <div class="card-top">
+          <h3><span class="ref">C3</span>AssemblyAI Startup Program</h3>
+          <div class="value"><small>Value</small>Free STT credits</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>Valeria</dd></div>
+          <div><dt>Term</dt><dd>12 months</dd></div>
+        </dl>
+        <span class="pill teal">Fallback only</span>
+        <ol class="steps">
+          <li>Apply ONLY if Deepgram declines or loses on real coach recordings.</li>
+          <li>Note: no TTS, so it cannot replace Deepgram alone.</li>
+        </ol>
+      </article>
+
+      <article class="card" data-group="C" data-search="comcast sportstech equity dormant valeria email">
+        <div class="card-top">
+          <h3><span class="ref">C4</span>Comcast SportsTech</h3>
+          <div class="value"><small>Value</small>$50K equity</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>Valeria</dd></div>
+          <div><dt>Deadline</dt><dd>By Fri Nov 14</dd></div>
+        </dl>
+        <span class="pill teal">One email, then drop</span>
+        <ol class="steps">
+          <li>Send one email.</li>
+          <li>Drop it if there is no reply — program still dormant, no 2027 class announced.</li>
+        </ol>
+      </article>
+
+      <article class="card" data-group="C" data-search="clickhouse for startups analytics database partner referral unassigned">
+        <div class="card-top">
+          <h3><span class="ref">C5</span>ClickHouse for Startups</h3>
+          <div class="value"><small>Value</small>$5K</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Owner</dt><dd>Unassigned</dd></div>
+          <div><dt>Deadline</dt><dd>—</dd></div>
+        </dl>
+        <span class="pill grey">Only if an analytics DB is added</span>
+        <ol class="steps">
+          <li>Only if an analytics DB is added.</li>
+          <li>Requires a partner referral to apply.</li>
+        </ol>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= D ================= -->
+  <section class="group gD" data-group="D" id="group-D">
+    <div class="group-head">
+      <span class="group-letter">D</span>
+      <h2>Skip / Nothing to do</h2>
+      <p>Closed out by the re-verification. Listed here so nobody re-opens them from an older sheet.</p>
+      <span class="group-count">3 items</span>
+    </div>
+    <div class="cards">
+
+      <article class="card" data-group="D" data-search="csit catalyst seed grant skip 2023 drug discovery">
+        <div class="card-top">
+          <h3><span class="ref">D1</span>CSIT Catalyst Seed Grant</h3>
+          <div class="value"><small>File said</small>$150K Round 2</div>
+        </div>
+        <span class="pill grey">Skip — no action</span>
+        <p class="note">The file's "$150K Round 2" was a <strong>July 2023 drug-discovery round</strong>. It is not a live Quixera opportunity. No action.</p>
+      </article>
+
+      <article class="card" data-group="D" data-search="anthropic premium nomination tier skip no longer exists">
+        <div class="card-top">
+          <h3><span class="ref">D2</span>Anthropic Premium $100K nomination tier</h3>
+          <div class="value"><small>File said</small>$100K</div>
+        </div>
+        <span class="pill grey">Skip — no action</span>
+        <p class="note">The tier <strong>no longer exists</strong>. No action. (The live Anthropic route is the partner-VC path in A3 / B1.)</p>
+      </article>
+
+      <article class="card" data-group="D" data-search="cloud bundle google microsoft cloudflare nvidia posthog together mongodb digitalocean already available">
+        <div class="card-top">
+          <h3><span class="ref">D3</span>Cloud bundle</h3>
+          <div class="value"><small>Status</small>Available now</div>
+        </div>
+        <span class="pill grey">Nothing to do</span>
+        <p class="note">Google / Microsoft / Cloudflare / NVIDIA / PostHog / Together / MongoDB / DigitalOcean tiers — <strong>already available</strong>. No action needed to unlock them.</p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= E ================= -->
+  <section class="group gE" data-group="E" id="group-E">
+    <div class="group-head">
+      <span class="group-letter">E</span>
+      <h2>Not in the file — still live</h2>
+      <p>Flagged gaps from the Oct 21 v3.1 re-verification. These programs are live but appear nowhere in the workbook, so they will not show up in any sheet-driven review.</p>
+      <span class="group-count">9 items</span>
+    </div>
+    <div class="cards">
+
+      <article class="card urgent" data-group="E" data-search="a16z speedrun closes november 1 most urgent apply">
+        <div class="card-top">
+          <h3><span class="ref">E1</span>a16z speedrun</h3>
+          <span class="urgent-badge">Most urgent</span>
+        </div>
+        <dl class="meta">
+          <div><dt>Value</dt><dd>up to $1M</dd></div>
+          <div><dt>Deadline</dt><dd class="deadline-red">Closes Nov 1, 2026</dd></div>
+        </dl>
+        <span class="pill red">Closes in 5 days</span>
+        <p class="nextstep"><strong>Next step — Apply</strong>Closes Sun Nov 1, 2026 — the nearest live deadline on this page and it is not in the workbook.</p>
+      </article>
+
+      <article class="card" data-group="E" data-search="nsf sbir phase i november 4 deadline evaluate">
+        <div class="card-top">
+          <h3><span class="ref">E2</span>NSF SBIR Phase I</h3>
+          <div class="value"><small>Value</small>Phase I</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Value</dt><dd>See C1 — $250–305K Phase I</dd></div>
+          <div><dt>Deadline</dt><dd class="deadline-amber">Nov 4, 2026</dd></div>
+        </dl>
+        <span class="pill amber">Deadline Nov 4, 2026</span>
+        <p class="nextstep"><strong>Next step — Evaluate</strong>This Nov 4 window passes before the Feb 2027 decision in C1 — decide explicitly whether to let it go.</p>
+      </article>
+
+      <article class="card" data-group="E" data-search="uefa euro 2028 innovation november 14 apply">
+        <div class="card-top">
+          <h3><span class="ref">E3</span>UEFA EURO 2028 Innovation</h3>
+          <div class="value"><small>Value</small>—</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Value</dt><dd>Not stated in the flag</dd></div>
+          <div><dt>Deadline</dt><dd class="deadline-amber">Open till Nov 14, 2026</dd></div>
+        </dl>
+        <span class="pill amber">Open till Nov 14, 2026</span>
+        <p class="nextstep"><strong>Next step — Evaluate</strong>Sports-innovation window open now; assess fit and apply before Nov 14 if it matches.</p>
+      </article>
+
+      <article class="card" data-group="E" data-search="fifa innovation programme open now evaluate">
+        <div class="card-top">
+          <h3><span class="ref">E4</span>FIFA Innovation Programme</h3>
+          <div class="value"><small>Value</small>—</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Value</dt><dd>Not stated in the flag</dd></div>
+          <div><dt>Deadline</dt><dd>Open now</dd></div>
+        </dl>
+        <span class="pill blue">Open now</span>
+        <p class="nextstep"><strong>Next step — Evaluate</strong>Open now with no closing date flagged — review the criteria and decide whether to pursue.</p>
+      </article>
+
+      <article class="card" data-group="E" data-search="nebius gpu credits 150k evaluate apply">
+        <div class="card-top">
+          <h3><span class="ref">E5</span>Nebius</h3>
+          <div class="value"><small>Value</small>up to $150K</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Value</dt><dd>up to $150K GPU credits</dd></div>
+          <div><dt>Deadline</dt><dd>Not flagged</dd></div>
+        </dl>
+        <span class="pill blue">Live — not in file</span>
+        <p class="nextstep"><strong>Next step — Evaluate</strong>Largest credit gap found in the re-verification; check eligibility against current GPU usage.</p>
+      </article>
+
+      <article class="card" data-group="E" data-search="ovhcloud 110k credits evaluate">
+        <div class="card-top">
+          <h3><span class="ref">E6</span>OVHcloud</h3>
+          <div class="value"><small>Value</small>~$110K</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Value</dt><dd>~$110K</dd></div>
+          <div><dt>Deadline</dt><dd>Not flagged</dd></div>
+        </dl>
+        <span class="pill blue">Live — not in file</span>
+        <p class="nextstep"><strong>Next step — Evaluate</strong>Compare against the cloud tiers already available in D3 before applying.</p>
+      </article>
+
+      <article class="card" data-group="E" data-search="akamai rise 120k evaluate">
+        <div class="card-top">
+          <h3><span class="ref">E7</span>Akamai Rise</h3>
+          <div class="value"><small>Value</small>up to $120K</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Value</dt><dd>up to $120K</dd></div>
+          <div><dt>Deadline</dt><dd>Not flagged</dd></div>
+        </dl>
+        <span class="pill blue">Live — not in file</span>
+        <p class="nextstep"><strong>Next step — Evaluate</strong>Check program criteria and whether the credits fit Quixera's delivery / CDN needs.</p>
+      </article>
+
+      <article class="card" data-group="E" data-search="digitalocean hatch 100k apply watch">
+        <div class="card-top">
+          <h3><span class="ref">E8</span>DigitalOcean Hatch</h3>
+          <div class="value"><small>Value</small>up to $100K</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Value</dt><dd>up to $100K</dd></div>
+          <div><dt>Deadline</dt><dd>Not flagged</dd></div>
+        </dl>
+        <span class="pill blue">Live — not in file</span>
+        <p class="nextstep"><strong>Next step — Watch</strong>Note D3 lists a DigitalOcean tier as already available — confirm whether Hatch is that tier or an additional one before applying.</p>
+      </article>
+
+      <article class="card" data-group="E" data-search="plug and play sportstech equity-free pilots evaluate">
+        <div class="card-top">
+          <h3><span class="ref">E9</span>Plug and Play Sportstech</h3>
+          <div class="value"><small>Value</small>Equity-free pilots</div>
+        </div>
+        <dl class="meta">
+          <div><dt>Value</dt><dd>Equity-free pilots</dd></div>
+          <div><dt>Deadline</dt><dd>Not flagged</dd></div>
+        </dl>
+        <span class="pill blue">Live — not in file</span>
+        <p class="nextstep"><strong>Next step — Evaluate</strong>Sportstech fit is direct; assess pilot criteria against Quixera's academy product.</p>
+      </article>
+
+    </div>
+  </section>
+
+  <div class="empty" id="emptyState">No programs match that search in the selected group. Clear the search or pick “All”.</div>
+
+  <footer>
+    <strong>How to read this page:</strong> Sections A–D come from sheet “7. Priority (22 Oct)” of the workbook named in the header, with the NJ Innovation Fellows verdict and the Oct 24 dates corrected as of Oct 27, 2026. Section E is deliberately separate — those nine programs are live but absent from the file. Per the NJEDA FAQ (updated Sep 8, 2026), NJ Innovation Fellows funds unformed business ideas only: forming a legal entity, registering to do business in NJ, or raising third-party capital are each disqualifying, and foreign-qualifying a Delaware entity in NJ is itself disqualifying.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('section.group'));
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+  var input = document.getElementById('q');
+  var countLine = document.getElementById('countLine');
+  var empty = document.getElementById('emptyState');
+  var activeFilter = 'all';
+  var total = cards.length;
+
+  function apply(){
+    var q = (input.value || '').trim().toLowerCase();
+    var shown = 0;
+    cards.forEach(function(card){
+      var groupOk = activeFilter === 'all' || card.getAttribute('data-group') === activeFilter;
+      var text = (card.textContent + ' ' + (card.getAttribute('data-search') || '')).toLowerCase();
+      var searchOk = !q || text.indexOf(q) !== -1;
+      var visible = groupOk && searchOk;
+      card.classList.toggle('hidden', !visible);
+      if (visible) shown++;
+    });
+    sections.forEach(function(sec){
+      var g = sec.getAttribute('data-group');
+      var anyVisible = cards.some(function(c){ return c.getAttribute('data-group') === g && !c.classList.contains('hidden'); });
+      sec.style.display = anyVisible ? '' : 'none';
+    });
+    countLine.innerHTML = 'Showing <strong>' + shown + '</strong> of ' + total + ' items';
+    empty.classList.toggle('show', shown === 0);
+  }
+
+  chips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      chips.forEach(function(c){ c.setAttribute('aria-pressed','false'); });
+      chip.setAttribute('aria-pressed','true');
+      activeFilter = chip.getAttribute('data-filter');
+      apply();
+    });
+  });
+  input.addEventListener('input', apply);
+  apply();
+})();
+</script>
+</body>
+</html>
