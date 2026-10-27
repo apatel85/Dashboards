@@ -1,0 +1,25 @@
+{
+  "id": "P3-001",
+  "source": "arlo",
+  "project": "QuixeraDev",
+  "issue_type": "Bug",
+  "title": "Billing invoice tabs fail to load: 'Couldn't load invoices \u2014 set the academy billing timezone'",
+  "severity": "High",
+  "page": "/billing",
+  "url": "https://facility-dev.quixeraos.com/billing",
+  "expected": "Outstanding and Refunded tabs list their invoices with footer sums, as the Payments list does (189 payments load fine).",
+  "actual": "2026-10-26 recheck: Outstanding tab and Refunded tab both show 'Couldn't load invoices \u2014 set the academy billing timezone' with no rows (Refunded footer reads '1\u20137 of 7' despite no rows). The Billing OUTSTANDING KPI itself still reads $2,374.76. This blocks verification of DEV-004 (Outstanding sum), P2-001 (Refunded statuses) and P2-002 (payer search).",
+  "steps": [
+    "Open Finance \u2192 Billing.",
+    "Click the Outstanding tab.",
+    "Click the Refunded tab.",
+    "Compare with Finance \u2192 Payments (loads fine)."
+  ],
+  "trail": [],
+  "shots": [],
+  "clip": null,
+  "clip_secs": 0,
+  "filed_by": "Arlo",
+  "status": "Open",
+  "created": "2026-10-26"
+}
