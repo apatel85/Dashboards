@@ -1,0 +1,23 @@
+{
+  "id": "P3-014",
+  "source": "arlo",
+  "project": "QuixeraDev",
+  "issue_type": "Bug",
+  "title": "Tax status contradiction: Action needed says expired, Settings \u2192 Taxes says Active",
+  "severity": "Medium",
+  "page": "/dashboard",
+  "url": "https://facility-dev.quixeraos.com/dashboard",
+  "expected": "One consistent tax state.",
+  "actual": "2026-10-26: Dashboard 'Action needed' shows 'Tax configuration expired' for New test facility and Cromwell Connecticut ('tax is not being collected there'), while Settings \u2192 Taxes shows a single NJ row, State 6.625%, combined 6.625%, FACILITIES 3, EFFECTIVE 21 Aug 2026 \u2192 \u2014, STATUS Active. Cause unresolved \u2014 reported as an inconsistency.",
+  "steps": [
+    "Open Dashboard \u2192 View action items (Tax items).",
+    "Open Settings \u2192 Taxes and compare."
+  ],
+  "trail": [],
+  "shots": [],
+  "clip": null,
+  "clip_secs": 0,
+  "filed_by": "Arlo",
+  "status": "Open",
+  "created": "2026-10-26"
+}
