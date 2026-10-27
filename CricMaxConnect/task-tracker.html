@@ -231,9 +231,9 @@ const RECOVERED = [
 let allTasks = [], allDecisions = [], coverLines = [];
 let currentView = 'overview', currentWorkstream = 'ALL';
 let lastSyncMs = 0, lastAlertSig = '';
-// Paste the deployed Apps Script /exec URL here to enable editing for
-// everyone on every device. Leave empty to set it per-browser in About & Setup.
-const BRIDGE_URL_DEFAULT = '';
+// Live bridge URL, baked in 2026-10-27 so every device connects with no
+// setup. A URL pasted in About & Setup still overrides this per-browser.
+const BRIDGE_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbz5O3YmAdr2jeY_57jASmgQ0HEeEx8NRxtHtGMmtTheCFmBHbZGwjDcZfyzqoEk1ZVA/exec';
 let bridgeUrl = '';
 let currentSort = 'due';
 
