@@ -1,5 +1,9 @@
 # AGENTLOG — CricMaxConnect
 
+## 2026-10-27 — Tracker: bridge URL hardcoded as default
+- Ankit deployed the Apps Script bridge as a STANDALONE project (sheet-bound deploy kept failing with a permission error despite Editor access) and shared the /exec URL.
+- Verified the URL returns {ok:true, service:krca-tracker-bridge}, then set it as BRIDGE_URL_DEFAULT in task-tracker.html and republished (verified live). Every device now connects with no setup; a URL pasted in About & Setup still overrides per-browser.
+
 ## 2026-10-25 — Tracker v2.1: ID width, sorting, Timeline, due-date editing
 - Fixed ID column wrapping (C-01 split across lines) with nowrap + fixed width; owner column also no-wrap.
 - Sorting control on All Tasks: Due date (soonest first, default), ID, Priority. Due sort = open work first, dated ascending, then relative-due, then no due, Done sinks to bottom; choice persists per browser. Due chips added (in Xd / overdue Xd / due today).
