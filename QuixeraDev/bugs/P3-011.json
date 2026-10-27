@@ -1,0 +1,23 @@
+{
+  "id": "P3-011",
+  "source": "arlo",
+  "project": "QuixeraDev",
+  "issue_type": "Bug",
+  "title": "Reports allow self-review and repeat identical outcomes indistinguishably",
+  "severity": "Medium",
+  "page": "/messages?tab=reports",
+  "url": "https://facility-dev.quixeraos.com/messages?tab=reports",
+  "expected": "A report cannot be reviewed by the person reported; per-attachment outcomes are distinguishable.",
+  "actual": "2026-10-26: Messages \u2192 Reports \u2192 Reviewed shows entries 'Reviewed by the admin who was reported' (Nayan Thacker \u00d73, Brijal Gaglani \u00d71) and 9 identical 'Reviewed \u00b7 Hid the attachment \u00b7 by Nayan Thacker' entries for one chat, with nothing distinguishing which attachment each refers to.",
+  "steps": [
+    "Open Messages \u2192 Reports \u2192 Reviewed.",
+    "Read the reviewer names and the repeated outcome entries."
+  ],
+  "trail": [],
+  "shots": [],
+  "clip": null,
+  "clip_secs": 0,
+  "filed_by": "Arlo",
+  "status": "Open",
+  "created": "2026-10-26"
+}
