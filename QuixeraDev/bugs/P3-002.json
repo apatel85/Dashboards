@@ -1,0 +1,24 @@
+{
+  "id": "P3-002",
+  "source": "arlo",
+  "project": "QuixeraDev",
+  "issue_type": "Bug",
+  "title": "Memberships directory header pill 'Active members 241' shows the total membership count, not the active count (136)",
+  "severity": "Medium",
+  "page": "/memberships/directory",
+  "url": "https://facility-dev.quixeraos.com/memberships/directory",
+  "expected": "The 'Active members' pill matches the Active tab count (136).",
+  "actual": "2026-10-26 recheck: directory header pill reads 'Active members 241', which equals the total membership count, while the directory's own ACTIVE MEMBERS figure and Active tab both read 136. (The dashboard\u2192directory count mismatch MAN-MVGU7NPC is fixed; this is the directory's own header pill disagreeing with its own tabs.)",
+  "steps": [
+    "Open Memberships \u2192 Directory.",
+    "Read the header pill 'Active members'.",
+    "Read the ACTIVE MEMBERS figure and the Active tab count."
+  ],
+  "trail": [],
+  "shots": [],
+  "clip": null,
+  "clip_secs": 0,
+  "filed_by": "Arlo",
+  "status": "Open",
+  "created": "2026-10-26"
+}
