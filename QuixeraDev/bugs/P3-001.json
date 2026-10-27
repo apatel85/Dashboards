@@ -8,7 +8,7 @@
   "page": "/billing",
   "url": "https://facility-dev.quixeraos.com/billing",
   "expected": "Outstanding and Refunded tabs list their invoices with footer sums, as the Payments list does (189 payments load fine).",
-  "actual": "2026-10-26 recheck: Outstanding tab and Refunded tab both show 'Couldn't load invoices \u2014 set the academy billing timezone' with no rows (Refunded footer reads '1\u20137 of 7' despite no rows). The Billing OUTSTANDING KPI itself still reads $2,374.76. This blocks verification of DEV-004 (Outstanding sum), P2-001 (Refunded statuses) and P2-002 (payer search).",
+  "actual": "2026-10-26 recheck: Outstanding tab and Refunded tab both show 'Couldn't load invoices \u2014 set the academy billing timezone' with no rows (Refunded footer reads '1\u20137 of 7' despite no rows). Feature pass 2026-10-26 adds: Billing heading 'Couldn't load invoices' with 'Set the academy billing timezone to view invoice dates correctly. Contact platform support to complete billing setup.' and a 'Try again' button that does not fix it, while the footer still shows 'Total: 335 invoices, 1\u201325 of 335' with 'Next page' enabled. The Billing OUTSTANDING KPI itself still reads $2,374.76. This blocks verification of DEV-004, P2-001 and P2-002.",
   "steps": [
     "Open Finance \u2192 Billing.",
     "Click the Outstanding tab.",
