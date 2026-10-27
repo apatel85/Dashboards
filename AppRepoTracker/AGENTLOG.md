@@ -1,5 +1,11 @@
 # AGENTLOG — AppRepoTracker
 
+## 2026-10-27 — v1.0.1 — Added missing Ankit x Arpit Task Tracker entry
+- Request: App Repo was missing the CricMaxConnect task tracker shared between Ankit and Arpit; going forward, update the GitHub app directly (Muse artifact no longer updated).
+- Change: added "Ankit x Arpit Task Tracker" to Live Apps (after CricMax Connect): shared board with Ankit/Arpit/Group owners, Master Tracker sheet as source, link to CricMaxConnect/task-tracker.html, Updated 2026-10-25 (v2.1), bridge-deploy flag. Counts updated to 34 entries / 17 live apps.
+- Verification: entry placement and counts checked in the pushed index.html; Pages URL re-checked after deploy.
+
+
 ## 2026-10-27 — v1.0.0 — Initial publish
 - Request: host the App Repo master tracker on GitHub Pages, with an "Updated from" field naming the Muse thread each entry was last updated from.
 - Change: published the tracker (33 entries: 16 live apps, 8 mocks/demos, 8 documents/plans, 1 automation; search + Flagged-only filter; standing rule that every new app/dashboard gets an entry by default, including its originating Muse thread) as a standalone page under AppRepoTracker/.
