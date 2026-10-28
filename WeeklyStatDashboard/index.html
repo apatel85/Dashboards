@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="light dark" />
 <link rel="icon" href="data:," />
-<title>Weekly Stat Dashboard — NFL Week 7</title>
+<title>Weekly Stat Dashboard — NFL Week 8</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -77,6 +77,23 @@
   @media (max-width:680px){
     .publish{flex-direction:column;gap:10px}
     .publish .item{flex-direction:column;gap:2px}
+  }
+
+  /* ---------- weekly job ---------- */
+  .job{
+    margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    box-shadow:var(--shadow);padding:14px 16px 16px;
+  }
+  .job-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:10px}
+  .job-head .k{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;color:var(--accent);white-space:nowrap}
+  .job-head .sched{font-weight:700;font-size:16px}
+  .job-head .last{color:var(--ink-3);font-size:13.5px}
+  .job-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;list-style:none;margin:0;padding:0}
+  .job-steps li{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink-2)}
+  .job-steps li b{display:block;color:var(--ink);font-size:14.5px;margin-bottom:2px}
+  .job-steps .step-n{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:13px;letter-spacing:.08em;color:var(--accent)}
+  @media (max-width:680px){
+    .job-steps{grid-template-columns:1fr}
   }
 
   /* ---------- controls ---------- */
@@ -259,18 +276,19 @@
 <div class="wrap">
 
   <header class="top">
-    <div class="weekline">NFL · Week 7 · Thu–Mon, Oct 22–26, 2026</div>
+    <div class="weekline">NFL · Week 8 · Thu–Mon, Oct 29 – Nov 2, 2026</div>
     <h1>Weekly Stat Dashboard</h1>
     <p class="sub">Matchup-adjusted stat boards for this week's slate. Every probability blends a player's
       own per-game production with what the defense he's facing actually surrenders — then gets
-      <b>verified against a rolling backtest (Weeks 2–6 this week)</b> that re-runs every Wednesday and grows by a week
-      each time, so small samples and extreme matchups no longer run hot. Last week's calls are graded in the Results tab.</p>
+      <b>verified against a rolling backtest (Weeks 2–7 this week)</b> that re-runs every Wednesday and grows by a week
+      each time. This week's run changed one setting: the touchdown boards ran hot two weeks running, so their
+      regression was strengthened before these boards were built. Last week's calls are graded in the Results tab.</p>
     <div class="meta-row">
-      <span><b>Byes:</b> BUF · JAX · LAC · WAS</span>
-      <span><b>Data through:</b> Week 6</span>
-      <span><b>Injuries checked:</b> Wed Oct 21 (early-week reports)</span>
-      <span><b>Model:</b> verified by the rolling Weeks 2–6 backtest (see Method)</span>
-      <span><b>Weekly job:</b> every Wednesday — grade last week → rolling backtest (Wk 2 → latest) → next week's projections</span>
+      <span><b>Byes:</b> HOU · NO · NYG · SF</span>
+      <span><b>Data through:</b> Week 7</span>
+      <span><b>Injuries checked:</b> Wed Oct 28 (early-week reports)</span>
+      <span><b>Model:</b> verified by the rolling Weeks 2–7 backtest — TD regression strengthened this week (see Method)</span>
+      <span><b>Weekly job:</b> every Wednesday, 9:24 AM ET — grade last week → rolling backtest (Wk 2 → latest) → next week's projections</span>
     </div>
     <div class="publish" role="note" aria-label="Publication and refresh">
       <div class="item">
@@ -279,14 +297,26 @@
       </div>
       <div class="item">
         <span class="k">Weekly refresh</span>
-        <span class="v">A job runs <b>every Wednesday</b>: it grades the week just played (Results tab), re-runs the rolling backtest from Week 2 through that week, then rebuilds these boards for the upcoming week's games and republishes the GitHub copy.</span>
+        <span class="v">A scheduled job runs <b>every Wednesday at 9:24 AM ET</b>: it grades the week just played (Results tab), re-runs the rolling backtest from Week 2 through that week, then rebuilds these boards for the upcoming week's games and republishes the GitHub copy.</span>
       </div>
+    </div>
+    <div class="job" role="note" aria-label="Weekly Wednesday job schedule">
+      <div class="job-head">
+        <span class="k">Weekly job</span>
+        <span class="sched">Every Wednesday · 9:24 AM ET (America/New_York)</span>
+        <span class="last">Last published run: Wed, Oct 28, 2026 — Week 8 projections below. Next run: Wed, Nov 4, 2026 — Week 9 projections, Week 8 graded, backtest Weeks 2–8.</span>
+      </div>
+      <ol class="job-steps">
+        <li><span class="step-n">Step 1</span><b>Grade the week just played</b>Every call from last week's boards is checked against the final box scores and posted in the Results tab, hit or miss.</li>
+        <li><span class="step-n">Step 2</span><b>Re-run the rolling backtest</b>Weeks 2 through the last completed week — the window grows by one week each Wednesday — and the calibration is re-verified before anything is projected.</li>
+        <li><span class="step-n">Step 3</span><b>Project the upcoming week</b>Fresh boards for the upcoming week's games are built with the backtest-verified model and republished to the GitHub Pages copy above.</li>
+      </ol>
     </div>
   </header>
 
   <nav class="viewtabs" aria-label="Dashboard views">
-    <button class="vtab" data-view="proj" aria-pressed="true">Week 7 projections</button>
-    <button class="vtab" data-view="res" aria-pressed="false">Results — Week 6 graded<span class="cnt">22/42</span></button>
+    <button class="vtab" data-view="proj" aria-pressed="true">Week 8 projections</button>
+    <button class="vtab" data-view="res" aria-pressed="false">Results — Week 7 graded<span class="cnt">17/42</span></button>
   </nav>
 
   <div id="view-proj">
@@ -319,9 +349,9 @@
     </div>
   </div>
 
-  <div class="recon" role="note" aria-label="Week 6 projection versus actual reconciliation">
-    <span class="k">Week 6 reconciliation</span>
-    <span class="v"><b>22 of 42 graded calls hit (52%)</b> against a <b>54% average predicted probability</b> — receiving 10/12, rushing 5/9, touchdowns 6/11, 2+ TDs 1/10. Every Week 6 call is graded player-by-player in the Results tab.</span>
+  <div class="recon" role="note" aria-label="Week 7 projection versus actual reconciliation">
+    <span class="k">Week 7 reconciliation</span>
+    <span class="v"><b>17 of 42 graded calls hit (40%)</b> against a <b>54% average predicted probability</b> — receiving 8/16, rushing 5/8, touchdowns 4/8, 2+ TDs 0/10. The touchdown boards ran cold two weeks running, so their calibration was tightened before the Week 8 boards were built. Every Week 7 call is graded player-by-player in the Results tab.</span>
     <button class="go" id="goto-results" type="button">See the reconciliation →</button>
   </div>
 
@@ -330,44 +360,47 @@
 
   <section class="info" id="defenses">
     <h2>Defensive extremes this week</h2>
-    <p class="board-note">Season-to-date yards and TDs allowed per game (through Week 6) for the defenses in action. These are the numbers driving every matchup adjustment above.</p>
+    <p class="board-note">Season-to-date yards and TDs allowed per game (through Week 7) for the defenses in action. These are the numbers driving every matchup adjustment above.</p>
     <div class="grid2">
       <div class="panel">
         <h3>Run defense</h3>
         <h4>Softest — most rush yards allowed</h4>
         <ul class="deflist">
-          <li><span class="tm">DAL Cowboys</span><span class="vl">149.8 /g</span></li>
-          <li><span class="tm">DEN Broncos</span><span class="vl">139.8 /g</span></li>
-          <li><span class="tm">NO Saints</span><span class="vl">138.0 /g</span></li>
-          <li><span class="tm">NY Giants</span><span class="vl">135.5 /g</span></li>
+          <li><span class="tm">CAR Panthers</span><span class="vl">153.2 /g</span></li>
+          <li><span class="tm">DAL Cowboys</span><span class="vl">145.7 /g</span></li>
+          <li><span class="tm">LV Raiders</span><span class="vl">143.6 /g</span></li>
+          <li><span class="tm">DEN Broncos</span><span class="vl">133.3 /g</span></li>
         </ul>
         <h4>Toughest — fewest rush yards allowed</h4>
         <ul class="deflist">
-          <li><span class="tm">TB Buccaneers</span><span class="vl">75.5 /g</span></li>
-          <li><span class="tm">HOU Texans</span><span class="vl">83.0 /g</span></li>
-          <li><span class="tm">ATL Falcons</span><span class="vl">83.2 /g</span></li>
+          <li><span class="tm">JAX Jaguars</span><span class="vl">72.2 /g</span></li>
+          <li><span class="tm">TB Buccaneers</span><span class="vl">77.3 /g</span></li>
+          <li><span class="tm">CHI Bears</span><span class="vl">87.6 /g</span></li>
+          <li><span class="tm">ATL Falcons</span><span class="vl">88.9 /g</span></li>
         </ul>
       </div>
       <div class="panel">
         <h3>Pass defense</h3>
         <h4>Softest — most pass yards allowed</h4>
         <ul class="deflist">
-          <li><span class="tm">DET Lions</span><span class="vl">297.4 /g</span></li>
-          <li><span class="tm">ATL Falcons</span><span class="vl">252.0 /g</span></li>
-          <li><span class="tm">HOU Texans</span><span class="vl">246.0 /g</span></li>
+          <li><span class="tm">DET Lions</span><span class="vl">291.8 /g</span></li>
+          <li><span class="tm">BUF Bills</span><span class="vl">285.8 /g</span></li>
+          <li><span class="tm">JAX Jaguars</span><span class="vl">273.8 /g</span></li>
         </ul>
         <h4>Toughest — fewest pass yards allowed</h4>
         <ul class="deflist">
-          <li><span class="tm">SEA Seahawks</span><span class="vl">141.3 /g</span></li>
-          <li><span class="tm">LA Rams</span><span class="vl">167.0 /g</span></li>
-          <li><span class="tm">MIN Vikings</span><span class="vl">173.2 /g</span></li>
+          <li><span class="tm">SEA Seahawks</span><span class="vl">144.4 /g</span></li>
+          <li><span class="tm">MIN Vikings</span><span class="vl">155.0 /g</span></li>
+          <li><span class="tm">LAR Rams</span><span class="vl">186.3 /g</span></li>
+          <li><span class="tm">NY Jets</span><span class="vl">187.7 /g</span></li>
         </ul>
         <h4>Touchdown extremes</h4>
         <ul class="deflist">
-          <li><span>DET — pass TDs allowed</span><span class="vl">2.80 /g</span></li>
-          <li><span>ARI — pass TDs allowed</span><span class="vl">2.67 /g</span></li>
-          <li><span>NO — rush TDs allowed</span><span class="vl">1.83 /g</span></li>
-          <li><span>CLE — rush TDs allowed (fades Pollard)</span><span class="vl">0.17 /g</span></li>
+          <li><span>DET — pass TDs allowed</span><span class="vl">2.67 /g</span></li>
+          <li><span>BUF / WAS — pass TDs allowed</span><span class="vl">2.50 /g</span></li>
+          <li><span>CAR — rush TDs allowed</span><span class="vl">1.83 /g</span></li>
+          <li><span>TB — rush TDs allowed (fades Bijan)</span><span class="vl">0.43 /g</span></li>
+          <li><span>MIN — pass TDs allowed (fades St. Brown)</span><span class="vl">0.50 /g</span></li>
         </ul>
       </div>
     </div>
@@ -375,20 +408,19 @@
 
   <section class="info" id="injuries">
     <h2>Injury watch</h2>
-    <p class="board-note">Checked Wednesday morning, Oct 21, from early-week practice reports — final designations land later in the week, so re-check before kickoff. Players on IR or out for the season are already excluded from every board; questionable players are flagged on their rows.</p>
+    <p class="board-note">Checked Wednesday morning, Oct 28, from early-week practice reports — final designations land later in the week, so re-check before kickoff. Players on IR or out for the season are already excluded from every board; questionable players are flagged on their rows.</p>
     <div class="panel">
       <ul class="inj">
-        <li><b>Jalen Hurts</b> — <span class="st">out for the season</span> (blood clots in his lungs, reported Monday). Tanner McKee starts for PHI vs DAL on Monday night — DeVonta Smith's number carries backup-QB risk.</li>
-        <li><b>Davante Adams</b> — <span class="st">IR</span> (ruptured hamstring tendon, out 6–10 weeks). Puka Nacua is the Rams' clear No. 1 receiver at Las Vegas.</li>
-        <li><b>Lamar Jackson</b> — <span class="st">questionable</span> (ankle, missed two games). Baltimore will evaluate him during the week; if he can't go, Tyler Huntley starts again vs CIN — Zay Flowers' number swings on this one.</li>
-        <li><b>Baker Mayfield</b> — <span class="st">questionable</span> (thumb) at CAR. He pushed to play last week; Jalon Daniels started instead (164 yards, 1 TD, 2 INT). Bucky Irving's rushing spot holds either way — Tampa's passing ceiling doesn't.</li>
-        <li><b>Saquon Barkley</b> — <span class="st">questionable</span> (hamstring) vs DAL after missing two games. Dameon Pierce handled the backfield in Week 6; Barkley's four-game sample (45.5 yds/g, no TDs) doesn't clear a board either way.</li>
-        <li><b>Breece Hall</b> — <span class="st">questionable</span> (quad) vs MIA; he has played only three games all season. Braelon Allen (52.3 yds/g) has carried the Jets' backfield and doesn't clear the rushing board either.</li>
-        <li><b>Mike Evans</b> — <span class="st">questionable</span> (Achilles). Left Monday night's win over Washington at halftime when it flared up; Shanahan said he doesn't expect it to be a long-term problem. Flagged on his receiving row.</li>
-        <li><b>A.J. Brown</b> — <span class="st">questionable</span> (ankle) for Thursday at Chicago after limited practice early in the week; his two-game, 53-yard sample keeps him off the boards regardless. Chicago's <b>Kyle Monangai</b> sat out the Bears' early-week walkthroughs (thumb/toe) — see the rushing near-miss line.</li>
-        <li><b>Jeremiyah Love</b> — <span class="st">questionable</span> (ankle) vs DEN after missing Week 6; Tyler Allgeier and Zonovan Knight split the work in his absence, and Love's rate doesn't clear a board even if he returns.</li>
-        <li><b>Tank Dell</b> — returns for HOU vs NYG, his first game since a severe knee injury in December 2024; no 2026 sample, so no board. Minnesota could get <b>Jordan Mason</b> (thumb) back off IR vs IND, while <b>Jordan Addison</b> (hamstring) and <b>T.J. Hockenson</b> (concussion) are questionable.</li>
-        <li><b>Out this week:</b> Travis Etienne (NO, hamstring — expected back Week 9), De'Von Achane (MIA, IR — ACL), Romeo Doubs (NE, IR — shoulder), Michael Pittman Jr. (PIT, IR). Adonai Mitchell (NYJ, finger) is doubtful vs MIA.</li>
+        <li><b>Lamar Jackson</b> — <span class="st">expected to play</span> (ankle) at Buffalo. No official designation as of Tuesday night; Ian Rapoport reported Oct 27 that Jackson is expected back, close to 100%, in week 3 of a 2–3 week injury. If he can't go, Tyler Huntley starts his fourth straight — Zay Flowers' number was built with Jackson back, and Flowers produced 137 yards and a TD with Huntley last week anyway.</li>
+        <li><b>Jalen Hurts</b> — <span class="st">out for the season</span> (blood clots in his lungs, confirmed this week). Tanner McKee starts for PHI at Washington on Sunday night — DeVonta Smith's number carries backup-QB risk on top of his own status below.</li>
+        <li><b>DeVonta Smith</b> — <span class="st">questionable</span> (hamstring). Ruled out for Week 7 and never took the field — that cost the receiving board a call — and he had no Week 8 designation as of Tuesday. Flagged on his receiving row; treat it as a genuine game-time risk.</li>
+        <li><b>Matthew Golden</b> — <span class="st">questionable</span> (shoulder/foot). Sat out Green Bay's Tuesday walkthroughs ahead of Thursday night vs Carolina. Flagged on his receiving row — a Thursday DNP trend is the worst kind.</li>
+        <li><b>Aaron Jones</b> — <span class="st">questionable</span> (knee, MCL aggravation), day-to-day after managing 26 yards vs Indianapolis. Jordan Mason would be Minnesota's workhorse at Detroit if Jones sits; Jones sits just below the rushing cut either way (see the near-miss line).</li>
+        <li><b>Breece Hall</b> — <span class="st">week-to-week</span> (quad), did not play in Week 7 and has no Week 8 designation yet. Braelon Allen has carried the Jets' backfield (418 yards in 7 games) and makes the rushing board vs Las Vegas.</li>
+        <li><b>Amon-Ra St. Brown</b> — <span class="st">expected to play</span> (ankle) vs MIN after his 153-yard Week 7; reports say he "should be fine." His constraint this week is Minnesota's league-best pass defense, not the ankle.</li>
+        <li><b>Puka Nacua</b> — <span class="st">monitor</span> (calf). Cleared and played in Week 7 (68 yards, 1 TD) after the scare; no new setback reported, but the calf is why his row carries a flag until final reports land.</li>
+        <li><b>Ladd McConkey</b> — expected back for the Chargers at the Rams after the bye (concussion); Tre Harris (hamstring) could also return. Neither was confirmed active as of Tuesday — and neither Chargers pass-catcher's rate clears the receiving board regardless.</li>
+        <li><b>Out this week:</b> Terry McLaurin (WAS, season-ending knee injury), Jacory Croskey-Merritt (WAS, IR — groin), Romeo Doubs (NE, IR — shoulder), David Njoku (LAC, IR — fibula). Jeremiyah Love (ARI, ankle) is expected to return at Dallas after missing Week 7, but his rate doesn't clear a board.</li>
       </ul>
     </div>
   </section>
@@ -398,232 +430,1134 @@
     <p><b>Expected yards.</b> Each player's per-game rate is first regressed toward his position's average
        (<code>blended = (games × rate + 2 × position avg) ÷ (games + 2)</code>), then scaled by this week's matchup with the
        multiplier shrunk halfway back to neutral (<code>mult′ = 1 + 0.5 × (opp allowed ÷ league avg − 1)</code>).
-       League baselines through Week 6: 110.0 rush yards and 220.5 pass yards allowed per game.</p>
+       League baselines through Week 7: 111.6 rush yards and 220.9 pass yards allowed per game.</p>
     <p><b>Comfortable max</b> is that expected number itself — his average outcome in <i>this</i> game against <i>this</i> defense,
        rounded to whole yards. It is not a season ceiling or a best-case tail. <b>P(60+)</b> uses a normal approximation with
        σ = 0.65 × expected yards; "likely" means P ≥ 55%.</p>
-    <p><b>Touchdowns count physical scorers only</b> — a QB's passing TDs never count; a QB who runs it in does, on rushing TDs alone — none clears the bar this week, with Josh Allen on bye. TD rates get stronger regression (weight 4) than yardage rates, and a player
+    <p><b>Touchdowns count physical scorers only</b> — a QB's passing TDs never count; a QB who runs it in does, on rushing TDs alone.
+       Josh Allen is back from bye and clears the bar this week on 8 rushing TDs in 6 games. TD rates get stronger regression than yardage rates
+       (<b>weight 5 this week, raised from 4</b> — see the backtest verdict in the Results tab), and a player
        needs at least 3 games of data to make the 1+ TD board. <code>P(1+) = 1 − e^(−λ)</code>, <code>P(2+) = 1 − e^(−λ)(1 + λ)</code>;
        "likely 1+ TD" means P ≥ 50%. Every row shows its games sample — thin samples are the main reason the raw model used to overpromise.</p>
     <div class="bt-stats">
-      <div class="bt"><div class="n">Wk 2–6</div><div class="d">rolling backtest window, re-run every Wednesday from Week 2 through the last completed week (the original Weeks 2–5 validation covered 299 player-weeks), strict no-lookahead — each week predicted only from data available before it</div></div>
-      <div class="bt"><div class="n">−10% / −17%</div><div class="d">prediction error (Brier) cut on the rushing and TD boards by the two calibration tweaks vs the raw model</div></div>
-      <div class="bt"><div class="n">50% → 60%</div><div class="d">"likely" flag quality on the rushing board after calibration; the comfortable-max definition itself tested unbiased (average miss 3–7 yards) and was left unchanged</div></div>
+      <div class="bt"><div class="n">Wk 2–7</div><div class="d">rolling backtest window, re-run every Wednesday from Week 2 through the last completed week, strict no-lookahead — each week predicted only from data available before it</div></div>
+      <div class="bt"><div class="n">4 → 5</div><div class="d">the one change this week's backtest supported: TD-rate regression weight raised, compressing every λ on the TD boards (D'Andre Swift's 1+ TD probability fell from above the line to 49% and off the board)</div></div>
+      <div class="bt"><div class="n">HELD</div><div class="d">yardage settings unchanged — rate regression (k = 2) and multiplier shrinkage (×0.5) re-verified: the receiving board is calibrated across Weeks 6–7 (18/28 hits vs ~65% average predicted) and rushing is within noise (10/17 vs ~64%)</div></div>
     </div>
-    <p><b>Honest limits.</b> The TD board was the weakest output in the backtest (its "likely" flags hit 36% against 74% predicted
-       before calibration) — that's why it gets the strictest treatment here, and why the 2+ TD board is a ranked watch list, not a
-       promise: multi-TD games are rare and nobody is a lock. Five weeks of rolling backtest data is still a small sample, and the live model uses
-       fuller game windows than the backtest could, so real-world calibration should run a bit better than the backtest showed.</p>
+    <p><b>Honest limits.</b> The TD board remains the weakest output: across the last two live weeks it has gone 10 of 19 on 1+ TD calls
+       against a ~61% average predicted probability, and 1 of 20 on the 2+ TD watch list against ~24% — that is why it gets the strictest
+       treatment here, and why the 2+ TD board is a ranked watch list, not a promise. Six weeks of rolling backtest data is still a small sample,
+       and the live model uses fuller game windows than the backtest could, so real-world calibration should run a bit better than the backtest showed.</p>
   </section>
   </div><!-- /view-proj -->
 
   <div id="view-res" hidden>
     <section class="info">
-      <h2>Week 6 results — projections vs actuals</h2>
-      <p class="board-note">Every call from the Week 6 boards (published Sunday, Oct 18, 2026), graded against the final box scores.
-         The graded set is the calls flagged at each board's "likely" line, plus Cam Skattebo — the named just-below-the-cut back the
-         rushing board tracked. Each Wednesday the week just played gets graded here before the new boards are built, so the model
-         keeps score on itself all season.</p>
+      <h2>Week 7 results — projections vs actuals</h2>
+      <p class="board-note">Every call from the Week 7 boards (published Wednesday, Oct 21, 2026), graded against the final box scores.
+         The graded set is the calls flagged at each board's "likely" line. Week 7 was the model's coldest week of the season —
+         the yardage boards held up, but the touchdown boards missed almost everything, and two receiving calls were lost to
+         game-day inactives before kickoff. Each Wednesday the week just played gets graded here before the new boards are built.</p>
       <div class="bt-stats four">
-        <div class="bt"><div class="n">22 / 42</div><div class="d">graded calls hit — <b>52% against a 54% average predicted probability</b>. No systematic over- or under-confidence: across all four boards, the model meant what it said.</div></div>
-        <div class="bt"><div class="n">10 / 12</div><div class="d"><b>Receiving</b> was the strongest board — if anything it underpromised (65% average predicted). The misses: Olave (43 yds, ill going in) and Adams (39, left hurt).</div></div>
-        <div class="bt"><div class="n">5 / 9</div><div class="d"><b>Rushing</b> — Henry missed the number by 2 yards and Skattebo was active but got zero touches, while Walker (128) and Hubbard (120) both smashed their comfortable maxes.</div></div>
-        <div class="bt"><div class="n">6 / 11 · 1 / 10</div><div class="d"><b>Touchdowns</b> — the 1+ TD board ran slightly hot (61% average predicted); the 2+ TD watch list converted only Walker, right in line with its low 25% average.</div></div>
+        <div class="bt"><div class="n">17 / 42</div><div class="d">graded calls hit — <b>40% against a 54% average predicted probability</b>. Unlike Week 6, this week the model did run hot overall — and the miss is concentrated almost entirely on the touchdown boards.</div></div>
+        <div class="bt"><div class="n">8 / 16</div><div class="d"><b>Receiving</b> — two of the eight misses (DeVonta Smith, Mike Evans) were players ruled inactive; on the field the board went 8 of 14. Smith-Njigba (150), Flowers (137), Higgins (148) and Nabers (111) all smashed their comfortable maxes.</div></div>
+        <div class="bt"><div class="n">5 / 8</div><div class="d"><b>Rushing</b> — right in line with its 64% average predicted. Gibbs (116), Warren (101), Irving (106) and Kyren Williams (99) all cleared easily; Walker was the big miss, held to 36 in Seattle.</div></div>
+        <div class="bt"><div class="n">4 / 8 · 0 / 10</div><div class="d"><b>Touchdowns</b> — the 1+ board ran hot again (61% average predicted) and the 2+ watch list converted nobody: Gibbs, the top call on both, scored zero. That two-week pattern is what tightened the TD calibration for Week 8.</div></div>
       </div>
     </section>
 
     <main id="results"></main>
 
     <section class="info method" id="backtest">
-      <h2>Rolling backtest — Weeks 2–6</h2>
-      <p>The calibration behind the Week 7 boards is no longer a fixed Weeks 2–5 snapshot. The backtest now <b>rolls</b>:
-         every Wednesday it re-runs from Week 2 through the last completed week — strict no-lookahead, each week predicted only
-         from data available before it — re-derives whether the current settings still hold, and only then are the new boards built.
-         The window grows by one week each refresh: next Wednesday (Oct 28) it covers <b>Weeks 2–7</b> for the Week 8 projections.</p>
+      <h2>Rolling backtest — Weeks 2–7</h2>
+      <p>The backtest <b>rolls</b>: every Wednesday it re-runs from Week 2 through the last completed week — strict no-lookahead,
+         each week predicted only from data available before it — re-derives whether the current settings still hold, and only then
+         are the new boards built. This week's run covers <b>Weeks 2–7</b>; the window grows by one week each refresh, so next
+         Wednesday (Nov 4) it covers <b>Weeks 2–8</b> for the Week 9 projections.</p>
       <div class="bt-stats">
-        <div class="bt"><div class="n">Wk 2–6</div><div class="d">current backtest window — five weeks, re-verified before the Week 7 boards were published; next run expands to Weeks 2–7</div></div>
-        <div class="bt"><div class="n">HOLD</div><div class="d">verdict — rate regression (k = 2), matchup-multiplier shrinkage (×0.5) and the TD board's stronger regression (weight 4) all re-verified; no setting changed</div></div>
-        <div class="bt"><div class="n">52% vs 54%</div><div class="d">Week 6 live grading — hit rate vs average predicted probability across the 42 graded calls; the best-calibrated week of the window so far, which is why the settings held</div></div>
+        <div class="bt"><div class="n">Wk 2–7</div><div class="d">current backtest window — six weeks, re-verified before the Week 8 boards were published; next run expands to Weeks 2–8</div></div>
+        <div class="bt"><div class="n">CHANGED: TD only</div><div class="d">TD-rate regression weight raised 4 → 5. Evidence: live TD grading across Weeks 6–7 went 10/19 on 1+ TD calls vs a ~61% average predicted probability and 1/20 on 2+ TD calls vs ~24% — the board overpromises at the top, so the top gets pulled down harder</div></div>
+        <div class="bt"><div class="n">HELD: yardage</div><div class="d">rate regression (k = 2) and multiplier shrinkage (×0.5) re-verified and unchanged — receiving went 18/28 across Weeks 6–7 against a ~65% average predicted (calibrated), rushing 10/17 against ~64% (within noise on this sample)</div></div>
       </div>
       <p><b>How the loop runs each Wednesday:</b> (1) grade the week just played into the Results tab above, (2) re-run the rolling
          backtest over the expanded window and apply only the changes it supports, (3) rebuild the boards for the upcoming week.
-         Week 7's projections were not altered mid-week by the Weeks 2–6 run — the verified settings simply carry forward.</p>
+         Week 8's yardage projections use the same settings as Week 7's; only the touchdown λ values were recomputed under the
+         stronger regression — which is why D'Andre Swift, on the 1+ TD board last week, sits just below the line this week at 49%.</p>
     </section>
   </div><!-- /view-res -->
 
   <footer>
-    <p><b>Snapshot:</b> Week 7 boards as computed Wednesday, Oct 21, 2026, published as a static page on GitHub Pages
-       (Dashboards repo, <i>WeeklyStatDashboard/index.html</i> → apatel85.github.io/Dashboards/WeeklyStatDashboard/). Each Wednesday the weekly
+    <p><b>Snapshot:</b> Week 8 boards as computed Wednesday, Oct 28, 2026, published as a static page on GitHub Pages
+       (Dashboards repo, <i>WeeklyStatDashboard/index.html</i> → apatel85.github.io/Dashboards/WeeklyStatDashboard/). Each Wednesday at 9:24 AM ET the weekly
        job grades the week just played into the Results tab, re-runs the rolling backtest (Week 2 through the latest completed week),
        rebuilds these boards for the upcoming week, and republishes the GitHub copy.
        Use the Download button above to save this file locally.</p>
-    <p>Week 6 actuals for the Results tab: Pro-Football-Reference box scores (BUF @ LV verified directly) and Sportradar box-score
-       tables, cross-checked against USA Today team wires, NBC Sports, FantasyPros and RotoWire game reports.</p>
-    <p>Sources: Pro-Football-Reference 2026 (player and opponent tables), StatMuse, FantasyPros, StatChasers (fantasy points allowed),
-       NBC Sports / Rotoworld, ESPN, Schefter &amp; Rapoport reporting. Statistical analysis only — not betting advice.</p>
+    <p>Week 7 actuals for the Results tab: Pro-Football-Reference and Sportradar box scores, cross-checked against NBC Sports,
+       FantasyPros and game reports (DAL 38 at PHI 21, Mon Oct 26, verified directly). Season stats and defensive tables through
+       Week 7: Pro-Football-Reference (Jets defensive per-game figures via ClutchPoints team totals). Injury news: NBC Sports
+       Week 8 injury report (updated Tue Oct 27) and Rapoport reporting.</p>
+    <p>Sources: Pro-Football-Reference 2026 (player and opponent tables), Sportradar, StatMuse, FantasyPros, ClutchPoints,
+       NBC Sports / Rotoworld, ESPN, Schefter &amp; Rapoport reporting, Reuters. Statistical analysis only — not betting advice.</p>
   </footer>
 </div>
 
 <script>
 "use strict";
 var DATA = {
-  rush: {
-    title: "60+ rushing yards",
-    rule: "Likely = P(60+) ≥ 55%",
-    note: "Comfortable max is the matchup-adjusted expectation for this game: his rushing average, regressed for sample size, scaled for the run defense he faces.",
-    kind: "yards",
-    rows: [
-      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"@ SEA", g:5, avg:133.0, allowed:96.0, max:100, p:73, note:"returns to Seattle, the team he won Super Bowl MVP with in February"},
-      {n:"Jahmyr Gibbs", pos:"RB", team:"DET", opp:"vs GB", g:5, avg:100.8, allowed:114.3, max:86, p:68},
-      {n:"Bijan Robinson", pos:"RB", team:"ATL", opp:"vs SF", g:6, avg:106.8, allowed:90.2, max:83, p:66},
-      {n:"Derrick Henry", pos:"RB", team:"BAL", opp:"vs CIN", g:6, avg:89.0, allowed:123.0, max:82, p:66},
-      {n:"Jaylen Warren", pos:"RB", team:"PIT", opp:"vs NO", g:6, avg:76.7, allowed:138.0, max:77, p:63, note:"neutral-site game in Paris"},
-      {n:"Aaron Jones", pos:"RB", team:"MIN", opp:"vs IND", g:5, avg:82.0, allowed:122.5, max:75, p:62},
-      {n:"Bucky Irving", pos:"RB", team:"TB", opp:"@ CAR", g:6, avg:75.3, allowed:132.2, max:74, p:61, note:"Baker Mayfield (thumb) may return; Jalon Daniels started last week"},
-      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"@ LV", g:6, avg:65.5, allowed:134.3, max:66, p:56}
+  "rush": {
+    "title": "60+ rushing yards",
+    "rule": "Likely = P(60+) ≥ 55%",
+    "note": "Comfortable max is the matchup-adjusted expectation for this game: his rushing average, regressed for sample size, scaled for the run defense he faces. Denver's and Las Vegas's soft run defenses lift the top and bottom of this board; Tampa Bay's league-best unit caps Bijan Robinson despite the league's best per-game rate.",
+    "kind": "yards",
+    "rows": [
+      {
+        "n": "Kenneth Walker III",
+        "pos": "RB",
+        "team": "KC",
+        "opp": "@ DEN",
+        "g": 6,
+        "avg": 116.8,
+        "allowed": 133.3,
+        "max": 111,
+        "p": 76,
+        "note": "701 yards in 6 games — Denver allows 133.3 rush yds/g"
+      },
+      {
+        "n": "James Cook III",
+        "pos": "RB",
+        "team": "BUF",
+        "opp": "vs BAL",
+        "g": 6,
+        "avg": 104.5,
+        "allowed": 96.6,
+        "max": 86,
+        "p": 68,
+        "note": "back from bye; Josh Allen's rushing threat holds the box"
+      },
+      {
+        "n": "Jahmyr Gibbs",
+        "pos": "RB",
+        "team": "DET",
+        "opp": "vs MIN",
+        "g": 6,
+        "avg": 103.3,
+        "allowed": 97.8,
+        "max": 86,
+        "p": 68,
+        "note": "116 rushing yards in Week 7 — Minnesota is the wall (97.8/g)"
+      },
+      {
+        "n": "Bijan Robinson",
+        "pos": "RB",
+        "team": "ATL",
+        "opp": "@ TB",
+        "g": 7,
+        "avg": 100.6,
+        "allowed": 77.3,
+        "max": 77,
+        "p": 63,
+        "note": "league-leading 704 rushing yards meets the league's toughest run defense (77.3/g, 0.43 rush TD/g)"
+      },
+      {
+        "n": "Jaylen Warren",
+        "pos": "RB",
+        "team": "PIT",
+        "opp": "vs CLE",
+        "g": 7,
+        "avg": 80.1,
+        "allowed": 116.4,
+        "max": 76,
+        "p": 63,
+        "note": "101 yards in Paris last week; Cleveland allows 116.4/g"
+      },
+      {
+        "n": "Derrick Henry",
+        "pos": "RB",
+        "team": "BAL",
+        "opp": "@ BUF",
+        "g": 7,
+        "avg": 82.7,
+        "allowed": 101.0,
+        "max": 73,
+        "p": 61,
+        "note": "Lamar Jackson expected back — Henry's Week 7 dud (45) came in a Huntley start"
+      },
+      {
+        "n": "Chuba Hubbard",
+        "pos": "RB",
+        "team": "CAR",
+        "opp": "@ GB",
+        "g": 6,
+        "avg": 76.5,
+        "allowed": 115.0,
+        "max": 72,
+        "p": 60
+      },
+      {
+        "n": "Kyren Williams",
+        "pos": "RB",
+        "team": "LAR",
+        "opp": "vs LAC",
+        "g": 7,
+        "avg": 70.3,
+        "allowed": 123.8,
+        "max": 71,
+        "p": 59,
+        "note": "99 yards at Las Vegas last week"
+      },
+      {
+        "n": "Javonte Williams",
+        "pos": "RB",
+        "team": "DAL",
+        "opp": "vs ARI",
+        "g": 7,
+        "avg": 67.4,
+        "allowed": 126.3,
+        "max": 69,
+        "p": 58,
+        "note": "155 yards and a TD on Monday night at Philadelphia"
+      },
+      {
+        "n": "Bucky Irving",
+        "pos": "RB",
+        "team": "TB",
+        "opp": "vs ATL",
+        "g": 7,
+        "avg": 79.7,
+        "allowed": 88.9,
+        "max": 67,
+        "p": 56,
+        "note": "106 yards and two rushing TDs at Carolina — Atlanta's run defense (88.9/g) is the drag"
+      },
+      {
+        "n": "Tony Pollard",
+        "pos": "RB",
+        "team": "TEN",
+        "opp": "@ CIN",
+        "g": 7,
+        "avg": 68.3,
+        "allowed": 116.3,
+        "max": 67,
+        "p": 56,
+        "note": "129 yards at Cleveland last week"
+      },
+      {
+        "n": "Braelon Allen",
+        "pos": "RB",
+        "team": "NYJ",
+        "opp": "vs LV",
+        "g": 7,
+        "avg": 59.7,
+        "allowed": 143.6,
+        "max": 67,
+        "p": 56,
+        "note": "the Jets' lead back with Breece Hall week-to-week; Las Vegas allows 143.6 rush yds/g"
+      },
+      {
+        "n": "Bhaysul Tuten",
+        "pos": "RB",
+        "team": "JAX",
+        "opp": "vs IND",
+        "g": 6,
+        "avg": 64.7,
+        "allowed": 124.4,
+        "max": 66,
+        "p": 55
+      }
     ],
-    near: "<b>Just below the cut:</b> Jonathan Taylor (IND @ MIN) 54% · comfortable max 65 — Minnesota's run defense (86.6 yds/g allowed) is the wall. Kyle Monangai (CHI vs NE) 53% · max 63, and he sat out Chicago's early-week walkthroughs (thumb/toe). Chuba Hubbard (CAR vs TB) 52% · max 62 — Tampa Bay allows a league-low 75.5 rush yds/g."
+    "near": "<b>Just below the cut:</b> Jonathan Taylor (IND @ JAX) 54% · comfortable max 64 — Jacksonville allows a league-low 72.2 rush yds/g. Aaron Jones (MIN @ DET) 54% · max 64, and he's day-to-day with a knee aggravation. D'Andre Swift (CHI @ SEA) 49% · max 59 — Seattle's run defense (89.4/g) plus Chicago's Monday-night spot keep him off."
   },
-  rec: {
-    title: "60+ receiving yards",
-    rule: "Likely = P(60+) ≥ 55%",
-    note: "Same build as the rushing board, against pass defenses. Detroit's league-worst pass defense (297.4 yds/g allowed) is doing heavy lifting for the Green Bay pair near the top.",
-    kind: "yards",
-    rows: [
-      {n:"Jaxon Smith-Njigba", pos:"WR", team:"SEA", opp:"vs KC", g:6, avg:119.5, allowed:217.2, max:100, p:73, note:"league-leading 717 receiving yards"},
-      {n:"Christian Watson", pos:"WR", team:"GB", opp:"@ DET", g:6, avg:89.7, allowed:297.4, max:92, p:70},
-      {n:"CeeDee Lamb", pos:"WR", team:"DAL", opp:"@ PHI", g:6, avg:96.2, allowed:244.5, max:88, p:69},
-      {n:"Puka Nacua", pos:"WR", team:"LAR", opp:"@ LV", g:4, avg:104.3, allowed:237.3, max:88, p:69, note:"Davante Adams is on IR — clear No. 1 in this offense now"},
-      {n:"Matthew Golden", pos:"WR", team:"GB", opp:"@ DET", g:6, avg:83.5, allowed:297.4, max:87, p:68},
-      {n:"Chris Olave", pos:"WR", team:"NO", opp:"vs PIT", g:6, avg:96.7, allowed:204.3, max:81, p:65, note:"neutral-site game in Paris"},
-      {n:"Tetairoa McMillan", pos:"WR", team:"CAR", opp:"vs TB", g:5, avg:94.2, allowed:224.0, max:81, p:65},
-      {n:"Zay Flowers", pos:"WR", team:"BAL", opp:"vs CIN", g:5, avg:94.2, allowed:221.2, max:80, p:65, note:"Lamar Jackson (ankle) may return; Huntley started the last two"},
-      {n:"Drake London", pos:"WR", team:"ATL", opp:"vs SF", g:6, avg:91.7, allowed:209.8, max:78, p:64},
-      {n:"Malik Nabers", pos:"WR", team:"NYG", opp:"@ HOU", g:6, avg:82.3, allowed:246.0, max:77, p:63},
-      {n:"Tee Higgins", pos:"WR", team:"CIN", opp:"@ BAL", g:5, avg:84.6, allowed:210.3, max:72, p:60},
-      {n:"Brock Bowers", pos:"TE", team:"LV", opp:"vs LAR", g:4, avg:95.5, allowed:167.0, max:69, p:58, note:"the Rams allow the 2nd-fewest pass yards in the league — matchup caps the ceiling"},
-      {n:"Jalen Coker", pos:"WR", team:"CAR", opp:"vs TB", g:4, avg:79.8, allowed:224.0, max:69, p:58},
-      {n:"DeVonta Smith", pos:"WR", team:"PHI", opp:"vs DAL", g:4, avg:77.5, allowed:232.7, max:69, p:58, note:"Tanner McKee at QB (Hurts out for the season)"},
-      {n:"George Pickens", pos:"WR", team:"DAL", opp:"@ PHI", g:6, avg:71.3, allowed:244.5, max:68, p:57},
-      {n:"Mike Evans", pos:"WR", team:"SF", opp:"@ ATL", g:6, avg:70.0, allowed:252.0, max:68, p:57, flag:"Q — Achilles, left Mon night's game"}
+  "rec": {
+    "title": "60+ receiving yards",
+    "rule": "Likely = P(60+) ≥ 55%",
+    "note": "Same build as the rushing board, against pass defenses. Buffalo (285.8 yds/g allowed) and Detroit (291.8) — the two softest pass defenses in the league — are doing heavy lifting near the top, while Minnesota's league-best unit (155.0/g) taxes the two Lions-adjacent names on it.",
+    "kind": "yards",
+    "rows": [
+      {
+        "n": "Jaxon Smith-Njigba",
+        "pos": "WR",
+        "team": "SEA",
+        "opp": "vs CHI",
+        "g": 7,
+        "avg": 123.9,
+        "allowed": 225.9,
+        "max": 110,
+        "p": 76,
+        "note": "league-leading 867 receiving yards; 150 and a TD in Week 7"
+      },
+      {
+        "n": "Zay Flowers",
+        "pos": "WR",
+        "team": "BAL",
+        "opp": "@ BUF",
+        "g": 6,
+        "avg": 101.3,
+        "allowed": 285.8,
+        "max": 103,
+        "p": 74,
+        "note": "137 and a TD with Huntley in Week 7 — and Lamar Jackson is expected back against the league's 2nd-softest pass defense"
+      },
+      {
+        "n": "Tee Higgins",
+        "pos": "WR",
+        "team": "CIN",
+        "opp": "vs TEN",
+        "g": 6,
+        "avg": 95.2,
+        "allowed": 233.0,
+        "max": 87,
+        "p": 69,
+        "note": "148 and a TD in the Week 7 comeback vs Baltimore"
+      },
+      {
+        "n": "CeeDee Lamb",
+        "pos": "WR",
+        "team": "DAL",
+        "opp": "vs ARI",
+        "g": 7,
+        "avg": 93.0,
+        "allowed": 228.0,
+        "max": 86,
+        "p": 68,
+        "note": "74 yards and two TDs on Monday night"
+      },
+      {
+        "n": "Puka Nacua",
+        "pos": "WR",
+        "team": "LAR",
+        "opp": "vs LAC",
+        "g": 5,
+        "avg": 97.0,
+        "allowed": 206.2,
+        "max": 82,
+        "p": 66,
+        "flag": "Monitor — calf, played Week 7",
+        "note": "Davante Adams remains on IR — clear No. 1 in this offense"
+      },
+      {
+        "n": "Drake London",
+        "pos": "WR",
+        "team": "ATL",
+        "opp": "@ TB",
+        "g": 7,
+        "avg": 88.0,
+        "allowed": 217.4,
+        "max": 80,
+        "p": 65
+      },
+      {
+        "n": "Tetairoa McMillan",
+        "pos": "WR",
+        "team": "CAR",
+        "opp": "@ GB",
+        "g": 6,
+        "avg": 85.2,
+        "allowed": 208.0,
+        "max": 75,
+        "p": 62
+      },
+      {
+        "n": "DeVonta Smith",
+        "pos": "WR",
+        "team": "PHI",
+        "opp": "@ WAS",
+        "g": 4,
+        "avg": 77.5,
+        "allowed": 254.0,
+        "max": 75,
+        "p": 62,
+        "flag": "Q — hamstring, inactive in Week 7",
+        "note": "Tanner McKee at QB (Hurts out for the season); Washington allows 254.0 pass yds/g"
+      },
+      {
+        "n": "Christian Watson",
+        "pos": "WR",
+        "team": "GB",
+        "opp": "vs CAR",
+        "g": 7,
+        "avg": 85.0,
+        "allowed": 195.7,
+        "max": 74,
+        "p": 61,
+        "note": "Carolina's pass defense is its strength (195.7/g) — its run defense is the sieve"
+      },
+      {
+        "n": "Brock Bowers",
+        "pos": "TE",
+        "team": "LV",
+        "opp": "@ NYJ",
+        "g": 5,
+        "avg": 91.0,
+        "allowed": 187.7,
+        "max": 72,
+        "p": 60,
+        "note": "the Jets allow just 187.7 pass yds/g — the matchup caps a 91.0 yds/g rate"
+      },
+      {
+        "n": "Amon-Ra St. Brown",
+        "pos": "WR",
+        "team": "DET",
+        "opp": "vs MIN",
+        "g": 6,
+        "avg": 87.5,
+        "allowed": 155.0,
+        "max": 68,
+        "p": 57,
+        "note": "153 yards in Week 7 — but Minnesota allows a league-low 155.0 pass yds/g and 0.50 pass TD/g"
+      },
+      {
+        "n": "Matthew Golden",
+        "pos": "WR",
+        "team": "GB",
+        "opp": "vs CAR",
+        "g": 7,
+        "avg": 77.1,
+        "allowed": 195.7,
+        "max": 68,
+        "p": 57,
+        "flag": "Q — shoulder/foot, DNP Tue walkthroughs"
+      },
+      {
+        "n": "Justin Jefferson",
+        "pos": "WR",
+        "team": "MIN",
+        "opp": "@ DET",
+        "g": 5,
+        "avg": 60.4,
+        "allowed": 291.8,
+        "max": 68,
+        "p": 57,
+        "note": "Detroit allows a league-worst 291.8 pass yds/g — the matchup does the lifting on a thin 5-game sample"
+      },
+      {
+        "n": "George Pickens",
+        "pos": "WR",
+        "team": "DAL",
+        "opp": "vs ARI",
+        "g": 7,
+        "avg": 69.3,
+        "allowed": 228.0,
+        "max": 67,
+        "p": 57,
+        "note": "57 yards and a TD at Philadelphia last week"
+      }
     ],
-    near: "<b>Just below the cut:</b> Nico Collins (HOU vs NYG) 54% · comfortable max 64 — and Tank Dell returns this week to share targets. Garrett Wilson (NYJ vs MIA) 53% · max 63, and Amon-Ra St. Brown (DET vs GB) 52% · max 62 — Green Bay's pass defense (193.3/g) caps him despite the shootout spot."
+    "near": "<b>Just below the cut:</b> Parker Washington (JAX vs IND) 55% · comfortable max 65 — right on the line in Jacksonville's first game off the bye shuffle. Garrett Wilson (NYJ vs LV) 53% · max 63 and Trey McBride (ARI @ DAL) 53% · max 63. Ja'Marr Chase (CIN vs TEN) is 49% · max 59 — 351 yards in 6 games is a rate problem no matchup fixes."
   },
-  td1: {
-    title: "Score a touchdown",
-    rule: "Likely = P(1+ TD) ≥ 50% · minimum 3 games",
-    note: "Physical scorers only — rushing and receiving TDs. No QB passing TDs — and with Josh Allen on bye, no QB clears the bar this week. TD rates get the strongest regression in the model after the backtest showed this board running hottest.",
-    kind: "td",
-    rows: [
-      {n:"Jahmyr Gibbs", pos:"RB", team:"DET", opp:"vs GB", g:5, lam:1.40, p:75, p2:41, note:"9 total TDs in 5 games (7 rushing, 2 receiving)"},
-      {n:"Javonte Williams", pos:"RB", team:"DAL", opp:"@ PHI", g:6, lam:1.11, p:67, p2:30},
-      {n:"Christian Watson", pos:"WR", team:"GB", opp:"@ DET", g:6, lam:1.04, p:65, p2:28, note:"6 receiving TDs — Detroit allows a league-worst 2.80 pass TD/g"},
-      {n:"Derrick Henry", pos:"RB", team:"BAL", opp:"vs CIN", g:6, lam:0.95, p:61, p2:25},
-      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"@ SEA", g:5, lam:0.91, p:60, p2:23, note:"8 total TDs — four multi-TD games in five with KC"},
-      {n:"Christian McCaffrey", pos:"RB", team:"SF", opp:"@ ATL", g:6, lam:0.87, p:58, p2:22, note:"all 7 TDs on the ground; his yardage rate doesn't clear the rushing board"},
-      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"@ LV", g:6, lam:0.73, p:52, p2:17},
-      {n:"D'Andre Swift", pos:"RB", team:"CHI", opp:"vs NE", g:6, lam:0.70, p:50, p2:16}
+  "td1": {
+    "title": "Score a touchdown",
+    "rule": "Likely = P(1+ TD) ≥ 50% · minimum 3 games",
+    "note": "Physical scorers only — rushing and receiving TDs. No QB passing TDs; Josh Allen qualifies on rushing TDs alone (8 in 6 games). TD rates get the strongest regression in the model — strengthened again this week (weight 4 → 5) after the Weeks 2–7 backtest, so every λ here runs a touch lower than last week's method would give.",
+    "kind": "td",
+    "rows": [
+      {
+        "n": "Javonte Williams",
+        "pos": "RB",
+        "team": "DAL",
+        "opp": "vs ARI",
+        "g": 7,
+        "lam": 1.16,
+        "p": 69,
+        "p2": 32,
+        "note": "9 total TDs in 7 games; Arizona allows 3.57 total TD/g"
+      },
+      {
+        "n": "Derrick Henry",
+        "pos": "RB",
+        "team": "BAL",
+        "opp": "@ BUF",
+        "g": 7,
+        "lam": 1.05,
+        "p": 65,
+        "p2": 28,
+        "note": "Buffalo allows 2.50 pass TD/g and 3.50 total TD/g — and Jackson's return restores the goal-line offense"
+      },
+      {
+        "n": "Josh Allen",
+        "pos": "QB",
+        "team": "BUF",
+        "opp": "vs BAL",
+        "g": 6,
+        "lam": 1.02,
+        "p": 64,
+        "p2": 27,
+        "qbrush": true,
+        "note": "8 rushing TDs in 6 games — passing TDs don't count on this board"
+      },
+      {
+        "n": "Kenneth Walker III",
+        "pos": "RB",
+        "team": "KC",
+        "opp": "@ DEN",
+        "g": 6,
+        "lam": 0.86,
+        "p": 58,
+        "p2": 21,
+        "note": "8 total TDs — held scoreless in Week 7, his first blank of the season"
+      },
+      {
+        "n": "Jaxon Smith-Njigba",
+        "pos": "WR",
+        "team": "SEA",
+        "opp": "vs CHI",
+        "g": 7,
+        "lam": 0.84,
+        "p": 57,
+        "p2": 21
+      },
+      {
+        "n": "CeeDee Lamb",
+        "pos": "WR",
+        "team": "DAL",
+        "opp": "vs ARI",
+        "g": 7,
+        "lam": 0.83,
+        "p": 57,
+        "p2": 20,
+        "note": "two TDs on Monday night; Arizona's secondary allows 2.43 pass TD/g"
+      },
+      {
+        "n": "Chuba Hubbard",
+        "pos": "RB",
+        "team": "CAR",
+        "opp": "@ GB",
+        "g": 6,
+        "lam": 0.79,
+        "p": 54,
+        "p2": 19
+      },
+      {
+        "n": "James Cook III",
+        "pos": "RB",
+        "team": "BUF",
+        "opp": "vs BAL",
+        "g": 6,
+        "lam": 0.76,
+        "p": 53,
+        "p2": 18
+      },
+      {
+        "n": "Jonathan Taylor",
+        "pos": "RB",
+        "team": "IND",
+        "opp": "@ JAX",
+        "g": 7,
+        "lam": 0.76,
+        "p": 53,
+        "p2": 18,
+        "note": "8 total TDs — Jacksonville's total-TD allowance (1.84/g) is the drag"
+      },
+      {
+        "n": "Jahmyr Gibbs",
+        "pos": "RB",
+        "team": "DET",
+        "opp": "vs MIN",
+        "g": 6,
+        "lam": 0.73,
+        "p": 52,
+        "p2": 17,
+        "note": "9 TDs in 6 games, but Minnesota allows a league-low 1.00 total TD/g — the matchup halves the edge"
+      }
     ],
-    near: "<b>Just below the cut:</b> Isaiah Likely 49% · George Kittle 49% · Chuba Hubbard 47% · Jaxon Smith-Njigba 47% · Nico Collins 47%. Josh Allen — this board's usual QB — is on bye, and no other quarterback's rushing-TD rate clears the calibrated bar this week."
+    "near": "<b>Just below the cut:</b> Christian Watson 53% · Kyren Williams 52% — both a coin-flip from the line. D'Andre Swift falls to 49% under this week's stronger TD regression (he was on this board at 50% in Week 7 and scored) · Bucky Irving 48% · Ja'Marr Chase 46%."
   },
-  td2: {
-    title: "Score 2+ touchdowns",
-    rule: "Top 10, ranked — nobody is a lock",
-    note: "Multi-TD games are rare even in the best spots: in the backtest, top-10 lists like this one produced a 2+ TD game about 1 time in 6. Read this as a ranking of the best shots, not a set of predictions.",
-    kind: "td2",
-    rows: [
-      {n:"Jahmyr Gibbs", pos:"RB", team:"DET", opp:"vs GB", g:5, lam:1.40, p:41},
-      {n:"Javonte Williams", pos:"RB", team:"DAL", opp:"@ PHI", g:6, lam:1.11, p:30},
-      {n:"Christian Watson", pos:"WR", team:"GB", opp:"@ DET", g:6, lam:1.04, p:28},
-      {n:"Derrick Henry", pos:"RB", team:"BAL", opp:"vs CIN", g:6, lam:0.95, p:25},
-      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"@ SEA", g:5, lam:0.91, p:23},
-      {n:"Christian McCaffrey", pos:"RB", team:"SF", opp:"@ ATL", g:6, lam:0.87, p:22},
-      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"@ LV", g:6, lam:0.73, p:17},
-      {n:"D'Andre Swift", pos:"RB", team:"CHI", opp:"vs NE", g:6, lam:0.70, p:16},
-      {n:"Isaiah Likely", pos:"TE", team:"NYG", opp:"@ HOU", g:6, lam:0.67, p:14},
-      {n:"George Kittle", pos:"TE", team:"SF", opp:"@ ATL", g:6, lam:0.67, p:14}
+  "td2": {
+    "title": "Score 2+ touchdowns",
+    "rule": "Top 10, ranked — nobody is a lock",
+    "note": "Multi-TD games are rare even in the best spots: this list converted 0 of 10 in Week 7 and 1 of 10 in Week 6. Read it as a ranking of the best shots, not a set of predictions — at these probabilities, one conversion in five names is a good week.",
+    "kind": "td2",
+    "rows": [
+      {
+        "n": "Javonte Williams",
+        "pos": "RB",
+        "team": "DAL",
+        "opp": "vs ARI",
+        "g": 7,
+        "lam": 1.16,
+        "p": 32
+      },
+      {
+        "n": "Derrick Henry",
+        "pos": "RB",
+        "team": "BAL",
+        "opp": "@ BUF",
+        "g": 7,
+        "lam": 1.05,
+        "p": 28
+      },
+      {
+        "n": "Josh Allen",
+        "pos": "QB",
+        "team": "BUF",
+        "opp": "vs BAL",
+        "g": 6,
+        "lam": 1.02,
+        "p": 27,
+        "qbrush": true
+      },
+      {
+        "n": "Kenneth Walker III",
+        "pos": "RB",
+        "team": "KC",
+        "opp": "@ DEN",
+        "g": 6,
+        "lam": 0.86,
+        "p": 21
+      },
+      {
+        "n": "Jaxon Smith-Njigba",
+        "pos": "WR",
+        "team": "SEA",
+        "opp": "vs CHI",
+        "g": 7,
+        "lam": 0.84,
+        "p": 21
+      },
+      {
+        "n": "CeeDee Lamb",
+        "pos": "WR",
+        "team": "DAL",
+        "opp": "vs ARI",
+        "g": 7,
+        "lam": 0.83,
+        "p": 20
+      },
+      {
+        "n": "Chuba Hubbard",
+        "pos": "RB",
+        "team": "CAR",
+        "opp": "@ GB",
+        "g": 6,
+        "lam": 0.79,
+        "p": 19
+      },
+      {
+        "n": "James Cook III",
+        "pos": "RB",
+        "team": "BUF",
+        "opp": "vs BAL",
+        "g": 6,
+        "lam": 0.76,
+        "p": 18
+      },
+      {
+        "n": "Jonathan Taylor",
+        "pos": "RB",
+        "team": "IND",
+        "opp": "@ JAX",
+        "g": 7,
+        "lam": 0.76,
+        "p": 18
+      },
+      {
+        "n": "Christian Watson",
+        "pos": "WR",
+        "team": "GB",
+        "opp": "vs CAR",
+        "g": 7,
+        "lam": 0.76,
+        "p": 18
+      }
     ],
-    near: "Chuba Hubbard (14%) just misses the top 10, behind Likely and Kittle on the λ tiebreak. Jaxon Smith-Njigba and Nico Collins sit at 13% — their yardage is elite, but their TD rates keep them off this list."
+    "near": "Jahmyr Gibbs (17%) and Kyren Williams (17%) just miss the top 10 — Gibbs's λ is real, but Minnesota's 1.00 total TD/g allowance is the single hardest TD matchup on the slate. D'Andre Swift sits at 14% after the regression change."
   }
 };
 </script>
 <script>
 "use strict";
-/* Week 6 boards as published Sun Oct 18, 2026, graded against final box scores. */
+/* Week 7 boards as published Wed Oct 21, 2026, graded against final box scores. */
 var RESULTS = [
   {
-    key: "rrush", title: "60+ rushing yards — Week 6", score: "5 of 9 hit · 63% average predicted",
-    kind: "yards",
-    note: "The two biggest comfortable maxes on the board both landed — Walker and Hubbard blew past theirs — while the misses were a 2-yard shortfall, a zero-touch benching, and two backs who simply got bottled up.",
-    rows: [
-      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"vs LAC", p:75, max:107, act:128, hit:true, note:"also scored twice"},
-      {n:"James Cook III", pos:"RB", team:"BUF", opp:"@ LV", p:73, max:100, act:95, hit:true},
-      {n:"Bijan Robinson", pos:"RB", team:"ATL", opp:"vs CHI", p:69, max:88, act:61, hit:true, note:"cleared it by a yard"},
-      {n:"Derrick Henry", pos:"RB", team:"BAL", opp:"@ CLE", p:66, max:82, act:58, hit:false, note:"2 yards short — Cleveland's run defense did it again"},
-      {n:"Jonathan Taylor", pos:"RB", team:"IND", opp:"vs TEN", p:59, max:70, act:94, hit:true},
-      {n:"Bucky Irving", pos:"RB", team:"TB", opp:"vs PIT", p:57, max:68, act:46, hit:false, note:"19 carries, no room"},
-      {n:"Chuba Hubbard", pos:"RB", team:"CAR", opp:"@ PHI", p:57, max:67, act:120, hit:true, note:"28 carries in the upset at Philadelphia"},
-      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"vs ARI", p:55, max:65, act:50, hit:false},
-      {n:"Cam Skattebo", pos:"RB", team:"NYG", opp:"vs NO", p:53, max:63, act:0, hit:false, tag:"NEAR-MISS CALL", note:"active, but 6 snaps and zero touches after his fumbles"}
+    "key": "rrush",
+    "title": "60+ rushing yards — Week 7",
+    "score": "5 of 8 hit · 64% average predicted",
+    "kind": "yards",
+    "note": "Right on its price. The four biggest games on the board all landed — Gibbs, Warren, Irving and Kyren Williams cleared by 15+ — while Walker got game-scripted out in Seattle and Henry's offense never scored after halftime.",
+    "rows": [
+      {
+        "n": "Kenneth Walker III",
+        "pos": "RB",
+        "team": "KC",
+        "opp": "@ SEA",
+        "p": 73,
+        "max": 100,
+        "act": 36,
+        "hit": false,
+        "note": "14 carries as KC managed 3 points in his Seattle return"
+      },
+      {
+        "n": "Jahmyr Gibbs",
+        "pos": "RB",
+        "team": "DET",
+        "opp": "vs GB",
+        "p": 68,
+        "max": 86,
+        "act": 116,
+        "hit": true
+      },
+      {
+        "n": "Bijan Robinson",
+        "pos": "RB",
+        "team": "ATL",
+        "opp": "vs SF",
+        "p": 66,
+        "max": 83,
+        "act": 63,
+        "hit": true,
+        "note": "cleared it by 3 in the upset — but held out of the end zone"
+      },
+      {
+        "n": "Derrick Henry",
+        "pos": "RB",
+        "team": "BAL",
+        "opp": "vs CIN",
+        "p": 66,
+        "max": 82,
+        "act": 45,
+        "hit": false,
+        "note": "Baltimore blew a 13–0 halftime lead and didn't score again"
+      },
+      {
+        "n": "Jaylen Warren",
+        "pos": "RB",
+        "team": "PIT",
+        "opp": "vs NO",
+        "p": 63,
+        "max": 77,
+        "act": 101,
+        "hit": true,
+        "note": "101 in the Paris win"
+      },
+      {
+        "n": "Aaron Jones",
+        "pos": "RB",
+        "team": "MIN",
+        "opp": "vs IND",
+        "p": 62,
+        "max": 75,
+        "act": 26,
+        "hit": false,
+        "note": "aggravated his knee — day-to-day for Week 8"
+      },
+      {
+        "n": "Bucky Irving",
+        "pos": "RB",
+        "team": "TB",
+        "opp": "@ CAR",
+        "p": 61,
+        "max": 74,
+        "act": 106,
+        "hit": true,
+        "note": "plus two rushing TDs in the 43–13 rout"
+      },
+      {
+        "n": "Kyren Williams",
+        "pos": "RB",
+        "team": "LAR",
+        "opp": "@ LV",
+        "p": 56,
+        "max": 65,
+        "act": 99,
+        "hit": true,
+        "note": "the Rams ran for 199 as a team"
+      }
     ],
-    near: "<b>Not graded:</b> Tony Pollard and Javonte Williams dropped off this board in the recalibration — Pollard ran for 76 (would have cleared it), Williams 41 (wouldn't). The recalibration giveth and it taketh away."
+    "near": "<b>Not graded:</b> Jonathan Taylor, the named just-below-the-cut back at 54%, ran for <b>95</b> at Minnesota — the cut cost that one. The recalibration giveth and it taketh away, again."
   },
   {
-    key: "rrec", title: "60+ receiving yards — Week 6", score: "10 of 12 hit · 65% average predicted",
-    kind: "yards",
-    note: "The model's best board of the week — it actually underpromised. Both misses came with a story: Olave was ill going in, and Adams left his game late with a knee injury.",
-    rows: [
-      {n:"Brock Bowers", pos:"TE", team:"LV", opp:"vs BUF", p:70, max:90, act:70, hit:true},
-      {n:"Puka Nacua", pos:"WR", team:"LAR", opp:"vs ARI", p:69, max:89, act:80, hit:true},
-      {n:"Chris Olave", pos:"WR", team:"NO", opp:"@ NYG", p:68, max:85, act:43, hit:false, note:"questionable (illness) going in; did catch a TD"},
-      {n:"Drake London", pos:"WR", team:"ATL", opp:"vs CHI", p:66, max:82, act:62, hit:true},
-      {n:"Zay Flowers", pos:"WR", team:"BAL", opp:"@ CLE", p:66, max:82, act:66, hit:true, note:"with Tyler Huntley at QB"},
-      {n:"Tetairoa McMillan", pos:"WR", team:"CAR", opp:"@ PHI", p:66, max:83, act:86, hit:true},
-      {n:"Christian Watson", pos:"WR", team:"GB", opp:"vs DAL", p:66, max:82, act:64, hit:true},
-      {n:"Davante Adams", pos:"WR", team:"LAR", opp:"vs ARI", p:64, max:79, act:39, hit:false, note:"left late with a non-contact knee injury"},
-      {n:"CeeDee Lamb", pos:"WR", team:"DAL", opp:"@ GB", p:64, max:78, act:70, hit:true},
-      {n:"Nico Collins", pos:"WR", team:"HOU", opp:"vs JAX", p:62, max:75, act:74, hit:true},
-      {n:"Matthew Golden", pos:"WR", team:"GB", opp:"vs DAL", p:59, max:71, act:104, hit:true, note:"best yardage day on the board"},
-      {n:"DeVonta Smith", pos:"WR", team:"PHI", opp:"vs CAR", p:56, max:67, act:75, hit:true, note:"with Tanner McKee at QB"}
+    "key": "rrec",
+    "title": "60+ receiving yards — Week 7",
+    "score": "8 of 16 hit · 64% average predicted",
+    "kind": "yards",
+    "note": "A split board: four receivers cleared 110 and smashed their maxes, but two calls were lost before kickoff to inactives (Smith, Evans) and the Green Bay pair went quiet at Detroit. On the field, it went 8 of 14.",
+    "rows": [
+      {
+        "n": "Jaxon Smith-Njigba",
+        "pos": "WR",
+        "team": "SEA",
+        "opp": "vs KC",
+        "p": 73,
+        "max": 100,
+        "act": 150,
+        "hit": true,
+        "note": "plus a TD — the board's biggest day"
+      },
+      {
+        "n": "Christian Watson",
+        "pos": "WR",
+        "team": "GB",
+        "opp": "@ DET",
+        "p": 70,
+        "max": 92,
+        "act": 57,
+        "hit": false,
+        "note": "3 short"
+      },
+      {
+        "n": "CeeDee Lamb",
+        "pos": "WR",
+        "team": "DAL",
+        "opp": "@ PHI",
+        "p": 69,
+        "max": 88,
+        "act": 74,
+        "hit": true,
+        "note": "plus two TDs on Monday night"
+      },
+      {
+        "n": "Puka Nacua",
+        "pos": "WR",
+        "team": "LAR",
+        "opp": "@ LV",
+        "p": 69,
+        "max": 88,
+        "act": 68,
+        "hit": true,
+        "note": "plus a TD"
+      },
+      {
+        "n": "Matthew Golden",
+        "pos": "WR",
+        "team": "GB",
+        "opp": "@ DET",
+        "p": 68,
+        "max": 87,
+        "act": 39,
+        "hit": false
+      },
+      {
+        "n": "Chris Olave",
+        "pos": "WR",
+        "team": "NO",
+        "opp": "vs PIT",
+        "p": 65,
+        "max": 81,
+        "act": 56,
+        "hit": false,
+        "note": "4 short in Paris"
+      },
+      {
+        "n": "Tetairoa McMillan",
+        "pos": "WR",
+        "team": "CAR",
+        "opp": "vs TB",
+        "p": 65,
+        "max": 81,
+        "act": 40,
+        "hit": false,
+        "note": "Carolina's offense stalled in the 43–13 loss"
+      },
+      {
+        "n": "Zay Flowers",
+        "pos": "WR",
+        "team": "BAL",
+        "opp": "vs CIN",
+        "p": 65,
+        "max": 80,
+        "act": 137,
+        "hit": true,
+        "note": "plus a TD — with Huntley at QB"
+      },
+      {
+        "n": "Drake London",
+        "pos": "WR",
+        "team": "ATL",
+        "opp": "vs SF",
+        "p": 64,
+        "max": 78,
+        "act": 66,
+        "hit": true,
+        "note": "plus a TD in the upset"
+      },
+      {
+        "n": "Malik Nabers",
+        "pos": "WR",
+        "team": "NYG",
+        "opp": "@ HOU",
+        "p": 63,
+        "max": 77,
+        "act": 111,
+        "hit": true
+      },
+      {
+        "n": "Tee Higgins",
+        "pos": "WR",
+        "team": "CIN",
+        "opp": "@ BAL",
+        "p": 60,
+        "max": 72,
+        "act": 148,
+        "hit": true,
+        "note": "plus a TD as Burrow threw four second-half TDs"
+      },
+      {
+        "n": "Brock Bowers",
+        "pos": "TE",
+        "team": "LV",
+        "opp": "vs LAR",
+        "p": 58,
+        "max": 69,
+        "act": 73,
+        "hit": true
+      },
+      {
+        "n": "Jalen Coker",
+        "pos": "WR",
+        "team": "CAR",
+        "opp": "vs TB",
+        "p": 58,
+        "max": 69,
+        "act": 9,
+        "hit": false
+      },
+      {
+        "n": "DeVonta Smith",
+        "pos": "WR",
+        "team": "PHI",
+        "opp": "vs DAL",
+        "p": 58,
+        "max": 69,
+        "act": 0,
+        "hit": false,
+        "tag": "INACTIVE",
+        "note": "ruled out (hamstring) — never took the field"
+      },
+      {
+        "n": "George Pickens",
+        "pos": "WR",
+        "team": "DAL",
+        "opp": "@ PHI",
+        "p": 57,
+        "max": 68,
+        "act": 57,
+        "hit": false,
+        "note": "3 short — but did catch a TD"
+      },
+      {
+        "n": "Mike Evans",
+        "pos": "WR",
+        "team": "SF",
+        "opp": "@ ATL",
+        "p": 57,
+        "max": 68,
+        "act": 0,
+        "hit": false,
+        "tag": "INACTIVE",
+        "note": "inactive (ribs/Achilles) — the flagged risk cashed the wrong way"
+      }
     ],
-    near: "<b>Also on the board</b> at the 55% line: Jalen Coker finished with <b>97 yards</b> and Parker Washington <b>64</b> — both cleared 60 too. Just below the cut, Garrett Wilson (54%) managed only 44 against New England, so the cut got that one right."
+    "near": "<b>Not graded:</b> Amon-Ra St. Brown, the named just-below-the-cut receiver at 52%, went for <b>153 yards</b> vs Green Bay — the week's biggest receiving day belonged to a player the cut left off. Garrett Wilson (53%) was held quiet by Miami, so the cut split its two judgment calls."
   },
   {
-    key: "rtd1", title: "Score a touchdown — Week 6", score: "6 of 11 hit · 61% average predicted",
-    kind: "td",
-    note: "Physical scorers only, as always — Josh Allen threw two TD passes and ran for 1 yard, so his 67% call missed on the rule the board is built on. Six of the eleven found the end zone; the board ran a touch hot and stays on the strictest regression in the model.",
-    rows: [
-      {n:"Javonte Williams", pos:"RB", team:"DAL", opp:"@ GB", p:71, lam:1.22, act:1, hit:true},
-      {n:"Josh Allen", pos:"QB", team:"BUF", opp:"@ LV", p:67, lam:1.12, act:0, hit:false, qbrush:true, note:"2 passing TDs don't count; 1 rushing yard"},
-      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"vs LAC", p:67, lam:1.11, act:2, hit:true},
-      {n:"Chuba Hubbard", pos:"RB", team:"CAR", opp:"@ PHI", p:61, lam:0.94, act:1, hit:true},
-      {n:"Christian Watson", pos:"WR", team:"GB", opp:"vs DAL", p:60, lam:0.91, act:0, hit:false},
-      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"vs ARI", p:59, lam:0.88, act:0, hit:false},
-      {n:"Jonathan Taylor", pos:"RB", team:"IND", opp:"vs TEN", p:58, lam:0.87, act:1, hit:true},
-      {n:"Brock Bowers", pos:"TE", team:"LV", opp:"vs BUF", p:58, lam:0.86, act:0, hit:false, note:"70 receiving yards, no score"},
-      {n:"George Kittle", pos:"TE", team:"SF", opp:"vs WAS", p:58, lam:0.86, act:1, hit:true},
-      {n:"James Cook III", pos:"RB", team:"BUF", opp:"@ LV", p:57, lam:0.84, act:1, hit:true},
-      {n:"Davante Adams", pos:"WR", team:"LAR", opp:"vs ARI", p:55, lam:0.80, act:0, hit:false, note:"left late with a knee injury"}
+    "key": "rtd1",
+    "title": "Score a touchdown — Week 7",
+    "score": "4 of 8 hit · 61% average predicted",
+    "kind": "td",
+    "note": "The board's top call was its worst: Gibbs piled up 116 rushing yards and never scored. The four hits were the board's bottom half — Williams, McCaffrey, Kyren Williams and Swift all found the end zone exactly once.",
+    "rows": [
+      {
+        "n": "Jahmyr Gibbs",
+        "pos": "RB",
+        "team": "DET",
+        "opp": "vs GB",
+        "p": 75,
+        "lam": 1.4,
+        "act": 0,
+        "hit": false,
+        "note": "116 rushing yards, zero scores"
+      },
+      {
+        "n": "Javonte Williams",
+        "pos": "RB",
+        "team": "DAL",
+        "opp": "@ PHI",
+        "p": 67,
+        "lam": 1.11,
+        "act": 1,
+        "hit": true,
+        "note": "155 rushing yards and a TD on Monday night"
+      },
+      {
+        "n": "Christian Watson",
+        "pos": "WR",
+        "team": "GB",
+        "opp": "@ DET",
+        "p": 65,
+        "lam": 1.04,
+        "act": 0,
+        "hit": false
+      },
+      {
+        "n": "Derrick Henry",
+        "pos": "RB",
+        "team": "BAL",
+        "opp": "vs CIN",
+        "p": 61,
+        "lam": 0.95,
+        "act": 0,
+        "hit": false,
+        "note": "Baltimore scoreless after halftime"
+      },
+      {
+        "n": "Kenneth Walker III",
+        "pos": "RB",
+        "team": "KC",
+        "opp": "@ SEA",
+        "p": 60,
+        "lam": 0.91,
+        "act": 0,
+        "hit": false,
+        "note": "his first scoreless game of the season"
+      },
+      {
+        "n": "Christian McCaffrey",
+        "pos": "RB",
+        "team": "SF",
+        "opp": "@ ATL",
+        "p": 58,
+        "lam": 0.87,
+        "act": 1,
+        "hit": true,
+        "note": "a rushing TD on 39 rushing yards"
+      },
+      {
+        "n": "Kyren Williams",
+        "pos": "RB",
+        "team": "LAR",
+        "opp": "@ LV",
+        "p": 52,
+        "lam": 0.73,
+        "act": 1,
+        "hit": true
+      },
+      {
+        "n": "D'Andre Swift",
+        "pos": "RB",
+        "team": "CHI",
+        "opp": "vs NE",
+        "p": 50,
+        "lam": 0.7,
+        "act": 1,
+        "hit": true,
+        "note": "78 rushing yards and a TD"
+      }
     ],
-    near: "<b>Just below the graded line:</b> Bijan Robinson (53%) and Derrick Henry (52%) both finished scoreless — the cut cost nothing. Mike Evans (47%, questionable) also went scoreless in one half of work against Washington."
+    "near": "<b>Just below the graded line:</b> Smith-Njigba (47%) scored — the cut cost one there. Likely and Kittle (both 49%) stayed scoreless, so the line got the two tightest calls right."
   },
   {
-    key: "rtd2", title: "Score 2+ touchdowns — Week 6", score: "1 of 10 hit · 25% average predicted",
-    kind: "td2",
-    note: "Exactly what the board advertises: a ranked watch list, not a set of predictions. Only Walker converted — and at a 25% average predicted probability, one conversion in ten is the model working as calibrated, not failing.",
-    rows: [
-      {n:"Javonte Williams", pos:"RB", team:"DAL", opp:"@ GB", p:35, lam:1.22, act:1, hit:false},
-      {n:"Josh Allen", pos:"QB", team:"BUF", opp:"@ LV", p:31, lam:1.12, act:0, hit:false, qbrush:true},
-      {n:"Kenneth Walker III", pos:"RB", team:"KC", opp:"vs LAC", p:30, lam:1.11, act:2, hit:true, note:"128 rushing yards and both KC rushing scores"},
-      {n:"Chuba Hubbard", pos:"RB", team:"CAR", opp:"@ PHI", p:24, lam:0.94, act:1, hit:false},
-      {n:"Christian Watson", pos:"WR", team:"GB", opp:"vs DAL", p:23, lam:0.91, act:0, hit:false},
-      {n:"Kyren Williams", pos:"RB", team:"LAR", opp:"vs ARI", p:22, lam:0.88, act:0, hit:false},
-      {n:"Jonathan Taylor", pos:"RB", team:"IND", opp:"vs TEN", p:22, lam:0.87, act:1, hit:false},
-      {n:"Brock Bowers", pos:"TE", team:"LV", opp:"vs BUF", p:21, lam:0.86, act:0, hit:false},
-      {n:"George Kittle", pos:"TE", team:"SF", opp:"vs WAS", p:21, lam:0.86, act:1, hit:false},
-      {n:"James Cook III", pos:"RB", team:"BUF", opp:"@ LV", p:21, lam:0.84, act:1, hit:false}
+    "key": "rtd2",
+    "title": "Score 2+ touchdowns — Week 7",
+    "score": "0 of 10 hit · 23% average predicted",
+    "kind": "td2",
+    "note": "A complete blank — the first of the season for this list. Four of the ten scored exactly once, which is the normal outcome here; nobody got the second. At a 23% average predicted probability the list priced ≈2 conversions, so zero is a genuinely cold run, not the model working as calibrated — and it drove this week's regression change.",
+    "rows": [
+      {
+        "n": "Jahmyr Gibbs",
+        "pos": "RB",
+        "team": "DET",
+        "opp": "vs GB",
+        "p": 41,
+        "lam": 1.4,
+        "act": 0,
+        "hit": false
+      },
+      {
+        "n": "Javonte Williams",
+        "pos": "RB",
+        "team": "DAL",
+        "opp": "@ PHI",
+        "p": 30,
+        "lam": 1.11,
+        "act": 1,
+        "hit": false,
+        "note": "scored exactly once"
+      },
+      {
+        "n": "Christian Watson",
+        "pos": "WR",
+        "team": "GB",
+        "opp": "@ DET",
+        "p": 28,
+        "lam": 1.04,
+        "act": 0,
+        "hit": false
+      },
+      {
+        "n": "Derrick Henry",
+        "pos": "RB",
+        "team": "BAL",
+        "opp": "vs CIN",
+        "p": 25,
+        "lam": 0.95,
+        "act": 0,
+        "hit": false
+      },
+      {
+        "n": "Kenneth Walker III",
+        "pos": "RB",
+        "team": "KC",
+        "opp": "@ SEA",
+        "p": 23,
+        "lam": 0.91,
+        "act": 0,
+        "hit": false
+      },
+      {
+        "n": "Christian McCaffrey",
+        "pos": "RB",
+        "team": "SF",
+        "opp": "@ ATL",
+        "p": 22,
+        "lam": 0.87,
+        "act": 1,
+        "hit": false,
+        "note": "scored exactly once"
+      },
+      {
+        "n": "Kyren Williams",
+        "pos": "RB",
+        "team": "LAR",
+        "opp": "@ LV",
+        "p": 17,
+        "lam": 0.73,
+        "act": 1,
+        "hit": false,
+        "note": "scored exactly once"
+      },
+      {
+        "n": "D'Andre Swift",
+        "pos": "RB",
+        "team": "CHI",
+        "opp": "vs NE",
+        "p": 16,
+        "lam": 0.7,
+        "act": 1,
+        "hit": false,
+        "note": "scored exactly once"
+      },
+      {
+        "n": "Isaiah Likely",
+        "pos": "TE",
+        "team": "NYG",
+        "opp": "@ HOU",
+        "p": 14,
+        "lam": 0.67,
+        "act": 0,
+        "hit": false
+      },
+      {
+        "n": "George Kittle",
+        "pos": "TE",
+        "team": "SF",
+        "opp": "@ ATL",
+        "p": 14,
+        "lam": 0.67,
+        "act": 0,
+        "hit": false,
+        "note": "88 receiving yards, no score"
+      }
     ],
-    near: "Five of the other nine scored exactly once (Williams, Hubbard, Taylor, Kittle, Cook) — landing one score and no more is the normal outcome for this list, which is why nobody on it is ever called a lock."
+    "near": "Two straight weeks at or below price for this list (1 of 10 in Week 6, 0 of 10 in Week 7) is the direct evidence behind the TD regression change in this week's Method section — the top of the TD market is where the model was most overconfident."
   }
 ];
 </script>
@@ -726,7 +1660,7 @@ document.getElementById("download").addEventListener("click", function(){
   var url = URL.createObjectURL(blob);
   var a = document.createElement("a");
   a.href = url;
-  a.download = "weekly-stat-dashboard-week7.html";
+  a.download = "weekly-stat-dashboard-week8.html";
   document.body.appendChild(a);
   a.click();
   a.remove();
