@@ -1,5 +1,10 @@
 # AGENTLOG — AppRepoTracker
 
+## 2026-10-28 — v1.0.5 — Added Membership & Enrolment decisions entry
+- Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
+- Change: added "Membership & Enrolment — Use Cases and Decisions" at the top of Live Apps (interactive draft decision aid: 32 use-case cards with model and coverage filters, 16 pickable open decisions with suggested defaults, four-tier decision tree with dependency connectors, Your choices summary; link to MembershipDecisions/, Updated 2026-10-28, thread Quixera Enhancement — Oct 28, 2026). Live Apps stay sorted most-recent-first, so the Oct 28 entry leads. Counts updated to 38 entries / 21 live apps.
+- Verification: entry placement and counts checked in the pushed index.html; Pages URL re-checked after deploy.
+
 ## 2026-10-28 — v1.0.4 — Added Market Research Dashboard entry
 - Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
 - Change: added "Market Research Dashboard" at the top of Live Apps (password-gated single dashboard, one tab per research project, per-tab PDF export and scoped share links, link to MarketResearch/, Updated 2026-10-28, thread Quixera Enhancement — Oct 28, 2026). Live Apps stay sorted most-recent-first, so the Oct 28 entry leads. Counts updated to 37 entries / 20 live apps.
