@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Membership &amp; Enrolment — Use Cases and Decisions</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#202124;background:#f8f9fa;line-height:1.5}
+  header{background:#1c0837;color:#fff;padding:28px 20px 22px}
+  header h1{margin:0 0 8px;font-size:26px;line-height:1.25}
+  header p{margin:0;opacity:.85;max-width:860px;font-size:15px}
+  main{max-width:1060px;margin:0 auto;padding:20px 16px 40px}
+  .strip{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 28px}
+  .strip div{background:#fff;border:1px solid #dadce0;border-radius:10px;padding:12px 16px;flex:1;min-width:220px}
+  .strip b{font-size:20px;display:block}
+  .strip span{color:#5f6368;font-size:13px}
+  h2{font-size:21px;margin:28px 0 12px}
+  h3{font-size:16px;margin:22px 0 8px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+  .pill{border:1px solid #dadce0;background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:14px}
+  .pill.on{background:#1c0837;color:#fff;border-color:#1c0837}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .case{background:#fff;border:1px solid #dadce0;border-radius:12px;padding:14px 16px}
+  .case.conflict{border-left:5px solid #c5221f}
+  .case-head{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .id{background:#1c0837;color:#fff;font-weight:700;font-size:13px;border-radius:6px;padding:2px 8px}
+  .model{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#5f6368}
+  .cov{margin-left:auto;font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px}
+  .cov.covered{background:#e6f4ea;color:#137333}
+  .cov.partial{background:#fef7e0;color:#b06000}
+  .cov.gap{background:#fce8e6;color:#a50e0e}
+  .cov.conflict{background:#c5221f;color:#fff}
+  .scen{font-weight:700;margin:0 0 10px}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .chip{background:#f1f3f4;border-radius:8px;padding:6px 9px;font-size:13px}
+  .chip b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#5f6368}
+  .arr{color:#9aa0a6;font-weight:700}
+  .note{font-style:italic;color:#5f6368;font-size:13px;margin:10px 0 0}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 16px}
+  .btn{border:1px solid #1c0837;background:#1c0837;color:#fff;border-radius:999px;padding:8px 16px;cursor:pointer;font-size:14px}
+  .btn.sec{background:#fff;color:#1c0837}
+  #counter{font-weight:700}
+  .tree{background:#fff;border:1px solid #dadce0;border-radius:12px;padding:16px;margin:0 0 20px}
+  .tier{margin:0 0 14px}
+  .tier-label{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:#5f6368;font-weight:700;margin-bottom:8px}
+  .tier-nodes{display:flex;flex-wrap:wrap;gap:8px}
+  .node{border:2px dashed #9aa0a6;background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;text-align:left;min-width:150px}
+  .node.chosen{border-style:solid;border-color:#1c0837;background:#f3efff}
+  .node .nid{font-weight:800;font-size:13px}
+  .node .nlabel{display:block;font-size:13px}
+  .node .nchoice{display:block;font-size:12px;color:#5f6368;margin-top:2px}
+  .node.chosen .nchoice{color:#1c0837;font-weight:700}
+  .node .ndep{display:block;font-size:11px;color:#9aa0a6}
+  .deps{font-size:13px;color:#5f6368;border-top:1px solid #e8eaed;padding-top:10px}
+  .deps b{color:#202124}
+  .summary{background:#fff;border:1px solid #dadce0;border-radius:12px;padding:16px;margin:0 0 20px}
+  .summary ul{margin:8px 0;padding-left:20px}
+  .summary li{margin:3px 0}
+  .dec{background:#fff;border:1px solid #dadce0;border-radius:12px;padding:16px;margin:0 0 14px}
+  .dec-head{display:flex;gap:8px;align-items:center}
+  .shoghi{margin-left:auto;font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px;background:#f1f3f4;color:#5f6368}
+  .shoghi.concern{background:#fce8e6;color:#a50e0e}
+  .shoghi.agree{background:#e6f4ea;color:#137333}
+  .q{font-weight:700;font-size:16px;margin:8px 0 4px}
+  .why{color:#5f6368;margin:0 0 10px}
+  .opt{display:block;padding:7px 10px;border-radius:8px;cursor:pointer}
+  .opt:hover{background:#f8f9fa}
+  .opt input{margin-right:8px}
+  .sug{font-size:11px;font-weight:700;background:#e6f4ea;color:#137333;border-radius:999px;padding:1px 8px;margin-left:6px}
+  .detail{display:block;font-size:13px;color:#5f6368;margin:2px 0 0 26px}
+  footer{color:#5f6368;font-size:13px;margin-top:30px}
+  @media print{
+    body{background:#fff}
+    .noprint{display:none !important}
+    .case,.dec,.tree,.summary{border-color:#999;break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Membership &amp; Enrolment — Use Cases and Decisions</h1>
+  <p>Source: Academy membership and enrolment use cases, Oct 28, 2026, draft for AS; coverage against written specs only, nothing tested in product. Pick your decisions below — the tree and summary update as you choose, so you can walk the team through them.</p>
+</header>
+<main>
+  <div class="strip">
+    <div><b>32</b><span>use cases: 9 Covered · 8 Partial · 13 Gap · 2 Conflict</span></div>
+    <div><b>16</b><span>open decisions — all Open</span></div>
+  </div>
+
+  <h2>Section 1 — Use cases at a glance</h2>
+  <div class="pills noprint" id="modelPills"></div>
+  <div class="pills noprint" id="covPills"></div>
+  <div class="grid" id="caseGrid"></div>
+  <p id="noCases" style="display:none;color:#5f6368">No cases match those filters.</p>
+
+  <h2>Section 2 — Open decisions: pick yours</h2>
+  <div class="controls noprint">
+    <button class="btn" id="fillBtn">Fill suggested defaults</button>
+    <button class="btn sec" id="clearBtn">Clear all</button>
+    <span id="counter">0 of 16 decided</span>
+  </div>
+
+  <h3>Decision tree — how the choices connect</h3>
+  <div class="tree" id="tree"></div>
+
+  <h3>Your choices</h3>
+  <div class="summary" id="summary"></div>
+
+  <h3>All 16 decisions</h3>
+  <div id="decList"></div>
+
+  <footer>
+    <p>Source: Academy membership and enrolment use cases, Oct 28, 2026, draft for AS. Coverage is against written specs only; nothing here is tested in product.</p>
+    <p>Selections are kept in this browser session only in this draft.</p>
+  </footer>
+</main>
+<script>
+var USECASES = [
+{id:"G1",model:"Gym",scenario:"Open beginner training, monthly membership, any session, no fixed batch",pays:"Autopay monthly",seat:"Check-in only",outcome:"No seat; attendance logged",cov:"Partial",note:"Unlimited covers access with a per-day fair-use cap, not a sessions-per-week cap."},
+{id:"G2",model:"Gym",scenario:"Monthly membership, 1 or 2 sessions a week, fixed batch at the level",pays:"Autopay monthly",seat:"Membership seat, picked inside purchase with hold; waitlist if full",outcome:"Seated on 1 or 2 batches",cov:"Gap",note:"No link from membership to roster yet."},
+{id:"G3",model:"Gym",scenario:"Quarterly membership, fixed batch",pays:"Autopay quarterly",seat:"Membership seat",outcome:"Seated on chosen batches",cov:"Gap",note:"Quarterly cadence exists in plans; seat link missing."},
+{id:"G4",model:"Gym",scenario:"6-month commitment paid up front",pays:"One upfront charge",seat:"Membership seat",outcome:"Seated 6 months; clawback if ended early",cov:"Gap",note:"6-month cadence not in product yet."},
+{id:"G5",model:"Gym",scenario:"Annual commitment paid up front",pays:"One upfront charge, largest discount",seat:"Membership seat",outcome:"Seated for the year",cov:"Gap",note:"Annual cadence not checked; no instalments by academy policy."},
+{id:"G6",model:"Gym",scenario:"Join mid-month or mid-quarter",pays:"Autopay",seat:"Membership seat from next session",outcome:"Seated from next session",cov:"Gap",note:"Policy undecided, see D4."},
+{id:"G7",model:"Gym",scenario:"Membership with extras (games included, kit)",pays:"Autopay plus add-on",seat:"Membership seat; extras flagged",outcome:"Seated; extras flagged",cov:"Partial",note:"Add-ons exist for class purchases only, not memberships."},
+{id:"G8",model:"Gym",scenario:"Facility access only, no coaching",pays:"Recurring autopay",seat:"No seat; check-in within window and fair-use cap",outcome:"Access only",cov:"Covered",note:""},
+{id:"G9",model:"Gym",scenario:"Two sessions a week with two specialist coaches (batting, bowling)",pays:"One autopay charge",seat:"Membership seats in two classes",outcome:"Seated on one batting and one bowling batch",cov:"Gap",note:"One membership funding seats in two programs is not modelled."},
+{id:"T1",model:"Term",scenario:"Fixed-term class paid at enrolment",pays:"Pay now",seat:"Seat from purchase",outcome:"Seated on purchase",cov:"Covered",note:""},
+{id:"T2",model:"Term",scenario:"Join a term class after it started",pays:"Pay now or desk",seat:"Seat from purchase, from next session",outcome:"Seated from next session",cov:"Partial",note:"Desk amount override exists; self-serve proration not confirmed."},
+{id:"T3",model:"Term",scenario:"Enrol at the desk: mark paid, pay later or payment link",pays:"Desk invoice",seat:"Seated at once, awaiting payment",outcome:"Paid or open invoice with academy deadline",cov:"Covered",note:""},
+{id:"T4",model:"Term",scenario:"Continue into next term by tapping Continue",pays:"Tap to continue",seat:"Held place until deadline",outcome:"Held, then seated on payment",cov:"Covered",note:""},
+{id:"T5",model:"Term",scenario:"Continue into next term automatically with saved card",pays:"Autopay",seat:"Seated without action",outcome:"Charged on saved card before term",cov:"Conflict",note:"Spec says no card is charged without a tap, but AS told Vishwanath the card rolls them over."},
+{id:"T6",model:"Term",scenario:"Term class with a Pass discount",pays:"Discounted class charge",seat:"Seat from purchase",outcome:"Seated",cov:"Covered",note:""},
+{id:"T7",model:"Term",scenario:"Term fee in instalments (e.g. three monthly payments)",pays:"Instalments",seat:"Seat from purchase",outcome:"Seated; split into scheduled charges",cov:"Gap",note:"Instalments excluded from this release by product decision."},
+{id:"T8",model:"Term",scenario:"Free trial session before enrolling",pays:"None",seat:"Trial seat for one session",outcome:"Converts to purchase",cov:"Covered",note:""},
+{id:"T9",model:"Term",scenario:"One-day event or camp",pays:"Pay now",seat:"Seat from purchase for the day",outcome:"Seated for the day",cov:"Covered",note:""},
+{id:"H1",model:"Hybrid",scenario:"Rolling class priced per block of N sessions, family taps to continue",pays:"Pay now, then tap",seat:"Seat from purchase",outcome:"Seated for the block; next block offered after second-last session",cov:"Covered",note:""},
+{id:"H2",model:"Hybrid",scenario:"Rolling block that continues automatically",pays:"Autopay per block",seat:"Seated without action",outcome:"Charged on saved card each block",cov:"Conflict",note:"Spec bills nothing until Continue is tapped."},
+{id:"H3",model:"Hybrid",scenario:"Membership pays; level runs as term batches; admin seats member at no class charge",pays:"Autopay membership",seat:"Membership seat, no class charge",outcome:"Seated on the batch, membership charge only",cov:"Gap",note:"FREE route can seat at no charge, but the seat is not tied to the membership."},
+{id:"H4",model:"Hybrid",scenario:"Beginners gym-style, intermediate and advanced term-style, same academy",pays:"Mixed",seat:"Mixed",outcome:"Beginners check in or seated; upper levels seated by purchase",cov:"Partial",note:"No path moves a member into a term class."},
+{id:"H5",model:"Hybrid",scenario:"Membership spans terms; member stays in a continuous class with no term end",pays:"Autopay",seat:"Membership seat, continuous class",outcome:"Stays seated without action",cov:"Gap",note:"Continuous classes replace the placeholder-class idea; Programs V2 needs a continuous class shape."},
+{id:"H6",model:"Hybrid",scenario:"Join a long program months in; pay prorated remainder, then roll to membership",pays:"Pay now then autopay",seat:"Seat from purchase then membership",outcome:"Seated throughout",cov:"Gap",note:"Vishwanath's main concern; no spec joins the two."},
+{id:"H7",model:"Hybrid",scenario:"Main membership plus girls-only weekend program",pays:"Two charges (plan plus class or second plan)",seat:"Seats in two programs",outcome:"Seated in both programs",cov:"Partial",note:"A second class purchase works; a second membership-funded seat does not."},
+{id:"H8",model:"Hybrid",scenario:"Facility access plus term classes",pays:"Two independent charges",seat:"Seat from class purchase; access by check-in",outcome:"Seated in classes; access by check-in",cov:"Covered",note:""},
+{id:"H9",model:"Hybrid",scenario:"Families who prepaid under the old system",pays:"None until renewal",seat:"Seat without charge at cut-over",outcome:"Seated at cut-over; no charge until prepaid period ends",cov:"Partial",note:"Desk FREE works one by one; cut-over runbook is CricMax only; AS offered a data load."},
+{id:"H10",model:"Hybrid",scenario:"Makeups per quarter for members",pays:"Autopay",seat:"Makeup seat in another batch of the level",outcome:"Makeup seat; allowance resets each period",cov:"Partial",note:"Allowance is per class, not per membership period."},
+{id:"H11",model:"Hybrid",scenario:"Same batch sold at different commitment prices (monthly vs 6 months)",pays:"Mixed; price depends on tier",seat:"Same roster, different payers",outcome:"Same roster, different payers",cov:"Gap",note:"Class price has one active price; no-blending would force a duplicate class per price kind."},
+{id:"H12",model:"Hybrid",scenario:"Siblings on different products or tiers",pays:"Mixed",seat:"Each child seated",outcome:"Sibling discount applied across products",cov:"Partial",note:"Sibling tiers apply to class purchases; memberships not confirmed."},
+{id:"H13",model:"Hybrid",scenario:"Registration or annual family fee charged as well as tuition",pays:"Annual fee plus tuition",seat:"Seated only when a current registration AND a class or membership are both held",outcome:"Annual fee plus tuition",cov:"Gap",note:"Needs prerequisite products (an admission rule with AND). Ask Vishwanath whether Knight Riders charges one."},
+{id:"H14",model:"Hybrid",scenario:"Part or all of a fee paid by someone other than the guardian (school purchase order, subsidy, parks and rec)",pays:"Invoice or split payment",seat:"Seat from purchase as usual",outcome:"Charged to the third party, or split between payer and guardian",cov:"Gap",note:"Storing the payer separately from the guardian keeps it reachable."}
+];
+var DECISIONS = [
+{id:"D1",label:"Class pricing optional",question:"Does class-level pricing stay optional?",why:"QA-041 requires a price on every class, but gym levels pay via membership.",shoghi:"Agree for now",options:[
+{key:"A",short:"Price on every class",label:"Price required on every class"},
+{key:"B",short:"Optional per class",label:"Optional per class: priced (term) or membership-funded (gym), never both",suggested:true},
+{key:"C",short:"Price on program",label:"Price on the program template instead"}]},
+{id:"D2",label:"Membership seats roster",question:"How does a membership put a child on a roster?",why:"Today a membership pays but seats no one.",shoghi:"Concern",options:[
+{key:"A",short:"Admin seats separately",label:"Admin seats separately"},
+{key:"B",short:"Pick class at sale",label:"Pick the class on the membership sale screen, with seat hold, consent gate and waitlist",suggested:true},
+{key:"C",short:"Plan names programs",label:"Plan names eligible programs; family picks batches (later)"}]},
+{id:"D3",label:"Autopay or tap",question:"Autopay or tap to continue?",why:"Specs bill only on a tap; AS promised card rollover and wants 80% autopay.",shoghi:"Agree",options:[
+{key:"A",short:"Tap only",label:"Tap only"},
+{key:"B",short:"Academy auto-continue",label:"Academy setting: auto-continue with saved card",suggested:true,detail:"Explicit audited opt-in, reminder 7 days before every charge, Stop always available."},
+{key:"C",short:"Family chooses",label:"Family chooses at purchase"}]},
+{id:"D4",label:"Mid-period billing date",question:"Billing date for a mid-period joiner",why:"Families join any week.",shoghi:"Agree",options:[
+{key:"A",short:"Anniversary billing",label:"Anniversary billing from join date",suggested:true,detail:"Suggested for memberships."},
+{key:"B",short:"Calendar + prorate",label:"Align to calendar period with prorated first charge"}]},
+{id:"D5",label:"Early exit clawback",question:"Early termination of discounted commitments",why:"Vishwanath enforces a clawback so the tier discount is not kept on early exit.",shoghi:"Agree",options:[
+{key:"A",short:"Re-rate and refund",label:"Re-rate used months at the monthly price and refund the rest",suggested:true,detail:"Set per academy. Admin sees a refund preview before ending."},
+{key:"B",short:"No refund",label:"No refund"},
+{key:"C",short:"Refund less fee",label:"Refund unused months at the paid rate less a fee"}]},
+{id:"D6",label:"Move price change",question:"Price change on level or frequency move",why:"Moves happen mid-period.",shoghi:"Concern",options:[
+{key:"A",short:"Prorate now",label:"Prorate now"},
+{key:"B",short:"At renewal",label:"Change at next renewal"},
+{key:"C",short:"End and restart",label:"End and restart membership"},
+{key:"S",short:"Bill only on price change",label:"Bill only on a price change: up in price, prorated difference now; down, credit at renewal; same price, no billing event",suggested:true}]},
+{id:"D7",label:"Commitment change",question:"Commitment change mid-term",why:"Families switch tiers.",shoghi:"Agree",options:[
+{key:"A",short:"Now with credit",label:"Allow now with credit: longer now, shorter treated as early termination per D5",suggested:true},
+{key:"B",short:"Only at renewal",label:"Only at renewal"}]},
+{id:"D8",label:"Class transfers",question:"Transfers between classes",why:"QA-041 leaves transfers out of this release.",shoghi:"Concern",options:[
+{key:"A",short:"Release and re-enrol",label:"Release and re-enrol"},
+{key:"B",short:"Move-to-class action",label:"Move-to-class action: same price is a scheduling event; show the target class's curriculum position and version",suggested:true}]},
+{id:"D9",label:"Pause or freeze",question:"Pause or freeze",why:"Not discussed on the call; common in academies.",shoghi:"Agree",options:[
+{key:"A",short:"Not allowed",label:"Not allowed"},
+{key:"B",short:"Up to 4 weeks/yr",label:"Allowed with a limit: up to 4 weeks per commitment year, billing paused, end date extended, seat held on return only if capacity allows",suggested:true}]},
+{id:"D10",label:"Failed autopay outcome",question:"Failed autopay outcome",why:"Card failures will happen at 80% autopay.",shoghi:"Agree",options:[
+{key:"A",short:"Release seat",label:"Release seat"},
+{key:"B",short:"Remind only",label:"Remind only"},
+{key:"C",short:"Admin decides",label:"Admin decides"},
+{key:"S",short:"Retry 7 days, then outcome",label:"Retry over 7 days with reminders, then the academy's chosen outcome; seat kept until then",suggested:true}]},
+{id:"D11",label:"Renewal and price changes",question:"Renewal and price changes",why:"6-month cadence is being added.",shoghi:"Agree",options:[
+{key:"A",short:"Auto-renew, 14 days' notice",label:"Auto-renew same tier: 14 days' notice; new prices apply at renewal, never mid-commitment",suggested:true},
+{key:"B",short:"Drop to monthly",label:"Drop to monthly"},
+{key:"C",short:"Ask each time",label:"Ask each time"}]},
+{id:"D12",label:"Discounts across products",question:"Discounts across products",why:"Siblings and second programs mix products.",shoghi:"Concern",options:[
+{key:"A",short:"Per product",label:"Per product: sibling tiers extended to memberships; define the Pass scope for members",suggested:true,detail:"Suggested for now."},
+{key:"B",short:"One family discount",label:"One family discount across all"}]},
+{id:"D13",label:"Makeup allowance",question:"Makeup allowance for members",why:"QA-162 counts per class.",shoghi:"Agree",options:[
+{key:"A",short:"Per class",label:"Per class"},
+{key:"B",short:"Per membership period",label:"Per membership period: e.g. 2 per quarter, allowance and each makeup used recorded; A stays for term classes",suggested:true}]},
+{id:"D14",label:"Migrate prepaid families",question:"Migrating prepaid families",why:"Some families paid annual fees before the switch.",shoghi:"Agree",options:[
+{key:"A",short:"Desk FREE one by one",label:"Desk FREE seat one by one"},
+{key:"B",short:"Data load + stragglers",label:"Data load with cut-off; A for stragglers",suggested:true}]},
+{id:"D15",label:"Glossary",question:"Glossary",why:"Terms were mixed live on the call.",shoghi:"Concern",options:[
+{key:"S",short:"Adopt Glossary sheet",label:"Adopt the Glossary sheet: Program is what a class teaches, class is the batch, membership is what the family pays on; Level-as-attainment is the Library badge, not the program; rename one of the two 'unlimited' products; drop 'package'",suggested:true}]},
+{id:"D16",label:"Data-model provisions",question:"Which data-model provisions go into the current build?",why:"The hybrid can ship as proposed, but some structure choices cost little now and avoid a rebuild later.",shoghi:"Proposed",options:[
+{key:"A",short:"No provisions",label:"Build the hybrid with no provisions"},
+{key:"B",short:"Cheap provisions now",label:"Add the cheap provisions now and size the rest first",suggested:true,detail:"Accept now: class stores a list of accepted funding types; group scope is a list of programs; frequency stored on the membership as sessions per week; payer stored separately from guardian. To be sized first: an entitlement record in the ledger for every purchase; proration, continuation, makeup and cancellation policies stored on each plan or fee."},
+{key:"C",short:"Full model now",label:"Build the full product and entitlement model now"}]}
+];
+
+var TIERS = [
+{label:"Tier 1 — Foundation", ids:["D1","D2","D16"]},
+{label:"Tier 2 — Money", ids:["D3","D4","D5","D7","D10","D11"]},
+{label:"Tier 3 — Movement and experience", ids:["D6","D8","D9","D13","D12"]},
+{label:"Tier 4 — Migration and language", ids:["D14","D15"]}
+];
+var DEPS = [["D1","D16"],["D16","D13"],["D6","D8"],["D5","D7"]];
+var DEP_ON = {"D16":"D1","D13":"D16","D8":"D6","D7":"D5"};
+
+var state = {};
+DECISIONS.forEach(function(d){ state[d.id] = ""; });
+var modelFilter = "All", covFilter = "All";
+
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+function renderPills(){
+  var models = ["All","Gym","Term","Hybrid"];
+  var covs = ["All","Covered","Partial","Gap","Conflict"];
+  document.getElementById("modelPills").innerHTML = models.map(function(m){
+    return '<button class="pill'+(modelFilter===m?" on":"")+'" onclick="setModel(\''+m+'\')">'+m+'</button>';
+  }).join("");
+  document.getElementById("covPills").innerHTML = covs.map(function(c){
+    return '<button class="pill'+(covFilter===c?" on":"")+'" onclick="setCov(\''+c+'\')">'+c+'</button>';
+  }).join("");
+}
+function setModel(m){ modelFilter = m; renderPills(); renderCases(); }
+function setCov(c){ covFilter = c; renderPills(); renderCases(); }
+
+function renderCases(){
+  var list = USECASES.filter(function(u){
+    return (modelFilter==="All" || u.model===modelFilter) && (covFilter==="All" || u.cov===covFilter);
+  });
+  document.getElementById("noCases").style.display = list.length ? "none" : "block";
+  document.getElementById("caseGrid").innerHTML = list.map(function(u){
+    var cls = u.cov==="Conflict" ? "case conflict" : "case";
+    var covCls = "cov " + u.cov.toLowerCase();
+    var html = '<article class="'+cls+'"><div class="case-head"><span class="id">'+u.id+'</span><span class="model">'+u.model+'</span><span class="'+covCls+'">'+u.cov+'</span></div>';
+    html += '<p class="scen">'+esc(u.scenario)+'</p>';
+    html += '<div class="flow"><span class="chip"><b>Pays</b>'+esc(u.pays)+'</span><span class="arr">→</span><span class="chip"><b>Seat</b>'+esc(u.seat)+'</span><span class="arr">→</span><span class="chip"><b>Outcome</b>'+esc(u.outcome)+'</span></div>';
+    if (u.note) html += '<p class="note">'+esc(u.note)+'</p>';
+    return html + '</article>';
+  }).join("");
+}
+
+function decById(id){ for (var i=0;i<DECISIONS.length;i++){ if (DECISIONS[i].id===id) return DECISIONS[i]; } return null; }
+function optByKey(d, key){ for (var i=0;i<d.options.length;i++){ if (d.options[i].key===key) return d.options[i]; } return null; }
+
+function renderTree(){
+  var html = TIERS.map(function(t){
+    var nodes = t.ids.map(function(id){
+      var d = decById(id);
+      var chosen = state[id];
+      var choice = chosen ? (chosen + " · " + esc(optByKey(d, chosen).short)) : "Undecided";
+      var dep = DEP_ON[id] ? '<span class="ndep">depends on '+DEP_ON[id]+'</span>' : "";
+      return '<button class="node'+(chosen?" chosen":"")+'" onclick="scrollToCard(\''+id+'\')"><span class="nid">'+id+'</span><span class="nlabel">'+esc(d.label)+'</span><span class="nchoice">'+choice+'</span>'+dep+'</button>';
+    }).join("");
+    return '<div class="tier"><div class="tier-label">'+esc(t.label)+'</div><div class="tier-nodes">'+nodes+'</div></div>';
+  }).join("");
+  html += '<div class="deps"><b>How decisions connect:</b> ' + DEPS.map(function(p){ return p[0] + " → " + p[1]; }).join(" &nbsp;·&nbsp; ") + '</div>';
+  document.getElementById("tree").innerHTML = html;
+}
+
+function renderSummary(){
+  var decided = DECISIONS.filter(function(d){ return state[d.id]; });
+  var undecided = DECISIONS.filter(function(d){ return !state[d.id]; }).map(function(d){ return d.id; });
+  var html = "<b>Decided (" + decided.length + " of 16)</b>";
+  if (decided.length){
+    html += "<ul>" + decided.map(function(d){
+      var o = optByKey(d, state[d.id]);
+      return "<li>" + d.id + " → " + state[d.id] + ": " + esc(o.short) + "</li>";
+    }).join("") + "</ul>";
+  } else {
+    html += "<p>No decisions picked yet.</p>";
+  }
+  html += "<p><b>Undecided:</b> " + (undecided.length ? undecided.join(", ") : "none — all 16 decided.") + "</p>";
+  html += '<div class="noprint"><button class="btn" id="copyBtn" onclick="copySummary()">Copy summary</button> <button class="btn sec" onclick="window.print()">Print</button></div>';
+  document.getElementById("summary").innerHTML = html;
+  document.getElementById("counter").textContent = decided.length + " of 16 decided";
+}
+
+function summaryText(){
+  var lines = ["Membership & Enrolment — Your choices (draft for AS, Oct 28, 2026)", ""];
+  DECISIONS.forEach(function(d){
+    if (state[d.id]){
+      lines.push(d.id + " → " + state[d.id] + ": " + optByKey(d, state[d.id]).short);
+    }
+  });
+  var undecided = DECISIONS.filter(function(d){ return !state[d.id]; }).map(function(d){ return d.id; });
+  lines.push("");
+  lines.push("Undecided: " + (undecided.length ? undecided.join(", ") : "none"));
+  return lines.join("\n");
+}
+
+function copySummary(){
+  var text = summaryText();
+  var btn = document.getElementById("copyBtn");
+  function done(msg){ if (btn){ btn.textContent = msg; setTimeout(function(){ btn.textContent = "Copy summary"; }, 2000); } }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ done("Copied"); }, function(){ fallbackCopy(text, done); });
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+function fallbackCopy(text, done){
+  var ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); done("Copied"); } catch (e) { done("Copy failed — select manually"); }
+  document.body.removeChild(ta);
+}
+
+function renderDecisions(){
+  document.getElementById("decList").innerHTML = DECISIONS.map(function(d){
+    var shoghiCls = d.shoghi === "Concern" ? "shoghi concern" : (d.shoghi === "Agree" ? "shoghi agree" : "shoghi");
+    var html = '<article class="dec" id="card-'+d.id+'"><div class="dec-head"><span class="id">'+d.id+'</span><span class="'+shoghiCls+'">Shoghi: '+esc(d.shoghi)+'</span></div>';
+    html += '<p class="q">'+esc(d.question)+'</p><p class="why">'+esc(d.why)+'</p>';
+    html += '<label class="opt"><input type="radio" name="dec-'+d.id+'" value="" '+(state[d.id]===""?"checked":"")+' onchange="pick(\''+d.id+'\',\'\')">Undecided</label>';
+    d.options.forEach(function(o){
+      html += '<label class="opt"><input type="radio" name="dec-'+d.id+'" value="'+o.key+'" '+(state[d.id]===o.key?"checked":"")+' onchange="pick(\''+d.id+'\',\''+o.key+'\')"><b>'+o.key+'</b> '+esc(o.label)+(o.suggested?' <span class="sug">Suggested</span>':"")+(o.detail?'<span class="detail">'+esc(o.detail)+'</span>':"")+'</label>';
+    });
+    return html + '</article>';
+  }).join("");
+}
+
+function pick(id, key){ state[id] = key; renderTree(); renderSummary(); }
+function scrollToCard(id){ var el = document.getElementById("card-"+id); if (el) el.scrollIntoView({behavior:"smooth", block:"start"}); }
+function fillSuggested(){
+  DECISIONS.forEach(function(d){
+    var s = null;
+    for (var i=0;i<d.options.length;i++){ if (d.options[i].suggested) s = d.options[i]; }
+    if (s) state[d.id] = s.key;
+  });
+  renderDecisions(); renderTree(); renderSummary();
+}
+function clearAll(){
+  DECISIONS.forEach(function(d){ state[d.id] = ""; });
+  renderDecisions(); renderTree(); renderSummary();
+}
+document.getElementById("fillBtn").onclick = fillSuggested;
+document.getElementById("clearBtn").onclick = clearAll;
+
+renderPills(); renderCases(); renderTree(); renderSummary(); renderDecisions();
+</script>
+</body>
+</html>
