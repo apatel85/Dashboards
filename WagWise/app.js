@@ -7,14 +7,27 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.28.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.29.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
   WATER_CUTOFF: '20:15',              // hard water cutoff (local time HH:MM)
-  BEDTIME: '22:00',                   // v3.10 — master-log median lockdown 9:57 PM (was 21:45)
-  PRE_BED_DRAIN_MIN: 10,              // pre-bed lawn drain = bedtime - this many min
-  EVENING_PEE: '21:15',               // v3.28 — evening pee anchor (Ankit 2026-10-18: holds to ~9:15, 8ish outing is opportunistic not need-driven)
+  BEDTIME: '21:30',                   // v3.29 — Ankit fixed sleep anchor (was 22:00)
+  PRE_BED_DRAIN_MIN: 10,              // pre-bed lawn drain = bedtime - this many min (v3.29: drain merged into final pee)
+  EVENING_PEE: '20:15',               // v3.29 — evening pre-break (was 21:15; Ankit 2026-10-27 schedule)
+  FINAL_PEE: '21:30',                 // v3.29 — final pre-sleep pee (= sleep time)
+  WAKE_TIME: '07:45',                 // v3.29 — Ankit fixed wake anchor
+  SLEEP_TIME: '21:30',                // v3.29 — Ankit fixed sleep anchor (schedule use; independent of saved BEDTIME)
+  BREAKFAST_TIME: '08:30',            // v3.29 — fixed fallback; dynamic = wake + 40 min
+  LUNCH_TIME: '13:15',                // v3.29 — fixed fallback; dynamic = nap 1 wake + 60 min
+  DINNER_TIME: '19:00',               // v3.29 — fixed (not wake-anchored; data gap too variable)
+  NAP1: ['09:30', '11:30'],           // v3.29 — Ankit fixed nap schedule
+  NAP2: ['13:30', '15:30'],           // v3.29 — Ankit fixed nap schedule
+  NAP3: ['17:30', '18:45'],           // v3.29 — Ankit fixed nap schedule
+  BREAKFAST_AFTER_WAKE_MIN: 40,       // v3.29 — dynamic breakfast window (data median wake→breakfast 33 min)
+  LUNCH_AFTER_NAP1_MIN: 60,           // v3.29 — dynamic lunch window (data median nap1-end→lunch 87 min; 60 = lead time)
+  POOP2_TIME: '16:30',                // v3.29 — bowel #2 window center (data cluster 4:12–4:27 PM on good-meal days)
+  POOP2_GOOD_TBSP: 2.0,               // v3.29 — breakfast AND lunch each ≥ this = good-meal day
   TARGET_AWAKE_HOLD: 75,              // v3.10 — master-log median awake hold (was 80)
   MEAL_WINDOW_MIN: 15,                // 15-minute dish pickup rule
   KCAL_PER_TBSP: { Chicken: 26.94, Salmon: 25.31, Blend: 26.13 }, // legacy; v3.6 uses FOODS
@@ -275,11 +288,12 @@ function loadCfg() {
     if (c.KCAL_MIN) CFG.KCAL_MIN = c.KCAL_MIN;
     if (c.KCAL_MAX) CFG.KCAL_MAX = c.KCAL_MAX;
     if (c.BEDTIME) CFG.BEDTIME = c.BEDTIME;
+    if (c.SLEEP_TIME) CFG.SLEEP_TIME = c.SLEEP_TIME; // v3.29 — schedule bedtime
     if (c.DAY_ONE) CFG.DAY_ONE = c.DAY_ONE; else CFG.DAY_ONE = '2026-09-01';
   } catch(e){ CFG.DAY_ONE = '2026-09-01'; }
 }
 function saveCfg() {
-  localStorage.setItem(CFG.LS.CFG, JSON.stringify({ KCAL_MIN: CFG.KCAL_MIN, KCAL_MAX: CFG.KCAL_MAX, BEDTIME: CFG.BEDTIME, DAY_ONE: CFG.DAY_ONE }));
+  localStorage.setItem(CFG.LS.CFG, JSON.stringify({ KCAL_MIN: CFG.KCAL_MIN, KCAL_MAX: CFG.KCAL_MAX, BEDTIME: CFG.BEDTIME, SLEEP_TIME: CFG.SLEEP_TIME, DAY_ONE: CFG.DAY_ONE }));
 }
 function dayNumber(date = new Date()) {
   const d1 = new Date(CFG.DAY_ONE + 'T12:00:00');
@@ -1199,13 +1213,20 @@ function bowel1ClockMin(events) {
     Morning: 9:30 AM → 11:45 AM ("any time after 9:30").
     Afternoon: 1:45 PM → 3:45 PM. Evening: 5:45 PM → 6:45 PM. */
 const CANONICAL_NAPS = [
-  { label: 'Morning', startMin: 9 * 60 + 30, durMin: 135 },  // 9:30 AM → 11:45 AM
-  { label: 'Afternoon', startMin: 13 * 60 + 45, durMin: 120 }, // 1:45 PM → 3:45 PM
-  { label: 'Evening', startMin: 17 * 60 + 45, durMin: 60 },  // 5:45 PM → 6:45 PM
+  { label: 'Morning', startMin: 9 * 60 + 30, durMin: 120 },  // v3.29: 9:30 AM → 11:30 AM (was 11:45)
+  { label: 'Afternoon', startMin: 13 * 60 + 30, durMin: 120 }, // v3.29: 1:30 PM → 3:30 PM (was 1:45–3:45)
+  { label: 'Evening', startMin: 17 * 60 + 30, durMin: 75 },  // v3.29: 5:30 PM → 6:45 PM (was 5:45–6:45; wake still 6:45)
 ];
 /** v3.20 — canonical meal times (Ankit-set 2026-10-06; slots not listed here
-    stay learned from his history). Lunch 1:00–1:15 PM: gap before the 1:45 PM nap. */
-const CANONICAL_MEALS = { lunch: { startMin: 13 * 60, endMin: 13 * 60 + 15 } };
+    stay learned from his history). Lunch 1:00–1:15 PM: gap before the 1:45 PM nap.
+    v3.29 — Ankit schedule 2026-10-27: breakfast 8:30–8:45 AM and dinner 7:00–7:15 PM
+    added as canonical fallbacks (dynamic wake-anchored windows override when the
+    anchor wake is logged today). */
+const CANONICAL_MEALS = {
+  breakfast: { startMin: 8 * 60 + 30, endMin: 8 * 60 + 45 },
+  lunch: { startMin: 13 * 60, endMin: 13 * 60 + 15 },
+  dinner: { startMin: 19 * 60, endMin: 19 * 60 + 15 },
+};
 /** v3.25.2 — bedtime cutoff: a "nap" starting at/after 9:30 PM is overnight sleep,
     not a nap cycle (Ankit 2026-10-06: 9:35 PM crate → 11:30 PM pee → back down for
     the night). No post-nap pee/poop predictions — he's not waking again. */
@@ -1286,7 +1307,7 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
        autoDone: !!done, manualDone: !!((doneMap || {})[id]),
        done: !!(done || (doneMap || {})[id]) });
   const [wch, wcm] = hmParts(CFG.WATER_CUTOFF), wc = atHM(wch, wcm);
-  const [bh, bm] = hmParts(CFG.BEDTIME), bed = atHM(bh, bm);
+  const [bh, bm] = hmParts(CFG.SLEEP_TIME), bed = atHM(bh, bm); // v3.29 — schedule uses fixed SLEEP_TIME, not legacy BEDTIME
   // 0. meal dish pickup
   if (st.mealInProgress && st.lastMealAt) {
     const end = new Date(new Date(st.lastMealAt).getTime() + CFG.MEAL_WINDOW_MIN * 60000);
@@ -1320,19 +1341,44 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   // (median clock time per slot, ≥3 samples). v3.20: Ankit-set canonical slots
   // (CANONICAL_MEALS) take precedence — his word is the schedule. Skips slots
   // already logged today and windows that fully passed.
+  // v3.29 — dynamic windows (Ankit schedule 2026-10-27): breakfast = actual
+  // morning wake + 40 min, lunch = nap 1 wake + 60 min. Dynamic replaces the
+  // canonical/learned window when the anchor wake is logged today; otherwise
+  // the canonical/learned window stands. The dynamic window is the popup —
+  // it fires ahead of the meal itself.
   const loggedSlots = new Set(today.filter(e => e.category === 'Food').map(e => mealSlot(new Date(e.logged_at))));
   const sugg = mealTimeSuggestions(hist, now);
+  const morningCands = [
+    ...today.filter(isPee).map(peeAt).filter(t => new Date(t).getHours() < 10),
+    ...today.filter(isNapEnd).map(peeAt).filter(t => new Date(t).getHours() < 10),
+  ];
+  const firstWakeT = morningCands.length ? Math.min(...morningCands) : null;
+  const nap1Ends = today.filter(isNapEnd).map(peeAt).filter(t => { const h = new Date(t).getHours(); return h >= 9 && h < 14; });
+  const nap1WakeT = nap1Ends.length ? Math.min(...nap1Ends) : null;
   [['breakfast', '🍳'], ['lunch', '🍽️'], ['dinner', '🌙']].forEach(([slot, icon]) => {
     const cm = CANONICAL_MEALS[slot];
     const s = sugg[slot];
-    if ((!cm && !s) || loggedSlots.has(slot)) return;
-    const center = cm ? null : atHM(Math.floor(s.clockMin / 60), s.clockMin % 60);
-    const wStart = cm ? atHM(Math.floor(cm.startMin / 60), cm.startMin % 60) : new Date(center.getTime() - 10 * 60000);
-    const wEnd = cm ? atHM(Math.floor(cm.endMin / 60), cm.endMin % 60) : new Date(center.getTime() + 10 * 60000);
-    if (nowMs > wEnd.getTime() + (cm ? 10 : 35) * 60000) return;
+    let dynCenter = null, dynWhy = null;
+    if (slot === 'breakfast' && firstWakeT) { dynCenter = firstWakeT + CFG.BREAKFAST_AFTER_WAKE_MIN * 60000; dynWhy = `wake + ${CFG.BREAKFAST_AFTER_WAKE_MIN}m (your schedule)`; }
+    if (slot === 'lunch' && nap1WakeT) { dynCenter = nap1WakeT + CFG.LUNCH_AFTER_NAP1_MIN * 60000; dynWhy = `nap 1 wake + ${CFG.LUNCH_AFTER_NAP1_MIN}m (your schedule)`; }
+    if ((!cm && !s && dynCenter == null) || loggedSlots.has(slot)) return;
+    let wStart, wEnd, why, grace;
+    if (dynCenter != null) {
+      wStart = new Date(dynCenter - 15 * 60000); wEnd = new Date(dynCenter + 15 * 60000);
+      why = dynWhy; grace = 35;
+    } else if (cm) {
+      wStart = atHM(Math.floor(cm.startMin / 60), cm.startMin % 60);
+      wEnd = atHM(Math.floor(cm.endMin / 60), cm.endMin % 60);
+      why = `set schedule ${fmtTime(wStart)}–${fmtTime(wEnd)}${s && s.avgTbsp ? ` · avg ${s.avgTbsp.toFixed(1)} tbsp` : ''}`;
+      grace = 10;
+    } else {
+      const center = atHM(Math.floor(s.clockMin / 60), s.clockMin % 60);
+      wStart = new Date(center.getTime() - 10 * 60000); wEnd = new Date(center.getTime() + 10 * 60000);
+      why = `avg ${fmtTime(center)}${s.avgTbsp ? ` · ${s.avgTbsp.toFixed(1)} tbsp` : ''} (${s.n} meals, your history)`;
+      grace = 35;
+    }
+    if (nowMs > wEnd.getTime() + grace * 60000) return;
     const label = slot.charAt(0).toUpperCase() + slot.slice(1) + ' window';
-    const why = cm ? `set schedule ${fmtTime(wStart)}–${fmtTime(wEnd)}${s && s.avgTbsp ? ` · avg ${s.avgTbsp.toFixed(1)} tbsp` : ''}`
-                   : `avg ${fmtTime(center)}${s.avgTbsp ? ` · ${s.avgTbsp.toFixed(1)} tbsp` : ''} (${s.n} meals, your history)`;
     items.push(mk('meal-' + slot, icon, label, wStart, wEnd, why, false));
   });
   // 2c. nap schedule — v3.20: canonical 3-nap slots, Ankit-set (whole span shown,
@@ -1387,11 +1433,10 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
         // (Ankit 2026-10-11: logged the morning poop late, stale prediction stayed).
         if (n.label === 'Morning') showPoop = poopsToday === 0;
         else if (n.label === 'Evening') {
-          const b2min = bowel2ClockMin(hist);
-          const b2End = atHM(Math.floor(b2min / 60), b2min % 60).getTime() + 10 * 60000;
-          // v3.25 — dinner logged → the post-dinner poop takes over as the fallback
-          const dinnerLogged = today.some(e => e.category === 'Food' && mealSlot(new Date(e.logged_at)) === 'dinner');
-          showPoop = poopsToday < 2 && nowMs > b2End && !dinnerLogged;
+          // v3.29 — suppressed: the meal-based poop2 window + dinner-poop fallback
+          // now own the afternoon/evening poop story (Ankit schedule 2026-10-27).
+          // Keeping the old evening post-nap poop would triple-predict one outing.
+          showPoop = false;
         }
         if (showPoop) {
           const p = new Date(w.getTime() + poopLat * 60000);
@@ -1433,12 +1478,13 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
       // v3.25.4 — expire stale pee windows (Ankit 2026-10-07: 10:35 AM window still
       // showing at 7 PM). A hold-based window older than 3h is clutter, not signal —
       // the newer predictions (from recent pees) carry the schedule.
-      // v3.28 — suppress the hold window 8:00–9:15 PM when the evening pee anchor is
-      // upcoming (Ankit 2026-10-18: the 8ish outing is opportunistic; 9:15 is the
-      // scheduled one). Avoids double-prompting.
+      // v3.29 — suppress the hold window only when its center falls inside the
+      // evening pee window (anchor ±15 min); the anchor is the scheduled outing.
+      // (A 30-min radius was too aggressive — it killed legitimate hold windows
+      // like a 7:57 PM center vs the 8:15 PM anchor.)
       const epAnchorMs = atHM(...hmParts(CFG.EVENING_PEE)).getTime();
-      const inEveningGap = pwStart >= atHM(20, 0).getTime() && pwStart < epAnchorMs && nowMs < epAnchorMs;
-      if (nowMs < pwEnd + 3 * 3600000 && !inEveningGap)
+      const overlapsEvening = Math.abs((pwStart + pwEnd) / 2 - epAnchorMs) <= 15 * 60000 && nowMs < epAnchorMs;
+      if (nowMs < pwEnd + 3 * 3600000 && !overlapsEvening)
         items.push(mk('pee-window', '🚻', 'Pee window', new Date(pwStart), new Date(pwEnd), why, done));
     }
   }
@@ -1454,24 +1500,52 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
     }
   }
   if (poops < 2) {
-    const cmin = bowel2ClockMin(hist), c = atHM(Math.floor(cmin / 60), cmin % 60);
-    if (nowMs < c.getTime() + 90 * 60000)
-      items.push(mk('poop2', '💩', 'Bowel #2 window', new Date(c.getTime() - 10 * 60000), new Date(c.getTime() + 10 * 60000),
-        `bowel #2 median ${fmtTime(c)} (your history) · he often pees around this time too`, false));
+    // v3.29 — bowel #2: fixed 4:30 PM window (Ankit schedule; data cluster 4:12–4:27
+    // on good-meal days). The window ALWAYS shows; poor meals change the note, not
+    // the visibility. Good = breakfast AND lunch each ≥2 tbsp; else the
+    // low-probability note. Visible until dinner, when the dinner-poop takes over.
+    const mealsToday = today.filter(e => e.category === 'Food');
+    const tbspFor = slot => {
+      const ms = mealsToday.filter(e => mealSlot(new Date(e.logged_at)) === slot);
+      return ms.length ? Math.max(...ms.map(e => +e.kibble_consumed_tbsp || 0)) : null;
+    };
+    const bT = tbspFor('breakfast'), lT = tbspFor('lunch');
+    const goodMeals = bT != null && lT != null && bT >= CFG.POOP2_GOOD_TBSP && lT >= CFG.POOP2_GOOD_TBSP;
+    const c = atHM(...hmParts(CFG.POOP2_TIME));
+    const dinnerMs = atHM(...hmParts(CFG.DINNER_TIME)).getTime();
+    let why = goodMeals
+      ? `bowel #2 ~${fmtTime(c)} (your schedule) · good breakfast + lunch`
+      : `⚠️ Probability of poop is low because of the meal skip or less meal (breakfast ${bT ?? '—'} tbsp, lunch ${lT ?? '—'} tbsp)`;
+    why += ' · he often pees around this time too';
+    if (nowMs < dinnerMs)
+      items.push(mk('poop2', '💩', 'Bowel #2 window', new Date(c.getTime() - 15 * 60000), new Date(c.getTime() + 15 * 60000), why, false));
   }
   // v3.25 — post-dinner poop fallback (Ankit 2026-10-06): the 2nd poop still isn't
   // logged and dinner was logged → very likely within ~15 min after dinner.
+  // v3.29 — also fires on the fixed dinner time when dinner isn't logged yet,
+  // so there's no gap after the poop2 window expires at dinner time.
   if (poopsToday < 2) {
     const dinners = today.filter(e => e.category === 'Food' && mealSlot(new Date(e.logged_at)) === 'dinner');
-    if (dinners.length) {
-      const dT = new Date(dinners[dinners.length - 1].logged_at).getTime();
-      const p = dT + 15 * 60000;
-      if (nowMs >= dT - 10 * 60000 && nowMs <= p + 45 * 60000) {
-        items.push(mk('dinner-poop', '💩', 'Post-dinner poop',
-          new Date(p - 10 * 60000), new Date(p + 10 * 60000),
-          `~15m after dinner (${fmtTime(new Date(dT))}) — 2nd poop still pending`, false));
-      }
+    const fixedDinnerMs = atHM(...hmParts(CFG.DINNER_TIME)).getTime();
+    const dT = dinners.length ? new Date(dinners[dinners.length - 1].logged_at).getTime() : fixedDinnerMs;
+    const p = dT + 15 * 60000;
+    const showFrom = dinners.length ? dT - 10 * 60000 : fixedDinnerMs;
+    if (nowMs >= showFrom && nowMs <= p + 45 * 60000) {
+      items.push(mk('dinner-poop', '💩', 'Post-dinner poop',
+        new Date(p - 10 * 60000), new Date(p + 10 * 60000),
+        dinners.length ? `~15m after dinner (${fmtTime(new Date(dT))}) — 2nd poop still pending`
+                       : `~15m after scheduled dinner (${fmtClock(CFG.DINNER_TIME)}) — 2nd poop still pending`, false));
     }
+  }
+  // v3.29 — poop2 skipped (✕ "didn't go") → the after-dinner window becomes
+  // prominent immediately (Ankit 2026-10-27). Uses actual dinner time if logged,
+  // else fixed dinner time. Guarded against duplicating the v3.25 row above.
+  if (poopsToday < 2 && (skipMap || {})['poop2'] && !items.some(a => a.id === 'dinner-poop')) {
+    const dinners = today.filter(e => e.category === 'Food' && mealSlot(new Date(e.logged_at)) === 'dinner');
+    const dT = dinners.length ? new Date(dinners[dinners.length - 1].logged_at).getTime() : atHM(...hmParts(CFG.DINNER_TIME)).getTime();
+    const p = dT + 15 * 60000;
+    items.push(mk('dinner-poop', '💩', 'Post-dinner poop (expected)', new Date(p - 10 * 60000), new Date(p + 10 * 60000),
+      '4:30 poop skipped — most likely right after dinner', false));
   }
   // v3.25 — clock-anchored pee blocks (confirmed 7/11 recent days each). Only the next
   // upcoming block renders (keeps the list compact). Auto-done when he pees
@@ -1498,28 +1572,31 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   if (nowMs < wc.getTime() + 30 * 60000)
     items.push(mk('water-cutoff', '💧', 'Hard water cutoff ' + fmtClock(CFG.WATER_CUTOFF), wc, wc,
       'shut down renal inflow for the night — pull the bowls', false));
-  // 5b. evening pee anchor — v3.28 (Ankit 2026-10-18): he holds to ~9:15 PM;
-  // the ~8ish hold-window outing is opportunistic, not need-driven. Explicit anchor
-  // at 9:15 PM; the hold-based window is suppressed 8:00–9:15 PM when this is upcoming.
+  // 5b. evening pee anchor — v3.29 (Ankit schedule 2026-10-27): 8:15 PM evening
+  // pre-break. Replaces the v3.28 9:15 PM anchor; the final pre-sleep pee is now
+  // 9:30 PM (see below).
   const [eph, epm] = hmParts(CFG.EVENING_PEE), epAnchor = atHM(eph, epm);
   const epStart = new Date(epAnchor.getTime() - 15 * 60000), epEnd = new Date(epAnchor.getTime() + 15 * 60000);
   const epDone = today.some(e => isPee(e) && peeAt(e) > epStart.getTime() - 30 * 60000);
   if (nowMs < epEnd.getTime())
     items.push(mk('evening-pee', '🌆', 'Evening pee', epStart, epEnd,
-      'scheduled 9:15 PM outing (your history: holds to ~9:15)', epDone));
-  // 6. pre-bed drain + 7. crate lockdown
-  const drain = new Date(bed.getTime() - CFG.PRE_BED_DRAIN_MIN * 60000);
-  if (nowMs < bed.getTime())
-    items.push(mk('drain', '🌙', 'Pre-bed lawn drain', drain, bed, 'reset bladder to true zero',
-      today.some(e => isPee(e) && peeAt(e) > drain.getTime() - 30 * 60000)));
+      'scheduled 8:15 PM evening outing (your schedule)', epDone));
+  // 6. final pre-sleep pee + 7. crate lockdown — v3.29: the old pre-bed drain is
+  // merged into the 9:30 PM final pee (Ankit schedule); bedtime moved 10:00 → 9:30 PM.
+  const fpAnchor = atHM(...hmParts(CFG.FINAL_PEE));
+  const fpStart = new Date(fpAnchor.getTime() - 15 * 60000), fpEnd = new Date(fpAnchor.getTime() + 15 * 60000);
+  if (nowMs < fpEnd.getTime())
+    items.push(mk('final-pee', '🌙', 'Final pee — before sleep', fpStart, fpEnd,
+      'last outing before crate · reset bladder to true zero',
+      today.some(e => isPee(e) && peeAt(e) > fpStart.getTime() - 30 * 60000)));
   if (nowMs < bed.getTime() + 20 * 60000)
-    items.push(mk('crate', '💤', 'Overnight den lockdown ' + fmtClock(CFG.BEDTIME), bed, new Date(bed.getTime() + 15 * 60000),
+    items.push(mk('crate', '💤', 'Overnight den lockdown ' + fmtClock(CFG.SLEEP_TIME), bed, new Date(bed.getTime() + 15 * 60000),
       'covered crate + brown noise', false));
   // 8. tomorrow morning pee (evening lookahead)
   if (nowMs > bed.getTime() - 60 * 60000) {
-    const morn = atHM(7, 43, 1); // v3.10 master-log median wake 7:43 AM
+    const morn = atHM(7, 45, 1); // v3.29 fixed wake 7:45 AM (was 7:43 master-log median)
     items.push(mk('morning-pee', '🌅', 'Morning pee', new Date(morn.getTime() - 15 * 60000), new Date(morn.getTime() + 15 * 60000),
-      'median wake 7:43 AM (your history)', false));
+      'fixed wake 7:45 AM (your schedule)', false));
   }
   // v3.17.5 — a pee/poop prediction whose window falls inside a predicted nap span
   // is invalid (he's asleep — ADH suppression handles continence). Drop it; the
@@ -1602,7 +1679,7 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   // v3.24 — the urgent pee break pins to the top while it's active
   const ui = sorted.findIndex(a => a.id === 'urgent-pee');
   if (ui > 0) { const [u] = sorted.splice(ui, 1); sorted.unshift(u); }
-  return sorted.slice(0, 10); // v3.25 — was 9; room for the clock-anchored pee block
+  return sorted.slice(0, 14); // v3.29 — was 10; room for the schedule rows (meals + naps)
 }
 /* ---------- v3.13 — local action alerts (Notification API, $0, no server) ----------
    Fires as a Next-up window opens (10-min heads-up), once per item per day.
@@ -3777,7 +3854,7 @@ function wire() {
   $('signOutBtn').onclick = async () => { await S.sb.auth.signOut(); S.user = null; S.events = []; renderAuth(); renderAll(); setSync(false); show('landing'); };
   $('cfgSave').onclick = () => {
     CFG.KCAL_MIN = +$('cfgKcalMin').value || 300; CFG.KCAL_MAX = +$('cfgKcalMax').value || 330;
-    CFG.BEDTIME = $('cfgBedtime').value || '21:45'; CFG.DAY_ONE = $('cfgDayOne').value || '2026-09-01';
+    CFG.BEDTIME = $('cfgBedtime').value || '21:30'; CFG.SLEEP_TIME = CFG.BEDTIME; CFG.DAY_ONE = $('cfgDayOne').value || '2026-09-01';
     saveCfg(); toast('Settings saved ✓'); renderCockpit();
   };
   document.querySelectorAll('#dialSeg button').forEach(b => b.onclick = () => { // v2.0 clockface filter
@@ -3835,7 +3912,7 @@ async function init() {
   applyBrand(); // v2.2 — white-label: brand name from config.js
   $('geminiKey').value = localStorage.getItem(CFG.LS.GEMINI) || '';
   $('cfgKcalMin').value = CFG.KCAL_MIN; $('cfgKcalMax').value = CFG.KCAL_MAX;
-  $('cfgBedtime').value = CFG.BEDTIME; $('cfgDayOne').value = CFG.DAY_ONE;
+  $('cfgBedtime').value = CFG.SLEEP_TIME; $('cfgDayOne').value = CFG.DAY_ONE;
   wire();
   const av0 = $('appVersion'); if (av0) av0.textContent = 'v' + APP_VERSION;
   const avl0 = $('appVersionLanding'); if (avl0) avl0.textContent = 'v' + APP_VERSION;
