@@ -1,5 +1,10 @@
 # AGENTLOG — AppRepoTracker
 
+## 2026-10-28 — v1.0.4 — Added Market Research Dashboard entry
+- Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
+- Change: added "Market Research Dashboard" at the top of Live Apps (password-gated single dashboard, one tab per research project, per-tab PDF export and scoped share links, link to MarketResearch/, Updated 2026-10-28, thread Quixera Enhancement — Oct 28, 2026). Live Apps stay sorted most-recent-first, so the Oct 28 entry leads. Counts updated to 37 entries / 20 live apps.
+- Verification: entry placement and counts checked in the pushed index.html; Pages URL re-checked after deploy.
+
 ## 2026-10-28 — v1.0.3 — Added Quixera Program Pricing Research entry
 - Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
 - Change: added "Quixera Program Pricing Research" (Muse artifact, slug quixera-program-pricing-research) at the top of Live Apps — academy pricing research across cricket, soccer, tennis, badminton, baseball plus comparators, with a recommended Quixera pricing structure. Live Apps stay sorted most-recent-first, so the Oct 28 entry leads. Counts updated to 36 entries / 19 live apps.
