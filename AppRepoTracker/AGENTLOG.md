@@ -1,5 +1,11 @@
 # AGENTLOG — AppRepoTracker
 
+## 2026-10-28 — v1.0.3 — Added Quixera Program Pricing Research entry
+- Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
+- Change: added "Quixera Program Pricing Research" (Muse artifact, slug quixera-program-pricing-research) at the top of Live Apps — academy pricing research across cricket, soccer, tennis, badminton, baseball plus comparators, with a recommended Quixera pricing structure. Live Apps stay sorted most-recent-first, so the Oct 28 entry leads. Counts updated to 36 entries / 19 live apps.
+- Verification: entry placement and counts checked in the pushed index.html; Pages URL re-checked after deploy.
+
+
 ## 2026-10-27 — v1.0.2 — Added QuixeraPrograms GitHub entry; sorted Live Apps by most recent update
 - Request: add QuixeraPrograms to the master App Repo app; sort apps by most active first (read as most recently updated).
 - Change: added "Quixera Startup Programs — GitHub Pages" to Live Apps (hosted copy of the programs dashboard, link to QuixeraPrograms/, Updated 2026-10-27). Live Apps re-sorted by Updated date descending (ties keep previous order; undated-Oct entry after dated October entries; unconfirmed dates last). Counts updated to 35 entries / 18 live apps.
