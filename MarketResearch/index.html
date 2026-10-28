@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market Research Dashboard</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1f2937; background: #f3f4f6; line-height: 1.55; }
+  /* ---------- Password gate ---------- */
+  #gate { position: fixed; inset: 0; z-index: 50; background: #111827; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  #gate.hidden { display: none; }
+  .gate-card { background: #fff; border-radius: 12px; padding: 28px 24px; width: 100%; max-width: 380px; text-align: center; }
+  .gate-card h1 { margin: 0 0 6px; font-size: 22px; }
+  .gate-card p { margin: 0 0 16px; color: #6b7280; font-size: 15px; }
+  .gate-card input { width: 100%; padding: 11px 12px; font-size: 16px; border: 1px solid #d1d5db; border-radius: 8px; margin-bottom: 12px; }
+  .gate-card button { width: 100%; padding: 11px; font-size: 16px; border: 0; border-radius: 8px; background: #1c0837; color: #fff; cursor: pointer; }
+  .gate-card button:hover { background: #2d1157; }
+  .gate-error { color: #b91c1c !important; min-height: 20px; font-size: 14px; }
+  /* ---------- App shell ---------- */
+  #app { max-width: 880px; margin: 0 auto; padding: 20px 16px 40px; }
+  .site-head h1 { margin: 0; font-size: 26px; }
+  .site-head p { margin: 2px 0 0; color: #6b7280; }
+  .shared-banner { margin: 16px 0 0; padding: 10px 14px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; font-size: 14px; }
+  .tabbar { display: flex; gap: 8px; overflow-x: auto; padding: 14px 0 4px; }
+  .tabbar button { flex: 0 0 auto; padding: 9px 14px; font-size: 15px; border: 1px solid #d1d5db; background: #fff; border-radius: 999px; cursor: pointer; }
+  .tabbar button.active { background: #1c0837; color: #fff; border-color: #1c0837; }
+  .tab-panel { display: none; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 22px 20px; margin-top: 12px; }
+  .tab-panel.active { display: block; }
+  .tab-panel h2 { font-size: 18px; margin: 26px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #e5e7eb; }
+  .tab-panel h2:first-of-type { margin-top: 8px; }
+  .tab-panel p, .tab-panel li { font-size: 15.5px; }
+  .tab-panel ul { padding-left: 20px; }
+  .sharebar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 18px; padding-bottom: 14px; border-bottom: 1px solid #e5e7eb; }
+  .sharebar button { padding: 8px 14px; font-size: 14px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 8px; cursor: pointer; }
+  .sharebar button:hover { background: #eef2ff; }
+  .sharebar .copy-note { font-size: 13px; color: #059669; }
+  .meta-line { color: #6b7280; font-size: 14px; margin: 0 0 4px; }
+  .verdict { font-size: 17px; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f9fafb; }
+  .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .swot-box { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; }
+  .swot-box h3 { margin: 0 0 6px; font-size: 15px; }
+  .flag-list li, .opp-list li { margin-bottom: 8px; }
+  .flag-list li::marker { color: #b91c1c; }
+  .opp-list li::marker { color: #059669; }
+  .callout { border-left: 4px solid #e6c22d; background: #fffbeb; padding: 12px 14px; border-radius: 0 8px 8px 0; }
+  .callout.warn { border-left-color: #b91c1c; background: #fef2f2; }
+  .empty-state { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 22px 20px; margin-top: 12px; }
+  footer { margin-top: 24px; color: #9ca3af; font-size: 13px; text-align: center; }
+  @media (max-width: 640px) {
+    .swot-grid { grid-template-columns: 1fr; }
+    .site-head h1 { font-size: 22px; }
+    .tab-panel { padding: 18px 14px; }
+  }
+  @media print {
+    body { background: #fff; }
+    #gate, .site-head, .tabbar, .sharebar, #sharedBanner, footer { display: none !important; }
+    .tab-panel { display: none !important; border: 0; padding: 0; }
+    .tab-panel.active { display: block !important; }
+  }
+</style>
+</head>
+<body>
+<script>
+/* ================= ADD NEW RESEARCH HERE =================
+   To add a research project, append an object to the RESEARCH array below.
+   Required fields, in the order they render on the tab:
+     id:            short slug, used in share links (?share=<id>)
+     title:         tab label, e.g. a company or product name
+     date:          date the research was completed (YYYY-MM-DD)
+     verdict:       one-paragraph verdict (build / extend / partner / drop + reason)
+     snapshot:      what the product does today, who pays, how it is priced
+     market:        market size, segments, trends, barriers (with sources)
+     competitors:   array of { name, offering, price, strengths, weaknesses }
+     swot:          { strengths: [], weaknesses: [], opportunities: [], threats: [] }
+     redFlags:      array of { title, detail } (each with its consequence)
+     opportunities: array of { title, detail } (each with what it takes to capture it)
+     quixeraPath:   array of { item, path } (existing capability / extension / new tool + next step)
+     newTool:       build / extend / new-tool decision, with scope, buyer, price,
+                    validation step and kill criteria when a new tool is warranted
+     sources:       array of source strings (prices date-stamped)
+     openQuestions: array of questions that would change the verdict
+   ========================================================== */
+var RESEARCH = [];
+</script>
+
+<!-- Password gate -->
+<div id="gate">
+  <div class="gate-card">
+    <h1>Market Research Dashboard</h1>
+    <p>Enter the shared password to continue.</p>
+    <form id="gateForm">
+      <input id="pw" type="password" placeholder="Password" autocomplete="current-password" autofocus>
+      <button type="submit">Unlock</button>
+    </form>
+    <p id="gateError" class="gate-error"></p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" hidden>
+  <header class="site-head">
+    <h1>Market Research Dashboard</h1>
+    <p>One dashboard &middot; one tab per research project</p>
+  </header>
+
+  <div id="sharedBanner" class="shared-banner" hidden>Shared view &mdash; showing only the research you were given access to.</div>
+
+  <nav class="tabbar" id="tabbar" role="tablist"></nav>
+
+  <main id="panels">
+    <section class="tab-panel" id="panel-how-this-works" data-tab="how-this-works">
+      <h2>How this works</h2>
+      <p>Research is commissioned in the Market Research chat: hand over one particular website, company, or product, and it gets a full in-depth research pass &mdash; current product analysis, market landscape, competitor research, SWOT, Quixera leverage at a reasonable cost, and a build / extend / new-tool decision.</p>
+      <p>Each finished research project becomes a tab in this dashboard. Tabs follow the same fixed order: Verdict, Product snapshot, Market landscape, Competitor comparison, SWOT, Red flags, Opportunities, Quixera path, New-tool decision, Sources, Open questions.</p>
+      <p>Tabs can be shared individually. Every research tab has a <strong>Download PDF</strong> button (prints just that tab) and a <strong>Copy share link</strong> button (a link that opens this dashboard showing only the chosen tabs).</p>
+      <div class="callout warn">
+        <strong>A note on the password gate:</strong> this dashboard is protected by a shared password, which keeps casual visitors out. It is not true login security &mdash; the page content technically lives in the site's files, so it will not stop someone determined. If any research is ever genuinely sensitive, ask for proper login-based access instead.
+      </div>
+    </section>
+    <!-- Research panels are injected here by the script below. -->
+  </main>
+
+  <div id="emptyState" class="empty-state" hidden>
+    <p><strong>No matching research found.</strong> The share link you followed does not match any research tab in this dashboard.</p>
+  </div>
+
+  <footer>Market Research Dashboard &middot; research commissioned in the Market Research chat</footer>
+</div>
+
+<script>
+var GATE_HASH = "8162ca2470e5c020c18ca743fda1c37d42806a96d286a571e38b1980c701f26b";
+
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function listItems(arr) {
+  return (arr || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("");
+}
+function titledItems(arr) {
+  return (arr || []).map(function (x) {
+    return "<li><strong>" + esc(x.title) + "</strong> &mdash; " + esc(x.detail) + "</li>";
+  }).join("");
+}
+function researchPanel(r) {
+  var compRows = (r.competitors || []).map(function (c) {
+    return "<tr><td><strong>" + esc(c.name) + "</strong></td><td>" + esc(c.offering) +
+      "</td><td>" + esc(c.price) + "</td><td>" + esc(c.strengths) +
+      "</td><td>" + esc(c.weaknesses) + "</td></tr>";
+  }).join("");
+  var swot = r.swot || {};
+  var qp = (r.quixeraPath || []).map(function (q) {
+    return "<li><strong>" + esc(q.item) + "</strong> &mdash; " + esc(q.path) + "</li>";
+  }).join("");
+  return '<section class="tab-panel" id="panel-' + esc(r.id) + '" data-tab="' + esc(r.id) + '">' +
+    '<div class="sharebar">' +
+      '<button type="button" onclick="window.print()">Download PDF</button>' +
+      '<button type="button" onclick="copyShareLink(\'' + esc(r.id) + '\', this)">Copy share link</button>' +
+      '<span class="copy-note" hidden>Link copied</span>' +
+    '</div>' +
+    '<p class="meta-line">Research completed ' + esc(r.date) + '</p>' +
+    '<h2>Verdict</h2><p class="verdict">' + esc(r.verdict) + '</p>' +
+    '<h2>Product snapshot</h2><p>' + esc(r.snapshot) + '</p>' +
+    '<h2>Market landscape</h2><p>' + esc(r.market) + '</p>' +
+    '<h2>Competitor comparison</h2><div class="table-wrap"><table>' +
+      '<tr><th>Competitor</th><th>Offering</th><th>Price</th><th>Strengths</th><th>Weaknesses</th></tr>' +
+      compRows + '</table></div>' +
+    '<h2>SWOT</h2><div class="swot-grid">' +
+      '<div class="swot-box"><h3>Strengths</h3><ul>' + listItems(swot.strengths) + '</ul></div>' +
+      '<div class="swot-box"><h3>Weaknesses</h3><ul>' + listItems(swot.weaknesses) + '</ul></div>' +
+      '<div class="swot-box"><h3>Opportunities</h3><ul>' + listItems(swot.opportunities) + '</ul></div>' +
+      '<div class="swot-box"><h3>Threats</h3><ul>' + listItems(swot.threats) + '</ul></div>' +
+    '</div>' +
+    '<h2>Red flags</h2><ul class="flag-list">' + titledItems(r.redFlags) + '</ul>' +
+    '<h2>Opportunities</h2><ul class="opp-list">' + titledItems(r.opportunities) + '</ul>' +
+    '<h2>Quixera path</h2><ul>' + qp + '</ul>' +
+    '<h2>New-tool decision</h2><p>' + esc(r.newTool) + '</p>' +
+    '<h2>Sources</h2><ul>' + listItems(r.sources) + '</ul>' +
+    '<h2>Open questions</h2><ul>' + listItems(r.openQuestions) + '</ul>' +
+  '</section>';
+}
+function copyShareLink(id, btn) {
+  var url = window.location.origin + window.location.pathname + "?share=" + encodeURIComponent(id);
+  function done() {
+    var note = btn.parentNode.querySelector(".copy-note");
+    note.hidden = false;
+    setTimeout(function () { note.hidden = true; }, 2500);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(done, function () { fallbackCopy(url); done(); });
+  } else { fallbackCopy(url); done(); }
+}
+function fallbackCopy(text) {
+  var ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+}
+function allTabs() {
+  var tabs = [{ id: "how-this-works", title: "How this works" }];
+  RESEARCH.forEach(function (r) { tabs.push({ id: r.id, title: r.title }); });
+  return tabs;
+}
+function activate(id) {
+  document.querySelectorAll(".tabbar button").forEach(function (b) {
+    b.classList.toggle("active", b.getAttribute("data-tab") === id);
+  });
+  document.querySelectorAll(".tab-panel").forEach(function (p) {
+    p.classList.toggle("active", p.getAttribute("data-tab") === id);
+  });
+}
+function showApp() {
+  document.getElementById("gate").classList.add("hidden");
+  var app = document.getElementById("app");
+  app.hidden = false;
+  var params = new URLSearchParams(window.location.search);
+  var shareRaw = params.get("share");
+  var shareIds = shareRaw ? shareRaw.split(",").map(function (s) { return s.trim(); }).filter(Boolean) : null;
+  var tabs = allTabs();
+  var visible = shareIds ? tabs.filter(function (t) { return shareIds.indexOf(t.id) !== -1; }) : tabs;
+  if (shareIds) { document.getElementById("sharedBanner").hidden = false; }
+  if (visible.length === 0) {
+    document.getElementById("tabbar").hidden = true;
+    document.getElementById("emptyState").hidden = false;
+    return;
+  }
+  var bar = document.getElementById("tabbar");
+  visible.forEach(function (t) {
+    var b = document.createElement("button");
+    b.type = "button"; b.setAttribute("data-tab", t.id); b.textContent = t.title;
+    b.onclick = function () { activate(t.id); };
+    bar.appendChild(b);
+  });
+  activate(visible[0].id);
+}
+async function sha256Hex(text) {
+  var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(function (b) {
+    return b.toString(16).padStart(2, "0");
+  }).join("");
+}
+document.getElementById("gateForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  var err = document.getElementById("gateError");
+  err.textContent = "";
+  try {
+    var h = await sha256Hex(document.getElementById("pw").value);
+    if (h === GATE_HASH) {
+      try { sessionStorage.setItem("mr_unlocked", "1"); } catch (e2) {}
+      showApp();
+    } else {
+      err.textContent = "Incorrect password.";
+    }
+  } catch (e3) {
+    err.textContent = "This gate needs a secure (https) connection.";
+  }
+});
+(function init() {
+  var panels = document.getElementById("panels");
+  RESEARCH.forEach(function (r) { panels.insertAdjacentHTML("beforeend", researchPanel(r)); });
+  var unlocked = false;
+  try { unlocked = sessionStorage.getItem("mr_unlocked") === "1"; } catch (e) {}
+  if (unlocked) { showApp(); }
+})();
+</script>
+</body>
+</html>
