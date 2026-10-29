@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.32.4'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.33.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   GEMINI_PROXY_MODELS: ['gemini-3.8-flash'], // v3.30.2 — 2.5-flash is closed to new users; Google's error points to 3.8-flash (GA Sep 2026)
@@ -589,7 +589,7 @@ async function syncOfflineQueue() {
   const okFlags = [];
   for (const ev of q) {
     if (!ev.subject_id) ev.subject_id = S.subject.id;
-    ev.owner_id = S.user.id;
+    if (!ev.owner_id) ev.owner_id = S.user.id; // keep the original logger's id: a later sign-in by another household member must not reassign queued events to themselves
     const { error } = await S.sb.from('telemetry_events').insert(ev);
     okFlags.push(!error);
   }
@@ -3389,6 +3389,14 @@ async function renderAuth() {
   const gb = $('googleBtn'); if (gb) gb.hidden = inOut;
   $('authEmail').disabled = inOut; $('authPass').disabled = inOut;
   $('authStatus').textContent = inOut ? `Signed in as ${S.user.email}` : 'Not signed in.';
+  const lb = $('logoutBtn'); if (lb) lb.hidden = !inOut; // v3.33.0: log out from More → About (the landing-screen sign-out is unreachable while signed in)
+}
+async function signOut() { // v3.33.0: shared by the landing sign-out and the More-screen log out
+  if (!confirm('Log out of WagWise on this device? Synced data stays on the server; any unsynced offline events stay on this device.')) return;
+  try { if (S.sb) await S.sb.auth.signOut(); } catch (e) {}
+  S.user = null; S.events = []; S.history = []; S.subjects = [];
+  try { localStorage.removeItem('st_active_pet'); } catch (e) {} // next sign-in picks that account's own first pet
+  renderAuth(); renderAll(); setSync(false); show('landing');
 }
 async function signIn() {
   if (!S.sb) { toast('Connect Supabase first.'); return; }
@@ -3971,7 +3979,8 @@ function wire() {
   const idis = $('installDismiss'); if (idis) idis.onclick = () => { $('installCard').hidden = true; localStorage.setItem('st_install_dismissed', '1'); };
   const imb = $('installMenuBtn'); if (imb) imb.onclick = runInstallFlow;
   $('signInBtn').onclick = signIn; $('signUpBtn').onclick = signUp;
-  $('signOutBtn').onclick = async () => { await S.sb.auth.signOut(); S.user = null; S.events = []; renderAuth(); renderAll(); setSync(false); show('landing'); };
+  $('signOutBtn').onclick = signOut;
+  $('logoutBtn').onclick = signOut;
   $('cfgSave').onclick = () => {
     CFG.KCAL_MIN = +$('cfgKcalMin').value || 300; CFG.KCAL_MAX = +$('cfgKcalMax').value || 330;
     CFG.BEDTIME = $('cfgBedtime').value || '21:30'; CFG.SLEEP_TIME = CFG.BEDTIME; CFG.DAY_ONE = $('cfgDayOne').value || '2026-09-01';
