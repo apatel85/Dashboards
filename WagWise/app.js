@@ -7,9 +7,11 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.29.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.30.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
+  GEMINI_PROXY_PATH: '/functions/v1/gemini-proxy', // v3.30 — shared Gemini proxy (Edge Function; key lives server-side only)
+  GEMINI_PROXY_MODELS: ['gemini-2.5-flash', 'gemini-2.0-flash'], // v3.30 — models the proxy allows
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
   WATER_CUTOFF: '20:15',              // hard water cutoff (local time HH:MM)
   BEDTIME: '21:30',                   // v3.29 — Ankit fixed sleep anchor (was 22:00)
@@ -2901,6 +2903,78 @@ function geminiErrText(status, msg) {
   if (status === 429) return 'Free-tier quota used up for now (or 500 web searches/day reached). Wait a bit and try again.';
   return 'AI error: ' + msg;
 }
+/* ----- v3.30 — shared Gemini proxy (Supabase Edge Function) -----
+   The global key lives ONLY as the function's GEMINI_API_KEY secret — never
+   in this file. Signed-in users without a personal key use the proxy; a
+   personal key (st_gemini) always wins when set. Pure helpers are tested. */
+function proxyBaseUrl() {
+  try {
+    return (typeof ST_CONFIG !== 'undefined' && ST_CONFIG.SUPABASE_URL) || localStorage.getItem(CFG.LS.SB_URL) || '';
+  } catch (e) { return ''; }
+}
+function proxyUrl() {
+  const b = proxyBaseUrl().replace(/\/$/, '');
+  return b ? b + CFG.GEMINI_PROXY_PATH : '';
+}
+function proxyBody(model, systemText, history, web) {
+  const m = CFG.GEMINI_PROXY_MODELS.includes(model) ? model : 'gemini-2.5-flash';
+  const contents = (history || []).slice(-10).map(x => ({ role: x.role === 'ai' ? 'model' : 'user', parts: [{ text: x.text }] }));
+  const body = { model: m, contents, generationConfig: { temperature: 0.35, maxOutputTokens: 1200 } };
+  if (systemText) body.system_instruction = { parts: [{ text: systemText }] };
+  if (web) body.tools = [{ googleSearch: {} }];
+  return body;
+}
+function proxyAuditBody(prompt) {
+  return { model: 'gemini-2.0-flash', contents: [{ parts: [{ text: prompt }] }] };
+}
+function proxyErrorText(status) {
+  if (status === 429) return 'Shared AI hit its daily limit — add your own key below for unlimited answers.';
+  if (status === 401) return 'Sign in to use shared AI, or add your own key below.';
+  if (status === 503) return 'Shared AI is not set up yet — add your own key below, or try again later.';
+  return 'Shared AI request failed — try again, or add your own key below.';
+}
+/** POST a Gemini-shaped body to the proxy. Returns {ok, status, data} or {error}. */
+async function proxyFetch(body) {
+  const url = proxyUrl();
+  if (!url || !S.sb) return { error: 'proxy-unavailable' };
+  let session = null;
+  try { ({ data: { session } } = await S.sb.auth.getSession()); } catch (e) {}
+  if (!session) return { error: 'proxy-unauthenticated' };
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 45000);
+  try {
+    const r = await fetch(url, {
+      method: 'POST', signal: ctl.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json().catch(() => ({}));
+    return { ok: r.ok, status: r.status, data };
+  } catch (e) {
+    return { error: e.name === 'AbortError' ? 'The request timed out — check your connection and try again.' : 'Network error reaching shared AI.' };
+  } finally { clearTimeout(timer); }
+}
+/** Ask-chat via proxy. Same result shape as callGemini. */
+async function callGeminiProxy(systemText, history, web, model) {
+  const res = await proxyFetch(proxyBody(model, systemText, history, web));
+  if (res.error) return { error: res.error };
+  if (!res.ok) return { error: proxyErrorText(res.status) };
+  const cand = (res.data.candidates || [])[0] || {};
+  const text = ((cand.content || {}).parts || []).map(p => p.text || '').join('').trim();
+  if (!text) return { error: 'The AI returned an empty answer. Try rephrasing.' };
+  const chunks = ((cand.groundingMetadata || {}).groundingChunks || [])
+    .map(c => c.web).filter(w => w && w.uri)
+    .filter((w, i, a) => a.findIndex(x => x.uri === w.uri) === i).slice(0, 6);
+  return { text, sources: chunks, webUsed: web && chunks.length > 0 };
+}
+/** Clinical-audit generation via proxy. Returns {text} or {error}. */
+async function callGeminiProxyAudit(prompt) {
+  const res = await proxyFetch(proxyAuditBody(prompt));
+  if (res.error) return { error: res.error };
+  if (!res.ok) return { error: proxyErrorText(res.status) };
+  const text = res.data.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
+  return { text };
+}
 /** v3.27 — On-device data query engine. Parses natural-language questions about
     Simba's logged data (counts, times, eating) and answers from S.history directly.
     Returns { text } or null if the query isn't a data question. */
@@ -3055,12 +3129,21 @@ async function sendChat(text) {
   const key = chatKey();
   try {
     let res;
-    if (!key) {
-      res = { text: await answerLocally(q) };
-    } else {
+    if (key) {
       const sys = await buildChatSystem(q);
       const hist = chatMsgs().msgs.filter(m => !m.typing);
       res = await callGemini(key, sys, hist, chatMsgs().web);
+    } else if (sbReady()) {
+      // v3.30 — shared proxy for signed-in users without a personal key.
+      // Proxy down / session gone after all -> on-device answer, as before.
+      const sys = await buildChatSystem(q);
+      const hist = chatMsgs().msgs.filter(m => !m.typing);
+      res = await callGeminiProxy(sys, hist, chatMsgs().web, GEMINI_MODEL);
+      if (res.error === 'proxy-unavailable' || res.error === 'proxy-unauthenticated') {
+        res = { text: await answerLocally(q) };
+      }
+    } else {
+      res = { text: await answerLocally(q) };
     }
     chatMsgs().msgs = chatMsgs().msgs.filter(m => !m.typing);
     if (res.error) pushChat('ai', '⚠️ ' + res.error);
@@ -3147,17 +3230,23 @@ Tone: empathetic, analytically rigorous, grounded, authoritative.`;
 async function generateWithGemini() {
   const key = localStorage.getItem(CFG.LS.GEMINI) || $('geminiKey').value.trim();
   const out = $('geminiOut');
-  if (!key) { out.textContent = 'Enter your Gemini API key above first (free tier at aistudio.google.com). It stays on this device.'; return; }
+  if (!key && !sbReady()) { out.textContent = 'Sign in to use shared AI, or enter your Gemini API key above first (free tier at aistudio.google.com). It stays on this device.'; return; }
   const prompt = $('auditPrompt').value;
   if (!prompt) { out.textContent = 'Build the audit prompt first.'; return; }
   out.textContent = 'Generating…';
   try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j?.error?.message || 'HTTP ' + r.status);
-    out.textContent = j.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '(empty response)';
+    if (key) {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j?.error?.message || 'HTTP ' + r.status);
+      out.textContent = j.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '(empty response)';
+      return;
+    }
+    // v3.30 — shared proxy for signed-in users without a personal key.
+    const res = await callGeminiProxyAudit(prompt);
+    out.textContent = res.error ? '✗ ' + res.error : (res.text || '(empty response)');
   } catch (e) { out.textContent = '✗ Gemini error: ' + e.message; }
 }
 
