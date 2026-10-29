@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.32.3'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.32.4'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   GEMINI_PROXY_MODELS: ['gemini-3.8-flash'], // v3.30.2 — 2.5-flash is closed to new users; Google's error points to 3.8-flash (GA Sep 2026)
@@ -340,7 +340,7 @@ async function refreshSession() {
   S.user = session?.user || null;
   renderAuth();
   if (S.user) {
-    await claimHousehold(); await loadSubjects(); await retryPendingSubjectWrites(); await loadCareTables(); await loadData();
+    await claimHousehold(); await loadSubjects(); await retryPendingSubjectWrites(); await loadCareTables(); await loadData(); await syncOfflineQueue(); // v3.32.4 — flush any stuck offline queue on every start, not just sign-in
     if (S._needsOnboard) { S._needsOnboard = false; openOnboard(false); }  // v2.1 first-run profile
     else maybeWeightPrompt();                                              // v2.1 monthly check-in
   }
@@ -567,17 +567,35 @@ function maybeRefreshFromServer() {
   loadData(true);
 }
 
+/* ----- v3.32.4 — main-phone → server sync -----
+   Two gaps found (member's Trends prove the server→member direction works):
+   1. The offline queue flushed ONLY on explicit sign-in — never on app
+      start. An event that failed to save (blip/timeout) sat on the phone
+      forever, looking saved (optimistic display) but never reaching the
+      server. Now refreshSession flushes it on every start.
+   2. The flush used q.slice(ok), which assumes failures are a suffix:
+      an interleaved failure was silently DROPPED and a later success was
+      RE-QUEUED (duplicate on the next flush). Now only failures stay.
+   3. The flush overwrote every event's subject with the current one; it
+      now keeps the subject the event was logged under. */
+/** Pure: after a queue flush, only failed items stay queued. Tested. */
+function queueRemainder(queue, okFlags) {
+  return queue.filter((_, i) => !okFlags[i]);
+}
 async function syncOfflineQueue() {
   if (!sbReady()) return;
   const q = JSON.parse(localStorage.getItem('st_queue') || '[]');
   if (!q.length || !S.subject) return;
-  let ok = 0;
+  const okFlags = [];
   for (const ev of q) {
-    ev.subject_id = S.subject.id; ev.owner_id = S.user.id;
+    if (!ev.subject_id) ev.subject_id = S.subject.id;
+    ev.owner_id = S.user.id;
     const { error } = await S.sb.from('telemetry_events').insert(ev);
-    if (!error) ok++;
+    okFlags.push(!error);
   }
-  localStorage.setItem('st_queue', JSON.stringify(q.slice(ok)));
+  const rest = queueRemainder(q, okFlags);
+  localStorage.setItem('st_queue', JSON.stringify(rest));
+  const ok = q.length - rest.length;
   if (ok) toast(`Synced ${ok} offline event(s).`);
   await loadData();
 }
