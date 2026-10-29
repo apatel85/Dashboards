@@ -180,6 +180,7 @@
     </div>
     <div class="card" id="parseCard" hidden>
       <div class="card-title">Parsed telemetry — confirm</div>
+      <div class="card-title">Parsed telemetry — confirm</div>
       <div id="parsePreview" class="parse-preview"></div>
       <div class="row">
         <button id="saveParsedBtn" class="btn primary">✓ Save event</button>
@@ -349,6 +350,15 @@
 
   <!-- MEDS & VACCINES (v2.0) -->
   <section class="screen" id="screen-meds">
+    <div class="card" id="careParseCard" hidden>
+      <div class="card-title"><span id="parseTitle">Parsed records</span></div>
+      <img id="parseImg" class="parse-img" alt="">
+      <div id="parseRows"></div>
+      <div class="row">
+        <button id="parseSaveBtn" class="btn primary" style="flex:1">Save all records</button>
+        <button id="parseCancelBtn" class="btn ghost">Cancel</button>
+      </div>
+    </div>
     <div class="card">
       <div class="card-title">Medications</div>
       <div id="medList"><div class="muted">No medications tracked.</div></div>
@@ -374,6 +384,7 @@
         <input id="medNote" placeholder="optional" autocomplete="off">
         <label class="lbl">Photo (optional)</label>
         <input id="medPhoto" type="file" accept="image/*">
+        <button id="medParseBtn" class="btn block">✨ Parse photo into records</button>
         <button id="medSaveBtn" class="btn primary block">Save medication</button>
       </div>
     </div>
@@ -394,6 +405,7 @@
         <input id="vaxNote" placeholder="optional" autocomplete="off">
         <label class="lbl">Photo (optional)</label>
         <input id="vaxPhoto" type="file" accept="image/*">
+        <button id="vaxParseBtn" class="btn block">✨ Parse photo into records</button>
         <button id="vaxSaveBtn" class="btn primary block">Save record</button>
       </div>
     </div>
@@ -559,7 +571,7 @@
 
 <!-- ============ VOICE FAB (v2.2) — global mic on every screen ============ -->
 <button id="micFab" class="mic-fab" aria-label="Voice log">🎙️</button>
-  <div id="lightbox" hidden><img id="lbImg" alt=""><button id="lbClose" class="btn">✕ Close</button></div>
+  <div id="lightbox" hidden><img id="lbImg" alt=""><div class="row"><button id="lbShare" class="btn primary">↗ Share</button><button id="lbClose" class="btn">✕ Close</button></div></div>
 
 <!-- ============ BOTTOM NAV ============ -->
 <nav id="tabbar">
@@ -576,7 +588,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="demo-data.js"></script>
-<script src="app.js?v=3.31.0"></script>
+<script src="app.js?v=3.32.0"></script>
 <script>
 // Register service worker (offline PWA)
 if ('serviceWorker' in navigator) {
