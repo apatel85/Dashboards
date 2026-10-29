@@ -372,6 +372,8 @@
         </div>
         <label class="lbl">Notes</label>
         <input id="medNote" placeholder="optional" autocomplete="off">
+        <label class="lbl">Photo (optional)</label>
+        <input id="medPhoto" type="file" accept="image/*">
         <button id="medSaveBtn" class="btn primary block">Save medication</button>
       </div>
     </div>
@@ -390,6 +392,8 @@
         <input id="vaxVet" placeholder="clinic name" autocomplete="off">
         <label class="lbl">Note</label>
         <input id="vaxNote" placeholder="optional" autocomplete="off">
+        <label class="lbl">Photo (optional)</label>
+        <input id="vaxPhoto" type="file" accept="image/*">
         <button id="vaxSaveBtn" class="btn primary block">Save record</button>
       </div>
     </div>
@@ -555,6 +559,7 @@
 
 <!-- ============ VOICE FAB (v2.2) — global mic on every screen ============ -->
 <button id="micFab" class="mic-fab" aria-label="Voice log">🎙️</button>
+  <div id="lightbox" hidden><img id="lbImg" alt=""><button id="lbClose" class="btn">✕ Close</button></div>
 
 <!-- ============ BOTTOM NAV ============ -->
 <nav id="tabbar">
@@ -571,7 +576,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="demo-data.js"></script>
-<script src="app.js?v=3.30.2"></script>
+<script src="app.js?v=3.31.0"></script>
 <script>
 // Register service worker (offline PWA)
 if ('serviceWorker' in navigator) {
