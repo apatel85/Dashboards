@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.30.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.30.1'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   GEMINI_PROXY_PATH: '/functions/v1/gemini-proxy', // v3.30 — shared Gemini proxy (Edge Function; key lives server-side only)
@@ -890,6 +890,7 @@ function show(name) {
   const el = $('screen-' + name);
   if (el) el.classList.add('active');
   document.body.classList.toggle('on-landing', name === 'landing'); // v2.2 — chromeless landing
+  document.body.classList.toggle('on-chat', name === 'chat'); // v3.30.1 — hide voice FAB on Ask tab (it overlapped Send)
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('active', b.dataset.screen === name));
   if (name === 'trends') renderTrends();
   if (name === 'insights') renderInsights();
@@ -2860,9 +2861,17 @@ async function buildChatSystem(query) {
   const brief = buildTelemetryBrief(S.history || [], S.subject || {});
   return `${CHAT_SYSTEM_BASE}\n\n--- SIMBA'S TELEMETRY BRIEF ---${brief}${kb || '\n\n(knowledge documents unavailable)'}`;
 }
+/** Gemini contents from chat history: last 10, roles mapped, user-first.
+    v3.30.1 — Gemini rejects a request whose first content is a model message,
+    which happens when slice(-10) starts mid-exchange; trim leading models. */
+function geminiContents(history) {
+  const contents = (history || []).slice(-10).map(m => ({ role: m.role === 'ai' ? 'model' : 'user', parts: [{ text: m.text }] }));
+  while (contents.length && contents[0].role !== 'user') contents.shift();
+  return contents;
+}
 /** Call Gemini from the browser (BYOK). Returns {text, sources[], webUsed, error}. */
 async function callGemini(key, systemText, history, web) {
-  const contents = history.slice(-10).map(m => ({ role: m.role === 'ai' ? 'model' : 'user', parts: [{ text: m.text }] }));
+  const contents = geminiContents(history);
   const body = {
     system_instruction: { parts: [{ text: systemText }] },
     contents,
@@ -2918,7 +2927,11 @@ function proxyUrl() {
 }
 function proxyBody(model, systemText, history, web) {
   const m = CFG.GEMINI_PROXY_MODELS.includes(model) ? model : 'gemini-2.5-flash';
-  const contents = (history || []).slice(-10).map(x => ({ role: x.role === 'ai' ? 'model' : 'user', parts: [{ text: x.text }] }));
+  const contents = geminiContents(history);
+  // v3.30.1 — stay under the proxy's 30k cap: drop oldest messages first,
+  // then re-trim to user-first. The latest exchange is always kept.
+  while (contents.length > 2 && JSON.stringify(contents).length > 28000) contents.shift();
+  while (contents.length && contents[0].role !== 'user') contents.shift();
   const body = { model: m, contents, generationConfig: { temperature: 0.35, maxOutputTokens: 1200 } };
   if (systemText) body.system_instruction = { parts: [{ text: systemText }] };
   if (web) body.tools = [{ googleSearch: {} }];
@@ -2949,7 +2962,13 @@ async function proxyFetch(body) {
       body: JSON.stringify(body),
     });
     const data = await r.json().catch(() => ({}));
-    return { ok: r.ok, status: r.status, data };
+    if (!r.ok) {
+      // v3.30.1 — surface the server's own message (Gemini / function / gateway)
+      // instead of a generic line, so a failure names its cause.
+      const serverMsg = (data && data.error && data.error.message) || (data && data.message);
+      return { error: serverMsg || proxyErrorText(r.status) };
+    }
+    return { ok: true, status: r.status, data };
   } catch (e) {
     return { error: e.name === 'AbortError' ? 'The request timed out — check your connection and try again.' : 'Network error reaching shared AI.' };
   } finally { clearTimeout(timer); }
@@ -2958,7 +2977,6 @@ async function proxyFetch(body) {
 async function callGeminiProxy(systemText, history, web, model) {
   const res = await proxyFetch(proxyBody(model, systemText, history, web));
   if (res.error) return { error: res.error };
-  if (!res.ok) return { error: proxyErrorText(res.status) };
   const cand = (res.data.candidates || [])[0] || {};
   const text = ((cand.content || {}).parts || []).map(p => p.text || '').join('').trim();
   if (!text) return { error: 'The AI returned an empty answer. Try rephrasing.' };
@@ -2971,7 +2989,6 @@ async function callGeminiProxy(systemText, history, web, model) {
 async function callGeminiProxyAudit(prompt) {
   const res = await proxyFetch(proxyAuditBody(prompt));
   if (res.error) return { error: res.error };
-  if (!res.ok) return { error: proxyErrorText(res.status) };
   const text = res.data.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
   return { text };
 }
