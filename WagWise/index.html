@@ -275,7 +275,7 @@
         <button id="chatKeyBtn" class="btn small ghost">🔑 AI key</button>
       </div>
       <div id="chatKeyBox" hidden>
-        <p class="muted small">Answers use your <b>free Gemini key</b> — <a href="https://aistudio.google.com" target="_blank" rel="noopener">get one at Google AI Studio</a>, paste it here. It stays on this device only, and is sent only to Google's Gemini API. Tip: in Google Cloud console, restrict the key to this app's address (APIs &amp; Services → Credentials → HTTP referrers). Note: on the free tier Google may use prompts to improve its products.</p>
+        <p class="muted small">When you are signed in, full AI answers use the <b>shared key</b> — no setup needed. You can still add your own <a href="https://aistudio.google.com" target="_blank" rel="noopener">free Gemini key</a> below as a backup: it stays on this device only, and is sent only to Google's Gemini API. Note: on the free tier Google may use prompts to improve its products.</p>
         <div class="chat-keyrow">
           <input id="chatKeyInput" type="password" placeholder="Paste Gemini API key" autocomplete="off">
           <button id="chatKeySave" class="btn small">Save</button>
@@ -434,7 +434,7 @@
     </div>
     <div class="card">
       <div class="card-title">Clinical audit generator</div>
-      <p class="muted small">Assembles the event + live physiological state + knowledge excerpts into the clinical audit prompt (spec §6.2). Copy it into your chat with Muse, or generate in-app with your own Gemini key.</p>
+      <p class="muted small">Assembles the event + live physiological state + knowledge excerpts into the clinical audit prompt (spec §6.2). Copy it into your chat with Muse, or generate in-app with shared AI (when signed in) or your own Gemini key.</p>
       <label class="lbl">Event to audit</label>
       <select id="auditEvent"></select>
       <button id="buildPromptBtn" class="btn primary block">Build audit prompt</button>
@@ -445,7 +445,7 @@
     </div>
     <div class="card">
       <div class="card-title">In-app generation (optional)</div>
-      <label class="lbl">Gemini API key <span class="hint">stored on this device only</span></label>
+      <label class="lbl">Gemini API key (optional) <span class="hint">personal key — shared AI is used when signed in; a personal key stays on this device only</span></label>
       <input type="password" id="geminiKey" placeholder="AIza…" autocomplete="off">
       <div class="row">
         <button id="saveGeminiBtn" class="btn">Save key</button>
@@ -571,7 +571,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="demo-data.js"></script>
-<script src="app.js?v=3.29.1"></script>
+<script src="app.js?v=3.30.0"></script>
 <script>
 // Register service worker (offline PWA)
 if ('serviceWorker' in navigator) {
