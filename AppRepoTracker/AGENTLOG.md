@@ -1,5 +1,10 @@
 # AGENTLOG — AppRepoTracker
 
+## 2026-10-28 — v1.0.6 — Added Simplified Pricing Workflow Demo entry
+- Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
+- Change: added "Simplified Pricing Workflow Demo" at the top of Live Apps (one simplified pricing workflow covering all 32 membership and enrolment use cases, simulator with presets and live price maths, F0–F17 feature log, 13 red flags with fixes; link to PricingWorkflow/, Updated 2026-10-28, thread Quixera Enhancement — Oct 28, 2026). Live Apps stay sorted most-recent-first, so the Oct 28 entry leads. Counts updated to 39 entries / 22 live apps.
+- Verification: entry placement and counts checked in the pushed index.html; Pages URL re-checked after deploy.
+
 ## 2026-10-28 — v1.0.5 — Added Membership & Enrolment decisions entry
 - Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
 - Change: added "Membership & Enrolment — Use Cases and Decisions" at the top of Live Apps (interactive draft decision aid: 32 use-case cards with model and coverage filters, 16 pickable open decisions with suggested defaults, four-tier decision tree with dependency connectors, Your choices summary; link to MembershipDecisions/, Updated 2026-10-28, thread Quixera Enhancement — Oct 28, 2026). Live Apps stay sorted most-recent-first, so the Oct 28 entry leads. Counts updated to 38 entries / 21 live apps.
