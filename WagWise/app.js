@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.32.2'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.32.3'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   GEMINI_PROXY_MODELS: ['gemini-3.8-flash'], // v3.30.2 — 2.5-flash is closed to new users; Google's error points to 3.8-flash (GA Sep 2026)
@@ -548,7 +548,23 @@ async function loadData(silent) {
   // v3.0 — compare LOCAL calendar days: logged_at is UTC, so a UTC slice
   // hides everything logged after 8 PM EDT from "today"
   S.events = S.history.filter(e => isToday(e.logged_at));
+  S._lastLoadAt = Date.now(); // v3.32.3 — drives the stale-snapshot refresh below
   renderAll();
+}
+
+/* ----- v3.32.3 — household sync: stop showing stale snapshots -----
+   The 60s tick and visibility handler only RE-RENDERED from the last load,
+   so a phone left open never saw the other person's newer events: its
+   Next-up (computed from history) drifted from the owner's phone while
+   the pill still said "synced". Now returning to the app, and every
+   5 minutes while open, re-pulls from the server (silent, throttled). */
+function shouldRefreshFromServer(lastLoadAt, now = Date.now(), minGapMs = 60000) {
+  return !lastLoadAt || (now - lastLoadAt) >= minGapMs;
+}
+function maybeRefreshFromServer() {
+  if (!sbReady() || !S.subject) return;
+  if (!shouldRefreshFromServer(S._lastLoadAt)) return;
+  loadData(true);
 }
 
 async function syncOfflineQueue() {
@@ -3968,7 +3984,7 @@ function wire() {
   $('expReportBtn').onclick = () => show('report');
   $('hhAddBtn').onclick = addHouseholdMember;
   window.addEventListener('afterprint', () => document.body.classList.remove('printing-report'));
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) renderCockpit(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { maybeRefreshFromServer(); renderCockpit(); } });
 }
 
 /** v3.26 — Demo mode (?demo=1): sandboxed in-memory demo with sample data.
@@ -4023,8 +4039,8 @@ async function init() {
     if (!S.user) show('landing'); // v2.2 — landing page with login prompt
   }
   else { setSync(false); renderAll(); renderConnStatus(false); show('setup'); }
-  // 60-second deterministic engine tick (spec section 5)
-  S.tickTimer = setInterval(() => { renderCockpit(); checkNudges(); }, 60000);
+  // 60-second deterministic engine tick (spec section 5) + 5-minute server refresh (v3.32.3)
+  S.tickTimer = setInterval(() => { renderCockpit(); checkNudges(); if (Date.now() - (S._lastLoadAt || 0) > 300000) maybeRefreshFromServer(); }, 60000);
 }
 /* ---------- v2.2: white-label brand + walk history ---------- */
 function applyBrand() {
