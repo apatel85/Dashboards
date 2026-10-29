@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.30.2'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.31.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   GEMINI_PROXY_MODELS: ['gemini-3.8-flash'], // v3.30.2 — 2.5-flash is closed to new users; Google's error points to 3.8-flash (GA Sep 2026)
@@ -3945,6 +3945,8 @@ function wire() {
   $('medAddBtn').onclick = () => { $('medForm').hidden = !$('medForm').hidden; };
   $('medSaveBtn').onclick = saveMedForm;
   $('vaxAddBtn').onclick = () => { $('vaxForm').hidden = !$('vaxForm').hidden; };
+  $('lbClose').onclick = () => { $('lightbox').hidden = true; $('lbImg').src = ''; };
+  $('lightbox').onclick = (e) => { if (e.target.id === 'lightbox') { $('lightbox').hidden = true; $('lbImg').src = ''; } };
   $('updateCheckBtn').onclick = checkForUpdates; // v3.5 — force update check
   $('vaxSaveBtn').onclick = saveVaxForm;
   $('printReportBtn').onclick = printVetReport;
@@ -4779,14 +4781,36 @@ async function saveMedForm() {
     name, dose: $('medDose').value.trim() || null, frequency: freq,
     time_of_day: tod || null, next_due_at: nextDueFrom(freq, tod), active: true,
     notes: $('medNote').value.trim() || null };
-  let saved = false;
+  const photoFile = $('medPhoto').files && $('medPhoto').files[0];
+  let saved = false, savedId = null;
   if (sbReady() && rec.subject_id) {
-    try { const { error } = await S.sb.from('medications').insert(rec); if (error) throw error; saved = true; }
-    catch (e) { console.warn('medications table unavailable', e); }
+    try {
+      const { data, error } = await S.sb.from('medications').insert(rec).select('id').single();
+      if (error) throw error; saved = true; savedId = data.id;
+    } catch (e) { console.warn('medications table unavailable', e); }
   }
-  if (!saved) { const a = careGet('st_meds'); rec.id = 'local-' + Date.now(); a.push(rec); careSet('st_meds', a); }
+  if (photoFile && savedId) {
+    try {
+      const path = await uploadCareImage('medications', savedId, photoFile);
+      await S.sb.from('medications').update({ image_path: path }).eq('id', savedId);
+    } catch (e) { toast(carePhotoHint(e)); }
+  }
+  if (!saved) {
+    const a = careGet('st_meds'); rec.id = 'local-' + Date.now();
+    if (photoFile) {
+      try { rec.image_data = await dataUrlOf(await compressImage(photoFile)); } catch (e) { /* photo skipped */ }
+    }
+    a.push(rec);
+    try { careSet('st_meds', a); }
+    catch (e) { // storage full: keep the record, drop the photo
+      const b = careGet('st_meds'); const r2 = { ...rec }; delete r2.image_data; b.push(r2);
+      try { careSet('st_meds', b); } catch (e2) {}
+      toast('Photo skipped — device storage full.');
+    }
+  }
   $('medForm').hidden = true;
   ['medName', 'medDose', 'medTime', 'medNote'].forEach(id => { $(id).value = ''; });
+  $('medPhoto').value = '';
   await loadCareTables(); renderMeds(); renderCockpit();
   toast('Medication saved ✓');
 }
@@ -4797,14 +4821,36 @@ async function saveVaxForm() {
     vaccine, given_at: $('vaxGiven').value ? new Date($('vaxGiven').value).toISOString() : new Date().toISOString(),
     next_due_at: $('vaxDue').value ? new Date($('vaxDue').value).toISOString() : null,
     vet: $('vaxVet').value.trim() || null, note: $('vaxNote').value.trim() || null };
-  let saved = false;
+  const photoFile = $('vaxPhoto').files && $('vaxPhoto').files[0];
+  let saved = false, savedId = null;
   if (sbReady() && rec.subject_id) {
-    try { const { error } = await S.sb.from('vaccinations').insert(rec); if (error) throw error; saved = true; }
-    catch (e) { console.warn('vaccinations table unavailable', e); }
+    try {
+      const { data, error } = await S.sb.from('vaccinations').insert(rec).select('id').single();
+      if (error) throw error; saved = true; savedId = data.id;
+    } catch (e) { console.warn('vaccinations table unavailable', e); }
   }
-  if (!saved) { const a = careGet('st_vax'); rec.id = 'local-' + Date.now(); a.push(rec); careSet('st_vax', a); }
+  if (photoFile && savedId) {
+    try {
+      const path = await uploadCareImage('vaccinations', savedId, photoFile);
+      await S.sb.from('vaccinations').update({ image_path: path }).eq('id', savedId);
+    } catch (e) { toast(carePhotoHint(e)); }
+  }
+  if (!saved) {
+    const a = careGet('st_vax'); rec.id = 'local-' + Date.now();
+    if (photoFile) {
+      try { rec.image_data = await dataUrlOf(await compressImage(photoFile)); } catch (e) { /* photo skipped */ }
+    }
+    a.push(rec);
+    try { careSet('st_vax', a); }
+    catch (e) { // storage full: keep the record, drop the photo
+      const b = careGet('st_vax'); const r2 = { ...rec }; delete r2.image_data; b.push(r2);
+      try { careSet('st_vax', b); } catch (e2) {}
+      toast('Photo skipped — device storage full.');
+    }
+  }
   $('vaxForm').hidden = true;
   ['vaxName', 'vaxGiven', 'vaxDue', 'vaxVet', 'vaxNote'].forEach(id => { $(id).value = ''; });
+  $('vaxPhoto').value = '';
   await loadCareTables(); renderMeds(); renderCockpit();
   toast('Vaccination saved ✓');
 }
@@ -4832,9 +4878,15 @@ async function markMedGiven(id) {
 }
 async function deleteCareRow(table, key, id) {
   if (!confirm('Delete this record?')) return;
+  const list = table === 'medications' ? (S.meds || []) : (S.vax || []);
+  const row = list.find(r => String(r.id) === String(id));
   if (sbReady() && !String(id).startsWith('local-')) {
     const { error } = await S.sb.from(table).delete().eq('id', id);
     if (error) { toast('Delete failed: ' + error.message); return; }
+    // Best effort: remove the photo too (ignore failures).
+    if (row && row.image_path && S.sb.storage) {
+      try { await S.sb.storage.from('med-images').remove([row.image_path]); } catch (e) {}
+    }
   }
   careSet(key, careGet(key).filter(r => String(r.id) !== String(id)));
   await loadCareTables(); renderMeds(); renderCockpit();
@@ -4845,24 +4897,123 @@ function fmtDue(iso) {
   if (ms < 0) return `<span style="color:var(--danger);font-weight:700">OVERDUE ${fmtDur(-ms / 60000)} ago</span>`;
   return `in ${fmtDur(ms / 60000)}`;
 }
+/* ----- v3.31 — med / vaccine photos (Supabase Storage) -----
+   One photo per record. Server rows: compressed JPEG in the private
+   `med-images` bucket at <subject_id>/<table>_<record_id>.jpg, RLS = pet
+   owner + household members. Local (offline) rows: compressed data URL
+   kept on-device (same device-only semantics as local text rows).
+   Pure helpers (path, kind) are tested. */
+function medImagePath(subjectId, table, id) { return `${subjectId}/${table}_${id}.jpg`; }
+function careImageKind(rec) {
+  if (!rec) return 'none';
+  if (rec.image_path) return 'storage';
+  if (rec.image_data) return 'local';
+  return 'none';
+}
+function compressImage(file, maxDim = 1600) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let w = img.width, h = img.height;
+      const scale = Math.min(1, maxDim / Math.max(w, h));
+      w = Math.round(w * scale); h = Math.round(h * scale);
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      cv.toBlob(b => b ? resolve(b) : reject(new Error('could not compress image')), 'image/jpeg', 0.82);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('could not read image')); };
+    img.src = url;
+  });
+}
+function dataUrlOf(blob) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+}
+function isQuotaErr(e) { return /quota/i.test((e && e.message) || ''); }
+async function uploadCareImage(table, id, file) {
+  const blob = await compressImage(file);
+  const path = medImagePath(S.subject.id, table, id);
+  const { error } = await S.sb.storage.from('med-images').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+  if (error) throw error;
+  return path;
+}
+function carePhotoHint(e) {
+  const msg = (e && e.message) || '';
+  if (/bucket not found/i.test(msg)) return 'Photo needs the med-images setup — run supabase/med-images.sql in the SQL editor.';
+  return 'Photo failed: ' + msg;
+}
+function pickImageFile(cb) {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.hidden = true;
+  inp.onchange = () => { const f = inp.files && inp.files[0]; inp.remove(); if (f) cb(f); };
+  document.body.appendChild(inp); inp.click();
+}
+async function attachCareImage(table, id, file) {
+  if (sbReady() && !String(id).startsWith('local-')) {
+    try {
+      const path = await uploadCareImage(table, id, file);
+      const { error } = await S.sb.from(table).update({ image_path: path }).eq('id', id);
+      if (error) throw error;
+      toast('Photo saved ✓'); await loadCareTables(); renderMeds();
+    } catch (e) { toast(carePhotoHint(e)); }
+    return;
+  }
+  // Local row: photo stays on this device only (same as the record itself).
+  try {
+    const dataUrl = await dataUrlOf(await compressImage(file));
+    const key = table === 'medications' ? 'st_meds' : 'st_vax';
+    const rows = careGet(key); const i = rows.findIndex(r => String(r.id) === String(id));
+    if (i >= 0) { rows[i] = { ...rows[i], image_data: dataUrl }; careSet(key, rows); }
+    toast('Photo saved on this device ✓'); renderMeds();
+  } catch (e) { toast(isQuotaErr(e) ? 'Photo skipped — device storage full.' : 'Photo failed: ' + (e.message || e)); }
+}
+function openLightbox(src) {
+  if (!src) return;
+  $('lbImg').src = src; $('lightbox').hidden = false;
+}
+async function fillCareThumb(imgEl, path) {
+  if (!S.sb) { imgEl.remove(); return; }
+  if (S.imgCache && S.imgCache[path]) { imgEl.src = S.imgCache[path]; return; }
+  try {
+    const { data, error } = await S.sb.storage.from('med-images').download(path);
+    if (error) throw error;
+    const url = URL.createObjectURL(data);
+    (S.imgCache = S.imgCache || {})[path] = url; imgEl.src = url;
+  } catch (e) { imgEl.remove(); } // missing file -> hide the thumbnail
+}
 function renderMeds() {
   const ml = $('medList'), vl = $('vaxList');
   if (!ml || !vl) return;
+  const thumbHtml = (r) => {
+    const kind = careImageKind(r);
+    if (kind === 'storage') return `<img class="care-thumb" data-path="${esc(r.image_path)}" alt="">`;
+    if (kind === 'local') return `<img class="care-thumb" src="${r.image_data}" alt="">`;
+    return '';
+  };
   const meds = medsForSubject();
   ml.innerHTML = meds.length ? meds.map(m => `
     <div class="tl-item"><div class="tl-body"><b>💊 ${esc(m.name)}</b> <span class="hint">${esc(m.dose || '')} · ${esc(m.frequency || '')}</span><br>
     <span class="muted">Next due: ${fmtDue(m.next_due_at)}</span></div>
-    <div class="tl-actions"><button data-give="${m.id}" title="Mark dose given">✓</button><button data-delmed="${m.id}" title="Delete">🗑</button></div></div>`).join('')
+    ${thumbHtml(m)}
+    <div class="tl-actions"><button data-photo="medications:${m.id}" title="Add photo">📷</button><button data-give="${m.id}" title="Mark dose given">✓</button><button data-delmed="${m.id}" title="Delete">🗑</button></div></div>`).join('')
     : '<div class="muted">No medications tracked.</div>';
   ml.querySelectorAll('[data-give]').forEach(b => b.onclick = () => markMedGiven(b.dataset.give));
   ml.querySelectorAll('[data-delmed]').forEach(b => b.onclick = () => deleteCareRow('medications', 'st_meds', b.dataset.delmed));
+  ml.querySelectorAll('[data-photo]').forEach(b => b.onclick = () => { const [t, id] = b.dataset.photo.split(':'); pickImageFile(f => attachCareImage(t, id, f)); });
+  ml.querySelectorAll('img[data-path]').forEach(el => { el.onclick = () => openLightbox(el.src); fillCareThumb(el, el.dataset.path); });
+  ml.querySelectorAll('img.care-thumb:not([data-path])').forEach(el => el.onclick = () => openLightbox(el.src));
   const vax = vaxForSubject();
   vl.innerHTML = vax.length ? vax.map(v => `
     <div class="tl-item"><div class="tl-body"><b>💉 ${esc(v.vaccine)}</b><br>
     <span class="muted">Given ${v.given_at ? v.given_at.slice(0, 10) : '—'}${v.vet ? ' · ' + esc(v.vet) : ''} · Next due: ${v.next_due_at ? v.next_due_at.slice(0, 10) : '—'}</span></div>
-    <div class="tl-actions"><button data-delvax="${v.id}" title="Delete">🗑</button></div></div>`).join('')
+    ${thumbHtml(v)}
+    <div class="tl-actions"><button data-photo="vaccinations:${v.id}" title="Add photo">📷</button><button data-delvax="${v.id}" title="Delete">🗑</button></div></div>`).join('')
     : '<div class="muted">No vaccinations recorded.</div>';
   vl.querySelectorAll('[data-delvax]').forEach(b => b.onclick = () => deleteCareRow('vaccinations', 'st_vax', b.dataset.delvax));
+  vl.querySelectorAll('[data-photo]').forEach(b => b.onclick = () => { const [t, id] = b.dataset.photo.split(':'); pickImageFile(f => attachCareImage(t, id, f)); });
+  vl.querySelectorAll('img[data-path]').forEach(el => { el.onclick = () => openLightbox(el.src); fillCareThumb(el, el.dataset.path); });
+  vl.querySelectorAll('img.care-thumb:not([data-path])').forEach(el => el.onclick = () => openLightbox(el.src));
 }
 /** Due-soon care items surface as cockpit countdowns. */
 function careReminders() {
