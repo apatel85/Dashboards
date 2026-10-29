@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.32.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.32.1'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   GEMINI_PROXY_MODELS: ['gemini-3.8-flash'], // v3.30.2 — 2.5-flash is closed to new users; Google's error points to 3.8-flash (GA Sep 2026)
@@ -365,13 +365,23 @@ function goOffline() {
 }
 
 /* v2.0 — Household: an invited email claims its membership row on first sign-in */
+/* Pure: which unclaimed household rows invite this email? Case-proof —
+   older invites may store mixed case, and PostgREST eq is case-sensitive,
+   so the old claim missed those rows forever. Tested. */
+function householdRowsToClaim(rows, email) {
+  const want = (email || '').toLowerCase();
+  return (rows || []).filter(r => !r.user_id && (r.email || '').toLowerCase() === want);
+}
 async function claimHousehold() {
   if (!sbReady() || !S.user?.email) return;
   try {
-    await S.sb.from('household_members')
-      .update({ user_id: S.user.id })
-      .is('user_id', null)
-      .eq('email', S.user.email.toLowerCase());
+    // Rows visible to this user already include unclaimed invites to their
+    // email (the select policy matches case-insensitively); claim by id.
+    const { data } = await S.sb.from('household_members').select('id, email').is('user_id', null);
+    const mine = householdRowsToClaim(data, S.user.email);
+    for (const r of mine) {
+      await S.sb.from('household_members').update({ user_id: S.user.id }).eq('id', r.id);
+    }
   } catch (e) { /* migration_v2 not run yet — household unavailable */ }
 }
 
