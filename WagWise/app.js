@@ -7,11 +7,10 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.30.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.30.2'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
-  GEMINI_PROXY_PATH: '/functions/v1/gemini-proxy', // v3.30 — shared Gemini proxy (Edge Function; key lives server-side only)
-  GEMINI_PROXY_MODELS: ['gemini-2.5-flash', 'gemini-2.0-flash'], // v3.30 — models the proxy allows
+  GEMINI_PROXY_MODELS: ['gemini-3.8-flash'], // v3.30.2 — 2.5-flash is closed to new users; Google's error points to 3.8-flash (GA Sep 2026)
   KCAL_MIN: 300, KCAL_MAX: 330,       // daily intake target (configurable in Setup)
   WATER_CUTOFF: '20:15',              // hard water cutoff (local time HH:MM)
   BEDTIME: '21:30',                   // v3.29 — Ankit fixed sleep anchor (was 22:00)
@@ -2826,7 +2825,7 @@ function buildTelemetryBrief(history, subj, now = new Date()) {
   return L.join('\n');
 }
 
-/* ----- Chat state, key management, Gemini call ----- */const GEMINI_MODEL = 'gemini-2.5-flash';
+/* ----- Chat state, key management, Gemini call ----- */const GEMINI_MODEL = 'gemini-3.8-flash'; // v3.30.2 — 2.5-flash closed to new users
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 // v3.17 — one shared key: the clinical-audit generator already uses CFG.LS.GEMINI ('st_gemini').
 function chatKey() { return localStorage.getItem(CFG.LS.GEMINI) || ''; }
@@ -2921,12 +2920,14 @@ function proxyBaseUrl() {
     return (typeof ST_CONFIG !== 'undefined' && ST_CONFIG.SUPABASE_URL) || localStorage.getItem(CFG.LS.SB_URL) || '';
   } catch (e) { return ''; }
 }
-function proxyUrl() {
+function edgeUrl(name) {
   const b = proxyBaseUrl().replace(/\/$/, '');
-  return b ? b + CFG.GEMINI_PROXY_PATH : '';
+  return b ? `${b}/functions/v1/${name}` : '';
 }
+function proxyUrl() { return edgeUrl('gemini-proxy'); }
+function inviteUrl() { return edgeUrl('invite-member'); }
 function proxyBody(model, systemText, history, web) {
-  const m = CFG.GEMINI_PROXY_MODELS.includes(model) ? model : 'gemini-2.5-flash';
+  const m = CFG.GEMINI_PROXY_MODELS.includes(model) ? model : 'gemini-3.8-flash';
   const contents = geminiContents(history);
   // v3.30.1 — stay under the proxy's 30k cap: drop oldest messages first,
   // then re-trim to user-first. The latest exchange is always kept.
@@ -2938,7 +2939,7 @@ function proxyBody(model, systemText, history, web) {
   return body;
 }
 function proxyAuditBody(prompt) {
-  return { model: 'gemini-2.0-flash', contents: [{ parts: [{ text: prompt }] }] };
+  return { model: 'gemini-3.8-flash', contents: [{ parts: [{ text: prompt }] }] };
 }
 function proxyErrorText(status) {
   if (status === 429) return 'Shared AI hit its daily limit — add your own key below for unlimited answers.';
@@ -3253,7 +3254,7 @@ async function generateWithGemini() {
   out.textContent = 'Generating…';
   try {
     if (key) {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(key)}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
       const j = await r.json();
@@ -4958,15 +4959,47 @@ async function renderHousehold() {
   box.querySelectorAll('[data-hhdel]').forEach(b => b.onclick = () => removeHouseholdMember(b.dataset.hhdel));
   $('hhAddRow').hidden = !owner;
 }
+/* ----- v3.30.2 — real household invite emails (Edge Function) -----
+   Returns {emailed} / {alreadyMember} / {emailed:false, reason} on success,
+   or {fallback:true} when the function is unreachable — the caller then
+   falls back to the old row-only insert so inviting never hard-fails. */
+async function inviteMember(email) {
+  const url = inviteUrl();
+  if (!url || !S.sb) return { fallback: true };
+  let session = null;
+  try { ({ data: { session } } = await S.sb.auth.getSession()); } catch (e) {}
+  if (!session) return { fallback: true };
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ email, subject_id: S.subject.id }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return { fallback: true };
+    return data;
+  } catch (e) { return { fallback: true }; }
+}
 async function addHouseholdMember() {
   const email = $('hhEmail').value.trim().toLowerCase();
   if (!email || !email.includes('@')) { toast('Enter a valid email.'); return; }
   if (!isSubjectOwner()) { toast('Only the pet owner can invite members.'); return; }
+  const inv = await inviteMember(email);
+  if (!inv.fallback) {
+    $('hhEmail').value = '';
+    if (inv.alreadyMember) toast(`${email} is already a member.`);
+    else if (inv.emailed) toast(`Invite email sent to ${email} ✓`);
+    else if (inv.reason && /already/i.test(inv.reason)) toast(`${email} already has an account — they just sign in.`);
+    else toast(`Added ${email} — invite email could not be sent; they sign in on their device to join.`);
+    renderHousehold();
+    return;
+  }
+  // Function not deployed / unreachable: old row-only behavior.
   try {
     const { error } = await S.sb.from('household_members').insert({ subject_id: S.subject.id, email, role: 'member' });
     if (error) throw error;
     $('hhEmail').value = '';
-    toast(`Invited ${email} ✓ — they sign in on their device to join.`);
+    toast(`Added ${email} — invite email not sent; they sign in on their device to join.`);
     renderHousehold();
   } catch (e) { toast('Invite failed: ' + e.message); }
 }
