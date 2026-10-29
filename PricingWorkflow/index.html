@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simplified Pricing Workflow Demo</title>
+<style>
+:root{--purple:#1c0837;--gold:#e6c22d;--ink:#222;--muted:#666;--line:#ddd;--green:#1e7d32;--greenbg:#e6f4ea;--amber:#8a6d00;--amberbg:#fef7e0;--red:#b3261e;--redbg:#fce8e6;--greybg:#f1f3f4}
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);margin:0;background:#fafafa;line-height:1.5}
+header{background:var(--purple);color:#fff;padding:28px 20px}
+header h1{margin:0 0 8px;font-size:26px}
+header p{margin:4px 0;color:#ddd;max-width:860px}
+header .ex{color:var(--gold);font-weight:700}
+main{max-width:900px;margin:0 auto;padding:20px}
+h2{font-size:21px;margin:32px 0 8px}
+h3{font-size:17px;margin:16px 0 6px}
+p.sub{color:var(--muted);margin:0 0 12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin:12px 0}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:700px){.steps{grid-template-columns:1fr 1fr}}
+.stepcard{border:2px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;background:#fff;text-align:left}
+.stepcard b{display:block;font-size:16px}
+.stepcard span{color:var(--muted);font-size:13px}
+.stepcard.on{border-color:var(--purple);background:#f3efff}
+.stepcard .n{font-size:24px;font-weight:800;color:var(--purple)}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;margin:2px}
+.p-covered{background:var(--greenbg);color:var(--green)}
+.p-partial{background:var(--amberbg);color:var(--amber)}
+.p-gap{background:var(--greybg);color:#444}
+.p-conflict{background:var(--redbg);color:var(--red)}
+.chip{display:inline-block;padding:3px 10px;border-radius:999px;background:#eee;font-size:13px;margin:2px;cursor:pointer}
+.chip.on{background:var(--purple);color:#fff}
+select,input[type=text]{padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:15px;width:100%;max-width:420px}
+label{font-weight:600;font-size:14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.row>div{flex:1;min-width:180px}
+button{padding:10px 18px;border:0;border-radius:8px;background:var(--purple);color:#fff;font-size:15px;cursor:pointer}
+button.sec{background:#fff;color:var(--purple);border:1px solid var(--purple)}
+button:disabled{opacity:.45;cursor:default}
+.math{background:#fff8e1;border:1px solid #f0d98c;border-radius:10px;padding:12px 14px;margin:12px 0}
+.math b{color:#5d4037}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
+th{background:#f3efff}
+tr:target, tr.hl{background:#fff8e1}
+.kbd{font-size:13px;color:var(--muted)}
+.flow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.flow .arr{color:var(--muted)}
+.ways{background:#f3efff;border-radius:10px;padding:12px;margin:10px 0}
+.ok{color:var(--green);font-weight:700}
+.warn{color:var(--red);font-weight:700}
+footer{color:var(--muted);font-size:13px;padding:20px;border-top:1px solid var(--line);max-width:900px;margin:20px auto}
+details{margin:8px 0}
+</style>
+</head>
+<body>
+<header>
+<h1>Simplified Pricing Workflow Demo</h1>
+<p>One flow for every model: gym, term, and hybrid. Built from the 32 membership and enrolment use cases (Oct 28, 2026).</p>
+<p><span class="ex">All money figures are EXAMPLES — the academy sets its own prices.</span> Nothing here is a real academy's price list.</p>
+</header>
+<main>
+
+<h2>1. The workflow in four steps</h2>
+<p class="sub">Click a step to see what happens in it, and which use cases it covers. Every model — gym, term, hybrid — runs through the same four steps.</p>
+<div class="steps" id="stepCards"></div>
+<div class="card" id="stepDetail"></div>
+
+<h2>2. Try it yourself</h2>
+<p class="sub">Pick a use case preset to load its flow, or choose Custom and build your own. Then walk the journey with Next: each step shows what happens and the live price maths.</p>
+<div class="card">
+<div class="row">
+<div><label for="preset">Use case preset</label><br>
+<select id="preset"></select></div>
+<div><label for="level">Level</label><br>
+<select id="level"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
+<div><label for="product">Product</label><br>
+<select id="product"></select></div>
+</div>
+<div style="margin-top:12px" id="addons"></div>
+<div style="margin-top:12px" id="presetInfo"></div>
+</div>
+
+<div class="card">
+<div class="flow" id="journeyNav"></div>
+<div id="journeyPanel"></div>
+<div class="math" id="mathsBox"></div>
+<div style="display:flex;gap:10px;margin-top:10px">
+<button id="backBtn" class="sec" type="button">Back</button>
+<button id="nextBtn" type="button">Next</button>
+</div>
+<div class="card" id="outcomePanel" style="margin:12px 0 0"></div>
+</div>
+
+<h2>3. Feature log</h2>
+<p class="sub">Every feature in the demo, the use cases it tackles, and the exact steps to see it. Filter by use-case ID (for example H11) or feature name.</p>
+<div class="card">
+<label for="logFilter">Filter the log</label><br>
+<input type="text" id="logFilter" placeholder="Type a use-case ID or feature name, for example H11 or makeup">
+<table style="margin-top:12px"><thead><tr><th style="width:32%">Feature</th><th style="width:18%">Use cases it tackles</th><th>Steps to see it in the demo and dashboard</th></tr></thead>
+<tbody id="logBody"></tbody></table>
+</div>
+
+<h2>4. What this fixes</h2>
+<p class="sub">The red flags from the use cases and the review, each paired with the feature that resolves it.</p>
+<div class="card" id="fixesBox"></div>
+
+</main>
+<footer>
+Source: 32 use cases from the Academy membership and enrolment use cases workbook (Oct 28, 2026); coverage is against written specs only, nothing tested in product. All money figures are examples. Selections in this demo are kept in the browser session only.
+</footer>
+<script>
+var PRODUCTS = {
+  monthly1: {label: "Monthly, 1x/week", price: 120, period: "month", sessions: 1, monthly: 120},
+  monthly2: {label: "Monthly, 2x/week", price: 200, period: "month", sessions: 2, monthly: 200},
+  quarterly1: {label: "Quarterly, 1x/week", price: 330, period: "quarter", sessions: 1, monthly: 110},
+  quarterly2: {label: "Quarterly, 2x/week", price: 540, period: "quarter", sessions: 2, monthly: 180},
+  six1: {label: "6-month, 1x/week", price: 650, period: "6 months", sessions: 1, monthly: 108.33},
+  six2: {label: "6-month, 2x/week", price: 1080, period: "6 months", sessions: 2, monthly: 180},
+  annual1: {label: "Annual, 1x/week", price: 1200, period: "year", sessions: 1, monthly: 100},
+  annual2: {label: "Annual, 2x/week", price: 2000, period: "year", sessions: 2, monthly: 166.67},
+  term: {label: "Term class fee", price: 360, period: "term", sessions: null, monthly: null},
+  block: {label: "Block of 10 sessions", price: 300, period: "block", sessions: 10, monthly: null},
+  dropin: {label: "Drop-in", price: 30, period: "visit", sessions: 1, monthly: null},
+  access: {label: "Access plan (check-in only)", price: null, period: "month", sessions: null, monthly: null}
+};
+var ADDONS = [
+  {id: "registration", label: "Annual registration fee ($50 example)"},
+  {id: "sibling", label: "Sibling on a second product (sibling tier applied, academy sets the %)"},
+  {id: "thirdParty", label: "Third-party or split payer (school, sponsor, subsidy)"},
+  {id: "extras", label: "Extras (games, kit — academy sets the price)"}
+];
+var PRESETS = [
+  {id:"G1", model:"Gym", title:"Open beginner training, monthly, any session, no fixed batch", product:"monthly1", coverage:"Partial", roster:"No seat; attendance logged as check-in", billing:"Monthly charge on saved card", fixedBy:["F1","F4"], note:"No fixed batch: check-in consumes the entitlement. Frequency is counted per week on the entitlement, not per class."},
+  {id:"G2", model:"Gym", title:"Monthly membership, 1 or 2 sessions a week, fixed batch at the level", product:"monthly1", coverage:"Gap", roster:"Seated on 1 or 2 batches of the level", billing:"Monthly charge; no class charge", fixedBy:["F1","F2","F3","F4"], note:"Class picked inside the purchase with a seat hold. If every batch is full, the family joins a waitlist and is not charged."},
+  {id:"G3", model:"Gym", title:"Quarterly membership, fixed batch", product:"quarterly1", coverage:"Gap", roster:"Seated on chosen batches", billing:"Quarterly charge", fixedBy:["F1","F2","F3"], note:"Quarterly cadence already exists in plans; the missing piece is the seat link, which the class pick inside the purchase supplies."},
+  {id:"G4", model:"Gym", title:"6-month commitment paid up front", product:"six1", coverage:"Gap", roster:"Seated for 6 months", billing:"One charge, discounted", fixedBy:["F1","F2","F3","F16"], note:"Early exit re-rates used months at the monthly price and refunds the rest — see the Exit maths in Life happens."},
+  {id:"G5", model:"Gym", title:"Annual commitment paid up front", product:"annual1", coverage:"Gap", roster:"Seated for the year", billing:"One charge, largest discount", fixedBy:["F1","F2","F3","F16"], note:"Same clawback rule as G4: used months re-rated at the monthly price, the rest refunded."},
+  {id:"G6", model:"Gym", title:"Join mid-month or mid-quarter", product:"monthly1", special:"midPeriod", coverage:"Gap", roster:"Seated from next session", billing:"Full period from join date, or prorated to calendar period", fixedBy:["F10"], note:"Joining rule: anniversary billing from the join date (or a prorated first charge). The family's cycle is its own."},
+  {id:"G7", model:"Gym", title:"Membership with extras (games included, kit)", product:"monthly1", addons:["extras"], coverage:"Partial", roster:"Seated; extras flagged", billing:"Add-on on each membership charge", fixedBy:["F1"], note:"Extras are product add-ons, so they travel with the membership instead of needing a separate class purchase."},
+  {id:"G8", model:"Gym", title:"Facility access only, no coaching", product:"access", coverage:"Covered", roster:"No seat; check-in within window and fair-use cap", billing:"Recurring charge", fixedBy:["F15"], note:"Access is a product with no seat: check-in only, inside its validity window."},
+  {id:"G9", model:"Gym", title:"Two sessions a week with two specialist coaches (batting, bowling)", product:"monthly2", special:"twoSeats", coverage:"Gap", roster:"Seated on one batting and one bowling batch", billing:"One membership charge", fixedBy:["F2","F4","F7"], note:"One membership funds seats in two programs: the roster shows both seats under one charge."},
+  {id:"T1", model:"Term", title:"Fixed-term class paid at enrolment", product:"term", coverage:"Covered", roster:"Seated on purchase", billing:"One charge at class price", fixedBy:["F0"], note:"The classic term path: pay is the seat. Nothing changes here."},
+  {id:"T2", model:"Term", title:"Join a term class after it started", product:"term", special:"lateJoin", coverage:"Partial", roster:"Seated from next session", billing:"Charge for remaining sessions", fixedBy:["F10"], note:"Late join: remaining-sessions price. Example: 12-session term at $360, joining at session 5 leaves 8 sessions = $240."},
+  {id:"T3", model:"Term", title:"Enrol at the desk: mark paid, pay later or payment link", product:"term", special:"desk", coverage:"Covered", roster:"Seated at once, awaiting payment", billing:"Paid or open invoice with academy deadline", fixedBy:["F0"], note:"Desk routes seat immediately and settle payment separately: mark paid, pay later, or a payment link."},
+  {id:"T4", model:"Term", title:"Continue into next term by tapping Continue", product:"term", special:"tapContinue", coverage:"Covered", roster:"Held, then seated on payment", billing:"Invoice on Continue", fixedBy:["F9"], note:"Held place until the deadline, then seated on payment. No card is charged without a tap."},
+  {id:"T5", model:"Term", title:"Continue into next term automatically with saved card", product:"term", special:"autocontinue", coverage:"Conflict", roster:"Seated without action", billing:"Charged on saved card before term", fixedBy:["F9"], note:"CONFLICT RESOLVED: the spec charges nothing without a tap, but the card rollover was promised. Resolution: auto-continue only with an explicit audited opt-in plus a reminder 7 days before every charge, and Stop always available."},
+  {id:"T6", model:"Term", title:"Term class with a Pass discount", product:"term", special:"pass", coverage:"Covered", roster:"Seated", billing:"Discounted class charge", fixedBy:["F15"], note:"The Pass discount applies at purchase with its scope shown (which products it covers)."},
+  {id:"T7", model:"Term", title:"Term fee in instalments (e.g. three monthly payments)", product:"term", special:"instalments", coverage:"Gap", roster:"Seated", billing:"Split into scheduled charges", fixedBy:["F11"], note:"Instalments are a billing pattern on the product: the seat is held from the first payment, the fee is split into a schedule."},
+  {id:"T8", model:"Term", title:"Free trial session before enrolling", product:"term", special:"trial", coverage:"Covered", roster:"Trial seat for one session", billing:"Nothing until purchase", fixedBy:["F0"], note:"A trial is a one-session product with no charge; it converts to a purchase."},
+  {id:"T9", model:"Term", title:"One-day event or camp", product:"term", special:"event", coverage:"Covered", roster:"Seated for the day", billing:"One charge", fixedBy:["F0"], note:"Events are fixed-date products with a hard cut-off, sold the same way as a term class."},
+  {id:"H1", model:"Hybrid", title:"Rolling class priced per block of N sessions, family taps to continue", product:"block", special:"tapBlock", coverage:"Covered", roster:"Seated for the block", billing:"Charge per block on Continue", fixedBy:["F9"], note:"A block is a product: N sessions from any start date, next block offered after the second-last session."},
+  {id:"H2", model:"Hybrid", title:"Rolling block that continues automatically", product:"block", special:"autocontinue", coverage:"Conflict", roster:"Seated without action", billing:"Charged on saved card each block", fixedBy:["F9"], note:"Same resolution as T5: auto-continue only with an explicit audited opt-in, a 7-day reminder, and Stop always available."},
+  {id:"H3", model:"Hybrid", title:"Membership pays; level runs as term batches; admin seats member at no class charge", product:"monthly1", special:"adminSeat", coverage:"Gap", roster:"Seated on the batch, no class charge", billing:"Membership charge only", fixedBy:["F2","F3","F5"], note:"The class accepts the membership product, so the member is seated directly with no class charge — no duplicate class needed."},
+  {id:"H4", model:"Hybrid", title:"Beginners gym-style, intermediate and advanced term-style, same academy", product:"monthly1", special:"mixed", coverage:"Partial", roster:"Beginners check in or seated; upper levels seated by purchase", billing:"Beginners on membership; upper levels on class price", fixedBy:["F5","F6"], note:"How a class is paid for is set per class, not by a program type picked upfront — so one academy mixes both models freely."},
+  {id:"H5", model:"Hybrid", title:"Membership spans terms; member stays in a continuous class with no term end", product:"monthly1", special:"continuous", coverage:"Gap", roster:"Stays seated in the same continuous class without action", billing:"Membership charge only", fixedBy:["F2","F3"], note:"Continuous classes repeat their units instead of ending after 12 sessions, so a member never falls out of a class."},
+  {id:"H6", model:"Hybrid", title:"Join a long program months in; pay prorated remainder, then roll to membership", product:"term", special:"prorateThenMembership", coverage:"Gap", roster:"Seated throughout", billing:"Prorated first charge, then recurring", fixedBy:["F6","F10"], note:"Vishwanath's main concern: the term remainder is prorated, then the athlete rolls onto the membership with no gap in seating."},
+  {id:"H7", model:"Hybrid", title:"Main membership plus girls-only weekend program", product:"monthly1", special:"twoPrograms", coverage:"Partial", roster:"Seated in both programs", billing:"Two charges", fixedBy:["F7"], note:"Two entitlements, one athlete: the roster shows both seats and both expiries."},
+  {id:"H8", model:"Hybrid", title:"Facility access plus term classes", product:"access", special:"accessPlusTerm", coverage:"Covered", roster:"Seated in classes; access by check-in", billing:"Two independent charges", fixedBy:["F5","F15"], note:"Access and class fees are separate products on the same account; each renews on its own cycle."},
+  {id:"H9", model:"Hybrid", title:"Families who prepaid under the old system", product:"monthly1", special:"prepaid", coverage:"Partial", roster:"Seated at cut-over", billing:"No charge until prepaid period ends", fixedBy:["F14"], note:"Cut-over by data load: the academy's sheet plus a cut-off date seats prepaid families without charge until their prepaid period ends."},
+  {id:"H10", model:"Hybrid", title:"Makeups per quarter for members", product:"monthly1", special:"makeup", coverage:"Partial", roster:"Makeup seat in another batch of the level", billing:"None (allowance)", fixedBy:["F4","F8"], note:"Makeup allowance is per membership period (example: 2 per quarter), recorded as it is used."},
+  {id:"H11", model:"Hybrid", title:"Same batch sold at different commitment prices (monthly vs 6 months)", product:"term", special:"blended", coverage:"Gap", roster:"Same roster, different payers", billing:"Price depends on tier chosen", fixedBy:["F1","F5"], note:"One roster, several prices: the class accepts several products, so monthly and 6-month payers sit in the same batch."},
+  {id:"H12", model:"Hybrid", title:"Siblings on different products or tiers", product:"monthly1", addons:["sibling"], special:"sibling", coverage:"Partial", roster:"Each child seated", billing:"Sibling discount applied across products", fixedBy:["F7","F15"], note:"Sibling tiers extend to memberships, not just class purchases, and the roster shows each child's own coverage."},
+  {id:"H13", model:"Hybrid", title:"Registration or annual family fee charged as well as tuition", product:"monthly1", addons:["registration"], special:"prereq", coverage:"Gap", roster:"Seated only when a current registration AND a class or membership are both held", billing:"Annual fee plus tuition", fixedBy:["F12"], note:"Registration is a prerequisite product: it grants no seat, but enrolment requires a current one."},
+  {id:"H14", model:"Hybrid", title:"Part or all of a fee paid by someone other than the guardian (school purchase order, subsidy, parks and rec)", product:"monthly1", addons:["thirdParty"], special:"thirdParty", coverage:"Gap", roster:"Seated as usual", billing:"Charged to the third party, or split between payer and guardian", fixedBy:["F13"], note:"The payer is stored separately from the guardian, so a school, sponsor, or subsidy can pay part or all of a fee."}
+];
+var FEATURES = [
+  {id:"F0", name:"Core purchase and seat (pay now, desk routes, trial, event)", cases:"T1, T3, T8, T9", steps:"Buy: choose class, pay (or Desk: mark paid / pay later / payment link), seated; Trial: trial seat, then convert."},
+  {id:"F1", name:"Product setup with price tables", cases:"G1, G2, G3, G4, G5, G7, H11", steps:"Setup, Products: new product, pick level, set price table (commitment x sessions per week), add extras (games, kit)."},
+  {id:"F2", name:"Membership purchase: class pick, seat hold, waitlist, consent", cases:"G2, G3, G4, G5, G9, H3, H5", steps:"Buy: choose membership, pick batch or batches, seat hold, consent and under-13 gate, pay, entitlement created; if full: waitlist, no charge."},
+  {id:"F3", name:"Continuous classes", cases:"H5, H3, G2, G3, G4, G5", steps:"Setup, Class: shape: continuous (repeating units), no term end."},
+  {id:"F4", name:"Entitlement ledger and frequency counting", cases:"G1, G2, G9, H10", steps:"Buy: entitlement created; Attend: check-in consumes sessions; Roster: sessions left shown in plain words."},
+  {id:"F5", name:"Blended classes (accepted funding types)", cases:"H11, H3, H4, H8", steps:"Setup, Class: accepted products (tick several); Buy: see every way in (\"Included in Beginner plan, $360 a term, $30 drop-in\")."},
+  {id:"F6", name:"Moves and product switch (price-change-only billing, curriculum position)", cases:"H4, H6", steps:"Athlete, Move: pick target class, see curriculum position and version; same price: free; price change: prorated preview, confirm."},
+  {id:"F7", name:"Multiple entitlements and roster coverage", cases:"G9, H7, H12", steps:"Roster: athlete row shows coverage (plan, term, drop-in, sponsor), expiry, sessions used this week."},
+  {id:"F8", name:"Makeups per period", cases:"H10", steps:"Athlete, Book makeup: allowance check (example 2 per quarter), record use, allowance decreases."},
+  {id:"F9", name:"Renewal: tap vs auto-continue with opt-in and reminders", cases:"T4, T5, H1, H2", steps:"Buy: opt-in toggle (explicit, audited); before renewal: 7-day reminder; charge (or tap to continue); Stop anytime."},
+  {id:"F10", name:"Joining rules: anniversary billing, proration, desk overrides", cases:"G6, H6, T2", steps:"Join mid-period: anniversary date set (or prorated first charge); late join: remaining-sessions price; Desk: override with reason."},
+  {id:"F11", name:"Instalments", cases:"T7", steps:"Buy: pay in instalments, schedule shown (deposit plus monthly charges)."},
+  {id:"F12", name:"Registration prerequisite", cases:"H13", steps:"Setup: prerequisite product (annual registration); Buy: blocked until a current registration is held, pay fee, proceed."},
+  {id:"F13", name:"Third-party and split payer", cases:"H14", steps:"Buy: payer: guardian, school, sponsor, or split; invoice or split charges; seated as usual."},
+  {id:"F14", name:"Prepaid cut-over", cases:"H9", steps:"Admin: data load (academy sheet plus cut-off); seats without charge until prepaid period ends; normal renewal after."},
+  {id:"F15", name:"Access, Pass, siblings", cases:"G8, T6, H8, H12", steps:"Buy access plan (check-in only); apply Pass discount at purchase (scope shown); second child: sibling tier applied."},
+  {id:"F16", name:"Exit: clawback and refund preview", cases:"G4, G5", steps:"Athlete, End membership: refund preview (used months re-rated at the monthly price, rest refunded), confirm."},
+  {id:"F17", name:"Pause and failed payments (no direct use-case rows; covers decisions D9 and D10 and member movement)", cases:"(none in the use-case tab; D9, D10)", steps:"Athlete, Pause: up to 4 weeks a year, seat held on return only if capacity allows; failed payment: 7-day retry with reminders, then the academy's chosen outcome."}
+];
+var STEPS = [
+  {n:1, title:"Set up products", tag:"Setup", what:"The academy creates products, not program types. A product has a price (a price table: commitment x sessions per week, so one product replaces dozens of plans), a billing pattern (one-off, recurring, instalments, invoiced), what it grants (scope, quantity, validity), and policies (proration, continuation, makeup, cancellation, pause). Classes then list which products they accept; a class can accept several, and \"members only\" is a setting, not a system limit.", cases:"G1, G2, G3, G4, G5, G7, H3, H4, H5, H8, H11, H13, H14"},
+  {n:2, title:"Buy", tag:"Buy", what:"The family picks a class and sees every way in (\"Included in Beginner plan, $360 a term, $30 drop-in\"). A seat hold is placed, the consent gate (including under-13) runs inside the purchase, then they pay (or are invoiced, or a third party pays) and an entitlement is created in the ledger. If every batch is full they join a waitlist and are NOT charged. Desk routes (mark paid, pay later, payment link), trials, and events all use this same purchase.", cases:"T1, T3, T8, T9, G2, G3, G4, G5, G9, H3, H5, G6, H6, T2, T7, H13, H14, H9, G8, T6, H8, H12"},
+  {n:3, title:"Attend", tag:"Roster", what:"Check-in or booking consumes the entitlement, and sessions per week are counted on the entitlement — never on the class. The roster shows each athlete's coverage in plain words (plan, term, drop-in, sponsor) plus expiry and sessions used this week. Makeups draw on a per-period allowance that is recorded as it is used.", cases:"G1, G2, G9, H7, H10, H12"},
+  {n:4, title:"Life happens", tag:"Athlete", what:"Moves: same price is free, a price change prorates or credits, and the target class's curriculum position and version are shown before confirming. Pause: up to 4 weeks a year, seat held on return only if capacity allows. Renewal: tap to continue, or auto-continue ONLY with an explicit audited opt-in plus a reminder 7 days before every charge, with Stop always available. Failed payment: retry 7 days with reminders, then the academy's chosen outcome. Exit: refund preview — used months re-rated at the monthly price, the rest refunded.", cases:"H4, H6, H10, T4, T5, H1, H2, G4, G5"}
+];
+var FIXES = [
+  {flag:"Autopay promise vs tap-only spec (T5, H2)", fix:"F9 — auto-continue only with an explicit audited opt-in, a reminder 7 days before every charge, and Stop always available."},
+  {flag:"Paying before a seat exists", fix:"F2 — class picked inside the purchase, seat hold before payment, waitlist with no charge when full."},
+  {flag:"Consent skipped when the membership sale becomes enrolment", fix:"F2 — consent gate (including under-13) sits inside every purchase path, and re-runs on moves into programs with new waivers."},
+  {flag:"No-blending forces duplicate classes", fix:"F5 — a class accepts several products; \"members only\" becomes an academy setting, not a system limit."},
+  {flag:"Plan explosion (4 levels x 4 commitments x 2 frequencies = 32 plans)", fix:"F1 — one product holds a price table (commitment x sessions per week); parents pick commitment and frequency, the price follows."},
+  {flag:"Frequency stored on the class", fix:"F4 — sessions per week are counted on the entitlement at booking or check-in; classes stay neutral."},
+  {flag:"Same-price level moves billed as billing events", fix:"F6 — billing changes only when the price changes; a group can cover several programs."},
+  {flag:"No continuous class shape (V2 classes end after 12 sessions)", fix:"F3 — continuous classes repeat their units, so members never fall out of a class."},
+  {flag:"No recorded access (frequency, makeups, pause, audit have no source of truth)", fix:"F4 — every purchase creates a ledger entitlement; attendance consumes it."},
+  {flag:"Instalments excluded from this release", fix:"F11 — instalments are a billing pattern on the product: deposit plus scheduled charges."},
+  {flag:"Registration fees and third-party payers missing", fix:"F12 and F13 — prerequisite products, and a payer stored separately from the guardian."},
+  {flag:"Prepaid families have no cut-over path", fix:"F14 — data load from the academy's sheet plus a cut-off date; seats without charge until the prepaid period ends."},
+  {flag:"Two products called \"unlimited\" (plus unclear Pass scope)", fix:"F15 — rename one unlimited product (decision D15); the Pass discount shows its scope at purchase."}
+];
+var S = {preset:"custom", level:"Beginner", product:"monthly1", addons:{}, payer:"guardian", step:1, seatHeld:false, paid:false, consent:false, fullBatch:false, sessionsUsed:0, makeupUsed:0, action:"move", autoOptIn:false, shape:"continuous", accepted:["plan","term","dropin"]};
+function $(id){return document.getElementById(id)}
+function money(n){return "$" + (Math.round(n*100)/100).toString().replace(/\.00$/,"")}
+function badge(c){var cls = c==="Covered" ? "p-covered" : c==="Partial" ? "p-partial" : c==="Conflict" ? "p-conflict" : "p-gap"; return '<span class="pill '+cls+'">'+c+'</span>'}
+function prod(){return PRODUCTS[S.product]}
+function preset(){for(var i=0;i<PRESETS.length;i++){if(PRESETS[i].id===S.preset) return PRESETS[i]} return null}
+function special(){var p = preset(); return p ? (p.special || "") : ""}
+function monthlyRate(){var p = prod(); return p.monthly}
+function counterpart(){var map = {monthly1:"monthly2", monthly2:"monthly1", quarterly1:"quarterly2", quarterly2:"quarterly1", six1:"six2", six2:"six1", annual1:"annual2", annual2:"annual1"}; return map[S.product] || null}
+
+function renderStepCards(){
+  var html = "";
+  for(var i=0;i<STEPS.length;i++){
+    var st = STEPS[i];
+    html += '<button type="button" class="stepcard'+(S.step===st.n?" on":"")+'" data-step="'+st.n+'"><span class="n">'+st.n+'</span><b>'+st.title+'</b><span>'+st.tag+' view</span></button>';
+  }
+  $("stepCards").innerHTML = html;
+  var cards = document.querySelectorAll("#stepCards .stepcard");
+  for(var j=0;j<cards.length;j++){cards[j].onclick = function(){S.step = parseInt(this.getAttribute("data-step"),10); renderAll();}}
+  var cur = STEPS[S.step-1];
+  $("stepDetail").innerHTML = "<h3>Step "+cur.n+": "+cur.title+" <span class='pill' style='background:#f3efff'>"+cur.tag+" view</span></h3><p>"+cur.what+"</p><p class='kbd'>Use cases covered here: "+cur.cases+"</p>";
+}
+function renderJourneyNav(){
+  var names = ["1 · Set up products (Setup)","2 · Buy (Buy)","3 · Attend (Roster)","4 · Life happens (Athlete)"];
+  var html = "";
+  for(var i=0;i<4;i++){html += '<button type="button" class="chip'+(S.step===i+1?" on":"")+'" data-nav="'+(i+1)+'">'+names[i]+'</button>';}
+  $("journeyNav").innerHTML = html;
+  var chips = document.querySelectorAll("#journeyNav .chip");
+  for(var j=0;j<chips.length;j++){chips[j].onclick = function(){S.step = parseInt(this.getAttribute("data-nav"),10); renderAll();}}
+}
+function priceTableHTML(){
+  var rows = [["Monthly, 1x",120],["Monthly, 2x",200],["Quarterly, 1x",330],["Quarterly, 2x",540],["6-month, 1x",650],["6-month, 2x",1080],["Annual, 1x",1200],["Annual, 2x",2000]];
+  var h = "<table><tr><th>Commitment</th><th>1x/week</th><th>2x/week</th></tr>";
+  var pairs = [["Monthly",120,200],["Quarterly",330,540],["6-month",650,1080],["Annual",1200,2000]];
+  for(var i=0;i<pairs.length;i++){h += "<tr><td>"+pairs[i][0]+"</td><td>"+money(pairs[i][1])+"</td><td>"+money(pairs[i][2])+"</td></tr>";}
+  h += "</table><p class='kbd'>EXAMPLE table for Beginner. Term class $360, drop-in $30, registration $50/year. The academy sets each level's own table.</p>";
+  return h;
+}
+function waysInHTML(){
+  var parts = [];
+  if(S.accepted.indexOf("plan")>=0) parts.push("Included in Beginner plan");
+  if(S.accepted.indexOf("term")>=0) parts.push("$360 a term");
+  if(S.accepted.indexOf("dropin")>=0) parts.push("$30 drop-in");
+  return parts.join(" · ");
+}
+function renderJourneyPanel(){
+  var p = prod(), sp = special(), el = $("journeyPanel"), html = "";
+  if(S.step===1){
+    html += "<h3>Setup — products, not program types</h3><p>One product replaces dozens of plans: pick a commitment and sessions per week, and the price follows.</p>";
+    html += priceTableHTML();
+    html += "<p><label>Class shape</label><br><select id='shapeSel'><option value='continuous'"+(S.shape==="continuous"?" selected":"")+">Continuous (repeating units, no term end)</option><option value='fixed'"+(S.shape==="fixed"?" selected":"")+">Fixed run (numbered sessions, then ends)</option></select></p>";
+    html += "<p><label>Accepted products on this class (tick several for a blended class)</label><br>";
+    var acc = [["plan","Beginner plan (membership)"],["term","Term fee"],["dropin","Drop-in"]];
+    for(var i=0;i<acc.length;i++){html += "<label style='font-weight:400'><input type='checkbox' class='accChk' value='"+acc[i][0]+"'"+(S.accepted.indexOf(acc[i][0])>=0?" checked":"")+"> "+acc[i][1]+"</label><br>";}
+    html += "</p>";
+    if(S.level!=="Beginner") html += "<p class='kbd'>Example maths use the Beginner table above; Intermediate and Advanced tables are set by the academy.</p>";
+  }
+  if(S.step===2){
+    html += "<h3>Buy — pick a class, see every way in</h3>";
+    html += "<div class='ways'><b>Every way into this class:</b> "+waysInHTML()+"</div>";
+    html += "<p><label>Pick a class</label><br><select id='classSel'><option>Beginner — Saturday 9am</option><option>Beginner — Sunday 11am</option><option>Intermediate — Tuesday 5pm</option><option>Advanced — Thursday 6pm</option></select></p>";
+    if(sp==="prepaid") html += "<p><b>Cut-over data load:</b> the academy's sheet plus a cut-off date seats this family without charge until the prepaid period ends. No payment step.</p>";
+    if(sp==="prereq" && !S.addons.registration) html += "<p class='warn'>Blocked: a current annual registration is required before enrolment. Add the registration below or tick it in the add-ons.</p><p><button type='button' id='addRegBtn' class='sec'>Add $50 annual registration</button></p>";
+    html += "<p><label style='font-weight:400'><input type='checkbox' id='fullChk'"+(S.fullBatch?" checked":"")+"> All batches full (demo the waitlist path)</label></p>";
+    if(!S.seatHeld && !S.paid) html += "<p><button type='button' id='holdBtn'>Place seat hold</button> <span class='kbd'>A hold is placed before any payment.</span></p>";
+    if(S.seatHeld && !S.paid) html += "<p class='ok'>Seat held for this family.</p>";
+    html += "<p><label style='font-weight:400'><input type='checkbox' id='consentChk'"+(S.consent?" checked":"")+"> Waivers signed, including under-13 consent where it applies</label> <span class='kbd'>Consent runs inside the purchase — no seat without it.</span></p>";
+    html += "<p><label>Payer</label><br><select id='payerSel'><option value='guardian'"+(S.payer==="guardian"?" selected":"")+">Guardian</option><option value='school'"+(S.payer==="school"?" selected":"")+">School (purchase order)</option><option value='sponsor'"+(S.payer==="sponsor"?" selected":"")+">Sponsor / subsidy</option><option value='split'"+(S.payer==="split"?" selected":"")+">Split between payer and guardian</option></select></p>";
+    if(p.monthly!==null || S.product==="term" || S.product==="block") html += "<p><label style='font-weight:400'><input type='checkbox' id='optChk'"+(S.autoOptIn?" checked":"")+"> Auto-continue with saved card (explicit opt-in, audited; reminder 7 days before every charge; Stop always available)</label></p>";
+    if(sp==="trial") html += "<p><b>Trial seat:</b> one free session, no charge. After the session, convert to a purchase.</p>";
+    if(sp==="desk") html += "<p><b>Desk routes:</b> seat immediately and settle separately.</p><p><button type='button' class='sec deskBtn' data-desk='Mark paid'>Mark paid</button> <button type='button' class='sec deskBtn' data-desk='Pay later'>Pay later</button> <button type='button' class='sec deskBtn' data-desk='Payment link'>Payment link</button></p>";
+    if(!S.paid){
+      if(S.fullBatch) html += "<p><button type='button' id='waitBtn'>Join waitlist (no charge)</button></p>";
+      else html += "<p><button type='button' id='payBtn'"+(S.consent?"":" disabled")+">Pay and create entitlement</button> <span class='kbd'>"+(S.consent?"":"Tick the consent box to enable payment.")+"</span></p>";
+    } else {
+      html += "<p class='ok'>Paid. Entitlement created in the ledger: "+p.label+" for "+S.level+", payer: "+S.payer+".</p>";
+    }
+  }
+  if(S.step===3){
+    html += "<h3>Attend — the roster, in plain words</h3>";
+    var cov = S.product==="term" ? "Term fee" : S.product==="dropin" ? "Drop-in" : S.product==="access" ? "Access plan" : S.product==="block" ? "Block (sessions left: "+(10-S.sessionsUsed)+")" : S.level+" plan";
+    var sess = "";
+    if(p.sessions!==null && p.period!=="block") sess = "Sessions used this week: "+S.sessionsUsed+" of "+p.sessions;
+    else if(S.product==="block") sess = "Sessions left in block: "+(10-S.sessionsUsed)+" of 10";
+    else if(S.product==="term") sess = "Seated for the term";
+    else sess = "Check-ins within window";
+    html += "<table><tr><th>Athlete</th><th>Coverage</th><th>Expiry</th><th>This week</th></tr>";
+    html += "<tr><td>Demo athlete ("+S.level+")</td><td>"+cov+"</td><td>End of current period</td><td>"+sess+"</td></tr>";
+    if(S.addons.sibling) html += "<tr><td>Sibling</td><td>Same product family, sibling tier applied</td><td>End of current period</td><td>Own sessions counted separately</td></tr>";
+    if(sp==="twoSeats") html += "<tr><td>Demo athlete — second seat</td><td>Bowling batch (same membership)</td><td>End of current period</td><td>Counts toward the same weekly allowance</td></tr>";
+    if(sp==="twoPrograms") html += "<tr><td>Demo athlete — weekend program</td><td>Girls-only weekend program</td><td>Own cycle</td><td>Separate allowance</td></tr>";
+    html += "</table>";
+    html += "<p><button type='button' id='checkinBtn'>Check in / attend a session</button> <span class='kbd'>Each check-in consumes the entitlement.</span></p>";
+    if(sp==="makeup") html += "<p>Makeup allowance this quarter (example): "+(2-S.makeupUsed)+" of 2 left. <button type='button' id='makeupBtn' class='sec'>Book a makeup in another batch</button></p>";
+  }
+  if(S.step===4){
+    html += "<h3>Life happens — Athlete view</h3><p>Pick an action to see its rule and its live maths.</p>";
+    var acts = [["move","Move up a level"],["pause","Pause"],["makeup","Book a makeup"],["renew","Renew"],["exit","Exit"]];
+    for(var i=0;i<acts.length;i++){html += "<button type='button' class='chip actBtn"+(S.action===acts[i][0]?" on":"")+"' data-act='"+acts[i][0]+"'>"+acts[i][1]+"</button> ";}
+    html += "<div id='actionPanel' style='margin-top:12px'></div>";
+  }
+  el.innerHTML = html;
+  bindJourneyEvents();
+  if(S.step===4) renderActionPanel();
+}
+function bindJourneyEvents(){
+  var el;
+  el = $("shapeSel"); if(el) el.onchange = function(){S.shape = this.value; renderMaths();};
+  var chks = document.querySelectorAll(".accChk");
+  for(var i=0;i<chks.length;i++){chks[i].onchange = function(){if(this.checked){if(S.accepted.indexOf(this.value)<0) S.accepted.push(this.value);} else {S.accepted = S.accepted.filter(function(v){return v!==this.value}.bind(this));} renderAll();};}
+  el = $("fullChk"); if(el) el.onchange = function(){S.fullBatch = this.checked; renderAll();};
+  el = $("consentChk"); if(el) el.onchange = function(){S.consent = this.checked; renderAll();};
+  el = $("payerSel"); if(el) el.onchange = function(){S.payer = this.value; renderAll();};
+  el = $("optChk"); if(el) el.onchange = function(){S.autoOptIn = this.checked; renderMaths();};
+  el = $("holdBtn"); if(el) el.onclick = function(){S.seatHeld = true; renderAll();};
+  el = $("payBtn"); if(el) el.onclick = function(){S.paid = true; renderAll();};
+  el = $("waitBtn"); if(el) el.onclick = function(){S.paid = false; alert("Waitlisted: no charge taken. A seat hold will be offered when a place opens.");};
+  el = $("addRegBtn"); if(el) el.onclick = function(){S.addons.registration = true; renderAll();};
+  var desks = document.querySelectorAll(".deskBtn");
+  for(var j=0;j<desks.length;j++){desks[j].onclick = function(){S.paid = true; renderAll();};}
+  el = $("checkinBtn"); if(el) el.onclick = function(){
+    var p = prod();
+    if(p.sessions!==null && p.period!=="block" && S.sessionsUsed>=p.sessions){alert("Weekly allowance reached (example cap: "+p.sessions+" sessions/week).");}
+    else if(S.product==="block" && S.sessionsUsed>=10){alert("Block used up. Offer the next block.");}
+    else {S.sessionsUsed++; renderAll();}
+  };
+  el = $("makeupBtn"); if(el) el.onclick = function(){if(S.makeupUsed>=2){alert("Makeup allowance used up for this quarter (example: 2).");} else {S.makeupUsed++; renderAll();}};
+  var acts = document.querySelectorAll(".actBtn");
+  for(var k=0;k<acts.length;k++){acts[k].onclick = function(){S.action = this.getAttribute("data-act"); renderJourneyPanel(); renderMaths();};}
+}
+function renderActionPanel(){
+  var p = prod(), sp = special(), h = "";
+  if(S.action==="move"){
+    h += "<p><b>Rule:</b> same price is a free scheduling move; a price change prorates (up) or credits (down). The target class's curriculum position and version are shown before confirming.</p>";
+    var cp = counterpart();
+    if(cp && monthlyRate()!==null){
+      var diff = PRODUCTS[cp].monthly - p.monthly;
+      h += "<p><b>Live maths (example: 15 of 30 days left):</b> moving "+p.label+" ("+money(p.monthly)+"/mo) to "+PRODUCTS[cp].label+" ("+money(PRODUCTS[cp].monthly)+"/mo): ("+money(PRODUCTS[cp].monthly)+" − "+money(p.monthly)+") × 15/30 = <b>"+money(diff*0.5)+"</b> "+(diff>=0?"due now":"credited to next renewal")+".</p>";
+    } else {
+      h += "<p><b>Worked example:</b> moving $120/mo to $200/mo with 15 of 30 days left: ($200 − $120) × 15/30 = <b>$40</b> due now.</p>";
+    }
+    if(sp==="prorateThenMembership") h += "<p><b>This case (H6):</b> term remainder prorated first, then the athlete rolls onto the membership with no gap in seating.</p>";
+    h += "<p><label>Target class</label><br><select><option>Intermediate — Tuesday 5pm (session 4 of 12, version 2)</option><option>Intermediate — Saturday 10am (session 1 of 12, version 2)</option></select> <span class='kbd'>Curriculum position and version shown before confirming.</span></p>";
+  }
+  if(S.action==="pause"){
+    h += "<p><b>Rule:</b> up to 4 weeks per commitment year, billing paused, end date extended. The seat is held on return only if capacity allows.</p><p><button type='button' class='sec' onclick='alert(\"Paused (demo). Billing paused, end date extended by the paused weeks.\")'>Pause membership</button></p>";
+  }
+  if(S.action==="makeup"){
+    h += "<p><b>Rule:</b> makeup allowance is per membership period (example: 2 per quarter) and every use is recorded.</p><p>Allowance left: <b>"+(2-S.makeupUsed)+" of 2</b>. <button type='button' class='sec' id='makeupBtn2'>Book a makeup</button></p>";
+    var b = $("makeupBtn2"); setTimeout(function(){var m = document.getElementById("makeupBtn2"); if(m) m.onclick = function(){if(S.makeupUsed>=2){alert("Makeup allowance used up for this quarter (example: 2).");} else {S.makeupUsed++; renderJourneyPanel(); renderMaths();}};},0);
+  }
+  if(S.action==="renew"){
+    h += "<p><b>Rule:</b> tap to continue, or auto-continue ONLY with an explicit audited opt-in plus a reminder 7 days before every charge. Stop is always available.</p>";
+    h += "<p>Auto-continue opt-in is currently: <b>"+(S.autoOptIn?"ON (set in Buy)":"OFF")+"</b>. "+(S.autoOptIn?"A reminder goes out 7 days before the charge.":"With it off, the family taps Continue and nothing is charged without that tap.")+"</p>";
+    h += "<p><button type='button' class='sec'>Tap to continue (demo)</button> <button type='button' class='sec'>Stop auto-continue (demo)</button></p>";
+  }
+  if(S.action==="exit"){
+    h += "<p><b>Rule:</b> refund preview before ending. Used months are re-rated at the monthly price; the rest is refunded.</p>";
+    if(S.product==="six1" || S.product==="six2" || S.product==="annual1" || S.product==="annual2"){
+      var mRate = (prod().sessions===1) ? 120 : 200, used = 4*mRate, refund = Math.max(0, p.price-used);
+      h += "<p><b>Live preview (example: exit after 4 months):</b> paid "+money(p.price)+"; used 4 months re-rated at "+money(mRate)+"/mo = "+money(used)+"; <b>refund "+money(refund)+"</b>.</p>";
+    } else if(p.monthly!==null){
+      h += "<p>Monthly and quarterly memberships cancel at period end with no refund.</p>";
+    } else {
+      h += "<p>No membership to exit here; a term or block simply ends naturally.</p>";
+    }
+    h += "<p><button type='button' class='sec'>Show refund preview and confirm (demo)</button></p>";
+  }
+  $("actionPanel").innerHTML = h;
+}
+function renderMaths(){
+  var p = prod(), sp = special(), lines = [];
+  if(p.price!==null) lines.push("<b>First charge (example):</b> "+p.label+" "+money(p.price)+" per "+p.period+".");
+  else lines.push("<b>First charge:</b> access plan — price set by the academy.");
+  if(S.addons.registration) lines.push("Plus annual registration: $50 (example).");
+  if(S.addons.sibling) lines.push("Sibling tier applied to the second child (academy sets the %).");
+  if(S.addons.extras) lines.push("Extras (games, kit) added (academy sets the price).");
+  if(S.addons.thirdParty) lines.push("Payer: "+S.payer+" (invoice or split charges).");
+  if(p.monthly!==null) lines.push("<b>Monthly equivalent (example):</b> "+money(Math.round(p.monthly*100)/100)+"/mo.");
+  if(sp==="instalments") lines.push("<b>Instalment schedule (example):</b> $360 term fee = 3 × $120 monthly. Seat held from the first payment.");
+  if(sp==="lateJoin") lines.push("<b>Late-join price (example):</b> 12-session term at $360, joining at session 5 leaves 8 sessions × $30 = $240.");
+  if(sp==="midPeriod") lines.push("<b>Joining rule:</b> anniversary billing from the join date (or a prorated first charge). Each family's cycle is its own.");
+  if(S.product==="block") lines.push("<b>Block (example):</b> 10 sessions at $300; next block offered after the second-last session.");
+  if(S.level!=="Beginner") lines.push("Example maths use the Beginner table; Intermediate and Advanced tables are set by the academy.");
+  $("mathsBox").innerHTML = lines.join("<br>");
+}
+function renderOutcome(){
+  var pr = preset(), el = $("outcomePanel");
+  if(!pr){el.innerHTML = "<h3>Outcome — Custom journey</h3><p>Walk the four steps above. The roster outcome is seating plus coverage in plain words; the billing outcome is the first charge plus the renewal rule you picked.</p>"; return;}
+  var chips = "";
+  for(var i=0;i<pr.fixedBy.length;i++){chips += "<button type='button' class='chip' data-log='"+pr.fixedBy[i]+"'>"+pr.fixedBy[i]+"</button> ";}
+  el.innerHTML = "<h3>Outcome — "+pr.id+" ("+pr.model+")</h3><p><b>Scenario:</b> "+pr.title+"</p><p><b>Expected roster outcome:</b> "+pr.roster+"</p><p><b>Expected billing outcome:</b> "+pr.billing+"</p><p>Current-spec coverage: "+badge(pr.coverage)+" <span class='kbd'>Fixed by: </span>"+chips+"</p><p><b>How the workflow handles it:</b> "+pr.note+"</p>";
+  var cs = el.querySelectorAll("[data-log]");
+  for(var j=0;j<cs.length;j++){cs[j].onclick = function(){var id = this.getAttribute("data-log"); document.getElementById("logFilter").value = id; renderLog(); document.getElementById(id).scrollIntoView();};}
+}
+function renderPresetInfo(){
+  var pr = preset();
+  $("presetInfo").innerHTML = pr ? "<p><b>"+pr.id+" ("+pr.model+"):</b> "+pr.title+" "+badge(pr.coverage)+"</p>" : "<p class='kbd'>Custom: choose a level, product, and add-ons, then walk the journey.</p>";
+}
+function renderLog(){
+  var q = ($("logFilter").value || "").toLowerCase(), html = "";
+  for(var i=0;i<FEATURES.length;i++){
+    var f = FEATURES[i], hay = (f.id+" "+f.name+" "+f.cases+" "+f.steps).toLowerCase();
+    if(q && hay.indexOf(q)<0) continue;
+    html += "<tr id='"+f.id+"'><td><b>"+f.id+"</b> — "+f.name+"</td><td>"+f.cases+"</td><td>"+f.steps+"</td></tr>";
+  }
+  $("logBody").innerHTML = html || "<tr><td colspan='3'>No log rows match that filter.</td></tr>";
+}
+function renderFixes(){
+  var html = "";
+  for(var i=0;i<FIXES.length;i++){html += "<p><b>"+FIXES[i].flag+"</b><br><span class='kbd'>Fix: </span>"+FIXES[i].fix+"</p>";}
+  $("fixesBox").innerHTML = html;
+}
+function renderAddons(){
+  var html = "";
+  for(var i=0;i<ADDONS.length;i++){var a = ADDONS[i]; html += "<label style='font-weight:400;margin-right:14px'><input type='checkbox' class='addonChk' value='"+a.id+"'"+(S.addons[a.id]?" checked":"")+"> "+a.label+"</label>";}
+  $("addons").innerHTML = html;
+  var chks = document.querySelectorAll(".addonChk");
+  for(var j=0;j<chks.length;j++){chks[j].onchange = function(){if(this.checked) S.addons[this.value]=true; else delete S.addons[this.value]; renderAll();};}
+}
+function renderPresetSelect(){
+  var html = "<option value='custom'>Custom — build your own</option>";
+  for(var i=0;i<PRESETS.length;i++){var pr = PRESETS[i]; html += "<option value='"+pr.id+"'"+(S.preset===pr.id?" selected":"")+">"+pr.id+" — "+pr.title+" ("+pr.coverage+")</option>";}
+  $("preset").innerHTML = html;
+  $("preset").onchange = function(){
+    var id = this.value;
+    if(id==="custom"){S.preset="custom"; renderAll(); return;}
+    var pr = null;
+    for(var i=0;i<PRESETS.length;i++){if(PRESETS[i].id===id) pr = PRESETS[i];}
+    S.preset = id; S.level = "Beginner"; S.product = pr.product;
+    S.addons = {}; if(pr.addons) for(var j=0;j<pr.addons.length;j++) S.addons[pr.addons[j]] = true;
+    S.step = 1; S.seatHeld = false; S.paid = false; S.consent = false; S.fullBatch = false; S.sessionsUsed = 0; S.makeupUsed = 0; S.action = "move"; S.autoOptIn = false;
+    renderAll();
+  };
+}
+function renderProductSelect(){
+  var html = "";
+  for(var k in PRODUCTS){html += "<option value='"+k+"'"+(S.product===k?" selected":"")+">"+PRODUCTS[k].label+(PRODUCTS[k].price!==null?" — $"+PRODUCTS[k].price:"")+"</option>";}
+  $("product").innerHTML = html;
+  $("product").onchange = function(){S.product = this.value; renderAll();};
+  $("level").onchange = function(){S.level = this.value; renderAll();};
+}
+function renderAll(){
+  renderStepCards(); renderJourneyNav(); renderJourneyPanel(); renderMaths(); renderOutcome(); renderPresetInfo(); renderAddons(); renderLog(); renderFixes();
+  $("backBtn").disabled = (S.step===1);
+  $("nextBtn").disabled = (S.step===4);
+}
+$("backBtn").onclick = function(){if(S.step>1){S.step--; renderAll();}};
+$("nextBtn").onclick = function(){if(S.step<4){S.step++; renderAll();}};
+$("logFilter").oninput = renderLog;
+renderPresetSelect(); renderProductSelect(); renderAll();
+</script>
+</body>
+</html>
