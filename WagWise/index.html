@@ -320,6 +320,7 @@
       <p class="muted small">WagWise <span id="appVersion">v…</span> — PWA. Deterministic physiological engines run on-device. Data syncs to your Supabase project. AI clinical reasoning happens with Muse (your agent) or your own Gemini key — nothing is sent anywhere without your action.</p>
       <button id="updateCheckBtn" class="btn block">⟳ Check for updates</button>
       <div class="muted small" id="updateStatus" style="margin-top:6px"></div>
+      <button id="logoutBtn" class="btn block" hidden>⎋ Log out</button>
     </div>
   </section>
 
@@ -588,7 +589,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="demo-data.js"></script>
-<script src="app.js?v=3.32.4"></script>
+<script src="app.js?v=3.33.0"></script>
 <script>
 // Register service worker (offline PWA)
 if ('serviceWorker' in navigator) {
