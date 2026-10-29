@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.31.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.32.0'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   GEMINI_PROXY_MODELS: ['gemini-3.8-flash'], // v3.30.2 — 2.5-flash is closed to new users; Google's error points to 3.8-flash (GA Sep 2026)
@@ -3944,7 +3944,12 @@ function wire() {
   $('addPetBtn2').onclick = () => openSheet('Pet');
   $('medAddBtn').onclick = () => { $('medForm').hidden = !$('medForm').hidden; };
   $('medSaveBtn').onclick = saveMedForm;
+  $('medParseBtn').onclick = () => parsePhotoInto('medications');
   $('vaxAddBtn').onclick = () => { $('vaxForm').hidden = !$('vaxForm').hidden; };
+  $('vaxParseBtn').onclick = () => parsePhotoInto('vaccinations');
+  $('parseSaveBtn').onclick = saveParsedRecords;
+  $('parseCancelBtn').onclick = () => { $('careParseCard').hidden = true; S._parse = null; };
+  $('lbShare').onclick = shareLightboxImage;
   $('lbClose').onclick = () => { $('lightbox').hidden = true; $('lbImg').src = ''; };
   $('lightbox').onclick = (e) => { if (e.target.id === 'lightbox') { $('lightbox').hidden = true; $('lbImg').src = ''; } };
   $('updateCheckBtn').onclick = checkForUpdates; // v3.5 — force update check
@@ -4883,9 +4888,11 @@ async function deleteCareRow(table, key, id) {
   if (sbReady() && !String(id).startsWith('local-')) {
     const { error } = await S.sb.from(table).delete().eq('id', id);
     if (error) { toast('Delete failed: ' + error.message); return; }
-    // Best effort: remove the photo too (ignore failures).
+    // Best effort: remove the photo too — but only if no other record
+    // still uses it (one visit photo can be shared by several records).
     if (row && row.image_path && S.sb.storage) {
-      try { await S.sb.storage.from('med-images').remove([row.image_path]); } catch (e) {}
+      const stillUsed = [...(S.meds || []), ...(S.vax || [])].some(r => String(r.id) !== String(id) && r.image_path === row.image_path);
+      if (!stillUsed) { try { await S.sb.storage.from('med-images').remove([row.image_path]); } catch (e) {} }
     }
   }
   careSet(key, careGet(key).filter(r => String(r.id) !== String(id)));
@@ -4981,6 +4988,160 @@ async function fillCareThumb(imgEl, path) {
     const url = URL.createObjectURL(data);
     (S.imgCache = S.imgCache || {})[path] = url; imgEl.src = url;
   } catch (e) { imgEl.remove(); } // missing file -> hide the thumbnail
+}
+/* ----- v3.32 — parse a care photo into records (Gemini vision) -----
+   One visit photo can hold SEVERAL vaccinations: the parser returns one
+   row per vaccine, the user reviews/edits them, and Save-all creates one
+   record per row — all sharing a single visit photo
+   (<subject_id>/visits_<visit_id>.jpg). Pure helpers (path, JSON) tested. */
+function visitImagePath(subjectId, visitId) { return `${subjectId}/visits_${visitId}.jpg`; }
+function newVisitId() { try { return crypto.randomUUID(); } catch (e) { return 'visit-' + Date.now(); } }
+function parseVisitJson(text) {
+  if (!text) return null;
+  const cleaned = String(text).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  try {
+    const p = JSON.parse(cleaned);
+    if (!p || !Array.isArray(p.records)) return null;
+    return p;
+  } catch (e) { return null; }
+}
+async function parseCareImage(blob, kind) {
+  const url = edgeUrl('parse-care-image');
+  if (!url || !S.sb) return { error: 'parse-unavailable' };
+  let session = null;
+  try { ({ data: { session } } = await S.sb.auth.getSession()); } catch (e) {}
+  if (!session) return { error: 'parse-unauthenticated' };
+  const b64 = (await dataUrlOf(blob)).split(',')[1] || '';
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 90000);
+  try {
+    const r = await fetch(url, {
+      method: 'POST', signal: ctl.signal,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ kind, image: b64 }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return { error: (data && data.error && data.error.message) || (data && data.message) || 'Photo parse failed.' };
+    return data;
+  } catch (e) {
+    return { error: e.name === 'AbortError' ? 'Photo parse timed out — try again.' : 'Network error reaching the parser.' };
+  } finally { clearTimeout(timer); }
+}
+async function parsePhotoInto(kind) {
+  if (S._parsing) { toast('Already reading a photo…'); return; }
+  const inputId = kind === 'medications' ? 'medPhoto' : 'vaxPhoto';
+  const file = $(inputId).files && $(inputId).files[0];
+  if (!file) { toast('Pick a photo first.'); return; }
+  S._parsing = true;
+  toast('Reading photo…');
+  try {
+    const blob = await compressImage(file);
+    const res = await parseCareImage(blob, kind);
+    if (res.error) {
+      if (res.error === 'parse-unavailable' || res.error === 'parse-unauthenticated') toast('Sign in to parse photos.');
+      else toast('⚠️ ' + res.error);
+      return;
+    }
+    const parsed = parseVisitJson(res.raw) || { records: res.records || [] };
+    S._parse = { kind, blob, visitId: newVisitId(),
+      vet: res.vet || '', records: parsed.records || [], raw: res.raw || '' };
+    renderParseCard();
+    $('careParseCard').hidden = false;
+    $('careParseCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) { toast('Photo parse failed: ' + (e.message || e)); }
+  finally { S._parsing = false; }
+}
+function renderParseCard() {
+  const p = S._parse; if (!p) return;
+  const box = $('parseRows'); if (!box) return;
+  $('parseTitle').textContent = p.kind === 'medications' ? 'Parsed medications' : 'Parsed vaccinations';
+  if (p._previewUrl) URL.revokeObjectURL(p._previewUrl);
+  p._previewUrl = URL.createObjectURL(p.blob);
+  $('parseImg').src = p._previewUrl;
+  if (!p.records.length) {
+    box.innerHTML = `<div class="muted">No records could be structured from this photo.${p.raw ? ' The model said:<br><span class="small">' + esc(p.raw.slice(0, 500)) + '</span>' : ''} Use the add forms below to enter them manually.</div>`;
+    $('parseSaveBtn').hidden = true;
+    return;
+  }
+  $('parseSaveBtn').hidden = false;
+  const freqOpts = ['once', 'daily', 'twice_daily', 'weekly', 'monthly', 'as_needed'];
+  box.innerHTML = p.records.map((r, i) => p.kind === 'medications' ? `
+    <div class="parse-row" data-i="${i}">
+      <input data-f="name" value="${esc(r.name || '')}" placeholder="Medication">
+      <input data-f="dose" value="${esc(r.dose || '')}" placeholder="Dose">
+      <select data-f="frequency">${freqOpts.map(f => `<option value="${f}"${(r.frequency || '') === f ? ' selected' : ''}>${f.replace('_', ' ')}</option>`).join('')}</select>
+      <input data-f="notes" value="${esc(r.notes || r.note || '')}" placeholder="Notes">
+      <button data-delrow="${i}" title="Remove">✕</button>
+    </div>` : `
+    <div class="parse-row" data-i="${i}">
+      <input data-f="vaccine" value="${esc(r.vaccine || '')}" placeholder="Vaccine">
+      <input data-f="given_at" type="date" value="${esc((r.given_at || '').slice(0, 10))}">
+      <input data-f="next_due_at" type="date" value="${esc((r.next_due_at || '').slice(0, 10))}">
+      <input data-f="vet" value="${esc(r.vet || p.vet || '')}" placeholder="Vet">
+      <input data-f="note" value="${esc(r.note || r.notes || '')}" placeholder="Note">
+      <button data-delrow="${i}" title="Remove">✕</button>
+    </div>`).join('');
+  box.querySelectorAll('[data-delrow]').forEach(b => b.onclick = () => { p.records.splice(+b.dataset.delrow, 1); renderParseCard(); });
+}
+async function saveParsedRecords() {
+  const p = S._parse; if (!p) return;
+  if (!sbReady() || !S.subject) { toast('Sign in to save parsed records.'); return; }
+  const rows = [...document.querySelectorAll('#parseRows .parse-row')].map(row => {
+    const o = {};
+    row.querySelectorAll('[data-f]').forEach(inp => o[inp.dataset.f] = inp.value.trim() || null);
+    return o;
+  });
+  // Upload the visit photo ONCE; every record from this visit shares it.
+  let imagePath = null;
+  try {
+    const path = visitImagePath(S.subject.id, p.visitId);
+    const { error } = await S.sb.storage.from('med-images').upload(path, p.blob, { contentType: 'image/jpeg', upsert: true });
+    if (error) throw error;
+    imagePath = path;
+  } catch (e) { toast(carePhotoHint(e)); /* records still save without the photo */ }
+  let n = 0;
+  for (const r of rows) {
+    try {
+      if (p.kind === 'medications') {
+        if (!r.name) continue;
+        const rec = { subject_id: S.subject.id, owner_id: S.user.id, name: r.name, dose: r.dose,
+          frequency: r.frequency || 'daily', time_of_day: null, next_due_at: nextDueFrom(r.frequency || 'daily', null),
+          active: true, notes: r.notes, image_path: imagePath };
+        const { error } = await S.sb.from('medications').insert(rec); if (error) throw error;
+      } else {
+        if (!r.vaccine) continue;
+        const rec = { subject_id: S.subject.id, owner_id: S.user.id, vaccine: r.vaccine,
+          given_at: r.given_at ? new Date(r.given_at).toISOString() : new Date().toISOString(),
+          next_due_at: r.next_due_at ? new Date(r.next_due_at).toISOString() : null,
+          vet: r.vet, note: r.note, image_path: imagePath };
+        const { error } = await S.sb.from('vaccinations').insert(rec); if (error) throw error;
+      }
+      n++;
+    } catch (e) { console.warn('parsed record save failed', e); }
+  }
+  $('careParseCard').hidden = true; S._parse = null;
+  if ($('medPhoto')) $('medPhoto').value = '';
+  if ($('vaxPhoto')) $('vaxPhoto').value = '';
+  await loadCareTables(); renderMeds(); renderCockpit();
+  toast(n ? `${n} record${n === 1 ? '' : 's'} saved ✓` : 'Nothing saved — check the rows and try again.');
+}
+/** Share the open lightbox photo: native share sheet, else download. */
+async function shareLightboxImage() {
+  const src = $('lbImg').src;
+  if (!src) return;
+  try {
+    const blob = await (await fetch(src)).blob();
+    const file = new File([blob], 'simba-record.jpg', { type: blob.type || 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Simba health record' });
+      return;
+    }
+    throw new Error('share-unavailable');
+  } catch (e) {
+    if (e && e.name === 'AbortError') return; // user closed the share sheet
+    const a = document.createElement('a'); a.href = src; a.download = 'simba-record.jpg'; a.click();
+    toast('Share not available here — photo downloaded instead.');
+  }
 }
 function renderMeds() {
   const ml = $('medList'), vl = $('vaxList');
