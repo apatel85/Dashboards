@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.33.0'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.33.1'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   GEMINI_PROXY_MODELS: ['gemini-3.8-flash'], // v3.30.2 — 2.5-flash is closed to new users; Google's error points to 3.8-flash (GA Sep 2026)
@@ -507,17 +507,43 @@ async function saveEvent(ev) {
   }
 }
 
+/* v3.33.1 — ROOT CAUSE of the household "no data" saga: PostgREST caps an
+   uncapped query at 1000 rows. The app loaded events OLDEST-first with no
+   limit, so once the 90-day window passed 1000 events (mid-Oct 2026, 1151
+   total), the newest ~150 events silently never arrived. Members saw only
+   old data (empty recent timeline, stale Next-up); the owner's phone masked
+   it because its own recent events stayed merged from local pending state.
+   Fix: fetch NEWEST-first in 1000-row pages, then restore chronological order. */
+function mergePagedEvents(pages) { // pure: each page is newest-first; result is oldest-first
+  const out = [];
+  for (let i = pages.length - 1; i >= 0; i--) for (let j = pages[i].length - 1; j >= 0; j--) out.push(pages[i][j]);
+  return out;
+}
+async function fetchAllEvents(subjectId, sinceIso) {
+  const pages = [];
+  let from = 0;
+  for (;;) {
+    let q = S.sb.from('telemetry_events').select('*').eq('subject_id', subjectId)
+      .order('logged_at', { ascending: false });
+    if (sinceIso) q = q.gte('logged_at', sinceIso);
+    const { data, error } = await q.range(from, from + 999);
+    if (error) throw error;
+    pages.push(data || []);
+    if (!data || data.length < 1000) break;
+    from += 1000;
+  }
+  return mergePagedEvents(pages);
+}
 async function loadData(silent) {
   if (!sbReady() || !S.subject) return;
   const since = new Date(); since.setDate(since.getDate() - 90);
   let data, error;
   try {
-    // v3.27.6 — timeout on load too (same hang risk as save)
-    const loadP = S.sb.from('telemetry_events')
-      .select('*').eq('subject_id', S.subject.id)
-      .gte('logged_at', since.toISOString()).order('logged_at', { ascending: true });
-    const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error('refresh timed out')), 10000));
-    ({ data, error } = await Promise.race([loadP, timeoutP]));
+    // v3.27.6 — timeout on load too (same hang risk as save); v3.33.1 — 20s
+    // because the paged fetch is multiple round trips, not one query
+    const loadP = fetchAllEvents(S.subject.id, since.toISOString());
+    const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error('refresh timed out')), 20000));
+    data = await Promise.race([loadP, timeoutP]);
   } catch (e) { error = e; }
   // v3.27.3 — surface load failures (Ankit 2026-10-14: logged events not appearing,
   // silent failure left stale timeline). Don't fail silently.
@@ -3325,8 +3351,8 @@ function toCSV(rows) {
 }
 async function allHistory() {
   if (sbReady() && S.subject) {
-    const { data } = await S.sb.from('telemetry_events').select('*').eq('subject_id', S.subject.id).order('logged_at');
-    return data || [];
+    try { return await fetchAllEvents(S.subject.id, null); } // v3.33.1: was oldest-1000 only
+    catch (e) { console.warn('allHistory failed, using loaded history', e); }
   }
   return S.history;
 }
@@ -4457,8 +4483,7 @@ async function createDataVersion(label) {
   if (!sbReady() || !S.subject) { if (status) status.textContent = 'Sign in to snapshot.'; return null; }
   try {
     if (status) status.textContent = 'Snapshotting…';
-    const { data: rows, error } = await S.sb.from('telemetry_events').select('*').eq('subject_id', S.subject.id).order('logged_at');
-    if (error) throw error;
+    const rows = await fetchAllEvents(S.subject.id, null); // v3.33.1: was oldest-1000 only — a rollback from a truncated snapshot would delete the newest events
     const { data, error: e2 } = await S.sb.from('data_versions').insert({
       subject_id: S.subject.id,
       created_by: S.user ? S.user.id : null,
