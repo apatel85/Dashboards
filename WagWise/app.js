@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.32.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.32.2'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   GEMINI_PROXY_MODELS: ['gemini-3.8-flash'], // v3.30.2 — 2.5-flash is closed to new users; Google's error points to 3.8-flash (GA Sep 2026)
@@ -4587,13 +4587,21 @@ function renderStreaks() {
 }
 
 /* ---------- Multi-pet subject switcher (v3.1 — lives in the top header) ---------- */
+/* Pure: switcher label. A household member can end up with TWO pets of the
+   same name — their own onboarding-created one (empty) and the owner's
+   shared one (all the history). Without a label they are indistinguishable,
+   so shared pets get a suffix. Tested. */
+function subjectOptionLabel(s, userId) {
+  const owned = s && userId && String(s.owner_id || '') === String(userId);
+  return (s?.name || 'Pet') + (owned ? '' : ' · shared');
+}
 function renderSubjectSwitcher() {
   const sel = $('topSubjectPick'); if (!sel) return;
   const multi = sbReady() && S.subjects.length > 1;
   sel.hidden = !multi;
   if (!multi) return;
   sel.innerHTML = S.subjects.map(s =>
-    `<option value="${s.id}"${S.subject && String(s.id) === String(S.subject.id) ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+    `<option value="${s.id}"${S.subject && String(s.id) === String(S.subject.id) ? ' selected' : ''}>${esc(subjectOptionLabel(s, S.user?.id))}</option>`).join('');
 }
 async function addPet(data) {
   if (!sbReady()) { toast('Connect Supabase to add pets.'); return; }
