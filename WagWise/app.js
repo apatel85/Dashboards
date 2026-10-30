@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------------- Configuration ---------------- */
-const APP_VERSION = '3.33.1'; // shown in More → About so you can confirm you're on the latest
+const APP_VERSION = '3.33.2'; // shown in More → About so you can confirm you're on the latest
 const CFG = {
   SCHEMA: 'simba_telemetry',          // one schema per app (team convention)
   GEMINI_PROXY_MODELS: ['gemini-3.8-flash'], // v3.30.2 — 2.5-flash is closed to new users; Google's error points to 3.8-flash (GA Sep 2026)
@@ -1360,6 +1360,21 @@ function actionCountdownText(it, nowMs) {
 }
 /** Pure: build the ordered action items. doneMap = {id:1} manual check-offs,
     skipMap = {id:timestamp} "didn't go" skips → next slot. Tested. */
+// v3.33.2 — Simba holds from his wake pee through the first nap to the
+// post-nap pee (Ankit 2026-10-30; verified Oct 29–30: wake pee ~7:54, no pee
+// before the ~9:30–9:50 nap, post-nap pee ~11:54). An elevated bladder risk
+// before the first daytime nap ends must NOT produce an urgent pee break —
+// the next pee is the post-nap pee, not a pre-nap trip. Pure: items are
+// Next-up rows {id, label, winStart, winEnd} with Date windows.
+// NOTE: napwin indices restart as past naps drop off (at 5:21 PM the evening
+// nap IS napwin-0), so the morning nap is found by label, not by index.
+// A live morning nap needs no special case: while it runs, asleep already
+// suppresses the urgent row.
+function firstNapSuppressesUrgentPee(items, nowMs) {
+  const morning = (items || []).find(a => String(a.id || '').startsWith('napwin-')
+    && String(a.label || '').startsWith('Morning nap'));
+  return !!morning && nowMs < morning.winEnd.getTime();
+}
 function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   const nowMs = now.getTime();
   let items = []; // v3.17.5 — reassigned by the nap-overlap filter below
@@ -1700,7 +1715,9 @@ function buildNextActions(hist, today, st, now, doneMap, avgHold, skipMap) {
   // dropped for nap overlap while he needs to go BEFORE the nap). Adds an
   // immediate "take him out in 5–10 min" row; the ntfy loop fires it as a
   // notification when the bell is on. Not while asleep (ADH handles continence).
-  if (!st.asleep && ((st.bladder || {}).accidentRisk === 'ELEVATED' || (st.bladder || {}).accidentRisk === 'CRITICAL')) {
+  // v3.33.2 — NOT before the first nap ends: he holds wake pee → post-nap pee,
+  // so an elevated risk in that window is not a trip (Ankit 2026-10-30).
+  if (!st.asleep && !firstNapSuppressesUrgentPee(items, nowMs) && ((st.bladder || {}).accidentRisk === 'ELEVATED' || (st.bladder || {}).accidentRisk === 'CRITICAL')) {
     const PEEPOOP_RE = /^(pee-window|morning-pee|meal-intercept|nappee-|nappoop-|poop[12]|dinner-poop)/;
     const horizon = nowMs + 45 * 60000;
     const imminent = items.some(a => !a.done && !a.skipped && PEEPOOP_RE.test(a.id) &&
