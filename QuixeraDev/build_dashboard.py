@@ -60,6 +60,50 @@ def _load_bugs():
 
 BUGS, BACKLOG = _load_bugs()
 
+def _slug(s):
+    return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-") or "other"
+
+JIRA_PRIORITY = {"High": "High", "Medium": "Medium", "Low": "Low", "Info": "Lowest"}
+
+def jira_export_row(b):
+    """One bug -> a Jira-CSV-ready row (Jira wiki markup in Description)."""
+    trail = b.get("trail")
+    if isinstance(trail, list) and trail and isinstance(trail[0], dict):
+        steps = humanize_trail(trail)
+    else:
+        s = b.get("steps", [])
+        steps = s if isinstance(s, list) else [s]
+    steps = [x for x in steps if x and x != "(no steps recorded)"][:25]
+    stamp, _ts = filed_stamp(b)
+    filer = b.get("filed_by") or "apatel85"
+    desc = [
+        "h2. Bug report (QA Capture dashboard)",
+        f"* Original ID: {b['id']}",
+        f"* Page: {b.get('page', '')}",
+        f"* URL: {b.get('url', '')}",
+        f"* Filed: {stamp} by {filer}" if stamp else f"* Filed by: {filer}",
+        f"* Source: {SOURCE_LABEL.get(b['source'], b['source'])}",
+        f"* Dashboard status: {b['status']}",
+    ]
+    if steps:
+        desc.append("h2. Steps to reproduce")
+        desc += [f"# {x}" for x in steps]
+    if b.get("expected"):
+        desc += ["h2. Expected", b["expected"]]
+    if b.get("actual"):
+        desc += ["h2. Actual", b["actual"]]
+    labels = " ".join(filter(None, [
+        "qa-capture", _slug(b["source"]), _slug(b.get("issue_type")),
+        "qa-status-" + _slug(b["status"]), "qa-id-" + _slug(b["id"]),
+    ]))
+    return {
+        "summary": b["title"],
+        "description": "\n".join(desc),
+        "issuetype": "Bug",
+        "priority": JIRA_PRIORITY.get(b["sev"], "Medium"),
+        "labels": labels,
+    }
+
 # ---- potential-duplicate detection for manual captures ----
 # Policy (2026-10-18, Ankit): an identical title alone NEVER flags a bug.
 # A bug is flagged only as a *potential* duplicate when title similarity is
@@ -132,7 +176,7 @@ SEV_ORDER = ["High", "Medium", "Low", "Info"]
 SEV_COLOR = {"High": "#b91c1c", "Medium": "#b45309", "Low": "#4d7c0f", "Info": "#1d4ed8"}
 STATUS_COLOR = {"Open": "#b91c1c", "Partly fixed": "#b45309", "Still failing": "#7f1d1d",
                 "Blocked": "#6b7280", "Fixed": "#15803d"}
-SOURCE_LABEL = {"arlo": "Arlo dev pass", "team": "QA team retest", "manual": "Manual capture"}
+SOURCE_LABEL = {"arlo": "Arlo dev pass", "team": "QA team retest", "manual": "Manual capture", "mobile": "📱 Mobile testing"}
 SEGMENTS = [
     ("team", "🧪 Tested by the QA team",
      "Bugs from the QA team's 2026-10-15 retest report — 186 retests (159 Fixed · 19 Partly fixed · 6 Still failing · 2 Blocked) plus 16 new bugs they filed."),
@@ -140,6 +184,8 @@ SEGMENTS = [
      "Bugs found in the independent dev-environment pass (DEV-001 … DEV-016), each re-verified with screenshots and repro steps."),
     ("manual", "🚩 Your manual captures",
      "Bugs you flagged yourself with the QA Capture extension — click trail, screenshots and clips attached automatically."),
+    ("mobile", "📱 Mobile testing",
+     "Guardian + coach Android app findings from the emulator pass — each with repro steps and screenshots."),
 ]
 
 def esc(s):
@@ -210,9 +256,16 @@ def trail_html(b):
     trail = b.get("trail")
     if isinstance(trail, list) and trail and isinstance(trail[0], dict):
         steps = humanize_trail(trail)
-        items = "".join(
+        # v3.9.3: long sessions produce endless trails — show the 20 most
+        # recent (the ones that led to the bug); the full raw trail stays
+        # one click away under "Raw click data".
+        hidden = max(0, len(steps) - 20)
+        shown = steps[-20:]
+        note = (f"<li class='trailmore'>…plus {hidden} earlier step{'s' if hidden != 1 else ''} "
+                f"(see Raw click data below)</li>" if hidden else "")
+        items = note + "".join(
             f"<li><span class='stp'>{i + 1}</span><span class='cl'>{esc(x)}</span></li>"
-            for i, x in enumerate(steps)) or "<li>No steps recorded.</li>"
+            for i, x in enumerate(shown)) or "<li>No steps recorded.</li>"
         raw = "".join(
             f"<li><span class='pg'>{esc(t.get('page', ''))}</span> "
             f"<span class='cl'>{esc(t.get('clicked', ''))}</span></li>"
@@ -220,8 +273,12 @@ def trail_html(b):
         return (f"<ol class='trail'>{items}</ol>"
                 f"<details class='rawtrail'><summary>Raw click data</summary>"
                 f"<ol class='trail'>{raw}</ol></details>")
+    steps_raw = b.get("steps", [])
+    if isinstance(steps_raw, str):
+        # defensive: a prose string (e.g. "A → B → C") must never render char-by-char
+        steps_raw = [s.strip() for s in steps_raw.replace("\u2192", "|").split("|") if s.strip()]
     steps = "".join(f"<li><span class='stp'>{i + 1}</span><span class='cl'>{esc(x)}</span></li>"
-                    for i, x in enumerate(b.get("steps", [])))
+                    for i, x in enumerate(steps_raw))
     return f"<ol class='trail'>{steps}</ol>"
 
 CARD_STATUSES = ["Open", "Partly fixed", "Still failing", "Blocked", "Fixed"]
@@ -301,6 +358,7 @@ def card(b):
           <div class="details">
             <p><span class="src">{SOURCE_LABEL[b['source']]}</span>{itype} {jira}</p>
             {filed}{manage}
+            <label class="expsel"><input type="checkbox" class="expcb" data-id="{b['id']}" onchange="updExpCount()"> Export to Jira</label>
             {dup}
             <p><a class="golink" href="{b['link']}" target="_blank" rel="noopener">↗ Open this page in the dev app</a></p>
             {extra}
@@ -314,6 +372,39 @@ def card(b):
       </div>
     </article>"""
 
+def capture_health():
+    """Per-source evidence stats: how many filings carry screenshots / trails.
+    v3.9.5+: filings stamp qa_version, so future rows split by version too."""
+    rows = []
+    for src, label in [("arlo", "🤖 Arlo pass"), ("manual", "🚩 Manual captures"), ("team", "🧪 QA team")]:
+        bs = [b for b in BUGS if b["source"] == src]
+        if not bs:
+            continue
+        n = len(bs)
+        with_shots = sum(1 for b in bs if b.get("imgs"))
+        empty_trail = sum(1 for b in bs if not (b.get("trail") or b.get("steps")))
+        vers = {}
+        for b in bs:
+            v = b.get("qa_version") or "pre-v3.9.5"
+            vers[v] = vers.get(v, 0) + 1
+        ver_str = ", ".join(f"v{v}×{c}" if v != "pre-v3.9.5" else f"pre-v3.9.5×{c}"
+                            for v, c in sorted(vers.items()))
+        rows.append(
+            f"<tr><td>{label}</td><td class='mono'>{n}</td>"
+            f"<td class='mono'>{with_shots} ({with_shots * 100 // n}%)</td>"
+            f"<td class='mono'>{n - with_shots}</td>"
+            f"<td class='mono'>{empty_trail}</td>"
+            f"<td>{esc(ver_str)}</td></tr>")
+    if not rows:
+        return ""
+    return ("""<div class="health"><b>📊 Capture health</b> — do filings carry their evidence?
+<table class="bl"><tr><th>Source</th><th>Filings</th><th>With screenshots</th><th>Without</th><th>Empty trail</th><th>Filed from</th></tr>"""
+            + "".join(rows) +
+            """</table>
+<p class="exphint">“Without screenshots” and “empty trail” are the capture failures to watch. From extension v3.9.5 every filing is stamped with its version, so a bad release shows up here by version. File capture/extension problems as issue type <b>QA tooling</b> to keep them separate from product bugs.</p></div>""")
+
+HEALTH_HTML = capture_health()
+
 segments = ""
 for src, title, desc in SEGMENTS:
     # order by severity within the segment
@@ -322,12 +413,14 @@ for src, title, desc in SEGMENTS:
         ordered += [card(b) for b in BUGS if b["source"] == src and b["sev"] == s]
     n = sum(1 for b in BUGS if b["source"] == src)
     n_open = sum(1 for b in BUGS if b["source"] == src and b["status"] == "Open")
+    empty_msg = ('Nothing here yet — mobile findings from the emulator pass will appear here.' if src == 'mobile'
+                 else 'Nothing here yet — flag an issue with the QA Capture extension and it will appear in this segment.')
     segments += f"""
     <section class="seg" data-src="{src}">
       <div class="seghead"><h2>{title}</h2>
         <span class="segcount">{n} issue{'s' if n != 1 else ''} · {n_open} open</span></div>
       <p class="segdesc">{desc}</p>
-      {''.join(ordered) if ordered else '<p class="segempty">Nothing here yet — flag an issue with the QA Capture extension and it will appear in this segment.</p>'}
+      {''.join(ordered) if ordered else f'<p class="segempty">{empty_msg}</p>'}
     </section>"""
 
 bl_rows = ""
@@ -364,7 +457,9 @@ header p{color:#c3d2e5;font-size:14px}
 .stat .l{font-size:12px;color:#6b7280}
 .stat.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s}
 .stat.clickable:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.12)}
-.stat.clickable.active{outline:3px solid #1e3a5f}
+.stat.clickable.active{background:#1e3a5f;box-shadow:0 4px 12px rgba(30,58,95,.35);transform:none}
+.stat.clickable.active .n{color:#fff !important}
+.stat.clickable.active .l{color:#dbe7f5}
 .dupwarn{background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:10px}
 .dupwarn a{font-weight:700;color:#b45309}
 .duplink{background:none;border:none;color:#b45309;font-weight:700;font-size:14px;cursor:pointer;text-decoration:underline;padding:0;font-family:ui-monospace,Menlo,monospace}
@@ -410,6 +505,14 @@ header p{color:#c3d2e5;font-size:14px}
 .details p{margin-bottom:10px;font-size:14px}
 .itype{display:inline-block;background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;margin-left:6px}
 .trail{list-style:none;margin:0 0 12px;padding:0}
+.trail li.trailmore{color:#6b7280;font-size:13px;font-style:italic}
+.expsel{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#6b7280;cursor:pointer;margin:6px 0 0 2px;font-weight:400}
+.expsel input{width:16px;height:16px;accent-color:#1e3a5f;cursor:pointer}
+.exphelp{margin:10px 0 0;font-size:13px;color:#374151}
+.exphelp summary{cursor:pointer;font-weight:600;color:#1e3a5f}
+.exphelp ol{margin:8px 0 8px 20px}
+.exphelp li{margin-bottom:6px}
+.exphint{color:#6b7280;font-size:12px}
 .trail li{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:14px}
 .stp{flex:none;min-width:26px;height:26px;border-radius:50%;background:#1e3a5f;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
 .pg{flex:none;font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#f3f4f6;border-radius:6px;padding:3px 8px;color:#4b5563;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -524,8 +627,9 @@ INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=
 <div class="stat clickable" data-seg="team" title="Show only QA team bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["team"]) + """</div><div class="l">🧪 QA team — tap to filter</div></div>
 <div class="stat clickable" data-seg="arlo" title="Show only Arlo bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["arlo"]) + """</div><div class="l">🤖 Arlo pass — tap to filter</div></div>
 <div class="stat clickable" data-seg="manual" title="Show only manual captures"><div class="n" style="color:#1e3a5f">""" + str(n_src["manual"]) + """</div><div class="l">🚩 Manual — tap to filter</div></div>
+<div class="stat clickable" data-seg="mobile" title="Show only mobile testing bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["mobile"]) + """</div><div class="l">📱 Mobile testing — tap to filter</div></div>
 <div class="stat clickable" data-seg="open" title="Show only open bugs"><div class="n" style="color:#b91c1c">""" + str(n_open) + """</div><div class="l">Open now — tap to filter</div></div>
-</div></header>
+</div>""" + HEALTH_HTML + """</header>
 <div class="toolbar">
 <button class="fbtn active" data-f="All">All severities</button>
 <button class="fbtn" data-f="High">High · """ + str(counts["High"]) + """</button>
@@ -544,7 +648,23 @@ INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=
 <span class="tsep" id="dashwho"></span>
 <button class="tbtn" onclick="setAll(true)">Expand all</button>
 <button class="tbtn" onclick="setAll(false)">Collapse all</button>
+<span class="tsep">Jira export:</span>
+<button class="tbtn" id="expgo" onclick="exportJira(false)">Export selected (<span id="expcount">0</span>)</button>
+<button class="tbtn" onclick="exportJira(true)">Export all</button>
+<button class="tbtn" id="expselall" onclick="toggleExpAll(this)">Select all</button>
 </div>
+<details class="exphelp"><summary>How to import this CSV into Jira</summary>
+<ol>
+<li>In Jira: <b>Settings (⚙) → System → External System Import → CSV</b>.</li>
+<li>Upload the downloaded file (UTF-8). On the field-mapping screen match:
+<b>Summary → Summary</b>, <b>Description → Description</b>, <b>Issue Type → Issue Type</b>,
+<b>Priority → Priority</b>, <b>Labels → Labels</b>.</li>
+<li>Set the target <b>project</b> (e.g. QA) and finish the import. Tickets land in the project's
+default status for triage; the original dashboard ID travels in the description and labels.</li>
+</ol>
+<p class="exphint">Priority names (High / Medium / Low / Lowest) match Jira's defaults — if your project
+renamed priorities, adjust the mapping on Jira's import screen.</p>
+</details>
 """ + segments + AUDIT_SECTION + """
 <details class="note"><summary style="cursor:pointer;font-weight:600">Retest backlog — 19 partly fixed + 6 still failing + 2 blocked (from the QA team retest of 186 fixes)</summary>
 <div style="overflow-x:auto;margin-top:10px"><table class="bl">
@@ -596,6 +716,7 @@ PAYLOAD = base64.b64encode(INNER.encode("utf-8")).decode()
 
 HTML = HEAD + """
 <script>const DASH_DIR = \"""" + os.path.basename(HERE) + """\"; const DUPDATA = """ + json.dumps(dupdata) + """;</script>
+<script>const EXPORT_DATA = """ + json.dumps({b["id"]: jira_export_row(b) for b in BUGS}) + """;</script>
 <div id="gate"><div class="gcard">
 <h2>🔒 QA Dashboard</h2>
 <p>This bug tracker is private. Enter the password to view it.</p>
@@ -751,6 +872,37 @@ document.querySelectorAll('.stat.clickable').forEach(t=>t.addEventListener('clic
   else{t.classList.add('active');F.seg=seg;}
   applyFilters();
 }));
+function updExpCount(){
+  const n=document.querySelectorAll('.expcb:checked').length;
+  document.getElementById('expcount').textContent=n;
+}
+function toggleExpAll(btn){
+  const boxes=[...document.querySelectorAll('.card')]
+    .filter(c=>c.style.display!=='none')
+    .map(c=>c.querySelector('.expcb')).filter(Boolean);
+  const allOn=boxes.length>0&&boxes.every(b=>b.checked);
+  boxes.forEach(b=>{b.checked=!allOn;});
+  btn.textContent=allOn?'Select all':'Clear selection';
+  updExpCount();
+}
+function exportJira(all){
+  const ids=all?Object.keys(EXPORT_DATA)
+    :[...document.querySelectorAll('.expcb:checked')].map(b=>b.dataset.id);
+  if(!ids.length){alert('Tick “Export to Jira” on at least one card first, or use Export all.');return;}
+  const q=v=>{v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const head=['Summary','Description','Issue Type','Priority','Labels'];
+  const lines=ids.map(id=>EXPORT_DATA[id]).filter(Boolean)
+    .map(r=>[r.summary,r.description,r.issuetype,r.priority,r.labels].map(q).join(','));
+  const csv='\uFEFF'+head.join(',')+'\n'+lines.join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  const d=new Date();
+  a.download='quixera-jira-export-'+d.getFullYear()
+    +String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')
+    +'-'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'.csv';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
 setAll(true);
 dashWireIdentity();
 }
