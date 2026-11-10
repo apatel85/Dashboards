@@ -78,14 +78,29 @@ function parseMarketsIsOpen(json: unknown): boolean | null {
   return typeof isOpen === 'boolean' ? isOpen : null;
 }
 
-/** Ticker universe = the keys of the pipeline's quotes.json snapshot. */
+/** Ticker universe = quotes.json keys PLUS Daily Brief breakout candidates.
+ * The brief's candidates are not all in quotes.json (only 98 tickers), so
+ * polling quotes.json alone leaves their rows on the stale snapshot price
+ * (the brief is a pre-market snapshot — its price_ts is the prior day). */
 async function fetchQuoteUniverse(): Promise<string[]> {
   const base = import.meta.env.BASE_URL || '/';
   const res = await fetch(`${base}data/quotes.json?ts=${Date.now()}`, { cache: 'no-cache' });
   if (!res.ok) throw new Error(`quotes.json HTTP ${res.status}`);
   const json = await res.json();
   const keys = Object.keys(json?.quotes ?? {});
-  return keys.map((k) => k.toUpperCase()).filter((k) => k.length > 0).slice(0, 150);
+  // Brief candidates — best effort, never fatal to polling.
+  try {
+    const bres = await fetch(`${base}data/daily-brief.json?ts=${Date.now()}`, { cache: 'no-cache' });
+    if (bres.ok) {
+      const bjson = await bres.json();
+      for (const c of bjson?.breakout_candidates ?? []) {
+        if (typeof c?.ticker === 'string') keys.push(c.ticker);
+      }
+    }
+  } catch {
+    // Brief file missing/unreadable — quotes.json universe still stands.
+  }
+  return [...new Set(keys.map((k) => k.toUpperCase()).filter((k) => k.length > 0))].slice(0, 150);
 }
 
 async function fetchSchwabQuotes(
