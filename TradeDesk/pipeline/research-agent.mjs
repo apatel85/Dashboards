@@ -85,8 +85,8 @@ const PLAYBOOK_WEIGHTS = [
 // Aliases are NOT all live-verified (no key in the build env to test with);
 // resolveModels() picks the first alias the API actually lists, so a renamed
 // alias degrades loudly-but-gracefully instead of killing the run.
-const QUICK_CANDIDATES = ['gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-1.5-flash'];
-const DEEP_CANDIDATES = ['gemini-2.0-flash', 'gemini-flash-latest', 'gemini-2.0-flash-lite', 'gemini-1.5-flash'];
+const QUICK_CANDIDATES = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-1.5-flash'];
+const DEEP_CANDIDATES = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-2.0-flash-lite', 'gemini-1.5-flash'];
 let QUICK_MODEL = arg('--quick-model', null);
 let DEEP_MODEL = arg('--deep-model', null);
 
@@ -182,6 +182,12 @@ async function geminiOnce(model, prompt, { temperature = 0.2, maxTokens = 2048 }
     e.code = 'RATE_429';
     throw e;
   }
+  if (res.status === 503) {
+    // Model overloaded (UNAVAILABLE) — transient; caller retries with backoff.
+    const e = new Error('Gemini 503 model overloaded');
+    e.code = 'OVERLOADED_503';
+    throw e;
+  }
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`Gemini HTTP ${res.status}: ${body.slice(0, 200)}`);
@@ -199,6 +205,9 @@ async function geminiOnce(model, prompt, { temperature = 0.2, maxTokens = 2048 }
 /**
  * Call Gemini with model-alias fallback (quick tier, then deep tier lists).
  * On 429: one long backoff then rethrow (caller logs + continues).
+ * On 503 (model overloaded — the Nov 4 run lost all 14 tickers to this):
+ * back off 30s, retry the same model once, then move to the next alias
+ * instead of throwing. A 503 is transient demand, not a bad request.
  */
 async function callGemini(tier, prompt, opts = {}) {
   const cands = tier === 'deep' ? DEEP_CANDIDATES : QUICK_CANDIDATES;
@@ -211,6 +220,19 @@ async function callGemini(tier, prompt, opts = {}) {
       await sleep(CALL_DELAY_MS);
       return { text, model, tier };
     } catch (e) {
+      if (e.code === 'OVERLOADED_503') {
+        console.warn(`[research] 503 overloaded (${model}) — backing off 30s, retrying once`);
+        await sleep(30000);
+        try {
+          const text = await geminiOnce(model, prompt, opts);
+          await sleep(CALL_DELAY_MS);
+          return { text, model, tier };
+        } catch (e2) {
+          console.warn(`[research] 503 retry failed (${model}) — trying next alias`);
+          lastErr = e2;
+          continue;
+        }
+      }
       if (e.code === 'RATE_429') {
         console.warn('[research] 429 — backing off 60s once, then continuing');
         await sleep(60000);
@@ -926,6 +948,23 @@ async function main() {
     return;
   }
 
+  // ── Batching: skip tickers already in research.json so repeated runs with
+  // a small --max-tickers naturally cover the next batch (free-tier 429s).
+  // Single-ticker mode always (re)researches that ticker.
+  let todo = tickers;
+  if (!SINGLE_TICKER) {
+    let existing = [];
+    try { existing = JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')); } catch { /* none yet */ }
+    const done = new Set((Array.isArray(existing) ? existing : []).map((i) => String(i.ticker || '').toUpperCase()));
+    const skipped = tickers.filter((s) => done.has(s.ticker.toUpperCase()));
+    todo = tickers.filter((s) => !done.has(s.ticker.toUpperCase()));
+    if (skipped.length) console.log(`[research] skipping ${skipped.length} already-researched: ${skipped.map((s) => s.ticker).join(', ')}`);
+    if (!todo.length) {
+      console.log('[research] all selected tickers already researched — nothing to do');
+      return;
+    }
+  }
+
   if (PREFETCH_ONLY) {
     // No-key test mode: validate selection + all prefetch math, print VERIFIED blocks.
     for (const sel of tickers) {
@@ -938,7 +977,7 @@ async function main() {
 
   const ideas = [];
   const failed = [];
-  for (const sel of tickers) {
+  for (const sel of todo) {
     try {
       const idea = await runTicker(sel, { brief, earnings, insiders, congress, signals }, spyCloses, cikMap);
       if (idea) ideas.push(idea);
@@ -949,8 +988,33 @@ async function main() {
     }
   }
 
-  writeJsonAtomic(OUT_PATH, ideas);
-  console.log(`\n[research] DONE: ${ideas.length} ideas, ${failed.length} failed${failed.length ? ` (${failed.join(', ')})` : ''}`);
+  // Merge with existing research.json (newer updated_at wins per ticker)
+  // so batched runs accumulate instead of overwriting.
+  let merged = ideas;
+  if (!SINGLE_TICKER) {
+    let existing = [];
+    try { existing = JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')); } catch { /* none yet */ }
+    if (Array.isArray(existing) && existing.length) {
+      const byTicker = new Map();
+      for (const i of existing) byTicker.set(String(i.ticker || '').toUpperCase(), i);
+      for (const i of ideas) {
+        const t = String(i.ticker || '').toUpperCase();
+        const prev = byTicker.get(t);
+        if (!prev || String(i.updated_at || '') >= String(prev.updated_at || '')) byTicker.set(t, i);
+      }
+      merged = [...byTicker.values()];
+    }
+  } else if (ideas.length) {
+    // Single-ticker refresh: merge the one idea into the existing file.
+    let existing = [];
+    try { existing = JSON.parse(fs.readFileSync(OUT_PATH, 'utf8')); } catch { /* none yet */ }
+    const byTicker = new Map((Array.isArray(existing) ? existing : []).map((i) => [String(i.ticker || '').toUpperCase(), i]));
+    for (const i of ideas) byTicker.set(String(i.ticker || '').toUpperCase(), i);
+    merged = [...byTicker.values()];
+  }
+
+  writeJsonAtomic(OUT_PATH, merged);
+  console.log(`\n[research] DONE: ${ideas.length} new ideas, ${failed.length} failed${failed.length ? ` (${failed.join(', ')})` : ''} — ${merged.length} total tracked`);
   console.log(`[research] wrote ${OUT_PATH}`);
 }
 
