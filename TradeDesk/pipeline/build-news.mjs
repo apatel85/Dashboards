@@ -9,6 +9,12 @@
  * and the whole step is NON-FATAL in refresh.sh — a news failure must never
  * fail the pipeline.
  *
+ * Fallback: GitHub's runner IPs get HTTP 429 from Yahoo search on every
+ * ticker (2026-11-10 run: 0/25 headlines), so on any Yahoo failure the
+ * ticker falls back to Google News RSS (news.google.com/rss/search — also
+ * keyless, no auth), parsed with plain regexes. Yahoo stays primary because
+ * it carries direct publisher links; RSS links are Google redirect URLs.
+ *
  * Universe: top daily-brief breakout candidates by score, topped up with
  * top signal tickers, deduped, max 25 tickers. 3 headlines per ticker max.
  *
@@ -91,6 +97,62 @@ async function newsFor(ticker) {
   }
 }
 
+/** Decode the few HTML entities RSS titles carry (&amp; &lt; &gt; &quot; &#39; + numeric). */
+function decodeEntities(s) {
+  return s
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_m, n) => String.fromCharCode(Number(n)));
+}
+
+function tagText(block, tag) {
+  const m = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`).exec(block);
+  return m ? decodeEntities(m[1]).trim() : '';
+}
+
+/** Google News RSS fallback — keyless, no auth. Returns ≤ NEWS_PER_TICKER items. */
+async function newsForRss(ticker) {
+  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(ticker)}&hl=en-US&gl=US&ceid=US:en`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA },
+      signal: ctrl.signal,
+      redirect: 'follow',
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const xml = await res.text();
+    const items = [];
+    const blocks = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
+    for (const block of blocks.slice(0, NEWS_PER_TICKER)) {
+      const rawTitle = tagText(block, 'title');
+      const link = tagText(block, 'link');
+      if (!rawTitle || !link) continue;
+      const source = tagText(block, 'source');
+      // RSS titles often end with " - Publisher"; strip it when it matches <source>.
+      const title = source && rawTitle.endsWith(` - ${source}`)
+        ? rawTitle.slice(0, -(3 + source.length))
+        : rawTitle;
+      const pub = tagText(block, 'pubDate');
+      const ts = pub ? Date.parse(pub) : NaN;
+      items.push({
+        ticker,
+        title,
+        publisher: source || 'Google News',
+        url: link,
+        published_at: Number.isFinite(ts) ? msToIso(ts) : null,
+      });
+    }
+    return items;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function main() {
   const universe = buildUniverse();
   console.log(`[news] universe: ${universe.length} tickers`);
@@ -104,8 +166,13 @@ async function main() {
     try {
       rows = await newsFor(ticker);
     } catch (e) {
-      console.warn(`[news] ${ticker}: skipped (${e.message})`);
-      continue;
+      console.warn(`[news] ${ticker}: Yahoo failed (${e.message}) — trying Google News RSS`);
+      try {
+        rows = await newsForRss(ticker);
+      } catch (e2) {
+        console.warn(`[news] ${ticker}: skipped (RSS: ${e2.message})`);
+        continue;
+      }
     }
     if (rows.length > 0) tickersWithNews++;
     for (const r of rows) {
