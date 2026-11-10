@@ -299,6 +299,13 @@ export default function DailyBriefTab() {
         </div>
       </div>
 
+      <p className="muted small plain-note">
+        Stocks setting up to break out of a range in the next 1–2 weeks. <b>Score</b> (0–100) =
+        how many bullish signals line up — higher is stronger. <b>Trigger</b> = the price a
+        breakout needs to clear; <b>Stop</b> = where the idea is wrong, get out. A green dot
+        means the price is live right now; otherwise it is the last close.
+      </p>
+
       <SectionHead
         title="Breakout candidates"
         sub="1–2 week window · scored on confluence"

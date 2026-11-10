@@ -122,6 +122,11 @@ export default function PerformanceTab() {
         title="Recommendation performance"
         sub={`${data.count} ideas tracked · prices ${data.quotes_as_of ? `as of ${fmtDate(data.quotes_as_of)}` : 'delayed'} · research only, not financial advice`}
       />
+      <p className="muted small plain-note">
+        This grades our own research: how every past idea actually did after we published
+        it. It tells us which kinds of ideas work and which do not, so the research keeps
+        getting better. <b>P(up 30d)</b> is what the research guessed at the time.
+      </p>
 
       {stats ? (
         <div className="perf-stats">

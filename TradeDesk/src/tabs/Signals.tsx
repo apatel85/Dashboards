@@ -253,8 +253,10 @@ export default function SignalsTab() {
         <p>
           <b>Flow</b> scores disclosed buying/selling pressure from Congress +
           White House filings (amount × officials × recency, 90-day window).{' '}
-          <b>P(up 30d)</b> is the research agent's estimated probability the stock
-          closes higher in 30 days — a model judgment, not a calibrated forecast.
+          <b>Accumulation</b> = officials buying a lot more than selling;{' '}
+          <b>Distribution</b> = the reverse. <b>P(up 30d)</b> is the research
+          agent's estimated probability the stock closes higher in 30 days — a model
+          judgment, not a calibrated forecast.
           Research deep-dives run Sun/Wed nights on the top flow names. Research
           and education only — not financial advice.
         </p>

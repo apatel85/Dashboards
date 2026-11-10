@@ -209,6 +209,11 @@ export default function EarningsTab() {
           Rolling window · {data.length} companies · sorted by date, then conviction.
           Click a row for streak, news, and detail.
         </p>
+        <p className="muted small plain-note">
+          Companies reporting earnings soon — prices often jump or drop hard around the
+          announcement. <b>Conviction</b> = how strong the setup looks; <b>Health</b> =
+          how solid the company's finances are. Tap a row for the full detail.
+        </p>
       </header>
 
       {groups.map((g) => (

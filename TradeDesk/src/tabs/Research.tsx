@@ -142,11 +142,11 @@ export default function ResearchTab() {
           </p>
           <div className="empty-subtitle">What each idea will carry</div>
           <ul className="empty-list">
-            <li>0–100 confluence score with per-attribute breakdown and weights</li>
-            <li>Minervini trend-template check, Weinstein stage, RS rank</li>
-            <li>Insider clusters, congressional buys, unusual options, sentiment</li>
-            <li>Trigger, stop, and what would invalidate the thesis</li>
-            <li>Per-agent notes from the debate (bull, bear, risk)</li>
+            <li>A 0–100 score showing how many bullish signals line up, with the breakdown</li>
+            <li>A trend check: is the stock in a healthy uptrend and beating the market?</li>
+            <li>Smart-money clues: insider buys, congressional buys, unusual options, sentiment</li>
+            <li>The price that triggers the idea, the stop if it is wrong, and what would prove it wrong</li>
+            <li>Notes from the bull and bear sides of the debate</li>
           </ul>
         </div>
       </section>
@@ -160,6 +160,12 @@ export default function ResearchTab() {
         <h2>Research</h2>
         <p className="muted">
           {ranked.length} ranked ideas · bull-vs-bear debated · scores 0–100.
+        </p>
+        <p className="muted small plain-note">
+          Each idea is a stock our research team (four analysts, then a bull-vs-bear debate)
+          scored 0–100 — higher is stronger. <b>P(up 30d)</b> is its guess at the chance
+          the stock closes higher in 30 days. Tap an idea for the full reasoning, trigger,
+          stop, and what would prove it wrong.
         </p>
       </header>
       <div className="idea-list">

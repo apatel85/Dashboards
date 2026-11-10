@@ -29,6 +29,12 @@ export default function OptionsTab() {
   return (
     <section className="tab">
       <SectionHead title="0DTE / 1DTE focus" sub="High-liquidity names · options lens" />
+      <p className="muted small plain-note">
+        Options expiring <b>today</b> (0DTE) or <b>tomorrow</b> (1DTE) on the most liquid
+        names. They move fast and can go to zero the same day, so this is the riskiest
+        corner of the app. The lotto scanner below only flags setups our backtests showed
+        actually had an edge — most days it flags nothing.
+      </p>
       <h4 className="dte-title">0DTE — expires today</h4>
       <div className="dte-grid">
         {zeroDte.length > 0 ? (
