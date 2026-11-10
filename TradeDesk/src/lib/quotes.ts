@@ -112,6 +112,32 @@ export async function refreshQuotes(): Promise<void> {
   }
 }
 
+/** Tickers the active tab registered via setQuoteUniverse (cap 150). */
+export function getQuoteUniverse(): string[] {
+  return [...universe];
+}
+
+/**
+ * Merge live Schwab prices over the snapshot cache. Only the symbols
+ * Schwab actually returned are touched — anything it rejects keeps its
+ * snapshot price. Emits so every useLivePrice consumer re-renders.
+ * Returns how many symbols were updated.
+ */
+export function applySchwabQuotes(prices: Record<string, number>): number {
+  let n = 0;
+  const now = Date.now();
+  for (const [sym, price] of Object.entries(prices)) {
+    if (typeof price !== 'number' || !isFinite(price) || price <= 0) continue;
+    cache.set(String(sym).toUpperCase(), { price, fetchedAt: now });
+    n++;
+  }
+  if (n > 0) {
+    lastOk = now;
+    emit();
+  }
+  return n;
+}
+
 /** Load the pipeline snapshot on first price lookup so cards show prices. */
 let quotesPrime: Promise<void> | null = null;
 export function primeQuotes(): void {

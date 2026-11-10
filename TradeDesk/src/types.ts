@@ -83,6 +83,34 @@ export interface DailyBrief {
   rotation_notes: string;
 }
 
+/* ── news.json ──────────────────────────────────────────────────── */
+
+export interface NewsHeadline {
+  ticker: string;
+  title: string;
+  publisher: string;
+  url: string;
+  published_at: string | null; // ISO timestamp, null when unknown
+}
+
+export interface NewsFile {
+  as_of: string; // ISO timestamp
+  count: number;
+  items: NewsHeadline[];
+}
+
+/* ── Schwab movers (proxy ?movers=) ────────────────────────────── */
+
+export interface SchwabMover {
+  symbol: string;
+  description?: string;
+  lastPrice?: number;
+  netChange?: number;
+  /** percent change, e.g. 3.42 */
+  percentChange?: number;
+  totalVolume?: number;
+}
+
 /* ── earnings.json ────────────────────────────────────────────────── */
 
 export interface EarningsQuarter {

@@ -11,6 +11,7 @@ import SignalsTab from './tabs/Signals';
 import PerformanceTab from './tabs/Performance';
 import ScreenerTab from './tabs/Screener';
 import { supabase } from './lib/supabase';
+import { SCHWAB_AUTH_START_URL, useSchwabLive } from './lib/useSchwabLive';
 import type { TabDef, TabId } from './types';
 
 const TABS: TabDef[] = [
@@ -27,7 +28,55 @@ const TABS: TabDef[] = [
 const TAB_IDS = TABS.map((t) => t.id);
 
 /** Build version — bump on every push so we can confirm what's live. */
-export const BUILD_VERSION = '2026-10-23c';
+export const BUILD_VERSION = '2026-11-10a';
+
+/** "14:32:05" in ET for the Schwab pill's updated time. */
+function fmtClockET(ms: number): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(new Date(ms));
+}
+
+/**
+ * Footer status pill for the Schwab live feed. Mounting it starts the
+ * 60-second poll (useSchwabLive). Hidden when there is no session.
+ */
+function SchwabPill() {
+  const s = useSchwabLive();
+  if (s.status === 'no-session') return null;
+  const time = s.lastOk ? fmtClockET(s.lastOk) : null;
+  if (s.status === 'reauth') {
+    return (
+      <a
+        className="badge b-red schwab-pill"
+        href={SCHWAB_AUTH_START_URL}
+        title="Schwab login expired — tap to reconnect (about 30 seconds)"
+      >
+        Schwab ● Reconnect
+      </a>
+    );
+  }
+  const tone = s.status === 'live' ? 'b-green' : s.status === 'stale' ? 'b-amber' : 'b-dim';
+  const label =
+    s.status === 'live'
+      ? 'Schwab ● Live'
+      : s.status === 'stale'
+        ? 'Schwab ● Delayed'
+        : 'Schwab ● Off-hours';
+  return (
+    <span
+      className={`badge ${tone} schwab-pill`}
+      title={s.lastError ? `Schwab poll: ${s.lastError}` : 'Schwab live quotes (60 s poll)'}
+    >
+      {label}
+      {time ? ` · updated ${time}` : ''}
+    </span>
+  );
+}
 
 /** Read the active tab from the URL hash (#options), defaulting to brief. */
 function tabFromHash(): TabId {
@@ -114,6 +163,7 @@ function Shell() {
       <footer className="footer">
         TradeDesk — research and education only, not financial advice.
         <span className="muted"> · v{BUILD_VERSION}</span>
+        <SchwabPill />
       </footer>
     </div>
   );

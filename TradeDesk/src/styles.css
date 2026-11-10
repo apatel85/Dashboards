@@ -491,6 +491,49 @@ code {
   text-align: center;
 }
 
+/* Schwab live-feed footer pill — badge base class, labels stay mixed-case. */
+.schwab-pill {
+  text-transform: none;
+  margin-left: 8px;
+  text-decoration: none;
+  letter-spacing: 0;
+}
+
+/* Movers rows (Daily Brief). */
+.mover-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+.mover-row:last-child {
+  border-bottom: 0;
+}
+.mover-row .mover-price {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* News headlines (Daily Brief). */
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.news-item a {
+  color: var(--text);
+  text-decoration: none;
+}
+.news-item a:hover {
+  text-decoration: underline;
+}
+.news-item .news-meta {
+  display: block;
+  margin-top: 2px;
+}
+
 /* ── Data tables ───────────────────────────────────────────── */
 
 .table-scroll {

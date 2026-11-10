@@ -13,10 +13,12 @@ import {
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
+import { supabase } from '../lib/supabase';
+import { SCHWAB_PROXY_URL } from '../lib/useSchwabLive';
 import PremarketLine from '../components/PremarketLine';
 import { Fundamentals } from '../components/Fundamentals';
-import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, prettify, prettifyOptions } from '../lib/format';
-import type { DailyBrief, BreakoutCandidate, SectorPerf, MarketRegime } from '../types';
+import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, fmtTimeAgo, prettify, prettifyOptions } from '../lib/format';
+import type { DailyBrief, BreakoutCandidate, SectorPerf, MarketRegime, NewsFile, SchwabMover } from '../types';
 
 const REGIME_TONE: Record<MarketRegime, 'green' | 'red' | 'amber' | 'dim'> = {
   uptrend: 'green',
@@ -152,6 +154,116 @@ function SectorTable({ rows, emptyText }: { rows: SectorPerf[]; emptyText?: stri
   );
 }
 
+function MoverList({ rows, tone }: { rows: SchwabMover[]; tone: 'up' | 'down' }) {
+  if (rows.length === 0) return <p className="muted">No movers in this run.</p>;
+  return (
+    <div>
+      {rows.map((m) => (
+        <div key={m.symbol} className="mover-row">
+          <span>
+            <TvLink ticker={m.symbol} />
+            {m.description ? <span className="subname">{m.description}</span> : null}
+          </span>
+          <span className="mover-price num">
+            {fmtMoney(m.lastPrice ?? null)}
+            <span className={`subname ${tone}`}>
+              {fmtPct(m.percentChange ?? null)}
+            </span>
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * S&P 500 top movers via the Schwab proxy, fetched once when the tab opens.
+ * Any failure (no session, reauth needed, network) hides the section —
+ * movers are a garnish, never a reason to error the brief.
+ */
+function MoversSection() {
+  const [movers, setMovers] = useState<{ up: SchwabMover[]; down: SchwabMover[] } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const jwt = data.session?.access_token;
+        if (!jwt) return;
+        const fetchDir = async (dir: 'up' | 'down'): Promise<SchwabMover[]> => {
+          const q = new URLSearchParams({ movers: '$SPX', direction: dir, change: 'percent' });
+          const res = await fetch(`${SCHWAB_PROXY_URL}?${q.toString()}`, {
+            headers: { Authorization: `Bearer ${jwt}` },
+            cache: 'no-cache',
+          });
+          if (!res.ok) return [];
+          const json = await res.json();
+          const rows = Array.isArray(json)
+            ? json
+            : Array.isArray(json?.screeners)
+              ? json.screeners
+              : [];
+          return (rows as SchwabMover[]).slice(0, 5);
+        };
+        const [up, down] = await Promise.all([fetchDir('up'), fetchDir('down')]);
+        if (!cancelled && (up.length > 0 || down.length > 0)) setMovers({ up, down });
+      } catch {
+        // Hide the section on any failure.
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!movers) return null;
+  return (
+    <>
+      <SectionHead title="Movers" sub="S&P 500 · top % movers · live via Schwab" />
+      <div className="sector-grid">
+        <div className="panel">
+          <h4 className="sector-title up">Top gainers</h4>
+          <MoverList rows={movers.up} tone="up" />
+        </div>
+        <div className="panel">
+          <h4 className="sector-title down">Top losers</h4>
+          <MoverList rows={movers.down} tone="down" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+/**
+ * Pipeline news headlines (news.json, Yahoo search). Hidden entirely when
+ * the file is missing or empty — the brief must not depend on it.
+ */
+function NewsSection() {
+  const { data } = useJsonData<NewsFile>('news.json');
+  if (!data || data.items.length === 0) return null;
+  const items = data.items.slice(0, 12);
+  return (
+    <>
+      <SectionHead title="News" sub={`Headlines for brief tickers · ${fmtTimeET(data.as_of)}`} />
+      <div className="panel news-list">
+        {items.map((n, i) => (
+          <div key={`${n.url}-${i}`} className="news-item">
+            <a href={n.url} target="_blank" rel="noreferrer">
+              {n.title}
+            </a>
+            <span className="muted small news-meta">
+              {n.ticker} · {n.publisher}
+              {n.published_at ? ` · ${fmtTimeAgo(n.published_at)}` : ''}
+            </span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export default function DailyBriefTab() {
   const { data, loading, error } = useJsonData<DailyBrief>('daily-brief.json');
 
@@ -221,6 +333,8 @@ export default function DailyBriefTab() {
         />
       )}
 
+      <MoversSection />
+
       <SectionHead title="Sectors" sub="Hot vs. weak · rotation read" />
       <div className="sector-grid">
         <div className="panel">
@@ -254,6 +368,8 @@ export default function DailyBriefTab() {
           <p>{brief.rotation_notes}</p>
         </div>
       ) : null}
+
+      <NewsSection />
     </section>
   );
 }

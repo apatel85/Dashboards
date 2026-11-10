@@ -118,6 +118,19 @@ export function fmtTimeET(iso: string | null | undefined): string {
   }
 }
 
+/** "5m ago" / "2h ago" / "3d ago" from an ISO timestamp. */
+export function fmtTimeAgo(iso: string | null | undefined): string {
+  if (!iso) return DASH;
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return DASH;
+  const mins = Math.max(0, Math.floor((Date.now() - t) / 60000));
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
 /** "earnings_acceleration" → "earnings acceleration" */
 export function prettify(s: string): string {
   return s.replace(/_/g, ' ');
