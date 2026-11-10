@@ -183,6 +183,18 @@ export interface CongressTrade {
   cluster: boolean;
 }
 
+/** Committee assignments per member (congress-committees.json, 119th Congress). */
+export interface CommitteeAssignment {
+  name: string;
+  role?: string | null; // 'Chair' | 'Ranking Member' | 'Member'
+}
+export interface MemberCommittees {
+  member: string; // exact spelling as in congress.json
+  chamber: 'House' | 'Senate';
+  committees: CommitteeAssignment[];
+  unverified?: boolean;
+}
+
 /* ── research.json ────────────────────────────────────────────────── */
 
 export interface ScoreComponent {

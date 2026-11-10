@@ -650,11 +650,11 @@ code {
   line-height: 1.4;
 }
 
-/* Notable (recency-ranked) cards */
+/* Notable (recency-ranked) cards — narrow tiles in a responsive grid. */
 .notable-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 10px;
 }
 
 .notable-card {
@@ -662,6 +662,7 @@ code {
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
+  min-width: 0;
 }
 
 .notable-card.open {
@@ -684,6 +685,7 @@ code {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .notable-top .ticker {
@@ -702,6 +704,30 @@ code {
   gap: 8px;
   margin-top: 6px;
   font-size: 12px;
+  flex-wrap: wrap;
+}
+
+/* Committee tags on Congress cards/rows. */
+.ctags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.ctag {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(96, 165, 250, 0.08);
+  color: var(--text);
+  white-space: nowrap;
+}
+.ctag.dim {
+  background: transparent;
+  color: var(--text-faint);
 }
 
 .notable-detail {
@@ -1899,4 +1925,23 @@ body {
 }
 .screener-table tr.clickable {
   cursor: pointer;
+}
+/* Numbers right-aligned; ticker column sticks while scrolling sideways. */
+.screener-table th:not(:first-child),
+.screener-table td.num {
+  text-align: right;
+}
+.screener-table th:first-child,
+.screener-table td:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--bg-panel);
+  z-index: 1;
+}
+.screener-table tr.detail-row td {
+  position: static;
+}
+.plain-note {
+  margin: 2px 0 10px;
+  line-height: 1.5;
 }

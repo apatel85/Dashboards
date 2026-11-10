@@ -9,11 +9,21 @@ import {
 import { useJsonData } from '../lib/useJsonData';
 import { Fundamentals } from '../components/Fundamentals';
 import { fmtDate, fmtInt, fmtCompactMoney } from '../lib/format';
-import type { CongressTrade } from '../types';
+import type { CongressTrade, MemberCommittees } from '../types';
 
 const PAGE_SIZE = 50;
 const AGG_PAGE_SIZE = 25;
 const NOTABLE_LIMIT = 100;
+
+/** Minimum trade size (midpoint of the disclosed range) filter. */
+const AMOUNT_FILTERS = [
+  { id: 'any', label: 'Any size', min: 0 },
+  { id: '15k', label: '$15k+', min: 15000 },
+  { id: '50k', label: '$50k+', min: 50000 },
+  { id: '100k', label: '$100k+', min: 100000 },
+  { id: '250k', label: '$250k+', min: 250000 },
+  { id: '500k', label: '$500k+', min: 500000 },
+];
 
 type Branch = 'congress' | 'executive';
 type ChamberFilter = 'all' | 'House' | 'Senate';
@@ -62,7 +72,24 @@ interface NotableItem {
   score: number;
 }
 
-function MemberSub({ t }: { t: CongressTrade }) {
+/** Small committee chips: at most 2 shown, "+n more" for the rest. */
+function CommitteeChips({ committees }: { committees: { name: string; role?: string | null }[] }) {
+  if (!committees.length) return null;
+  const shown = committees.slice(0, 2);
+  return (
+    <span className="ctags">
+      {shown.map((c) => (
+        <span key={c.name} className="ctag" title={c.role && c.role !== 'Member' ? `${c.name} — ${c.role}` : c.name}>
+          {c.name}
+          {c.role && c.role !== 'Member' ? ` · ${c.role}` : ''}
+        </span>
+      ))}
+      {committees.length > 2 && <span className="ctag dim">+{committees.length - 2} more</span>}
+    </span>
+  );
+}
+
+function MemberSub({ t, committees }: { t: CongressTrade; committees: { name: string; role?: string | null }[] }) {
   const sub =
     t.chamber === 'Executive'
       ? [t.role, t.agency].filter(Boolean).join(' · ')
@@ -71,23 +98,19 @@ function MemberSub({ t }: { t: CongressTrade }) {
     <>
       {t.member}
       <span className="subname">{sub || '—'}</span>
-      {t.committee ? (
-        <span className="subname" title="Relevant committee">
-          {t.committee}
-        </span>
-      ) : null}
+      <CommitteeChips committees={committees} />
     </>
   );
 }
 
-function TradeRow({ t }: { t: CongressTrade }) {
+function TradeRow({ t, committees }: { t: CongressTrade; committees: { name: string; role?: string | null }[] }) {
   const [open, setOpen] = useState(false);
   const late = t.lag_days != null && t.lag_days > 45;
   return (
     <>
       <tr className="clickable" onClick={() => setOpen((o) => !o)} title="Tap for detail">
         <td data-th="Member">
-          <MemberSub t={t} />
+          <MemberSub t={t} committees={committees} />
         </td>
         <td data-th="Asset">
           {t.ticker ? (
@@ -202,7 +225,7 @@ function AggRowView({ r, onSelect }: { r: AggRow; onSelect: (r: AggRow) => void 
   );
 }
 
-function NotableRow({ item }: { item: NotableItem }) {
+function NotableRow({ item, committees }: { item: NotableItem; committees: { name: string; role?: string | null }[] }) {
   const [open, setOpen] = useState(false);
   const { t, daysAgo, byFiling } = item;
   const whenLabel = byFiling ? 'disclosed' : 'traded';
@@ -228,6 +251,7 @@ function NotableRow({ item }: { item: NotableItem }) {
           <span>{whenLabel} {daysAgoLabel(daysAgo)}</span>
           {t.cluster ? <Badge tone="amber">Cluster</Badge> : null}
         </span>
+        <CommitteeChips committees={committees} />
         {t.ticker ? (
           <span className="subname" title={t.asset_name}>{trunc(t.asset_name, 60)}</span>
         ) : null}
@@ -269,6 +293,9 @@ function NotableRow({ item }: { item: NotableItem }) {
 export default function CongressGovTab() {
   const { data: congressData, loading: cLoading, error: cError } = useJsonData<CongressTrade[]>('congress.json');
   const { data: execData, loading: eLoading, error: eError } = useJsonData<CongressTrade[]>('executive.json');
+  // Committee mapping is a static file (119th Congress); missing file = no
+  // chips/filter yet, never an error state.
+  const { data: committeesData } = useJsonData<MemberCommittees[]>('congress-committees.json');
 
   const [branch, setBranch] = useState<Branch>('congress');
   const [view, setView] = useState<View>('agg');
@@ -276,22 +303,52 @@ export default function CongressGovTab() {
   const [type, setType] = useState<TypeFilter>('all');
   const [clusterOnly, setClusterOnly] = useState(false);
   const [query, setQuery] = useState('');
+  const [committee, setCommittee] = useState('all');
+  const [minAmount, setMinAmount] = useState(0);
   const [keyFilter, setKeyFilter] = useState<{ key: string; label: string } | null>(null);
   const [page, setPage] = useState(0);
   const [aggSort, setAggSort] = useState<AggSort>('amount');
   const [notableWindow, setNotableWindow] = useState<NotableWindow>(30);
 
+  const committeesByMember = useMemo(() => {
+    const m = new Map<string, { name: string; role?: string | null }[]>();
+    for (const entry of committeesData ?? []) {
+      if (entry.member && Array.isArray(entry.committees)) m.set(entry.member, entry.committees);
+    }
+    return m;
+  }, [committeesData]);
+  const committeesFor = (member: string) => committeesByMember.get(member) ?? [];
+  const allCommittees = useMemo(() => {
+    const s = new Set<string>();
+    for (const list of committeesByMember.values()) for (const c of list) s.add(c.name);
+    return [...s].sort();
+  }, [committeesByMember]);
+
   const loading = cLoading || eLoading;
   const error = branch === 'congress' ? cError : eError;
   const data = branch === 'congress' ? congressData : execData;
 
+  // Base rows for every view: chamber + committee + minimum size.
+  // (Type, cluster, key and text search apply per-view below.)
   const branchRows = useMemo(() => {
     if (!data) return [];
-    if (branch === 'congress') {
-      return data.filter((t) => chamber === 'all' || t.chamber === chamber);
+    let rows = branch === 'congress'
+      ? data.filter((t) => chamber === 'all' || t.chamber === chamber)
+      : data;
+    if (branch === 'congress' && committee !== 'all') {
+      rows = rows.filter((t) => committeesFor(t.member).some((c) => c.name === committee));
     }
-    return data;
-  }, [data, branch, chamber]);
+    if (minAmount > 0) {
+      rows = rows.filter((t) => (t.amount_mid ?? 0) >= minAmount);
+    }
+    return rows;
+  }, [data, branch, chamber, committee, minAmount, committeesByMember]);
+
+  const matchesQuery = (t: CongressTrade, q: string) =>
+    q === '' ||
+    (t.ticker ?? '').toLowerCase().includes(q) ||
+    t.member.toLowerCase().includes(q) ||
+    t.asset_name.toLowerCase().includes(q);
 
   const agg = useMemo((): AggRow[] => {
     const m = new Map<string, { ticker: string | null; name: string; trades: number; buys: number; sells: number; officials: Set<string>; amount: number }>();
@@ -322,8 +379,14 @@ export default function CongressGovTab() {
     rows.sort((a, b) =>
       aggSort === 'amount' ? b.amount - a.amount : b.officials - a.officials || b.amount - a.amount,
     );
+    const q = query.trim().toLowerCase();
+    if (q) {
+      return rows.filter(
+        (r) => (r.ticker ?? '').toLowerCase().includes(q) || r.name.toLowerCase().includes(q),
+      );
+    }
     return rows;
-  }, [branchRows, aggSort]);
+  }, [branchRows, aggSort, query]);
 
   /**
    * Notable: individual recent trades, ranked by size × recency.
@@ -335,7 +398,9 @@ export default function CongressGovTab() {
     if (!branchRows) return [];
     const now = Date.now();
     const out: NotableItem[] = [];
+    const q = query.trim().toLowerCase();
     for (const t of branchRows) {
+      if (!matchesQuery(t, q)) continue;
       const refDate = t.disclosed_date ?? t.tx_date;
       const byFiling = t.disclosed_date != null;
       const daysAgo = (now - Date.parse(`${refDate}T12:00:00Z`)) / 86400000;
@@ -347,29 +412,21 @@ export default function CongressGovTab() {
     }
     out.sort((a, b) => b.score - a.score);
     return out.slice(0, NOTABLE_LIMIT);
-  }, [branchRows, notableWindow]);
+  }, [branchRows, notableWindow, query]);
 
   const filtered = useMemo(() => {
-    if (!data) return [];
     const q = query.trim().toLowerCase();
-    return data
-      .filter((t) => branch === 'executive' || chamber === 'all' || t.chamber === chamber)
+    return branchRows
       .filter((t) => type === 'all' || t.trade_type === type)
       .filter((t) => !clusterOnly || t.cluster)
       .filter((t) => !keyFilter || aggKey(t) === keyFilter.key)
-      .filter(
-        (t) =>
-          q === '' ||
-          (t.ticker ?? '').toLowerCase().includes(q) ||
-          t.member.toLowerCase().includes(q) ||
-          t.asset_name.toLowerCase().includes(q),
-      )
+      .filter((t) => matchesQuery(t, q))
       .sort((a, b) => {
         const ka = a.disclosed_date ?? a.tx_date;
         const kb = b.disclosed_date ?? b.tx_date;
         return ka !== kb ? (ka < kb ? 1 : -1) : a.tx_date < b.tx_date ? 1 : -1;
       });
-  }, [data, branch, chamber, type, clusterOnly, query, keyFilter]);
+  }, [branchRows, type, clusterOnly, query, keyFilter]);
 
   const freshness = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -394,6 +451,8 @@ export default function CongressGovTab() {
     setBranch(b);
     setKeyFilter(null);
     setQuery('');
+    setCommittee('all');
+    setMinAmount(0);
     resetPage();
   };
   const selectAggRow = (r: AggRow) => {
@@ -430,6 +489,13 @@ export default function CongressGovTab() {
               {' '}· latest filing <b>{fmtDate(freshness)}</b>
             </>
           ) : null}
+        </p>
+        <p className="muted small plain-note">
+          What members of Congress and senior officials bought and sold. Useful for spotting
+          where insiders are putting money — but filings can lag the trade by 45 days, so this
+          is a slow research feed, never a buy signal on its own. Committee tags show which
+          panels a member sits on; a trade in a sector their committee oversees is worth a
+          closer look.
         </p>
       </header>
 
@@ -490,6 +556,49 @@ export default function CongressGovTab() {
             </select>
           </label>
         )}
+        {!isExec && allCommittees.length > 0 && (
+          <label className="filter">
+            <span>Committee</span>
+            <select
+              value={committee}
+              onChange={(e) => {
+                setCommittee(e.target.value);
+                resetPage();
+              }}
+            >
+              <option value="all">All committees</option>
+              {allCommittees.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        <label className="filter">
+          <span>Min size</span>
+          <select
+            value={AMOUNT_FILTERS.find((f) => f.min === minAmount)?.id ?? 'any'}
+            onChange={(e) => {
+              setMinAmount(AMOUNT_FILTERS.find((f) => f.id === e.target.value)?.min ?? 0);
+              resetPage();
+            }}
+          >
+            {AMOUNT_FILTERS.map((f) => (
+              <option key={f.id} value={f.id}>{f.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="filter grow">
+          <span>Search {isExec ? 'official / asset' : 'ticker / member'}</span>
+          <input
+            type="text"
+            value={query}
+            placeholder={isExec ? 'e.g. Trump or NVIDIA' : 'e.g. NVDA or Pelosi'}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              resetPage();
+            }}
+          />
+        </label>
         {view === 'agg' && (
           <div className="seg" role="tablist" aria-label="Sort aggregate">
             <button className={aggSort === 'amount' ? 'active' : ''} onClick={() => { setAggSort('amount'); resetPage(); }}>
@@ -540,18 +649,6 @@ export default function CongressGovTab() {
                 }}
               />
               <span>Cluster buys only</span>
-            </label>
-            <label className="filter grow">
-              <span>Search {isExec ? 'official / asset' : 'ticker / member'}</span>
-              <input
-                type="text"
-                value={query}
-                placeholder={isExec ? 'e.g. Trump or NVIDIA' : 'e.g. NVDA or Pelosi'}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  resetPage();
-                }}
-              />
             </label>
           </>
         )}
@@ -630,7 +727,11 @@ export default function CongressGovTab() {
           {notable.length > 0 ? (
             <div className="notable-list">
               {notable.map((item, i) => (
-                <NotableRow key={`${item.t.member}-${item.t.tx_date}-${item.t.disclosed_date}-${i}`} item={item} />
+                <NotableRow
+                  key={`${item.t.member}-${item.t.tx_date}-${item.t.disclosed_date}-${i}`}
+                  item={item}
+                  committees={committeesFor(item.t.member)}
+                />
               ))}
             </div>
           ) : (
@@ -675,7 +776,7 @@ export default function CongressGovTab() {
                   </thead>
                   <tbody>
                     {pageRows.map((t, i) => (
-                      <TradeRow key={`${t.member}-${t.tx_date}-${t.disclosed_date}-${i}`} t={t} />
+                      <TradeRow key={`${t.member}-${t.tx_date}-${t.disclosed_date}-${i}`} t={t} committees={committeesFor(t.member)} />
                     ))}
                   </tbody>
                 </table>

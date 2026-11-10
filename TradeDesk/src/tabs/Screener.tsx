@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useJsonData } from '../lib/useJsonData';
 import { useFundamentals, peerTone } from '../lib/useFundamentals';
 import { Fundamentals } from '../components/Fundamentals';
@@ -8,6 +8,14 @@ import type { FundamentalsFile, FundamentalMetrics } from '../types';
 type SortKey =
   | 'ticker' | 'price' | 'market_cap' | 'pe_trailing' | 'pe_forward' | 'peg'
   | 'roe' | 'revenue_growth_yoy' | 'peer_upside_pct' | 'graham_upside_pct';
+
+/** Upside figures past ±999% are data errors, not signals — cap the display. */
+function fmtUpside(v: number | null): string {
+  if (v == null) return '—';
+  if (v > 999) return '>999%';
+  if (v < -999) return '<-999%';
+  return `${v > 0 ? '+' : ''}${v}%`;
+}
 
 const COLUMNS: { key: SortKey; label: string; fmt: (f: FundamentalMetrics & { ticker: string }) => string }[] = [
   { key: 'ticker', label: 'Ticker', fmt: () => '' },
@@ -21,8 +29,8 @@ const COLUMNS: { key: SortKey; label: string; fmt: (f: FundamentalMetrics & { ti
   { key: 'peg', label: 'PEG', fmt: (f) => (f.peg != null ? f.peg.toFixed(2) : '—') },
   { key: 'roe', label: 'ROE', fmt: (f) => (f.roe != null ? `${(f.roe * 100).toFixed(1)}%` : '—') },
   { key: 'revenue_growth_yoy', label: 'Rev Gr', fmt: (f) => (f.revenue_growth_yoy != null ? `${(f.revenue_growth_yoy * 100).toFixed(1)}%` : '—') },
-  { key: 'peer_upside_pct', label: 'Peer ↑', fmt: (f) => (f.peer_upside_pct != null ? `${f.peer_upside_pct > 0 ? '+' : ''}${f.peer_upside_pct}%` : '—') },
-  { key: 'graham_upside_pct', label: 'Graham ↑', fmt: (f) => (f.graham_upside_pct != null ? `${f.graham_upside_pct > 0 ? '+' : ''}${f.graham_upside_pct}%` : '—') },
+  { key: 'peer_upside_pct', label: 'Peer ↑', fmt: (f) => fmtUpside(f.peer_upside_pct) },
+  { key: 'graham_upside_pct', label: 'Graham ↑', fmt: (f) => fmtUpside(f.graham_upside_pct) },
 ];
 
 const PRESETS: { id: string; label: string; test: (f: FundamentalMetrics) => boolean }[] = [
@@ -115,6 +123,12 @@ export default function ScreenerTab() {
         title="🔍 Fundamentals screener"
         sub={`${filtered.length} of ${rows.length} tickers · tap a header to sort · tap a row for full fundamentals`}
       />
+      <p className="muted small plain-note">
+        Find stocks that look cheap or strong on the numbers. <b>Peer ↑</b> = how far the price is
+        below what similar companies would imply. <b>Graham ↑</b> = how far below a conservative
+        deep-value floor. Green = the numbers say cheap; red = expensive. Swipe the table sideways
+        to see all columns.
+      </p>
       <div className="screener-filters">
         <input
           className="screener-search"
@@ -143,8 +157,8 @@ export default function ScreenerTab() {
           <button className="link-btn" onClick={() => setPresets(new Set())}>Clear</button>
         )}
       </div>
-      <div className="table-wrap">
-        <table className="data-table screener-table">
+      <div className="table-scroll">
+        <table className="dtable screener-table">
           <thead>
             <tr>
               {COLUMNS.map((c) => (
@@ -156,9 +170,8 @@ export default function ScreenerTab() {
           </thead>
           <tbody>
             {filtered.map((r) => (
-              <>
+              <Fragment key={r.ticker}>
                 <tr
-                  key={r.ticker}
                   onClick={() => setOpenTicker((t) => (t === r.ticker ? null : r.ticker))}
                   className="clickable"
                 >
@@ -176,7 +189,7 @@ export default function ScreenerTab() {
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
