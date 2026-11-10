@@ -114,10 +114,23 @@ function extract(ticker, qs) {
   const fd = qs.financialData || {};
   const ap = qs.assetProfile || {};
   const px = raw(price.regularMarketPrice);
-  const epsT = raw(ks.trailingEps);
-  const epsF = raw(ks.forwardEps);
-  const bv = raw(ks.bookValue);
+  let epsT = raw(ks.trailingEps);
+  let epsF = raw(ks.forwardEps);
+  let bv = raw(ks.bookValue);
   const { revenue_growth_yoy, revenue_cagr_3y } = growthRates(qs.incomeStatementHistory?.incomeStatementHistory);
+
+  // Currency-mix guard: Yahoo returns local-currency per-share figures for
+  // some foreign ADRs (PPERY: $8.45 price but eps_forward 935.65 IDR and
+  // book_value 3017.48 IDR), which explodes peer/Graham upside to +120,000%.
+  // A per-share figure is only usable when its implied multiple is sane.
+  const saneMultiple = (perShare) => {
+    if (typeof px !== 'number' || px <= 0 || typeof perShare !== 'number' || perShare <= 0) return false;
+    const mult = px / perShare;
+    return mult >= 0.5 && mult <= 1000;
+  };
+  if (!saneMultiple(epsF)) epsF = null;
+  if (!saneMultiple(epsT)) epsT = null;
+  if (!saneMultiple(bv)) bv = null;
 
   // Expected EPS growth from trailing -> forward estimates.
   let eps_growth_exp = null;
@@ -140,10 +153,12 @@ function extract(ticker, qs) {
     // Yahoo sometimes returns {} for ETF market caps — sanitize to null.
     market_cap: typeof mc === 'number' && Number.isFinite(mc) ? mc : null,
     price: typeof px === 'number' ? Math.round(px * 100) / 100 : null,
-    pe_trailing: r2(sd.trailingPE),
-    pe_forward: r2(sd.forwardPE),
+    // Yahoo's own multiples inherit the same currency mix — null them when
+    // the underlying per-share figure failed the sanity guard above.
+    pe_trailing: epsT != null ? r2(sd.trailingPE) : null,
+    pe_forward: epsF != null ? r2(sd.forwardPE) : null,
     peg: r2(ks.pegRatio),
-    pb: r2(ks.priceToBook),
+    pb: bv != null ? r2(ks.priceToBook) : null,
     ps: r2(sd.priceToSalesTrailing12Months),
     profit_margin: r2(ks.profitMargins ?? fd.profitMargins),
     roe: r2(fd.returnOnEquity),
@@ -189,10 +204,14 @@ function enrichWithPeers(fundamentals) {
       f.sector_median_fwd_pe = null;
     }
     if (typeof f.price === 'number' && f.price > 0) {
-      f.peer_upside_pct = f.peer_fair_value != null
-        ? Math.round(((f.peer_fair_value - f.price) / f.price) * 1000) / 10 : null;
-      f.graham_upside_pct = f.graham_number != null
-        ? Math.round(((f.graham_number - f.price) / f.price) * 1000) / 10 : null;
+      // Backstop: no upside figure is meaningful past ±999.9% — beyond that
+      // it is a data error, not a signal. (The per-share guards above should
+      // already have nulled the degenerate cases.)
+      const clampUpside = (v) => (typeof v === 'number' ? Math.max(-999.9, Math.min(999.9, v)) : null);
+      f.peer_upside_pct = clampUpside(f.peer_fair_value != null
+        ? Math.round(((f.peer_fair_value - f.price) / f.price) * 1000) / 10 : null);
+      f.graham_upside_pct = clampUpside(f.graham_number != null
+        ? Math.round(((f.graham_number - f.price) / f.price) * 1000) / 10 : null);
     } else {
       f.peer_upside_pct = null;
       f.graham_upside_pct = null;
