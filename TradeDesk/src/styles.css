@@ -1945,3 +1945,47 @@ body {
   margin: 2px 0 10px;
   line-height: 1.5;
 }
+
+/* Deep Dive tab */
+.dd-search {
+  align-items: flex-end;
+}
+.dd-quick {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.dd-list {
+  margin: 6px 0 10px;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.dd-list li {
+  margin-bottom: 4px;
+}
+/* 52-week range bar: fill shows the span, marker shows where price sits. */
+.rangebar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  margin: 12px 0 6px;
+  overflow: visible;
+}
+.rangebar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.35);
+}
+.rangebar-marker {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  background: var(--accent, #60a5fa);
+  transform: translateX(-1px);
+}

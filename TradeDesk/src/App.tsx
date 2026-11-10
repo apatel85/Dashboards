@@ -10,6 +10,7 @@ import ResearchTab from './tabs/Research';
 import SignalsTab from './tabs/Signals';
 import PerformanceTab from './tabs/Performance';
 import ScreenerTab from './tabs/Screener';
+import DeepDiveTab from './tabs/DeepDive';
 import { supabase } from './lib/supabase';
 import { SCHWAB_AUTH_START_URL, useSchwabLive } from './lib/useSchwabLive';
 import type { TabDef, TabId } from './types';
@@ -21,6 +22,7 @@ const TABS: TabDef[] = [
   { id: 'earnings', label: 'Earnings', dataFile: 'earnings.json' },
   { id: 'congress', label: 'Congress & Gov', dataFile: 'congress.json' },
   { id: 'research', label: 'Research', dataFile: 'research.json' },
+  { id: 'deepdive', label: 'Deep Dive', dataFile: 'signals.json' },
   { id: 'performance', label: 'Performance', dataFile: 'performance.json' },
   { id: 'screener', label: 'Screener', dataFile: 'fundamentals.json' },
 ];
@@ -28,7 +30,7 @@ const TABS: TabDef[] = [
 const TAB_IDS = TABS.map((t) => t.id);
 
 /** Build version — bump on every push so we can confirm what's live. */
-export const BUILD_VERSION = '2026-11-10d';
+export const BUILD_VERSION = '2026-11-10e';
 
 /** "14:32:05" in ET for the Schwab pill's updated time. */
 function fmtClockET(ms: number): string {
@@ -151,6 +153,9 @@ function Shell() {
         </TabErrorBoundary>
         <TabErrorBoundary tabName="Research" key={`research-${active}`}>
           {active === 'research' && <ResearchTab />}
+        </TabErrorBoundary>
+        <TabErrorBoundary tabName="Deep Dive" key={`deepdive-${active}`}>
+          {active === 'deepdive' && <DeepDiveTab />}
         </TabErrorBoundary>
         <TabErrorBoundary tabName="Performance" key={`performance-${active}`}>
           {active === 'performance' && <PerformanceTab />}
