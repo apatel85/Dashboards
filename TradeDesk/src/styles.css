@@ -2560,6 +2560,10 @@ body {
     display: none;
   }
 
+  .alerts-grid {
+    grid-template-columns: 1fr;
+  }
+
   .bottomnav {
     display: flex;
     position: fixed;
@@ -2633,6 +2637,10 @@ body {
   .feed-search {
     max-width: 320px;
   }
+
+  .alerts-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Responsive: laptop/desktop (1280px+) ──────────────────────────── */
@@ -2693,4 +2701,44 @@ body {
   .feed-search {
     max-width: 320px;
   }
+}
+
+/* ── New developments alerts ─────────────────────────────────── */
+.alerts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.alerts-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.alerts-block > p {
+  margin: 0 0 8px;
+}
+.alert-item {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+.alert-item a {
+  color: var(--text);
+  text-decoration: none;
+}
+.alert-item a:hover {
+  text-decoration: underline;
+}
+.alert-meta {
+  display: block;
+  margin-top: 2px;
+}
+.alert-cluster {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  color: var(--green);
+  font-size: 11px;
+  white-space: nowrap;
 }

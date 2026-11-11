@@ -21,7 +21,7 @@ import PremarketLine from '../components/PremarketLine';
 import { Fundamentals } from '../components/Fundamentals';
 import { DteCard } from '../components/Dte';
 import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, fmtTimeAgo, fmtCompactMoney, prettify, prettifyOptions } from '../lib/format';
-import type { DailyBrief, BreakoutCandidate, SectorPerf, MarketRegime, NewsFile, SchwabMover, CongressTrade, TabId } from '../types';
+import type { DailyBrief, BreakoutCandidate, SectorPerf, MarketRegime, NewsFile, SchwabMover, CongressTrade, TabId, DailyAlerts, AlertTradeItem, AlertNewsItem } from '../types';
 
 const REGIME_TONE: Record<MarketRegime, 'green' | 'red' | 'amber' | 'dim'> = {
   uptrend: 'green',
@@ -461,6 +461,150 @@ function NewsSection() {
   );
 }
 
+/**
+ * "New developments" — the day's new Congress / White House disclosures and
+ * news to watch, from the morning pipeline run (daily-alerts.json). Rendered
+ * at the very top of the Daily Brief, above the mood banner. A missing file
+ * (pipeline hasn't run the new step yet) shows a quiet note, never a crash.
+ */
+function daysAgo(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const t = new Date(`${iso}T12:00:00Z`).getTime();
+  if (Number.isNaN(t)) return null;
+  const now = new Date();
+  const todayNoon = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12);
+  return Math.round((todayNoon - t) / 86400000);
+}
+
+/** "today" / "yesterday" / "2 days ago" for a disclosure date. */
+function disclosedWhen(iso: string | null | undefined): string {
+  const d = daysAgo(iso);
+  if (d === null) return '';
+  if (d <= 0) return 'today';
+  if (d === 1) return 'yesterday';
+  return `${d} days ago`;
+}
+
+function tradeVerb(t: AlertTradeItem['trade_type']): string {
+  if (t === 'buy') return 'bought';
+  if (t === 'sell') return 'sold';
+  return 'exchanged';
+}
+
+function AlertTradeRow({ t }: { t: AlertTradeItem }) {
+  return (
+    <div className="alert-item">
+      <div className="alert-line">
+        <b>{t.member}</b>
+        {t.role ? <span className="muted"> · {t.role}</span> : null} {tradeVerb(t.trade_type)}{' '}
+        {t.ticker ? <TvLink ticker={t.ticker} /> : <b>{t.asset_name}</b>}
+        {' · '}
+        {t.amount_range}
+        {t.cluster ? <span className="alert-cluster">cluster buy</span> : null}
+      </div>
+      <span className="muted small alert-meta">
+        {t.chamber}
+        {t.disclosed_date
+          ? ` · disclosed ${disclosedWhen(t.disclosed_date)} (${t.disclosed_date})`
+          : ` · traded ${t.tx_date}`}
+        {t.doc_url ? (
+          <>
+            {' · '}
+            <a href={t.doc_url} target="_blank" rel="noreferrer">
+              Filing ↗
+            </a>
+          </>
+        ) : null}
+      </span>
+    </div>
+  );
+}
+
+function AlertNewsRow({ n }: { n: AlertNewsItem }) {
+  return (
+    <div className="alert-item">
+      <a href={n.url} target="_blank" rel="noreferrer">
+        {n.title}
+      </a>
+      <span className="muted small alert-meta">
+        {n.ticker} · {n.publisher}
+        {n.published_at ? ` · ${fmtTimeAgo(n.published_at)}` : ''}
+      </span>
+    </div>
+  );
+}
+
+function AlertsSection() {
+  const { data, loading, error } = useJsonData<DailyAlerts>('daily-alerts.json');
+  if (loading) {
+    return (
+      <>
+        <SectionHead title="New developments" sub="Checking this morning's disclosures…" />
+        <p className="muted">Loading the latest disclosures and headlines…</p>
+      </>
+    );
+  }
+  if (error || !data) {
+    return (
+      <>
+        <SectionHead title="New developments" sub="Congress, White House & news to watch" />
+        <div className="panel">
+          <p className="muted">
+            Alerts load with the morning update — check back after the daily pipeline run.
+          </p>
+        </div>
+      </>
+    );
+  }
+  return (
+    <>
+      <SectionHead
+        title="New developments"
+        sub={`Updated ${fmtTimeET(data.generated_at)} · as of this morning's run`}
+      />
+      <div className="alerts-grid">
+        <div className="panel alerts-block">
+          <h4 className="alerts-title">
+            Congress &amp; Senate <span className="muted">· {data.congress.count}</span>
+          </h4>
+          <p className="muted small">{data.congress.summary}</p>
+          {data.congress.items.length === 0 ? (
+            <p className="muted">Nothing new to show.</p>
+          ) : (
+            data.congress.items.map((t, i) => (
+              <AlertTradeRow key={`${t.member}-${t.ticker ?? t.asset_name}-${t.tx_date}-${i}`} t={t} />
+            ))
+          )}
+        </div>
+        <div className="panel alerts-block">
+          <h4 className="alerts-title">
+            White House <span className="muted">· {data.executive.count}</span>
+          </h4>
+          <p className="muted small">{data.executive.summary}</p>
+          {data.executive.items.length === 0 ? (
+            <p className="muted">Nothing new to show.</p>
+          ) : (
+            data.executive.items.map((t, i) => (
+              <AlertTradeRow key={`${t.member}-${t.ticker ?? t.asset_name}-${t.tx_date}-${i}`} t={t} />
+            ))
+          )}
+        </div>
+        <div className="panel alerts-block">
+          <h4 className="alerts-title">
+            News to watch <span className="muted">· {data.news.count}</span>
+          </h4>
+          <p className="muted small">{data.news.summary}</p>
+          {data.news.items.length === 0 ? (
+            <p className="muted">Nothing new to show.</p>
+          ) : (
+            data.news.items.map((n, i) => <AlertNewsRow key={`${n.url}-${i}`} n={n} />)
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) => void }) {
   const { data, loading, error } = useJsonData<DailyBrief>('daily-brief.json');
   // Company names for the ticker cells (fundamentals.json is the source of
@@ -521,6 +665,8 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
           <div className="muted small">Generated {fmtTimeET(brief.generated_at)}</div>
         </div>
       </div>
+
+      <AlertsSection />
 
       <div className="mood-banner">
         <span className="mood-label">Today</span>

@@ -31,7 +31,7 @@ const TABS: TabDef[] = [
 const TAB_IDS = TABS.map((t) => t.id);
 
 /** Build version — bump on every push so we can confirm what's live. */
-export const BUILD_VERSION = '2026-11-10i';
+export const BUILD_VERSION = '2026-11-10j';
 
 /** "14:32:05" in ET for the Schwab pill's updated time. */
 function fmtClockET(ms: number): string {
