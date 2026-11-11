@@ -11,7 +11,7 @@ import {
   SCHWAB_AUTH_START_URL,
 } from '../lib/schwabDeepDive';
 import type { DeepDiveData } from '../lib/schwabDeepDive';
-import { fmtDate, fmtInt, fmtCompactMoney, fmtPct } from '../lib/format';
+import { fmtDate, fmtDateY, fmtInt, fmtCompactMoney, fmtPct } from '../lib/format';
 import type { SignalsFile, EarningsEntry, NewsFile, CongressTrade } from '../types';
 
 const QUICK_TICKERS = ['NVDA', 'AAPL', 'MSFT', 'MU', 'SNDK', 'TSM'];
@@ -77,7 +77,7 @@ function SmartMoneyPanel({ ticker, flow }: {
           <ul className="dd-list">
             {congTrades.map((t, i) => (
               <li key={i}>
-                <b>{t.member}</b> · {t.trade_type} {t.amount_range} · disclosed {fmtDate(t.disclosed_date)}
+                <b>{t.member}</b> · {t.trade_type} {t.amount_range} · disclosed {fmtDateY(t.disclosed_date)}
               </li>
             ))}
           </ul>

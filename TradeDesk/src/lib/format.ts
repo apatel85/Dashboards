@@ -66,6 +66,26 @@ export function fmtDate(s: string | null | undefined): string {
   }
 }
 
+/**
+ * "Nov 9, 2026" — disclosed dates ALWAYS carry the year. The disclosure
+ * file spans 12 months, so a bare "Nov 9" is genuinely ambiguous (Nov 2025
+ * vs Nov 2026) and reads as if the sort were wrong. Use this for every
+ * disclosed/traded date in the Congress views and the alerts.
+ */
+export function fmtDateY(s: string | null | undefined): string {
+  if (!s) return DASH;
+  try {
+    return parseDay(s).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
+  } catch {
+    return DASH;
+  }
+}
+
 /** "Thu, Oct 15" */
 export function fmtDayLabel(s: string | null | undefined): string {
   if (!s) return DASH;

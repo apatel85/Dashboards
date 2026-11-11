@@ -20,7 +20,8 @@ import { SCHWAB_PROXY_URL } from '../lib/useSchwabLive';
 import PremarketLine from '../components/PremarketLine';
 import { Fundamentals } from '../components/Fundamentals';
 import { DteCard } from '../components/Dte';
-import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, fmtTimeAgo, fmtCompactMoney, prettify, prettifyOptions } from '../lib/format';
+import { fmtMoney, fmtPct, fmtFullDate, fmtDateY, fmtTimeET, fmtTimeAgo, fmtCompactMoney, prettify, prettifyOptions } from '../lib/format';
+import { requestCongressDeepLink } from '../lib/congressDeepLink';
 import type { DailyBrief, BreakoutCandidate, SectorPerf, MarketRegime, NewsFile, SchwabMover, CongressTrade, TabId, DailyAlerts, AlertTradeItem, AlertNewsItem } from '../types';
 
 const REGIME_TONE: Record<MarketRegime, 'green' | 'red' | 'amber' | 'dim'> = {
@@ -491,9 +492,44 @@ function tradeVerb(t: AlertTradeItem['trade_type']): string {
   return 'exchanged';
 }
 
-function AlertTradeRow({ t }: { t: AlertTradeItem }) {
+/**
+ * One disclosure in the alerts. Tapping the row jumps to the Congress & Gov
+ * tab with this exact trade filtered and highlighted — the Filing link and
+ * the chart link still work on their own (their clicks don't navigate).
+ */
+function AlertTradeRow({
+  t,
+  branch,
+  onOpenTab,
+}: {
+  t: AlertTradeItem;
+  branch: 'congress' | 'executive';
+  onOpenTab?: (id: TabId) => void;
+}) {
+  const openTrade = () => {
+    if (!onOpenTab) return;
+    requestCongressDeepLink({
+      branch,
+      query: t.ticker ?? t.member,
+      key: `${t.member}|${t.ticker ?? t.asset_name}|${t.disclosed_date ?? t.tx_date}`,
+    });
+    onOpenTab('congress');
+  };
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openTrade();
+    }
+  };
   return (
-    <div className="alert-item">
+    <div
+      className="alert-item alert-item-clickable"
+      role="button"
+      tabIndex={0}
+      onClick={openTrade}
+      onKeyDown={onKey}
+      title="Tap to open this trade in Congress & Gov"
+    >
       <div className="alert-line">
         <b>{t.member}</b>
         {t.role ? <span className="muted"> · {t.role}</span> : null} {tradeVerb(t.trade_type)}{' '}
@@ -505,15 +541,15 @@ function AlertTradeRow({ t }: { t: AlertTradeItem }) {
       <span className="muted small alert-meta">
         {t.chamber}
         {t.disclosed_date
-          ? ` · disclosed ${disclosedWhen(t.disclosed_date)} (${t.disclosed_date})`
-          : ` · traded ${t.tx_date}`}
+          ? ` · disclosed ${disclosedWhen(t.disclosed_date)} (${fmtDateY(t.disclosed_date)})`
+          : ` · traded ${fmtDateY(t.tx_date)}`}
         {t.doc_url ? (
-          <>
+          <span onClick={(e) => e.stopPropagation()}>
             {' · '}
             <a href={t.doc_url} target="_blank" rel="noreferrer">
               Filing ↗
             </a>
-          </>
+          </span>
         ) : null}
       </span>
     </div>
@@ -534,7 +570,74 @@ function AlertNewsRow({ n }: { n: AlertNewsItem }) {
   );
 }
 
-function AlertsSection() {
+/** Collapsed state per alerts block, remembered across visits. Default: open. */
+function useCollapsed(key: string): [boolean, () => void] {
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(key) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const toggle = () => {
+    setCollapsed((c) => {
+      const next = !c;
+      try {
+        localStorage.setItem(key, next ? '1' : '0');
+      } catch {
+        // Private mode etc. — collapsing still works for this visit.
+      }
+      return next;
+    });
+  };
+  return [collapsed, toggle];
+}
+
+/** One of the three alerts blocks with a tap-to-collapse header. */
+function AlertBlock({
+  title,
+  count,
+  storageKey,
+  summary,
+  hint,
+  children,
+}: {
+  title: string;
+  count: number;
+  storageKey: string;
+  summary: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  const [collapsed, toggle] = useCollapsed(storageKey);
+  return (
+    <div className="panel alerts-block">
+      <button
+        type="button"
+        className="alerts-head"
+        onClick={toggle}
+        aria-expanded={!collapsed}
+        title={collapsed ? 'Tap to expand' : 'Tap to collapse'}
+      >
+        <span className="alerts-title">
+          {title} <span className="muted">· {count}</span>
+        </span>
+        <span className="alerts-chev" aria-hidden="true">
+          {collapsed ? '▸' : '▾'}
+        </span>
+      </button>
+      {!collapsed && (
+        <>
+          <p className="muted small">{summary}</p>
+          {hint ? <p className="muted small alerts-hint">{hint}</p> : null}
+          {children}
+        </>
+      )}
+    </div>
+  );
+}
+
+function AlertsSection({ onOpenTab }: { onOpenTab?: (id: TabId) => void }) {
   const { data, loading, error } = useJsonData<DailyAlerts>('daily-alerts.json');
   if (loading) {
     return (
@@ -563,43 +666,58 @@ function AlertsSection() {
         sub={`Updated ${fmtTimeET(data.generated_at)} · as of this morning's run`}
       />
       <div className="alerts-grid">
-        <div className="panel alerts-block">
-          <h4 className="alerts-title">
-            Congress &amp; Senate <span className="muted">· {data.congress.count}</span>
-          </h4>
-          <p className="muted small">{data.congress.summary}</p>
+        <AlertBlock
+          title="Congress & Senate"
+          count={data.congress.count}
+          storageKey="td-alerts-congress"
+          summary={data.congress.summary}
+          hint="Tap a trade to open it in Congress & Gov."
+        >
           {data.congress.items.length === 0 ? (
             <p className="muted">Nothing new to show.</p>
           ) : (
             data.congress.items.map((t, i) => (
-              <AlertTradeRow key={`${t.member}-${t.ticker ?? t.asset_name}-${t.tx_date}-${i}`} t={t} />
+              <AlertTradeRow
+                key={`${t.member}-${t.ticker ?? t.asset_name}-${t.tx_date}-${i}`}
+                t={t}
+                branch="congress"
+                onOpenTab={onOpenTab}
+              />
             ))
           )}
-        </div>
-        <div className="panel alerts-block">
-          <h4 className="alerts-title">
-            White House <span className="muted">· {data.executive.count}</span>
-          </h4>
-          <p className="muted small">{data.executive.summary}</p>
+        </AlertBlock>
+        <AlertBlock
+          title="White House"
+          count={data.executive.count}
+          storageKey="td-alerts-executive"
+          summary={data.executive.summary}
+          hint="Tap a trade to open it in the White House branch."
+        >
           {data.executive.items.length === 0 ? (
             <p className="muted">Nothing new to show.</p>
           ) : (
             data.executive.items.map((t, i) => (
-              <AlertTradeRow key={`${t.member}-${t.ticker ?? t.asset_name}-${t.tx_date}-${i}`} t={t} />
+              <AlertTradeRow
+                key={`${t.member}-${t.ticker ?? t.asset_name}-${t.tx_date}-${i}`}
+                t={t}
+                branch="executive"
+                onOpenTab={onOpenTab}
+              />
             ))
           )}
-        </div>
-        <div className="panel alerts-block">
-          <h4 className="alerts-title">
-            News to watch <span className="muted">· {data.news.count}</span>
-          </h4>
-          <p className="muted small">{data.news.summary}</p>
+        </AlertBlock>
+        <AlertBlock
+          title="News to watch"
+          count={data.news.count}
+          storageKey="td-alerts-news"
+          summary={data.news.summary}
+        >
           {data.news.items.length === 0 ? (
             <p className="muted">Nothing new to show.</p>
           ) : (
             data.news.items.map((n, i) => <AlertNewsRow key={`${n.url}-${i}`} n={n} />)
           )}
-        </div>
+        </AlertBlock>
       </div>
     </>
   );
@@ -666,7 +784,7 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
         </div>
       </div>
 
-      <AlertsSection />
+      <AlertsSection onOpenTab={onOpenTab} />
 
       <div className="mood-banner">
         <span className="mood-label">Today</span>

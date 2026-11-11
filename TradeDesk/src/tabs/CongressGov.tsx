@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Badge,
   SectionHead,
@@ -8,7 +8,8 @@ import {
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { Fundamentals } from '../components/Fundamentals';
-import { fmtDate, fmtInt, fmtCompactMoney } from '../lib/format';
+import { fmtDateY, fmtInt, fmtCompactMoney } from '../lib/format';
+import { takeCongressDeepLink } from '../lib/congressDeepLink';
 import type { CongressTrade, MemberCommittees } from '../types';
 
 const PAGE_SIZE = 50;
@@ -42,6 +43,12 @@ const TYPE_TONE: Record<string, 'green' | 'red' | 'amber'> = {
 /** Never invent tickers: group by tradeable ticker when known, else the asset. */
 function aggKey(t: CongressTrade): string {
   return t.agg_key ?? t.ticker ?? `DESC:${t.asset_name.toUpperCase()}`;
+}
+
+/** Stable identity for one trade row — the deep link from the Daily Brief
+ * targets this key so the exact row can be highlighted and scrolled to. */
+function tradeKey(t: CongressTrade): string {
+  return `${t.member}|${t.ticker ?? t.asset_name}|${t.disclosed_date ?? t.tx_date}`;
 }
 
 function trunc(s: string, n = 42): string {
@@ -104,12 +111,26 @@ function MemberSub({ t, committees }: { t: CongressTrade; committees: { name: st
   );
 }
 
-function TradeRow({ t, committees }: { t: CongressTrade; committees: { name: string; role?: string | null }[] }) {
-  const [open, setOpen] = useState(false);
+function TradeRow({
+  t,
+  committees,
+  highlight,
+}: {
+  t: CongressTrade;
+  committees: { name: string; role?: string | null }[];
+  /** Deep-linked row: starts open and stays visibly marked. */
+  highlight?: boolean;
+}) {
+  const [open, setOpen] = useState(highlight ?? false);
   const late = t.lag_days != null && t.lag_days > 45;
   return (
     <>
-      <tr className="clickable" onClick={() => setOpen((o) => !o)} title="Tap for detail">
+      <tr
+        data-trade-key={tradeKey(t)}
+        className={`clickable${highlight ? ' trade-highlight' : ''}`}
+        onClick={() => setOpen((o) => !o)}
+        title="Tap for detail"
+      >
         <td data-th="Member">
           <MemberSub t={t} committees={committees} />
         </td>
@@ -117,7 +138,7 @@ function TradeRow({ t, committees }: { t: CongressTrade; committees: { name: str
           {t.ticker ? (
             <>
               <TvLink ticker={t.ticker} />
-              <span className="subname" title={t.asset_name}>
+              <span className="subname asset-sub" title={t.asset_name}>
                 {trunc(t.asset_name)}
               </span>
             </>
@@ -131,24 +152,24 @@ function TradeRow({ t, committees }: { t: CongressTrade; committees: { name: str
           <Badge tone={TYPE_TONE[t.trade_type] ?? 'dim'}>{t.trade_type}</Badge>
         </td>
         <td data-th="Amount" className="num">{t.amount_range}</td>
-        <td data-th="Disclosed" className="num">{fmtDate(t.disclosed_date)}</td>
-        <td data-th="Chamber" className="hide-sm">
+        <td data-th="Disclosed" className="num">{fmtDateY(t.disclosed_date)}</td>
+        <td data-th="Chamber" className="hide-md">
           <Badge tone={t.chamber === 'House' ? 'blue' : t.chamber === 'Senate' ? 'dim' : 'amber'}>
             {t.chamber === 'Executive' ? 'Exec' : t.chamber}
           </Badge>
         </td>
-        <td data-th="Traded" className="num hide-sm">{fmtDate(t.tx_date)}</td>
+        <td data-th="Traded" className="num hide-narrow">{fmtDateY(t.tx_date)}</td>
         <td
           data-th="Lag"
-          className={`num hide-sm${late ? ' lateflag' : ''}`}
+          className={`num hide-md${late ? ' lateflag' : ''}`}
           title={late ? 'Filed after the 45-day deadline' : 'Disclosure lag'}
         >
           {t.lag_days != null ? `${fmtInt(t.lag_days)}d` : '—'}
         </td>
-        <td data-th="Signal" className="hide-sm">
+        <td data-th="Signal" className="hide-md">
           {t.cluster ? <Badge tone="amber">Cluster</Badge> : <span className="muted">—</span>}
         </td>
-        <td data-th="Filing" className="hide-sm">
+        <td data-th="Filing" className="hide-md">
           {t.doc_url ? (
             <a className="doclink" href={t.doc_url} target="_blank" rel="noreferrer">
               {t.chamber === 'Executive' ? 'Record' : 'PDF'}
@@ -169,7 +190,7 @@ function TradeRow({ t, committees }: { t: CongressTrade; committees: { name: str
                 </span>
                 <span>
                   <span className="detail-label">Traded</span>
-                  <div className="num">{fmtDate(t.tx_date)}</div>
+                  <div className="num">{fmtDateY(t.tx_date)}</div>
                 </span>
                 <span>
                   <span className="detail-label">Lag</span>
@@ -215,13 +236,13 @@ function AggRowView({ r, onSelect }: { r: AggRow; onSelect: (r: AggRow) => void 
           <span className="assetname" title={r.name}>{trunc(r.name, 44)}</span>
         )}
       </td>
-      <td data-th="Est. amount" className="num">
+      <td data-th="Est. amount" className="num r">
         <b>{fmtCompactMoney(r.amount)}</b>
       </td>
-      <td data-th="Officials" className="num">{fmtInt(r.officials)}</td>
-      <td data-th="Trades" className="num">{fmtInt(r.trades)}</td>
-      <td data-th="Buys" className="num up">{fmtInt(r.buys)}</td>
-      <td data-th="Sells" className="num down">{fmtInt(r.sells)}</td>
+      <td data-th="Officials" className="num r">{fmtInt(r.officials)}</td>
+      <td data-th="Trades" className="num r">{fmtInt(r.trades)}</td>
+      <td data-th="Buys" className="num r up">{fmtInt(r.buys)}</td>
+      <td data-th="Sells" className="num r down">{fmtInt(r.sells)}</td>
     </tr>
   );
 }
@@ -262,11 +283,11 @@ function NotableRow({ item, committees }: { item: NotableItem; committees: { nam
           <div className="mgrid">
             <span>
               <span className="detail-label">Traded</span>
-              <div className="num">{fmtDate(t.tx_date)}</div>
+              <div className="num">{fmtDateY(t.tx_date)}</div>
             </span>
             <span>
               <span className="detail-label">Disclosed</span>
-              <div className="num">{fmtDate(t.disclosed_date)}</div>
+              <div className="num">{fmtDateY(t.disclosed_date)}</div>
             </span>
             <span>
               <span className="detail-label">{t.chamber === 'Executive' ? 'Role' : 'Chamber'}</span>
@@ -312,6 +333,8 @@ export default function CongressGovTab() {
   const [notableWindow, setNotableWindow] = useState<NotableWindow>(30);
   /** Trades-table sort: date desc (newest first) is the default. */
   const [tradeSort, setTradeSort] = useState<{ key: TradeSortKey; dir: 1 | -1 }>({ key: 'date', dir: -1 });
+  /** Deep-linked trade row (from the Daily Brief) to highlight + scroll to. */
+  const [highlightKey, setHighlightKey] = useState<string | null>(null);
 
   const committeesByMember = useMemo(() => {
     const m = new Map<string, { name: string; role?: string | null }[]>();
@@ -513,6 +536,41 @@ export default function CongressGovTab() {
     else if (kind === 'cluster') { setClusterOnly(!clusterOnly); setType('all'); }
   };
 
+  /**
+   * Deep link from the Daily Brief's New developments: on mount, take the
+   * pending link (if any) and jump straight to that trade — right branch,
+   * Trades view, search set to the ticker/member, other filters reset so the
+   * trade is actually visible, newest-first sort.
+   */
+  useEffect(() => {
+    const link = takeCongressDeepLink();
+    if (!link) return;
+    setBranch(link.branch);
+    setView('trades');
+    setQuery(link.query);
+    setChamber('all');
+    setType('all');
+    setClusterOnly(false);
+    setCommittee('all');
+    setMinAmount(0);
+    setKeyFilter(null);
+    setPage(0);
+    setTradeSort({ key: 'date', dir: -1 });
+    setHighlightKey(link.key);
+    // Mount-only: the link is consumed once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** Once the deep-linked row is rendered, scroll it into view. */
+  useEffect(() => {
+    if (!highlightKey) return;
+    const id = window.setTimeout(() => {
+      const el = document.querySelector(`[data-trade-key="${CSS.escape(highlightKey)}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 150);
+    return () => window.clearTimeout(id);
+  }, [highlightKey, pageRows]);
+
   if (loading) return <LoadingPanel what="disclosure data" />;
   if (error || !data)
     return (
@@ -538,7 +596,7 @@ export default function CongressGovTab() {
           )}
           {freshness ? (
             <>
-              {' '}· latest filing <b>{fmtDate(freshness)}</b>
+              {' '}· latest filing <b>{fmtDateY(freshness)}</b>
             </>
           ) : null}
         </p>
@@ -876,7 +934,7 @@ export default function CongressGovTab() {
           {pageRows.length > 0 ? (
             <>
               <div className="table-scroll">
-                <table className="dtable">
+                <table className="dtable trades-table">
                   <thead>
                     <tr>
                       <th>
@@ -900,16 +958,21 @@ export default function CongressGovTab() {
                           Disclosed{sortArrow('date')}
                         </button>
                       </th>
-                      <th className="hide-sm">Branch</th>
-                      <th className="hide-sm">Traded</th>
-                      <th className="hide-sm">Lag</th>
-                      <th className="hide-sm">Signal</th>
-                      <th className="hide-sm">Filing</th>
+                      <th className="hide-md">Branch</th>
+                      <th className="hide-narrow">Traded</th>
+                      <th className="hide-md">Lag</th>
+                      <th className="hide-md">Signal</th>
+                      <th className="hide-md">Filing</th>
                     </tr>
                   </thead>
                   <tbody>
                     {pageRows.map((t, i) => (
-                      <TradeRow key={`${t.member}-${t.tx_date}-${t.disclosed_date}-${i}`} t={t} committees={committeesFor(t.member)} />
+                      <TradeRow
+                        key={`${t.member}-${t.tx_date}-${t.disclosed_date}-${i}`}
+                        t={t}
+                        committees={committeesFor(t.member)}
+                        highlight={highlightKey !== null && highlightKey === tradeKey(t)}
+                      />
                     ))}
                   </tbody>
                 </table>

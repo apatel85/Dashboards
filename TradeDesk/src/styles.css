@@ -619,6 +619,51 @@ code {
   background: var(--bg-raised);
 }
 
+/* ── Trades table: fit the view, no horizontal scrolling ─────────────
+ * 10 columns don't fit a tablet. Below 1280px the least-important columns
+ * (Branch, Lag, Signal, Filing) hide — their values stay reachable by
+ * tapping a row, which shows them in the detail grid below. Below 1100px
+ * Traded hides too, the asset name truncates, and the 760px min-width
+ * is dropped so the table can shrink to the container. */
+@media (max-width: 1280px) {
+  .dtable td.hide-md,
+  .dtable th.hide-md {
+    display: none;
+  }
+  /* Detail grid carries the hidden columns' values at these widths. */
+  .only-sm {
+    display: block;
+  }
+  .only-sm.mgrid {
+    display: grid;
+  }
+}
+
+@media (max-width: 1100px) {
+  .dtable td.hide-narrow,
+  .dtable th.hide-narrow {
+    display: none;
+  }
+  .dtable.trades-table {
+    min-width: 0;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1100px) {
+  .dtable.trades-table .asset-sub {
+    display: block;
+    max-width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Deep-linked trade row (from the Daily Brief): stays visibly marked. */
+.dtable tr.trade-highlight td {
+  background: rgba(63, 169, 245, 0.14);
+}
+
 /* Mobile-only helpers (desktop default: hidden; shown in the ≤640px query) */
 .only-sm {
   display: none;
@@ -1427,7 +1472,7 @@ code {
 
 /* ── Responsive ────────────────────────────────────────────── */
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   body {
     font-size: 13px;
   }
@@ -1535,6 +1580,11 @@ code {
   .dtable tr.detail-row td {
     display: block;
     text-align: left;
+  }
+
+  /* Deep-linked row keeps its highlight in card mode too. */
+  .dtable tr.trade-highlight {
+    background: rgba(63, 169, 245, 0.14);
   }
 
   .dtable tr.detail-row td::before {
@@ -2714,6 +2764,57 @@ body {
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+/* Collapsible block header: full-width tap target, chevron on the right. */
+.alerts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 0 4px;
+  cursor: pointer;
+  color: var(--text);
+  font-family: var(--font-ui);
+  text-align: left;
+}
+.alerts-head .alerts-title {
+  margin: 0;
+}
+.alerts-head:hover .alerts-title {
+  color: var(--accent);
+}
+.alerts-head:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.alerts-chev {
+  color: var(--text-faint);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.alerts-hint {
+  margin-top: -4px;
+}
+/* A disclosure row is a tap target: opens the trade in Congress & Gov. */
+.alert-item-clickable {
+  cursor: pointer;
+  border-radius: 6px;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin-left: -6px;
+  margin-right: -6px;
+}
+.alert-item-clickable:hover {
+  background: rgba(63, 169, 245, 0.06);
+}
+.alert-item-clickable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .alerts-block > p {
   margin: 0 0 8px;
