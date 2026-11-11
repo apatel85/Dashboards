@@ -4,20 +4,74 @@
     "name": "AAPL",
     "sector": "Unknown",
     "subsector": "Unknown",
-    "index_membership": ["SP500", "NASDAQ100"],
+    "index_membership": [
+      "SP500",
+      "NASDAQ100"
+    ],
     "thesis": "AAPL is a Stage 2 leader 1.9% below its 52-week high with elite fundamentals (Piotroski 8/9, 27.2% net margin, +16.4% revenue growth) and 3-month relative strength of +17.8% vs SPY. The trade is the breakout trigger at $355.38 on expanding volume, not a chase at the current price. Tempering conviction: disclosed congressional flow is net selling (-$749k, 9 sells vs 3 buys) and there is no near-term catalyst, so the breakout needs volume confirmation in a choppy market.",
     "score": 71,
     "p_up": 60,
-    "flow": {"direction": "distribution", "flow_score": 79, "net_flow": -749003, "buy_amount": 24002, "sell_amount": 773005, "officials": 9, "buy_trades": 3, "sell_trades": 9, "cluster": true, "latest_ref_date": "2026-11-04"},
+    "flow": {
+      "direction": "distribution",
+      "flow_score": 79,
+      "net_flow": -749003,
+      "buy_amount": 24002,
+      "sell_amount": 773005,
+      "officials": 9,
+      "buy_trades": 3,
+      "sell_trades": 9,
+      "cluster": true,
+      "latest_ref_date": "2026-11-04"
+    },
     "score_breakdown": [
-      {"attribute": "earnings_acceleration", "weight": 0.2, "score": 60, "note": "Revenue +16.4% YoY but no earnings momentum data in window"},
-      {"attribute": "trend_relative_strength", "weight": 0.2, "score": 80, "note": "Stage 2, RS rank 86, 1.9% below 52w high"},
-      {"attribute": "base_quality_volume", "weight": 0.15, "score": 75, "note": "Trend template passes, volume 1.32x 50-day average"},
-      {"attribute": "estimate_revisions", "weight": 0.1, "score": 50, "note": "No estimate-revision data in the prefetch"},
-      {"attribute": "catalyst_in_window", "weight": 0.1, "score": 40, "note": "No dated catalyst in the next 2 weeks"},
-      {"attribute": "smart_money", "weight": 0.1, "score": 45, "note": "Congressional flow is net selling despite 3 small buys"},
-      {"attribute": "sector_market", "weight": 0.1, "score": 50, "note": "Choppy market regime, SPY below its 50-day"},
-      {"attribute": "float_short_interest", "weight": 0.05, "score": 50, "note": "No float/short-interest data in the prefetch"}
+      {
+        "attribute": "earnings_acceleration",
+        "weight": 0.2,
+        "score": 60,
+        "note": "Revenue +16.4% YoY but no earnings momentum data in window"
+      },
+      {
+        "attribute": "trend_relative_strength",
+        "weight": 0.2,
+        "score": 80,
+        "note": "Stage 2, RS rank 86, 1.9% below 52w high"
+      },
+      {
+        "attribute": "base_quality_volume",
+        "weight": 0.15,
+        "score": 75,
+        "note": "Trend template passes, volume 1.32x 50-day average"
+      },
+      {
+        "attribute": "estimate_revisions",
+        "weight": 0.1,
+        "score": 50,
+        "note": "No estimate-revision data in the prefetch"
+      },
+      {
+        "attribute": "catalyst_in_window",
+        "weight": 0.1,
+        "score": 40,
+        "note": "No dated catalyst in the next 2 weeks"
+      },
+      {
+        "attribute": "smart_money",
+        "weight": 0.1,
+        "score": 45,
+        "note": "Congressional flow is net selling despite 3 small buys"
+      },
+      {
+        "attribute": "sector_market",
+        "weight": 0.1,
+        "score": 50,
+        "note": "Choppy market regime, SPY below its 50-day"
+      },
+      {
+        "attribute": "float_short_interest",
+        "weight": 0.05,
+        "score": 50,
+        "note": "No float/short-interest data in the prefetch"
+      }
     ],
     "trend_template_pass": true,
     "stage": "Stage 2",
@@ -33,16 +87,56 @@
     "stop_price": 325.33,
     "invalidation": "A close below $325.33 kills the breakout thesis; loss of the SMA50 at $337.27 on volume would also invalidate the setup.",
     "analyst_notes": [
-      {"agent": "market_analyst", "summary": "Stage 2 uptrend: price $348.51 above rising SMA50 $337.27 and SMA200 $299.78, 1.9% below the 52-week high $355.38. RSI 53.1 is neutral with room to run, MACD histogram slightly negative (-0.067), Bollinger %B 0.75. Volume running 1.32x its 50-day average and 3-month relative strength is +17.8% vs SPY (rank 86). Key levels: $355.38 resistance, $337.27 and $325.33 support.", "stance": "bullish"},
-      {"agent": "fundamentals_analyst", "summary": "Piotroski 8/9, Altman Z 11.16, earnings quality 1.81 (operating cash flow well above net income), health score 69. Revenue +16.4% YoY with a 27.2% net margin. No quality red flags in the available data; the balance sheet is a fortress. Earnings context is thin (no upcoming report in the window), but the fundamental picture is the strongest of the six names.", "stance": "bullish"},
-      {"agent": "news_analyst", "summary": "No material company catalyst in the last 7 days. Headlines are mostly noise: an iPhone security-flaw warning, ESG-fund comparisons, and third-party takes on AI hardware. No dated catalyst inside the next 2 weeks. Themes: product security (minor), AI hardware demand (tangential).", "stance": "neutral"},
-      {"agent": "sentiment_analyst", "summary": "Headlines-only read (no social-sentiment source exists). Tone is mixed-to-neutral with normal attention levels — no spike after the run, which is healthy. Overall band mildly bullish, score 5/10, confidence low. Limitation: headlines only; no social chatter measured.", "stance": "neutral"},
-      {"agent": "bull_researcher", "summary": "AAPL is a Stage 2 leader 1.9% from its highs with the strongest fundamentals in this batch (Piotroski 8, 27.2% margins) and expanding volume. The breakout trigger at $355.38 is clean and the 3-month relative strength of +17.8% shows institutions are already accumulating. Strongest point: trend + quality + momentum all align at the highs.", "stance": "bullish"},
-      {"agent": "bear_researcher", "summary": "The flow that selected this name is net selling: 9 officials sold vs 3 bought, -$749k net, flow score 79 distribution. MACD histogram is negative, there is no near-term catalyst, and the breakout has not happened yet — buying below the high in a choppy market risks a false breakout. Strongest point: disclosed officials are selling into this strength.", "stance": "bearish"},
-      {"agent": "research_manager", "summary": "Stage 2 trend with RS rank 86 and elite fundamentals outweigh the distribution flow; the trade is a breakout trigger, not a chase. Weighted score 60.3/100. Quality gate passes.", "stance": "bullish"},
-      {"agent": "trader", "summary": "Buy the high-volume break of $355.38; entry $355.38, stop $325.33 (the brief's 20-day-low level). Position sized to ~2% account risk — the stop is ~8.4% away, so keep the position modest. Invalidation: a close below $325.33 kills the breakout thesis.", "stance": "bullish"},
-      {"agent": "risk_review", "summary": "Top risks: (1) Congressional distribution flow — 9 officials sold into strength. (2) False breakout risk in a choppy regime with no catalyst. (3) MACD histogram negative — momentum is not yet confirming. Thesis-killer: a close below $325.33.", "stance": "neutral"},
-      {"agent": "portfolio_manager", "summary": "AAPL is a quality Stage 2 breakout setup 1.9% from its highs, but the trade is the trigger, not the current price, and disclosed selling tempers conviction.", "stance": "bullish"}
+      {
+        "agent": "market_analyst",
+        "summary": "Stage 2 uptrend: price $348.51 above rising SMA50 $337.27 and SMA200 $299.78, 1.9% below the 52-week high $355.38. RSI 53.1 is neutral with room to run, MACD histogram slightly negative (-0.067), Bollinger %B 0.75. Volume running 1.32x its 50-day average and 3-month relative strength is +17.8% vs SPY (rank 86). Key levels: $355.38 resistance, $337.27 and $325.33 support.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "fundamentals_analyst",
+        "summary": "Piotroski 8/9, Altman Z 11.16, earnings quality 1.81 (operating cash flow well above net income), health score 69. Revenue +16.4% YoY with a 27.2% net margin. No quality red flags in the available data; the balance sheet is a fortress. Earnings context is thin (no upcoming report in the window), but the fundamental picture is the strongest of the six names.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "news_analyst",
+        "summary": "No material company catalyst in the last 7 days. Headlines are mostly noise: an iPhone security-flaw warning, ESG-fund comparisons, and third-party takes on AI hardware. No dated catalyst inside the next 2 weeks. Themes: product security (minor), AI hardware demand (tangential).",
+        "stance": "neutral"
+      },
+      {
+        "agent": "sentiment_analyst",
+        "summary": "Headlines-only read (no social-sentiment source exists). Tone is mixed-to-neutral with normal attention levels — no spike after the run, which is healthy. Overall band mildly bullish, score 5/10, confidence low. Limitation: headlines only; no social chatter measured.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "bull_researcher",
+        "summary": "AAPL is a Stage 2 leader 1.9% from its highs with the strongest fundamentals in this batch (Piotroski 8, 27.2% margins) and expanding volume. The breakout trigger at $355.38 is clean and the 3-month relative strength of +17.8% shows institutions are already accumulating. Strongest point: trend + quality + momentum all align at the highs.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "bear_researcher",
+        "summary": "The flow that selected this name is net selling: 9 officials sold vs 3 bought, -$749k net, flow score 79 distribution. MACD histogram is negative, there is no near-term catalyst, and the breakout has not happened yet — buying below the high in a choppy market risks a false breakout. Strongest point: disclosed officials are selling into this strength.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "research_manager",
+        "summary": "Stage 2 trend with RS rank 86 and elite fundamentals outweigh the distribution flow; the trade is a breakout trigger, not a chase. Weighted score 60.3/100. Quality gate passes.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "trader",
+        "summary": "Buy the high-volume break of $355.38; entry $355.38, stop $325.33 (the brief's 20-day-low level). Position sized to ~2% account risk — the stop is ~8.4% away, so keep the position modest. Invalidation: a close below $325.33 kills the breakout thesis.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "risk_review",
+        "summary": "Top risks: (1) Congressional distribution flow — 9 officials sold into strength. (2) False breakout risk in a choppy regime with no catalyst. (3) MACD histogram negative — momentum is not yet confirming. Thesis-killer: a close below $325.33.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "portfolio_manager",
+        "summary": "AAPL is a quality Stage 2 breakout setup 1.9% from its highs, but the trade is the trigger, not the current price, and disclosed selling tempers conviction.",
+        "stance": "bullish"
+      }
     ],
     "updated_at": "2026-11-11T02:55:41.000Z"
   },
@@ -55,16 +149,67 @@
     "thesis": "Alphabet is a quality company — fortress balance sheet, 29.3% net margins — in a confirmed Stage 4 downtrend, 29.7% below its highs with RS rank 23 and a falling 200-day. Disclosed flow is net selling (-$482k) and Piotroski 4 flags deteriorating financials. The oversold RSI of 25 argues for a bounce, not a trend change; wait for a reclaim of the SMA200 before considering a long.",
     "score": 34,
     "p_up": 42,
-    "flow": {"direction": "distribution", "flow_score": 75, "net_flow": -482501, "buy_amount": 16001, "sell_amount": 498503, "officials": 5, "buy_trades": 2, "sell_trades": 5, "cluster": true, "latest_ref_date": "2026-09-18"},
+    "flow": {
+      "direction": "distribution",
+      "flow_score": 75,
+      "net_flow": -482501,
+      "buy_amount": 16001,
+      "sell_amount": 498503,
+      "officials": 5,
+      "buy_trades": 2,
+      "sell_trades": 5,
+      "cluster": true,
+      "latest_ref_date": "2026-09-18"
+    },
     "score_breakdown": [
-      {"attribute": "earnings_acceleration", "weight": 0.2, "score": 55, "note": "Revenue +12% YoY but no acceleration signal"},
-      {"attribute": "trend_relative_strength", "weight": 0.2, "score": 25, "note": "Stage 4, RS rank 23, falling 200-day"},
-      {"attribute": "base_quality_volume", "weight": 0.15, "score": 40, "note": "No trend template, volume elevated in a downtrend"},
-      {"attribute": "estimate_revisions", "weight": 0.1, "score": 50, "note": "No estimate-revision data"},
-      {"attribute": "catalyst_in_window", "weight": 0.1, "score": 40, "note": "No dated catalyst in the next 2 weeks"},
-      {"attribute": "smart_money", "weight": 0.1, "score": 40, "note": "Congressional flow is net selling"},
-      {"attribute": "sector_market", "weight": 0.1, "score": 45, "note": "Choppy regime plus AI financing fears"},
-      {"attribute": "float_short_interest", "weight": 0.05, "score": 50, "note": "No float/short-interest data"}
+      {
+        "attribute": "earnings_acceleration",
+        "weight": 0.2,
+        "score": 55,
+        "note": "Revenue +12% YoY but no acceleration signal"
+      },
+      {
+        "attribute": "trend_relative_strength",
+        "weight": 0.2,
+        "score": 25,
+        "note": "Stage 4, RS rank 23, falling 200-day"
+      },
+      {
+        "attribute": "base_quality_volume",
+        "weight": 0.15,
+        "score": 40,
+        "note": "No trend template, volume elevated in a downtrend"
+      },
+      {
+        "attribute": "estimate_revisions",
+        "weight": 0.1,
+        "score": 50,
+        "note": "No estimate-revision data"
+      },
+      {
+        "attribute": "catalyst_in_window",
+        "weight": 0.1,
+        "score": 40,
+        "note": "No dated catalyst in the next 2 weeks"
+      },
+      {
+        "attribute": "smart_money",
+        "weight": 0.1,
+        "score": 40,
+        "note": "Congressional flow is net selling"
+      },
+      {
+        "attribute": "sector_market",
+        "weight": 0.1,
+        "score": 45,
+        "note": "Choppy regime plus AI financing fears"
+      },
+      {
+        "attribute": "float_short_interest",
+        "weight": 0.05,
+        "score": 50,
+        "note": "No float/short-interest data"
+      }
     ],
     "trend_template_pass": false,
     "stage": "Stage 4",
@@ -75,21 +220,63 @@
     "unusual_options": true,
     "sentiment": "mixed",
     "quality_gate_pass": true,
-    "quality_flags": ["Piotroski F-score 4/9 — deteriorating financials"],
+    "quality_flags": [
+      "Piotroski F-score 4/9 — deteriorating financials"
+    ],
     "trigger_price": 340,
     "stop_price": 270.7,
     "invalidation": "A close below the 52-week low of $270.70 confirms further downside and kills any bounce thesis.",
     "analyst_notes": [
-      {"agent": "market_analyst", "summary": "Stage 4 downtrend: $287.38 is below a falling SMA50 $330.72 and SMA200 $339.08, 29.7% below the 52-week high. RSI 25 is oversold, MACD histogram -1.779 is deeply negative, Bollinger %B 0.27. Volume 1.32x average. Relative strength -13.4% vs SPY (rank 23). Key levels: $330.72 and $339.08 resistance, $270.70 52-week-low support.", "stance": "bearish"},
-      {"agent": "fundamentals_analyst", "summary": "Altman Z 13.12 and health score 84 show a fortress balance sheet; revenue +12% YoY with a 29.3% net margin. But Piotroski is only 4/9, flagging deteriorating financial trends. Quality is mixed: the balance sheet is strong, the trend in the numbers is not.", "stance": "neutral"},
-      {"agent": "news_analyst", "summary": "No company-specific catalyst. Headlines are sector-level: AI advertising, data-center backlash, hyperscaler cost debates. Nothing dated inside 2 weeks.", "stance": "neutral"},
-      {"agent": "sentiment_analyst", "summary": "Headlines-only. Tone is mildly bearish with elevated attention after a ~30% drawdown — attention spiking after a big fall is a caution flag, not a buy signal. Band mildly bearish, score 4/10, confidence low. Limitation: headlines only.", "stance": "bearish"},
-      {"agent": "bull_researcher", "summary": "RSI 25 and 30% off the highs with a fortress balance sheet (Altman 13.1, health 84) make this a bounce candidate; Alphabet's Search/YouTube cash flows are intact and the stock is the cheapest mega-cap AI name. Strongest point: oversold + quality balance sheet.", "stance": "bullish"},
-      {"agent": "bear_researcher", "summary": "Stage 4 is a confirmed downtrend with a falling 200-day and RS rank 23; distribution flow of -$482k shows officials still selling; Piotroski 4 flags weak financials; there is no catalyst to reverse the trend. Catching a falling knife. Strongest point: the trend is down on every timeframe that matters.", "stance": "bearish"},
-      {"agent": "research_manager", "summary": "Downtrend + distribution flow dominate; oversold argues for a bounce, not a trend change. Weighted score 42/100. Quality gate passes with a Piotroski flag.", "stance": "bearish"},
-      {"agent": "trader", "summary": "Hold; buy only a reclaim — entry $340.00 above the SMA200, stop $270.70 at the 52-week low. No position until the reclaim triggers. Invalidation: close below $270.70.", "stance": "neutral"},
-      {"agent": "risk_review", "summary": "Top risks: (1) Stage 4 momentum — oversold can get more oversold. (2) Continued distribution by officials. (3) AI capex/financing fears compressing the multiple further. Thesis-killer: a close below the 52-week low $270.70.", "stance": "bearish"},
-      {"agent": "portfolio_manager", "summary": "Alphabet is a quality company in a confirmed Stage 4 downtrend with distribution flow; the oversold RSI argues for a bounce, not a trend change. Wait for the reclaim.", "stance": "bearish"}
+      {
+        "agent": "market_analyst",
+        "summary": "Stage 4 downtrend: $287.38 is below a falling SMA50 $330.72 and SMA200 $339.08, 29.7% below the 52-week high. RSI 25 is oversold, MACD histogram -1.779 is deeply negative, Bollinger %B 0.27. Volume 1.32x average. Relative strength -13.4% vs SPY (rank 23). Key levels: $330.72 and $339.08 resistance, $270.70 52-week-low support.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "fundamentals_analyst",
+        "summary": "Altman Z 13.12 and health score 84 show a fortress balance sheet; revenue +12% YoY with a 29.3% net margin. But Piotroski is only 4/9, flagging deteriorating financial trends. Quality is mixed: the balance sheet is strong, the trend in the numbers is not.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "news_analyst",
+        "summary": "No company-specific catalyst. Headlines are sector-level: AI advertising, data-center backlash, hyperscaler cost debates. Nothing dated inside 2 weeks.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "sentiment_analyst",
+        "summary": "Headlines-only. Tone is mildly bearish with elevated attention after a ~30% drawdown — attention spiking after a big fall is a caution flag, not a buy signal. Band mildly bearish, score 4/10, confidence low. Limitation: headlines only.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "bull_researcher",
+        "summary": "RSI 25 and 30% off the highs with a fortress balance sheet (Altman 13.1, health 84) make this a bounce candidate; Alphabet's Search/YouTube cash flows are intact and the stock is the cheapest mega-cap AI name. Strongest point: oversold + quality balance sheet.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "bear_researcher",
+        "summary": "Stage 4 is a confirmed downtrend with a falling 200-day and RS rank 23; distribution flow of -$482k shows officials still selling; Piotroski 4 flags weak financials; there is no catalyst to reverse the trend. Catching a falling knife. Strongest point: the trend is down on every timeframe that matters.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "research_manager",
+        "summary": "Downtrend + distribution flow dominate; oversold argues for a bounce, not a trend change. Weighted score 42/100. Quality gate passes with a Piotroski flag.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "trader",
+        "summary": "Hold; buy only a reclaim — entry $340.00 above the SMA200, stop $270.70 at the 52-week low. No position until the reclaim triggers. Invalidation: close below $270.70.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "risk_review",
+        "summary": "Top risks: (1) Stage 4 momentum — oversold can get more oversold. (2) Continued distribution by officials. (3) AI capex/financing fears compressing the multiple further. Thesis-killer: a close below the 52-week low $270.70.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "portfolio_manager",
+        "summary": "Alphabet is a quality company in a confirmed Stage 4 downtrend with distribution flow; the oversold RSI argues for a bounce, not a trend change. Wait for the reclaim.",
+        "stance": "bearish"
+      }
     ],
     "updated_at": "2026-11-11T02:55:41.000Z"
   },
@@ -102,16 +289,67 @@
     "thesis": "Microsoft is a Stage 2 quality compounder 4.6% below its highs with elite 39.7% net margins and +18.8% revenue growth, health score 84. The trade is the breakout above $559.15. Tempering conviction: 12 officials sold a net -$431k, and the Anthropic challenge to Office is the first credible threat to the core franchise — a narrative risk that bears watching, though not yet a numbers risk.",
     "score": 71,
     "p_up": 58,
-    "flow": {"direction": "distribution", "flow_score": 75, "net_flow": -431502, "buy_amount": 89003, "sell_amount": 520505, "officials": 12, "buy_trades": 5, "sell_trades": 10, "cluster": true, "latest_ref_date": "2026-11-04"},
+    "flow": {
+      "direction": "distribution",
+      "flow_score": 75,
+      "net_flow": -431502,
+      "buy_amount": 89003,
+      "sell_amount": 520505,
+      "officials": 12,
+      "buy_trades": 5,
+      "sell_trades": 10,
+      "cluster": true,
+      "latest_ref_date": "2026-11-04"
+    },
     "score_breakdown": [
-      {"attribute": "earnings_acceleration", "weight": 0.2, "score": 70, "note": "Revenue +18.8% YoY, 39.7% net margin"},
-      {"attribute": "trend_relative_strength", "weight": 0.2, "score": 72, "note": "Stage 2, RS rank 72, 4.6% below 52w high"},
-      {"attribute": "base_quality_volume", "weight": 0.15, "score": 70, "note": "Trend template passes, volume 1.5x 50-day average"},
-      {"attribute": "estimate_revisions", "weight": 0.1, "score": 50, "note": "No estimate-revision data"},
-      {"attribute": "catalyst_in_window", "weight": 0.1, "score": 45, "note": "Anthropic Office threat is a negative narrative, not a dated catalyst"},
-      {"attribute": "smart_money", "weight": 0.1, "score": 50, "note": "Distribution flow offset by 5 clustered congressional buys"},
-      {"attribute": "sector_market", "weight": 0.1, "score": 55, "note": "Choppy regime; software holding up better than semis"},
-      {"attribute": "float_short_interest", "weight": 0.05, "score": 50, "note": "No float/short-interest data"}
+      {
+        "attribute": "earnings_acceleration",
+        "weight": 0.2,
+        "score": 70,
+        "note": "Revenue +18.8% YoY, 39.7% net margin"
+      },
+      {
+        "attribute": "trend_relative_strength",
+        "weight": 0.2,
+        "score": 72,
+        "note": "Stage 2, RS rank 72, 4.6% below 52w high"
+      },
+      {
+        "attribute": "base_quality_volume",
+        "weight": 0.15,
+        "score": 70,
+        "note": "Trend template passes, volume 1.5x 50-day average"
+      },
+      {
+        "attribute": "estimate_revisions",
+        "weight": 0.1,
+        "score": 50,
+        "note": "No estimate-revision data"
+      },
+      {
+        "attribute": "catalyst_in_window",
+        "weight": 0.1,
+        "score": 45,
+        "note": "Anthropic Office threat is a negative narrative, not a dated catalyst"
+      },
+      {
+        "attribute": "smart_money",
+        "weight": 0.1,
+        "score": 50,
+        "note": "Distribution flow offset by 5 clustered congressional buys"
+      },
+      {
+        "attribute": "sector_market",
+        "weight": 0.1,
+        "score": 55,
+        "note": "Choppy regime; software holding up better than semis"
+      },
+      {
+        "attribute": "float_short_interest",
+        "weight": 0.05,
+        "score": 50,
+        "note": "No float/short-interest data"
+      }
     ],
     "trend_template_pass": true,
     "stage": "Stage 2",
@@ -127,16 +365,56 @@
     "stop_price": 517.8,
     "invalidation": "A close below the SMA50 at $517.80 kills the breakout setup.",
     "analyst_notes": [
-      {"agent": "market_analyst", "summary": "Stage 2: $533.16 above SMA50 $517.80 and a rising SMA200 $440.56, 4.6% below the 52-week high $559.15. RSI 50.1 is neutral, MACD histogram slightly negative (-0.108), Bollinger %B 0.55. Volume 1.5x average, 3-month RS +10.9% (rank 72). Key levels: $559.15 resistance, $517.80 and $440.56 support.", "stance": "bullish"},
-      {"agent": "fundamentals_analyst", "summary": "Revenue +18.8% YoY with an elite 39.7% net margin, health score 84, Altman Z 8.51. Piotroski 5/9 is middling — the only soft spot. The growth + margin combination is the strongest in this batch after AAPL.", "stance": "bullish"},
-      {"agent": "news_analyst", "summary": "One material theme: Anthropic challenging Office software (IBD, Nov 10) — a genuine competitive-threat narrative for the Office franchise. Otherwise: lobbying on transceiver bans, CoreWeave earnings, and noise about overtaking Nvidia. No dated catalyst in 2 weeks.", "stance": "neutral"},
-      {"agent": "sentiment_analyst", "summary": "Headlines-only. Tone mixed: the Anthropic threat is a real negative, offset by steady business coverage. Band mildly bullish, score 5/10, confidence low. Limitation: headlines only.", "stance": "neutral"},
-      {"agent": "bull_researcher", "summary": "Stage 2 compounder 4.6% from highs, 39.7% net margins, +18.8% revenue growth, health 84, and 5 clustered congressional buys. The trend, the quality and the smart-money buys align. Strongest point: elite margins + growth at the highs.", "stance": "bullish"},
-      {"agent": "bear_researcher", "summary": "Twelve officials sold a net -$431k (distribution, flow 75) and the Anthropic threat to Office is the first credible challenge to the core franchise in years. Piotroski 5 and a negative MACD histogram say momentum is not confirming yet. Strongest point: officials are selling while a real competitive threat emerges.", "stance": "bearish"},
-      {"agent": "research_manager", "summary": "Quality growth + Stage 2 trend outweigh the distribution flow and the Anthropic headline, which is a narrative risk, not yet a numbers risk. Weighted score 61.4/100. Quality gate passes.", "stance": "bullish"},
-      {"agent": "trader", "summary": "Buy the breakout above $559.15; entry $559.15, stop $517.80 (SMA50, ~7.4% away, inside the playbook max). Size to ~2% account risk. Invalidation: a close below $517.80.", "stance": "bullish"},
-      {"agent": "risk_review", "summary": "Top risks: (1) Anthropic/Office disruption narrative gaining traction. (2) Distribution flow by 12 officials. (3) Choppy-market rejection at the highs. Thesis-killer: a close below the SMA50 at $517.80.", "stance": "neutral"},
-      {"agent": "portfolio_manager", "summary": "MSFT is a Stage 2 quality compounder near its highs with elite margins, but disclosed selling and the Anthropic threat cap conviction — buy the breakout, not the current price.", "stance": "bullish"}
+      {
+        "agent": "market_analyst",
+        "summary": "Stage 2: $533.16 above SMA50 $517.80 and a rising SMA200 $440.56, 4.6% below the 52-week high $559.15. RSI 50.1 is neutral, MACD histogram slightly negative (-0.108), Bollinger %B 0.55. Volume 1.5x average, 3-month RS +10.9% (rank 72). Key levels: $559.15 resistance, $517.80 and $440.56 support.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "fundamentals_analyst",
+        "summary": "Revenue +18.8% YoY with an elite 39.7% net margin, health score 84, Altman Z 8.51. Piotroski 5/9 is middling — the only soft spot. The growth + margin combination is the strongest in this batch after AAPL.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "news_analyst",
+        "summary": "One material theme: Anthropic challenging Office software (IBD, Nov 10) — a genuine competitive-threat narrative for the Office franchise. Otherwise: lobbying on transceiver bans, CoreWeave earnings, and noise about overtaking Nvidia. No dated catalyst in 2 weeks.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "sentiment_analyst",
+        "summary": "Headlines-only. Tone mixed: the Anthropic threat is a real negative, offset by steady business coverage. Band mildly bullish, score 5/10, confidence low. Limitation: headlines only.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "bull_researcher",
+        "summary": "Stage 2 compounder 4.6% from highs, 39.7% net margins, +18.8% revenue growth, health 84, and 5 clustered congressional buys. The trend, the quality and the smart-money buys align. Strongest point: elite margins + growth at the highs.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "bear_researcher",
+        "summary": "Twelve officials sold a net -$431k (distribution, flow 75) and the Anthropic threat to Office is the first credible challenge to the core franchise in years. Piotroski 5 and a negative MACD histogram say momentum is not confirming yet. Strongest point: officials are selling while a real competitive threat emerges.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "research_manager",
+        "summary": "Quality growth + Stage 2 trend outweigh the distribution flow and the Anthropic headline, which is a narrative risk, not yet a numbers risk. Weighted score 61.4/100. Quality gate passes.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "trader",
+        "summary": "Buy the breakout above $559.15; entry $559.15, stop $517.80 (SMA50, ~7.4% away, inside the playbook max). Size to ~2% account risk. Invalidation: a close below $517.80.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "risk_review",
+        "summary": "Top risks: (1) Anthropic/Office disruption narrative gaining traction. (2) Distribution flow by 12 officials. (3) Choppy-market rejection at the highs. Thesis-killer: a close below the SMA50 at $517.80.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "portfolio_manager",
+        "summary": "MSFT is a Stage 2 quality compounder near its highs with elite margins, but disclosed selling and the Anthropic threat cap conviction — buy the breakout, not the current price.",
+        "stance": "bullish"
+      }
     ],
     "updated_at": "2026-11-11T02:55:41.000Z"
   },
@@ -149,16 +427,67 @@
     "thesis": "Alphabet Class C mirrors GOOGL: a quality company in a confirmed Stage 4 downtrend, 29.6% below its highs with RS rank 23 and a falling 200-day. Same fortress balance sheet, same net-selling flow (-$258k), same oversold RSI of 24. Wait for a reclaim of the SMA200; a break of the 52-week low confirms further downside.",
     "score": 34,
     "p_up": 42,
-    "flow": {"direction": "distribution", "flow_score": 72, "net_flow": -258001, "buy_amount": 8001, "sell_amount": 266002, "officials": 4, "buy_trades": 1, "sell_trades": 4, "cluster": true, "latest_ref_date": "2026-10-27"},
+    "flow": {
+      "direction": "distribution",
+      "flow_score": 72,
+      "net_flow": -258001,
+      "buy_amount": 8001,
+      "sell_amount": 266002,
+      "officials": 4,
+      "buy_trades": 1,
+      "sell_trades": 4,
+      "cluster": true,
+      "latest_ref_date": "2026-10-27"
+    },
     "score_breakdown": [
-      {"attribute": "earnings_acceleration", "weight": 0.2, "score": 55, "note": "Revenue +12% YoY but no acceleration signal"},
-      {"attribute": "trend_relative_strength", "weight": 0.2, "score": 25, "note": "Stage 4, RS rank 23, falling 200-day"},
-      {"attribute": "base_quality_volume", "weight": 0.15, "score": 40, "note": "No trend template, volume elevated in a downtrend"},
-      {"attribute": "estimate_revisions", "weight": 0.1, "score": 50, "note": "No estimate-revision data"},
-      {"attribute": "catalyst_in_window", "weight": 0.1, "score": 40, "note": "No dated catalyst in the next 2 weeks"},
-      {"attribute": "smart_money", "weight": 0.1, "score": 40, "note": "Congressional flow is net selling"},
-      {"attribute": "sector_market", "weight": 0.1, "score": 45, "note": "Choppy regime plus AI financing fears"},
-      {"attribute": "float_short_interest", "weight": 0.05, "score": 50, "note": "No float/short-interest data"}
+      {
+        "attribute": "earnings_acceleration",
+        "weight": 0.2,
+        "score": 55,
+        "note": "Revenue +12% YoY but no acceleration signal"
+      },
+      {
+        "attribute": "trend_relative_strength",
+        "weight": 0.2,
+        "score": 25,
+        "note": "Stage 4, RS rank 23, falling 200-day"
+      },
+      {
+        "attribute": "base_quality_volume",
+        "weight": 0.15,
+        "score": 40,
+        "note": "No trend template, volume elevated in a downtrend"
+      },
+      {
+        "attribute": "estimate_revisions",
+        "weight": 0.1,
+        "score": 50,
+        "note": "No estimate-revision data"
+      },
+      {
+        "attribute": "catalyst_in_window",
+        "weight": 0.1,
+        "score": 40,
+        "note": "No dated catalyst in the next 2 weeks"
+      },
+      {
+        "attribute": "smart_money",
+        "weight": 0.1,
+        "score": 40,
+        "note": "Congressional flow is net selling"
+      },
+      {
+        "attribute": "sector_market",
+        "weight": 0.1,
+        "score": 45,
+        "note": "Choppy regime plus AI financing fears"
+      },
+      {
+        "attribute": "float_short_interest",
+        "weight": 0.05,
+        "score": 50,
+        "note": "No float/short-interest data"
+      }
     ],
     "trend_template_pass": false,
     "stage": "Stage 4",
@@ -169,21 +498,63 @@
     "unusual_options": false,
     "sentiment": "mixed",
     "quality_gate_pass": true,
-    "quality_flags": ["Piotroski F-score 4/9 — deteriorating financials"],
+    "quality_flags": [
+      "Piotroski F-score 4/9 — deteriorating financials"
+    ],
     "trigger_price": 337.07,
     "stop_price": 271.41,
     "invalidation": "A close below the 52-week low of $271.41 confirms further downside and kills any bounce thesis.",
     "analyst_notes": [
-      {"agent": "market_analyst", "summary": "Stage 4 downtrend: $284.92 below a falling SMA50 $327.64 and SMA200 $337.07, 29.6% below the 52-week high. RSI 24 oversold, MACD -1.719, Bollinger %B 0.27, volume 1.34x. RS -13.6% (rank 23). Key levels: $327.64 and $337.07 resistance, $271.41 52-week-low support.", "stance": "bearish"},
-      {"agent": "fundamentals_analyst", "summary": "Altman Z 13.02 and health score 84 show a fortress balance sheet; revenue +12% YoY with a 29.3% net margin. But Piotroski is only 4/9, flagging deteriorating financial trends. Quality is mixed: the balance sheet is strong, the trend in the numbers is not.", "stance": "neutral"},
-      {"agent": "news_analyst", "summary": "No company-specific catalyst. Headlines are sector-level: AI advertising, data-center backlash, hyperscaler cost debates. Nothing dated inside 2 weeks.", "stance": "neutral"},
-      {"agent": "sentiment_analyst", "summary": "Headlines-only. Tone is mildly bearish with elevated attention after a ~30% drawdown — attention spiking after a big fall is a caution flag, not a buy signal. Band mildly bearish, score 4/10, confidence low. Limitation: headlines only.", "stance": "bearish"},
-      {"agent": "bull_researcher", "summary": "RSI 24 and 30% off the highs with a fortress balance sheet (Altman 13.0, health 84) make this a bounce candidate; Alphabet's Search/YouTube cash flows are intact. Strongest point: oversold + quality balance sheet.", "stance": "bullish"},
-      {"agent": "bear_researcher", "summary": "Stage 4 is a confirmed downtrend with a falling 200-day and RS rank 23; distribution flow of -$258k shows officials still selling; Piotroski 4 flags weak financials; there is no catalyst to reverse the trend. Strongest point: the trend is down on every timeframe that matters.", "stance": "bearish"},
-      {"agent": "research_manager", "summary": "Downtrend + distribution flow dominate; oversold argues for a bounce, not a trend change. Weighted score 42/100. Quality gate passes with a Piotroski flag.", "stance": "bearish"},
-      {"agent": "trader", "summary": "Hold; buy only a reclaim — entry $337.07 at the SMA200, stop $271.41 at the 52-week low. No position until the reclaim triggers. Invalidation: close below $271.41.", "stance": "neutral"},
-      {"agent": "risk_review", "summary": "Top risks: (1) Stage 4 momentum — oversold can get more oversold. (2) Continued distribution by officials. (3) AI capex/financing fears compressing the multiple further. Thesis-killer: a close below the 52-week low $271.41.", "stance": "bearish"},
-      {"agent": "portfolio_manager", "summary": "Alphabet Class C is the same company as GOOGL with the same verdict: quality balance sheet in a Stage 4 downtrend. Wait for the reclaim.", "stance": "bearish"}
+      {
+        "agent": "market_analyst",
+        "summary": "Stage 4 downtrend: $284.92 below a falling SMA50 $327.64 and SMA200 $337.07, 29.6% below the 52-week high. RSI 24 oversold, MACD -1.719, Bollinger %B 0.27, volume 1.34x. RS -13.6% (rank 23). Key levels: $327.64 and $337.07 resistance, $271.41 52-week-low support.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "fundamentals_analyst",
+        "summary": "Altman Z 13.02 and health score 84 show a fortress balance sheet; revenue +12% YoY with a 29.3% net margin. But Piotroski is only 4/9, flagging deteriorating financial trends. Quality is mixed: the balance sheet is strong, the trend in the numbers is not.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "news_analyst",
+        "summary": "No company-specific catalyst. Headlines are sector-level: AI advertising, data-center backlash, hyperscaler cost debates. Nothing dated inside 2 weeks.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "sentiment_analyst",
+        "summary": "Headlines-only. Tone is mildly bearish with elevated attention after a ~30% drawdown — attention spiking after a big fall is a caution flag, not a buy signal. Band mildly bearish, score 4/10, confidence low. Limitation: headlines only.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "bull_researcher",
+        "summary": "RSI 24 and 30% off the highs with a fortress balance sheet (Altman 13.0, health 84) make this a bounce candidate; Alphabet's Search/YouTube cash flows are intact. Strongest point: oversold + quality balance sheet.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "bear_researcher",
+        "summary": "Stage 4 is a confirmed downtrend with a falling 200-day and RS rank 23; distribution flow of -$258k shows officials still selling; Piotroski 4 flags weak financials; there is no catalyst to reverse the trend. Strongest point: the trend is down on every timeframe that matters.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "research_manager",
+        "summary": "Downtrend + distribution flow dominate; oversold argues for a bounce, not a trend change. Weighted score 42/100. Quality gate passes with a Piotroski flag.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "trader",
+        "summary": "Hold; buy only a reclaim — entry $337.07 at the SMA200, stop $271.41 at the 52-week low. No position until the reclaim triggers. Invalidation: close below $271.41.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "risk_review",
+        "summary": "Top risks: (1) Stage 4 momentum — oversold can get more oversold. (2) Continued distribution by officials. (3) AI capex/financing fears compressing the multiple further. Thesis-killer: a close below the 52-week low $271.41.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "portfolio_manager",
+        "summary": "Alphabet Class C is the same company as GOOGL with the same verdict: quality balance sheet in a Stage 4 downtrend. Wait for the reclaim.",
+        "stance": "bearish"
+      }
     ],
     "updated_at": "2026-11-11T02:55:41.000Z"
   },
@@ -192,20 +563,62 @@
     "name": "AIZ",
     "sector": "Unknown",
     "subsector": "Unknown",
-    "index_membership": ["SP500"],
+    "index_membership": [
+      "SP500"
+    ],
     "thesis": "Assurant is the strongest breakout setup in the Daily Brief (score 90, RS rank 87, 0.2% below its 52-week high on 1.53x volume) with analyst targets up to $377. But it is also the most overbought name in the batch (RSI 83.9, Bollinger %B 1.08) with the weakest quality scores (earnings quality 0.87, health 47) — a momentum trade, not a quality buy. Buy the breakout at $322.93 with a wide stop and small size.",
     "score": 71,
     "p_up": 57,
     "flow": null,
     "score_breakdown": [
-      {"attribute": "earnings_acceleration", "weight": 0.2, "score": 55, "note": "Revenue +9.2% YoY, no acceleration signal"},
-      {"attribute": "trend_relative_strength", "weight": 0.2, "score": 85, "note": "RS rank 87, 0.2% below 52w high"},
-      {"attribute": "base_quality_volume", "weight": 0.15, "score": 80, "note": "Trend template passes, volume 1.53x 50-day average"},
-      {"attribute": "estimate_revisions", "weight": 0.1, "score": 55, "note": "Analyst targets $325-$377, average near $347"},
-      {"attribute": "catalyst_in_window", "weight": 0.1, "score": 55, "note": "Protection Point acquisition plus analyst target moves"},
-      {"attribute": "smart_money", "weight": 0.1, "score": 50, "note": "No flow signal, no insider or congressional buying"},
-      {"attribute": "sector_market", "weight": 0.1, "score": 50, "note": "Choppy market regime"},
-      {"attribute": "float_short_interest", "weight": 0.05, "score": 50, "note": "No float/short-interest data"}
+      {
+        "attribute": "earnings_acceleration",
+        "weight": 0.2,
+        "score": 55,
+        "note": "Revenue +9.2% YoY, no acceleration signal"
+      },
+      {
+        "attribute": "trend_relative_strength",
+        "weight": 0.2,
+        "score": 85,
+        "note": "RS rank 87, 0.2% below 52w high"
+      },
+      {
+        "attribute": "base_quality_volume",
+        "weight": 0.15,
+        "score": 80,
+        "note": "Trend template passes, volume 1.53x 50-day average"
+      },
+      {
+        "attribute": "estimate_revisions",
+        "weight": 0.1,
+        "score": 55,
+        "note": "Analyst targets $325-$377, average near $347"
+      },
+      {
+        "attribute": "catalyst_in_window",
+        "weight": 0.1,
+        "score": 55,
+        "note": "Protection Point acquisition plus analyst target moves"
+      },
+      {
+        "attribute": "smart_money",
+        "weight": 0.1,
+        "score": 50,
+        "note": "No flow signal, no insider or congressional buying"
+      },
+      {
+        "attribute": "sector_market",
+        "weight": 0.1,
+        "score": 50,
+        "note": "Choppy market regime"
+      },
+      {
+        "attribute": "float_short_interest",
+        "weight": 0.05,
+        "score": 50,
+        "note": "No float/short-interest data"
+      }
     ],
     "trend_template_pass": true,
     "stage": "Stage 2",
@@ -216,21 +629,64 @@
     "unusual_options": false,
     "sentiment": "bullish",
     "quality_gate_pass": false,
-    "quality_flags": ["Earnings quality 0.87 — operating cash flow below net income", "Health score 47 — below-average financial health"],
+    "quality_flags": [
+      "Earnings quality 0.87 — operating cash flow below net income",
+      "Health score 47 — below-average financial health"
+    ],
     "trigger_price": 322.93,
     "stop_price": 268.92,
     "invalidation": "A close below $300 breaks the breakout momentum; a close below $268.92 kills the thesis outright.",
     "analyst_notes": [
-      {"agent": "market_analyst", "summary": "Stage 2 with the strongest trend in this batch: $322.16 is 0.2% below the 52-week high, above SMA50 $281.89 and a rising SMA200 $257.06. MACD histogram +3.16 is strong, volume 1.53x, RS +18.3% (rank 87). But RSI 83.9 is extremely overbought and Bollinger %B 1.08 sits above the upper band — the most stretched name here. Key levels: $322.93 resistance, $281.89 and $268.92 support.", "stance": "bullish"},
-      {"agent": "fundamentals_analyst", "summary": "Piotroski 5/9, revenue +9.2% YoY, 7.8% net margin (thin but normal for P&C insurance). Earnings quality 0.87 means operating cash flow trails net income — a concrete flag — and health score 47 is below average. Altman Z is not meaningful for insurers. Fundamentals are the weak leg; this is a momentum story, not a quality story.", "stance": "neutral"},
-      {"agent": "news_analyst", "summary": "Analyst price targets cluster $325-$377: UBS $377 Buy, Piper $356, Morgan Stanley $330, KBW $325 (cut from $345). Assurant acquired Protection Point, expanding commercial equipment capabilities in Canada. Themes: analyst support with one cut, small M&A.", "stance": "bullish"},
-      {"agent": "sentiment_analyst", "summary": "Headlines-only. Tone mildly bullish (Zacks 'top momentum pick', analyst support), but attention is spiking after a big run — a caution flag per the attention/return finding. Band mildly bullish, score 6/10, confidence low. Limitation: headlines only.", "stance": "neutral"},
-      {"agent": "bull_researcher", "summary": "Top Daily Brief score (90), 0.2% from its highs, RS rank 87, volume expanding 1.53x, UBS at $377 with a Buy. The breakout trigger at $322.93 is the cleanest setup in the brief. Strongest point: trend + momentum + volume all confirm at the highs.", "stance": "bullish"},
-      {"agent": "bear_researcher", "summary": "RSI 83.9 and %B 1.08 — extremely overbought and 25% above the SMA200. Earnings quality 0.87 and health 47 say the fundamentals don't support the momentum; KBW cut its target to $325, right at the current price; no insider or congressional buying; chasing highs in a choppy market. Strongest point: this is the most overbought name in the batch with the weakest quality scores.", "stance": "bearish"},
-      {"agent": "research_manager", "summary": "Elite trend/momentum (85 trend, 80 base quality) carries the call, but the overbought extreme and failed quality gate cap it at Overweight, not Buy. Weighted score 63.5/100. Quality gate FAILS on earnings quality 0.87 and health 47.", "stance": "bullish"},
-      {"agent": "trader", "summary": "Buy the breakout at $322.93; stop $268.92 (the brief's 20-day-low level). Note the stop is ~16.7% away — wider than the playbook 7-8% max — so size small to ~2% account risk. Invalidation: a close below $268.92.", "stance": "bullish"},
-      {"agent": "risk_review", "summary": "Top risks: (1) Extremely overbought — RSI 83.9, %B 1.08; pullback risk is high and chasing the breakout risks buying the top. (2) Weak quality scores (earnings quality 0.87, health 47). (3) KBW's target cut to $325 implies no upside from here. Thesis-killer: a close below $300, or below $268.92.", "stance": "neutral"},
-      {"agent": "portfolio_manager", "summary": "AIZ is the strongest breakout setup in the brief but also the most overbought, with weak quality scores — a momentum trade, not a quality buy. Buy the breakout with a wide stop and small size.", "stance": "bullish"}
+      {
+        "agent": "market_analyst",
+        "summary": "Stage 2 with the strongest trend in this batch: $322.16 is 0.2% below the 52-week high, above SMA50 $281.89 and a rising SMA200 $257.06. MACD histogram +3.16 is strong, volume 1.53x, RS +18.3% (rank 87). But RSI 83.9 is extremely overbought and Bollinger %B 1.08 sits above the upper band — the most stretched name here. Key levels: $322.93 resistance, $281.89 and $268.92 support.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "fundamentals_analyst",
+        "summary": "Piotroski 5/9, revenue +9.2% YoY, 7.8% net margin (thin but normal for P&C insurance). Earnings quality 0.87 means operating cash flow trails net income — a concrete flag — and health score 47 is below average. Altman Z is not meaningful for insurers. Fundamentals are the weak leg; this is a momentum story, not a quality story.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "news_analyst",
+        "summary": "Analyst price targets cluster $325-$377: UBS $377 Buy, Piper $356, Morgan Stanley $330, KBW $325 (cut from $345). Assurant acquired Protection Point, expanding commercial equipment capabilities in Canada. Themes: analyst support with one cut, small M&A.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "sentiment_analyst",
+        "summary": "Headlines-only. Tone mildly bullish (Zacks 'top momentum pick', analyst support), but attention is spiking after a big run — a caution flag per the attention/return finding. Band mildly bullish, score 6/10, confidence low. Limitation: headlines only.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "bull_researcher",
+        "summary": "Top Daily Brief score (90), 0.2% from its highs, RS rank 87, volume expanding 1.53x, UBS at $377 with a Buy. The breakout trigger at $322.93 is the cleanest setup in the brief. Strongest point: trend + momentum + volume all confirm at the highs.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "bear_researcher",
+        "summary": "RSI 83.9 and %B 1.08 — extremely overbought and 25% above the SMA200. Earnings quality 0.87 and health 47 say the fundamentals don't support the momentum; KBW cut its target to $325, right at the current price; no insider or congressional buying; chasing highs in a choppy market. Strongest point: this is the most overbought name in the batch with the weakest quality scores.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "research_manager",
+        "summary": "Elite trend/momentum (85 trend, 80 base quality) carries the call, but the overbought extreme and failed quality gate cap it at Overweight, not Buy. Weighted score 63.5/100. Quality gate FAILS on earnings quality 0.87 and health 47.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "trader",
+        "summary": "Buy the breakout at $322.93; stop $268.92 (the brief's 20-day-low level). Note the stop is ~16.7% away — wider than the playbook 7-8% max — so size small to ~2% account risk. Invalidation: a close below $268.92.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "risk_review",
+        "summary": "Top risks: (1) Extremely overbought — RSI 83.9, %B 1.08; pullback risk is high and chasing the breakout risks buying the top. (2) Weak quality scores (earnings quality 0.87, health 47). (3) KBW's target cut to $325 implies no upside from here. Thesis-killer: a close below $300, or below $268.92.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "portfolio_manager",
+        "summary": "AIZ is the strongest breakout setup in the brief but also the most overbought, with weak quality scores — a momentum trade, not a quality buy. Buy the breakout with a wide stop and small size.",
+        "stance": "bullish"
+      }
     ],
     "updated_at": "2026-11-11T02:55:41.000Z"
   },
@@ -245,14 +701,54 @@
     "p_up": 52,
     "flow": null,
     "score_breakdown": [
-      {"attribute": "earnings_acceleration", "weight": 0.2, "score": 75, "note": "Revenue +40.8% YoY, 4 straight EPS beats, earnings in 6 days"},
-      {"attribute": "trend_relative_strength", "weight": 0.2, "score": 25, "note": "Stage 3, RS rank 7, 30.6% below 52w high"},
-      {"attribute": "base_quality_volume", "weight": 0.15, "score": 45, "note": "No trend template, but 2.4x capitulation volume"},
-      {"attribute": "estimate_revisions", "weight": 0.1, "score": 50, "note": "No estimate-revision data"},
-      {"attribute": "catalyst_in_window", "weight": 0.1, "score": 80, "note": "Earnings Nov 17 AMC, implied move +/-10.3%"},
-      {"attribute": "smart_money", "weight": 0.1, "score": 65, "note": "7 clustered congressional buys plus extreme options flow"},
-      {"attribute": "sector_market", "weight": 0.1, "score": 45, "note": "Choppy regime, AI selloff and financing fears"},
-      {"attribute": "float_short_interest", "weight": 0.05, "score": 50, "note": "No float/short-interest data"}
+      {
+        "attribute": "earnings_acceleration",
+        "weight": 0.2,
+        "score": 75,
+        "note": "Revenue +40.8% YoY, 4 straight EPS beats, earnings in 6 days"
+      },
+      {
+        "attribute": "trend_relative_strength",
+        "weight": 0.2,
+        "score": 25,
+        "note": "Stage 3, RS rank 7, 30.6% below 52w high"
+      },
+      {
+        "attribute": "base_quality_volume",
+        "weight": 0.15,
+        "score": 45,
+        "note": "No trend template, but 2.4x capitulation volume"
+      },
+      {
+        "attribute": "estimate_revisions",
+        "weight": 0.1,
+        "score": 50,
+        "note": "No estimate-revision data"
+      },
+      {
+        "attribute": "catalyst_in_window",
+        "weight": 0.1,
+        "score": 80,
+        "note": "Earnings Nov 17 AMC, implied move +/-10.3%"
+      },
+      {
+        "attribute": "smart_money",
+        "weight": 0.1,
+        "score": 65,
+        "note": "7 clustered congressional buys plus extreme options flow"
+      },
+      {
+        "attribute": "sector_market",
+        "weight": 0.1,
+        "score": 45,
+        "note": "Choppy regime, AI selloff and financing fears"
+      },
+      {
+        "attribute": "float_short_interest",
+        "weight": 0.05,
+        "score": 50,
+        "note": "No float/short-interest data"
+      }
     ],
     "trend_template_pass": false,
     "stage": "Stage 3",
@@ -263,22 +759,347 @@
     "unusual_options": true,
     "sentiment": "bullish",
     "quality_gate_pass": true,
-    "quality_flags": ["Piotroski F-score 4/9 — weak financial trend", "Earnings quality 0.84 — operating cash flow below net income", "Prefetched net margin of 1922% is a data error (frame mismatch) — not used"],
+    "quality_flags": [
+      "Piotroski F-score 4/9 — weak financial trend",
+      "Earnings quality 0.84 — operating cash flow below net income",
+      "Prefetched net margin of 1922% is a data error (frame mismatch) — not used"
+    ],
     "trigger_price": 204.54,
     "stop_price": 164.27,
     "invalidation": "A close below the 52-week low of $164.27, or an earnings miss that breaks the 4-beat streak, kills the bounce thesis.",
     "analyst_notes": [
-      {"agent": "market_analyst", "summary": "Stage 3 transition: $168.89 sits well below SMA50 $218 and SMA200 $204.54, though the 200-day still rises. RSI 19.3 is deeply oversold, 30.6% below the 52-week high, RS -21.4% (rank 7, worst in batch), MACD -4.278. Volume 2.4x average into the lows and price 2.8% above the 52-week low $164.27 — a capitulation signature. Key levels: $204.54 and $218 resistance, $164.27 support.", "stance": "bearish"},
-      {"agent": "fundamentals_analyst", "summary": "Revenue +40.8% YoY, health score 90, Altman Z 51.99 — a fortress balance sheet. But Piotroski is 4/9 and earnings quality 0.84 flags cash-flow quality. NOTE: the prefetched net margin of 1922.3% is a data error (frame mismatch in the prefetch math) and is not used; the real margin is far lower. Growth and balance sheet are elite; quality scores are middling.", "stance": "neutral"},
-      {"agent": "news_analyst", "summary": "Earnings Nov 17 AMC is the dated catalyst (6 days out), with a +/-10.32% implied move, EPS est $2.49, and 4 straight beats (+3.5%, +5.3%, +5.5%, +6.2%). Headlines are contrarian-bullish: Burry calling it 'a heck of a trade', Cathie Wood buying semis. Themes: earnings catalyst, contrarian attention.", "stance": "bullish"},
-      {"agent": "sentiment_analyst", "summary": "Headlines-only. Tone mildly bullish on contrarian buying, but attention is spiking after a 30% drawdown — a caution flag. Band mildly bullish, score 6/10, confidence low. Limitation: headlines only.", "stance": "neutral"},
-      {"agent": "bull_researcher", "summary": "RSI 19.3 with 2.4x volume into the lows is the capitulation signature, earnings land in 6 days with 4 straight beats, health is 90, 7 clustered congressional buys, and options flow is extreme (363.6x max vol/OI). Burry and Wood are buying. Strongest point: capitulation + catalyst + smart money all at once.", "stance": "bullish"},
-      {"agent": "bear_researcher", "summary": "Stage 3 with RS rank 7 — the trend is still down and the stock is 30% off its highs. Buying 6 days before earnings with a +/-10.3% implied move is a coin flip on the print, and the AI circular-financing overhang hasn't cleared. Strongest point: the downtrend is intact and the print decides everything.", "stance": "bearish"},
-      {"agent": "research_manager", "summary": "The evidence is genuinely balanced: capitulation + catalyst + smart money vs a Stage 3 downtrend and an earnings coin flip. Weighted score 53.3/100. Quality gate passes with flags. This is a watchlist name, not a buy.", "stance": "neutral"},
-      {"agent": "trader", "summary": "No long entry on a long-only book. The levels that change the call: a reclaim above the SMA200 at $204.54, or post-earnings strength; stop $164.27 at the 52-week low. Invalidation: a close below $164.27 or an earnings miss that breaks the 4-beat streak.", "stance": "neutral"},
-      {"agent": "risk_review", "summary": "Top risks: (1) Earnings Nov 17 with a +/-10.3% implied move — the print gaps either way. (2) Stage 3 downtrend — oversold can stay oversold. (3) Extreme options positioning (363.6x) that can unwind violently. Thesis-killer: a close below $164.27.", "stance": "neutral"},
-      {"agent": "portfolio_manager", "summary": "NVDA is a capitulation watchlist name, not a buy — RSI 19.3 and 2.4x volume into the lows with earnings in 6 days and clustered congressional buying, but the trend is Stage 3 with RS rank 7 and the print is a coin flip. Wait for the reclaim or the print.", "stance": "neutral"}
+      {
+        "agent": "market_analyst",
+        "summary": "Stage 3 transition: $168.89 sits well below SMA50 $218 and SMA200 $204.54, though the 200-day still rises. RSI 19.3 is deeply oversold, 30.6% below the 52-week high, RS -21.4% (rank 7, worst in batch), MACD -4.278. Volume 2.4x average into the lows and price 2.8% above the 52-week low $164.27 — a capitulation signature. Key levels: $204.54 and $218 resistance, $164.27 support.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "fundamentals_analyst",
+        "summary": "Revenue +40.8% YoY, health score 90, Altman Z 51.99 — a fortress balance sheet. But Piotroski is 4/9 and earnings quality 0.84 flags cash-flow quality. NOTE: the prefetched net margin of 1922.3% is a data error (frame mismatch in the prefetch math) and is not used; the real margin is far lower. Growth and balance sheet are elite; quality scores are middling.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "news_analyst",
+        "summary": "Earnings Nov 17 AMC is the dated catalyst (6 days out), with a +/-10.32% implied move, EPS est $2.49, and 4 straight beats (+3.5%, +5.3%, +5.5%, +6.2%). Headlines are contrarian-bullish: Burry calling it 'a heck of a trade', Cathie Wood buying semis. Themes: earnings catalyst, contrarian attention.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "sentiment_analyst",
+        "summary": "Headlines-only. Tone mildly bullish on contrarian buying, but attention is spiking after a 30% drawdown — a caution flag. Band mildly bullish, score 6/10, confidence low. Limitation: headlines only.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "bull_researcher",
+        "summary": "RSI 19.3 with 2.4x volume into the lows is the capitulation signature, earnings land in 6 days with 4 straight beats, health is 90, 7 clustered congressional buys, and options flow is extreme (363.6x max vol/OI). Burry and Wood are buying. Strongest point: capitulation + catalyst + smart money all at once.",
+        "stance": "bullish"
+      },
+      {
+        "agent": "bear_researcher",
+        "summary": "Stage 3 with RS rank 7 — the trend is still down and the stock is 30% off its highs. Buying 6 days before earnings with a +/-10.3% implied move is a coin flip on the print, and the AI circular-financing overhang hasn't cleared. Strongest point: the downtrend is intact and the print decides everything.",
+        "stance": "bearish"
+      },
+      {
+        "agent": "research_manager",
+        "summary": "The evidence is genuinely balanced: capitulation + catalyst + smart money vs a Stage 3 downtrend and an earnings coin flip. Weighted score 53.3/100. Quality gate passes with flags. This is a watchlist name, not a buy.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "trader",
+        "summary": "No long entry on a long-only book. The levels that change the call: a reclaim above the SMA200 at $204.54, or post-earnings strength; stop $164.27 at the 52-week low. Invalidation: a close below $164.27 or an earnings miss that breaks the 4-beat streak.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "risk_review",
+        "summary": "Top risks: (1) Earnings Nov 17 with a +/-10.3% implied move — the print gaps either way. (2) Stage 3 downtrend — oversold can stay oversold. (3) Extreme options positioning (363.6x) that can unwind violently. Thesis-killer: a close below $164.27.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "portfolio_manager",
+        "summary": "NVDA is a capitulation watchlist name, not a buy — RSI 19.3 and 2.4x volume into the lows with earnings in 6 days and clustered congressional buying, but the trend is Stage 3 with RS rank 7 and the print is a coin flip. Wait for the reclaim or the print.",
+        "stance": "neutral"
+      }
     ],
     "updated_at": "2026-11-11T02:55:41.000Z"
+  },
+  {
+    "ticker": "HD",
+    "name": "Home Depot, Inc. (The)",
+    "sector": "Consumer Cyclical",
+    "subsector": "Home Improvement Retail",
+    "index_membership": [],
+    "thesis": "HD's fundamental foundation remains intact, supported by an exceptional cash-to-net-income ratio of 1.27 and an Altman Z-score of 4.23 indicating minimal structural balance sheet risk. However, the macro housing backdrop continues to pressure comparable store sales, and the broader technical landscape reflects an inverted 50/200-day moving average configuration. With the stock having rallied sharply into resistance and momentum indicators reaching stretched levels, the upside before earnings is limited. A confirmed post-earnings breakout above $365 would substantiate a technical trend reversal, whereas a drop below $337.50 would trigger a transition into Stage 4 markdown requiring full liquidation.",
+    "score": 50,
+    "p_up": 52,
+    "flow": {
+      "direction": "distribution",
+      "flow_score": 70,
+      "net_flow": -229004,
+      "buy_amount": 24002,
+      "sell_amount": 253006,
+      "officials": 6,
+      "buy_trades": 3,
+      "sell_trades": 11,
+      "cluster": true,
+      "latest_ref_date": "2026-10-27"
+    },
+    "score_breakdown": [
+      {
+        "attribute": "earnings_acceleration",
+        "weight": 0.2,
+        "score": 58,
+        "note": "Stable 5.7% revenue growth and 10% net margins, but comparable sales face macro consumer headwinds."
+      },
+      {
+        "attribute": "trend_relative_strength",
+        "weight": 0.2,
+        "score": 48,
+        "note": "Rebounded above 50 and 200 SMAs, but trapped in Stage 3 distribution with a declining 200-day SMA."
+      },
+      {
+        "attribute": "base_quality_volume",
+        "weight": 0.15,
+        "score": 45,
+        "note": "Failed trend template characteristics with overbought short-term indicators (%B at 0.86, RSI 68.3)."
+      },
+      {
+        "attribute": "estimate_revisions",
+        "weight": 0.1,
+        "score": 50,
+        "note": "Earnings growth expected next week, though key analysts recently trimmed price targets modestly ($407 to $397)."
+      },
+      {
+        "attribute": "catalyst_in_window",
+        "weight": 0.1,
+        "score": 65,
+        "note": "Upcoming quarterly earnings report and seasonal holiday merchandise rollouts provide immediate catalysts."
+      },
+      {
+        "attribute": "smart_money",
+        "weight": 0.1,
+        "score": 60,
+        "note": "Clustered congressional buying over trailing 90 days offsets lack of open-market corporate insider buying."
+      },
+      {
+        "attribute": "sector_market",
+        "weight": 0.1,
+        "score": 50,
+        "note": "Home improvement retail faces uneven consumer discretionary demand and mixed housing turnover dynamics."
+      },
+      {
+        "attribute": "float_short_interest",
+        "weight": 0.05,
+        "score": 50,
+        "note": "Typical large-cap retail float profile with negligible short squeeze potential or abnormal borrowing pressure."
+      }
+    ],
+    "trend_template_pass": false,
+    "stage": "Stage 3",
+    "rs_rank": 63,
+    "distance_from_52w_high_pct": 11.7,
+    "insider_clusters": [],
+    "congress_buys": 3,
+    "unusual_options": false,
+    "sentiment": "mixed",
+    "quality_gate_pass": true,
+    "quality_flags": [
+      "Proprietary health score modest at 45 despite solid Altman Z and Piotroski metrics"
+    ],
+    "trigger_price": 365,
+    "stop_price": 337.5,
+    "invalidation": "A post-earnings close below the 330.0 support cluster invalidates the current base and triggers an exit, while sustained volume clearing 365.0 invalidates the cautious Hold thesis.",
+    "analyst_notes": [
+      {
+        "agent": "market_analyst",
+        "summary": "[quick:gemini-flash-latest] HD closed at $351.00, trading above its 50-day moving average ($310.32) and 200-day moving average ($333.09), while sitting 11.7% below its 52-week high of $397.63. The longer-term trend structure remains impaired as the 200-day SMA is declining and the 50-day SMA sits below the 200-day SMA, leading to a failed trend template. Momentum is firm in the near term, with RSI(14) at 68.3, a positive MACD histogram at 2.892, and Bollinger %B at 0.86 approaching the upper band. Overall, the price advanc",
+        "stance": "neutral"
+      },
+      {
+        "agent": "fundamentals_analyst",
+        "summary": "[quick:gemini-flash-latest] Home Depot maintains a sound financial profile supported by an Altman Z-score of 4.23, placing it safely out of financial distress territory, alongside a Piotroski F-score of 6 indicating moderate operational efficiency. Revenue expanded by 5.7% year-over-year while net margin held steady at 10.0%, reflecting sustained retail profitability. Cash generation quality is robust with an earnings quality ratio of 1.27, confirming operating cash flow outpaces reported net income. However, the proprieta",
+        "stance": "bullish"
+      },
+      {
+        "agent": "news_analyst",
+        "summary": "[quick:gemini-flash-latest] Home Depot is approaching its upcoming earnings report next week with Wall Street anticipating earnings growth, though questions persist regarding comparable sales performance amid uneven consumer demand. Analyst sentiment remains constructive, as BofA Securities maintained a Buy rating while modestly trimming its price target to $397 from $407. On the retail front, the company launched its updated viral holiday tree line ahead of peak seasonal shopping. Meanwhile, smart-money data reveals clust",
+        "stance": "bullish"
+      },
+      {
+        "agent": "sentiment_analyst",
+        "summary": "[quick:gemini-flash-latest] no summary",
+        "stance": "mixed"
+      },
+      {
+        "agent": "bull_researcher",
+        "summary": "[quick:gemini-flash-latest] Home Depot continues to demonstrate resilient financial strength, supported by 5.7% year-over-year revenue growth and a steady 10.0% net margin. The company's financial foundation remains exceptionally healthy, evidenced by a Piotroski F-score of 6, an Altman Z-score of 4.23 that eliminates distress risk, and an earnings quality ratio of 1.27 showing operating cash flow outpaces net income. While skeptics highlight an impaired longer-term trend structure, the stock has decisively rebounded above",
+        "stance": "bullish"
+      },
+      {
+        "agent": "bear_researcher",
+        "summary": "[quick:gemini-flash-latest] While the bull champions HD's recent price recovery, market data reveals this advance is merely a short-term rebound trapped within a broader Stage 3 distribution phase, characterized by an impaired, failed trend template with a declining 200-day SMA that sits above the 50-day SMA. With the RSI already stretched to 68.3 and Bollinger %B at 0.86 approaching the upper band, the stock is flashing near-term exhaustion while still sitting 11.7% below its 52-week high. Fundamentally, Home Depot's prop",
+        "stance": "bearish"
+      },
+      {
+        "agent": "research_manager",
+        "summary": "[deep:gemini-flash-latest] Home Depot presents a conflicting setup where sound balance sheet fundamentals and high earnings quality (1.27 cash-to-net-income ratio, 4.23 Altman Z-score) clash with an impaired broader technical structure. Although the stock has mounted a sharp short-term rally above its 50-day and 200-day moving averages, the long-term trend remains in Stage 3 distribution with an inverted 50/200 SMA configuration and an RSI near overbought levels at 68.3. Furthermore, while analyst sentiment remains positi",
+        "stance": "neutral"
+      },
+      {
+        "agent": "trader",
+        "summary": "[quick:gemini-flash-latest] On this long-only book, the recommendation is a Hold as near-overbought RSI (68.3) and broader Stage 3 distribution outweigh strong fundamental cash conversion ahead of upcoming earnings. We remain sidelined until post-earnings price action resolves the inverted 50/200 SMA structure, with a confirmed breakout above 365.0 required to flip the stance to Buy. Existing positions should maintain protection with a stop at 337.5.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "risk_review",
+        "summary": "[quick:gemini-flash-latest] Earnings downside gap risk: With an implied move of 5.58% and persistent softness in comparable store sales, a negative earnings report could trigger an immediate gap down that breaches the 337.5 stop with severe slippage. | Overbought technical exhaustion: The RSI reading of 68.3 coupled with an inverted 50/200 SMA configuration leaves the stock vulnerable to sharp mean-reversion selling before reaching the 365 breakout trigger. | Opportunity cost and breakout chasing: If earnings spark a sharp",
+        "stance": "neutral"
+      },
+      {
+        "agent": "portfolio_manager",
+        "summary": "[deep:gemini-flash-latest] Home Depot is rated Hold as robust cash-generation metrics and high earnings quality are offset by an unfavorable tactical setup directly ahead of earnings. With an RSI approaching overbought territory at 68.3 within a broader Stage 3 distribution structure, initiating new long risk into an implied 5.58% earnings move offers poor risk-reward. We recommend holding existing inventory with a strict stop at $337.50 while awaiting post-earnings price resolution.",
+        "stance": "neutral"
+      }
+    ],
+    "updated_at": "2026-11-11T10:28:37.883Z"
+  },
+  {
+    "ticker": "BE",
+    "name": "BE",
+    "sector": "Unknown",
+    "subsector": "Unknown",
+    "index_membership": [],
+    "thesis": "The bullish narrative rests on explosive 139.8% YoY revenue growth and accelerating adoption of onsite fuel cell power for AI data centers, supported by strong balance sheet solvency. However, the bear case is heavily weighted by persistent GAAP unprofitability (-4.6% margin), low earnings quality, and severe technical degradation with the stock sitting 47.2% off highs. Without evidence of operating leverage or a sustained base breakout above 195.0, the risk of a technical cascade toward the 170.0 support level remains elevated. Capital should remain on the sidelines until technical structure and bottom-line margins align.",
+    "score": 50,
+    "p_up": 47,
+    "flow": {
+      "direction": "accumulation",
+      "flow_score": 68,
+      "net_flow": 3750001,
+      "buy_amount": 3750001,
+      "sell_amount": 0,
+      "officials": 1,
+      "buy_trades": 2,
+      "sell_trades": 0,
+      "cluster": false,
+      "latest_ref_date": "2026-08-21"
+    },
+    "score_breakdown": [
+      {
+        "attribute": "earnings_acceleration",
+        "weight": 0.2,
+        "score": 65,
+        "note": "Exceptional top-line revenue growth of 139.8% YoY is curtailed by an ongoing negative net margin of -4.6%."
+      },
+      {
+        "attribute": "trend_relative_strength",
+        "weight": 0.2,
+        "score": 20,
+        "note": "Decisively broken below 50-day and 200-day SMAs with an abysmal RS rank of 14 and RSI of 37.4."
+      },
+      {
+        "attribute": "base_quality_volume",
+        "weight": 0.15,
+        "score": 25,
+        "note": "Failed trend template following a 47.2% drawdown, leaving strong overhead resistance and distant support."
+      },
+      {
+        "attribute": "estimate_revisions",
+        "weight": 0.1,
+        "score": 60,
+        "note": "Wall Street price targets remain constructive with RBC projecting 68% upside, though valuation scrutiny persists."
+      },
+      {
+        "attribute": "catalyst_in_window",
+        "weight": 0.1,
+        "score": 75,
+        "note": "AI data center power deployment provides a massive secular catalyst and high-visibility contract pipeline."
+      },
+      {
+        "attribute": "smart_money",
+        "weight": 0.1,
+        "score": 70,
+        "note": "Encouraging net congressional buying totaling $3.75 million over the trailing 90 days."
+      },
+      {
+        "attribute": "sector_market",
+        "weight": 0.1,
+        "score": 35,
+        "note": "Sector-wide 10-24% pullback driven by political uncertainty and data center power thesis reassessment."
+      },
+      {
+        "attribute": "float_short_interest",
+        "weight": 0.05,
+        "score": 50,
+        "note": "Neutral positioning without definitive short squeeze or excessive float distress metrics reported."
+      }
+    ],
+    "trend_template_pass": false,
+    "stage": "Stage 3",
+    "rs_rank": 14,
+    "distance_from_52w_high_pct": 47.2,
+    "insider_clusters": [],
+    "congress_buys": 2,
+    "unusual_options": false,
+    "sentiment": "mixed",
+    "quality_gate_pass": false,
+    "quality_flags": [
+      "Negative earnings quality metric (-1.29)",
+      "Unprofitable GAAP net margin (-4.6%)"
+    ],
+    "trigger_price": 195,
+    "stop_price": 180.5,
+    "invalidation": "The neutral stance is invalidated to the downside by a breakdown below 170.0 on heavy volume, or to the upside if quarterly GAAP operating margins turn solidly positive alongside a reclaim of the 50-day moving average.",
+    "analyst_notes": [
+      {
+        "agent": "market_analyst",
+        "summary": "[quick:gemini-flash-latest] BE trades at $185.42, sitting 47.2% below its 52-week high of $351.28 and decisively below both its 50-day SMA ($245.31) and 200-day SMA ($222.89). Momentum remains weak, evidenced by an RSI-14 of 37.4, a negative MACD histogram of -2.291, and a Bollinger %B of 0.20. The stock fails the trend template and exhibits heavy relative weakness with an RS rank of 14 and a 3-month underperformance of -17.9% against the S&P 500. Immediate overhead resistance sits at the 200-day SMA ($222.89), while the p",
+        "stance": "bearish"
+      },
+      {
+        "agent": "fundamentals_analyst",
+        "summary": "[quick:gemini-flash-latest] BE demonstrates exceptional top-line expansion with year-over-year revenue growth of 139.8%, backed by a strong Altman Z-score of 8.41 signaling minimal balance sheet distress. However, bottom-line profitability remains negative with a net margin of -4.6% alongside a negative earnings quality metric of -1.29. The Piotroski F-score of 7 reflects solid operational stability and sequential improvements despite current GAAP losses. Sustained capital efficiency and conversion of high top-line growth ",
+        "stance": "neutral"
+      },
+      {
+        "agent": "news_analyst",
+        "summary": "[quick:gemini-flash-latest] Bloom Energy has secured a major AI data center deal accompanied by surging revenue, establishing itself as a key power provider for the AI infrastructure buildout. Despite recent stock volatility and a 10% to 24% sector-wide sell-off driven by political and data center reassessment concerns, Wall Street sentiment remains largely constructive. Analysts such as RBC see substantial upside of 68%, viewing the recent pullback as an attractive entry point into the AI power theme. Meanwhile, valuation",
+        "stance": "bullish"
+      },
+      {
+        "agent": "sentiment_analyst",
+        "summary": "[quick:gemini-flash-latest] no summary",
+        "stance": "mixed"
+      },
+      {
+        "agent": "bull_researcher",
+        "summary": "[quick:gemini-flash-latest] Bloom Energy is emerging as a premier power provider for the AI infrastructure boom, highlighted by a major AI data center deal and extraordinary 139.8% year-over-year revenue growth. While a sector-wide reassessment and technical weakness have pushed the stock 47.2% below its 52-week high, this pullback provides an attractive entry point backed by Wall Street analysts like RBC targeting 68% upside. Underlying financial health remains exceptionally sound, evidenced by a robust Altman Z-score of ",
+        "stance": "bullish"
+      },
+      {
+        "agent": "bear_researcher",
+        "summary": "[quick:gemini-flash-latest] The bull case fixates on top-line AI excitement, but it completely overlooks that Bloom Energy remains fundamentally unprofitable with a -4.6% net margin and a negative earnings quality metric of -1.29. Sizable revenue growth means very little if conversion to positive GAAP net earnings remains an unproven hurdle while valuation analyses question whether long-term cash flows justify current pricing. Furthermore, the 47.2% decline is not an attractive entry point but rather severe technical break",
+        "stance": "bearish"
+      },
+      {
+        "agent": "research_manager",
+        "summary": "[deep:gemini-flash-latest] Bloom Energy presents an acute tension between extraordinary top-line momentum (139.8% YoY revenue growth, major AI data center contracts) and severe technical/profitability impairments. The stock is currently in a severe downtrend, trading 47.2% below its highs and beneath both the 50-day and 200-day moving averages with a weak relative strength rank of 14. Furthermore, persistent GAAP unprofitability (-4.6% net margin) and poor earnings quality (-1.29) fail the quality gate despite strong bala",
+        "stance": "neutral"
+      },
+      {
+        "agent": "trader",
+        "summary": "[quick:gemini-flash-latest] On this long-only book, BE is maintained at Hold as severe technical degradation—trading below the 50-day and 200-day moving averages with an RS of 14—and persistent negative net margins overshadow explosive top-line growth. We require price stabilization and margin inflection before committing fresh capital. A sustained technical reclaim above 195.0 would shift our stance to Buy, while a breakdown below 170.0 would trigger an outright Sell.",
+        "stance": "neutral"
+      },
+      {
+        "agent": "risk_review",
+        "summary": "[quick:gemini-flash-latest] Severe technical momentum risk remains elevated, as trading below the 50-day and 200-day moving averages with an RS rank of 14 leaves the stock vulnerable to a rapid cascade toward the 170 support level. | Operating leverage failure poses a major threat; despite 139.8% revenue growth, persistent negative GAAP margins (-4.6%) and low earnings quality (-1.29) could prolong cash burn if input costs rise. | Concentration and execution risk in AI data center deployments could surface if regulatory fr",
+        "stance": "neutral"
+      },
+      {
+        "agent": "portfolio_manager",
+        "summary": "[deep:gemini-flash-latest] Bloom Energy displays remarkable top-line momentum driven by AI data center demand, but this is offset by persistent GAAP net losses and acute technical weakness. Trading beneath its 50-day and 200-day moving averages with a poor relative strength score, the stock lacks the price stabilization required for new capital deployment. We maintain a neutral stance until operating leverage translates into positive GAAP net margins and key moving averages are reclaimed.",
+        "stance": "neutral"
+      }
+    ],
+    "updated_at": "2026-11-11T10:32:38.062Z"
   }
 ]
