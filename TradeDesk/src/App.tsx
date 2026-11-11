@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import AuthGate from './auth/AuthGate';
 import LiveQuoteButton from './components/LiveQuoteButton';
+import { DefinitionsDrawer, FundamentalsPill } from './components/DefinitionsDrawer';
 import { TabErrorBoundary } from './components/ErrorBoundary';
 import DailyBriefTab from './tabs/DailyBrief';
 import OptionsTab from './tabs/Options';
@@ -30,7 +31,7 @@ const TABS: TabDef[] = [
 const TAB_IDS = TABS.map((t) => t.id);
 
 /** Build version — bump on every push so we can confirm what's live. */
-export const BUILD_VERSION = '2026-11-10f';
+export const BUILD_VERSION = '2026-11-10g';
 
 /** "14:32:05" in ET for the Schwab pill's updated time. */
 function fmtClockET(ms: number): string {
@@ -86,8 +87,42 @@ function tabFromHash(): TabId {
   return (TAB_IDS as string[]).includes(h) ? h : 'brief';
 }
 
+/** Mobile bottom nav: Today / Options / Congress / Search. */
+function BottomNav({
+  active,
+  onTab,
+  onSearch,
+}: {
+  active: TabId;
+  onTab: (id: TabId) => void;
+  onSearch: () => void;
+}) {
+  const item = (id: TabId, label: string) => (
+    <button
+      key={id}
+      className={`bottomnav-btn${active === id ? ' active' : ''}`}
+      onClick={() => onTab(id)}
+      aria-current={active === id ? 'page' : undefined}
+    >
+      {label}
+    </button>
+  );
+  return (
+    <nav className="bottomnav" aria-label="TradeDesk sections">
+      {item('brief', 'Today')}
+      {item('options', 'Options')}
+      {item('congress', 'Congress')}
+      <button className="bottomnav-btn" onClick={onSearch}>
+        Search
+      </button>
+    </nav>
+  );
+}
+
 function Shell() {
   const [active, setActive] = useState<TabId>(tabFromHash);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [defsOpen, setDefsOpen] = useState(false);
 
   // Keep the URL hash in sync so refresh stays on the same tab.
   // Listen for hash changes too (back/forward buttons).
@@ -97,9 +132,43 @@ function Shell() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
+  // Escape closes the side menu; lock body scroll while it is open.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen]);
+
   const select = (id: TabId) => {
     setActive(id);
     window.location.hash = id === 'brief' ? '' : id;
+  };
+
+  const goTab = (id: TabId) => {
+    select(id);
+    setMenuOpen(false);
+  };
+
+  const openDefs = () => {
+    setMenuOpen(false);
+    setDefsOpen(true);
+  };
+
+  /** Bottom-nav Search: jump to the Daily Brief and focus its ticker search. */
+  const focusBriefSearch = () => {
+    select('brief');
+    setMenuOpen(false);
+    window.setTimeout(() => {
+      document.getElementById('brief-search')?.focus();
+    }, 80);
   };
 
   const signOut = async () => {
@@ -108,68 +177,125 @@ function Shell() {
 
   return (
     <div className="app">
-      <header className="topbar">
-        <div className="brand-row">
+      {/* Side menu: slide-in drawer on phone/tablet, persistent sidebar on desktop. */}
+      <aside className={`sidebar${menuOpen ? ' open' : ''}`} aria-label="TradeDesk sections">
+        <div className="sidebar-brand">
           <span className="brand-mark" aria-hidden="true">◈</span>
-          <h1 className="brand">TradeDesk</h1>
-        </div>
-        <div className="topbar-actions">
-          <LiveQuoteButton />
-          <button className="btn btn-ghost" onClick={signOut}>
-            Sign out
-          </button>
-        </div>
-      </header>
-
-      <nav className="tabnav" role="tablist" aria-label="TradeDesk sections">
-        {TABS.map((t) => (
+          <span className="brand">TradeDesk</span>
           <button
-            key={t.id}
-            role="tab"
-            aria-selected={active === t.id}
-            className={`tabbtn${active === t.id ? ' active' : ''}`}
-            onClick={() => select(t.id)}
+            className="sidebar-close"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
           >
-            {t.label}
+            ✕
           </button>
-        ))}
-      </nav>
+        </div>
+        <nav className="sidebar-nav">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              className={`sidebar-item${active === t.id ? ' active' : ''}`}
+              onClick={() => goTab(t.id)}
+              aria-current={active === t.id ? 'page' : undefined}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-section">
+          <button className="sidebar-item sidebar-defs" onClick={openDefs}>
+            <span aria-hidden="true">📖</span> Understanding Fundamentals
+          </button>
+        </div>
+        <div className="sidebar-foot muted small">
+          Research &amp; education only, not financial advice.
+        </div>
+      </aside>
+      {menuOpen && <div className="scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
 
-      <main className="content">
-        <TabErrorBoundary tabName="Daily Brief" key={`brief-${active}`}>
-          {active === 'brief' && <DailyBriefTab />}
-        </TabErrorBoundary>
-        <TabErrorBoundary tabName="Options" key={`options-${active}`}>
-          {active === 'options' && <OptionsTab />}
-        </TabErrorBoundary>
-        <TabErrorBoundary tabName="Signals" key={`signals-${active}`}>
-          {active === 'signals' && <SignalsTab />}
-        </TabErrorBoundary>
-        <TabErrorBoundary tabName="Earnings" key={`earnings-${active}`}>
-          {active === 'earnings' && <EarningsTab />}
-        </TabErrorBoundary>
-        <TabErrorBoundary tabName="Congress & Gov" key={`congress-${active}`}>
-          {active === 'congress' && <CongressGovTab />}
-        </TabErrorBoundary>
-        <TabErrorBoundary tabName="Research" key={`research-${active}`}>
-          {active === 'research' && <ResearchTab />}
-        </TabErrorBoundary>
-        <TabErrorBoundary tabName="Deep Dive" key={`deepdive-${active}`}>
-          {active === 'deepdive' && <DeepDiveTab />}
-        </TabErrorBoundary>
-        <TabErrorBoundary tabName="Performance" key={`performance-${active}`}>
-          {active === 'performance' && <PerformanceTab />}
-        </TabErrorBoundary>
-        <TabErrorBoundary tabName="Screener" key={`screener-${active}`}>
-          {active === 'screener' && <ScreenerTab />}
-        </TabErrorBoundary>
-      </main>
+      <div className="main-col">
+        <header className="topbar">
+          <div className="brand-row">
+            <button
+              className="hamburger"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              aria-expanded={menuOpen}
+            >
+              ☰
+            </button>
+            <span className="brand-mark" aria-hidden="true">◈</span>
+            <h1 className="brand">TradeDesk</h1>
+          </div>
+          <div className="topbar-actions">
+            <button
+              className="btn btn-ghost fund-shortcut"
+              onClick={() => setDefsOpen(true)}
+              title="Understanding Fundamentals — every number in plain English"
+            >
+              ? Fundamentals
+            </button>
+            <LiveQuoteButton />
+            <button className="btn btn-ghost" onClick={signOut}>
+              Sign out
+            </button>
+          </div>
+        </header>
 
-      <footer className="footer">
-        TradeDesk — research and education only, not financial advice.
-        <span className="muted"> · v{BUILD_VERSION}</span>
-        <SchwabPill />
-      </footer>
+        <nav className="tabnav" role="tablist" aria-label="TradeDesk sections">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={active === t.id}
+              className={`tabbtn${active === t.id ? ' active' : ''}`}
+              onClick={() => select(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        <main className="content">
+          <TabErrorBoundary tabName="Daily Brief" key={`brief-${active}`}>
+            {active === 'brief' && <DailyBriefTab onOpenTab={goTab} />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Options" key={`options-${active}`}>
+            {active === 'options' && <OptionsTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Signals" key={`signals-${active}`}>
+            {active === 'signals' && <SignalsTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Earnings" key={`earnings-${active}`}>
+            {active === 'earnings' && <EarningsTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Congress & Gov" key={`congress-${active}`}>
+            {active === 'congress' && <CongressGovTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Research" key={`research-${active}`}>
+            {active === 'research' && <ResearchTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Deep Dive" key={`deepdive-${active}`}>
+            {active === 'deepdive' && <DeepDiveTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Performance" key={`performance-${active}`}>
+            {active === 'performance' && <PerformanceTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Screener" key={`screener-${active}`}>
+            {active === 'screener' && <ScreenerTab />}
+          </TabErrorBoundary>
+        </main>
+
+        <footer className="footer">
+          TradeDesk — research and education only, not financial advice.
+          <span className="muted"> · v{BUILD_VERSION}</span>
+          <SchwabPill />
+        </footer>
+      </div>
+
+      <BottomNav active={active} onTab={goTab} onSearch={focusBriefSearch} />
+      <DefinitionsDrawer open={defsOpen} onClose={() => setDefsOpen(false)} />
+      <FundamentalsPill onOpen={() => setDefsOpen(true)} />
     </div>
   );
 }

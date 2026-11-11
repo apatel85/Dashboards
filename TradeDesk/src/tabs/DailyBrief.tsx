@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import EmptyState from '../components/EmptyState';
 import {
   ScoreBar,
@@ -18,8 +18,9 @@ import { supabase } from '../lib/supabase';
 import { SCHWAB_PROXY_URL } from '../lib/useSchwabLive';
 import PremarketLine from '../components/PremarketLine';
 import { Fundamentals } from '../components/Fundamentals';
-import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, fmtTimeAgo, prettify, prettifyOptions } from '../lib/format';
-import type { DailyBrief, BreakoutCandidate, SectorPerf, MarketRegime, NewsFile, SchwabMover } from '../types';
+import { DteCard } from '../components/Dte';
+import { fmtMoney, fmtPct, fmtFullDate, fmtTimeET, fmtTimeAgo, fmtCompactMoney, prettify, prettifyOptions } from '../lib/format';
+import type { DailyBrief, BreakoutCandidate, SectorPerf, MarketRegime, NewsFile, SchwabMover, CongressTrade, TabId } from '../types';
 
 const REGIME_TONE: Record<MarketRegime, 'green' | 'red' | 'amber' | 'dim'> = {
   uptrend: 'green',
@@ -35,79 +36,244 @@ const REGIME_LABEL: Record<MarketRegime, string> = {
   unknown: 'Unknown',
 };
 
-function BreakoutRow({ c, companyName }: { c: BreakoutCandidate; companyName: string }) {
-  const [open, setOpen] = useState(false);
+/** Plain-words lead-in for the mood banner, by regime. */
+const REGIME_LEAD: Record<MarketRegime, string> = {
+  uptrend: 'The market is in an uptrend —',
+  downtrend: 'The market is in a downtrend —',
+  choppy: 'The market is choppy —',
+  unknown: 'Market mood is unclear —',
+};
+
+type FeedFilter = 'all' | 'breakouts' | 'options' | 'congress';
+
+const FILTERS: { id: FeedFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'breakouts', label: 'Breakouts' },
+  { id: 'options', label: 'Options' },
+  { id: 'congress', label: 'Congress' },
+];
+
+/** First sentence of the thesis — the card's plain-English verdict. */
+function firstSentence(s: string): string {
+  const t = (s || '').trim();
+  if (!t) return '';
+  const m = t.match(/^.*?[.!?](?=\s|$)/);
+  return (m ? m[0] : t).trim();
+}
+
+/**
+ * Verdict-first breakout card. Upfront: verdict, ticker + company name,
+ * score, and the key numbers (price, trigger, stop). Tap to expand the
+ * full detail — thesis, attributes, catalyst, fundamentals.
+ */
+function BreakoutCard({
+  c,
+  companyName,
+  expanded,
+  onToggle,
+}: {
+  c: BreakoutCandidate;
+  companyName: string;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   const lp = useLivePrice(c.ticker, c.price);
+  const verdict = firstSentence(c.thesis) || `${c.ticker} is setting up: ${c.setup}.`;
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onToggle();
+    }
+  };
+  return (
+    <article className={`feed-card${expanded ? ' open' : ''}`} id={`feed-card-${c.ticker}`}>
+      <div
+        className="feed-card-main"
+        onClick={onToggle}
+        onKeyDown={onKey}
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        title="Tap for the full detail"
+      >
+        <div className="feed-card-head">
+          <div className="feed-card-id">
+            {/* Stop the TvLink click from also toggling the card. */}
+            <span onClick={(e) => e.stopPropagation()}>
+              <TvLink ticker={c.ticker} />
+            </span>
+            <span className="subname">{companyName}</span>
+          </div>
+          <div className="feed-card-score">
+            <ScoreBar value={c.score} small />
+            <span className="feed-chev" aria-hidden="true">{expanded ? '▾' : '▸'}</span>
+          </div>
+        </div>
+        <p className="feed-verdict">{verdict}</p>
+        <div className="feed-keynums">
+          <span className="feed-num">
+            <span className="feed-num-label">Price</span>
+            {lp.live ? <span className="livedot" title="Live ~15-min delayed quote" /> : null}
+            <span className="num">{fmtMoney(lp.price)}</span>
+          </span>
+          <span className="feed-num">
+            <span className="feed-num-label">Trigger</span>
+            <span className="num up">{fmtMoney(c.trigger_price)}</span>
+          </span>
+          <span className="feed-num">
+            <span className="feed-num-label">Stop</span>
+            <span className="num down">{fmtMoney(c.stop_price)}</span>
+          </span>
+          <span className="feed-num feed-num-setup">
+            <span className="feed-num-label">Setup</span>
+            {c.setup}
+          </span>
+        </div>
+        <PremarketLine pm={lp.premarket} />
+      </div>
+      {expanded && (
+        <div className="feed-card-detail">
+          <div className="detail-thesis">{prettifyOptions(c.thesis || '')}</div>
+          <div className="detail-meta">
+            <div>
+              <span className="detail-label">Attributes</span>
+              <div className="chips">
+                {c.attributes.length > 0 ? (
+                  c.attributes.map((a) => <Chip key={a}>{prettify(a)}</Chip>)
+                ) : (
+                  <span className="muted">—</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <span className="detail-label">Catalyst</span>
+              <div>
+                {c.catalyst ? (
+                  <>
+                    {prettify(c.catalyst)}
+                    {c.catalyst_date ? <span className="muted"> · {c.catalyst_date}</span> : null}
+                  </>
+                ) : (
+                  <span className="muted">—</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <span className="detail-label">Index</span>
+              <IndexBadges items={c.index_membership} />
+            </div>
+            <div>
+              <span className="detail-label">Sector</span>
+              <div>
+                {c.sector}
+                {c.subsector ? <span className="muted"> · {c.subsector}</span> : null}
+              </div>
+            </div>
+          </div>
+          <Fundamentals ticker={c.ticker} />
+        </div>
+      )}
+    </article>
+  );
+}
+
+/**
+ * Congress flow summary for the feed: buys vs sells across the tracked
+ * filings (congress.json spans the last 12 months), with a jump into the
+ * full Congress & Gov tab. Hidden when the file is missing/empty.
+ */
+function CongressCard({ onOpenTab }: { onOpenTab?: (id: TabId) => void }) {
+  const { data } = useJsonData<CongressTrade[]>('congress.json');
+  const stats = useMemo(() => {
+    if (!data || data.length === 0) return null;
+    let buys = 0;
+    let sells = 0;
+    let buyAmt = 0;
+    let sellAmt = 0;
+    let latest = '';
+    for (const t of data) {
+      if (t.trade_type === 'buy') {
+        buys++;
+        buyAmt += t.amount_mid ?? 0;
+      } else if (t.trade_type === 'sell') {
+        sells++;
+        sellAmt += t.amount_mid ?? 0;
+      }
+      const k = t.disclosed_date ?? t.tx_date;
+      if (k && k > latest) latest = k;
+    }
+    return { buys, sells, buyAmt, sellAmt, latest };
+  }, [data]);
+  if (!stats) return null;
+  const total = stats.buys + stats.sells;
+  const buyPct = total > 0 ? (stats.buys / total) * 100 : 50;
+  const selling = stats.sells > stats.buys;
+  return (
+    <article className="feed-card congress-card">
+      <div className="feed-card-head">
+        <div className="feed-card-id">
+          <span className="ticker">Congress flow</span>
+        </div>
+        <Badge tone={selling ? 'red' : 'green'}>{selling ? 'Selling' : 'Buying'}</Badge>
+      </div>
+      <p className="feed-verdict">
+        Congress is {selling ? 'selling' : 'buying'} — {stats.buys.toLocaleString('en-US')} buys
+        vs {stats.sells.toLocaleString('en-US')} sells in the last 12 months of filings.
+      </p>
+      <div
+        className="flow-bar"
+        title={`${stats.buys.toLocaleString('en-US')} buys vs ${stats.sells.toLocaleString('en-US')} sells`}
+      >
+        <div className="flow-bar-buy" style={{ width: `${buyPct}%` }} />
+      </div>
+      <div className="feed-keynums">
+        <span className="feed-num">
+          <span className="feed-num-label">Buys</span>
+          <span className="num up">{fmtCompactMoney(stats.buyAmt)}</span>
+        </span>
+        <span className="feed-num">
+          <span className="feed-num-label">Sells</span>
+          <span className="num down">{fmtCompactMoney(stats.sellAmt)}</span>
+        </span>
+        <span className="feed-num">
+          <span className="feed-num-label">Latest filing</span>
+          {stats.latest || '—'}
+        </span>
+      </div>
+      {onOpenTab ? (
+        <button className="btn btn-ghost feed-card-cta" onClick={() => onOpenTab('congress')}>
+          Open Congress &amp; Gov →
+        </button>
+      ) : null}
+    </article>
+  );
+}
+
+function DteSection({ brief }: { brief: DailyBrief }) {
+  const zero = brief.dte_focus?.zero_dte ?? [];
+  const one = brief.dte_focus?.one_dte ?? [];
+  if (zero.length === 0 && one.length === 0) return null;
   return (
     <>
-      <tr className="clickable" onClick={() => setOpen((o) => !o)} title="Click for thesis">
-        <td data-th="Ticker">
-          <TvLink ticker={c.ticker} />
-          <span className="subname">{companyName}</span>
-        </td>
-        <td data-th="Price" className="num">
-          {lp.live ? <span className="livedot" title="Live ~15-min delayed quote" /> : null}
-          {fmtMoney(lp.price)}
-          <span className="subname">
-            {lp.live && lp.fetchedAt
-              ? `live ${fmtTimeET(new Date(lp.fetchedAt).toISOString())}`
-              : c.price_ts
-                ? fmtTimeET(c.price_ts)
-                : ''}
-          </span>
-          <PremarketLine pm={lp.premarket} />
-        </td>
-        <td data-th="Score">
-          <ScoreBar value={c.score} small />
-        </td>
-        <td data-th="Setup" className="setup">{c.setup}</td>
-        <td data-th="Index" className="hide-sm">
-          <IndexBadges items={c.index_membership} />
-        </td>
-        <td data-th="Sector" className="hide-sm">
-          {c.sector}
-          <span className="subname">{c.subsector}</span>
-        </td>
-        <td data-th="Trigger / Stop" className="num hide-sm">
-          <span className="up">{fmtMoney(c.trigger_price)}</span>
-          {' / '}
-          <span className="down">{fmtMoney(c.stop_price)}</span>
-        </td>
-      </tr>
-      {open && (
-        <tr className="detail-row">
-          <td colSpan={7}>
-            <div className="detail-grid">
-              <div className="detail-thesis">{prettifyOptions(c.thesis || '')}</div>
-              <div className="detail-meta">
-                <div>
-                  <span className="detail-label">Attributes</span>
-                  <div className="chips">
-                    {c.attributes.length > 0 ? (
-                      c.attributes.map((a) => <Chip key={a}>{prettify(a)}</Chip>)
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <span className="detail-label">Catalyst</span>
-                  <div>
-                    {c.catalyst ? (
-                      <>
-                        {prettify(c.catalyst)}
-                        {c.catalyst_date ? <span className="muted"> · {c.catalyst_date}</span> : null}
-                      </>
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <Fundamentals ticker={c.ticker} />
-            </div>
-          </td>
-        </tr>
+      {zero.length > 0 && (
+        <>
+          <SectionHead title="0DTE focus" sub="Expires today · index options" />
+          <div className="dte-grid">
+            {zero.map((p) => (
+              <DteCard key={p.ticker} p={p} />
+            ))}
+          </div>
+        </>
+      )}
+      {one.length > 0 && (
+        <>
+          <SectionHead title="1DTE focus" sub="Expires tomorrow · index options" />
+          <div className="dte-grid">
+            {one.map((p) => (
+              <DteCard key={p.ticker} p={p} />
+            ))}
+          </div>
+        </>
       )}
     </>
   );
@@ -265,12 +431,15 @@ function NewsSection() {
   );
 }
 
-export default function DailyBriefTab() {
+export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) => void }) {
   const { data, loading, error } = useJsonData<DailyBrief>('daily-brief.json');
   // Company names for the ticker cells (fundamentals.json is the source of
   // truth — the brief's `name` field is just the ticker). One fetch here,
   // passed down, so 15 rows don't each fetch the file.
   const { get: getFund } = useFundamentals();
+  const [filter, setFilter] = useState<FeedFilter>('all');
+  const [query, setQuery] = useState('');
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     if (data) {
@@ -289,6 +458,26 @@ export default function DailyBriefTab() {
 
   const brief = data;
   const hasCandidates = brief.breakout_candidates.length > 0;
+  const q = query.trim().toLowerCase();
+  const visibleCandidates = brief.breakout_candidates.filter((c) => {
+    if (!q) return true;
+    const name = (getFund(c.ticker)?.name ?? c.name).toLowerCase();
+    return c.ticker.toLowerCase().includes(q) || name.includes(q);
+  });
+  const top3 = brief.breakout_candidates.slice(0, 3);
+  const showBreakouts = filter === 'all' || filter === 'breakouts';
+  const showOptions = (filter === 'all' || filter === 'options') && !q;
+  const showCongress = (filter === 'all' || filter === 'congress') && !q;
+  const showRest = filter === 'all' && !q;
+
+  const jumpTo = (ticker: string) => {
+    setQuery('');
+    setFilter('breakouts');
+    setExpanded(ticker);
+    window.setTimeout(() => {
+      document.getElementById(`feed-card-${ticker}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  };
 
   return (
     <section className="tab">
@@ -296,7 +485,6 @@ export default function DailyBriefTab() {
         <div className="brief-head-main">
           <div className="eyebrow">Daily Brief · {brief.universe}</div>
           <h2>{fmtFullDate(brief.brief_date)}</h2>
-          <p className="regime-notes">{brief.regime_notes}</p>
         </div>
         <div className="brief-head-side">
           <Badge tone={REGIME_TONE[brief.market_regime]}>{REGIME_LABEL[brief.market_regime]}</Badge>
@@ -304,84 +492,143 @@ export default function DailyBriefTab() {
         </div>
       </div>
 
-      <p className="muted small plain-note">
-        Stocks setting up to break out of a range in the next 1–2 weeks. <b>Score</b> (0–100) =
-        how many bullish signals line up — higher is stronger. <b>Trigger</b> = the price a
-        breakout needs to clear; <b>Stop</b> = where the idea is wrong, get out. A green dot
-        means the price is live right now; otherwise it is the last close.
-      </p>
+      <div className="mood-banner">
+        <span className="mood-label">Today</span>
+        <p>
+          {REGIME_LEAD[brief.market_regime]} {brief.regime_notes}
+        </p>
+      </div>
 
-      <SectionHead
-        title="Breakout candidates"
-        sub="1–2 week window · scored on confluence"
-      />
-      {hasCandidates ? (
-        <div className="table-scroll">
-          <table className="dtable">
-            <thead>
-              <tr>
-                <th>Ticker</th>
-                <th>Price</th>
-                <th>Score</th>
-                <th>Setup</th>
-                <th className="hide-sm">Index</th>
-                <th className="hide-sm">Sector</th>
-                <th className="hide-sm">Trigger / Stop</th>
-              </tr>
-            </thead>
-            <tbody>
-              {brief.breakout_candidates.map((c) => (
-                <BreakoutRow key={c.ticker} c={c} companyName={getFund(c.ticker)?.name ?? c.name} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <EmptyState
-          dataFile="public/data/daily-brief.json"
-          loading={false}
-          error={null}
-          items={['No breakout candidates met the scoring cutoffs in this run.']}
+      <div className="feed-controls">
+        <input
+          id="brief-search"
+          className="screener-search feed-search"
+          type="search"
+          placeholder="Search a ticker or company…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search breakout candidates by ticker or company name"
         />
-      )}
-
-      <MoversSection />
-
-      <SectionHead title="Sectors" sub="Hot vs. weak · rotation read" />
-      <div className="sector-grid">
-        <div className="panel">
-          <h4 className="sector-title up">Hot sectors</h4>
-          <SectorTable rows={brief.sectors.hot} />
-        </div>
-        <div className="panel">
-          <h4 className="sector-title down">Weak sectors</h4>
-          <SectorTable rows={brief.sectors.weak} />
+        <div className="feed-chips" role="group" aria-label="Filter the feed">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              className={`chip-btn${filter === f.id ? ' on' : ''}`}
+              onClick={() => setFilter(f.id)}
+              aria-pressed={filter === f.id}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
       </div>
-      {brief.subsectors ? (
+
+      {showBreakouts && !q && top3.length > 0 && (
         <>
-          <SectionHead title="Subsectors" sub="Industry momentum · liquid industry ETFs" />
-          <div className="sector-grid">
-            <div className="panel">
-              <h4 className="sector-title up">Hot subsectors</h4>
-              <SectorTable rows={brief.subsectors.hot} emptyText="No subsector data in this run." />
-            </div>
-            <div className="panel">
-              <h4 className="sector-title down">Weak subsectors</h4>
-              <SectorTable rows={brief.subsectors.weak} emptyText="No subsector data in this run." />
-            </div>
+          <SectionHead title="Look at these today" sub="Top 3 by score · tap to open the card" />
+          <div className="top3-strip">
+            {top3.map((c) => (
+              <button key={c.ticker} className="top3-tile" onClick={() => jumpTo(c.ticker)}>
+                <span className="top3-ticker num">{c.ticker}</span>
+                <span className="top3-name">{getFund(c.ticker)?.name ?? c.name}</span>
+                <span className="top3-score">
+                  Score <b>{c.score}</b>
+                </span>
+                <span className="top3-setup">{c.setup}</span>
+              </button>
+            ))}
           </div>
         </>
-      ) : null}
+      )}
 
-      {brief.rotation_notes ? (
-        <div className="callout">
-          <span className="detail-label">Rotation</span>
-          <p>{brief.rotation_notes}</p>
-        </div>
-      ) : null}
+      {showBreakouts && (
+        <>
+          <SectionHead
+            title="Breakout candidates"
+            sub={q ? `${visibleCandidates.length} match${visibleCandidates.length === 1 ? '' : 'es'} · 1–2 week window` : '1–2 week window · tap a card for the full detail'}
+          />
+          {hasCandidates ? (
+            visibleCandidates.length > 0 ? (
+              <div className="feed-list">
+                {visibleCandidates.map((c) => (
+                  <BreakoutCard
+                    key={c.ticker}
+                    c={c}
+                    companyName={getFund(c.ticker)?.name ?? c.name}
+                    expanded={expanded === c.ticker}
+                    onToggle={() => setExpanded((cur) => (cur === c.ticker ? null : c.ticker))}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                dataFile="public/data/daily-brief.json"
+                loading={false}
+                error={null}
+                items={[`No breakout candidate matches “${query.trim()}”.`]}
+              />
+            )
+          ) : (
+            <EmptyState
+              dataFile="public/data/daily-brief.json"
+              loading={false}
+              error={null}
+              items={['No breakout candidates met the scoring cutoffs in this run.']}
+            />
+          )}
+        </>
+      )}
 
-      <NewsSection />
+      {showCongress && (
+        <>
+          <SectionHead title="Congress" sub="What disclosed trading says · last 12 months" />
+          <CongressCard onOpenTab={onOpenTab} />
+        </>
+      )}
+
+      {showOptions && <DteSection brief={brief} />}
+
+      {showRest && (
+        <>
+          <MoversSection />
+
+          <SectionHead title="Sectors" sub="Hot vs. weak · rotation read" />
+          <div className="sector-grid">
+            <div className="panel">
+              <h4 className="sector-title up">Hot sectors</h4>
+              <SectorTable rows={brief.sectors.hot} />
+            </div>
+            <div className="panel">
+              <h4 className="sector-title down">Weak sectors</h4>
+              <SectorTable rows={brief.sectors.weak} />
+            </div>
+          </div>
+          {brief.subsectors ? (
+            <>
+              <SectionHead title="Subsectors" sub="Industry momentum · liquid industry ETFs" />
+              <div className="sector-grid">
+                <div className="panel">
+                  <h4 className="sector-title up">Hot subsectors</h4>
+                  <SectorTable rows={brief.subsectors.hot} emptyText="No subsector data in this run." />
+                </div>
+                <div className="panel">
+                  <h4 className="sector-title down">Weak subsectors</h4>
+                  <SectorTable rows={brief.subsectors.weak} emptyText="No subsector data in this run." />
+                </div>
+              </div>
+            </>
+          ) : null}
+
+          {brief.rotation_notes ? (
+            <div className="callout">
+              <span className="detail-label">Rotation</span>
+              <p>{brief.rotation_notes}</p>
+            </div>
+          ) : null}
+
+          <NewsSection />
+        </>
+      )}
     </section>
   );
 }
