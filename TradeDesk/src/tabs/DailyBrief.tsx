@@ -12,6 +12,7 @@ import {
   TvLink,
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
+import { useFundamentals } from '../lib/useFundamentals';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import { supabase } from '../lib/supabase';
 import { SCHWAB_PROXY_URL } from '../lib/useSchwabLive';
@@ -34,7 +35,7 @@ const REGIME_LABEL: Record<MarketRegime, string> = {
   unknown: 'Unknown',
 };
 
-function BreakoutRow({ c }: { c: BreakoutCandidate }) {
+function BreakoutRow({ c, companyName }: { c: BreakoutCandidate; companyName: string }) {
   const [open, setOpen] = useState(false);
   const lp = useLivePrice(c.ticker, c.price);
   return (
@@ -42,7 +43,7 @@ function BreakoutRow({ c }: { c: BreakoutCandidate }) {
       <tr className="clickable" onClick={() => setOpen((o) => !o)} title="Click for thesis">
         <td data-th="Ticker">
           <TvLink ticker={c.ticker} />
-          <span className="subname">{c.name}</span>
+          <span className="subname">{companyName}</span>
         </td>
         <td data-th="Price" className="num">
           {lp.live ? <span className="livedot" title="Live ~15-min delayed quote" /> : null}
@@ -266,6 +267,10 @@ function NewsSection() {
 
 export default function DailyBriefTab() {
   const { data, loading, error } = useJsonData<DailyBrief>('daily-brief.json');
+  // Company names for the ticker cells (fundamentals.json is the source of
+  // truth — the brief's `name` field is just the ticker). One fetch here,
+  // passed down, so 15 rows don't each fetch the file.
+  const { get: getFund } = useFundamentals();
 
   useEffect(() => {
     if (data) {
@@ -326,7 +331,7 @@ export default function DailyBriefTab() {
             </thead>
             <tbody>
               {brief.breakout_candidates.map((c) => (
-                <BreakoutRow key={c.ticker} c={c} />
+                <BreakoutRow key={c.ticker} c={c} companyName={getFund(c.ticker)?.name ?? c.name} />
               ))}
             </tbody>
           </table>

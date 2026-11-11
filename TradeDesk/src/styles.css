@@ -1989,3 +1989,124 @@ body {
   background: var(--accent, #60a5fa);
   transform: translateX(-1px);
 }
+
+/* ── Lotto compact stat strip: one line, dividers between items ─────── */
+.stat-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+}
+.stat-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 0 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.stat-item + .stat-item {
+  border-left: 1px solid var(--border);
+}
+.stat-item-label {
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Fundamentals legend ─────────────────────────────────────────────── */
+.fund-legend-toggle {
+  margin-top: 8px;
+}
+.fund-legend {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+.fund-legend-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.fund-legend-row b {
+  font-weight: 600;
+}
+.fund-legend-row span {
+  color: var(--text-dim);
+}
+@media (max-width: 560px) {
+  .fund-legend-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+/* ── DTE details toggle ──────────────────────────────────────────────── */
+.dte-toggle {
+  margin-top: 8px;
+}
+
+/* ── Congress flow infographic ───────────────────────────────────────── */
+.flow-info {
+  margin-bottom: 12px;
+}
+.flow-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--red);
+  overflow: hidden;
+  margin: 4px 0 12px;
+}
+.flow-bar-buy {
+  height: 100%;
+  background: var(--green);
+}
+.flow-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+.flow-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+.flow-tile:hover {
+  border-color: var(--accent);
+}
+.flow-tile.active {
+  border-color: var(--accent);
+  background: rgba(63, 169, 245, 0.12);
+}
+.flow-tile.up .flow-tile-num {
+  color: var(--green);
+}
+.flow-tile.down .flow-tile-num {
+  color: var(--red);
+}
+.flow-tile-num {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+}
+.flow-tile-label {
+  font-size: 12px;
+  color: var(--text-dim);
+}

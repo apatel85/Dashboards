@@ -31,6 +31,7 @@ type TypeFilter = 'all' | 'buy' | 'sell' | 'exchange';
 type View = 'agg' | 'notable' | 'trades';
 type AggSort = 'amount' | 'officials';
 type NotableWindow = 7 | 30 | 90;
+type TradeSortKey = 'date' | 'amount' | 'member' | 'asset';
 
 const TYPE_TONE: Record<string, 'green' | 'red' | 'amber'> = {
   buy: 'green',
@@ -309,6 +310,8 @@ export default function CongressGovTab() {
   const [page, setPage] = useState(0);
   const [aggSort, setAggSort] = useState<AggSort>('amount');
   const [notableWindow, setNotableWindow] = useState<NotableWindow>(30);
+  /** Trades-table sort: date desc (newest first) is the default. */
+  const [tradeSort, setTradeSort] = useState<{ key: TradeSortKey; dir: 1 | -1 }>({ key: 'date', dir: -1 });
 
   const committeesByMember = useMemo(() => {
     const m = new Map<string, { name: string; role?: string | null }[]>();
@@ -416,17 +419,43 @@ export default function CongressGovTab() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const dir = tradeSort.dir;
     return branchRows
       .filter((t) => type === 'all' || t.trade_type === type)
       .filter((t) => !clusterOnly || t.cluster)
       .filter((t) => !keyFilter || aggKey(t) === keyFilter.key)
       .filter((t) => matchesQuery(t, q))
       .sort((a, b) => {
-        const ka = a.disclosed_date ?? a.tx_date;
-        const kb = b.disclosed_date ?? b.tx_date;
-        return ka !== kb ? (ka < kb ? 1 : -1) : a.tx_date < b.tx_date ? 1 : -1;
+        switch (tradeSort.key) {
+          case 'amount':
+            return ((a.amount_mid ?? 0) - (b.amount_mid ?? 0)) * dir;
+          case 'member':
+            return a.member.localeCompare(b.member) * dir;
+          case 'asset':
+            return (a.ticker ?? a.asset_name).localeCompare(b.ticker ?? b.asset_name) * dir;
+          case 'date':
+          default: {
+            const ka = a.disclosed_date ?? a.tx_date;
+            const kb = b.disclosed_date ?? b.tx_date;
+            return (ka !== kb ? (ka < kb ? -1 : 1) : a.tx_date < b.tx_date ? -1 : 1) * dir;
+          }
+        }
       });
-  }, [branchRows, type, clusterOnly, query, keyFilter]);
+  }, [branchRows, type, clusterOnly, query, keyFilter, tradeSort]);
+
+  /** Infographic stats: the whole branch feed (not the filtered subset), so
+   * the tiles always show the full picture and act as filters. */
+  const flowStats = useMemo(() => {
+    let buys = 0, sells = 0, buyAmt = 0, sellAmt = 0, house = 0, senate = 0, clusters = 0;
+    for (const t of data ?? []) {
+      if (t.trade_type === 'buy') { buys++; buyAmt += t.amount_mid ?? 0; }
+      else if (t.trade_type === 'sell') { sells++; sellAmt += t.amount_mid ?? 0; }
+      if (t.chamber === 'House') house++;
+      else if (t.chamber === 'Senate') senate++;
+      if (t.cluster) clusters++;
+    }
+    return { buys, sells, buyAmt, sellAmt, house, senate, clusters, total: (data ?? []).length };
+  }, [data]);
 
   const freshness = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -459,6 +488,29 @@ export default function CongressGovTab() {
     setKeyFilter({ key: r.key, label: r.ticker ?? r.name });
     setView('trades');
     resetPage();
+  };
+
+  /** Trades-table header sort: tap a header to sort, tap again to reverse. */
+  const toggleTradeSort = (key: TradeSortKey) => {
+    setTradeSort((s) =>
+      s.key === key
+        ? { key, dir: s.dir === 1 ? -1 : 1 }
+        : { key, dir: key === 'date' || key === 'amount' ? -1 : 1 },
+    );
+    resetPage();
+  };
+  const sortArrow = (key: TradeSortKey) =>
+    tradeSort.key !== key ? '' : tradeSort.dir === 1 ? ' ▲' : ' ▼';
+
+  /** Infographic tile tap: filter the feed (tap again to clear). */
+  const pickFlow = (kind: 'buy' | 'sell' | 'house' | 'senate' | 'cluster') => {
+    setView('trades');
+    resetPage();
+    if (kind === 'buy') { setType(type === 'buy' ? 'all' : 'buy'); setClusterOnly(false); }
+    else if (kind === 'sell') { setType(type === 'sell' ? 'all' : 'sell'); setClusterOnly(false); }
+    else if (kind === 'house') setChamber(chamber === 'House' ? 'all' : 'House');
+    else if (kind === 'senate') setChamber(chamber === 'Senate' ? 'all' : 'Senate');
+    else if (kind === 'cluster') { setClusterOnly(!clusterOnly); setType('all'); }
   };
 
   if (loading) return <LoadingPanel what="disclosure data" />;
@@ -526,6 +578,71 @@ export default function CongressGovTab() {
             intraday signal.
           </p>
         )}
+      </div>
+
+      {/* Flow infographic: the whole feed at a glance. Tap a tile to filter. */}
+      <div className="panel flow-info">
+        <div className="flow-bar" title={`${flowStats.buys.toLocaleString('en-US')} buys vs ${flowStats.sells.toLocaleString('en-US')} sells`}>
+          <div
+            className="flow-bar-buy"
+            style={{ width: `${flowStats.buys + flowStats.sells > 0 ? (flowStats.buys / (flowStats.buys + flowStats.sells)) * 100 : 50}%` }}
+          />
+        </div>
+        <div className="flow-tiles">
+          <button
+            type="button"
+            className={`flow-tile up${view === 'trades' && type === 'buy' ? ' active' : ''}`}
+            onClick={() => pickFlow('buy')}
+            title="Show only buys"
+          >
+            <span className="flow-tile-num">{flowStats.buys.toLocaleString('en-US')}</span>
+            <span className="flow-tile-label">Buys · {fmtCompactMoney(flowStats.buyAmt)}</span>
+          </button>
+          <button
+            type="button"
+            className={`flow-tile down${view === 'trades' && type === 'sell' ? ' active' : ''}`}
+            onClick={() => pickFlow('sell')}
+            title="Show only sells"
+          >
+            <span className="flow-tile-num">{flowStats.sells.toLocaleString('en-US')}</span>
+            <span className="flow-tile-label">Sells · {fmtCompactMoney(flowStats.sellAmt)}</span>
+          </button>
+          {!isExec && (
+            <>
+              <button
+                type="button"
+                className={`flow-tile${chamber === 'House' ? ' active' : ''}`}
+                onClick={() => pickFlow('house')}
+                title="Show only House trades"
+              >
+                <span className="flow-tile-num">{flowStats.house.toLocaleString('en-US')}</span>
+                <span className="flow-tile-label">House</span>
+              </button>
+              <button
+                type="button"
+                className={`flow-tile${chamber === 'Senate' ? ' active' : ''}`}
+                onClick={() => pickFlow('senate')}
+                title="Show only Senate trades"
+              >
+                <span className="flow-tile-num">{flowStats.senate.toLocaleString('en-US')}</span>
+                <span className="flow-tile-label">Senate</span>
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            className={`flow-tile${view === 'trades' && clusterOnly ? ' active' : ''}`}
+            onClick={() => pickFlow('cluster')}
+            title="Show only cluster buys (2+ officials, same week)"
+          >
+            <span className="flow-tile-num">{flowStats.clusters.toLocaleString('en-US')}</span>
+            <span className="flow-tile-label">Cluster buys</span>
+          </button>
+        </div>
+        <p className="muted small plain-note">
+          Green bar = share of buys. Tap a tile to filter the trades below; tap again to clear.
+          Amounts are range midpoints, so treat the dollars as estimates.
+        </p>
       </div>
 
       <div className="panel filterbar">
@@ -754,7 +871,7 @@ export default function CongressGovTab() {
         <>
           <SectionHead
             title="Disclosed trades"
-            sub={`${filtered.length.toLocaleString('en-US')} matching · sorted by disclosure date · tap a row for detail`}
+            sub={`${filtered.length.toLocaleString('en-US')} matching · sorted by ${tradeSort.key === 'date' ? 'disclosure date' : tradeSort.key} ${tradeSort.dir === 1 ? '↑' : '↓'} · tap a column header to re-sort · tap a row for detail`}
           />
           {pageRows.length > 0 ? (
             <>
@@ -762,11 +879,27 @@ export default function CongressGovTab() {
                 <table className="dtable">
                   <thead>
                     <tr>
-                      <th>{isExec ? 'Official' : 'Member'}</th>
-                      <th>Asset</th>
+                      <th>
+                        <button className="linklike" onClick={() => toggleTradeSort('member')}>
+                          {isExec ? 'Official' : 'Member'}{sortArrow('member')}
+                        </button>
+                      </th>
+                      <th>
+                        <button className="linklike" onClick={() => toggleTradeSort('asset')}>
+                          Asset{sortArrow('asset')}
+                        </button>
+                      </th>
                       <th>Type</th>
-                      <th>Amount</th>
-                      <th>Disclosed</th>
+                      <th>
+                        <button className="linklike" onClick={() => toggleTradeSort('amount')}>
+                          Amount{sortArrow('amount')}
+                        </button>
+                      </th>
+                      <th>
+                        <button className="linklike" onClick={() => toggleTradeSort('date')}>
+                          Disclosed{sortArrow('date')}
+                        </button>
+                      </th>
                       <th className="hide-sm">Branch</th>
                       <th className="hide-sm">Traded</th>
                       <th className="hide-sm">Lag</th>

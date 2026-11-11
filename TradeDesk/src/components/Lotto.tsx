@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, SectionHead, Stat, TvLink } from './ui';
+import { Badge, SectionHead, TvLink } from './ui';
 import { Fundamentals } from './Fundamentals';
 import { prettifyOptions } from '../lib/format';
 import type { LottoCandidate, LottoFile } from '../types';
@@ -75,17 +75,36 @@ function LottoCard({ c, rank, forceOpen }: { c: LottoCandidate; rank: number; fo
               <strong>Γ 0DTE:</strong> <span className="muted">{c.gamma_0dte}</span>
             </div>
           ) : null}
-          <div className="stat-grid">
-            <Stat label="Spot" value={`$${c.spot}`} />
-            {c.expiry_0dte ? <Stat label="0DTE exp" value={c.expiry_0dte.slice(5)} /> : null}
-            {c.expiry_1dte ? <Stat label="1DTE exp" value={c.expiry_1dte.slice(5)} /> : null}
-            <Stat
-              label="Day vol / OI"
-              value={`${c.unusual?.vol_oi_ratio ?? '—'}×`}
-              accent={c.unusual?.vol_oi_ratio != null && c.unusual.vol_oi_ratio >= 1 ? 'up' : undefined}
-            />
-            {c.rv20_pct != null ? <Stat label="20d realized" value={`${c.rv20_pct}%`} /> : null}
-            {c.gamma_regime ? <Stat label="Gamma" value={c.gamma_regime} /> : null}
+          <div className="stat-strip">
+            <span className="stat-item">
+              <span className="stat-item-label">Spot</span> <b className="num">${c.spot}</b>
+            </span>
+            {c.expiry_0dte ? (
+              <span className="stat-item">
+                <span className="stat-item-label">0DTE</span> <b className="num">{c.expiry_0dte.slice(5)}</b>
+              </span>
+            ) : null}
+            {c.expiry_1dte ? (
+              <span className="stat-item">
+                <span className="stat-item-label">1DTE</span> <b className="num">{c.expiry_1dte.slice(5)}</b>
+              </span>
+            ) : null}
+            <span className="stat-item">
+              <span className="stat-item-label">Day vol / OI</span>{' '}
+              <b className={`num ${c.unusual?.vol_oi_ratio != null && c.unusual.vol_oi_ratio >= 1 ? 'up' : ''}`}>
+                {c.unusual?.vol_oi_ratio ?? '—'}×
+              </b>
+            </span>
+            {c.rv20_pct != null ? (
+              <span className="stat-item">
+                <span className="stat-item-label">20d realized</span> <b className="num">{c.rv20_pct}%</b>
+              </span>
+            ) : null}
+            {c.gamma_regime ? (
+              <span className="stat-item">
+                <span className="stat-item-label">Gamma</span> <b>{c.gamma_regime}</b>
+              </span>
+            ) : null}
           </div>
           {c.friday_pin ? (
             <div className="thesis-line">

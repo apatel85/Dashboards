@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { FundamentalMetrics } from '../types';
 import { useFundamentals, peerTone } from '../lib/useFundamentals';
 
@@ -27,6 +28,32 @@ const TONE_CLASS: Record<string, string> = {
   neutral: '',
 };
 
+/** Plain-English legend: what each metric is and how to read it. */
+const LEGEND: [string, string][] = [
+  ['P/E (TTM)', 'Price ÷ the last 12 months of earnings. Lower = cheaper for the profit you get. Under ~15 is cheap, over ~30 is pricey.'],
+  ['Fwd P/E', 'Same as P/E, but using next year\u2019s expected earnings instead of last year\u2019s.'],
+  ['PEG', 'P/E ÷ expected earnings growth. Under 1 = cheap for how fast it is growing; over 2 = pricey for its growth.'],
+  ['P/B', 'Price ÷ book value (what the company owns minus what it owes). Under 1 = selling for less than its net assets.'],
+  ['P/S', 'Price ÷ yearly sales. Lower = cheaper for the sales the company brings in.'],
+  ['ROE', 'Profit ÷ shareholder equity. How hard the company works its owners\u2019 money. Over 15% is strong.'],
+  ['Profit margin', 'Profit kept from each $1 of sales. Higher = the business keeps more of what it earns.'],
+  ['Debt/Equity', 'Debt ÷ equity. Under 1 = light debt; over 2 = heavily indebted.'],
+  ['Rev growth YoY', 'Sales vs a year ago. Positive = the business is growing.'],
+  ['Rev 3Y CAGR', 'Average yearly sales growth over the last 3 years.'],
+  ['EPS growth (est)', 'How much analysts expect earnings per share to grow. Positive = more profit ahead.'],
+  ['Beta', 'How much the stock swings vs the market. 1 = moves with the market; 2 = twice as jumpy; 0.5 = half as jumpy.'],
+  ['Div yield', 'Yearly dividend ÷ price. What the stock pays you each year just for holding it.'],
+  ['Mkt cap', 'Total value of all shares. Bigger = bigger company.'],
+  ['Graham number', 'A deep-value floor from earnings × book value. Price below it = potentially cheap.'],
+  ['Peer fair value', 'What the stock would be worth if it traded at its sector\u2019s typical P/E.'],
+];
+
+const METRIC_KEYS = [
+  'pe_trailing', 'pe_forward', 'peg', 'pb', 'ps', 'roe', 'profit_margin',
+  'debt_equity', 'revenue_growth_yoy', 'revenue_cagr_3y', 'eps_growth_expected',
+  'beta', 'div_yield', 'market_cap',
+];
+
 /**
  * Compact fundamentals panel for a ticker, colored vs sector peers:
  * green = better than peers, red = worse, uncolored = in line / neutral metric.
@@ -35,8 +62,15 @@ const TONE_CLASS: Record<string, string> = {
  */
 export function Fundamentals({ ticker }: { ticker: string }) {
   const { get, peerStats } = useFundamentals();
+  const [showLegend, setShowLegend] = useState(false);
   const f: FundamentalMetrics | null = get(ticker);
   if (!f) return null;
+  // ETFs and indices carry almost no company metrics (only P/E + div yield)
+  // — showing a grid of dashes helps nobody, so hide the whole block.
+  const presentCount = METRIC_KEYS.filter((k) =>
+    isNum((f as unknown as Record<string, unknown>)[k]),
+  ).length;
+  if (presentCount < 4) return null;
   const stats = peerStats(ticker);
 
   const rows: [string, string, string][] = [
@@ -92,6 +126,22 @@ export function Fundamentals({ ticker }: { ticker: string }) {
           );
         })}
       </div>
+      <button className="link-btn fund-legend-toggle" onClick={() => setShowLegend((s) => !s)}>
+        {showLegend ? 'Hide what these mean ▾' : 'What do these mean? ▸'}
+      </button>
+      {showLegend && (
+        <div className="fund-legend">
+          {LEGEND.map(([label, text]) => (
+            <div className="fund-legend-row" key={label}>
+              <b>{label}</b>
+              <span>{text}</span>
+            </div>
+          ))}
+          <div className="muted small">
+            Green = better than its sector peers, red = worse, plain = in line.
+          </div>
+        </div>
+      )}
       {(isNum(f.graham_number) || isNum(f.peer_fair_value)) && (
         <div className="valuation-block">
           <span className="detail-label">Intrinsic value vs price</span>
