@@ -451,6 +451,80 @@ export interface PerformanceFile {
   items: PerformanceItem[];
 }
 
+/* ── daily prediction tracker (breakout candidates + 0DTE/1DTE plays) ── */
+
+export interface PredictionOutcome {
+  status: string;
+  trigger_day?: number | null;
+  stop_day?: number | null;
+  ret_5d?: number | null;
+  ret_10d?: number | null;
+  ret_30d?: number | null;
+  mfe?: number | null;
+  mae?: number | null;
+  r_10d?: number | null;
+  r_now?: number | null;
+  last_close?: number | null;
+  last_bar_date?: string | null;
+  expiry_close?: number | null;
+  moved_pct?: number | null;
+  triggered?: boolean | null;
+  modeled_return?: number | null;
+  modeled_multiple?: number | null;
+  win?: boolean | null;
+  ungradable?: string | null;
+}
+
+export interface PredictionRow {
+  date: string;
+  ticker: string;
+  name?: string | null;
+  type: 'breakout' | 'lotto';
+  score: number | null;
+  setup: string | null;
+  price?: number | null;
+  trigger?: number | null;
+  stop?: number | null;
+  direction?: 'CALL' | 'PUT' | 'BOTH' | null;
+  spot?: number | null;
+  expiry?: string | null;
+  expiry_kind?: '0DTE' | '1DTE' | null;
+  strike?: number | null;
+  premium?: number | null;
+  breakeven?: number | null;
+  expected_move_pct?: number | null;
+  iv_pct?: number | null;
+  seeded?: boolean;
+  outcome: PredictionOutcome | null;
+}
+
+export interface PredictionSummaryBlock {
+  tracked: number;
+  graded: number;
+  open: number;
+  ungradable?: number;
+  trigger_hit?: number;
+  trigger_rate: number | null;
+  stop_hit?: number;
+  stop_rate?: number | null;
+  win_rate: number | null;
+  avg_r_10d?: number | null;
+  avg_ret_5d?: number | null;
+  avg_ret_10d?: number | null;
+  avg_ret_30d?: number | null;
+  triggered?: number;
+  avg_modeled_return?: number | null;
+  avg_modeled_multiple?: number | null;
+}
+
+export interface PredictionPerformanceFile {
+  as_of: string;
+  source: string;
+  history_since: string | null;
+  summary: { breakout: PredictionSummaryBlock; lotto: PredictionSummaryBlock };
+  rows: PredictionRow[];
+}
+
 /* ── fundamentals.json ──────────────────────────────────────────── */
 
 export interface FundamentalMetrics {
