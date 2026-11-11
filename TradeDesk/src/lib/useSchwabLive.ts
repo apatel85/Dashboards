@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from './supabase';
-import { applySchwabQuotes, primeQuotes } from './quotes';
+import { SCHWAB_PROXY_URL } from './schwab';
+import { applySchwabQuotes, primeQuotes, getQuoteUniverse } from './quotes';
+import type { SchwabSession } from './quotes';
+import { fetchPremarketRanges, etDateStr } from './premarketRange';
+
+export { SCHWAB_PROXY_URL, SCHWAB_AUTH_START_URL } from './schwab';
 
 /**
- * Live Schwab quotes in the browser — 60-second polling, market hours only.
+ * Live Schwab quotes in the browser — 60-second polling, regular session
+ * PLUS extended hours (pre-market 4:00–9:30am ET, after-hours 4:00–8:00pm
+ * ET). During extended hours the price is Schwab's `mark` (fallback
+ * `lastPrice`); yesterday's close rides along so cards can show the gap.
  *
  * Auth is the signed-in Supabase session JWT (Authorization: Bearer). The
  * proxy verifies it with auth.getUser() — the anon key fails that check, so
@@ -11,38 +19,52 @@ import { applySchwabQuotes, primeQuotes } from './quotes';
  * browser; it is only for the pipeline / verify script.
  *
  * Behaviour contract:
- *  - Polls the proxy quotes endpoint every 60 s ONLY while the market is
- *    open (9:30–16:00 ET, Mon–Fri). Open/closed comes from the proxy's
- *    markets endpoint once on load (refreshed every 30 min), falling back
- *    to a local ET clock when that call fails.
+ *  - Polls the proxy quotes endpoint every 60 s while the market is in ANY
+ *    session (pre-market, regular, after-hours), Mon–Fri. The session comes
+ *    from the proxy's markets endpoint (sessionHours blocks) once on load
+ *    (refreshed every 30 min), falling back to a local ET clock when that
+ *    call fails or has no sessionHours.
  *  - Live prices merge over the pipeline's quotes.json snapshot in the
  *    shared quote store, so every tab shows them through useLivePrice.
+ *    The store also records the session and yesterday's close per ticker.
+ *  - While the pre-market is running, the on-screen tickers' pre-market
+ *    high/low is fetched (extended-hours 1-min history, refreshed every
+ *    5 min); after the open it is fetched once for the final morning range.
  *  - ANY failure falls back to the snapshot silently — the UI never blanks.
- *    Status is exposed for the footer pill: live | stale | reauth |
- *    off-hours | no-session.
+ *    Status is exposed for the footer pill: live | premarket | afterhours |
+ *    stale | reauth | off-hours | no-session.
  *  - No tokens are stored anywhere by this hook; the JWT lives only in
  *    memory (supabase-js manages the session itself).
  */
 
-export const SCHWAB_PROXY_URL =
-  'https://iknfvddnevudpjtyxkbh.supabase.co/functions/v1/schwab-market-data';
-export const SCHWAB_AUTH_START_URL =
-  'https://iknfvddnevudpjtyxkbh.supabase.co/functions/v1/schwab-auth-start';
-
-export type SchwabStatus = 'live' | 'stale' | 'reauth' | 'off-hours' | 'no-session';
+export type SchwabStatus =
+  | 'live'
+  | 'premarket'
+  | 'afterhours'
+  | 'stale'
+  | 'reauth'
+  | 'off-hours'
+  | 'no-session';
 
 export interface SchwabLiveState {
   status: SchwabStatus;
   /** epoch ms of the last successful poll, null if never */
   lastOk: number | null;
   lastError: string | null;
-  /** markets endpoint's isOpen when known, else null */
+  /** whether the regular session is open, when known, else null */
   marketOpen: boolean | null;
+  /** current session (closed = overnight/weekend) */
+  session: SchwabSession;
 }
 
 const POLL_MS = 60_000;
 const MARKETS_REFRESH_MS = 30 * 60_000;
+const RANGE_REFRESH_MS = 5 * 60_000;
 const MAX_PER_CALL = 50;
+
+function num(v: unknown): number | null {
+  return typeof v === 'number' && Number.isFinite(v) ? v : null;
+}
 
 /** ET weekday (0=Sun) + minutes since midnight, via Intl. */
 function etParts(d = new Date()): { weekday: number; minutes: number } {
@@ -61,21 +83,52 @@ function etParts(d = new Date()): { weekday: number; minutes: number } {
   return { weekday: wd, minutes: (get('hour') % 24) * 60 + get('minute') };
 }
 
-/** Local-time fallback: Mon–Fri 9:30–16:00 ET. */
-function localMarketOpen(): boolean {
+/** Local-time fallback: pre 4:00–9:30, regular 9:30–16:00, after 16:00–20:00 ET, Mon–Fri. */
+function localSession(): SchwabSession {
   const { weekday, minutes } = etParts();
-  return weekday >= 1 && weekday <= 5 && minutes >= 570 && minutes < 960;
+  if (weekday < 1 || weekday > 5) return 'closed';
+  if (minutes >= 240 && minutes < 570) return 'premarket';
+  if (minutes >= 570 && minutes < 960) return 'regular';
+  if (minutes >= 960 && minutes < 1200) return 'afterhours';
+  return 'closed';
 }
 
-/** Defensive parse of GET /markets — shape varies; null when unknown. */
-function parseMarketsIsOpen(json: unknown): boolean | null {
+/**
+ * Session from the markets endpoint's sessionHours blocks (ISO start/end
+ * with offsets — exact). Returns 'closed' when sessionHours is present
+ * but now falls in none of its blocks (overnight). Null when the shape
+ * is unknown, so the caller falls back to the ET clock.
+ */
+function parseMarketsSession(json: unknown): SchwabSession | null {
   const eq = (json as { equity?: unknown } | null)?.equity;
   if (!eq || typeof eq !== 'object') return null;
   const entry =
     (eq as Record<string, unknown>).EQ ?? Object.values(eq as Record<string, unknown>)[0];
   if (!entry || typeof entry !== 'object') return null;
-  const isOpen = (entry as Record<string, unknown>).isOpen;
-  return typeof isOpen === 'boolean' ? isOpen : null;
+  const rec = entry as Record<string, unknown>;
+  const hours = rec.sessionHours as
+    | Record<string, { start?: unknown; end?: unknown }[]>
+    | undefined;
+  if (hours && typeof hours === 'object') {
+    const now = Date.now();
+    const blocks: [string, SchwabSession][] = [
+      ['preMarket', 'premarket'],
+      ['regularMarket', 'regular'],
+      ['postMarket', 'afterhours'],
+    ];
+    for (const [key, session] of blocks) {
+      const list = hours[key];
+      if (!Array.isArray(list)) continue;
+      for (const b of list) {
+        const s = typeof b.start === 'string' ? Date.parse(b.start) : NaN;
+        const e = typeof b.end === 'string' ? Date.parse(b.end) : NaN;
+        if (Number.isFinite(s) && Number.isFinite(e) && now >= s && now < e) return session;
+      }
+    }
+    return 'closed';
+  }
+  if (typeof rec.isOpen === 'boolean') return rec.isOpen ? 'regular' : null;
+  return null;
 }
 
 /** Ticker universe = quotes.json keys PLUS Daily Brief breakout candidates.
@@ -106,8 +159,10 @@ async function fetchQuoteUniverse(): Promise<string[]> {
 async function fetchSchwabQuotes(
   jwt: string,
   symbols: string[],
-): Promise<{ prices: Record<string, number>; reauth: boolean }> {
+  session: SchwabSession,
+): Promise<{ prices: Record<string, number>; prevClose: Record<string, number>; reauth: boolean }> {
   const prices: Record<string, number> = {};
+  const prevClose: Record<string, number> = {};
   let reauth = false;
   for (let i = 0; i < symbols.length; i += MAX_PER_CALL) {
     const batch = symbols.slice(i, i + MAX_PER_CALL);
@@ -126,13 +181,17 @@ async function fetchSchwabQuotes(
     if (!res.ok) throw new Error(`Schwab proxy HTTP ${res.status}`);
     const data = await res.json();
     for (const [sym, v] of Object.entries(data ?? {})) {
-      const last =
-        (v as { quote?: { lastPrice?: unknown }; lastPrice?: unknown })?.quote?.lastPrice ??
-        (v as { lastPrice?: unknown })?.lastPrice;
-      if (typeof last === 'number') prices[String(sym).toUpperCase()] = last;
+      const quote = ((v as { quote?: unknown })?.quote ?? {}) as Record<string, unknown>;
+      const last = num(quote.lastPrice);
+      const mark = num(quote.mark);
+      // Extended hours: the mark is the live pre/post-market price.
+      const price = session === 'regular' ? last : (mark ?? last);
+      if (price != null) prices[String(sym).toUpperCase()] = price;
+      const pc = num(quote.closePrice);
+      if (pc != null) prevClose[String(sym).toUpperCase()] = pc;
     }
   }
-  return { prices, reauth };
+  return { prices, prevClose, reauth };
 }
 
 export function useSchwabLive(): SchwabLiveState {
@@ -141,11 +200,14 @@ export function useSchwabLive(): SchwabLiveState {
     lastOk: null,
     lastError: null,
     marketOpen: null,
+    session: 'closed',
   });
   const jwtRef = useRef<string | null>(null);
   const universeRef = useRef<string[] | null>(null);
-  const marketsOpenRef = useRef<boolean | null>(null);
+  const marketsSessionRef = useRef<SchwabSession | null>(null);
   const marketsFetchedAtRef = useRef(0);
+  const rangeFetchedAtRef = useRef(0);
+  const rangeFetchedDateRef = useRef('');
 
   useEffect(() => {
     let cancelled = false;
@@ -177,19 +239,43 @@ export function useSchwabLive(): SchwabLiveState {
         });
         if (!res.ok) return;
         const json = await res.json();
-        const open = parseMarketsIsOpen(json);
-        if (open !== null) {
-          marketsOpenRef.current = open;
+        const session = parseMarketsSession(json);
+        if (session !== null) {
+          marketsSessionRef.current = session;
           marketsFetchedAtRef.current = Date.now();
-          if (!cancelled) setState((s) => ({ ...s, marketOpen: open }));
+          if (!cancelled)
+            setState((s) => ({ ...s, session, marketOpen: session === 'regular' }));
         }
       } catch {
         // Fall back to the local-time check.
       }
     };
 
-    const isOpen = () =>
-      marketsOpenRef.current !== null ? marketsOpenRef.current : localMarketOpen();
+    const currentSession = (): SchwabSession =>
+      marketsSessionRef.current !== null ? marketsSessionRef.current : localSession();
+
+    /** Pre-market high/low for the tickers on screen (the active tab's
+     * universe). Every 5 min while the pre-market runs; once per day
+     * after the open for the final morning range. Never blocks polling. */
+    const maybeFetchRanges = async (jwt: string, session: SchwabSession) => {
+      const tickers = getQuoteUniverse();
+      if (tickers.length === 0) return;
+      try {
+        if (session === 'premarket') {
+          const now = Date.now();
+          if (now - rangeFetchedAtRef.current < RANGE_REFRESH_MS) return;
+          rangeFetchedAtRef.current = now;
+          await fetchPremarketRanges(jwt, tickers, true);
+        } else {
+          const today = etDateStr(Date.now());
+          if (rangeFetchedDateRef.current === today) return;
+          rangeFetchedDateRef.current = today;
+          await fetchPremarketRanges(jwt, tickers, false);
+        }
+      } catch {
+        // Ranges are an overlay — a failed fetch just hides the line.
+      }
+    };
 
     const pollOnce = async () => {
       const jwt = jwtRef.current;
@@ -197,8 +283,14 @@ export function useSchwabLive(): SchwabLiveState {
         if (!cancelled) setState((s) => ({ ...s, status: 'no-session' }));
         return;
       }
-      if (!isOpen()) {
-        if (!cancelled) setState((s) => (s.status === 'off-hours' ? s : { ...s, status: 'off-hours' }));
+      const session = currentSession();
+      if (session === 'closed') {
+        if (!cancelled)
+          setState((s) =>
+            s.status === 'off-hours' && s.session === 'closed'
+              ? s
+              : { ...s, status: 'off-hours', session: 'closed', marketOpen: false },
+          );
         return;
       }
       try {
@@ -206,23 +298,32 @@ export function useSchwabLive(): SchwabLiveState {
           universeRef.current = await fetchQuoteUniverse();
         }
         if (universeRef.current.length === 0) {
-          if (!cancelled) setState((s) => ({ ...s, status: 'stale', lastError: 'empty quote universe' }));
+          if (!cancelled) setState((s) => ({ ...s, status: 'stale', session, lastError: 'empty quote universe' }));
           return;
         }
-        const { prices, reauth } = await fetchSchwabQuotes(jwt, universeRef.current);
+        const { prices, prevClose, reauth } = await fetchSchwabQuotes(jwt, universeRef.current, session);
         if (cancelled) return;
         if (reauth) {
-          setState((s) => ({ ...s, status: 'reauth', lastError: 'Schwab login expired' }));
+          setState((s) => ({ ...s, status: 'reauth', session, lastError: 'Schwab login expired' }));
           return;
         }
-        const n = applySchwabQuotes(prices);
+        const n = applySchwabQuotes(prices, { prevClose, session });
         if (n === 0) throw new Error('no usable prices in Schwab response');
-        setState((s) => ({ ...s, status: 'live', lastOk: Date.now(), lastError: null }));
+        setState((s) => ({
+          ...s,
+          status: session === 'regular' ? 'live' : session,
+          session,
+          marketOpen: session === 'regular',
+          lastOk: Date.now(),
+          lastError: null,
+        }));
+        void maybeFetchRanges(jwt, session);
       } catch (e) {
         if (cancelled) return;
         setState((s) => ({
           ...s,
           status: 'stale',
+          session,
           lastError: e instanceof Error ? e.message : 'poll failed',
         }));
       }

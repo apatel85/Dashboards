@@ -14,10 +14,16 @@ import { useEffect, useState } from 'react';
  * from the browser (it sends CORS *); failure is non-fatal.
  */
 
+export type SchwabSession = 'regular' | 'premarket' | 'afterhours' | 'closed';
+
 export interface LiveQuote {
   price: number;
   /** epoch ms when this quote was fetched */
   fetchedAt: number;
+  /** yesterday's close from Schwab (closePrice), for the extended-hours gap */
+  prevClose: number | null;
+  /** which session this price came from (null = pipeline snapshot) */
+  session: SchwabSession | null;
 }
 
 /** Extended-hours quote from CNBC's free batch endpoint (pre/post market). */
@@ -51,6 +57,20 @@ let lastError: string | null = null;
 /** as_of from quotes.json — the honest timestamp behind every price. */
 let quotesAsOf: string | null = null;
 let quotesLoaded = false;
+/** Session of the last successful Schwab poll (null = never polled). */
+let schwabSession: SchwabSession | null = null;
+
+/** Which session the Schwab poll last reported (null before the first poll). */
+export function getSchwabSession(): SchwabSession | null {
+  return schwabSession;
+}
+
+/** Re-render when the Schwab session changes (pre-market → open, …). */
+export function useSchwabSession(): SchwabSession | null {
+  const [, force] = useState(0);
+  useEffect(() => subscribeQuotes(() => force((x) => x + 1)), []);
+  return schwabSession;
+}
 
 function emit() {
   listeners.forEach((fn) => fn());
@@ -121,16 +141,34 @@ export function getQuoteUniverse(): string[] {
  * Merge live Schwab prices over the snapshot cache. Only the symbols
  * Schwab actually returned are touched — anything it rejects keeps its
  * snapshot price. Emits so every useLivePrice consumer re-renders.
+ * `opts.session` records which session the price came from; during
+ * extended hours the price is the Schwab mark (see useSchwabLive) and
+ * `opts.prevClose` carries yesterday's close for the gap %.
  * Returns how many symbols were updated.
  */
-export function applySchwabQuotes(prices: Record<string, number>): number {
+export function applySchwabQuotes(
+  prices: Record<string, number>,
+  opts?: { prevClose?: Record<string, number>; session?: SchwabSession },
+): number {
   let n = 0;
   const now = Date.now();
   for (const [sym, price] of Object.entries(prices)) {
     if (typeof price !== 'number' || !isFinite(price) || price <= 0) continue;
-    cache.set(String(sym).toUpperCase(), { price, fetchedAt: now });
+    const key = String(sym).toUpperCase();
+    const prev = cache.get(key);
+    const pc = opts?.prevClose?.[sym];
+    cache.set(key, {
+      price,
+      fetchedAt: now,
+      prevClose:
+        typeof pc === 'number' && isFinite(pc) && pc > 0
+          ? pc
+          : (prev?.prevClose ?? null),
+      session: opts?.session ?? null,
+    });
     n++;
   }
+  if (opts?.session) schwabSession = opts.session;
   if (n > 0) {
     lastOk = now;
     emit();
@@ -170,7 +208,7 @@ async function refreshPipelineQuotes(): Promise<void> {
   for (const [sym, q] of Object.entries(quotes)) {
     const price = (q as { price?: number })?.price;
     if (typeof price === 'number' && isFinite(price) && price > 0) {
-      cache.set(String(sym).toUpperCase(), { price, fetchedAt: Date.now() });
+      cache.set(String(sym).toUpperCase(), { price, fetchedAt: Date.now(), prevClose: null, session: null });
       n++;
     }
   }
@@ -217,6 +255,8 @@ async function refreshPremarket(): Promise<void> {
  * `live` is true only when the value came from a real quote fetch.
  * `premarket` carries the extended-hours quote when the last refresh
  * caught a pre/post-market session, else null.
+ * `session` is the session the cached price came from (null = snapshot);
+ * `prevClose` is yesterday's close when Schwab supplied it.
  */
 export function useLivePrice(
   ticker: string | null | undefined,
@@ -226,6 +266,8 @@ export function useLivePrice(
   live: boolean;
   fetchedAt: number | null;
   premarket: PremarketQuote | null;
+  session: SchwabSession | null;
+  prevClose: number | null;
 } {
   const [, force] = useState(0);
   useEffect(() => subscribeQuotes(() => force((x) => x + 1)), []);
@@ -234,8 +276,16 @@ export function useLivePrice(
   }, []);
   const q = getQuote(ticker);
   const pm = getPremarket(ticker);
-  if (q) return { price: q.price, live: true, fetchedAt: q.fetchedAt, premarket: pm };
-  return { price: fallback ?? null, live: false, fetchedAt: null, premarket: pm };
+  if (q)
+    return {
+      price: q.price,
+      live: true,
+      fetchedAt: q.fetchedAt,
+      premarket: pm,
+      session: q.session ?? null,
+      prevClose: q.prevClose ?? null,
+    };
+  return { price: fallback ?? null, live: false, fetchedAt: null, premarket: pm, session: null, prevClose: null };
 }
 
 /** Re-render when quote store status changes (for the refresh button). */

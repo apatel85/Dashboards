@@ -2,6 +2,9 @@ import { useMemo, useState } from 'react';
 import { SectionHead, TvLink, Badge } from '../components/ui';
 import { Fundamentals } from '../components/Fundamentals';
 import { useJsonData } from '../lib/useJsonData';
+import { useSchwabSession } from '../lib/quotes';
+import { fetchPremarketRange, usePremarketRange } from '../lib/premarketRange';
+import { supabase } from '../lib/supabase';
 import {
   fetchDeepDive,
   DeepDiveError,
@@ -122,6 +125,16 @@ export default function DeepDiveTab() {
     try {
       const d = await fetchDeepDive(t);
       setData(d);
+      // Pre-market range for the S/R section — best effort, never blocks.
+      void (async () => {
+        try {
+          const { data: sess } = await supabase.auth.getSession();
+          const jwt = sess.session?.access_token;
+          if (jwt) await fetchPremarketRange(jwt, t);
+        } catch {
+          // No range — the section stays hidden.
+        }
+      })();
     } catch (e) {
       setError(e instanceof DeepDiveError ? e : new DeepDiveError('fetch', e instanceof Error ? e.message : 'Deep Dive failed.'));
     } finally {
@@ -151,6 +164,9 @@ export default function DeepDiveTab() {
   const tech = data?.technicals;
   const opt = data?.options;
   const ivVsHv = opt?.atmIv != null && tech?.hv30 != null ? opt.atmIv / tech.hv30 : null;
+  // This morning's pre-market range (fetched on demand after the dive).
+  const range = usePremarketRange(ticker);
+  const schwabSession = useSchwabSession();
 
   return (
     <section className="tab">
@@ -233,7 +249,7 @@ export default function DeepDiveTab() {
               sub={`Live via Schwab · ${new Date(data.fetchedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} ET`}
             />
             <div className="perf-stats">
-              <div className="stat"><span className="stat-label">Today</span><span className="stat-value num">{q.changePct != null ? fmtPct(q.changePct / 100) : '—'}</span></div>
+              <div className="stat"><span className="stat-label">Today</span><span className="stat-value num">{q.changePct != null ? fmtPct(q.changePct) : '—'}</span></div>
               <div className="stat"><span className="stat-label">52-wk range</span><span className="stat-value num">{fmtUsd(q.week52Low)} – {fmtUsd(q.week52High)}</span></div>
               <div className="stat"><span className="stat-label">P/E</span><span className="stat-value num">{fmtNum(q.peRatio, 1)}</span></div>
               <div className="stat"><span className="stat-label">Market cap</span><span className="stat-value num">{fmtCompactMoney(q.marketCap)}</span></div>
@@ -252,6 +268,34 @@ export default function DeepDiveTab() {
               {q.divYield != null && q.divYield > 0 ? <> · pays a {fmtPct(q.divYield)} dividend</> : ''}.
             </p>
           </div>
+
+          {/* Pre-market support / resistance: this morning's high and low
+              are the first levels the open has to deal with. */}
+          {range && q.price != null ? (
+            <div className="panel">
+              <SectionHead title="Pre-market" sub="Before today's open · live via Schwab" />
+              <div className="perf-stats">
+                <div className="stat"><span className="stat-label">Pre-market high</span><span className="stat-value num">{fmtUsd(range.high)}</span></div>
+                <div className="stat"><span className="stat-label">Pre-market low</span><span className="stat-value num">{fmtUsd(range.low)}</span></div>
+                <div className="stat"><span className="stat-label">Gap vs yesterday</span><span className="stat-value num">{schwabSession === 'premarket' && q.changePct != null ? fmtPct(q.changePct) : '—'}</span></div>
+              </div>
+              <p className="muted small plain-note">
+                {q.price > range.high ? (
+                  <>The price is already <b>above the whole pre-market range</b> — it gapped up and held above the morning&apos;s high. That high ({fmtUsd(range.high)}) is now the first support below.</>
+                ) : q.price < range.low ? (
+                  <>The price is already <b>below the whole pre-market range</b> — it gapped down under the morning&apos;s low. That low ({fmtUsd(range.low)}) is now the first resistance above.</>
+                ) : (
+                  <>The price is <b>inside this morning&apos;s range</b>. The pre-market high ({fmtUsd(range.high)}) is the first resistance above — clearing it means buyers took control before the open. The pre-market low ({fmtUsd(range.low)}) is the first support below — losing it means the pre-market buyers gave up.</>
+                )}
+                {' '}Pre-market prints run from about 7:00 AM ET.
+              </p>
+            </div>
+          ) : schwabSession === 'premarket' ? (
+            <div className="panel">
+              <SectionHead title="Pre-market" sub="Before today's open · live via Schwab" />
+              <p className="muted small">No pre-market trading yet — Schwab&apos;s pre-market prints start around 7:00 AM ET.</p>
+            </div>
+          ) : null}
 
           <div className="panel">
             <SectionHead title="Trend & momentum" sub="2 years of daily prices vs its averages and vs the S&P 500" />

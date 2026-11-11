@@ -3,12 +3,17 @@ import { SignalBadge, Chip, Stat, TvLink } from './ui';
 import PremarketLine from './PremarketLine';
 import { Fundamentals } from './Fundamentals';
 import { useLivePrice } from '../lib/quotes';
+import { usePremarketRange } from '../lib/premarketRange';
 import { fmtMoney, fmtPct, fmtOcc, fmtK, splitThesis, prettifyOptions } from '../lib/format';
 import type { DtePick } from '../types';
 
 export function DteCard({ p }: { p: DtePick }) {
   const [open, setOpen] = useState(false);
   const lp = useLivePrice(p.ticker, p.underlying_price);
+  const range = usePremarketRange(p.ticker);
+  // When Schwab is already showing the extended-hours price, the free
+  // CNBC line below would just repeat it — hide it then.
+  const extended = lp.session === 'premarket' || lp.session === 'afterhours';
   const { main: thesisMain, unusual } = splitThesis(p.thesis || '');
   return (
     <div className="dte-card">
@@ -29,7 +34,16 @@ export function DteCard({ p }: { p: DtePick }) {
         <Stat label="IV rank" value={p.iv_rank != null ? `${p.iv_rank}` : '—'} />
         <Stat label="Exp. move" value={fmtPct(p.expected_move_pct, 1, false)} />
       </div>
-      <PremarketLine pm={lp.premarket} />
+      <PremarketLine pm={extended ? null : lp.premarket} />
+      {range ? (
+        <div
+          className="pm-range"
+          title="The highest and lowest prices before today's open (Schwab pre-market prints, from ~7:00 AM ET) — the first support and resistance to watch at the open"
+        >
+          Pre-market high <span className="num">{fmtMoney(range.high)}</span> · low{' '}
+          <span className="num">{fmtMoney(range.low)}</span>
+        </div>
+      ) : null}
       <button
         className="link-btn dte-toggle"
         onClick={() => setOpen((o) => !o)}

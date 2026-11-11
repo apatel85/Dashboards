@@ -31,7 +31,7 @@ const TABS: TabDef[] = [
 const TAB_IDS = TABS.map((t) => t.id);
 
 /** Build version — bump on every push so we can confirm what's live. */
-export const BUILD_VERSION = '2026-11-10h';
+export const BUILD_VERSION = '2026-11-10i';
 
 /** "14:32:05" in ET for the Schwab pill's updated time. */
 function fmtClockET(ms: number): string {
@@ -63,17 +63,36 @@ function SchwabPill() {
       </a>
     );
   }
-  const tone = s.status === 'live' ? 'b-green' : s.status === 'stale' ? 'b-amber' : 'b-dim';
+  const tone =
+    s.status === 'live'
+      ? 'b-green'
+      : s.status === 'stale'
+        ? 'b-amber'
+        : s.status === 'premarket' || s.status === 'afterhours'
+          ? 'b-amber'
+          : 'b-dim';
   const label =
     s.status === 'live'
       ? 'Schwab ● Live'
-      : s.status === 'stale'
-        ? 'Schwab ● Delayed'
-        : 'Schwab ● Off-hours';
+      : s.status === 'premarket'
+        ? 'Schwab ● Pre-market'
+        : s.status === 'afterhours'
+          ? 'Schwab ● After-hours'
+          : s.status === 'stale'
+            ? 'Schwab ● Delayed'
+            : 'Schwab ● Off-hours';
   return (
     <span
       className={`badge ${tone} schwab-pill`}
-      title={s.lastError ? `Schwab poll: ${s.lastError}` : 'Schwab live quotes (60 s poll)'}
+      title={
+        s.lastError
+          ? `Schwab poll: ${s.lastError}`
+          : s.status === 'premarket'
+            ? 'Schwab pre-market quotes (mark price, 60 s poll)'
+            : s.status === 'afterhours'
+              ? 'Schwab after-hours quotes (mark price, 60 s poll)'
+              : 'Schwab live quotes (60 s poll)'
+      }
     >
       {label}
       {time ? ` · updated ${time}` : ''}

@@ -99,6 +99,49 @@ export interface NewsFile {
   items: NewsHeadline[];
 }
 
+/* ── Daily "New developments" alerts (pipeline/build-alerts.mjs) ── */
+
+export interface AlertTradeItem {
+  member: string;
+  chamber: 'House' | 'Senate' | 'Executive';
+  role?: string | null; // executive-branch only, e.g. "President"
+  agency?: string | null; // executive-branch only, e.g. "White House"
+  ticker: string | null; // null when the filing names no tradeable ticker
+  asset_name: string;
+  trade_type: 'buy' | 'sell' | 'exchange';
+  amount_range: string; // disclosure range, e.g. "$1,001 - $15,000"
+  amount_mid: number | null;
+  tx_date: string; // YYYY-MM-DD (actual trade)
+  disclosed_date: string | null; // YYYY-MM-DD (filing); null when unknown upstream
+  doc_url: string | null; // official filing PDF
+  cluster: boolean; // 2+ members/officials bought the same asset in ~7d
+}
+
+export interface AlertNewsItem {
+  ticker: string;
+  title: string;
+  publisher: string;
+  url: string;
+  published_at: string | null; // ISO timestamp, null when unknown
+}
+
+export interface AlertGroup<T> {
+  count: number; // new items in the window (before the display cap)
+  summary: string; // one computed line, e.g. "3 new disclosures · 2 buys, 1 sell"
+  latest_filing_date?: string | null; // newest disclosed_date in the whole source file
+  none_new?: boolean; // true when count === 0 (executive usually)
+  items: T[];
+}
+
+export interface DailyAlerts {
+  generated_at: string; // ISO timestamp of the pipeline run
+  as_of: string; // YYYY-MM-DD (the morning's run date)
+  window_days: number; // "new" = disclosed within this many days
+  congress: AlertGroup<AlertTradeItem>;
+  executive: AlertGroup<AlertTradeItem>;
+  news: AlertGroup<AlertNewsItem>;
+}
+
 /* ── Schwab movers (proxy ?movers=) ────────────────────────────── */
 
 export interface SchwabMover {

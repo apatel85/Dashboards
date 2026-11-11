@@ -14,6 +14,7 @@ import {
 import { useJsonData } from '../lib/useJsonData';
 import { useFundamentals } from '../lib/useFundamentals';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
+import { usePremarketRange } from '../lib/premarketRange';
 import { supabase } from '../lib/supabase';
 import { SCHWAB_PROXY_URL } from '../lib/useSchwabLive';
 import PremarketLine from '../components/PremarketLine';
@@ -78,6 +79,14 @@ function BreakoutCard({
   onToggle: () => void;
 }) {
   const lp = useLivePrice(c.ticker, c.price);
+  const range = usePremarketRange(c.ticker);
+  // During extended hours the price IS the pre/post-market price (Schwab
+  // mark) — show it as such, with the gap vs yesterday's close.
+  const extended = lp.session === 'premarket' || lp.session === 'afterhours';
+  const gapPct =
+    extended && lp.prevClose != null && lp.price != null
+      ? (lp.price - lp.prevClose) / lp.prevClose
+      : null;
   const verdict = firstSentence(c.thesis) || `${c.ticker} is setting up: ${c.setup}.`;
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -112,9 +121,21 @@ function BreakoutCard({
         <p className="feed-verdict">{verdict}</p>
         <div className="feed-keynums">
           <span className="feed-num">
-            <span className="feed-num-label">Price</span>
-            {lp.live ? <span className="livedot" title="Live ~15-min delayed quote" /> : null}
+            <span className="feed-num-label">
+              {extended ? (lp.session === 'premarket' ? 'Pre-market' : 'After-hours') : 'Price'}
+            </span>
+            {extended ? (
+              <span className="pmdot" title="Live extended-hours price (Schwab mark)" />
+            ) : lp.live ? (
+              <span className="livedot" title="Live ~15-min delayed quote" />
+            ) : null}
             <span className="num">{fmtMoney(lp.price)}</span>
+            {gapPct != null ? (
+              <span className={`gap-pct ${gapPct >= 0 ? 'up' : 'down'}`} title="Gap vs yesterday's close">
+                {gapPct >= 0 ? '+' : ''}
+                {(gapPct * 100).toFixed(2)}%
+              </span>
+            ) : null}
           </span>
           <span className="feed-num">
             <span className="feed-num-label">Trigger</span>
@@ -129,7 +150,16 @@ function BreakoutCard({
             {c.setup}
           </span>
         </div>
-        <PremarketLine pm={lp.premarket} />
+        {range ? (
+          <div
+            className="pm-range"
+            title="The highest and lowest prices before today's open (Schwab pre-market prints, from ~7:00 AM ET) — the first levels to watch at the open"
+          >
+            Pre-market high <span className="num">{fmtMoney(range.high)}</span> · low{' '}
+            <span className="num">{fmtMoney(range.low)}</span>
+          </div>
+        ) : null}
+        {!extended && <PremarketLine pm={lp.premarket} />}
       </div>
       {expanded && (
         <div className="feed-card-detail">

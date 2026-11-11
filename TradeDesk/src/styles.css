@@ -264,6 +264,33 @@ code {
   color: var(--amber);
 }
 
+/* Pre-market high/low line under a card's key numbers — the morning's
+   range, i.e. the first support/resistance to watch at the open. */
+.pm-range {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--amber);
+}
+
+.pm-range .num {
+  font-weight: 600;
+}
+
+/* Gap vs yesterday's close, shown next to an extended-hours price. */
+.gap-pct {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.gap-pct.up {
+  color: var(--green);
+}
+
+.gap-pct.down {
+  color: var(--red);
+}
+
 /* Smart-money signal cards */
 .signal-list {
   display: flex;
