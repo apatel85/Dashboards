@@ -630,7 +630,7 @@ function AlertBlock({
         <>
           <p className="muted small">{summary}</p>
           {hint ? <p className="muted small alerts-hint">{hint}</p> : null}
-          {children}
+          <div className="alerts-items">{children}</div>
         </>
       )}
     </div>

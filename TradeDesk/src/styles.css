@@ -2610,7 +2610,7 @@ body {
     display: none;
   }
 
-  .alerts-grid {
+  .alerts-items {
     grid-template-columns: 1fr;
   }
 
@@ -2687,10 +2687,6 @@ body {
   .feed-search {
     max-width: 320px;
   }
-
-  .alerts-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ── Responsive: laptop/desktop (1280px+) ──────────────────────────── */
@@ -2754,10 +2750,19 @@ body {
 }
 
 /* ── New developments alerts ─────────────────────────────────── */
+/* Stacked: one full-width row per section; items inside lay out in 2 cols. */
 .alerts-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 16px;
+}
+.alerts-items {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 20px;
+}
+.alerts-items > p {
+  grid-column: 1 / -1;
 }
 .alerts-title {
   margin: 0 0 4px;
