@@ -19,6 +19,8 @@ export GEX_EXTRA_TICKERS="${GEX_EXTRA_TICKERS:-MU,SNDK}"
 echo "=== TradeDesk pipeline refresh → $OUT ==="
 echo "--- 1/16 congress ---"
 node fetch-congress.mjs
+echo "--- 1b/16 congress (Quantgress second source, non-fatal until key verified) ---"
+node fetch-congress-quantgress.mjs || echo "[pipeline] WARNING: Quantgress merge failed — keeping congressinfor-only congress.json"
 echo "--- 2/16 executive (White House) ---"
 node fetch-executive.mjs
 echo "--- 3/16 signals (smart-money flow) ---"
