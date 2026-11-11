@@ -1,20 +1,18 @@
 name: TradeDesk Data Pipeline
 
-# Weekday pre-market refresh: 12:30 UTC = 8:30 AM ET (EST) / 7:30 AM ET (EDT).
-# NOTE: cron runs in UTC; during EDT this fires at 8:30am ET, during EST at 7:30am ET.
 # Weekday refreshes (cron runs in UTC):
 #   05:00 UTC = 1:00 AM ET (EDT) / 12:00 AM ET (EST) — pre-market run.
 #   17:00 UTC = 1:00 PM ET (EDT) / 12:00 PM ET (EST) — midday run.
 # NOTE: GitHub's scheduler fires several hours late on this repo, so both
 # runs typically land later than scheduled; the two triggers are 12h apart
 # so the runs never overlap or race on the commit step.
- on:
-   schedule:
-     - cron: '0 5 * * 1-5'
-     - cron: '0 17 * * 1-5'
-   workflow_dispatch:
-     inputs:
-       quick:
+on:
+  schedule:
+    - cron: '0 5 * * 1-5'
+    - cron: '0 17 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      quick:
         description: 'Quick mode: S&P 500 + Nasdaq-100 only (skip Russell 2000 scan)'
         required: false
         default: 'true'
@@ -26,7 +24,6 @@ jobs:
   refresh:
     name: Fetch keyless data & rebuild TradeDesk
     runs-on: ubuntu-latest
-    # No secrets referenced anywhere in this workflow — all sources are keyless.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,6 +38,7 @@ jobs:
         env:
           # Contact email for SEC EDGAR fair-access User-Agent (plain variable, not a secret).
           SEC_CONTACT_EMAIL: ${{ vars.SEC_CONTACT_EMAIL }}
+          QUANTGRESS_API_KEY: ${{ secrets.QUANTGRESS_API_KEY }}
         run: |
           chmod +x refresh.sh
           if [ "${{ inputs.quick }}" = "false" ]; then
