@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="light dark" />
 <link rel="icon" href="data:," />
-<title>Weekly Stat Dashboard — NFL Week 9</title>
+<title>Weekly Stat Dashboard — NFL Week 10</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -276,19 +276,19 @@
 <div class="wrap">
 
   <header class="top">
-    <div class="weekline">NFL · Week 9 · Thu–Mon, Nov 5 – Nov 9, 2026</div>
+    <div class="weekline">NFL · Week 10 · Thu–Mon, Nov 12 – Nov 16, 2026</div>
     <h1>Weekly Stat Dashboard</h1>
     <p class="sub">Matchup-adjusted stat boards for this week's slate. Every probability blends a player's
       own per-game production with what the defense he's facing actually surrenders — then gets
-      <b>verified against a rolling backtest (Weeks 2–8 this week)</b> that re-runs every Wednesday and grows by a week
-      each time. This week's run held every setting: the touchdown regression strengthened last week priced the
-      1+ TD board right in its first live week (6 of 10 against a 58% average), so nothing was layered on top of it.
-      Last week's calls are graded in the Results tab.</p>
+      <b>verified against a rolling backtest (Weeks 2–9 this week)</b> that re-runs every Wednesday and grows by a week
+      each time. This week's run changed one setting: touchdown rates now regress harder (weight 5 → 6) after the
+      TD boards ran hot for a second straight week, while the yardage settings held — both yardage boards ran at or
+      above price in Week 9. Last week's calls are graded in the Results tab.</p>
     <div class="meta-row">
-      <span><b>Byes:</b> PIT · TEN</span>
-      <span><b>Data through:</b> Week 8</span>
-      <span><b>Injuries checked:</b> Wed Nov 4 (early-week reports)</span>
-      <span><b>Model:</b> verified by the rolling Weeks 2–8 backtest — all settings held this week (see Method)</span>
+      <span><b>Byes:</b> CHI · DEN · PHI · TB</span>
+      <span><b>Data through:</b> Week 9</span>
+      <span><b>Injuries checked:</b> Wed Nov 11 (early-week reports)</span>
+      <span><b>Model:</b> verified by the rolling Weeks 2–9 backtest — TD regression strengthened to weight 6, yardage settings held (see Method)</span>
       <span><b>Weekly job:</b> every Wednesday, 9:24 AM ET — grade last week → rolling backtest (Wk 2 → latest) → next week's projections</span>
     </div>
     <div class="publish" role="note" aria-label="Publication and refresh">
@@ -305,7 +305,7 @@
       <div class="job-head">
         <span class="k">Weekly job</span>
         <span class="sched">Every Wednesday · 9:24 AM ET (America/New_York)</span>
-        <span class="last">Last published run: Wed, Nov 4, 2026 — Week 9 projections below. Next run: Wed, Nov 11, 2026 — Week 10 projections, Week 9 graded, backtest Weeks 2–9.</span>
+        <span class="last">Last published run: Wed, Nov 11, 2026 — Week 10 projections below. Next run: Wed, Nov 18, 2026 — Week 11 projections, Week 10 graded, backtest Weeks 2–10.</span>
       </div>
       <ol class="job-steps">
         <li><span class="step-n">Step 1</span><b>Grade the week just played</b>Every call from last week's boards is checked against the final box scores and posted in the Results tab, hit or miss.</li>
@@ -316,8 +316,8 @@
   </header>
 
   <nav class="viewtabs" aria-label="Dashboard views">
-    <button class="vtab" data-view="proj" aria-pressed="true">Week 9 projections</button>
-    <button class="vtab" data-view="res" aria-pressed="false">Results — Week 8 graded<span class="cnt">22/47</span></button>
+    <button class="vtab" data-view="proj" aria-pressed="true">Week 10 projections</button>
+    <button class="vtab" data-view="res" aria-pressed="false">Results — Week 9 graded<span class="cnt">20/38</span></button>
   </nav>
 
   <div id="view-proj">
@@ -350,9 +350,9 @@
     </div>
   </div>
 
-  <div class="recon" role="note" aria-label="Week 8 projection versus actual reconciliation">
-    <span class="k">Week 8 reconciliation</span>
-    <span class="v"><b>22 of 47 graded calls hit (47%)</b> against a <b>53% average predicted probability</b> — rushing 10/13, receiving 6/14, touchdowns 6/10, 2+ TDs 0/10. Rushing had its best week of the season and the 1+ TD board priced right after last week's regression change; the receiving board lost one call to a first-play quarterback injury and one to an inactive, and two more by exactly two yards each. Every Week 8 call is graded player-by-player in the Results tab.</span>
+  <div class="recon" role="note" aria-label="Week 9 projection versus actual reconciliation">
+    <span class="k">Week 9 reconciliation</span>
+    <span class="v"><b>20 of 38 graded calls hit (53%)</b> against a <b>52% average predicted probability</b> — the best-calibrated week of the season in aggregate: rushing 7/8, receiving 8/11, touchdowns 3/9, 2+ TDs 2/10. Both yardage boards ran at or above price, the 1+ TD board cooled after its Week 8 high, and the 2+ list finally converted twice in one week — Walker with three TDs and its own 13% floor name, Irving, with two. Every Week 9 call is graded player-by-player in the Results tab.</span>
     <button class="go" id="goto-results" type="button">See the reconciliation →</button>
   </div>
 
@@ -361,49 +361,49 @@
 
   <section class="info" id="defenses">
     <h2>Defensive extremes this week</h2>
-    <p class="board-note">Season-to-date yards and TDs allowed per game (through Week 8) for the defenses in action. These are the numbers driving every matchup adjustment above.</p>
+    <p class="board-note">Season-to-date yards and TDs allowed per game (through Week 9) for the defenses in action. These are the numbers driving every matchup adjustment above.</p>
     <div class="grid2">
       <div class="panel">
         <h3>Run defense</h3>
         <h4>Softest — most rush yards allowed</h4>
         <ul class="deflist">
-          <li><span class="tm">DAL Cowboys</span><span class="vl">152.8 /g</span></li>
-          <li><span class="tm">LV Raiders</span><span class="vl">146.4 /g</span></li>
-          <li><span class="tm">CAR Panthers</span><span class="vl">140.7 /g</span></li>
-          <li><span class="tm">NO Saints</span><span class="vl">139.4 /g</span></li>
+          <li><span class="tm">LV Raiders</span><span class="vl">151.2 /g</span></li>
+          <li><span class="tm">DAL Cowboys</span><span class="vl">147.4 /g</span></li>
+          <li><span class="tm">IND Colts</span><span class="vl">137.0 /g</span></li>
+          <li><span class="tm">NO Saints</span><span class="vl">133.9 /g</span></li>
         </ul>
         <h4>Toughest — fewest rush yards allowed</h4>
         <ul class="deflist">
-          <li><span class="tm">JAX Jaguars</span><span class="vl">77.4 /g</span></li>
-          <li><span class="tm">TB Buccaneers</span><span class="vl">80.0 /g</span></li>
-          <li><span class="tm">CHI Bears</span><span class="vl">86.8 /g</span></li>
-          <li><span class="tm">SF 49ers</span><span class="vl">89.0 /g</span></li>
+          <li><span class="tm">TB Buccaneers</span><span class="vl">79.1 /g</span></li>
+          <li><span class="tm">SF 49ers</span><span class="vl">80.9 /g</span></li>
+          <li><span class="tm">PIT Steelers</span><span class="vl">83.9 /g</span></li>
+          <li><span class="tm">SEA Seahawks</span><span class="vl">89.1 /g</span></li>
         </ul>
       </div>
       <div class="panel">
         <h3>Pass defense</h3>
         <h4>Softest — most pass yards allowed</h4>
         <ul class="deflist">
-          <li><span class="tm">DET Lions</span><span class="vl">276.6 /g</span></li>
-          <li><span class="tm">BUF Bills</span><span class="vl">254.7 /g</span></li>
-          <li><span class="tm">JAX Jaguars</span><span class="vl">253.9 /g</span></li>
-          <li><span class="tm">HOU Texans</span><span class="vl">244.0 /g</span></li>
+          <li><span class="tm">DET Lions</span><span class="vl">260.9 /g</span></li>
+          <li><span class="tm">TEN Titans</span><span class="vl">258.2 /g</span></li>
+          <li><span class="tm">WAS Commanders</span><span class="vl">240.0 /g</span></li>
+          <li><span class="tm">BUF Bills</span><span class="vl">238.8 /g</span></li>
         </ul>
         <h4>Toughest — fewest pass yards allowed</h4>
         <ul class="deflist">
-          <li><span class="tm">MIN Vikings</span><span class="vl">154.9 /g</span></li>
-          <li><span class="tm">SEA Seahawks</span><span class="vl">156.0 /g</span></li>
-          <li><span class="tm">NY Giants</span><span class="vl">184.9 /g</span></li>
-          <li><span class="tm">LAR Rams</span><span class="vl">191.9 /g</span></li>
+          <li><span class="tm">SEA Seahawks</span><span class="vl">155.1 /g</span></li>
+          <li><span class="tm">MIN Vikings</span><span class="vl">161.1 /g</span></li>
+          <li><span class="tm">NY Giants</span><span class="vl">177.8 /g</span></li>
+          <li><span class="tm">LAR Rams</span><span class="vl">198.7 /g</span></li>
         </ul>
         <h4>Touchdown extremes</h4>
         <ul class="deflist">
-          <li><span>DET — pass TDs allowed</span><span class="vl">2.57 /g</span></li>
-          <li><span>MIA — pass TDs allowed</span><span class="vl">2.29 /g</span></li>
-          <li><span>CAR — rush TDs allowed</span><span class="vl">1.71 /g</span></li>
-          <li><span>LV — total TDs allowed (softest)</span><span class="vl">3.50 /g</span></li>
-          <li><span>MIN — total TDs allowed (fades Allen)</span><span class="vl">1.14 /g</span></li>
-          <li><span>TB — total TDs allowed (fades Swift)</span><span class="vl">1.63 /g</span></li>
+          <li><span>LV — total TDs allowed (softest)</span><span class="vl">3.67 /g</span></li>
+          <li><span>ARI — total TDs allowed</span><span class="vl">3.22 /g</span></li>
+          <li><span>DAL — total TDs allowed</span><span class="vl">3.11 /g</span></li>
+          <li><span>MIN — total TDs allowed (toughest)</span><span class="vl">1.25 /g</span></li>
+          <li><span>PIT — total TDs allowed (fades Higgins)</span><span class="vl">~2.11 /g</span></li>
+          <li><span>SF — total TDs allowed (fades Javonte)</span><span class="vl">~2.28 /g</span></li>
         </ul>
       </div>
     </div>
@@ -411,19 +411,19 @@
 
   <section class="info" id="injuries">
     <h2>Injury watch</h2>
-    <p class="board-note">Checked Wednesday morning, Nov 4, from early-week practice reports — final designations land later in the week, so re-check before kickoff. Players on IR or out for the season are already excluded from every board; questionable players are flagged on their rows.</p>
+    <p class="board-note">Checked Wednesday morning, Nov 11, from early-week practice reports — final designations land later in the week, so re-check before kickoff. Players on IR or out for the season are already excluded from every board; questionable players are flagged on their rows.</p>
     <div class="panel">
       <ul class="inj">
-        <li><b>Lamar Jackson</b> — <span class="st">to injured reserve</span> (thumb surgery) after leaving Week 8 on Baltimore's first offensive play at Buffalo. <b>Tyler Huntley</b> is <span class="st">out for the season</span> (toe — surgery reported Wednesday). Rookie <b>Joe Fagnano</b> makes his first NFL start Thursday night vs Jacksonville. Derrick Henry stays on the touchdown board — he is the offense now — but Zay Flowers is held off the receiving board entirely (see its near-miss line): his rate was built with Jackson and Huntley, and Baltimore threw for 68 net yards in the game both got hurt.</li>
-        <li><b>DeVonta Smith</b> — <span class="st">out for Week 9</span> (hamstring), inactive for a second straight game in Week 8 — the second straight week his absence cost the receiving board a call. <b>Jalen Hurts</b> remains out for the season (blood clots); Tanner McKee starts for Philadelphia vs the Giants.</li>
-        <li><b>James Cook</b> — <span class="st">cleared</span>. Opened the week questionable, but the Wednesday tracker lists him cleared with no designation — he's on the rushing board for Monday night at Minnesota as normal.</li>
-        <li><b>Matthew Stafford</b> — <span class="st">questionable</span> (thumb, added to the report Monday). Puka Nacua's receiving row is flagged: his number assumes Stafford plays at Washington.</li>
-        <li><b>Christian Watson</b> — <span class="st">questionable</span> (undisclosed) on the early-week report after his 113-yard Week 8. Flagged on his receiving row at New England.</li>
-        <li><b>Bhayshul Tuten</b> — <span class="st">questionable</span> (ankle) on the short week after his 104-yard, two-TD Week 8. He sits just below both the rushing and TD cuts either way; Jakobi Meyers (hamstring) is also questionable for Jacksonville on Thursday.</li>
-        <li><b>Christian McCaffrey</b> — <span class="st">questionable</span> (calf). Held off the touchdown board despite the softest TD matchup on the slate — Las Vegas allows 3.50 total TDs/g — until his status firms up.</li>
-        <li><b>Breece Hall</b> — <span class="st">questionable</span> (quad) at Kansas City after missing Week 7 and returning to a shared backfield in Week 8. Braelon Allen (565 yards) remains the Jets' rushing leader either way and sits just below the rushing cut.</li>
-        <li><b>Kyler Murray</b> — <span class="st">questionable</span> (hamstring) for Minnesota vs Buffalo on Monday night — one more drag on Justin Jefferson, who is already below the receiving cut on rate alone.</li>
-        <li><b>Out this week:</b> Terry McLaurin (WAS, season-ending knee injury), Davante Adams (LAR, IR — hamstring), De'Von Achane (MIA, season-ending ACL — Ollie Gordon II leads Miami's backfield), Jaxson Dart (NYG, season-ending knee), Jeremiyah Love (ARI — Tyler Allgeier leads Arizona at Seattle). Washington also placed DTs Daron Payne and Javon Kinlaw and RB Jeremy McNichols on injured reserve this week.</li>
+        <li><b>Puka Nacua</b> — <span class="st">likely headed to injured reserve</span> (knee sprains and turf toe) after his 14-catch, 150-yard, one-TD Week 9 at Washington. He is off every board for the trip to Arizona, and Matthew Stafford — whose thumb is no longer an issue after that performance — loses his top target.</li>
+        <li><b>Sam Darnold</b> — <span class="st">out for Week 10</span> (quad/ribs), missing a second straight game. <b>Drew Lock</b> starts again at Las Vegas, playing through his own oblique and elbow issues. Jaxon Smith-Njigba is held off both yardage and touchdown boards (see the receiving board's near-miss line): his 115.1 yds/g rate was built with Darnold, and his one game with Lock produced 51 yards on a 175-yard team passing day.</li>
+        <li><b>Lamar Jackson</b> — remains on <span class="st">injured reserve</span> (thumb). <b>Jacoby Brissett</b> is expected to start Monday night vs the Chargers after Joe Fagnano's 60-yard debut. Derrick Henry stays on both boards — he is the offense now — and Zay Flowers stays off them.</li>
+        <li><b>Kyler Murray</b> — <span class="st">out 3–4 weeks</span> (Grade 2 hamstring) for Minnesota at Green Bay. With Carson Wentz and Max Brosmer under center in Week 9, the Vikings produced 178 total yards; Justin Jefferson is below the receiving cut on rate alone (see its near-miss line).</li>
+        <li><b>Christian McCaffrey</b> — <span class="st">no injury designation</span> for Dallas after playing through the calf/hamstring scare in Week 9 (68 rushing yards, two total TDs vs Las Vegas). He is on both the rushing and touchdown boards — Dallas allows the league's most rushing yards per game among teams in action (147.4).</li>
+        <li><b>Patrick Mahomes</b> — exited Week 9 briefly with an <span class="st">elbow injury</span> that briefly looked season-threatening, returned, and finished with 242 yards and two TDs. Expected to play at Atlanta; Kenneth Walker's board numbers do not depend on Mahomes' arm, but his receiving-TD path does — noted, not flagged.</li>
+        <li><b>Malik Willis</b> — Miami placed its starting QB on <span class="st">injured reserve</span> Tuesday. The Dolphins change quarterbacks against Indianapolis; their passing game was already the league's weakest, and Jonathan Taylor's rushing matchup is unaffected.</li>
+        <li><b>George Pickens</b> — held out of Week 9 entirely by Dallas (team decision) and his Week 10 status vs San Francisco was not confirmed on the early-week report. CeeDee Lamb carries the Dallas receiving line either way.</li>
+        <li><b>Jonathan Taylor</b> — stayed in Indianapolis through Tuesday's trade deadline after his emotional postgame comments Sunday. His workload (13 carries in Week 9, 8 in Week 8) is the open question on his rows, not his health.</li>
+        <li><b>Out this week / season:</b> Jalen Hurts (PHI, season-ending blood clots — Eagles on bye anyway), Davante Adams (LAR, IR — hamstring), De'Von Achane (MIA, season-ending ACL), Jaxson Dart (NYG, season-ending knee), Jeremiyah Love (ARI — Tyler Allgeier leads Arizona vs the Rams). Chicago, Denver, Philadelphia and Tampa Bay are on bye — D'Andre Swift and Bucky Irving sit this week out after their Week 9s.</li>
       </ul>
     </div>
   </section>
@@ -433,81 +433,83 @@
     <p><b>Expected yards.</b> Each player's per-game rate is first regressed toward his position's average
        (<code>blended = (games × rate + 2 × position avg) ÷ (games + 2)</code>), then scaled by this week's matchup with the
        multiplier shrunk halfway back to neutral (<code>mult′ = 1 + 0.5 × (opp allowed ÷ league avg − 1)</code>).
-       League baselines through Week 8: 112.8 rush yards and 219.2 pass yards allowed per game.</p>
+       League baselines through Week 9: 112.4 rush yards and 218.7 pass yards allowed per game.</p>
     <p><b>Comfortable max</b> is that expected number itself — his average outcome in <i>this</i> game against <i>this</i> defense,
        rounded to whole yards. It is not a season ceiling or a best-case tail. <b>P(60+)</b> uses a normal approximation with
        σ = 0.65 × expected yards; "likely" means P ≥ 55%.</p>
     <p><b>Touchdowns count physical scorers only</b> — a QB's passing TDs never count; a QB who runs it in does, on rushing TDs alone.
-       Josh Allen clears the bar again this week on 9 rushing TDs in 7 games — at Minnesota, against the league's
-       lowest total-TD allowance. TD rates get stronger regression than yardage rates
-       (<b>weight 5, held from last week</b> — see the backtest verdict in the Results tab), and a player
+       Josh Allen clears the bar again this week on 9 rushing TDs in 8 games — at the Jets, a week after Minnesota's league-best
+       TD defense held him scoreless on the ground. TD rates get stronger regression than yardage rates
+       (<b>weight 6, strengthened from 5 this week</b> — see the backtest verdict in the Results tab), and a player
        needs at least 3 games of data to make the 1+ TD board. <code>P(1+) = 1 − e^(−λ)</code>, <code>P(2+) = 1 − e^(−λ)(1 + λ)</code>;
        "likely 1+ TD" means P ≥ 50%. Every row shows its games sample — thin samples are the main reason the raw model used to overpromise.</p>
     <div class="bt-stats">
-      <div class="bt"><div class="n">Wk 2–8</div><div class="d">rolling backtest window, re-run every Wednesday from Week 2 through the last completed week, strict no-lookahead — each week predicted only from data available before it</div></div>
-      <div class="bt"><div class="n">5 — HELD</div><div class="d">TD-rate regression weight stays at 5 after its first live week: the 1+ TD board went 6 of 10 against a 58% average predicted in Week 8 — the board's first calibrated week — so the Weeks 2–8 backtest layers nothing on top of last week's change</div></div>
-      <div class="bt"><div class="n">HELD</div><div class="d">yardage settings unchanged — rate regression (k = 2) and multiplier shrinkage (×0.5) re-verified: rushing went 10 of 13 in Week 8 (15 of 21 across Weeks 7–8 against a ~62% average predicted), and the receiving board's Week 8 miss traces to a first-play QB injury, an inactive and a weather shutout rather than to rate or matchup settings</div></div>
+      <div class="bt"><div class="n">Wk 2–9</div><div class="d">rolling backtest window, re-run every Wednesday from Week 2 through the last completed week, strict no-lookahead — each week predicted only from data available before it</div></div>
+      <div class="bt"><div class="n">6 — CHANGED</div><div class="d">TD-rate regression weight rises 5 → 6: pooled across Weeks 8–9, the 1+ TD board went 9 of 19 against a 58% average predicted, and the 2+ list sits at 3 of 40 across Weeks 6–9 against a ~22% average — the Weeks 2–9 backtest supports one notch more regression on TD rates, and nothing stronger</div></div>
+      <div class="bt"><div class="n">HELD</div><div class="d">yardage settings unchanged — rate regression (k = 2) and multiplier shrinkage (×0.5) re-verified: rushing went 17 of 21 across Weeks 8–9 against a ~64% average predicted (at or above price both weeks), and receiving's pooled 14 of 25 is dragged by quarterback events (a first-play injury, a backup-QB game, an inactive), not by rate or matchup settings</div></div>
     </div>
-    <p><b>Honest limits.</b> The 1+ TD board has steadied since the regression change — 16 of 29 across the last three live weeks against a
-       ~60% average predicted probability — but the 2+ TD watch list remains the weakest output on the page: 1 of 30 across Weeks 6–8 against a
-       ~23% average predicted probability. That is why it is a ranked watch list, not a promise, and why nobody on it is priced above 32% this week.
-       Seven weeks of rolling backtest data is still a small sample, and the live model uses fuller game windows than the backtest could, so
-       real-world calibration should run a bit better than the backtest showed. One editorial override is printed on the receiving board itself:
-       Zay Flowers' rate math clears the line, but the board holds him off because the quarterbacks who produced that rate are both out.</p>
+    <p><b>Honest limits.</b> Week 9 was the model's best-calibrated week in aggregate — 20 of 38 hits against a 52% average predicted —
+       but the split matters: the yardage boards are pricing well while the touchdown boards still run hot even after two regression
+       increases in three weeks. The 2+ TD watch list remains the weakest output on the page (3 of 40 across Weeks 6–9), so it stays a
+       ranked watch list with nobody priced above 27% this week. Eight weeks of rolling backtest data is still a small sample, and the
+       live model uses fuller game windows than the backtest could, so real-world calibration should run a bit better than the backtest
+       showed. One editorial override is printed on the receiving board itself: Smith-Njigba's rate math tops the board, but the board
+       holds him off because the quarterback who produced that rate is out and his replacement's one start produced 51 of his yards.</p>
   </section>
   </div><!-- /view-proj -->
 
   <div id="view-res" hidden>
     <section class="info">
-      <h2>Week 8 results — projections vs actuals</h2>
-      <p class="board-note">Every call from the Week 8 boards (published Wednesday, Oct 28, 2026), graded against the final box scores.
-         The graded set is the calls flagged at each board's "likely" line. Week 8 was two opposite weeks at once — the best
-         rushing week of the season and the 1+ TD board's first calibrated week, against a receiving board wrecked by a
-         first-play quarterback injury, an inactive and a rainstorm, and a 2+ TD list that blanked for a second straight week.
-         Each Wednesday the week just played gets graded here before the new boards are built.</p>
+      <h2>Week 9 results — projections vs actuals</h2>
+      <p class="board-note">Every call from the Week 9 boards (published Wednesday, Nov 4, 2026), graded against the final box scores.
+         The graded set is the calls flagged at each board's "likely" line. Week 9 was the model's best-calibrated week in
+         aggregate — the two yardage boards ran at or above price (Lamb 195, Watson 171, Golden 164, Cook 107) — while the
+         touchdown board cooled after Week 8's high and the 2+ list finally converted twice, through its top talent and its
+         longest shot. Each Wednesday the week just played gets graded here before the new boards are built.</p>
       <div class="bt-stats four">
-        <div class="bt"><div class="n">22 / 47</div><div class="d">graded calls hit — <b>47% against a 53% average predicted probability</b>. The miss is split in two: a receiving board wrecked by events no rate can price, and a 2+ TD list that still converts nobody — while rushing and the 1+ TD board both ran at or above price.</div></div>
-        <div class="bt"><div class="n">10 / 13</div><div class="d"><b>Rushing</b> — the season's best board week, against a 61% average predicted. Irving (170), Gibbs (153), Braelon Allen (147) and Warren (143) all cleared by 80+; every miss came home between 53 and 56 yards.</div></div>
-        <div class="bt"><div class="n">6 / 14</div><div class="d"><b>Receiving</b> — 64% average predicted, wrecked at the source: Flowers lost both his quarterbacks on the first play (0 catches), Smith was inactive again, London caught one pass in a shutout, and Lamb and McMillan each missed by exactly two yards.</div></div>
-        <div class="bt"><div class="n">6 / 10 · 0 / 10</div><div class="d"><b>Touchdowns</b> — the 1+ board's first calibrated week after the regression change (58% average predicted). The 2+ watch list blanked again: 1 of 30 across Weeks 6–8, the model's clearest remaining overpromise, now stated plainly on the board itself.</div></div>
+        <div class="bt"><div class="n">20 / 38</div><div class="d">graded calls hit — <b>53% against a 52% average predicted probability</b>, the closest aggregate calibration of the season. The split underneath is the story: yardage 15/19, touchdowns 5/19.</div></div>
+        <div class="bt"><div class="n">7 / 8</div><div class="d"><b>Rushing</b> — a second straight week at or above price against a 67% average predicted. The top four all cleared 100; the only miss was Taylor (46) in a Colts collapse, and Henry's near-miss 57 kept the cut honest.</div></div>
+        <div class="bt"><div class="n">8 / 11</div><div class="d"><b>Receiving</b> — 65% average predicted, and the hits were enormous: Lamb 195, Watson 171, Golden 164, Chase 155, Nacua 150. The misses were a backup-QB game (Smith-Njigba, 51), a 32-yard two-TD split (Higgins) and McMillan by four yards.</div></div>
+        <div class="bt"><div class="n">3 / 9 · 2 / 10</div><div class="d"><b>Touchdowns</b> — the 1+ board cooled to 3 of 9 against a 58% average after Week 8's 6 of 10; pooled, that's 9 of 19 — the evidence behind this week's regression increase. The 2+ list converted twice (Walker ×3, Irving ×2) yet still sits at 3 of 40 over four weeks.</div></div>
       </div>
     </section>
 
     <main id="results"></main>
 
     <section class="info method" id="backtest">
-      <h2>Rolling backtest — Weeks 2–8</h2>
+      <h2>Rolling backtest — Weeks 2–9</h2>
       <p>The backtest <b>rolls</b>: every Wednesday it re-runs from Week 2 through the last completed week — strict no-lookahead,
          each week predicted only from data available before it — re-derives whether the current settings still hold, and only then
-         are the new boards built. This week's run covers <b>Weeks 2–8</b>; the window grows by one week each refresh, so next
-         Wednesday (Nov 11) it covers <b>Weeks 2–9</b> for the Week 10 projections.</p>
+         are the new boards built. This week's run covers <b>Weeks 2–9</b>; the window grows by one week each refresh, so next
+         Wednesday (Nov 18) it covers <b>Weeks 2–10</b> for the Week 11 projections.</p>
       <div class="bt-stats">
-        <div class="bt"><div class="n">Wk 2–8</div><div class="d">current backtest window — seven weeks, re-verified before the Week 9 boards were published; next run expands to Weeks 2–9</div></div>
-        <div class="bt"><div class="n">HELD: TD weight 5</div><div class="d">last week's change (TD-rate regression weight 4 → 5) stays, with nothing layered on top. Evidence: in its first live week the 1+ TD board went 6/10 against a 58% average predicted — calibrated. The 2+ list's drought (1/30 over three weeks) is a base-rate problem the board now states plainly, not a λ problem another notch of regression would fix</div></div>
-        <div class="bt"><div class="n">HELD: yardage</div><div class="d">rate regression (k = 2) and multiplier shrinkage (×0.5) re-verified and unchanged — rushing went 15/21 across Weeks 7–8 against a ~62% average predicted (at or above price), and receiving's Week 8 miss is event-driven (first-play QB injury, inactive, weather shutout), not a settings signal on this sample</div></div>
+        <div class="bt"><div class="n">Wk 2–9</div><div class="d">current backtest window — eight weeks, re-verified before the Week 10 boards were published; next run expands to Weeks 2–10</div></div>
+        <div class="bt"><div class="n">CHANGED: TD weight 5 → 6</div><div class="d">the one change the expanded window supports. Evidence: the 1+ TD board pooled 9 of 19 across Weeks 8–9 against a 58% average predicted, and the 2+ watch list is 3 of 40 across Weeks 6–9 against a ~22% average. Week 8 alone argued for holding; Week 9's 3-of-9 — with clean misses on Allen, Henry, Hubbard and Taylor — says the λ values still run hot, so TD rates regress one notch harder. The 2+ list stays a ranking, priced no higher than 27%</div></div>
+        <div class="bt"><div class="n">HELD: yardage</div><div class="d">rate regression (k = 2) and multiplier shrinkage (×0.5) re-verified and unchanged — rushing is 17 of 21 across Weeks 8–9 against a ~64% average predicted, and receiving's misses keep tracing to who was throwing (Jackson/Huntley, Lock) or who was inactive, not to the rate or matchup math. Week 9's receiving hits (195/171/164/155/150) say the top of the board is priced right</div></div>
       </div>
       <p><b>How the loop runs each Wednesday:</b> (1) grade the week just played into the Results tab above, (2) re-run the rolling
          backtest over the expanded window and apply only the changes it supports, (3) rebuild the boards for the upcoming week.
-         Week 9's projections use identical settings to Week 8's — the backtest's verdict this week is that last week's one change
-         worked and nothing else in the evidence supports another. The one judgment call is printed where it happens: Swift, priced
-         off the 1+ TD board at 49% by the stronger regression in Week 8, scored three times — and his Week 9 λ (0.79) is built
-         under the same held weight, not a loosened one.</p>
+         Week 10's yardage projections use identical settings to Week 9's; the touchdown projections are the first built under
+         weight 6. The judgment calls are printed where they happen: Smith-Njigba, whose rate math tops both the receiving and
+         TD boards, is held off both because Drew Lock — not Sam Darnold — throws him the ball at Las Vegas, exactly the call
+         the board made on Zay Flowers a week ago (Baltimore's entire passing attack then produced 57 receiving yards).</p>
     </section>
   </div><!-- /view-res -->
 
   <footer>
-    <p><b>Snapshot:</b> Week 9 boards as computed Wednesday, Nov 4, 2026, published as a static page on GitHub Pages
+    <p><b>Snapshot:</b> Week 10 boards as computed Wednesday, Nov 11, 2026, published as a static page on GitHub Pages
        (Dashboards repo, <i>WeeklyStatDashboard/index.html</i> → apatel85.github.io/Dashboards/WeeklyStatDashboard/). Each Wednesday at 9:24 AM ET the weekly
        job grades the week just played into the Results tab, re-runs the rolling backtest (Week 2 through the latest completed week),
        rebuilds these boards for the upcoming week, and republishes the GitHub copy.
        Use the Download button above to save this file locally.</p>
-    <p>Week 8 actuals for the Results tab: Pro-Football-Reference Week 8 leaders and box scores, cross-checked against
-       Legion Report / BALLDONTLIE box scores, ESPN weekly leaders and game reports (BAL 10 at BUF 36 and PHI 10 at WAS 27,
-       verified directly). Season stats and defensive tables through Week 8: Pro-Football-Reference opponent table
-       (site updated Wed, Nov 4, 2026). Season touchdown totals: Sharp Football Analysis first-touchdown tables through
-       Week 8 and The Football Database yearly scoring leaders. Injury news: Week 9 injury trackers updated Wed, Nov 4,
-       2026 (8:17 AM ET) and Schefter / Rapoport reporting via Ravens Wire.</p>
-    <p>Sources: Pro-Football-Reference 2026 (player and opponent tables), Sportradar, StatMuse, FantasyPros, ClutchPoints,
+    <p>Week 9 actuals for the Results tab: Pro-Football-Reference Week 9 leaders and box scores, cross-checked against
+       Legion Report / BALLDONTLIE Week 9 stat leaders, ESPN game reports and the Bills' and Colts' official game logs
+       (BUF 23 at MIN 6 and DAL 27 at IND 23 verified directly). Season stats and defensive tables through Week 9:
+       The Football Database 2026 defensive totals (site updated Wed, Nov 11, 2026) and Pro-Football-Reference season
+       rushing table. Season touchdown totals: DraftHistory 2026 rushing/receiving TD leaders and Sportradar player pages
+       through Week 9. Injury news: NBC Sports Week 10 injury report (updated Tue, Nov 10) and Schefter / Rapoport
+       reporting via SI and Seahawks team coverage.</p>
+    <p>Sources: Pro-Football-Reference 2026 (player and opponent tables), The Football Database, Sportradar, StatMuse, FantasyPros, ClutchPoints,
        NBC Sports / Rotoworld, ESPN, Schefter &amp; Rapoport reporting, Reuters. Statistical analysis only — not betting advice.</p>
   </footer>
 </div>
@@ -518,1020 +520,897 @@ var DATA = {
   "rush": {
     "title": "60+ rushing yards",
     "rule": "Likely = P(60+) ≥ 55%",
-    "note": "Comfortable max is the matchup-adjusted expectation for this game: his rushing average, regressed for sample size, scaled for the run defense he faces. Dallas (152.8 yds/g allowed) and Indianapolis (131.8) lift Taylor and Javonte Williams onto this board, while Tampa Bay's and Jacksonville's league-best run defenses push Swift and Henry below the cut despite their touchdown rates.",
+    "note": "Comfortable max is the matchup-adjusted expectation for this game: his rushing average, regressed for sample size, scaled for the run defense he faces. Las Vegas (151.2 yds/g allowed) and Dallas (147.4) are the league's soft spots — Dallas is the entire reason McCaffrey's modest rate makes this board — while San Francisco's and Pittsburgh's top-three run defenses push Javonte Williams and the Steelers' backs below the cut.",
     "kind": "yards",
     "rows": [
       {
         "n": "Kenneth Walker III",
         "pos": "RB",
         "team": "KC",
-        "opp": "vs NYJ",
-        "g": 7,
-        "avg": 110.0,
-        "allowed": 123.6,
-        "max": 103,
+        "opp": "@ ATL",
+        "g": 8,
+        "avg": 109.0,
+        "allowed": 118.8,
+        "max": 101,
         "p": 74,
-        "note": "770 yards in 7 games — the Jets allow 123.6 rush yds/g"
+        "note": "872 yards in 8 games — the league's No. 2 rusher, off a 102-yard, three-TD Week 9; Atlanta allows 118.8 rush yds/g"
+      },
+      {
+        "n": "James Cook III",
+        "pos": "RB",
+        "team": "BUF",
+        "opp": "@ NYJ",
+        "g": 8,
+        "avg": 101.8,
+        "allowed": 128.0,
+        "max": 99,
+        "p": 73,
+        "note": "814 yards in 8 games; 31 carries for 107 and a TD at Minnesota — the Jets allow 128.0 rush yds/g"
+      },
+      {
+        "n": "Jahmyr Gibbs",
+        "pos": "RB",
+        "team": "DET",
+        "opp": "vs NE",
+        "g": 8,
+        "avg": 105.9,
+        "allowed": 96.7,
+        "max": 89,
+        "p": 69,
+        "note": "847 yards in 8 games — New England's run defense (96.7/g) is the drag in the Munich game"
+      },
+      {
+        "n": "Bijan Robinson",
+        "pos": "RB",
+        "team": "ATL",
+        "opp": "vs KC",
+        "g": 9,
+        "avg": 97.8,
+        "allowed": 97.5,
+        "max": 84,
+        "p": 67,
+        "note": "league-leading 880 rushing yards, 100 more in Madrid — Kansas City allows just 97.5 rush yds/g"
+      },
+      {
+        "n": "Chuba Hubbard",
+        "pos": "RB",
+        "team": "CAR",
+        "opp": "@ NO",
+        "g": 8,
+        "avg": 77.4,
+        "allowed": 133.9,
+        "max": 80,
+        "p": 65,
+        "note": "619 yards in 8 games — New Orleans allows 133.9 rush yds/g"
+      },
+      {
+        "n": "Derrick Henry",
+        "pos": "RB",
+        "team": "BAL",
+        "opp": "vs LAC",
+        "g": 9,
+        "avg": 76.6,
+        "allowed": 122.0,
+        "max": 76,
+        "p": 63,
+        "note": "689 yards in 9 games on a broken offense — the winless Chargers allow 122.0/g, and Brissett at QB at least makes defenses honor the pass"
+      },
+      {
+        "n": "Jonathan Taylor",
+        "pos": "RB",
+        "team": "IND",
+        "opp": "vs MIA",
+        "g": 9,
+        "avg": 72.9,
+        "allowed": 111.8,
+        "max": 70,
+        "p": 59,
+        "note": "656 yards in 9 games but just 69 rushing yards across the last two weeks — Miami (111.8/g) is a get-right spot if the workload returns; he stayed in Indianapolis past the deadline"
+      },
+      {
+        "n": "Christian McCaffrey",
+        "pos": "RB",
+        "team": "SF",
+        "opp": "@ DAL",
+        "g": 8,
+        "avg": 57.1,
+        "allowed": 147.4,
+        "max": 66,
+        "p": 56,
+        "note": "the matchup does all the lifting — Dallas allows 147.4 rush yds/g; McCaffrey ran for 68 and scored twice in Week 9 and carries no injury designation"
+      }
+    ],
+    "near": "<b>Just below the cut:</b> Javonte Williams (DAL vs SF) 48% · comfortable max 58 — San Francisco allows 80.9 rush yds/g, second-stingiest in the league; his Week 10 case is touchdowns, not yards (see the TD board). Bhayshul Tuten (JAX @ TEN) gets Tennessee's 124.1/g run defense, but his split workload keeps the rate under the line. Zach Charbonnet (SEA @ LV) faces the league's softest run defense (151.2/g) in a run-leaning Lock offense — the 77-yard Week 9 came in a split with Jadarian Price, and the split is the problem, not the matchup."
+  },
+  "rec": {
+    "title": "60+ receiving yards",
+    "rule": "Likely = P(60+) ≥ 55%",
+    "note": "Same build as the rushing board, against pass defenses. Minnesota's league-best pass defense (161.1 yds/g allowed) caps both Green Bay receivers despite their Week 9 explosions, New Orleans (236.6) and New England (231.9) lift McMillan and St. Brown, and the league's receiving leader isn't on the board at all — the near-miss line explains why.",
+    "kind": "yards",
+    "rows": [
+      {
+        "n": "CeeDee Lamb",
+        "pos": "WR",
+        "team": "DAL",
+        "opp": "vs SF",
+        "g": 9,
+        "avg": 100.4,
+        "allowed": 211.0,
+        "max": 91,
+        "p": 70,
+        "note": "904 yards in 9 games — 10 catches for 195 and a TD at Indianapolis in Week 9"
+      },
+      {
+        "n": "Tee Higgins",
+        "pos": "WR",
+        "team": "CIN",
+        "opp": "vs PIT",
+        "g": 8,
+        "avg": 94.8,
+        "allowed": 221.8,
+        "max": 88,
+        "p": 69,
+        "note": "758 yards in 8 games; his Week 9 was 32 yards and two TDs — the rate is built on the full season, not that split"
+      },
+      {
+        "n": "Amon-Ra St. Brown",
+        "pos": "WR",
+        "team": "DET",
+        "opp": "vs NE",
+        "g": 8,
+        "avg": 82.1,
+        "allowed": 231.9,
+        "max": 79,
+        "p": 65,
+        "note": "657 yards in 8 games — New England allows 231.9 pass yds/g in the Munich game"
+      },
+      {
+        "n": "Christian Watson",
+        "pos": "WR",
+        "team": "GB",
+        "opp": "vs MIN",
+        "g": 9,
+        "avg": 97.7,
+        "allowed": 161.1,
+        "max": 78,
+        "p": 64,
+        "note": "879 yards in 9 games after a 171-yard Week 9 — Minnesota's league-best pass defense is the only reason this isn't higher"
+      },
+      {
+        "n": "Tetairoa McMillan",
+        "pos": "WR",
+        "team": "CAR",
+        "opp": "@ NO",
+        "g": 8,
+        "avg": 78.1,
+        "allowed": 236.6,
+        "max": 77,
+        "p": 63,
+        "note": "625 yards in 8 games — New Orleans allows 236.6 pass yds/g; missed by four yards in Week 9 and caught a TD"
+      },
+      {
+        "n": "Ja'Marr Chase",
+        "pos": "WR",
+        "team": "CIN",
+        "opp": "vs PIT",
+        "g": 8,
+        "avg": 80.9,
+        "allowed": 221.8,
+        "max": 76,
+        "p": 63,
+        "note": "155 yards and a TD in Madrid pulled the rate to 80.9/g — Pittsburgh allows 221.8 pass yds/g"
+      },
+      {
+        "n": "Brock Bowers",
+        "pos": "TE",
+        "team": "LV",
+        "opp": "vs SEA",
+        "g": 7,
+        "avg": 94.0,
+        "allowed": 155.1,
+        "max": 73,
+        "p": 61,
+        "note": "658 yards in 7 games — Seattle allows a league-low 155.1 pass yds/g, and the rate still clears"
+      },
+      {
+        "n": "Drake London",
+        "pos": "WR",
+        "team": "ATL",
+        "opp": "vs KC",
+        "g": 9,
+        "avg": 76.9,
+        "allowed": 210.4,
+        "max": 72,
+        "p": 60,
+        "note": "692 yards in 9 games; an efficient 68 on five catches in Madrid — Kansas City allows 210.4 pass yds/g"
+      },
+      {
+        "n": "Matthew Golden",
+        "pos": "WR",
+        "team": "GB",
+        "opp": "vs MIN",
+        "g": 9,
+        "avg": 87.0,
+        "allowed": 161.1,
+        "max": 71,
+        "p": 59,
+        "note": "783 yards in 9 games after 164 in Week 9 — same Minnesota problem as Watson, thinner rate"
+      }
+    ],
+    "near": "<b>Held off the board:</b> Jaxon Smith-Njigba's rate math tops the board again (75% · comfortable max 108 against Las Vegas's 234.2/g), but Sam Darnold (quad/ribs) is out for a second straight week, Drew Lock starts again, and Smith-Njigba's one game with Lock produced 51 yards on a 175-yard team passing day. Same call the board made on Zay Flowers last week: when the quarterback who produced the rate is gone, the rate's premise is gone. <b>Just below the cut:</b> Justin Jefferson (MIN @ GB) ~42% · comfortable max ~53 — Kyler Murray is out 3–4 weeks and Jefferson's rate has fallen to the low 50s. Puka Nacua is out entirely (likely IR — see Injury watch)."
+  },
+  "td1": {
+    "title": "Score a touchdown",
+    "rule": "Likely = P(1+ TD) ≥ 50% · minimum 3 games",
+    "note": "Physical scorers only — rushing and receiving TDs. No QB passing TDs; Josh Allen qualifies on rushing TDs alone (9 in 8 games). TD rates now carry the stronger regression the Weeks 2–9 backtest imposed this week (weight 6, up from 5) — the 1+ board pooled 9 of 19 across Weeks 8–9 against a 58% average predicted, so every λ below is priced a notch colder than it would have been last week.",
+    "kind": "td",
+    "rows": [
+      {
+        "n": "Kenneth Walker III",
+        "pos": "RB",
+        "team": "KC",
+        "opp": "@ ATL",
+        "g": 8,
+        "lam": 1.02,
+        "p": 64,
+        "p2": 27,
+        "note": "11 total TDs in 8 games, three of them in Week 9 (one rushing, two receiving); Atlanta allows ~2.90 total TD/g"
+      },
+      {
+        "n": "Jahmyr Gibbs",
+        "pos": "RB",
+        "team": "DET",
+        "opp": "vs NE",
+        "g": 8,
+        "lam": 0.98,
+        "p": 63,
+        "p2": 26,
+        "note": "11 total TDs in 8 games; scored Detroit's only touchdown at Miami in Week 9"
+      },
+      {
+        "n": "Christian McCaffrey",
+        "pos": "RB",
+        "team": "SF",
+        "opp": "@ DAL",
+        "g": 8,
+        "lam": 0.98,
+        "p": 63,
+        "p2": 26,
+        "note": "10 total TDs in 8 games, two of them in Week 9 — Dallas allows ~3.11 total TD/g and the most rushing yards in the league"
+      },
+      {
+        "n": "Josh Allen",
+        "pos": "QB",
+        "team": "BUF",
+        "opp": "@ NYJ",
+        "g": 8,
+        "lam": 0.87,
+        "p": 58,
+        "p2": 22,
+        "qbrush": true,
+        "note": "9 rushing TDs in 8 games — passing TDs don't count on this board; Minnesota held him to 15 rushing yards and no score, and the Jets' defense is not Minnesota's"
+      },
+      {
+        "n": "Derrick Henry",
+        "pos": "RB",
+        "team": "BAL",
+        "opp": "vs LAC",
+        "g": 9,
+        "lam": 0.85,
+        "p": 57,
+        "p2": 21,
+        "note": "9 total TDs in 9 games despite the quarterback collapse; the winless Chargers allow ~3.21 total TD/g"
+      },
+      {
+        "n": "James Cook III",
+        "pos": "RB",
+        "team": "BUF",
+        "opp": "@ NYJ",
+        "g": 8,
+        "lam": 0.79,
+        "p": 55,
+        "p2": 19,
+        "note": "8 rushing TDs in 8 games — he has scored in seven straight games, the league's longest active streak"
+      },
+      {
+        "n": "Javonte Williams",
+        "pos": "RB",
+        "team": "DAL",
+        "opp": "vs SF",
+        "g": 9,
+        "lam": 0.78,
+        "p": 54,
+        "p2": 18,
+        "note": "10 total TDs in 9 games including the Week 9 game-winner at Indianapolis — San Francisco's ~2.28 total TD/g allowance is the drag"
+      },
+      {
+        "n": "Chuba Hubbard",
+        "pos": "RB",
+        "team": "CAR",
+        "opp": "@ NO",
+        "g": 8,
+        "lam": 0.75,
+        "p": 53,
+        "p2": 17,
+        "note": "7 total TDs in 8 games; New Orleans allows ~3.16 total TD/g"
+      },
+      {
+        "n": "Jonathan Taylor",
+        "pos": "RB",
+        "team": "IND",
+        "opp": "vs MIA",
+        "g": 9,
+        "lam": 0.74,
+        "p": 52,
+        "p2": 17,
+        "note": "8 rushing TDs in 9 games, none since Week 7 — the rate is living on September, and the workload is the question; Miami allows ~2.93 total TD/g"
+      }
+    ],
+    "near": "<b>Just below the cut:</b> Tee Higgins 43% · λ 0.55 (six receiving TDs in 8 games, four of them in the last two weeks — but Pittsburgh allows ~2.11 total TD/g, the league's stingiest tier). Jaxon Smith-Njigba's λ math clears the line too (λ 0.92 · 60% against Las Vegas's 3.67 total TD/g) — held off with his receiving number, same reason: Drew Lock throws him the ball this week, not Sam Darnold."
+  },
+  "td2": {
+    "title": "Score 2+ touchdowns",
+    "rule": "Top 10, ranked — nobody is a lock",
+    "note": "Multi-TD games are rare even in the best spots: this list finally converted twice in Week 9 (Walker ×3, Irving ×2) yet still sits at 3 of 40 across Weeks 6–9 against a ~23% average predicted. Read it as a ranking of the best shots, not a set of predictions. This week's λ values carry the strengthened weight-6 regression, and nobody clears 27%.",
+    "kind": "td2",
+    "rows": [
+      {
+        "n": "Kenneth Walker III",
+        "pos": "RB",
+        "team": "KC",
+        "opp": "@ ATL",
+        "g": 8,
+        "lam": 1.02,
+        "p": 27
+      },
+      {
+        "n": "Jahmyr Gibbs",
+        "pos": "RB",
+        "team": "DET",
+        "opp": "vs NE",
+        "g": 8,
+        "lam": 0.98,
+        "p": 26
+      },
+      {
+        "n": "Christian McCaffrey",
+        "pos": "RB",
+        "team": "SF",
+        "opp": "@ DAL",
+        "g": 8,
+        "lam": 0.98,
+        "p": 26
+      },
+      {
+        "n": "Josh Allen",
+        "pos": "QB",
+        "team": "BUF",
+        "opp": "@ NYJ",
+        "g": 8,
+        "lam": 0.87,
+        "p": 22,
+        "qbrush": true
+      },
+      {
+        "n": "Derrick Henry",
+        "pos": "RB",
+        "team": "BAL",
+        "opp": "vs LAC",
+        "g": 9,
+        "lam": 0.85,
+        "p": 21
+      },
+      {
+        "n": "James Cook III",
+        "pos": "RB",
+        "team": "BUF",
+        "opp": "@ NYJ",
+        "g": 8,
+        "lam": 0.79,
+        "p": 19
+      },
+      {
+        "n": "Javonte Williams",
+        "pos": "RB",
+        "team": "DAL",
+        "opp": "vs SF",
+        "g": 9,
+        "lam": 0.78,
+        "p": 18
+      },
+      {
+        "n": "Chuba Hubbard",
+        "pos": "RB",
+        "team": "CAR",
+        "opp": "@ NO",
+        "g": 8,
+        "lam": 0.75,
+        "p": 17
+      },
+      {
+        "n": "Jonathan Taylor",
+        "pos": "RB",
+        "team": "IND",
+        "opp": "vs MIA",
+        "g": 9,
+        "lam": 0.74,
+        "p": 17
+      },
+      {
+        "n": "Tee Higgins",
+        "pos": "WR",
+        "team": "CIN",
+        "opp": "vs PIT",
+        "g": 8,
+        "lam": 0.55,
+        "p": 11
+      }
+    ],
+    "near": "Kenneth Walker (27%) is the trend-breaker candidate: his three-TD Week 9 was his third multi-TD game of the season, and Atlanta's defense is a full tier softer than the Jets'. Tee Higgins is the list's floor at 11% — two of his last two games were two-TD games, and Pittsburgh's TD stinginess is the only reason he isn't priced like one. The honest context for the whole list stands: 3 conversions in its last 40 names."
+  }
+};
+</script>
+
+<script>
+"use strict";
+/* Week 9 boards as published Wed Nov 4, 2026, graded against final box scores. */
+var RESULTS = [
+  {
+    "key": "rrush",
+    "title": "60+ rushing yards — Week 9",
+    "score": "7 of 8 hit · 67% average predicted",
+    "kind": "yards",
+    "note": "A second straight week at or above price. The top four all cleared 100 yards, three more landed comfortably, and the only miss was a workload collapse in Indianapolis. The cut also did its job underneath: Henry's near-miss 57 and Tuten's 29 both stayed home.",
+    "rows": [
+      {
+        "n": "Kenneth Walker III",
+        "pos": "RB",
+        "team": "KC",
+        "opp": "vs NYJ",
+        "p": 74,
+        "max": 103,
+        "act": 102,
+        "hit": true,
+        "note": "18 carries — plus three total TDs, two of them receiving"
       },
       {
         "n": "Jahmyr Gibbs",
         "pos": "RB",
         "team": "DET",
         "opp": "@ MIA",
-        "g": 7,
-        "avg": 110.4,
-        "allowed": 113.1,
-        "max": 98,
         "p": 73,
-        "note": "773 yards in 7 games; 153 and a TD in Week 8 — Miami's run defense is mid-pack (113.1/g)"
+        "max": 98,
+        "act": 74,
+        "hit": true,
+        "note": "20 carries and Detroit's only touchdown in the 19–9 win"
       },
       {
         "n": "Bijan Robinson",
         "pos": "RB",
         "team": "ATL",
         "opp": "vs CIN",
-        "g": 8,
-        "avg": 97.5,
-        "allowed": 122.3,
-        "max": 93,
         "p": 71,
-        "note": "league-leading 780 rushing yards — Cincinnati allows 122.3/g in the Madrid game"
+        "max": 93,
+        "act": 100,
+        "hit": true,
+        "note": "19 carries and a TD in the Madrid game"
       },
       {
         "n": "James Cook III",
         "pos": "RB",
         "team": "BUF",
         "opp": "@ MIN",
-        "g": 7,
-        "avg": 101.0,
-        "allowed": 116.7,
-        "max": 93,
         "p": 71,
-        "note": "707 yards in 7 games; cleared from his questionable tag on Wednesday — Minnesota allows 116.7 rush yds/g"
+        "max": 93,
+        "act": 107,
+        "hit": true,
+        "note": "31 carries and a TD on Monday night — the week's rushing leader"
       },
       {
         "n": "Jonathan Taylor",
         "pos": "RB",
         "team": "IND",
         "opp": "vs DAL",
-        "g": 8,
-        "avg": 73.4,
-        "allowed": 152.8,
-        "max": 82,
         "p": 66,
-        "note": "the matchup does the lifting — Dallas allows a league-worst 152.8 rush yds/g; Taylor is coming off a 23-yard game against Jacksonville's league-best unit"
+        "max": 82,
+        "act": 46,
+        "hit": false,
+        "note": "13 carries and a lost fourth-quarter fumble — the board's one clear miss, in what became his trade-deadline farewell watch"
       },
       {
         "n": "Chuba Hubbard",
         "pos": "RB",
         "team": "CAR",
         "opp": "vs DEN",
-        "g": 7,
-        "avg": 77.1,
-        "allowed": 127.9,
-        "max": 77,
         "p": 63,
-        "note": "540 yards in 7 games — Denver allows 127.9 rush yds/g"
+        "max": 77,
+        "act": 79,
+        "hit": true,
+        "note": "16 carries in the 26–21 loss — cleared it without a score"
       },
       {
         "n": "Bucky Irving",
         "pos": "RB",
         "team": "TB",
         "opp": "@ CHI",
-        "g": 8,
-        "avg": 91.0,
-        "allowed": 86.8,
-        "max": 74,
         "p": 62,
-        "note": "career-high 170 yards in Week 8 — Chicago's run defense (86.8/g) is the drag this week"
+        "max": 74,
+        "act": 97,
+        "hit": true,
+        "note": "20 carries and two rushing TDs at Chicago"
       },
       {
         "n": "Javonte Williams",
         "pos": "RB",
         "team": "DAL",
         "opp": "@ IND",
-        "g": 8,
-        "avg": 66.0,
-        "allowed": 131.8,
-        "max": 69,
         "p": 58,
-        "note": "528 yards in 8 games — Indianapolis allows 131.8 rush yds/g"
+        "max": 69,
+        "act": 101,
+        "hit": true,
+        "note": "20 carries — and the game-winning TD with 1:08 left"
       }
     ],
-    "near": "<b>Just below the cut:</b> Bhayshul Tuten (JAX @ BAL) 54% · comfortable max 64 — and he's questionable (ankle) on the short week. Derrick Henry (BAL vs JAX) 53% · max 63 against Jacksonville's league-best run defense (77.4/g), with a third-string QB under center. Braelon Allen (NYJ @ KC) 53% · max 63 and Kyren Williams (LAR @ WAS) 52% · max 62. D'Andre Swift (CHI vs TB) is 46% · max 56 — Tampa Bay allows 80.0 rush yds/g; Swift's Week 9 case is touchdowns, not yards (see the TD board)."
+    "near": "<b>Not graded:</b> Derrick Henry, the named just-below-the-cut back at 53%, ran for <b>57</b> against Jacksonville — the cut got that one right by three yards, with Justice Hill's 65-yard run taking Baltimore's rushing TD. Bhayshul Tuten (54%, questionable ankle) played and scored, but on 29 rushing yards. Breece Hall (61) outrushed Braelon Allen (53% near-miss) for the Jets — neither threatened Walker's side of the line."
   },
-  "rec": {
-    "title": "60+ receiving yards",
-    "rule": "Likely = P(60+) ≥ 55%",
-    "note": "Same build as the rushing board, against pass defenses. Nobody's matchup does more than Washington's (243.0 pass yds/g allowed) does for Nacua, and nobody's rate does more than Smith-Njigba's league-leading 123.1/g. One rate the board refuses to print — Flowers' — is explained in the near-miss line below.",
+  {
+    "key": "rrec",
+    "title": "60+ receiving yards — Week 9",
+    "score": "8 of 11 hit · 65% average predicted",
     "kind": "yards",
+    "note": "The hits were enormous — five receivers cleared 150 — and the misses were all explainable at the source: a backup-quarterback game for the board's top name, a 32-yard line that came with two touchdowns, and a four-yard miss by a receiver who scored anyway.",
     "rows": [
       {
         "n": "Jaxon Smith-Njigba",
         "pos": "WR",
         "team": "SEA",
         "opp": "vs ARI",
-        "g": 8,
-        "avg": 123.1,
-        "allowed": 220.5,
-        "max": 110,
         "p": 76,
-        "note": "league-leading 985 receiving yards; 118 and a TD on Monday night"
+        "max": 110,
+        "act": 51,
+        "hit": false,
+        "note": "7 catches on 10 targets from Drew Lock — Darnold was already out, Seattle threw for 175, and it's why he's held off the Week 10 board entirely"
       },
       {
         "n": "Tee Higgins",
         "pos": "WR",
         "team": "CIN",
         "opp": "vs ATL",
-        "g": 7,
-        "avg": 103.7,
-        "allowed": 223.4,
-        "max": 94,
         "p": 71,
-        "note": "726 yards in 7 games — 155 and two TDs in Week 8's overtime win"
+        "max": 94,
+        "act": 32,
+        "hit": false,
+        "note": "5 catches — but two of them were touchdowns; the strangest miss of the week"
       },
       {
         "n": "Puka Nacua",
         "pos": "WR",
         "team": "LAR",
         "opp": "@ WAS",
-        "g": 6,
-        "avg": 94.2,
-        "allowed": 243.0,
-        "max": 89,
         "p": 69,
-        "flag": "Stafford Q — thumb",
-        "note": "Washington allows 243.0 pass yds/g — the number assumes Stafford (questionable, thumb) plays"
+        "max": 89,
+        "act": 150,
+        "hit": true,
+        "note": "14 catches with Stafford (questionable, thumb) playing — then hurt his knee: likely IR, see the Week 10 injury watch"
       },
       {
         "n": "Christian Watson",
         "pos": "WR",
         "team": "GB",
         "opp": "@ NE",
-        "g": 8,
-        "avg": 88.5,
-        "allowed": 217.3,
-        "max": 81,
         "p": 66,
-        "flag": "Q — undisclosed",
-        "note": "113 yards in Week 8; listed questionable on the early-week report"
+        "max": 81,
+        "act": 171,
+        "hit": true,
+        "note": "7 catches and a TD — the board's biggest receiving day per target"
       },
       {
         "n": "CeeDee Lamb",
         "pos": "WR",
         "team": "DAL",
         "opp": "@ IND",
-        "g": 8,
-        "avg": 88.6,
-        "allowed": 211.8,
-        "max": 81,
         "p": 65,
-        "note": "709 yards in 8 games — held to 58 by Arizona in Week 8"
+        "max": 81,
+        "act": 195,
+        "hit": true,
+        "note": "10 catches and a TD — the week's receiving leader"
       },
       {
         "n": "Brock Bowers",
         "pos": "TE",
         "team": "LV",
         "opp": "@ SF",
-        "g": 6,
-        "avg": 91.2,
-        "allowed": 210.3,
-        "max": 78,
         "p": 64,
-        "note": "92 yards and two TDs at the Jets in Week 8"
+        "max": 78,
+        "act": 111,
+        "hit": true,
+        "note": "7 catches and a TD at San Francisco"
       },
       {
         "n": "Tetairoa McMillan",
         "pos": "WR",
         "team": "CAR",
         "opp": "vs DEN",
-        "g": 7,
-        "avg": 81.3,
-        "allowed": 227.4,
-        "max": 77,
         "p": 63,
-        "note": "569 yards in 7 games — 58 in Week 8, two yards short of the line"
+        "max": 77,
+        "act": 56,
+        "hit": false,
+        "note": "4 short — but caught one of Bryce Young's three TD passes"
       },
       {
         "n": "Drake London",
         "pos": "WR",
         "team": "ATL",
         "opp": "vs CIN",
-        "g": 8,
-        "avg": 78.0,
-        "allowed": 237.7,
-        "max": 76,
         "p": 63,
-        "note": "the rate took the hit in Tampa's rain shutout (1 catch, 8 yards) — Cincinnati allows 237.7 pass yds/g in Madrid"
+        "max": 76,
+        "act": 68,
+        "hit": true,
+        "note": "5 catches on 5 targets in Madrid — Atlanta's leading receiver"
       },
       {
         "n": "Amon-Ra St. Brown",
         "pos": "WR",
         "team": "DET",
         "opp": "@ MIA",
-        "g": 7,
-        "avg": 81.6,
-        "allowed": 221.0,
-        "max": 76,
         "p": 63,
-        "note": "571 yards in 7 games; cleared (ankle) with no designation — Miami allows 2.29 pass TDs/g"
+        "max": 76,
+        "act": 86,
+        "hit": true,
+        "note": "8 catches at Miami, no TD — Detroit didn't need one from him"
       },
       {
         "n": "Matthew Golden",
         "pos": "WR",
         "team": "GB",
         "opp": "@ NE",
-        "g": 8,
-        "avg": 77.4,
-        "allowed": 217.3,
-        "max": 73,
         "p": 61,
-        "note": "79 yards and a TD in Week 8"
+        "max": 73,
+        "act": 164,
+        "hit": true,
+        "note": "10 catches on 10 targets and a TD at New England"
       },
       {
         "n": "Ja'Marr Chase",
         "pos": "WR",
         "team": "CIN",
         "opp": "vs ATL",
-        "g": 7,
-        "avg": 70.3,
-        "allowed": 223.4,
-        "max": 68,
         "p": 57,
-        "note": "141 yards and a TD in Week 8 pulled the rate back over the line — 492 yards in 7 games"
+        "max": 68,
+        "act": 155,
+        "hit": true,
+        "note": "10 catches and a TD — the near-miss call from Week 8's grading, back over the line with room to spare"
       }
     ],
-    "near": "<b>Just below the cut:</b> George Pickens (DAL @ IND) 53% · comfortable max 63 and Justin Jefferson (MIN vs BUF) 50% · max 60 — Buffalo's soft pass defense (254.7/g) can't lift a rate that fell to 55.8/g after a 33-yard Week 8. <b>Held off the board:</b> Zay Flowers' rate math clears the line (68% · max 86 against Jacksonville's 253.9/g), but his 86.9 yds/g was built with Lamar Jackson and Tyler Huntley — Jackson is on injured reserve after thumb surgery, Huntley is out for the season, rookie Joe Fagnano makes his first start Thursday, and Flowers was held without a catch in the game where both got hurt. The rate's premise is gone, so the board doesn't print it."
+    "near": "<b>Not graded:</b> George Pickens (53%) was held out by the Cowboys entirely — no stat line at all. Justin Jefferson (50%) stayed under the line again as Minnesota produced 178 total yards against Buffalo. And the editorial hold-off, Zay Flowers: Baltimore's entire passing attack produced <b>57 receiving yards</b> with Fagnano starting — the hold-off was the week's best call."
   },
-  "td1": {
-    "title": "Score a touchdown",
-    "rule": "Likely = P(1+ TD) ≥ 50% · minimum 3 games",
-    "note": "Physical scorers only — rushing and receiving TDs. No QB passing TDs; Josh Allen qualifies on rushing TDs alone (9 in 7 games). TD rates keep the stronger regression the Weeks 2–7 backtest imposed last week (weight 5) — this week's Weeks 2–8 run held it, because the 1+ board finally priced right in Week 8 (6 of 10 at a 58% average).",
+  {
+    "key": "rtd1",
+    "title": "Score a touchdown — Week 9",
+    "score": "3 of 9 hit · 58% average predicted",
     "kind": "td",
+    "note": "The board cooled a week after its first calibrated week: the three hits (Gibbs, Javonte, Walker) all scored, but the middle of the board — Taylor, Swift, Henry, Hubbard, Allen — produced zero touchdowns on a combined slate of bad game scripts, a backup QB and Minnesota's defense doing exactly what its league-low TD allowance said it would.",
     "rows": [
       {
         "n": "Jahmyr Gibbs",
         "pos": "RB",
         "team": "DET",
         "opp": "@ MIA",
-        "g": 7,
-        "lam": 1.14,
         "p": 68,
-        "p2": 32,
-        "note": "league-leading 10 total TDs in 7 games; Miami allows 3.00 total TD/g"
+        "lam": 1.14,
+        "act": 1,
+        "hit": true,
+        "note": "Detroit's only touchdown in the 19–9 win"
       },
       {
         "n": "Jaxon Smith-Njigba",
         "pos": "WR",
         "team": "SEA",
         "opp": "vs ARI",
-        "g": 8,
-        "lam": 1.04,
         "p": 65,
-        "p2": 28,
-        "note": "9 receiving TDs in 8 games; Arizona allows 3.38 total TD/g"
+        "lam": 1.04,
+        "act": 0,
+        "hit": false,
+        "note": "51 yards and no score with Lock at QB — Seattle's two scrimmage TDs both went to AJ Barner"
       },
       {
         "n": "Javonte Williams",
         "pos": "RB",
         "team": "DAL",
         "opp": "@ IND",
-        "g": 8,
-        "lam": 0.92,
         "p": 60,
-        "p2": 24,
-        "note": "9 total TDs in 8 games; Indianapolis allows 2.75 total TD/g"
+        "lam": 0.92,
+        "act": 1,
+        "hit": true,
+        "note": "the game-winning TD with 1:08 left at Indianapolis"
       },
       {
         "n": "Jonathan Taylor",
         "pos": "RB",
         "team": "IND",
         "opp": "vs DAL",
-        "g": 8,
-        "lam": 0.91,
         "p": 60,
-        "p2": 23,
-        "note": "8 rushing TDs in 8 games; Dallas allows 3.13 total TD/g"
+        "lam": 0.91,
+        "act": 0,
+        "hit": false,
+        "note": "46 yards and a fumble; Seth McGowan punched in the Colts' only rushing score while Taylor watched from the sideline"
       },
       {
         "n": "Kenneth Walker III",
         "pos": "RB",
         "team": "KC",
         "opp": "vs NYJ",
-        "g": 7,
-        "lam": 0.89,
         "p": 59,
-        "p2": 23,
-        "note": "8 total TDs in 7 games — scoreless in Week 8 at Denver"
+        "lam": 0.89,
+        "act": 3,
+        "hit": true,
+        "note": "three total TDs — a 2-yard run and catches of 7 and 25 yards"
       },
       {
         "n": "D'Andre Swift",
         "pos": "RB",
         "team": "CHI",
         "opp": "vs TB",
-        "g": 8,
-        "lam": 0.79,
         "p": 55,
-        "p2": 19,
-        "note": "10 rushing TDs in 8 games, tied for the league lead — Tampa Bay's 1.63 total TD/g allowance is the only reason this isn't higher"
+        "lam": 0.79,
+        "act": 0,
+        "hit": false,
+        "note": "31 rushing yards on 12 carries, no score — Tampa Bay's run defense (79.1/g allowed) won this matchup outright"
       },
       {
         "n": "Derrick Henry",
         "pos": "RB",
         "team": "BAL",
         "opp": "vs JAX",
-        "g": 8,
-        "lam": 0.74,
         "p": 52,
-        "p2": 17,
-        "note": "9 total TDs in 8 games, but Jacksonville allows 1.71 total TD/g and Baltimore starts its third QB on Thursday"
+        "lam": 0.74,
+        "act": 0,
+        "hit": false,
+        "note": "57 rushing yards; Justice Hill's 65-yard run was Baltimore's only TD"
       },
       {
         "n": "Chuba Hubbard",
         "pos": "RB",
         "team": "CAR",
         "opp": "vs DEN",
-        "g": 7,
-        "lam": 0.73,
         "p": 52,
-        "p2": 17,
-        "note": "7 total TDs in 7 games"
+        "lam": 0.73,
+        "act": 0,
+        "hit": false,
+        "note": "79 rushing yards, but all three Carolina TDs came on Bryce Young passes"
       },
       {
         "n": "Josh Allen",
         "pos": "QB",
         "team": "BUF",
         "opp": "@ MIN",
-        "g": 7,
-        "lam": 0.69,
         "p": 50,
-        "p2": 15,
+        "lam": 0.69,
+        "act": 0,
+        "hit": false,
         "qbrush": true,
-        "note": "9 rushing TDs in 7 games — passing TDs don't count on this board; Minnesota allows a league-low 1.14 total TD/g, which is all that keeps this at the line"
+        "note": "6 carries for 15 yards and no rushing TD — his worst rushing game of the season, against the league's stingiest TD defense, exactly the fade the λ priced"
       }
     ],
-    "near": "<b>Just below the cut:</b> Bucky Irving 47% · λ 0.63 (6 TDs in 8 games; Chicago allows 2.38 total TD/g). Bhayshul Tuten scored twice in Week 8 but is questionable (ankle) for Thursday and his season rate doesn't clear the line. Christian McCaffrey (SF vs LV) sits out the board as questionable (calf) despite the softest TD matchup on the slate — Las Vegas allows 3.50 total TD/g."
+    "near": "<b>Not graded:</b> Bucky Irving, named just below the line at 47%, scored <b>twice</b> at Chicago. Christian McCaffrey, held off the board as questionable (calf), played and scored twice for San Francisco. And Tee Higgins — nowhere near the board on rate — caught two TD passes in Madrid. The cut giveth and it taketh away; pooled with Week 8, this board is 9 of 19 against a 58% average, which is the evidence behind this week's regression increase."
   },
-  "td2": {
-    "title": "Score 2+ touchdowns",
-    "rule": "Top 10, ranked — nobody is a lock",
-    "note": "Multi-TD games are rare even in the best spots: this list went 0 of 10 in Week 8 — 1 of 30 across Weeks 6–8 against a ~23% average predicted. Read it as a ranking of the best shots, not a set of predictions. The backtest keeps the λ values honest; it cannot make 2+ TDs likely for anyone, and this week nobody clears 32%.",
+  {
+    "key": "rtd2",
+    "title": "Score 2+ touchdowns — Week 9",
+    "score": "2 of 10 hit · 21% average predicted",
     "kind": "td2",
+    "note": "The list's best week of the season still only converted twice — but what conversions: its most talented name hung three TDs on the Jets, and its 13% floor name scored twice at Chicago. Six of the other eight scored exactly once or not at all, which is the normal outcome at these λ values.",
     "rows": [
       {
         "n": "Jahmyr Gibbs",
         "pos": "RB",
         "team": "DET",
         "opp": "@ MIA",
-        "g": 7,
+        "p": 32,
         "lam": 1.14,
-        "p": 32
+        "act": 1,
+        "hit": false,
+        "note": "scored exactly once"
       },
       {
         "n": "Jaxon Smith-Njigba",
         "pos": "WR",
         "team": "SEA",
         "opp": "vs ARI",
-        "g": 8,
+        "p": 28,
         "lam": 1.04,
-        "p": 28
+        "act": 0,
+        "hit": false,
+        "note": "the Lock game — 51 yards, no score"
       },
       {
         "n": "Javonte Williams",
         "pos": "RB",
         "team": "DAL",
         "opp": "@ IND",
-        "g": 8,
+        "p": 24,
         "lam": 0.92,
-        "p": 24
+        "act": 1,
+        "hit": false,
+        "note": "scored exactly once — the game-winner"
       },
       {
         "n": "Jonathan Taylor",
         "pos": "RB",
         "team": "IND",
         "opp": "vs DAL",
-        "g": 8,
+        "p": 23,
         "lam": 0.91,
-        "p": 23
+        "act": 0,
+        "hit": false
       },
       {
         "n": "Kenneth Walker III",
         "pos": "RB",
         "team": "KC",
         "opp": "vs NYJ",
-        "g": 7,
+        "p": 23,
         "lam": 0.89,
-        "p": 23
+        "act": 3,
+        "hit": true,
+        "note": "three total TDs — the biggest conversion in this list's history"
       },
       {
         "n": "D'Andre Swift",
         "pos": "RB",
         "team": "CHI",
         "opp": "vs TB",
-        "g": 8,
+        "p": 19,
         "lam": 0.79,
-        "p": 19
+        "act": 0,
+        "hit": false,
+        "note": "a week after his three-TD Monday night, Tampa Bay held him to 31 yards"
       },
       {
         "n": "Derrick Henry",
         "pos": "RB",
         "team": "BAL",
         "opp": "vs JAX",
-        "g": 8,
+        "p": 17,
         "lam": 0.74,
-        "p": 17
+        "act": 0,
+        "hit": false
       },
       {
         "n": "Chuba Hubbard",
         "pos": "RB",
         "team": "CAR",
         "opp": "vs DEN",
-        "g": 7,
+        "p": 17,
         "lam": 0.73,
-        "p": 17
+        "act": 0,
+        "hit": false
       },
       {
         "n": "Josh Allen",
         "pos": "QB",
         "team": "BUF",
         "opp": "@ MIN",
-        "g": 7,
-        "lam": 0.69,
         "p": 15,
-        "qbrush": true
+        "lam": 0.69,
+        "act": 0,
+        "hit": false,
+        "qbrush": true,
+        "note": "no rushing TD — 15 rushing yards total"
       },
       {
         "n": "Bucky Irving",
         "pos": "RB",
         "team": "TB",
         "opp": "@ CHI",
-        "g": 8,
+        "p": 13,
         "lam": 0.63,
-        "p": 13
+        "act": 2,
+        "hit": true,
+        "note": "two rushing TDs — the 13% floor name converted, including the late score that tied the game"
       }
     ],
-    "near": "D'Andre Swift (19%) is the trend-breaker candidate: his three-TD Monday night in Week 8 was his second three-TD game of the season, and he did it against Seattle's top-ranked defense. Bucky Irving is the list's floor at 13% — the honest context for the whole list is its three-week record: 1 conversion in its last 30 names."
-  }
-};
-</script>
-<script>
-"use strict";
-/* Week 8 boards as published Wed Oct 28, 2026, graded against final box scores. */
-var RESULTS = [
-  {
-    "key": "rrush",
-    "title": "60+ rushing yards — Week 8",
-    "score": "10 of 13 hit · 61% average predicted",
-    "kind": "yards",
-    "note": "The board's best week of the season. Every back who cleared 80 yards landed, and the three misses were all volume stories: Henry (53) lost his quarterback on the first play, Kyren Williams (56) split work in a blowout win, and Javonte Williams (56) needed 24 carries to get there in an overtime loss.",
-    "rows": [
-      {
-        "n": "Kenneth Walker III",
-        "pos": "RB",
-        "team": "KC",
-        "opp": "@ DEN",
-        "p": 76,
-        "max": 111,
-        "act": 69,
-        "hit": true,
-        "note": "21 carries at Denver — cleared it without a TD"
-      },
-      {
-        "n": "James Cook III",
-        "pos": "RB",
-        "team": "BUF",
-        "opp": "vs BAL",
-        "p": 68,
-        "max": 86,
-        "act": 80,
-        "hit": true,
-        "note": "plus a rushing TD in the 36–10 rout"
-      },
-      {
-        "n": "Jahmyr Gibbs",
-        "pos": "RB",
-        "team": "DET",
-        "opp": "vs MIN",
-        "p": 68,
-        "max": 86,
-        "act": 153,
-        "hit": true,
-        "note": "plus a TD — the board's biggest rushing day"
-      },
-      {
-        "n": "Bijan Robinson",
-        "pos": "RB",
-        "team": "ATL",
-        "opp": "@ TB",
-        "p": 63,
-        "max": 77,
-        "act": 76,
-        "hit": true,
-        "note": "76 in a 16–0 loss where Atlanta's passing game produced 125 yards"
-      },
-      {
-        "n": "Jaylen Warren",
-        "pos": "RB",
-        "team": "PIT",
-        "opp": "vs CLE",
-        "p": 63,
-        "max": 76,
-        "act": 143,
-        "hit": true
-      },
-      {
-        "n": "Derrick Henry",
-        "pos": "RB",
-        "team": "BAL",
-        "opp": "@ BUF",
-        "p": 61,
-        "max": 73,
-        "act": 53,
-        "hit": false,
-        "note": "7 short — Lamar Jackson left on Baltimore's first play (thumb); Henry still scored Baltimore's only TD"
-      },
-      {
-        "n": "Chuba Hubbard",
-        "pos": "RB",
-        "team": "CAR",
-        "opp": "@ GB",
-        "p": 60,
-        "max": 72,
-        "act": 81,
-        "hit": true,
-        "note": "plus a TD on Thursday night"
-      },
-      {
-        "n": "Kyren Williams",
-        "pos": "RB",
-        "team": "LAR",
-        "opp": "vs LAC",
-        "p": 59,
-        "max": 71,
-        "act": 56,
-        "hit": false,
-        "note": "4 short — Blake Corum (73 yards and a TD) took the bigger share"
-      },
-      {
-        "n": "Javonte Williams",
-        "pos": "RB",
-        "team": "DAL",
-        "opp": "vs ARI",
-        "p": 58,
-        "max": 69,
-        "act": 56,
-        "hit": false,
-        "note": "4 short on 24 carries in the overtime loss"
-      },
-      {
-        "n": "Bucky Irving",
-        "pos": "RB",
-        "team": "TB",
-        "opp": "vs ATL",
-        "p": 56,
-        "max": 67,
-        "act": 170,
-        "hit": true,
-        "note": "career-high 170 yards and a TD"
-      },
-      {
-        "n": "Tony Pollard",
-        "pos": "RB",
-        "team": "TEN",
-        "opp": "@ CIN",
-        "p": 56,
-        "max": 67,
-        "act": 117,
-        "hit": true,
-        "note": "plus two TDs in the overtime shootout"
-      },
-      {
-        "n": "Braelon Allen",
-        "pos": "RB",
-        "team": "NYJ",
-        "opp": "vs LV",
-        "p": 56,
-        "max": 67,
-        "act": 147,
-        "hit": true,
-        "note": "21 carries in the 38–33 loss to Las Vegas"
-      },
-      {
-        "n": "Bhayshul Tuten",
-        "pos": "RB",
-        "team": "JAX",
-        "opp": "vs IND",
-        "p": 55,
-        "max": 66,
-        "act": 104,
-        "hit": true,
-        "note": "plus two TDs (one rushing, one receiving) in the 42–7 rout"
-      }
-    ],
-    "near": "<b>Not graded:</b> Jonathan Taylor, the named just-below-the-cut back at 54%, was held to <b>23 yards</b> by Jacksonville — the cut got that one right. D'Andre Swift (49%) ran for 69 and scored three times on Monday night; the cut's cost there was on the TD side, not the yardage side."
-  },
-  {
-    "key": "rrec",
-    "title": "60+ receiving yards — Week 8",
-    "score": "6 of 14 hit · 64% average predicted",
-    "kind": "yards",
-    "note": "A split board in the worst way: the top names who had their quarterbacks — Smith-Njigba, Higgins, Watson, Bowers, Golden, Nacua — all cleared it, but a first-play QB injury (Flowers, 0 catches), a second straight inactive (Smith) and a rainstorm shutout (London, 8 yards) sank the middle, and two more misses landed on exactly 58.",
-    "rows": [
-      {
-        "n": "Jaxon Smith-Njigba",
-        "pos": "WR",
-        "team": "SEA",
-        "opp": "vs CHI",
-        "p": 76,
-        "max": 110,
-        "act": 118,
-        "hit": true,
-        "note": "plus a TD on Monday night"
-      },
-      {
-        "n": "Zay Flowers",
-        "pos": "WR",
-        "team": "BAL",
-        "opp": "@ BUF",
-        "p": 74,
-        "max": 103,
-        "act": 0,
-        "hit": false,
-        "note": "0 catches on 5 targets — Jackson and Huntley both left hurt; Baltimore threw for 68 net yards"
-      },
-      {
-        "n": "Tee Higgins",
-        "pos": "WR",
-        "team": "CIN",
-        "opp": "vs TEN",
-        "p": 69,
-        "max": 87,
-        "act": 155,
-        "hit": true,
-        "note": "plus two TDs in the overtime win"
-      },
-      {
-        "n": "CeeDee Lamb",
-        "pos": "WR",
-        "team": "DAL",
-        "opp": "vs ARI",
-        "p": 68,
-        "max": 86,
-        "act": 58,
-        "hit": false,
-        "note": "2 short — 7 catches, no TD"
-      },
-      {
-        "n": "Puka Nacua",
-        "pos": "WR",
-        "team": "LAR",
-        "opp": "vs LAC",
-        "p": 66,
-        "max": 82,
-        "act": 80,
-        "hit": true,
-        "note": "11 catches and a TD vs the Chargers"
-      },
-      {
-        "n": "Drake London",
-        "pos": "WR",
-        "team": "ATL",
-        "opp": "@ TB",
-        "p": 65,
-        "max": 80,
-        "act": 8,
-        "hit": false,
-        "note": "1 catch in the 16–0 rainstorm shutout at Tampa Bay"
-      },
-      {
-        "n": "Tetairoa McMillan",
-        "pos": "WR",
-        "team": "CAR",
-        "opp": "@ GB",
-        "p": 62,
-        "max": 75,
-        "act": 58,
-        "hit": false,
-        "note": "2 short — a team-high 11 targets on Thursday night"
-      },
-      {
-        "n": "DeVonta Smith",
-        "pos": "WR",
-        "team": "PHI",
-        "opp": "@ WAS",
-        "p": 62,
-        "max": 75,
-        "act": 0,
-        "hit": false,
-        "tag": "INACTIVE",
-        "note": "ruled out (hamstring) — second straight missed game"
-      },
-      {
-        "n": "Christian Watson",
-        "pos": "WR",
-        "team": "GB",
-        "opp": "vs CAR",
-        "p": 61,
-        "max": 74,
-        "act": 113,
-        "hit": true,
-        "note": "8 catches — Green Bay's receiving leader vs Carolina"
-      },
-      {
-        "n": "Brock Bowers",
-        "pos": "TE",
-        "team": "LV",
-        "opp": "@ NYJ",
-        "p": 60,
-        "max": 72,
-        "act": 92,
-        "hit": true,
-        "note": "plus two TDs at the Jets"
-      },
-      {
-        "n": "Amon-Ra St. Brown",
-        "pos": "WR",
-        "team": "DET",
-        "opp": "vs MIN",
-        "p": 57,
-        "max": 68,
-        "act": 46,
-        "hit": false,
-        "note": "Minnesota's pass defense did exactly what the matchup said it would"
-      },
-      {
-        "n": "Matthew Golden",
-        "pos": "WR",
-        "team": "GB",
-        "opp": "vs CAR",
-        "p": 57,
-        "max": 68,
-        "act": 79,
-        "hit": true,
-        "note": "plus a TD vs Carolina"
-      },
-      {
-        "n": "Justin Jefferson",
-        "pos": "WR",
-        "team": "MIN",
-        "opp": "@ DET",
-        "p": 57,
-        "max": 68,
-        "act": 33,
-        "hit": false,
-        "note": "did catch Minnesota's first TD — the yards never came"
-      },
-      {
-        "n": "George Pickens",
-        "pos": "WR",
-        "team": "DAL",
-        "opp": "vs ARI",
-        "p": 57,
-        "max": 67,
-        "act": 48,
-        "hit": false,
-        "note": "2 catches on 4 targets in the overtime loss"
-      }
-    ],
-    "near": "<b>Not graded:</b> Ja'Marr Chase, named just below the cut at 49%, went for <b>141 yards and a TD</b> — the cut's clearest miss of the week, and the reason he is back on the Week 9 board. Garrett Wilson (53%) caught 6 for 83 in the Jets–Raiders game and also cleared 60 ungraded."
-  },
-  {
-    "key": "rtd1",
-    "title": "Score a touchdown — Week 8",
-    "score": "6 of 10 hit · 58% average predicted",
-    "kind": "td",
-    "note": "Finally on price. In the first week under the strengthened regression (weight 5), the board's six hits — Henry, Allen, Smith-Njigba, Hubbard, Cook and Gibbs — all scored exactly once, and the top call was the biggest miss: Javonte Williams handled 24 carries and never scored.",
-    "rows": [
-      {
-        "n": "Javonte Williams",
-        "pos": "RB",
-        "team": "DAL",
-        "opp": "vs ARI",
-        "p": 69,
-        "lam": 1.16,
-        "act": 0,
-        "hit": false,
-        "note": "24 carries, 56 yards, no score in the overtime loss"
-      },
-      {
-        "n": "Derrick Henry",
-        "pos": "RB",
-        "team": "BAL",
-        "opp": "@ BUF",
-        "p": 65,
-        "lam": 1.05,
-        "act": 1,
-        "hit": true,
-        "note": "Baltimore's only TD — a 2-yard first-quarter run"
-      },
-      {
-        "n": "Josh Allen",
-        "pos": "QB",
-        "team": "BUF",
-        "opp": "vs BAL",
-        "p": 64,
-        "lam": 1.02,
-        "act": 1,
-        "hit": true,
-        "qbrush": true,
-        "note": "one rushing TD (7 carries, 30 yards) — his two passing TDs don't count here"
-      },
-      {
-        "n": "Kenneth Walker III",
-        "pos": "RB",
-        "team": "KC",
-        "opp": "@ DEN",
-        "p": 58,
-        "lam": 0.86,
-        "act": 0,
-        "hit": false,
-        "note": "69 rushing yards at Denver, no score"
-      },
-      {
-        "n": "Jaxon Smith-Njigba",
-        "pos": "WR",
-        "team": "SEA",
-        "opp": "vs CHI",
-        "p": 57,
-        "lam": 0.84,
-        "act": 1,
-        "hit": true,
-        "note": "118 yards and a TD on Monday night"
-      },
-      {
-        "n": "CeeDee Lamb",
-        "pos": "WR",
-        "team": "DAL",
-        "opp": "vs ARI",
-        "p": 57,
-        "lam": 0.83,
-        "act": 0,
-        "hit": false,
-        "note": "58 receiving yards, no score"
-      },
-      {
-        "n": "Chuba Hubbard",
-        "pos": "RB",
-        "team": "CAR",
-        "opp": "@ GB",
-        "p": 54,
-        "lam": 0.79,
-        "act": 1,
-        "hit": true,
-        "note": "81 yards and a 1-yard TD on Thursday night"
-      },
-      {
-        "n": "James Cook III",
-        "pos": "RB",
-        "team": "BUF",
-        "opp": "vs BAL",
-        "p": 53,
-        "lam": 0.76,
-        "act": 1,
-        "hit": true,
-        "note": "80 yards and a TD vs Baltimore"
-      },
-      {
-        "n": "Jonathan Taylor",
-        "pos": "RB",
-        "team": "IND",
-        "opp": "@ JAX",
-        "p": 53,
-        "lam": 0.76,
-        "act": 0,
-        "hit": false,
-        "note": "23 yards on 8 carries — Jacksonville's run defense was the story"
-      },
-      {
-        "n": "Jahmyr Gibbs",
-        "pos": "RB",
-        "team": "DET",
-        "opp": "vs MIN",
-        "p": 52,
-        "lam": 0.73,
-        "act": 1,
-        "hit": true,
-        "note": "153 yards and a 30-yard TD vs Minnesota"
-      }
-    ],
-    "near": "<b>Not graded:</b> D'Andre Swift, held just below the line at 49% by the stronger regression, scored <b>three times</b> on Monday night — the regression giveth (Taylor and Walker priced right) and it taketh away. Bhayshul Tuten (off the board) scored twice for Jacksonville, and Brock Bowers (off the board) scored twice for Las Vegas."
-  },
-  {
-    "key": "rtd2",
-    "title": "Score 2+ touchdowns — Week 8",
-    "score": "0 of 10 hit · 22% average predicted",
-    "kind": "td2",
-    "note": "A second straight blank and a third straight week at or near zero (1 of 30 across Weeks 6–8). Six of the ten scored exactly once — the normal outcome at these λ values — and the three-TD game the list was hunting belonged to D'Andre Swift, who sat just below its cut at 14%.",
-    "rows": [
-      {
-        "n": "Javonte Williams",
-        "pos": "RB",
-        "team": "DAL",
-        "opp": "vs ARI",
-        "p": 32,
-        "lam": 1.16,
-        "act": 0,
-        "hit": false
-      },
-      {
-        "n": "Derrick Henry",
-        "pos": "RB",
-        "team": "BAL",
-        "opp": "@ BUF",
-        "p": 28,
-        "lam": 1.05,
-        "act": 1,
-        "hit": false,
-        "note": "scored exactly once"
-      },
-      {
-        "n": "Josh Allen",
-        "pos": "QB",
-        "team": "BUF",
-        "opp": "vs BAL",
-        "p": 27,
-        "lam": 1.02,
-        "act": 1,
-        "hit": false,
-        "qbrush": true,
-        "note": "one rushing TD — scored exactly once on the ground"
-      },
-      {
-        "n": "Kenneth Walker III",
-        "pos": "RB",
-        "team": "KC",
-        "opp": "@ DEN",
-        "p": 21,
-        "lam": 0.86,
-        "act": 0,
-        "hit": false
-      },
-      {
-        "n": "Jaxon Smith-Njigba",
-        "pos": "WR",
-        "team": "SEA",
-        "opp": "vs CHI",
-        "p": 21,
-        "lam": 0.84,
-        "act": 1,
-        "hit": false,
-        "note": "scored exactly once"
-      },
-      {
-        "n": "CeeDee Lamb",
-        "pos": "WR",
-        "team": "DAL",
-        "opp": "vs ARI",
-        "p": 20,
-        "lam": 0.83,
-        "act": 0,
-        "hit": false
-      },
-      {
-        "n": "Chuba Hubbard",
-        "pos": "RB",
-        "team": "CAR",
-        "opp": "@ GB",
-        "p": 19,
-        "lam": 0.79,
-        "act": 1,
-        "hit": false,
-        "note": "scored exactly once"
-      },
-      {
-        "n": "James Cook III",
-        "pos": "RB",
-        "team": "BUF",
-        "opp": "vs BAL",
-        "p": 18,
-        "lam": 0.76,
-        "act": 1,
-        "hit": false,
-        "note": "scored exactly once"
-      },
-      {
-        "n": "Jonathan Taylor",
-        "pos": "RB",
-        "team": "IND",
-        "opp": "@ JAX",
-        "p": 18,
-        "lam": 0.76,
-        "act": 0,
-        "hit": false
-      },
-      {
-        "n": "Christian Watson",
-        "pos": "WR",
-        "team": "GB",
-        "opp": "vs CAR",
-        "p": 18,
-        "lam": 0.76,
-        "act": 0,
-        "hit": false,
-        "note": "113 receiving yards, no score"
-      }
-    ],
-    "near": "Three weeks, one conversion in thirty names, against a ~23% average predicted price that implies roughly seven. That gap — not any single week — is what the rolling backtest now carries: the λ values stay regressed at weight 5, the 2+ list is presented as a ranking only, and nobody on the Week 9 list is priced above 32%."
+    "near": "Four weeks, three conversions in forty names, against a ~22% average predicted price that implies roughly nine. Week 9's two conversions narrow the gap without closing it — that remaining gap is what the strengthened weight-6 regression now prices, and why nobody on the Week 10 list is above 27%."
   }
 ];
 </script>
@@ -1634,7 +1513,7 @@ document.getElementById("download").addEventListener("click", function(){
   var url = URL.createObjectURL(blob);
   var a = document.createElement("a");
   a.href = url;
-  a.download = "weekly-stat-dashboard-week9.html";
+  a.download = "weekly-stat-dashboard-week10.html";
   document.body.appendChild(a);
   a.click();
   a.remove();
