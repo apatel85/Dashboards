@@ -322,6 +322,7 @@ async function main() {
         ticker, spot: +spot.toFixed(2),
         direction, setup, setup_validated: validated,
         score: Math.round(Math.min(100, Math.max(0, score))),
+        trigger_level: direction === 'BOTH' ? null : +trigLvl.toFixed(2),
         entry_trigger: direction === 'BOTH'
           ? `Break of ${isFriday ? 'Friday pin $' + (prim.pinStrike ?? '—') : 'opening range'} with volume decides direction`
           : `Buy ${direction === 'CALL' ? 'call' : 'put'} on break ${direction === 'CALL' ? 'above' : 'below'} $${trigLvl.toFixed(2)} with expanding volume`,
