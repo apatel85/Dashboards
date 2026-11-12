@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App Sprints — Start a sprint</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --muted: #555555;
+    --line: #c9c9c9;
+    --field-line: #8a8a8a;
+    --accent: #14532d;
+    --accent-dark: #0c3a1f;
+    --accent-soft: #e8f2ec;
+    --error: #9b1c1c;
+    --error-soft: #fdf0f0;
+    --bg: #ffffff;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 16px;
+    --space-4: 24px;
+    --space-5: 32px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  main { max-width: 640px; margin: 0 auto; padding: var(--space-4) var(--space-3) 64px; }
+  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 var(--space-2); letter-spacing: -0.01em; }
+  h2 { font-size: 20px; line-height: 1.3; margin: 0 0 var(--space-2); }
+  h3 { font-size: 17px; line-height: 1.4; margin: 0 0 var(--space-2); }
+  p { margin: 0 0 var(--space-3); }
+  .lede { font-size: 18px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 15px; }
+  header { border-bottom: 2px solid var(--ink); padding-bottom: var(--space-3); margin-bottom: var(--space-4); }
+  header p { margin-bottom: 0; }
+  section.step {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: var(--space-4) var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  section.step > p.step-intro { color: var(--muted); font-size: 15px; }
+  fieldset { border: 0; margin: 0 0 var(--space-4); padding: 0; min-width: 0; }
+  fieldset:last-child { margin-bottom: 0; }
+  legend {
+    font-weight: 700;
+    font-size: 17px;
+    padding: 0;
+    margin-bottom: var(--space-2);
+  }
+  .hint { color: var(--muted); font-size: 15px; margin: 0 0 var(--space-2); }
+  label.field-label { display: block; font-weight: 700; margin-bottom: var(--space-1); }
+  .required-mark { color: var(--error); }
+  input[type="text"], textarea {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid var(--field-line);
+    border-radius: 6px;
+  }
+  textarea { min-height: 72px; resize: vertical; }
+  input[type="text"]:focus, textarea:focus { outline: 3px solid var(--accent); outline-offset: 2px; border-color: var(--accent); }
+  .field { margin-bottom: var(--space-3); }
+  .field:last-child { margin-bottom: 0; }
+  /* Radio-style tap targets: real radios, labels are the buttons */
+  .choice-group { display: flex; flex-direction: column; gap: var(--space-2); }
+  .choice-group input[type="radio"] {
+    position: absolute;
+    width: 1px; height: 1px;
+    opacity: 0;
+    overflow: hidden;
+  }
+  .choice-group label {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 1px solid var(--field-line);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 400;
+  }
+  .choice-group label::before {
+    content: "";
+    flex: 0 0 auto;
+    width: 18px; height: 18px;
+    margin-right: 10px;
+    border: 2px solid var(--field-line);
+    border-radius: 50%;
+    background: #fff;
+  }
+  .choice-group input[type="radio"]:checked + label {
+    border-color: var(--accent);
+    border-width: 2px;
+    background: var(--accent-soft);
+    font-weight: 700;
+  }
+  .choice-group input[type="radio"]:checked + label::before {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 10px var(--accent);
+  }
+  .choice-group input[type="radio"]:focus-visible + label {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .branch { display: none; }
+  .branch.is-visible { display: block; }
+  .role-block {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+  .role-block h3 { margin-bottom: var(--space-2); }
+  details {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: var(--space-4);
+  }
+  summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  details ol { margin: var(--space-2) 0 0; padding-left: 20px; }
+  details li { margin-bottom: var(--space-2); }
+  button {
+    font: inherit;
+    min-height: 48px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .btn-primary {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: 2px solid var(--accent);
+    font-weight: 700;
+    font-size: 18px;
+  }
+  .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  .btn-secondary {
+    background: #fff;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    font-weight: 700;
+  }
+  .btn-text {
+    background: none;
+    border: 0;
+    color: var(--error);
+    font-weight: 700;
+    min-height: 44px;
+    padding: 8px 4px;
+  }
+  .error-box {
+    display: none;
+    background: var(--error-soft);
+    border: 1px solid var(--error);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: var(--space-3);
+    color: var(--error);
+    font-weight: 700;
+  }
+  .error-box.is-visible { display: block; }
+  .error-box p { margin: 0; }
+  #result { display: none; }
+  #result.is-visible { display: block; }
+  #result pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background: #f5f5f5;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px;
+    margin: 0 0 var(--space-2);
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .result-block { margin-bottom: var(--space-4); }
+  .copy-status { color: var(--accent); font-weight: 700; font-size: 15px; min-height: 24px; margin: 0; }
+  .next-steps {
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: var(--space-3);
+    background: var(--accent-soft);
+  }
+  .next-steps p { margin-bottom: var(--space-2); }
+  .next-steps p:last-child { margin-bottom: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>App Sprints</h1>
+    <p class="lede">Tell us what you need built, in plain words. We turn it into a short research sprint first, so the design starts from evidence, not guesses.</p>
+  </header>
+
+  <p>Here is how it works. You fill in this form. That starts a <strong>Phase 0 research sprint</strong>: we check what already exists, who it is for, and what could go wrong. You get a <strong>Research Receipt</strong> back — a short, plain summary of what we found. Only then does design start.</p>
+
+  <details>
+    <summary>How the pipeline works, in detail</summary>
+    <ol>
+      <li><strong>Intake (this form).</strong> Answer the questions below. It takes about five minutes.</li>
+      <li><strong>Phase 0 research sprint.</strong> We research the idea: similar tools, the people who will use it, and the risks. No building yet.</li>
+      <li><strong>Research Receipt.</strong> You get a short written summary of the findings, with a clear go or no-go.</li>
+      <li><strong>Design.</strong> If the receipt says go, design starts from the research, not from a blank page.</li>
+    </ol>
+    <p class="small muted">New intakes are picked up daily at about 8am ET. If you need one sooner, paste your brief in the App Sprints side chat and ask for a manual run.</p>
+  </details>
+
+  <form id="intake-form" novalidate>
+    <div class="error-box" id="form-error" role="alert" tabindex="-1">
+      <p id="form-error-text">Please add a one-sentence description before you submit. Nothing was lost — your other answers are still here.</p>
+    </div>
+
+    <!-- Step 1 -->
+    <section class="step" aria-labelledby="step1-heading">
+      <h2 id="step1-heading">Step 1 — Three quick questions</h2>
+      <p class="step-intro">Tap one answer for each. These sort your request before anyone reads it.</p>
+
+      <fieldset>
+        <legend>Who is it for?</legend>
+        <div class="choice-group" id="audience-group">
+          <input type="radio" id="audience-me" name="audience" value="just-me">
+          <label for="audience-me">Just me</label>
+          <input type="radio" id="audience-team" name="audience" value="my-team">
+          <label for="audience-team">My team</label>
+          <input type="radio" id="audience-public" name="audience" value="public">
+          <label for="audience-public">The public</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>How many kinds of users?</legend>
+        <p class="hint" id="user-types-hint">One type means everyone does the same thing. Several roles means different people do different things — for example, a coach and a parent.</p>
+        <div class="choice-group" id="user-types-group" aria-describedby="user-types-hint">
+          <input type="radio" id="user-types-one" name="user_types" value="one">
+          <label for="user-types-one">One type</label>
+          <input type="radio" id="user-types-several" name="user_types" value="several">
+          <label for="user-types-several">Several roles</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>How often will they use it?</legend>
+        <div class="choice-group" id="frequency-group">
+          <input type="radio" id="frequency-daily" name="frequency" value="daily">
+          <label for="frequency-daily">Daily</label>
+          <input type="radio" id="frequency-occasional" name="frequency" value="occasional">
+          <label for="frequency-occasional">Once in a while</label>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- Step 2 -->
+    <section class="step" aria-labelledby="step2-heading">
+      <h2 id="step2-heading">Step 2 — The five questions</h2>
+      <p class="step-intro">Short answers are fine. One clear sentence beats a long paragraph.</p>
+
+      <div class="field">
+        <label class="field-label" for="q-what">What are we building, in one sentence? <span class="required-mark" aria-hidden="true">*</span><span class="small"> (required)</span></label>
+        <textarea id="q-what" name="q_what" required aria-required="true" rows="2" placeholder="Example: A simple log for tracking Simba&#39;s meals and walks."></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="q-user">Who is the non-technical user, in one line?</label>
+        <input type="text" id="q-user" name="q_user" autocomplete="off" placeholder="Example: A parent checking in from the sideline.">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="q-task">The one core task they must finish</label>
+        <input type="text" id="q-task" name="q_task" autocomplete="off" placeholder="Example: Log a walk in under ten seconds.">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="q-never">What should it never do or show?</label>
+        <input type="text" id="q-never" name="q_never" autocomplete="off" placeholder="Example: Never show other families&#39; children.">
+      </div>
+
+      <fieldset>
+        <legend>Where will they mostly use it?</legend>
+        <div class="choice-group" id="device-group">
+          <input type="radio" id="device-phone" name="device" value="phone">
+          <label for="device-phone">Phone</label>
+          <input type="radio" id="device-tablet" name="device" value="tablet">
+          <label for="device-tablet">Tablet</label>
+          <input type="radio" id="device-desktop" name="device" value="desktop">
+          <label for="device-desktop">Desktop</label>
+          <input type="radio" id="device-all" name="device" value="all">
+          <label for="device-all">All of them</label>
+        </div>
+      </fieldset>
+    </section>
+
+    <!-- Step 3: branching -->
+    <section class="step branch" id="branch-personal" aria-labelledby="branch-personal-heading">
+      <h2 id="branch-personal-heading">Step 3 — For you or your team</h2>
+      <p class="step-intro">These only apply because this is for you or your team, not the public.</p>
+      <div class="field">
+        <label class="field-label" for="b-replaces">What does it replace today?</label>
+        <input type="text" id="b-replaces" name="b_replaces" autocomplete="off" placeholder="Example: A shared spreadsheet and group texts.">
+      </div>
+      <div class="field">
+        <label class="field-label" for="b-device">What device will you use most?</label>
+        <input type="text" id="b-device" name="b_device" autocomplete="off" placeholder="Example: My phone, on the sideline.">
+      </div>
+      <div class="field">
+        <label class="field-label" for="b-login">Is a login needed?</label>
+        <input type="text" id="b-login" name="b_login" autocomplete="off" placeholder="Example: Yes — only our team should see it.">
+      </div>
+    </section>
+
+    <section class="step branch" id="branch-public" aria-labelledby="branch-public-heading">
+      <h2 id="branch-public-heading">Step 3 — For the public</h2>
+      <p class="step-intro">These only apply because this is for the public.</p>
+      <div class="field">
+        <label class="field-label" for="b-found">How do people find it?</label>
+        <input type="text" id="b-found" name="b_found" autocomplete="off" placeholder="Example: A link on our website.">
+      </div>
+      <div class="field">
+        <label class="field-label" for="b-trust">What must they trust in the first 5 seconds?</label>
+        <input type="text" id="b-trust" name="b_trust" autocomplete="off" placeholder="Example: That it is the real academy, not a copy.">
+      </div>
+      <div class="field">
+        <label class="field-label" for="b-money">Is money or sign-up involved?</label>
+        <input type="text" id="b-money" name="b_money" autocomplete="off" placeholder="Example: Yes — parents sign up and pay for a class.">
+      </div>
+    </section>
+
+    <section class="step branch" id="branch-roles" aria-labelledby="branch-roles-heading">
+      <h2 id="branch-roles-heading">Step 3 — Roles</h2>
+      <p class="step-intro">These only apply because there are several kinds of users. Add up to 4 roles. Each role gets one thing it does, and one thing it must not see.</p>
+      <div id="roles-list"></div>
+      <button type="button" class="btn-secondary" id="add-role" aria-describedby="roles-hint">Add another role</button>
+      <p class="hint small" id="roles-hint">You can add up to 4 roles. Remove a role if you added one by mistake.</p>
+    </section>
+
+    <!-- Name -->
+    <section class="step" aria-labelledby="name-heading">
+      <h2 id="name-heading">Name for this intake</h2>
+      <p class="step-intro">Every intake gets its own name and its own folder. We suggest one from your sentence — change it if you like.</p>
+      <div class="field">
+        <label class="field-label" for="intake-name">Intake name</label>
+        <input type="text" id="intake-name" name="intake_name" autocomplete="off" placeholder="example: simba-meal-log">
+        <p class="hint" id="name-hint">Use lower-case letters, numbers, and dashes only. Your folder will be <span id="folder-preview">sprints/</span>.</p>
+      </div>
+      <button type="button" class="btn-secondary" id="suggest-name">Suggest a name from my sentence</button>
+    </section>
+
+    <button type="submit" class="btn-primary" id="submit-btn">Create my brief</button>
+    <p class="small muted">Creating the brief does not send anything. You copy it and paste it in the App Sprints side chat on the next screen.</p>
+  </form>
+
+  <!-- Result -->
+  <div id="result" aria-labelledby="result-heading" tabindex="-1">
+    <h2 id="result-heading">Your brief is ready</h2>
+    <div class="next-steps">
+      <p><strong>What to do next:</strong> Paste this in the App Sprints side chat to start the sprint.</p>
+      <p>The watcher picks up new intakes daily at about 8am ET, or ask in the chat for a manual run.</p>
+    </div>
+
+    <div class="result-block">
+      <h3>Brief as structured data (JSON)</h3>
+      <pre id="output-json" tabindex="0" aria-label="Brief as structured data"></pre>
+      <button type="button" class="btn-secondary" id="copy-json">Copy JSON brief</button>
+      <p class="copy-status" id="copy-json-status" role="status" aria-live="polite"></p>
+    </div>
+
+    <div class="result-block">
+      <h3>Brief as plain text</h3>
+      <pre id="output-text" tabindex="0" aria-label="Brief as plain text"></pre>
+      <button type="button" class="btn-secondary" id="copy-text">Copy plain-text brief</button>
+      <p class="copy-status" id="copy-text-status" role="status" aria-live="polite"></p>
+    </div>
+
+    <button type="button" class="btn-secondary" id="back-to-form">Back to the form</button>
+  </div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var form = document.getElementById("intake-form");
+  var result = document.getElementById("result");
+  var errorBox = document.getElementById("form-error");
+  var qWhat = document.getElementById("q-what");
+  var intakeName = document.getElementById("intake-name");
+  var folderPreview = document.getElementById("folder-preview");
+  var branchPersonal = document.getElementById("branch-personal");
+  var branchPublic = document.getElementById("branch-public");
+  var branchRoles = document.getElementById("branch-roles");
+  var rolesList = document.getElementById("roles-list");
+  var addRoleBtn = document.getElementById("add-role");
+  var MAX_ROLES = 4;
+  var roleCount = 0;
+  var nameEditedByHand = false;
+
+  function kebabCase(text) {
+    return (text || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .replace(/-{2,}/g, "-")
+      .slice(0, 60)
+      .replace(/-+$/g, "");
+  }
+
+  function suggestName() {
+    var suggested = kebabCase(qWhat.value);
+    if (suggested) {
+      intakeName.value = suggested;
+      updateFolderPreview();
+    }
+  }
+
+  function updateFolderPreview() {
+    var name = kebabCase(intakeName.value);
+    folderPreview.textContent = name ? "sprints/" + name + "/" : "sprints/";
+  }
+
+  function checkedValue(groupName) {
+    var el = form.querySelector('input[name="' + groupName + '"]:checked');
+    return el ? el.value : "";
+  }
+
+  function updateBranching() {
+    var audience = checkedValue("audience");
+    var userTypes = checkedValue("user_types");
+    branchPersonal.classList.toggle("is-visible", audience === "just-me" || audience === "my-team");
+    branchPublic.classList.toggle("is-visible", audience === "public");
+    var showRoles = userTypes === "several";
+    branchRoles.classList.toggle("is-visible", showRoles);
+    if (showRoles && roleCount === 0) {
+      addRole();
+    }
+  }
+
+  function addRole() {
+    if (roleCount >= MAX_ROLES) { return; }
+    roleCount += 1;
+    var index = roleCount;
+    var block = document.createElement("div");
+    block.className = "role-block";
+    block.setAttribute("data-role-index", String(index));
+    block.innerHTML =
+      '<h3>Role ' + index + '</h3>' +
+      '<div class="field"><label class="field-label" for="role-name-' + index + '">Role name</label>' +
+      '<input type="text" id="role-name-' + index + '" autocomplete="off" placeholder="Example: Coach"></div>' +
+      '<div class="field"><label class="field-label" for="role-does-' + index + '">The one thing this role does</label>' +
+      '<input type="text" id="role-does-' + index + '" autocomplete="off" placeholder="Example: Marks who showed up."></div>' +
+      '<div class="field"><label class="field-label" for="role-notsee-' + index + '">The one thing this role must NOT see</label>' +
+      '<input type="text" id="role-notsee-' + index + '" autocomplete="off" placeholder="Example: Other families\u2019 payment details."></div>' +
+      '<button type="button" class="btn-text" data-remove-role>Remove this role</button>';
+    rolesList.appendChild(block);
+    block.querySelector("[data-remove-role]").addEventListener("click", function () {
+      block.remove();
+      roleCount -= 1;
+      renumberRoles();
+      updateAddRoleState();
+    });
+    updateAddRoleState();
+  }
+
+  function renumberRoles() {
+    var blocks = rolesList.querySelectorAll(".role-block");
+    blocks.forEach(function (block, i) {
+      var heading = block.querySelector("h3");
+      if (heading) { heading.textContent = "Role " + (i + 1); }
+    });
+  }
+
+  function updateAddRoleState() {
+    addRoleBtn.disabled = roleCount >= MAX_ROLES;
+    addRoleBtn.textContent = roleCount >= MAX_ROLES ? "4 roles added (maximum)" : "Add another role";
+  }
+
+  function collectRoles() {
+    var roles = [];
+    var blocks = rolesList.querySelectorAll(".role-block");
+    blocks.forEach(function (block) {
+      var name = block.querySelector('input[id^="role-name-"]').value.trim();
+      var does = block.querySelector('input[id^="role-does-"]').value.trim();
+      var notSee = block.querySelector('input[id^="role-notsee-"]').value.trim();
+      if (name || does || notSee) {
+        roles.push({ name: name, does: does, must_not_see: notSee });
+      }
+    });
+    return roles;
+  }
+
+  function plainTextBrief(brief) {
+    var lines = [];
+    lines.push("APP SPRINTS — INTAKE BRIEF");
+    lines.push("Name: " + brief.name);
+    lines.push("Folder: " + brief.folder);
+    lines.push("Status: " + brief.status);
+    lines.push("Created: " + brief.created);
+    lines.push("");
+    lines.push("Who is it for: " + (brief.classifiers.audience || "(not answered)"));
+    lines.push("Kinds of users: " + (brief.classifiers.user_types || "(not answered)"));
+    lines.push("How often: " + (brief.classifiers.frequency || "(not answered)"));
+    lines.push("");
+    lines.push("What are we building: " + (brief.answers.what || ""));
+    lines.push("Non-technical user: " + (brief.answers.user || "(not answered)"));
+    lines.push("Core task: " + (brief.answers.core_task || "(not answered)"));
+    lines.push("Never do or show: " + (brief.answers.never || "(not answered)"));
+    lines.push("Where they use it: " + (brief.answers.device || "(not answered)"));
+    if (brief.branching.replaces || brief.branching.device || brief.branching.login_needed) {
+      lines.push("");
+      lines.push("For you or your team:");
+      lines.push("  Replaces today: " + (brief.branching.replaces || "(not answered)"));
+      lines.push("  Device: " + (brief.branching.device || "(not answered)"));
+      lines.push("  Login needed: " + (brief.branching.login_needed || "(not answered)"));
+    }
+    if (brief.branching.found_how || brief.branching.trust_first_5s || brief.branching.money_or_signup) {
+      lines.push("");
+      lines.push("For the public:");
+      lines.push("  How people find it: " + (brief.branching.found_how || "(not answered)"));
+      lines.push("  Must trust in first 5 seconds: " + (brief.branching.trust_first_5s || "(not answered)"));
+      lines.push("  Money or sign-up: " + (brief.branching.money_or_signup || "(not answered)"));
+    }
+    if (brief.roles.length) {
+      lines.push("");
+      lines.push("Roles:");
+      brief.roles.forEach(function (role, i) {
+        lines.push("  " + (i + 1) + ". " + (role.name || "(unnamed role)") + " — does: " + (role.does || "(not answered)") + "; must NOT see: " + (role.must_not_see || "(not answered)"));
+      });
+    }
+    return lines.join("\n");
+  }
+
+  function copyText(text, statusEl, button) {
+    function done() {
+      statusEl.textContent = "Copied.";
+      button.textContent = "Copied";
+      setTimeout(function () {
+        statusEl.textContent = "";
+        button.textContent = button.id === "copy-json" ? "Copy JSON brief" : "Copy plain-text brief";
+      }, 2500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) { /* leave status unchanged on failure */ }
+    document.body.removeChild(ta);
+  }
+
+  form.addEventListener("change", updateBranching);
+  form.addEventListener("input", function (e) {
+    if (e.target === qWhat && !nameEditedByHand) { suggestName(); }
+    if (e.target === intakeName) { updateFolderPreview(); }
+  });
+  intakeName.addEventListener("input", function () { nameEditedByHand = true; updateFolderPreview(); });
+  document.getElementById("suggest-name").addEventListener("click", function () {
+    nameEditedByHand = false;
+    suggestName();
+    intakeName.focus();
+  });
+  addRoleBtn.addEventListener("click", addRole);
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var what = qWhat.value.trim();
+    if (!what) {
+      errorBox.classList.add("is-visible");
+      qWhat.focus();
+      return;
+    }
+    errorBox.classList.remove("is-visible");
+    var name = kebabCase(intakeName.value) || kebabCase(what) || "untitled-intake";
+    var brief = {
+      name: name,
+      folder: "sprints/" + name + "/",
+      status: "new",
+      created: new Date().toISOString(),
+      classifiers: {
+        audience: checkedValue("audience"),
+        user_types: checkedValue("user_types"),
+        frequency: checkedValue("frequency")
+      },
+      answers: {
+        what: what,
+        user: document.getElementById("q-user").value.trim(),
+        core_task: document.getElementById("q-task").value.trim(),
+        never: document.getElementById("q-never").value.trim(),
+        device: checkedValue("device")
+      },
+      branching: {
+        replaces: document.getElementById("b-replaces").value.trim(),
+        device: document.getElementById("b-device").value.trim(),
+        login_needed: document.getElementById("b-login").value.trim(),
+        found_how: document.getElementById("b-found").value.trim(),
+        trust_first_5s: document.getElementById("b-trust").value.trim(),
+        money_or_signup: document.getElementById("b-money").value.trim()
+      },
+      roles: collectRoles()
+    };
+    var jsonText = JSON.stringify(brief, null, 2);
+    var plainText = plainTextBrief(brief);
+    document.getElementById("output-json").textContent = jsonText;
+    document.getElementById("output-text").textContent = plainText;
+    form.style.display = "none";
+    result.classList.add("is-visible");
+    result.focus();
+    window.scrollTo(0, 0);
+    document.getElementById("copy-json").onclick = function () { copyText(jsonText, document.getElementById("copy-json-status"), this); };
+    document.getElementById("copy-text").onclick = function () { copyText(plainText, document.getElementById("copy-text-status"), this); };
+  });
+
+  document.getElementById("back-to-form").addEventListener("click", function () {
+    result.classList.remove("is-visible");
+    form.style.display = "";
+    qWhat.focus();
+    window.scrollTo(0, 0);
+  });
+
+  updateBranching();
+  updateFolderPreview();
+})();
+</script>
+</body>
+</html>

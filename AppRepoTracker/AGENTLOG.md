@@ -1,5 +1,10 @@
 # AGENTLOG — AppRepoTracker
 
+## 2026-11-12 — v1.0.11 — Added App Sprints entry
+- Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
+- Change: added "App Sprints" at the top of Live Apps (adaptive intake form for Phase 0 research sprints before any new app is designed; three classifier questions branch to relevant follow-ups, five intake questions, submit generates JSON + plain-text brief for the App Sprints side chat; one folder per request under sprints/<name>/ with intake.json and research-receipt.md; daily watcher runs Phase 0 for new intakes only; first sprint TradeDesk revamp, Receipt ready). Live Apps stay sorted most-recent-first, so the Nov 12 entry leads. Counts updated to 44 entries / 27 live apps.
+- Verification: entry links to the live Pages URL; on-device confirmation pending.
+
 ## 2026-11-11 — v1.0.10 — Added Skill Library Demo entry
 - Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
 - Change: added "Skill Library Demo" at the top of Live Apps (fresh, radically simpler rebuild of the Skill Library redesign after the full builder was judged too confusing: 5-step plain-word journey Start / Build / Sub-skill / Publish / Program, one screen = one job = one primary button, 640px max width, 48px tap targets, helper line on every screen; opens with one small labeled example library with one-tap Start empty; browser-local data with Export/Import JSON and Reset to blank; stage map, per-level assessment definitions, stage-filtered program curriculum, coach view with drills first, one pathway settings screen; Access/Versions tabs, separate suggestion queue and drill-bank views, 4-board import, copy-to-new-sport, guidance toggle, shortcuts and change-marker chrome all cut; link to SkillLibraryDemo/, Updated 2026-11-11, thread Quixera Enhancement — Nov 11, 2026). Live Apps stay sorted most-recent-first, so the Nov 11 entry leads. Counts updated to 43 entries / 26 live apps.
