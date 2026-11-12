@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Market Research Runner</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1f2937; background: #f3f4f6; line-height: 1.55; }
+  /* ---------- Password gate ---------- */
+  #gate { position: fixed; inset: 0; z-index: 50; background: #111827; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  #gate.hidden { display: none; }
+  .gate-card { background: #fff; border-radius: 12px; padding: 28px 24px; width: 100%; max-width: 380px; text-align: center; }
+  .gate-card h1 { margin: 0 0 6px; font-size: 22px; }
+  .gate-card p { margin: 0 0 16px; color: #6b7280; font-size: 15px; }
+  .gate-card input { width: 100%; padding: 11px 12px; font-size: 16px; border: 1px solid #d1d5db; border-radius: 8px; margin-bottom: 12px; }
+  .gate-card button { width: 100%; min-height: 44px; padding: 11px; font-size: 16px; border: 0; border-radius: 8px; background: #1c0837; color: #fff; cursor: pointer; }
+  .gate-card button:hover { background: #2d1157; }
+  .gate-error { color: #b91c1c !important; min-height: 20px; font-size: 14px; }
+  /* ---------- App shell ---------- */
+  #app { max-width: 880px; margin: 0 auto; padding: 20px 16px 40px; }
+  .site-head h1 { margin: 0; font-size: 26px; }
+  .site-head p { margin: 2px 0 0; color: #6b7280; }
+  .site-head .sub { color: #4b5563; font-size: 15px; margin-top: 6px; }
+  .tabbar { display: flex; gap: 8px; overflow-x: auto; padding: 14px 0 4px; }
+  .tabbar button { flex: 0 0 auto; min-height: 44px; padding: 9px 14px; font-size: 15px; border: 1px solid #d1d5db; background: #fff; border-radius: 999px; cursor: pointer; }
+  .tabbar button.active { background: #1c0837; color: #fff; border-color: #1c0837; }
+  .tabbar button .badge { display: inline-block; min-width: 20px; padding: 1px 6px; margin-left: 4px; border-radius: 999px; background: #e5e7eb; color: #1f2937; font-size: 12px; font-weight: 700; }
+  .tabbar button.active .badge { background: #e6c22d; color: #1c0837; }
+  .screen { display: none; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 22px 20px; margin-top: 12px; }
+  .screen.active { display: block; }
+  .screen h2 { font-size: 19px; margin: 0 0 4px; }
+  .screen h3 { font-size: 16px; margin: 22px 0 6px; }
+  .screen p, .screen li { font-size: 15.5px; }
+  .screen ul { padding-left: 20px; }
+  .lede { color: #4b5563; margin: 0 0 16px; }
+  /* ---------- Forms ---------- */
+  label { display: block; font-weight: 600; font-size: 15px; margin: 16px 0 4px; }
+  label .hint { display: block; font-weight: 400; color: #6b7280; font-size: 13.5px; margin-top: 2px; }
+  input[type="text"], input[type="url"], textarea, select { width: 100%; padding: 11px 12px; font-size: 16px; font-family: inherit; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #1f2937; }
+  textarea { min-height: 84px; resize: vertical; }
+  input:focus, textarea:focus, select:focus, button:focus-visible { outline: 3px solid #7c5cbf; outline-offset: 1px; }
+  .radio-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .radio-row label { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; margin: 0; padding: 10px 14px; min-height: 44px; border: 1px solid #d1d5db; border-radius: 999px; cursor: pointer; background: #fff; }
+  .radio-row input { accent-color: #1c0837; width: 18px; height: 18px; }
+  .radio-row label:has(input:checked) { background: #1c0837; color: #fff; border-color: #1c0837; }
+  .btn { display: inline-block; min-height: 44px; padding: 11px 18px; font-size: 16px; border: 0; border-radius: 8px; background: #1c0837; color: #fff; cursor: pointer; }
+  .btn:hover { background: #2d1157; }
+  .btn.secondary { background: #f9fafb; color: #1f2937; border: 1px solid #d1d5db; }
+  .btn.secondary:hover { background: #eef2ff; }
+  .btn.danger { background: #fff; color: #b91c1c; border: 1px solid #fca5a5; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+  .error-box { display: none; background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; border-radius: 8px; padding: 12px 14px; margin-top: 16px; font-size: 15px; }
+  .error-box.show { display: block; }
+  .ok-note { display: none; background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; border-radius: 8px; padding: 10px 14px; margin-top: 12px; font-size: 14px; }
+  .ok-note.show { display: block; }
+  .callout { border-left: 4px solid #e6c22d; background: #fffbeb; padding: 12px 14px; border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 15px; }
+  .callout.warn { border-left-color: #b91c1c; background: #fef2f2; }
+  .callout.info { border-left-color: #1c0837; background: #f5f3ff; }
+  .example-banner { display: none; background: #fffbeb; border: 1px solid #f59e0b; border-radius: 8px; padding: 10px 14px; margin: 0 0 14px; font-size: 14px; }
+  .example-banner.show { display: block; }
+  .muted { color: #6b7280; font-size: 14px; }
+  /* ---------- Phase checklist ---------- */
+  .phase { border: 1px solid #e5e7eb; border-radius: 10px; margin-top: 10px; overflow: hidden; }
+  .phase-head { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 10px 14px; background: #fff; border: 0; cursor: pointer; text-align: left; font-size: 16px; font-family: inherit; color: #1f2937; }
+  .phase-head:hover { background: #f9fafb; }
+  .phase-num { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; background: #1c0837; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+  .phase-title { flex: 1 1 auto; font-weight: 600; }
+  .phase-title small { display: block; font-weight: 400; color: #6b7280; font-size: 13.5px; }
+  .status-pill { flex: 0 0 auto; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #e5e7eb; color: #4b5563; }
+  .status-pill.in-progress { background: #fef3c7; color: #92400e; }
+  .status-pill.done { background: #d1fae5; color: #065f46; }
+  .phase-body { display: none; border-top: 1px solid #e5e7eb; padding: 16px; background: #fbfbfd; }
+  .phase.open .phase-body { display: block; }
+  .phase-body .guidance { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 10px 12px; font-size: 14.5px; margin: 0 0 12px; }
+  .phase-foot { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .phase-foot .btn, .phase-foot select { min-height: 44px; }
+  /* ---------- Structured builders ---------- */
+  .table-wrap { overflow-x: auto; margin-top: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f9fafb; }
+  table input, table textarea { font-size: 14.5px; padding: 8px 10px; min-height: 44px; }
+  table textarea { min-height: 64px; }
+  .comp-row td { min-width: 130px; }
+  .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  .swot-box { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; background: #fff; }
+  .swot-box h4 { margin: 0 0 4px; font-size: 15px; }
+  .swot-box .box-hint { color: #6b7280; font-size: 13px; margin: 0 0 8px; }
+  .swot-item { border-top: 1px solid #f3f4f6; padding-top: 8px; margin-top: 8px; }
+  .swot-item:first-of-type { border-top: 0; margin-top: 0; padding-top: 0; }
+  .swot-item input { margin-bottom: 6px; }
+  .item-row { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; }
+  .item-row > * { flex: 1 1 auto; min-width: 0; }
+  .item-row .btn { flex: 0 0 auto; padding: 11px 12px; }
+  .mini-btn { min-height: 44px; padding: 8px 12px; font-size: 14px; border: 1px solid #d1d5db; background: #fff; border-radius: 8px; cursor: pointer; }
+  .mini-btn:hover { background: #eef2ff; }
+  /* ---------- Requests / library ---------- */
+  .req-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; margin-top: 10px; background: #fff; }
+  .req-card h3 { margin: 0 0 2px; font-size: 16px; }
+  .req-card p { margin: 2px 0; }
+  .req-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .empty-state { border: 1px dashed #d1d5db; border-radius: 10px; padding: 20px; margin-top: 12px; text-align: center; color: #4b5563; }
+  .brief-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin-top: 12px; white-space: pre-wrap; font-size: 14.5px; max-height: 60vh; overflow: auto; }
+  footer { margin-top: 24px; color: #9ca3af; font-size: 13px; text-align: center; }
+  @media (max-width: 640px) {
+    .swot-grid { grid-template-columns: 1fr; }
+    .site-head h1 { font-size: 22px; }
+    .screen { padding: 18px 14px; }
+  }
+  @media print {
+    body { background: #fff; }
+    #gate, .site-head, .tabbar, .btn-row, footer { display: none !important; }
+    .screen { display: none !important; border: 0; padding: 0; }
+    .screen.active { display: block !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Password gate -->
+<div id="gate">
+  <div class="gate-card">
+    <h1>Market Research Runner</h1>
+    <p>Enter the shared password to continue. Same password as the Market Research Dashboard.</p>
+    <form id="gateForm">
+      <input id="pw" type="password" placeholder="Password" autocomplete="current-password" autofocus>
+      <button type="submit">Unlock</button>
+    </form>
+    <p id="gateError" class="gate-error"></p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" hidden>
+  <header class="site-head">
+    <h1>Market Research Runner</h1>
+    <p>Frame it &middot; work it &middot; commission it &middot; publish it</p>
+    <p class="sub">This site prepares and structures research. The sourced research itself runs with your assistant in the Market Research chat, and finished research is published as a tab in the <a href="../MarketResearch/">Market Research Dashboard</a>.</p>
+  </header>
+
+  <nav class="tabbar" id="tabbar" role="tablist">
+    <button type="button" data-screen="start" class="active">1 &middot; Start a run</button>
+    <button type="button" data-screen="workspace">2 &middot; Workspace</button>
+    <button type="button" data-screen="commission">3 &middot; Commission</button>
+    <button type="button" data-screen="requests">4 &middot; My requests <span class="badge" id="reqBadge">0</span></button>
+    <button type="button" data-screen="results">5 &middot; Results library</button>
+  </nav>
+
+  <!-- ============ SCREEN 1: START A RUN ============ -->
+  <main>
+  <section class="screen active" id="screen-start" data-screen="start">
+    <h2>Start a research run</h2>
+    <p class="lede">Answer these before anything else. The research is only as good as the question it is asked to answer &mdash; a clear product, a clear buyer, and a clear decision.</p>
+
+    <div class="callout info">
+      <strong>How this works:</strong> you frame the research here, work through the eight phases in the Workspace, then commission it. The research itself is done by your assistant in the Market Research chat &mdash; this site never pretends to crawl the web or call research services itself.
+    </div>
+
+    <label for="fProduct">What is the product or company?
+      <span class="hint">One sentence: what it does. Example: &ldquo;A scheduling app for youth sports academies.&rdquo;</span>
+    </label>
+    <input type="text" id="fProduct" placeholder="e.g. A scheduling app for youth sports academies" autocomplete="off">
+
+    <label for="fUrl">Website <span style="font-weight:400; color:#6b7280;">(optional)</span>
+      <span class="hint">The product&rsquo;s own website, if it has one. The research starts from the product&rsquo;s own pages, not from review roundups.</span>
+    </label>
+    <input type="url" id="fUrl" placeholder="https://example.com" autocomplete="off">
+
+    <label for="fWhoPays">Who pays for it?
+      <span class="hint">The buyer &mdash; the person or organisation whose money is spent. Not the end user, unless they are the same person.</span>
+    </label>
+    <input type="text" id="fWhoPays" placeholder="e.g. Academy owners, who sell classes to parents" autocomplete="off">
+
+    <label for="fGeo">Where does it sell?
+      <span class="hint">Geography the answer must cover. Example: New Jersey, USA; or India; or worldwide.</span>
+    </label>
+    <input type="text" id="fGeo" placeholder="e.g. Central New Jersey, USA" autocomplete="off">
+
+    <label>What decision must the research support?
+      <span class="hint">Pick one. The whole research is judged against this decision.</span>
+    </label>
+    <div class="radio-row" id="fDecision">
+      <label><input type="radio" name="decision" value="build"> Build it</label>
+      <label><input type="radio" name="decision" value="buy"> Buy it</label>
+      <label><input type="radio" name="decision" value="partner"> Partner</label>
+      <label><input type="radio" name="decision" value="price"> Price it</label>
+      <label><input type="radio" name="decision" value="drop"> Drop it</label>
+    </div>
+
+    <label for="fTime">Timeframe
+      <span class="hint">How far ahead the answer should hold. Example: the next 12 months.</span>
+    </label>
+    <input type="text" id="fTime" placeholder="e.g. Next 12 months" autocomplete="off">
+
+    <label for="fQuestions">Questions the research must answer
+      <span class="hint">One per line. These are the questions the research is not allowed to leave unanswered.</span>
+    </label>
+    <textarea id="fQuestions" placeholder="e.g. Who are the direct competitors and what do they charge?&#10;Would academies pay for this, and at what price?&#10;What would stop a new entrant?"></textarea>
+
+    <div class="error-box" id="frameError" role="alert"></div>
+
+    <div class="btn-row">
+      <button type="button" class="btn" id="btnToWorkspace">Save framing &amp; go to the Workspace</button>
+      <button type="button" class="btn secondary" id="btnSaveDraft">Save as draft</button>
+    </div>
+    <p class="ok-note" id="frameOk"></p>
+    <p class="muted" style="margin-top:14px;">Your work is saved in this browser only, on this device. Nothing is uploaded anywhere from this page.</p>
+  </section>
+
+  <!-- ============ SCREEN 2: WORKSPACE ============ -->
+  <section class="screen" id="screen-workspace" data-screen="workspace">
+    <h2>Research workspace</h2>
+    <p class="lede">Eight phases, in order. Work a phase, mark it done, move on. Nothing here is published until you commission it &mdash; and the research itself still runs in the Market Research chat.</p>
+
+    <div class="example-banner" id="exampleBanner">
+      <strong>EXAMPLE data is loaded.</strong> Every value below is labelled EXAMPLE so you can see how the workspace works. Replace it with real findings before you commission anything. <button type="button" class="mini-btn" id="btnClearExample">Clear EXAMPLE data</button>
+    </div>
+
+    <div class="btn-row" style="margin-top:0;">
+      <button type="button" class="btn secondary" id="btnLoadExample">Load EXAMPLE data</button>
+      <span class="muted" style="align-self:center;">Fills the competitor table and SWOT with labelled EXAMPLE values so you can try the tools.</span>
+    </div>
+
+    <div id="phases"></div>
+  </section>
+
+  <!-- ============ SCREEN 3: COMMISSION ============ -->
+  <section class="screen" id="screen-commission" data-screen="commission">
+    <h2>Commission the research</h2>
+    <p class="lede">This assembles everything you framed and captured into one brief, in the fixed shape the research follows. Check it, copy it, and paste it into the Market Research chat.</p>
+
+    <div class="callout">
+      <strong>In plain words:</strong> this site prepares and structures the research. The sourced research itself runs with your assistant in the Market Research chat &mdash; paste the brief there &mdash; and the finished research is published as a tab in the Market Research Dashboard.
+    </div>
+
+    <div id="commissionWarn"></div>
+
+    <div class="btn-row">
+      <button type="button" class="btn" id="btnBuildBrief">Build the brief</button>
+      <button type="button" class="btn secondary" id="btnCopyBrief" disabled>Copy brief</button>
+      <button type="button" class="btn secondary" id="btnSaveRequest" disabled>Save to My requests</button>
+    </div>
+    <p class="ok-note" id="copyNote"></p>
+
+    <div class="brief-box" id="briefBox" hidden></div>
+  </section>
+
+  <!-- ============ SCREEN 4: MY REQUESTS ============ -->
+  <section class="screen" id="screen-requests" data-screen="requests">
+    <h2>My requests</h2>
+    <p class="lede">Every research run you started, in one queue. Advance a request by hand as it moves along &mdash; Draft, Commissioned, Running, Published.</p>
+    <p class="muted">Saved in this browser only, on this device. Clearing this browser&rsquo;s data clears this list.</p>
+    <div id="requestList"></div>
+  </section>
+
+  <!-- ============ SCREEN 5: RESULTS LIBRARY ============ -->
+  <section class="screen" id="screen-results" data-screen="results">
+    <h2>Results library</h2>
+    <p class="lede">Finished research, published as tabs in the <a href="../MarketResearch/">Market Research Dashboard</a>. This list reads the same published research the dashboard holds.</p>
+    <div id="resultsList"></div>
+    <div class="btn-row">
+      <button type="button" class="btn secondary" id="btnRefreshResults">Refresh list</button>
+      <a class="btn" href="../MarketResearch/" style="text-decoration:none; display:inline-flex; align-items:center;">Open the Market Research Dashboard</a>
+    </div>
+  </section>
+  </main>
+
+  <footer>Market Research Runner — structures the research; sourced research runs in the Market Research chat; results publish as tabs in the Market Research Dashboard.</footer>
+</div>
+
+<script>
+/* ================================================================
+   Market Research Runner — single-file app.
+   State lives in this browser only (localStorage, key mrr_state_v1).
+   The password gate uses the same SHA-256 hash as the viewer
+   dashboard; the raw password appears nowhere in this file.
+   ================================================================ */
+var GATE_HASH = "8162ca2470e5c020c18ca743fda1c37d42806a96d286a571e38b1980c701f26b";
+var VIEWER_URL = "../MarketResearch/";
+var LS_KEY = "mrr_state_v1";
+
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function $(id) { return document.getElementById(id); }
+
+/* ---------------- State ---------------- */
+function blankFraming() {
+  return { product: "", url: "", whoPays: "", geography: "", decision: "", timeframe: "", questions: "" };
+}
+function blankWorkspace() {
+  return {
+    product: { features: "", howSold: "", praise: "", complaints: "", strengths: "", weaknesses: "", unknowns: "" },
+    market: { size: "", segments: "", trends: "", barriers: "" },
+    competitors: [],
+    swot: { strengths: [], weaknesses: [], opportunities: [], threats: [] },
+    leverage: [],
+    cost: { reuseNote: "", priceCarry: "", phases: [] },
+    decision: { choice: "", scope: "", buyer: "", price: "", validation: "", kill: "" }
+  };
+}
+function defaultState() {
+  return {
+    framing: blankFraming(),
+    phaseStatus: { frame: "not-started", product: "not-started", market: "not-started", competitors: "not-started", swot: "not-started", leverage: "not-started", cost: "not-started", decision: "not-started" },
+    ws: blankWorkspace(),
+    requests: [],
+    exampleLoaded: false,
+    currentRequestId: null
+  };
+}
+var state = defaultState();
+try {
+  var raw = localStorage.getItem(LS_KEY);
+  if (raw) {
+    var parsed = JSON.parse(raw);
+    if (parsed && parsed.framing) {
+      state = parsed;
+      state.ws = Object.assign(blankWorkspace(), state.ws || {});
+      state.ws.product = Object.assign(blankWorkspace().product, (state.ws || {}).product || {});
+      state.ws.market = Object.assign(blankWorkspace().market, (state.ws || {}).market || {});
+      state.ws.swot = Object.assign(blankWorkspace().swot, (state.ws || {}).swot || {});
+      state.ws.cost = Object.assign(blankWorkspace().cost, (state.ws || {}).cost || {});
+      state.ws.decision = Object.assign(blankWorkspace().decision, (state.ws || {}).decision || {});
+      state.phaseStatus = Object.assign(defaultState().phaseStatus, state.phaseStatus || {});
+    }
+  }
+} catch (e) { state = defaultState(); }
+function save() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+/* ---------------- Password gate ---------------- */
+async function sha256Hex(text) {
+  var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+}
+function showApp() {
+  $("gate").classList.add("hidden");
+  $("app").hidden = false;
+  renderAll();
+}
+$("gateForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  var err = $("gateError");
+  err.textContent = "";
+  try {
+    var h = await sha256Hex($("pw").value);
+    if (h === GATE_HASH) {
+      try { sessionStorage.setItem("mr_unlocked", "1"); } catch (e2) {}
+      showApp();
+    } else {
+      err.textContent = "Incorrect password.";
+    }
+  } catch (e3) {
+    err.textContent = "This gate needs a secure (https) connection.";
+  }
+});
+(function initGate() {
+  var unlocked = false;
+  try { unlocked = sessionStorage.getItem("mr_unlocked") === "1"; } catch (e) {}
+  if (unlocked) { showApp(); }
+})();
+
+/* ---------------- Screen tabs ---------------- */
+document.querySelectorAll("#tabbar button").forEach(function (b) {
+  b.addEventListener("click", function () { activateScreen(b.getAttribute("data-screen")); });
+});
+function activateScreen(name) {
+  document.querySelectorAll("#tabbar button").forEach(function (b) {
+    b.classList.toggle("active", b.getAttribute("data-screen") === name);
+  });
+  document.querySelectorAll(".screen").forEach(function (s) {
+    s.classList.toggle("active", s.getAttribute("data-screen") === name);
+  });
+  if (name === "commission") { $("commissionWarn").innerHTML = ""; }
+  if (name === "requests") { renderRequests(); }
+  if (name === "results") { renderResults(); }
+  window.scrollTo(0, 0);
+}
+
+/* ---------------- Screen 1: framing ---------------- */
+function readFramingFromForm() {
+  var dec = document.querySelector('#fDecision input:checked');
+  return {
+    product: $("fProduct").value.trim(),
+    url: $("fUrl").value.trim(),
+    whoPays: $("fWhoPays").value.trim(),
+    geography: $("fGeo").value.trim(),
+    decision: dec ? dec.value : "",
+    timeframe: $("fTime").value.trim(),
+    questions: $("fQuestions").value.trim()
+  };
+}
+function writeFramingToForm(f) {
+  $("fProduct").value = f.product || "";
+  $("fUrl").value = f.url || "";
+  $("fWhoPays").value = f.whoPays || "";
+  $("fGeo").value = f.geography || "";
+  $("fTime").value = f.timeframe || "";
+  $("fQuestions").value = f.questions || "";
+  document.querySelectorAll('#fDecision input').forEach(function (r) {
+    r.checked = (r.value === f.decision);
+  });
+}
+function framingMissing(f) {
+  var missing = [];
+  if (!f.product) missing.push("the product (what it does)");
+  if (!f.whoPays) missing.push("who pays for it");
+  if (!f.decision) missing.push("the decision the research must support");
+  return missing;
+}
+function saveFraming(showMsg) {
+  var f = readFramingFromForm();
+  state.framing = f;
+  if (f.product || f.whoPays || f.decision) {
+    state.phaseStatus.frame = state.phaseStatus.frame === "done" ? "done" : "in-progress";
+  }
+  save();
+  if (showMsg) {
+    var ok = $("frameOk");
+    ok.textContent = "Framing saved in this browser.";
+    ok.classList.add("show");
+    setTimeout(function () { ok.classList.remove("show"); }, 3000);
+  }
+  return f;
+}
+$("btnSaveDraft").addEventListener("click", function () {
+  var f = saveFraming(true);
+  upsertRequestFromFraming(f, "Draft");
+  renderRequests();
+});
+$("btnToWorkspace").addEventListener("click", function () {
+  var f = readFramingFromForm();
+  var missing = framingMissing(f);
+  var err = $("frameError");
+  if (missing.length) {
+    err.innerHTML = "<strong>Before the research can start, add:</strong><br>&bull; " + missing.map(esc).join("<br>&bull; ");
+    err.classList.add("show");
+    err.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  err.classList.remove("show");
+  saveFraming(false);
+  upsertRequestFromFraming(f, "Draft");
+  renderRequests();
+  activateScreen("workspace");
+});
+
+/* ---------------- Requests queue ---------------- */
+function newId() { return "rq-" + Date.now().toString(36) + Math.floor(Math.random() * 1000); }
+function upsertRequestFromFraming(f, status) {
+  var title = f.product || "Untitled research";
+  var req = null;
+  if (state.currentRequestId) {
+    req = state.requests.find(function (r) { return r.id === state.currentRequestId; });
+  }
+  if (!req) {
+    req = { id: newId(), title: title, created: new Date().toISOString().slice(0, 10), status: status || "Draft", tabId: "", brief: "" };
+    state.requests.unshift(req);
+    state.currentRequestId = req.id;
+  } else {
+    req.title = title;
+    if (status && req.status === "Draft") { req.status = status; }
+  }
+  save();
+  return req;
+}
+var STATUS_FLOW = ["Draft", "Commissioned", "Running", "Published"];
+function renderRequests() {
+  var badge = $("reqBadge");
+  badge.textContent = state.requests.length;
+  var list = $("requestList");
+  if (!state.requests.length) {
+    list.innerHTML = '<div class="empty-state"><strong>No requests yet.</strong><br>Frame a research run on screen 1 and it will appear here. Each request keeps its brief, so you can come back to it later.</div>';
+    return;
+  }
+  list.innerHTML = state.requests.map(function (r) {
+    var idx = STATUS_FLOW.indexOf(r.status);
+    var next = idx >= 0 && idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null;
+    var linkHtml = "";
+    if (r.status === "Published" && r.tabId) {
+      linkHtml = '<p><a href="' + esc(VIEWER_URL) + '?share=' + encodeURIComponent(r.tabId) + '">Open its tab in the Market Research Dashboard</a></p>';
+    }
+    return '<div class="req-card" data-req="' + esc(r.id) + '">' +
+      '<h3>' + esc(r.title) + '</h3>' +
+      '<p class="muted">Started ' + esc(r.created) + ' &middot; Status: <strong>' + esc(r.status) + '</strong></p>' +
+      linkHtml +
+      '<div class="req-actions">' +
+        '<button type="button" class="mini-btn" data-act="open-brief">View brief</button>' +
+        (next ? '<button type="button" class="mini-btn" data-act="advance" data-next="' + esc(next) + '">Mark as ' + esc(next) + '</button>' : "") +
+        (r.status === "Published" ? '<button type="button" class="mini-btn" data-act="set-tab">Set dashboard tab</button>' : "") +
+        '<button type="button" class="mini-btn" data-act="delete">Delete</button>' +
+      '</div>' +
+      (r.status === "Published" ? '<div class="tab-row" style="margin-top:10px; display:none;"><label style="margin:0 0 4px;">Dashboard tab ID <span class="hint" style="font-weight:400; color:#6b7280;">the short slug from the viewer dashboard, e.g. the tab&rsquo;s id</span></label><div class="item-row"><input type="text" class="tab-input" value="' + esc(r.tabId || "") + '" placeholder="e.g. teamup-calendar"><button type="button" class="mini-btn" data-act="save-tab">Save</button></div></div>' : "") +
+    '</div>';
+  }).join("");
+  list.querySelectorAll(".req-card").forEach(function (card) {
+    var id = card.getAttribute("data-req");
+    card.addEventListener("click", function (e) {
+      var btn = e.target.closest("[data-act]");
+      if (!btn) return;
+      var act = btn.getAttribute("data-act");
+      var req = state.requests.find(function (r) { return r.id === id; });
+      if (!req) return;
+      if (act === "open-brief") {
+        state.currentRequestId = id;
+        save();
+        activateScreen("commission");
+        buildBrief();
+      } else if (act === "advance") {
+        req.status = btn.getAttribute("data-next");
+        save();
+        renderRequests();
+      } else if (act === "delete") {
+        if (confirm("Delete this request? Its brief is removed from this browser.")) {
+          state.requests = state.requests.filter(function (r) { return r.id !== id; });
+          if (state.currentRequestId === id) { state.currentRequestId = null; }
+          save();
+          renderRequests();
+        }
+      } else if (act === "set-tab") {
+        var row = card.querySelector(".tab-row");
+        if (row) { row.style.display = row.style.display === "none" ? "block" : "none"; }
+      } else if (act === "save-tab") {
+        var inp = card.querySelector(".tab-input");
+        req.tabId = inp ? inp.value.trim() : "";
+        save();
+        renderRequests();
+      }
+    });
+  });
+}
+
+/* ---------------- Workspace: phase definitions ---------------- */
+var PHASES = [
+  { id: "frame", n: 1, title: "Frame", sub: "Product, buyer, decision — already set on screen 1" },
+  { id: "product", n: 2, title: "Current product", sub: "What it does today, how it sells, what users say" },
+  { id: "market", n: 3, title: "Market", sub: "Size from named sources, segments, trends, barriers" },
+  { id: "competitors", n: 4, title: "Competitors", sub: "5 to 8 profiles, compared side by side" },
+  { id: "swot", n: 5, title: "SWOT", sub: "One line per item, evidence attached" },
+  { id: "leverage", n: 6, title: "Quixera leverage", sub: "Already built, extendable, or missing — and better?" },
+  { id: "cost", n: 7, title: "Cost", sub: "Reuse first, phased estimates, smallest useful release first" },
+  { id: "decision", n: 8, title: "Build / extend / new-tool decision", sub: "Scope, buyer, price, validation step, kill criteria" }
+];
+var STATUS_LABELS = { "not-started": "Not started", "in-progress": "In progress", "done": "Done" };
+
+function phaseBodyHtml(p) {
+  switch (p.id) {
+    case "frame": {
+      var f = state.framing;
+      return '<div class="guidance">Framing is the scope. Never expand into adjacent markets unless asked. If any of product, buyer, or decision is unclear, the research does not start.</div>' +
+        '<p><strong>Product:</strong> ' + esc(f.product || "— not set yet —") + '</p>' +
+        '<p><strong>Who pays:</strong> ' + esc(f.whoPays || "— not set yet —") + '</p>' +
+        '<p><strong>Where it sells:</strong> ' + esc(f.geography || "—") + '</p>' +
+        '<p><strong>Decision:</strong> ' + esc(f.decision || "— not set yet —") + '</p>' +
+        '<p><strong>Timeframe:</strong> ' + esc(f.timeframe || "—") + '</p>' +
+        '<p><strong>Questions:</strong><br>' + esc(f.questions || "—").replace(/\n/g, "<br>") + '</p>' +
+        '<div class="btn-row"><button type="button" class="btn secondary" onclick="activateScreen(\'start\')">Edit framing</button></div>';
+    }
+    case "product": {
+      var pr = state.ws.product;
+      return '<div class="guidance">Describe the product in plain language, feature by feature, and who uses each feature. Record how it is sold today. Separate what users praise from what they complain about. Name strengths and weaknesses from evidence, not from its marketing page. Say what is unknown plainly instead of guessing.</div>' +
+        field("ws-product-features", "What it does today, feature by feature", pr.features, "e.g. Class scheduling, attendance, parent messaging — who uses each one") +
+        field("ws-product-howsold", "How it is sold today", pr.howSold, "Price points, billing model, free trials, what is included vs excluded") +
+        field("ws-product-praise", "What users praise", pr.praise, "From reviews, forums, support complaints — the good side") +
+        field("ws-product-complaints", "What users complain about", pr.complaints, "From reviews, forums, support complaints — the bad side") +
+        field("ws-product-strengths", "Real strengths (from evidence)", pr.strengths, "Not from the marketing page") +
+        field("ws-product-weaknesses", "Real weaknesses (from evidence)", pr.weaknesses, "Not from the marketing page") +
+        field("ws-product-unknowns", "What is unknown", pr.unknowns, "Gaps to fill — say it plainly, do not guess");
+    }
+    case "market": {
+      var mk = state.ws.market;
+      return '<div class="guidance">Size the market only from credible published sources and name each source. Report a range when sources disagree — never present one analyst&rsquo;s number as fact. Say which segment the product actually serves. Flag structural barriers a new entrant must cross, like licences, certifications, distribution control, or network effects.</div>' +
+        field("ws-market-size", "Market size — with the source named", mk.size, "e.g. $X–$Y, source: [name, date]. Never invent a number.") +
+        field("ws-market-segments", "Segments — by buyer, price tier, geography", mk.segments, "Which segment does this product actually serve?") +
+        field("ws-market-trends", "Trends shaping the market", mk.trends, "Regulation, technology shifts, buyer behaviour — one source per trend") +
+        field("ws-market-barriers", "Structural barriers for a new entrant", mk.barriers, "Licences, certifications, distribution control, network effects");
+    }
+    case "competitors":
+      return '<div class="guidance">Direct competitors first, then indirect ones, then substitutes a buyer could choose instead. Aim for 5 to 8 names and stop when new names stop changing the picture. Read each competitor&rsquo;s own pricing and product pages before trusting any aggregator. Note unpublished prices or &ldquo;contact us&rdquo; tiers as gaps — never invent a number.</div>' +
+        '<div id="compBuilder"></div>' +
+        '<h3>Side-by-side comparison</h3>' +
+        '<p class="muted">Same attributes for every competitor, so trade-offs are visible at a glance.</p>' +
+        '<div id="compCompare"></div>';
+    case "swot":
+      return '<div class="guidance">Strengths and Weaknesses come from the product analysis only. Opportunities and Threats come from the market and competitor research only. Keep every item to one line with its evidence attached, and drop any item that has no evidence. Never pad SWOT with generic items that apply to every product.</div>' +
+        '<div class="swot-grid" id="swotGrid"></div>';
+    case "leverage":
+      return '<div class="guidance">Map every capability the researched product needs against Quixera&rsquo;s existing modules: already built, extendable with small work, or missing. For each missing capability, judge whether Quixera can build it <em>better</em> than the competitors, not merely match them. Name where Quixera has no credible path and say so directly. Keep the academy&rsquo;s view alongside the parent&rsquo;s — Quixera sells to academies who sell to parents.</div>' +
+        '<div id="levBuilder"></div>' +
+        field("ws-lev-advantage", "Where Quixera has an unfair advantage", state.ws.leverageAdvantage || "", "e.g. academy, program, Library, and multi-sport structure") +
+        field("ws-lev-nopath", "Where Quixera has no credible path", state.ws.leverageNoPath || "", "Say it directly instead of forcing a fit");
+    case "cost":
+      return '<div class="guidance">Prefer reuse first — price the path that reuses existing Quixera modules before pricing any new build. Estimate new work in phases, smallest useful release first, and state what each phase costs in effort and what it unlocks. Judge the price the software can reasonably carry by comparing competitor prices and academy budgets, not by build cost alone. Flag any path whose cost would force a price academies cannot pay, and propose a cheaper phased alternative.</div>' +
+        '<div id="costBuilder"></div>' +
+        field("ws-cost-reuse", "Reuse-first note", state.ws.cost.reuseNote, "What existing Quixera modules cover, before any new build") +
+        field("ws-cost-price", "Price it can reasonably carry", state.ws.cost.priceCarry, "From competitor prices and academy budgets, not build cost");
+    case "decision":
+      return '<div class="guidance">Recommend extending Quixera when the gap is small and existing modules cover most of the need. Recommend a brand new tool only when all three hold: the need is real and evidenced, no existing module covers it, and the new tool opens a market or revenue line extension cannot. When a new tool is not warranted, say what to build instead or what to drop — do not leave the question open.</div>' +
+        '<label>Decision</label><div class="radio-row" id="ws-decision-choice">' +
+        ["build", "extend", "new-tool"].map(function (c) {
+          var lab = { build: "Build it in Quixera", extend: "Extend Quixera", "new-tool": "New tool" }[c];
+          return '<label><input type="radio" name="ws-decision" value="' + c + '"' + (state.ws.decision.choice === c ? " checked" : "") + '> ' + lab + '</label>';
+        }).join("") + '</div>' +
+        '<div id="newToolFields" style="display:' + (state.ws.decision.choice === "new-tool" ? "block" : "none") + ';">' +
+        field("ws-dec-scope", "Smallest scope that proves value", state.ws.decision.scope, "The problem it solves, in one line, then the smallest scope") +
+        field("ws-dec-buyer", "Buyer", state.ws.decision.buyer, "Who pays for the new tool") +
+        field("ws-dec-price", "Price it can carry", state.ws.decision.price, "With the evidence behind it") +
+        field("ws-dec-validation", "Validation step that must pass first", state.ws.decision.validation, "What must be true before building") +
+        field("ws-dec-kill", "Kill criteria", state.ws.decision.kill, "What stops it") +
+        '</div>';
+  }
+  return "";
+}
+function field(id, label, value, placeholder) {
+  return '<label for="' + id + '">' + esc(label) + '</label>' +
+    '<textarea id="' + id + '" data-field="' + id + '" placeholder="' + esc(placeholder || "") + '">' + esc(value || "") + '</textarea>';
+}
+function renderPhases() {
+  var wrap = $("phases");
+  wrap.innerHTML = PHASES.map(function (p) {
+    var st = state.phaseStatus[p.id] || "not-started";
+    return '<div class="phase" id="phase-' + p.id + '">' +
+      '<button type="button" class="phase-head" data-phase="' + p.id + '" aria-expanded="false">' +
+        '<span class="phase-num">' + p.n + '</span>' +
+        '<span class="phase-title">' + esc(p.title) + '<small>' + esc(p.sub) + '</small></span>' +
+        '<span class="status-pill ' + (st === "in-progress" ? "in-progress" : st === "done" ? "done" : "") + '">' + esc(STATUS_LABELS[st]) + '</span>' +
+      '</button>' +
+      '<div class="phase-body">' + phaseBodyHtml(p) +
+        '<div class="phase-foot">' +
+          '<label style="margin:0; align-self:center;">Status</label>' +
+          '<select data-status-for="' + p.id + '" aria-label="Status for ' + esc(p.title) + '">' +
+            Object.keys(STATUS_LABELS).map(function (k) {
+              return '<option value="' + k + '"' + (st === k ? " selected" : "") + '>' + STATUS_LABELS[k] + '</option>';
+            }).join("") +
+          '</select>' +
+          '<button type="button" class="btn secondary" data-mark-done="' + p.id + '">Mark phase done</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join("");
+  wrap.querySelectorAll(".phase-head").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var ph = btn.parentNode;
+      var open = ph.classList.toggle("open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  });
+  wrap.querySelectorAll("[data-status-for]").forEach(function (sel) {
+    sel.addEventListener("change", function () {
+      var pid = sel.getAttribute("data-status-for");
+      state.phaseStatus[pid] = sel.value;
+      save();
+      updatePhasePill(pid, sel.value);
+    });
+  });
+  wrap.querySelectorAll("[data-mark-done]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var pid = b.getAttribute("data-mark-done");
+      state.phaseStatus[pid] = "done";
+      save();
+      updatePhasePill(pid, "done");
+      var sel = wrap.querySelector('[data-status-for="' + pid + '"]');
+      if (sel) { sel.value = "done"; }
+    });
+  });
+  bindWorkspaceFields();
+  renderCompetitors();
+  renderSwot();
+  renderLeverage();
+  renderCost();
+  bindDecisionChoice();
+}
+function bindWorkspaceFields() {
+  document.querySelectorAll("[data-field]").forEach(function (el) {
+    el.addEventListener("input", function () {
+      var id = el.getAttribute("data-field");
+      var v = el.value;
+      if (id.indexOf("ws-product-") === 0) { state.ws.product[id.slice(11)] = v; }
+      else if (id.indexOf("ws-market-") === 0) { state.ws.market[id.slice(10)] = v; }
+      else if (id === "ws-lev-advantage") { state.ws.leverageAdvantage = v; }
+      else if (id === "ws-lev-nopath") { state.ws.leverageNoPath = v; }
+      else if (id === "ws-cost-reuse") { state.ws.cost.reuseNote = v; }
+      else if (id === "ws-cost-price") { state.ws.cost.priceCarry = v; }
+      else if (id.indexOf("ws-dec-") === 0) { state.ws.decision[id.slice(7)] = v; }
+      save();
+    });
+  });
+}
+function bindDecisionChoice() {
+  var wrap = $("ws-decision-choice");
+  if (!wrap) return;
+  wrap.querySelectorAll("input").forEach(function (r) {
+    r.addEventListener("change", function () {
+      state.ws.decision.choice = r.value;
+      save();
+      var nt = $("newToolFields");
+      if (nt) { nt.style.display = r.value === "new-tool" ? "block" : "none"; }
+    });
+  });
+}
+
+/* ---------------- Phase pill (in-place, no re-render) ---------------- */
+function updatePhasePill(pid, st) {
+  var ph = $("phase-" + pid);
+  if (!ph) return;
+  var pill = ph.querySelector(".status-pill");
+  if (pill) {
+    pill.textContent = STATUS_LABELS[st];
+    pill.className = "status-pill" + (st === "in-progress" ? " in-progress" : st === "done" ? " done" : "");
+  }
+}
+
+/* ---------------- Competitor builder ---------------- */
+var COMP_FIELDS = [
+  ["name", "Name"], ["offering", "Offering"], ["buyer", "Target buyer"],
+  ["price", "Price & billing"], ["distribution", "Distribution"],
+  ["strengths", "Strengths"], ["weaknesses", "Weaknesses"], ["reputation", "Reputation signals"]
+];
+function blankCompetitor() {
+  return { name: "", offering: "", buyer: "", price: "", distribution: "", strengths: "", weaknesses: "", reputation: "" };
+}
+function renderCompetitors() {
+  var host = $("compBuilder");
+  if (!host) return;
+  var rows = state.ws.competitors;
+  var countNote = rows.length < 5
+    ? '<p class="muted">Aim for 5 to 8 competitors. You have ' + rows.length + ' so far &mdash; stop when new names stop changing the picture.</p>'
+    : rows.length > 8
+    ? '<p class="muted">You have ' + rows.length + ' &mdash; more than 8 usually means the picture is already clear. Consider dropping the weakest.</p>'
+    : '<p class="muted">' + rows.length + ' competitors &mdash; in the 5 to 8 range. Good.</p>';
+  host.innerHTML = countNote +
+    '<div class="table-wrap"><table><tr>' +
+    COMP_FIELDS.map(function (f) { return "<th>" + f[1] + "</th>"; }).join("") + "<th></th></tr>" +
+    rows.map(function (c, i) {
+      return "<tr class=\"comp-row\">" + COMP_FIELDS.map(function (f) {
+        var isLong = (f[0] === "offering" || f[0] === "strengths" || f[0] === "weaknesses" || f[0] === "reputation");
+        var tag = isLong ? "textarea" : "input";
+        var open = tag === "textarea"
+          ? "<textarea data-comp=\"" + i + "\" data-field=\"" + f[0] + "\" placeholder=\"" + f[1] + "\">"
+          : "<input type=\"text\" data-comp=\"" + i + "\" data-field=\"" + f[0] + "\" placeholder=\"" + f[1] + "\"";
+        return "<td>" + open + (tag === "textarea" ? esc(c[f[0]]) + "</textarea>" : ' value="' + esc(c[f[0]]) + '">') + "</td>";
+      }).join("") +
+      '<td><button type="button" class="mini-btn" data-remove-comp="' + i + '" aria-label="Remove competitor ' + (i + 1) + '">Remove</button></td></tr>';
+    }).join("") + "</table></div>" +
+    '<div class="btn-row"><button type="button" class="btn secondary" id="btnAddComp"' + (rows.length >= 8 ? " disabled" : "") + '>Add a competitor</button></div>';
+  host.querySelectorAll("[data-comp]").forEach(function (el) {
+    el.addEventListener("input", function () {
+      var i = parseInt(el.getAttribute("data-comp"), 10);
+      state.ws.competitors[i][el.getAttribute("data-field")] = el.value;
+      save();
+      renderCompCompare();
+    });
+  });
+  host.querySelectorAll("[data-remove-comp]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.ws.competitors.splice(parseInt(b.getAttribute("data-remove-comp"), 10), 1);
+      save();
+      renderCompetitors();
+    });
+  });
+  var add = $("btnAddComp");
+  if (add) {
+    add.addEventListener("click", function () {
+      if (state.ws.competitors.length >= 8) return;
+      state.ws.competitors.push(blankCompetitor());
+      save();
+      renderCompetitors();
+    });
+  }
+  renderCompCompare();
+}
+function renderCompCompare() {
+  var host = $("compCompare");
+  if (!host) return;
+  var rows = state.ws.competitors.filter(function (c) { return c.name && c.name.trim(); });
+  if (!rows.length) {
+    host.innerHTML = '<div class="empty-state">No competitors named yet. Add them above and the comparison appears here.</div>';
+    return;
+  }
+  host.innerHTML = '<div class="table-wrap"><table><tr>' +
+    COMP_FIELDS.map(function (f) { return "<th>" + f[1] + "</th>"; }).join("") + "</tr>" +
+    rows.map(function (c) {
+      return "<tr>" + COMP_FIELDS.map(function (f) { return "<td>" + esc(c[f[0]] || "—") + "</td>"; }).join("") + "</tr>";
+    }).join("") + "</table></div>";
+}
+
+/* ---------------- SWOT builder ---------------- */
+var SWOT_DEFS = [
+  ["strengths", "Strengths", "From the product analysis only."],
+  ["weaknesses", "Weaknesses", "From the product analysis only. Each one becomes a question for the leverage phase."],
+  ["opportunities", "Opportunities", "From the market and competitor research only."],
+  ["threats", "Threats", "From the market and competitor research only. Each one is a candidate red flag."]
+];
+function renderSwot() {
+  var grid = $("swotGrid");
+  if (!grid) return;
+  grid.innerHTML = SWOT_DEFS.map(function (d) {
+    var key = d[0], items = state.ws.swot[key] || [];
+    return '<div class="swot-box"><h4>' + d[1] + '</h4><p class="box-hint">' + d[2] + '</p>' +
+      items.map(function (it, i) {
+        return '<div class="swot-item"><input type="text" data-swot="' + key + '" data-idx="' + i + '" data-f="text" placeholder="One line" value="' + esc(it.text) + '" aria-label="' + d[1] + ' item">' +
+        '<input type="text" data-swot="' + key + '" data-idx="' + i + '" data-f="evidence" placeholder="Evidence behind it" value="' + esc(it.evidence) + '" aria-label="Evidence">' +
+        '<button type="button" class="mini-btn" data-remove-swot="' + key + ":" + i + '">Remove</button></div>';
+      }).join("") +
+      '<div class="btn-row"><button type="button" class="mini-btn" data-add-swot="' + key + '">Add ' + ({ strengths: "a strength", weaknesses: "a weakness", opportunities: "an opportunity", threats: "a threat" })[key] + '</button></div></div>';
+  }).join("");
+  grid.querySelectorAll("[data-swot]").forEach(function (el) {
+    el.addEventListener("input", function () {
+      var key = el.getAttribute("data-swot");
+      var i = parseInt(el.getAttribute("data-idx"), 10);
+      state.ws.swot[key][i][el.getAttribute("data-f")] = el.value;
+      save();
+    });
+  });
+  grid.querySelectorAll("[data-add-swot]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.ws.swot[b.getAttribute("data-add-swot")].push({ text: "", evidence: "" });
+      save();
+      renderSwot();
+    });
+  });
+  grid.querySelectorAll("[data-remove-swot]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var parts = b.getAttribute("data-remove-swot").split(":");
+      state.ws.swot[parts[0]].splice(parseInt(parts[1], 10), 1);
+      save();
+      renderSwot();
+    });
+  });
+}
+
+/* ---------------- Leverage builder ---------------- */
+function renderLeverage() {
+  var host = $("levBuilder");
+  if (!host) return;
+  var rows = state.ws.leverage;
+  host.innerHTML =
+    '<div class="table-wrap"><table><tr><th>Capability the product needs</th><th>Status in Quixera</th><th>Can Quixera build it better than competitors? How?</th><th></th></tr>' +
+    rows.map(function (r, i) {
+      return "<tr><td><input type=\"text\" data-lev=\"" + i + "\" data-f=\"capability\" placeholder=\"e.g. Parent messaging\" value=\"" + esc(r.capability) + "\"></td>" +
+      '<td><select data-lev="' + i + '" data-f="status" aria-label="Status">' +
+        ["already-built", "extendable", "missing"].map(function (s) {
+          var lab = { "already-built": "Already built", "extendable": "Extendable", "missing": "Missing" }[s];
+          return '<option value="' + s + '"' + (r.status === s ? " selected" : "") + ">" + lab + "</option>";
+        }).join("") + "</select></td>" +
+      '<td><textarea data-lev="' + i + '" data-f="better" placeholder="Only for missing ones: the advantage, or say there is none">' + esc(r.better) + "</textarea></td>" +
+      '<td><button type="button" class="mini-btn" data-remove-lev="' + i + '">Remove</button></td></tr>';
+    }).join("") + "</table></div>" +
+    '<div class="btn-row"><button type="button" class="btn secondary" id="btnAddLev">Add a capability</button></div>';
+  host.querySelectorAll("[data-lev]").forEach(function (el) {
+    el.addEventListener("input", function () { updateLev(el); });
+    el.addEventListener("change", function () { updateLev(el); });
+  });
+  function updateLev(el) {
+    var i = parseInt(el.getAttribute("data-lev"), 10);
+    state.ws.leverage[i][el.getAttribute("data-f")] = el.value;
+    save();
+  }
+  host.querySelectorAll("[data-remove-lev]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.ws.leverage.splice(parseInt(b.getAttribute("data-remove-lev"), 10), 1);
+      save();
+      renderLeverage();
+    });
+  });
+  $("btnAddLev").addEventListener("click", function () {
+    state.ws.leverage.push({ capability: "", status: "extendable", better: "" });
+    save();
+    renderLeverage();
+  });
+}
+
+/* ---------------- Cost builder ---------------- */
+function renderCost() {
+  var host = $("costBuilder");
+  if (!host) return;
+  var rows = state.ws.cost.phases;
+  host.innerHTML =
+    '<p class="muted">Smallest useful release first. Each phase: what it costs in effort, and what it unlocks.</p>' +
+    '<div class="table-wrap"><table><tr><th>Phase</th><th>Effort / cost</th><th>What it unlocks</th><th></th></tr>' +
+    rows.map(function (r, i) {
+      return "<tr><td><input type=\"text\" data-cost=\"" + i + "\" data-f=\"phase\" placeholder=\"e.g. Phase 1 — reuse only\" value=\"" + esc(r.phase) + "\"></td>" +
+      '<td><input type="text" data-cost="' + i + '" data-f="effort" placeholder="e.g. 2 weeks, one builder" value="' + esc(r.effort) + '"></td>' +
+      '<td><textarea data-cost="' + i + '" data-f="unlocks" placeholder="What academies can do after this phase">' + esc(r.unlocks) + "</textarea></td>" +
+      '<td><button type="button" class="mini-btn" data-remove-cost="' + i + '">Remove</button></td></tr>';
+    }).join("") + "</table></div>" +
+    '<div class="btn-row"><button type="button" class="btn secondary" id="btnAddCost">Add a phase</button></div>';
+  host.querySelectorAll("[data-cost]").forEach(function (el) {
+    el.addEventListener("input", function () {
+      var i = parseInt(el.getAttribute("data-cost"), 10);
+      state.ws.cost.phases[i][el.getAttribute("data-f")] = el.value;
+      save();
+    });
+  });
+  host.querySelectorAll("[data-remove-cost]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.ws.cost.phases.splice(parseInt(b.getAttribute("data-remove-cost"), 10), 1);
+      save();
+      renderCost();
+    });
+  });
+  $("btnAddCost").addEventListener("click", function () {
+    state.ws.cost.phases.push({ phase: "", effort: "", unlocks: "" });
+    save();
+    renderCost();
+  });
+}
+
+/* ---------------- EXAMPLE data ---------------- */
+$("btnLoadExample").addEventListener("click", function () {
+  state.ws.competitors = [
+    { name: "EXAMPLE Competitor A", offering: "EXAMPLE — scheduling plus payments", buyer: "EXAMPLE — academy owners", price: "EXAMPLE — $99/month", distribution: "EXAMPLE — direct sales", strengths: "EXAMPLE — easy setup", weaknesses: "EXAMPLE — no parent app", reputation: "EXAMPLE — 4.2 stars, 40 reviews" },
+    { name: "EXAMPLE Competitor B", offering: "EXAMPLE — all-in-one club software", buyer: "EXAMPLE — multi-site clubs", price: "EXAMPLE — contact us", distribution: "EXAMPLE — resellers", strengths: "EXAMPLE — deep reporting", weaknesses: "EXAMPLE — hard to learn", reputation: "EXAMPLE — praised for support" },
+    { name: "EXAMPLE Competitor C", offering: "EXAMPLE — free scheduling tool", buyer: "EXAMPLE — small academies", price: "EXAMPLE — free, paid add-ons", distribution: "EXAMPLE — app stores", strengths: "EXAMPLE — free to start", weaknesses: "EXAMPLE — no billing", reputation: "EXAMPLE — mixed reviews" },
+    { name: "EXAMPLE Competitor D", offering: "EXAMPLE — spreadsheets and WhatsApp", buyer: "EXAMPLE — everyone", price: "EXAMPLE — $0", distribution: "EXAMPLE — already in use", strengths: "EXAMPLE — zero cost", weaknesses: "EXAMPLE — no structure", reputation: "EXAMPLE — the default substitute" },
+    { name: "EXAMPLE Competitor E", offering: "EXAMPLE — parent messaging app", buyer: "EXAMPLE — coaches", price: "EXAMPLE — $49/month", distribution: "EXAMPLE — direct sales", strengths: "EXAMPLE — parents love it", weaknesses: "EXAMPLE — no scheduling", reputation: "EXAMPLE — 4.6 stars" }
+  ];
+  state.ws.swot.strengths = [{ text: "EXAMPLE — academies already run on Quixera", evidence: "EXAMPLE — existing customers" }];
+  state.ws.swot.weaknesses = [{ text: "EXAMPLE — no parent-facing scheduling", evidence: "EXAMPLE — support requests" }];
+  state.ws.swot.opportunities = [{ text: "EXAMPLE — academies leaving spreadsheets", evidence: "EXAMPLE — competitor reviews" }];
+  state.ws.swot.threats = [{ text: "EXAMPLE — a free tool adds billing", evidence: "EXAMPLE — their changelog" }];
+  state.ws.leverage = [
+    { capability: "EXAMPLE — scheduling", status: "already-built", better: "" },
+    { capability: "EXAMPLE — parent messaging", status: "extendable", better: "EXAMPLE — built into the academy app parents already use" },
+    { capability: "EXAMPLE — payments", status: "missing", better: "EXAMPLE — no advantage; competitors do this well" }
+  ];
+  state.ws.cost.phases = [
+    { phase: "EXAMPLE — Phase 1, reuse only", effort: "EXAMPLE — 2 weeks", unlocks: "EXAMPLE — scheduling for existing academies" },
+    { phase: "EXAMPLE — Phase 2, extend messaging", effort: "EXAMPLE — 4 weeks", unlocks: "EXAMPLE — parents see schedules in the app" }
+  ];
+  state.exampleLoaded = true;
+  save();
+  $("exampleBanner").classList.add("show");
+  renderPhases();
+  var ph = $("phase-competitors");
+  if (ph) { ph.classList.add("open"); ph.querySelector(".phase-head").setAttribute("aria-expanded", "true"); }
+});
+$("btnClearExample").addEventListener("click", function () {
+  state.ws.competitors = [];
+  state.ws.swot = { strengths: [], weaknesses: [], opportunities: [], threats: [] };
+  state.ws.leverage = [];
+  state.ws.cost.phases = [];
+  state.exampleLoaded = false;
+  save();
+  $("exampleBanner").classList.remove("show");
+  renderPhases();
+});
+
+/* ---------------- Screen 3: commission / brief ---------------- */
+function lines(arr) { return (arr || []).filter(function (x) { return x && String(x).trim(); }); }
+function buildBrief() {
+  var f = state.framing;
+  var ws = state.ws;
+  var missing = framingMissing(f);
+  var warn = $("commissionWarn");
+  if (missing.length) {
+    warn.innerHTML = '<div class="callout warn"><strong>The framing is not finished yet.</strong> Missing: ' + missing.map(esc).join(", ") + '. <a href="#" onclick="activateScreen(\'start\'); return false;">Go back to screen 1</a> and fill them in before commissioning.</div>';
+    $("briefBox").hidden = true;
+    $("btnCopyBrief").disabled = true;
+    $("btnSaveRequest").disabled = true;
+    return "";
+  }
+  warn.innerHTML = "";
+  var q = lines(f.questions.split("\n")).map(function (x, i) { return (i + 1) + ". " + x.trim(); });
+  var comps = ws.competitors.filter(function (c) { return c.name && c.name.trim(); }).map(function (c) {
+    return "- " + c.name + (c.offering ? ": " + c.offering : "") + (c.price ? " (" + c.price + ")" : "");
+  });
+  var swotLine = function (key) {
+    return (ws.swot[key] || []).filter(function (i) { return i.text && i.text.trim(); }).map(function (i) {
+      return "  - " + i.text + (i.evidence ? " [evidence: " + i.evidence + "]" : "");
+    });
+  };
+  var lev = ws.leverage.filter(function (r) { return r.capability && r.capability.trim(); }).map(function (r) {
+    return "- " + r.capability + " — " + r.status + (r.better ? " (better test: " + r.better + ")" : "");
+  });
+  var costPh = ws.cost.phases.filter(function (r) { return r.phase && r.phase.trim(); }).map(function (r) {
+    return "- " + r.phase + " — effort: " + (r.effort || "?") + "; unlocks: " + (r.unlocks || "?");
+  });
+  var brief = "MARKET RESEARCH BRIEF — " + f.product + "\n\n" +
+    "Product (one sentence): " + f.product + "\n" +
+    (f.url ? "Website: " + f.url + "\n" : "") +
+    "Who pays: " + f.whoPays + "\n" +
+    "Where it sells: " + (f.geography || "Not specified") + "\n" +
+    "Decision this research must support: " + f.decision + "\n" +
+    "Timeframe: " + (f.timeframe || "Not specified") + "\n\n" +
+    "Questions the research must answer:\n" + (q.length ? q.join("\n") : "- (none listed — ask one clarifying question first)") + "\n\n" +
+    "WORK CAPTURED SO FAR IN THE RUNNER (findings noted while framing — verify against sources in the research):\n" +
+    "Current product: " + (ws.product.features || "Not captured yet.") + "\n" +
+    "How it sells: " + (ws.product.howSold || "Not captured yet.") + "\n" +
+    "Market: " + (ws.market.size || "Not captured yet.") + "\n" +
+    "Competitors named (" + comps.length + "):\n" + (comps.length ? comps.join("\n") : "- None named yet.") + "\n" +
+    "SWOT so far:\n" +
+    "  Strengths:\n" + (swotLine("strengths").join("\n") || "  - (none)") + "\n" +
+    "  Weaknesses:\n" + (swotLine("weaknesses").join("\n") || "  - (none)") + "\n" +
+    "  Opportunities:\n" + (swotLine("opportunities").join("\n") || "  - (none)") + "\n" +
+    "  Threats:\n" + (swotLine("threats").join("\n") || "  - (none)") + "\n" +
+    "Quixera leverage:\n" + (lev.length ? lev.join("\n") : "- Not mapped yet.") + "\n" +
+    "Cost phases:\n" + (costPh.length ? costPh.join("\n") : "- Not estimated yet.") + "\n" +
+    "Decision so far: " + (ws.decision.choice || "Not decided yet.") + "\n\n" +
+    "Please run the full research in the fixed shape: verdict first (build / extend / partner / drop, with the single strongest reason), then product snapshot, market landscape, competitor comparison table, SWOT, red flags (each with its consequence), opportunities (each with what it takes to capture it), Quixera path per item, new-tool decision, sources, and open questions.\n" +
+    "Attach a source to every price, claim, and competitor fact, and date-stamp every price. Label anything unverified as unverified and list gaps as gaps. Never invent a competitor, a price, or a market size. End with open questions that would change the verdict, and name who should answer each one.";
+  var box = $("briefBox");
+  box.textContent = brief;
+  box.hidden = false;
+  $("btnCopyBrief").disabled = false;
+  $("btnSaveRequest").disabled = false;
+  return brief;
+}
+$("btnBuildBrief").addEventListener("click", function () { buildBrief(); });
+function copyText(text, done) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+  } else { fallbackCopy(text); done(); }
+}
+function fallbackCopy(text) {
+  var ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+}
+$("btnCopyBrief").addEventListener("click", function () {
+  var brief = $("briefBox").textContent;
+  if (!brief) return;
+  copyText(brief, function () {
+    var n = $("copyNote");
+    n.textContent = "Brief copied. Paste it into the Market Research chat to run the research.";
+    n.classList.add("show");
+    setTimeout(function () { n.classList.remove("show"); }, 4000);
+  });
+});
+$("btnSaveRequest").addEventListener("click", function () {
+  var brief = $("briefBox").textContent;
+  if (!brief) return;
+  var req = upsertRequestFromFraming(state.framing, "Commissioned");
+  req.brief = brief;
+  if (req.status === "Draft") { req.status = "Commissioned"; }
+  save();
+  renderRequests();
+  var n = $("copyNote");
+  n.textContent = "Saved to My requests as “" + req.title + "” (status: " + req.status + ").";
+  n.classList.add("show");
+  setTimeout(function () { n.classList.remove("show"); }, 4000);
+});
+
+/* ---------------- Screen 5: results library ---------------- */
+function renderResults() {
+  var host = $("resultsList");
+  host.innerHTML = '<div class="empty-state">Loading the published list&hellip;</div>';
+  fetch(VIEWER_URL)
+    .then(function (resp) { return resp.text(); })
+    .then(function (html) {
+      var m = html.match(/var RESEARCH\s*=\s*(\[[\s\S]*?\]);/);
+      var list = [];
+      if (m) {
+        try { list = JSON.parse(m[1]); } catch (e) { list = []; }
+      }
+      renderResultsList(list);
+    })
+    .catch(function () { renderResultsList([]); });
+}
+function renderResultsList(list) {
+  var host = $("resultsList");
+  if (!list || !list.length) {
+    host.innerHTML = '<div class="empty-state"><strong>No research published yet.</strong><br>The first finished research becomes tab 1 in the Market Research Dashboard. Commission a run on screens 1 to 3, and when the research is done it will appear here and in the dashboard.</div>';
+    return;
+  }
+  host.innerHTML = list.map(function (r) {
+    return '<div class="req-card"><h3>' + esc(r.title) + '</h3>' +
+      '<p class="muted">Completed ' + esc(r.date || "") + '</p>' +
+      '<p>' + esc(r.verdict || "") + '</p>' +
+      '<div class="req-actions"><a class="btn" href="' + esc(VIEWER_URL) + '?share=' + encodeURIComponent(r.id) + '" style="text-decoration:none; display:inline-flex; align-items:center;">Open in the dashboard</a></div>' +
+    '</div>';
+  }).join("");
+}
+$("btnRefreshResults").addEventListener("click", function () { renderResults(); });
+
+/* ---------------- Render all ---------------- */
+function renderAll() {
+  writeFramingToForm(state.framing);
+  renderPhases();
+  renderRequests();
+  renderResults();
+  if (state.exampleLoaded) { $("exampleBanner").classList.add("show"); }
+}
+renderAll();
+</script>
+</body>
+</html>
