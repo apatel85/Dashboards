@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import AuthGate from './auth/AuthGate';
+import AuthGate, { useInvite } from './auth/AuthGate';
 import LiveQuoteButton from './components/LiveQuoteButton';
 import { DefinitionsDrawer, FundamentalsPill } from './components/DefinitionsDrawer';
 import { TabErrorBoundary } from './components/ErrorBoundary';
@@ -12,6 +12,7 @@ import SignalsTab from './tabs/Signals';
 import PerformanceTab from './tabs/Performance';
 import ScreenerTab from './tabs/Screener';
 import DeepDiveTab from './tabs/DeepDive';
+import AdminTab from './tabs/Admin';
 import { supabase } from './lib/supabase';
 import { SCHWAB_AUTH_START_URL, useSchwabLive } from './lib/useSchwabLive';
 import type { TabDef, TabId } from './types';
@@ -30,8 +31,14 @@ const TABS: TabDef[] = [
 
 const TAB_IDS = TABS.map((t) => t.id);
 
+/** Admin tab — only rendered for admins (see Shell). Not in TABS on purpose. */
+const ADMIN_TAB: TabDef = { id: 'admin', label: 'Admin', dataFile: 'tradedesk_invites' };
+
+/** Every tab id, including admin — for reading the URL hash. */
+const ALL_TAB_IDS = [...TAB_IDS, 'admin'] as TabId[];
+
 /** Build version — bump on every push so we can confirm what's live. */
-export const BUILD_VERSION = '2026-11-10l';
+export const BUILD_VERSION = '2026-11-10m';
 
 /** "14:32:05" in ET for the Schwab pill's updated time. */
 function fmtClockET(ms: number): string {
@@ -103,7 +110,7 @@ function SchwabPill() {
 /** Read the active tab from the URL hash (#options), defaulting to brief. */
 function tabFromHash(): TabId {
   const h = window.location.hash.replace('#', '') as TabId;
-  return (TAB_IDS as string[]).includes(h) ? h : 'brief';
+  return (ALL_TAB_IDS as string[]).includes(h) ? h : 'brief';
 }
 
 /** Mobile bottom nav: Today / Options / Congress / Search. */
@@ -142,6 +149,13 @@ function Shell() {
   const [active, setActive] = useState<TabId>(tabFromHash);
   const [menuOpen, setMenuOpen] = useState(false);
   const [defsOpen, setDefsOpen] = useState(false);
+
+  // Admin tab: visible only to admins. Non-admins never see it in the menu,
+  // the tab row, or the bottom nav — and a #admin hash falls back to brief.
+  const invite = useInvite();
+  const isAdmin = invite?.isAdmin ?? false;
+  const visibleTabs = isAdmin ? [...TABS, ADMIN_TAB] : TABS;
+  const activeTab = active === 'admin' && !isAdmin ? 'brief' : active;
 
   // Keep the URL hash in sync so refresh stays on the same tab.
   // Listen for hash changes too (back/forward buttons).
@@ -210,12 +224,12 @@ function Shell() {
           </button>
         </div>
         <nav className="sidebar-nav">
-          {TABS.map((t) => (
+          {visibleTabs.map((t) => (
             <button
               key={t.id}
-              className={`sidebar-item${active === t.id ? ' active' : ''}`}
+              className={`sidebar-item${activeTab === t.id ? ' active' : ''}`}
               onClick={() => goTab(t.id)}
-              aria-current={active === t.id ? 'page' : undefined}
+              aria-current={activeTab === t.id ? 'page' : undefined}
             >
               {t.label}
             </button>
@@ -262,12 +276,12 @@ function Shell() {
         </header>
 
         <nav className="tabnav" role="tablist" aria-label="TradeDesk sections">
-          {TABS.map((t) => (
+          {visibleTabs.map((t) => (
             <button
               key={t.id}
               role="tab"
-              aria-selected={active === t.id}
-              className={`tabbtn${active === t.id ? ' active' : ''}`}
+              aria-selected={activeTab === t.id}
+              className={`tabbtn${activeTab === t.id ? ' active' : ''}`}
               onClick={() => select(t.id)}
             >
               {t.label}
@@ -276,33 +290,38 @@ function Shell() {
         </nav>
 
         <main className="content">
-          <TabErrorBoundary tabName="Daily Brief" key={`brief-${active}`}>
-            {active === 'brief' && <DailyBriefTab onOpenTab={goTab} />}
+          <TabErrorBoundary tabName="Daily Brief" key={`brief-${activeTab}`}>
+            {activeTab === 'brief' && <DailyBriefTab onOpenTab={goTab} />}
           </TabErrorBoundary>
-          <TabErrorBoundary tabName="Options" key={`options-${active}`}>
-            {active === 'options' && <OptionsTab />}
+          <TabErrorBoundary tabName="Options" key={`options-${activeTab}`}>
+            {activeTab === 'options' && <OptionsTab />}
           </TabErrorBoundary>
-          <TabErrorBoundary tabName="Signals" key={`signals-${active}`}>
-            {active === 'signals' && <SignalsTab />}
+          <TabErrorBoundary tabName="Signals" key={`signals-${activeTab}`}>
+            {activeTab === 'signals' && <SignalsTab />}
           </TabErrorBoundary>
-          <TabErrorBoundary tabName="Earnings" key={`earnings-${active}`}>
-            {active === 'earnings' && <EarningsTab />}
+          <TabErrorBoundary tabName="Earnings" key={`earnings-${activeTab}`}>
+            {activeTab === 'earnings' && <EarningsTab />}
           </TabErrorBoundary>
-          <TabErrorBoundary tabName="Congress & Gov" key={`congress-${active}`}>
-            {active === 'congress' && <CongressGovTab />}
+          <TabErrorBoundary tabName="Congress & Gov" key={`congress-${activeTab}`}>
+            {activeTab === 'congress' && <CongressGovTab />}
           </TabErrorBoundary>
-          <TabErrorBoundary tabName="Research" key={`research-${active}`}>
-            {active === 'research' && <ResearchTab />}
+          <TabErrorBoundary tabName="Research" key={`research-${activeTab}`}>
+            {activeTab === 'research' && <ResearchTab />}
           </TabErrorBoundary>
-          <TabErrorBoundary tabName="Deep Dive" key={`deepdive-${active}`}>
-            {active === 'deepdive' && <DeepDiveTab />}
+          <TabErrorBoundary tabName="Deep Dive" key={`deepdive-${activeTab}`}>
+            {activeTab === 'deepdive' && <DeepDiveTab />}
           </TabErrorBoundary>
-          <TabErrorBoundary tabName="Performance" key={`performance-${active}`}>
-            {active === 'performance' && <PerformanceTab />}
+          <TabErrorBoundary tabName="Performance" key={`performance-${activeTab}`}>
+            {activeTab === 'performance' && <PerformanceTab />}
           </TabErrorBoundary>
-          <TabErrorBoundary tabName="Screener" key={`screener-${active}`}>
-            {active === 'screener' && <ScreenerTab />}
+          <TabErrorBoundary tabName="Screener" key={`screener-${activeTab}`}>
+            {activeTab === 'screener' && <ScreenerTab />}
           </TabErrorBoundary>
+          {isAdmin && (
+            <TabErrorBoundary tabName="Admin" key={`admin-${activeTab}`}>
+              {activeTab === 'admin' && <AdminTab />}
+            </TabErrorBoundary>
+          )}
         </main>
 
         <footer className="footer">
@@ -312,7 +331,7 @@ function Shell() {
         </footer>
       </div>
 
-      <BottomNav active={active} onTab={goTab} onSearch={focusBriefSearch} />
+      <BottomNav active={activeTab} onTab={goTab} onSearch={focusBriefSearch} />
       <DefinitionsDrawer open={defsOpen} onClose={() => setDefsOpen(false)} />
       <FundamentalsPill onOpen={() => setDefsOpen(true)} />
     </div>

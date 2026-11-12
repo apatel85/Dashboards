@@ -409,7 +409,7 @@ export interface GexChangesFile {
 
 /* ── tabs ───────────────────────────────────────────────────────── */
 
-export type TabId = 'brief' | 'options' | 'earnings' | 'congress' | 'research' | 'signals' | 'performance' | 'screener' | 'deepdive';
+export type TabId = 'brief' | 'options' | 'earnings' | 'congress' | 'research' | 'signals' | 'performance' | 'screener' | 'deepdive' | 'admin';
 
 export interface TabDef {
   id: TabId;

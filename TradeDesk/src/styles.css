@@ -2848,3 +2848,82 @@ body {
   font-size: 11px;
   white-space: nowrap;
 }
+
+/* ── Admin (invite list) ────────────────────────────────────────── */
+
+.admin-add {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0 8px;
+  max-width: 560px;
+}
+
+.admin-add input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 14px;
+  padding: 10px 12px;
+}
+
+.admin-add input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  max-width: 760px;
+}
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+}
+
+.admin-who {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-email {
+  font-weight: 700;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--red);
+  border-color: var(--red);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: rgba(255, 77, 94, 0.12);
+}
+
+@media (max-width: 767px) {
+  .admin-add {
+    flex-direction: column;
+  }
+
+  .admin-add .btn {
+    width: 100%;
+  }
+}
