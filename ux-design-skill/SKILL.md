@@ -130,18 +130,36 @@ Mock B (TradeDesk revamp, Nov 12, 2026) is the standing baseline for how designs
 
 ## Navigation (choosing how people move)
 
-The leaders' debate covered evidence, heuristics, simplicity, mobile-first, and research — it did not structure navigation. This section closes that gap. Navigation is decided before layout, not after.
+Decided by the navigation debate (Nov 12, 2026) — a synthesis of the five leaders' published frameworks, not recorded quotes.
 
-- **Decide navigation before layout.** Count the destinations, rank them by frequency, then pick the pattern. Never let a page grow into a long scroll of sections and call the scroll the navigation.
-- **One tap to any primary destination.** The daily job's destinations are always visible and one tap away. No primary destination hides behind a scroll, a menu, or a second tap.
-- **Bottom tab bar on phone (up to 5 primaries + More).** Phone-first apps with multiple sections get a persistent bottom tab bar: at most five primary destinations, thumb-reachable, with a visible active state. Everything else goes under More (a sheet or list), reachable in two taps at most. Never more than five tabs; never a scrolling tab strip on phone.
-- **Rail on desktop, tabs on phone — same destinations.** At 1024px and up the rail (Mock B baseline: 348px sticky) lists the destinations; on phone the same destinations live in the bottom bar + More. Same content, same destinations at every width — the pattern changes, the map doesn't.
-- **Top tabs only for a small set of peer views.** Top tabs fit 2–5 sibling views of one thing (e.g., day/week/month). They are not the app's main navigation when there are more than five destinations.
-- **Drawers hide; don't hide the daily job.** A hamburger/drawer is for secondary and settings destinations only. If the user needs it daily, it is a tab, not a drawer item.
-- **Name tabs by the job, not the data.** "Timeline" and "Meds" beat "Records" and "Data". The active tab is always visibly marked (not by color alone).
-- **Switching views replaces the scroll.** Tapping a tab switches the main view; it never jumps the user down a long page. A long page with collapsed sections is a workbench, not navigation — give the workbench tabs (or a rail) too.
-- **Deep-link every destination.** Every tab and More item is a real destination the user can return to; back goes to the previous destination, never to the top of a long page.
-- **A core action may sit in the bar.** When one action is the job itself (log it, capture it, check in), it gets a prominent button in the bottom bar so it is one tap from any tab — never buried on one screen.
+Twelve rules, written to be carried into the skill file as-is. Navigation is decided before layout and style — a style applied to an unmapped app produces a beautiful corridor.
+
+- **N1 — Map before screens.** Before any layout work, write the destination map: every destination, named, grouped, with its expected frequency (daily / weekly / occasional). No map, no mockup.
+- **N2 — Destinations switch; content scrolls.** Moving between destinations is a view switch — instant, fixed position, current destination visibly marked. Scrolling is only for one continuous read inside a destination. Never ship multiple destinations as one long scroll with collapsed sections.
+- **N3 — One tap to any primary.** From anywhere in the app, every primary destination is exactly one tap away, from a persistent navigation surface that never scrolls out of view.
+- **N4 — Phone: bottom tab bar, 3–5 slots.** Primary phone navigation is a persistent bottom tab bar (thumb zone). Three to five slots total — and a center core action, if present, counts as one of the five.
+- **N5 — Primaries are earned by frequency.** Bar slots go to the destinations used most often, counted from the job — not by feature importance or stakeholder seniority. If six destinations claim daily use, fix the map (merge or split jobs), don't widen the bar.
+- **N6 — More is an index, not a drawer of leftovers.** Overflow goes in a grouped, labeled More index whose groups users can predict. Everything in More is reachable in ≤2 taps from anywhere. A daily-used destination found living in More is a defect: promote it, demote the least-used primary.
+- **N7 — No primary hides behind a hamburger.** Drawers and hamburger menus hold account, settings, and app-level material only. Any destination used weekly gets a visible door.
+- **N8 — Top tabs are for peer views of one thing.** Top tabs (2–5) switch views of the same object — Days/Weeks/Months, Quotes/Chart/News. They never carry primary jobs and never compete with the main navigation.
+- **N9 — Tablet and desktop: the rail is the same map, drawn bigger.** Tablet gets a narrow labeled rail; desktop a full left rail, icon + label, all destinations visible — More dissolves because everything fits. Same names, same order, same grouping at every size.
+- **N10 — Name tabs by the job, in the user's words.** Labels are the words users would say out loud asking for the destination. Icon + label together on primaries; never icon-only, never internal jargon or brand names. Test: a first-time user predicts at least 4 of 5 bar destinations before tapping.
+- **N11 — At most one core action in the bar.** Only an app whose dominant verb is performed many times a day (logging, scanning, timing) may place it as a distinct center action. It must look like an action, complete or open-and-return, and leave the user where they were. Reading apps get none.
+- **N12 — State and stability are part of navigation.** Each destination keeps its own scroll and state; re-tapping the current destination returns it to the top. Bar order and labels are stable across sessions and versions — changes are deliberate redesigns, never silent updates. Verify with the 10-second test: a user can name where they are, and reach any primary in one tap, on phone, tablet, and desktop.
+
+### What the current draft section gets wrong or misses
+
+The skill already gained a Navigation section when the long-scroll flaw was caught. The panel's verdict on that draft: directionally right, four defects, five gaps.
+
+- "Max five primaries + More" doesn't say whether a core action counts. Teams will ship five destinations plus a center Log button and call it compliant — six claims on a five-slot bar. Fix: N4 — the action counts as a slot.
+- "One tap to any primary" is unenforceable without a frequency definition. Everything looks primary to its owner. Fix: N5 — primaries are assigned by counted frequency, and six daily claims means the map is wrong, not the bar.
+- "Tapping a tab switches the view instead of scrolling" overreaches. Read flatly, it bans the Daily Brief's own scroll — a ranked morning list should scroll. Fix: N2 — the rule is between destinations, never inside one continuous read.
+- More is specified as a container but not as an index. "Everything else in More" invites an ungrouped junk list. Fix: N6 — grouped, predictable, ≤2 taps, with the promote/demote audit when a daily job is found inside.
+- Missing: the tablet pattern. The draft jumps from phone bar to desktop rail, leaving the middle size to improvisation. Added: N9's narrow labeled rail.
+- Missing: state rules. Nothing on per-destination scroll memory or re-tap-to-top — the details that make switching feel like rooms instead of trapdoors. Added: N12.
+- Missing: stability. Nothing stops a later version from reordering the bar and destroying users' spatial memory. Added: N12.
+- Missing: a naming test. "Name tabs by the job" is advice without a check. Added: N10's 4-of-5 prediction test.
+- Missing: a verification step. The draft lists patterns but no done-test. Added: N12's 10-second test at 390 / 768 / 1280px — the same widths the skill already requires for responsive checks.
 
 ## Responsive layouts
 
