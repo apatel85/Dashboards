@@ -1,0 +1,75 @@
+import { SectionHead } from './ui';
+
+function Block({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="thesis-line">
+      <strong>{title}</strong>
+      <ul className="bullet-list" style={{ marginTop: 4 }}>
+        {children}
+      </ul>
+    </div>
+  );
+}
+
+export function Playbook() {
+  return (
+    <>
+      <SectionHead
+        title="Reversal playbook — one page"
+        sub="The zone + trigger + exit system from the backtests. Tape it to your monitor."
+      />
+      <div className="signal-card open">
+        <div className="signal-body">
+          <Block title="1 · Map the zones — before the session (daily + 4H)">
+            <li>Prior swing highs/lows, especially multi-touch levels</li>
+            <li>Round numbers — the most evidence-backed levels (ES 6800/6900, NQ equivalents)</li>
+            <li>Gamma walls, flip and magnet from the gamma panel above</li>
+            <li>Prior-day / overnight high/low: session reference only, no measured reversal edge</li>
+          </Block>
+          <Block title="2 · Wait for the trigger — 15m (decisions happen here)">
+            <li>Price tags a mapped zone</li>
+            <li>Rejection wick: hammer at support, shooting star at resistance</li>
+            <li>Volume ≥ 1.8× the 20-bar average on the touch bar (true capitulation prints 5×+)</li>
+            <li>RSI with the trend: ≥ 55 for longs at support, ≤ 45 for shorts at resistance (capitulation bottoms: RSI under ~25)</li>
+            <li>Price on the right side of EMA50</li>
+          </Block>
+          <Block title="3 · Enter — 3m (precision only, no decisions here)">
+            <li>Enter on 3m confirmation in the trigger direction</li>
+            <li>Stop: 0.5× ATR(15m) beyond the zone</li>
+          </Block>
+          <Block title="4 · Exits — never all at once">
+            <li>Scale half at 0.75–1× ATR(15m) or the nearest minor level — bounces die here</li>
+            <li>Move stop to breakeven after the first scale-out</li>
+            <li>Trail the runner under the latest 3m swing low/high — let the market take you out</li>
+            <li>Time stop: nothing happens in 5–10 15m bars → exit, dead money</li>
+            <li>Exit alarm: rejection wick + volume spike <em>against</em> you near target → take the rest off, don't wait for the print</li>
+          </Block>
+          <Block title="5 · Capitulation bottom — the SNDK setup (15m, liquid names only)">
+            <li>At a swing low or round number: RSI under 35 + volume ≥ 3× average + range ≥ 2× ATR + hammer or bull engulfing (body ≥ 60%)</li>
+            <li>Long at the bar's close, stop 0.5× ATR under the level, target 1R</li>
+            <li>Strict version (RSI under 25, 5× volume): rare — about twice a week across 60 liquid names — but tested at 84% wins</li>
+            <li>Liquid large-caps and indices only: the pattern washes out on thin names, and never prints on daily bars — it's intraday-only</li>
+            <li>Timeframe matters: validated on <strong>15m</strong> (57% wins, +0.12R) and <strong>3m</strong> (85%, small sample); mild on 1h (+0.08R); <strong>fails on 10m</strong> (−0.27R — don't trade it there); never occurs on 4h</li>
+          </Block>
+          <Block title="6 · Skip the trade when">
+            <li>Dealer gamma is LONG into the zone (pinning headwind)</li>
+            <li>The level already broke and reclaimed (stop hunt — stand aside)</li>
+            <li>No volume on the touch — unconfirmed</li>
+          </Block>
+          <Block title="7 · Continuation — major swing-high breakout (longs only)">
+            <li>Close ≥ 0.3% beyond a <em>major</em> swing high + volume ≥ 1.5× + price above SMA200</li>
+            <li>Enter next open, stop 0.5× ATR under the level, target 1.5R</li>
+            <li>Breakdown shorts tested at −0.09R in bull regimes — skip them; longs tested +0.13R</li>
+          </Block>
+          <p className="muted small footnote-line">
+            Why: zones alone bounce ~53% (n=3,586, coin flip); with the trigger conditions 62–93%.
+            Mechanical fixed-target entries didn't validate — the edge is in selecting which touches to take,
+            and most bounces exhaust at 0.75–1 ATR. 12 multi-factor strategies backtested on 503 S&P 500 names:
+            no mechanical system cleared a real edge; round-number + climax longs (+0.08R) and breakout longs
+            (+0.13R) are mild tailwinds, not systems. Research and education only — not financial advice.
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}

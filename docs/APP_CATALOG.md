@@ -8,6 +8,7 @@ mindmap
   root((Dashboards repo))
     Finance and Trading
       TradeDesk (React/Vite, pipeline, Supabase invites)
+      TradeDeskV2 (clean UI, reads TradeDesk data)
       EarningAnalysis (earnings tracker)
       CongressTradeTracker (Flask+ETL, Render)
       CapitolPulse (static Congress trades)
@@ -47,6 +48,7 @@ mindmap
 | Dir | Nature | What it includes | Tech / hosting | Log |
 |---|---|---|---|---|
 | **TradeDesk** | Stock research hub (largest app, ~40MB incl. data) | Tabs: Daily Brief, Options, Signals, Earnings, Congress & Gov, Research, Screener, Deep Dive, Performance, Admin. ES/NQ gamma (GEX), Congress/WH flow signals, ~15-min Yahoo quotes, Schwab live, lotto picks, prediction-performance tracking. Invite-only (Supabase `tradedesk_invites`, AuthGate fails closed) | React+TS+Vite → `dist/`; Node pipeline (`pipeline/*.mjs`) writing `public/data/*.json`; Actions cron (weekday 05:00 UTC pipeline; research agent Sun/Wed) | yes (v2026-11-10m) |
+| **TradeDeskV2** | Clean-UI rebuild of TradeDesk (original untouched) | 7 pages with sub-tabs: Today overview (regime, ES/NQ gamma, top setups), Options, Stock ideas, Lookup, Earnings, Smart money, Track record; ticker search, Data status view, pagination | React+TS+Vite → `dist/`; no data of its own, reads `/Dashboards/TradeDesk/dist/data/`; same Supabase login + invite list | yes — partial (login + Schwab not verified) |
 | **EarningAnalysis** | Weekly earnings tracker | Companies reporting this/next week, filter by sector/cap/timing; mock-data mode + live-data go-live guide (`HOW_TO_USE.md`); root index redirects to build | Node + Python scripts, `dist/`; Action `update-earnings.yml` (Fri 22:00 UTC) | no |
 | **CongressTradeTracker** | Congress/White House trade tracker, 4-source verified | CongressInvests + House eFD + Senate eFD + OGE 278 → staging DB → verification/confidence engine → master trades → web app with login | Flask/gunicorn + SQLite, Render (`render.yaml`); `etl_refresh.yml` every 6h | no |
 | **CapitolPulse** | Static Congress trading tracker | Client-side fetch of CongressInvests, 24h localStorage cache, force-refresh | Static, no build | no |
