@@ -1,5 +1,12 @@
 # AGENTLOG — App Sprints
 
+## 2026-11-12 — DealFinder sprint (Phase 0)
+- **Request:** Intake via GitHub issue #23 ("Sprint intake: dealfinder", created 2026-11-12 23:55 UTC) — household app to find the best product at the best price, groceries first (milk, eggs, juice, breakfast/lunch/dinner items), search by item name or UPC; public, daily, one user type; never show personal information.
+- **What changed:** New sprint folder `sprints/dealfinder/` — `intake.json` (status receipt-ready; filed from issue #23) + `research-receipt.md` (Phase 0: job, household language, current solutions, 3-competitor audit of Flipp / Basket — shut down Oct 30, 2026 — / ShopSavvy, screen-size map, Pattern Router, 3 style options with bright supermarket value-first recommended).
+- **Verification:** Files verified on GitHub after push (GET returns both files, intake.json parses, status receipt-ready). Issue #23 left open (PAT has no Issues write scope — Ankit closes it).
+- **Note:** Mockup starts only after Ankit confirms the Receipt and picks a style (or says "you pick" — then bright supermarket, value-first).
+
+
 ## 2026-11-12 — WagWise redesign sprint (Phase 0)
 - **Request:** Ankit (App Sprints chat, Nov 12, 2026) — test the redesign flow on another existing app: run Phase 0 for WagWise and build a mockup version; live app untouched.
 - **What changed:** New sprint folder `sprints/wagwise-redesign-2026-11-12/` — `intake.json` (status receipt-ready; built from known facts, no form submitted) + `research-receipt.md` (Phase 0: job, household language, current solutions, 3-competitor audit of DogLog / PetDesk / 11pets, screen-size map, Pattern Router, 3 style options with soft-rounded-warm recommended).
