@@ -1,5 +1,12 @@
 # AGENTLOG — App Sprints
 
+## 2026-11-12 — WagWise redesign sprint (Phase 0)
+- **Request:** Ankit (App Sprints chat, Nov 12, 2026) — test the redesign flow on another existing app: run Phase 0 for WagWise and build a mockup version; live app untouched.
+- **What changed:** New sprint folder `sprints/wagwise-redesign-2026-11-12/` — `intake.json` (status receipt-ready; built from known facts, no form submitted) + `research-receipt.md` (Phase 0: job, household language, current solutions, 3-competitor audit of DogLog / PetDesk / 11pets, screen-size map, Pattern Router, 3 style options with soft-rounded-warm recommended).
+- **Verification:** Files verified on GitHub after push (GET returns both files, intake.json parses, status receipt-ready). Live WagWise app untouched; mockup not built yet.
+- **Note:** Mockup starts only after Ankit confirms the Receipt and picks a style (or says "you pick" — then soft rounded, warm).
+
+
 ## v1.1.0 — 2026-11-12
 - **Request:** Ankit (App Sprints chat, Nov 12, 2026) — the intake form should save the brief into the repo and folder so the agent can pull it and start the work, instead of only producing a copyable brief.
 - **What changed:** Submit now opens a prefilled GitHub issue in `apatel85/Dashboards` (title `Sprint intake: <name>`, body = plain-text brief + JSON code block, label `sprint-intake`) for the user to submit under their own login — no token in the page. Copy buttons kept as fallback. The watcher now also checks open issues titled `Sprint intake: ...`, files each new one as `sprints/<name>/intake.json` (status new), runs Phase 0, writes the Receipt, sets receipt-ready, and records the issue number in the state file so each issue is handled once. Instructions in the form and README updated to the new flow.
