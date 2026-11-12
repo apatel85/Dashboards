@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill Library Builder · Quixera</title>
+<style>
+:root{--primary:#0D7C66;--primary-dark:#0A5F4E;--primary-soft:#E3F2EE;--ink:#1A2B26;--muted:#5B6B65;--line:#E3E8E5;--bg:#F6F8F7;--warn-bg:#FFF4E0;--warn-border:#E8A13A;--bad-bg:#FDECEA;--bad-border:#D64541;--good-bg:#EAF7EF;--amber:#B7791F}
+*{box-sizing:border-box}
+html{font-size:16px}
+body{margin:0;font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
+h1,h2,h3,h4{margin:0 0 8px;line-height:1.25}
+h1{font-size:28px}h2{font-size:22px}h3{font-size:17px}h4{font-size:15px}
+p{margin:0 0 10px}
+a{color:var(--primary-dark)}
+button{min-height:44px;min-width:44px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:14px;cursor:pointer}
+button:hover{background:#F2F6F3}
+button.primary{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
+button.primary:hover{background:var(--primary-dark)}
+button.ghost{border-color:transparent;background:transparent;color:var(--primary-dark);padding:6px 10px}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{font:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);min-height:44px}
+input[type=checkbox],input[type=radio]{min-height:0;padding:0;accent-color:var(--primary)}
+label{font-weight:600}
+.small{font-size:13px}.tiny{font-size:12px}.muted{color:var(--muted)}
+.kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 6px;font-size:12px;background:#fff}
+code{background:#F0F3F1;border-radius:4px;padding:1px 6px;font-size:13px}
+/* top bar */
+.topbar{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#fff;border-bottom:1px solid var(--line);padding:10px 16px}
+.topbar .brand{font-weight:800;font-size:16px;color:var(--primary-dark)}
+.topbar .demobadge{background:var(--primary-soft);color:var(--primary-dark);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
+.topbar select{min-height:44px;max-width:280px}
+.guide{background:#FFF8E1;border-bottom:1px solid #F0DFA8;padding:10px 16px;font-size:14px}
+/* admin nav */
+.appnav{position:fixed;left:0;top:61px;width:196px;height:calc(100vh - 61px);overflow:auto;background:#fff;border-right:1px solid var(--line);padding:12px 8px;z-index:40}
+.appnav .cap{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px 12px 4px}
+.appnav a{display:block;padding:9px 12px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14px;min-height:40px}
+.appnav a:hover{background:#F2F6F3}
+.appnav a.on{background:var(--primary-soft);font-weight:700;color:var(--primary-dark)}
+.appnav a .nb{float:right;background:#EDEFF0;border-radius:999px;padding:0 7px;font-size:11px}
+@media(min-width:1101px){.wrap{margin-left:196px}}
+@media(max-width:1100px){.appnav{display:none}}
+/* layout */
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+.screen{display:none}
+.screen.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border-color:transparent;background:transparent;border-radius:999px;padding:8px 14px}
+.tabs button.on{background:var(--ink);color:#fff;font-weight:700}
+.pill{display:inline-block;background:var(--primary-soft);color:var(--primary-dark);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}
+.badge{display:inline-block;background:#EDEFF0;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}
+.badge.warn{background:var(--warn-bg);color:var(--amber)}
+.badge.bad{background:var(--bad-bg);color:#9B2C28}
+.badge.later{background:#E8EEF7;color:#2B4C7E}
+.chip{display:inline-block;background:var(--primary-soft);color:var(--primary-dark);border:1px solid #BFE0D6;border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600;margin:2px 4px 2px 0}
+.chip.solid{background:var(--primary);color:#fff;border-color:var(--primary)}
+.chip.grey{background:#F0F3F1;color:var(--muted);border-color:var(--line)}
+.role{display:inline-block;background:#EDEFF0;border-radius:6px;padding:3px 8px;font-size:12px;font-weight:700;margin-right:6px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.toolbar input[type=search]{flex:1;min-width:200px}
+.verbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:12px 0}
+/* landing */
+.librow{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.libhead{padding:14px 16px;cursor:pointer;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.libhead:hover{background:#F8FAF9}
+.mono{flex:0 0 44px;width:44px;height:44px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.libbody{padding:0 16px 12px}
+.meta{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:4px}
+.subrow{display:flex;gap:10px;align-items:baseline;padding:10px 8px;border-top:1px solid var(--line);cursor:pointer;border-radius:8px}
+.subrow:hover{background:#F8FAF9}
+.subrow .comp{margin-left:auto;text-align:right;font-size:13px;color:var(--muted)}
+.bluedot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563EB;margin-left:4px}
+/* tables */
+table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+tr.area td{background:#F2F6F3;font-weight:700}
+tr.fam td{background:#FAFBFA;font-weight:600}
+tr.sub{cursor:pointer}
+tr.sub:hover td{background:#F8FAF9}
+tr.sub.sel td{background:var(--primary-soft)}
+tr.sub td:first-child{max-width:340px}
+.strike{text-decoration:line-through;color:var(--muted)}
+.newtag{background:#D9F2E4;color:#14663B;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700}
+.was{background:#FFF4E0;border-radius:6px;padding:2px 8px;font-size:12px}
+.drag{color:var(--muted);cursor:grab;margin-right:6px}
+.inline-add{width:100%;max-width:420px;border-style:dashed}
+/* matrix */
+.matrix td,.matrix th{text-align:center}
+.matrix td.filled{background:var(--primary-soft);font-weight:700;cursor:pointer}
+.matrix td.gap{background:#FFF8E1;color:var(--amber);cursor:pointer;border:1px dashed var(--warn-border)}
+.matrix td:first-child,.matrix th:first-child{text-align:left}
+/* sections (sub-skill) */
+.subgrid{display:grid;grid-template-columns:200px 1fr 240px;gap:16px;align-items:start}
+@media(max-width:900px){.subgrid{grid-template-columns:1fr}}
+.railnav a{display:block;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14px;min-height:44px}
+.railnav a:hover{background:#F2F6F3}
+.railnav a.on{background:var(--primary-soft);font-weight:700;color:var(--primary-dark)}
+.railnav a.sub{padding-left:24px}
+.sectioncard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;max-width:760px}
+.field{margin-bottom:12px}
+.field label{display:block;margin-bottom:4px}
+.hint{font-size:13px;color:var(--muted);margin-top:4px}
+.hintchip{display:inline-block;background:#FFF1CC;border-radius:999px;padding:2px 10px;font-size:12px}
+.stageRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px}
+.step{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
+.step.on{border-color:var(--primary);background:var(--primary-soft);font-weight:700}
+.arr{color:var(--muted)}
+/* create */
+.rail{display:flex;gap:8px;list-style:none;padding:0;margin:0 0 16px}
+.rail li{flex:1;border-top:4px solid var(--line);padding-top:8px;font-size:13px;color:var(--muted)}
+.rail li.on{border-color:var(--primary);color:var(--ink);font-weight:700}
+.rail li.done{border-color:var(--primary);color:var(--primary-dark)}
+.sportcards{display:flex;gap:8px;flex-wrap:wrap}
+.sportcard{text-align:left;min-width:120px}
+.sportcard.on{border-color:var(--primary);background:var(--primary-soft)}
+.radiocards{display:grid;gap:8px}
+.radiocard{display:flex;gap:10px;align-items:flex-start;text-align:left}
+.radiocard.on{border-color:var(--primary);background:var(--primary-soft)}
+.stepnav{display:flex;justify-content:space-between;gap:8px;margin-top:16px;flex-wrap:wrap}
+.checks .row{display:flex;gap:10px;align-items:baseline;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff}
+.checks .row.warn{background:var(--warn-bg);border-color:var(--warn-border)}
+.checks .row.bad{background:var(--bad-bg);border-color:var(--bad-border)}
+/* modal + toast */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:80}
+.modal .modalcard,.modalcard{background:#fff;border-radius:12px;max-width:640px;margin:8vh auto;padding:20px;max-height:84vh;overflow:auto}
+.modalcard h3{margin-bottom:8px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;display:none;z-index:90;max-width:90vw}
+/* suggestions */
+.sugrow{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fff}
+.sugrow input[type=checkbox]{margin-top:6px;min-width:20px;min-height:20px}
+.diff{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.diff>div{border:1px solid var(--line);border-radius:10px;padding:12px}
+.diff .hl{background:#FFF4E0;border-radius:6px;padding:4px 6px}
+/* coach phone */
+.phone{width:390px;max-width:100%;margin:0 auto;border:1px solid var(--line);border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+.phonebar{background:var(--primary);color:#fff;padding:14px 16px;font-weight:700}
+.phwrap{padding:12px 14px 90px}
+.phfam{display:flex;justify-content:space-between;align-items:center;padding:14px 8px;border-bottom:1px solid var(--line);cursor:pointer;min-height:44px}
+.phsub{padding:12px 8px 12px 20px;border-bottom:1px solid var(--line);cursor:pointer;min-height:44px}
+.drillcard{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.phonesheet{border-top:1px solid var(--line);background:#fff}
+/* misc */
+.tourmap{width:100%}
+.tourmap td:first-child{white-space:nowrap;font-weight:700}
+.empty{border:2px dashed var(--line);border-radius:12px;padding:28px;text-align:center;background:#fff}
+.tcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px}
+.tcard{border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left;background:#fff}
+.profcard{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;background:#fff}
+.levelchip{display:inline-block;border-radius:6px;padding:4px 10px;color:#fff;font-weight:700;font-size:13px;margin:2px 4px 2px 0}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+
+/* ===== builder additions ===== */
+.databar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:12px 0;font-size:13px}
+.databar .sp{flex:1}
+button.danger{color:#9B2C28;border-color:#E5B3B0}
+button.mini{min-height:36px;padding:4px 10px;font-size:13px}
+button.iconbtn{min-width:44px;padding:4px 8px}
+.startgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px}
+.startcard{border:1px solid var(--line);border-radius:12px;padding:18px;text-align:left;background:#fff;min-height:120px}
+.startcard:hover{border-color:var(--primary)}
+.startcard:disabled{opacity:.55;cursor:not-allowed}
+.startcard:disabled:hover{border-color:var(--line)}
+.fieldrow{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.fieldrow .field{flex:1;min-width:160px;margin-bottom:0}
+.persona{display:flex;gap:4px;align-items:center;background:#F0F3F1;border-radius:999px;padding:4px}
+.persona button{border-color:transparent;background:transparent;border-radius:999px;min-height:36px;padding:6px 12px}
+.persona button.on{background:#fff;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.progcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer}
+.progcard:hover{border-color:var(--primary)}
+.seg{display:inline-flex;gap:4px;flex-wrap:wrap}
+.seg button{border-radius:999px}
+.seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+textarea.mono{font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.importprev{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+.importprev th,.importprev td{border:1px solid var(--line);padding:6px 8px;text-align:left}
+.importprev tr.prob td{background:#FFF4E0}
+.importprev tr.skip td{opacity:.5;text-decoration:line-through}
+.checkline{display:flex;gap:8px;align-items:baseline;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff}
+.checkline.bad{background:var(--bad-bg);border-color:var(--bad-border)}
+.checkline.warn{background:var(--warn-bg);border-color:var(--warn-border)}
+.kv{display:grid;grid-template-columns:160px 1fr;gap:6px 12px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.pillbtn{border-radius:999px;padding:6px 12px;font-size:13px}
+select.inline{min-height:36px;padding:6px 8px}
+input.inline{min-height:36px;padding:6px 8px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span class="brand">Quixera · Skill Library Builder</span>
+  <span class="demobadge">Working builder</span>
+  <select id="screenSel" aria-label="Go to screen" onchange="goScreen(+this.value)"></select>
+  <span style="flex:1"></span>
+  <span class="persona" role="group" aria-label="Persona">
+    <button id="personaAdmin" class="on" onclick="setPersona('admin')">Admin</button>
+    <button id="personaCoach" onclick="setPersona('coach')">Coach</button>
+  </span>
+  <button id="guideToggle" onclick="toggleGuide()" aria-pressed="false">Show guidance notes</button>
+  <button onclick="document.getElementById('keysModal').style.display='block'" aria-label="Keyboard shortcuts">?</button>
+</header>
+<div id="guideBar" class="guide" style="display:none"></div>
+<nav class="appnav" aria-label="Admin navigation">
+<div class="cap">Quixera admin</div>
+<a href="#" onclick="return false">Dashboard</a>
+<a href="#" onclick="return false">People</a>
+<a href="#" onclick="return false">Schedule</a>
+<a href="#" onclick="return false">Academy</a>
+<a href="#" onclick="goScreen(9);return false">Programs</a>
+<a href="#" class="on" onclick="goScreen(1);return false">Skill Library</a>
+<a href="#" onclick="return false">Waitlist</a>
+<a href="#" onclick="return false">Inquiries</a>
+<a href="#" onclick="return false">Leads</a>
+<a href="#" onclick="return false">Memberships</a>
+<a href="#" onclick="return false">Memberships &amp; Packages</a>
+<a href="#" onclick="return false">Events</a>
+<a href="#" onclick="return false">Facilities</a>
+<a href="#" onclick="return false">Bookings</a>
+<a href="#" onclick="return false">Inbox</a>
+<a href="#" onclick="return false">Finance</a>
+<a href="#" onclick="return false">Insights</a>
+<a href="#" onclick="goScreen(6);return false">Settings</a>
+<a href="#" onclick="return false">Help &amp; Legal</a>
+</nav>
+<main class="wrap">
+<div class="databar">
+  <span><b>Your workspace</b> · saved in this browser only</span>
+  <span class="muted small" id="dataMeta"></span>
+  <span class="sp"></span>
+  <button class="mini" onclick="exportJSON()">Export workspace (JSON)</button>
+  <button class="mini" onclick="document.getElementById('importFile').click()">Import workspace</button>
+  <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importJSONFile(event)">
+  <button class="mini danger" onclick="resetBlank()">Reset to blank</button>
+</div>
+<section class="screen" id="scr-0"></section>
+<section class="screen" id="scr-1"></section>
+<section class="screen" id="scr-2"></section>
+<section class="screen" id="scr-3"></section>
+<section class="screen" id="scr-4"></section>
+<section class="screen" id="scr-5"></section>
+<section class="screen" id="scr-6"></section>
+<section class="screen" id="scr-7"></section>
+<section class="screen" id="scr-8"></section>
+<section class="screen" id="scr-9"></section>
+<section class="screen" id="scr-10"></section>
+<section class="screen" id="scr-11"></section>
+<footer>
+  <p>Skill Library Builder — a working rebuild of the Skill Library redesign (Nov 11, 2026, 62-row Excel review). Starts completely blank; everything you see is either typed by you or from a template or import you chose. Guided tour with sample data: <a href="https://apatel85.github.io/Dashboards/SkillLibrary/">Skill Library — Redesign Demo</a>. Demo builder: not the live app. Never touches the live Quixera app.</p>
+</footer>
+</main>
+<div id="keysModal" class="modal">
+  <div class="modalcard">
+    <h3>Keyboard shortcuts</h3>
+    <p><span class="kbd">/</span> Search · <span class="kbd">J</span> / <span class="kbd">K</span> Previous / next sub-skill · <span class="kbd">N</span> New sub-skill · <span class="kbd">F2</span> Rename · <span class="kbd">?</span> This list · <span class="kbd">Esc</span> Back / close</p>
+    <p style="text-align:right"><button onclick="document.getElementById('keysModal').style.display='none'">Close</button></p>
+  </div>
+</div>
+<div id="modalHost"></div>
+<div id="toast" role="status"></div>
+<script>
+/* ================= Skill Library Builder — working app =================
+   Starts completely blank. All data lives in localStorage (key below).
+   Templates and imports only add data when the user explicitly picks them. */
+var LS_KEY = "skillLibraryBuilder-v1";
+function uid(){return "id"+Date.now().toString(36)+Math.floor(Math.random()*1296).toString(36)}
+function $(s){return document.querySelector(s)}
+function esc(x){return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function toast(msg){var t=$("#toast");t.textContent=msg;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(function(){t.style.display="none"},3400)}
+function clone(o){return JSON.parse(JSON.stringify(o))}
+
+/* ---------- sport + pathway presets (Excel rows 36-38, 53) ---------- */
+var SPORTS = ["Cricket","Football","Tennis","Swimming","Martial arts","Other"];
+var SPORT_CODE = {Cricket:"CRI",Football:"FTB",Tennis:"TEN",Swimming:"SWM","Martial arts":"MAR",Other:"OTH"};
+var PATHWAY_PRESETS = {
+  Cricket:{shape:"age-level",levels:[{name:"White",color:"#9AA5B1"},{name:"Silver",color:"#8E9AAF"},{name:"Gold",color:"#C9A227"},{name:"Purple",color:"#6C4AB6"}],ages:["U9","U10","U11","U12","U13","U14","U15","U16","U17","U18","Adult"],ageRules:{},cutoff:"Sep 1",movingUp:{complete:"coach",ageMove:"first"}},
+  Football:{shape:"age-level",levels:[{name:"Foundation",color:"#9AA5B1"},{name:"Development",color:"#8E9AAF"},{name:"Advanced",color:"#C9A227"}],ages:["U7","U8","U9","U10","U11","U12","U13","U14","U15","U16","U17","U18","Adult"],ageRules:{},cutoff:"Sep 1",movingUp:{complete:"coach",ageMove:"first"}},
+  Tennis:{shape:"levels",levels:[{name:"Red",color:"#D64541"},{name:"Orange",color:"#E8833A"},{name:"Green",color:"#2E8B57"},{name:"Yellow",color:"#C9A227"}],ages:[],ageRules:{},cutoff:"",movingUp:{complete:"coach",ageMove:"keep"}},
+  Swimming:{shape:"levels",levels:[{name:"Stage 1",color:"#0D7C66"},{name:"Stage 2",color:"#0D7C66"},{name:"Stage 3",color:"#0D7C66"},{name:"Stage 4",color:"#0D7C66"},{name:"Stage 5",color:"#0D7C66"},{name:"Stage 6",color:"#0D7C66"},{name:"Stage 7",color:"#0D7C66"}],ages:[],ageRules:{},cutoff:"",movingUp:{complete:"coach",ageMove:"keep"}},
+  "Martial arts":{shape:"levels",levels:[{name:"White belt",color:"#9AA5B1"},{name:"Yellow belt",color:"#C9A227"},{name:"Orange belt",color:"#E8833A"},{name:"Green belt",color:"#2E8B57"},{name:"Blue belt",color:"#2B4C7E"},{name:"Brown belt",color:"#7A4A21"},{name:"Black belt",color:"#1A2B26"}],ages:[],ageRules:{},cutoff:"",movingUp:{complete:"coach",ageMove:"keep"}},
+  Other:{shape:"levels",levels:[{name:"Level 1",color:"#0D7C66"},{name:"Level 2",color:"#0D7C66"},{name:"Level 3",color:"#0D7C66"}],ages:[],ageRules:{},cutoff:"",movingUp:{complete:"coach",ageMove:"keep"}}
+};
+function pathwayFor(sport){ return state.pathways[sport] || null }
+function ensurePathway(sport){
+  if(!state.pathways[sport]) state.pathways[sport]=clone(PATHWAY_PRESETS[sport]||PATHWAY_PRESETS.Other);
+  return state.pathways[sport];
+}
+/* Stage options a stage picker shows for a sport. Age+level shape: every age x level. */
+function stageOptions(sport){
+  var p=pathwayFor(sport)||PATHWAY_PRESETS[sport]||PATHWAY_PRESETS.Other;
+  if(p.shape==="levels") return p.levels.map(function(l){return l.name});
+  if(p.shape==="ages") return p.ages.slice();
+  var out=[];
+  p.ages.forEach(function(a){p.levels.forEach(function(l){out.push(a+" "+l.name)})});
+  return out;
+}
+function stageLabel(sport){
+  var p=pathwayFor(sport)||PATHWAY_PRESETS[sport]||PATHWAY_PRESETS.Other;
+  if(p.shape==="levels") return "stage";
+  if(p.shape==="ages") return "age group";
+  return "age group and skill level";
+}
+function pathwaySummary(sport){
+  var p=pathwayFor(sport); if(!p) return "No pathway yet — set one up in Academy settings";
+  var parts=[];
+  if(p.shape==="age-level") parts.push(p.ages.join(", ")+" × "+p.levels.map(function(l){return l.name}).join(", "));
+  if(p.shape==="levels") parts.push(p.levels.map(function(l){return l.name}).join(", "));
+  if(p.shape==="ages") parts.push(p.ages.join(", "));
+  if(p.cutoff) parts.push("Cut-off "+p.cutoff);
+  return parts.join(" · ");
+}
+
+/* ---------- state ---------- */
+function blankState(){
+  return {v:1, libraries:[], pathways:{}, programs:[], persona:"admin", coachStage:{}, ui:{screen:0, lib:null, sub:null, ltab:"skills", lview:"tree", lstatus:"all", stageFilter:"", q:"", expanded:{}, progTab:"running", progId:null, editSec:"details"}};
+}
+var state = blankState();
+function loadState(){
+  try{var raw=localStorage.getItem(LS_KEY); if(raw){var s=JSON.parse(raw); if(s&&s.v===1){state=s; return;}}}catch(e){}
+}
+function saveState(){
+  try{localStorage.setItem(LS_KEY, JSON.stringify(state));}catch(e){}
+  var m=$("#dataMeta"); if(m){var n=state.libraries.length, p=state.programs.length, s=state.libraries.reduce(function(a,l){return a+countSubs(l)},0); m.textContent=n+" librar"+(n===1?"y":"ies")+" · "+s+" sub-skills · "+p+" program"+(p===1?"":"s");}
+}
+function resetBlank(){
+  if(!confirm("Reset to blank? This deletes every library, program, pathway and suggestion in this browser. Export first if you want to keep a copy.")) return;
+  state=blankState(); saveState(); goScreen(0); renderAll(); toast("Workspace reset — completely blank.");
+}
+function exportJSON(){
+  var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="skill-library-builder-workspace.json"; a.click(); setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
+  toast("Workspace exported as JSON.");
+}
+function importJSONFile(ev){
+  var f=ev.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){ try{var s=JSON.parse(r.result); if(!s||s.v!==1||!Array.isArray(s.libraries)) throw 0;
+    if(!confirm("Replace the current workspace with this file? Your current libraries and programs will be replaced.")) return;
+    state=s; saveState(); goScreen(0); renderAll(); toast("Workspace imported.");
+  }catch(e){ alert("That file is not a Skill Library Builder workspace. Nothing was changed."); } };
+  r.readAsText(f); ev.target.value="";
+}
+
+/* ---------- library model ---------- */
+function newLibrary(sport, name, scope){
+  return {id:uid(), sport:sport, name:name||(sport+" Library"), scope:scope||"sport", origin:"Built by your academy",
+    desc:"", version:0, published:false, draftChanges:[], versions:[], areas:[], drills:[], editors:[], suggestions:[],
+    archived:false, created:new Date().toISOString().slice(0,10)};
+}
+function libById(id){return state.libraries.find(function(l){return l.id===id})||null}
+function countSubs(lib){return lib.areas.reduce(function(a,ar){return a+ar.families.reduce(function(b,f){return b+f.subs.length},0)},0)}
+function allSubs(lib){
+  var out=[];
+  lib.areas.forEach(function(ar){ar.families.forEach(function(f){f.subs.forEach(function(s){out.push({area:ar, fam:f, sub:s})})})});
+  return out;
+}
+function findSub(lib, subId){
+  var r=null; allSubs(lib).forEach(function(x){if(x.sub.id===subId) r=x});
+  return r;
+}
+function subById(lib, subId){var r=findSub(lib,subId); return r?r.sub:null}
+function newSub(lib, areaId, famId, name){
+  return {id:uid(), libId:lib.id, areaId:areaId, famId:famId, name:name||"", code:"", autoCode:true,
+    buildsOn:null, points:[], ican:"", stages:[], drills:[], homework:[], restrictions:{notBefore:"", limit:"", equipment:""},
+    allStages:false, retired:false, isNew:true, changed:false, was:null};
+}
+function autoCode(lib, sub){
+  var ar=lib.areas.find(function(a){return a.id===sub.areaId});
+  var fam=ar?ar.families.find(function(f){return f.id===sub.famId}):null;
+  var pre=(SPORT_CODE[lib.sport]||"OTH");
+  var a=(ar?ar.name.replace(/[^A-Za-z]/g,"").slice(0,3).toUpperCase():"GEN");
+  var f=(fam?fam.name.replace(/[^A-Za-z]/g,"").slice(0,3).toUpperCase():"GEN");
+  var n=allSubs(lib).length+1; var code;
+  do{ code=pre+"-"+a+"-"+f+"-"+String(n).padStart(2,"0"); n++; }while(allSubs(lib).some(function(x){return x.sub.code===code}));
+  return code;
+}
+function codeTaken(lib, code, exceptId){
+  code=(code||"").trim().toLowerCase(); if(!code) return false;
+  return allSubs(lib).some(function(x){return x.sub.id!==exceptId && (x.sub.code||"").trim().toLowerCase()===code});
+}
+function markChanged(lib, kind, target, detail, was){
+  lib.draftChanges.push({kind:kind, target:target, detail:detail||"", was:was||null, at:new Date().toISOString().slice(0,10)});
+}
+function completeness(lib){
+  var subs=allSubs(lib); var total=subs.length;
+  var staged=subs.filter(function(x){return x.sub.allStages||x.sub.stages.length>0}).length;
+  var assessed=subs.filter(function(x){return x.sub.stages.some(function(s){return s.role==="Assessed"})}).length;
+  var drilled=subs.filter(function(x){return x.sub.drills.length>0}).length;
+  return {total:total, staged:staged, assessed:assessed, drilled:drilled};
+}
+function areaCompleteness(lib, area){
+  var subs=[]; area.families.forEach(function(f){f.subs.forEach(function(s){subs.push(s)})});
+  return {total:subs.length,
+    staged:subs.filter(function(s){return s.allStages||s.stages.length>0}).length,
+    assessed:subs.filter(function(s){return s.stages.some(function(x){return x.role==="Assessed"})}).length,
+    drilled:subs.filter(function(s){return s.drills.length>0}).length};
+}
+function stageMatches(sub, stage){
+  if(!stage) return true;
+  if(sub.allStages) return true;
+  return sub.stages.some(function(x){return x.stage===stage || (x.stage||"").indexOf(stage.split(" ")[0])===0});
+}
+function subStageChips(sub){
+  if(sub.allStages) return '<span class="chip grey">All stages</span>';
+  var rows=(sub.stages||[]).slice(0,3).map(function(x){
+    return '<span class="chip'+(x.role==="Assessed"?" solid":"")+'">'+esc(x.stage)+" · "+esc(x.role)+"</span>";
+  }).join("");
+  if((sub.stages||[]).length>3) rows+='<span class="chip grey">+'+(sub.stages.length-3)+"</span>";
+  return rows||'<span class="badge warn">No assessed stage</span>';
+}
+function drillById(lib, id){return lib.drills.find(function(d){return d.id===id})||null}
+function drillUseCount(lib, id){
+  var n=0; allSubs(lib).forEach(function(x){if(x.sub.drills.some(function(d){return d.drillId===id})) n++});
+  return n;
+}
+function newDrill(lib, name){
+  return {id:uid(), code:"D"+String(lib.drills.length+1).padStart(2,"0"), name:name||"", minutes:10,
+    format:"Pairs", type:"Technical practice", area:"", equip:"", how:"", mediaName:"", safety:"",
+    space:"", group:"", ratio:"", points:[], easier:"", harder:"", alsoHomework:false};
+}
+
+/* ---------- explicit templates (only when picked) ---------- */
+var TEMPLATES = {
+  Cricket:{sport:"Cricket", areas:[{name:"Batting", type:"Technical", families:[{name:"Defense", subs:[{
+    name:"Forward defense", code:"CRI-BAT-DEF-01",
+    stages:[{stage:"U9 White", role:"Introduce", check:"", pass:"", scoring:"", points:""},
+            {stage:"U11 Silver", role:"Assessed", check:"Block 10 dropped balls into the safe zone", pass:"7 of 10 clean blocks, shape held", scoring:"Count out of N", points:""}],
+    points:["Head still, eyes level","Front elbow high","Bat and pad together"],
+    ican:"I can block a straight ball safely",
+    drills:[{name:"Pairs cricket", minutes:20, format:"Pairs", type:"Game or match play", area:"Batting", equip:"1 bat, 1 ball, 2 sets of stumps", how:"Pairs take turns batting and bowling in a lane; rotate every 6 balls.", safety:"Helmets on for hard ball."}],
+    homework:[{title:"Wall blocking", text:"Against a wall, take your stance and block 15 tennis balls back with a straight bat. Ask a parent to check your grip.", freq:"After each session"}]
+  }]}]}]},
+  Swimming:{sport:"Swimming", areas:[{name:"Strokes", type:"Strand", families:[{name:"Freestyle", subs:[{
+    name:"Push and glide on back", code:"SWM-STR-FRE-01",
+    stages:[{stage:"Stage 2", role:"Assessed", check:"Push and glide on back for 5 seconds", pass:"5 seconds without help", scoring:"Pass / not yet", points:""},
+            {stage:"Stage 3", role:"Revisit", check:"", pass:"", scoring:"", points:""}],
+    points:["Streamline","Kick gently"],
+    ican:"I can float on my back for 5 seconds without help",
+    drills:[{name:"Float and glide", minutes:10, format:"Pairs", type:"Technical practice", area:"Strokes", equip:"Pool, 1 lane", how:"In pairs, one pushes off the wall and glides on their back while the partner watches.", safety:"Lifeguard present."}],
+    homework:[]
+  }]}]}]}
+};
+function loadTemplate(sport){
+  var t=TEMPLATES[sport]; if(!t) return null;
+  ensurePathway(sport);
+  var lib=newLibrary(sport, sport+" Library", "sport"); lib.origin="Started from a Quixera template";
+  t.areas.forEach(function(ar){
+    var area={id:uid(), name:ar.name, type:ar.type||"", families:[]};
+    ar.families.forEach(function(fm){
+      var fam={id:uid(), name:fm.name, subs:[]};
+      fm.subs.forEach(function(ts){
+        var s=newSub(lib, area.id, fam.id, ts.name);
+        s.code=ts.code; s.autoCode=false;
+        s.stages=clone(ts.stages); s.points=clone(ts.points); s.ican=ts.ican;
+        s.isNew=false;
+        (ts.drills||[]).forEach(function(td){
+          var d=newDrill(lib, td.name); Object.assign(d, td); d.id=uid();
+          lib.drills.push(d); s.drills.push({drillId:d.id, variation:""});
+        });
+        s.homework=clone(ts.homework||[]);
+        fam.subs.push(s);
+      });
+      area.families.push(fam);
+    });
+    lib.areas.push(area);
+  });
+  return lib;
+}
+
+/* ---------- navigation ---------- */
+var SCREENS=[
+ {id:0,name:"0 · Start — build your library",guide:"Start here. Pick how to begin — a template, an import, a copy, or from scratch. Nothing exists until you create it (blank start)."},
+ {id:1,name:"1 · Libraries landing (LB01)",guide:"Row 1: grouped landing that expands · Row 3: one search across library, area, family, sub-skill and drill · Completeness line per skill area."},
+ {id:2,name:"2 · Library page (LB20)",guide:"Row 11: one table for create, edit and view · Row 13: progression matrix with gap cells · Row 32: drill bank as a flat view."},
+ {id:3,name:"3 · Sub-skill page (LB21)",guide:"Row 24: stage map with pass standards · Row 23: Basics → Stage map → Coaching → How it is assessed → Drills → Homework → Restrictions · Done returns to the same place."},
+ {id:4,name:"4 · Create library",guide:"Row 12: shared full-screen shell, slimmed 4 → 3 steps (Start, Skills, Review and publish) · Row 8: import as Upload → Map → Check → Done."},
+ {id:5,name:"5 · Edit mode",guide:"Row 61: change markers — New, Edited with “Was …” and Undo, Removed struck through with Undo · Row 40: publish review dialog."},
+ {id:6,name:"6 · Pathways",guide:"Row 36: one pathway per sport in Academy settings; libraries inherit it read-only · Row 53: moving-up rules marked Later."},
+ {id:7,name:"7 · Coach mobile",guide:"Row 48: coach mobile, one thumb · Row 49: stage selector as the primary control · Row 48: drills first in the sub-skill sheet."},
+ {id:8,name:"8 · Suggestions queue",guide:"Row 45: suggestions queue across libraries · Row 45: two-column review with the approval explainer."},
+ {id:9,name:"9 · Programs",guide:"Program list — Running and Drafts. Programs are built from a library you created."},
+ {id:10,name:"10 · Create program",guide:"3 steps: Basics → Curriculum (stage-filtered from your library) → Review and publish. Row 50: curriculum filters by stage, not just age."},
+ {id:11,name:"11 · Program page",guide:"Program read view: Basics, Curriculum, Sessions. Classes are coming next — class creation is out of v1."}
+];
+function buildNav(){
+  var sel=$("#screenSel");
+  sel.innerHTML=SCREENS.map(function(s){return '<option value="'+s.id+'">'+esc(s.name)+"</option>"}).join("");
+}
+function goScreen(id){
+  state.ui.screen=id; saveState();
+  document.querySelectorAll(".screen").forEach(function(el){el.classList.remove("on")});
+  var el=$("#scr-"+id); if(el) el.classList.add("on");
+  var sel=$("#screenSel"); if(sel) sel.value=String(id);
+  var g=$("#guideBar"); if(g && g.style.display!=="none") g.textContent=SCREENS[id].guide;
+  window.scrollTo(0,0);
+  renderScreen(id);
+}
+function renderScreen(id){
+  if(id===0) renderStart();
+  else if(id===1) renderLanding();
+  else if(id===2) renderLibraryPage();
+  else if(id===3) renderSub();
+  else if(id===4) renderCreate();
+  else if(id===5) renderEdit();
+  else if(id===6) renderPathways();
+  else if(id===7) renderPhone();
+  else if(id===8) renderSugg();
+  else if(id===9) renderPrograms();
+  else if(id===10) renderProgramCreate();
+  else if(id===11) renderProgramPage();
+}
+function renderAll(){ saveState(); renderScreen(state.ui.screen); }
+function toggleGuide(){
+  var bar=$("#guideBar"), btn=$("#guideToggle");
+  if(bar.style.display==="none"){bar.style.display="block"; bar.textContent=SCREENS[state.ui.screen].guide; btn.textContent="Hide guidance notes"; btn.setAttribute("aria-pressed","true");}
+  else{bar.style.display="none"; btn.textContent="Show guidance notes"; btn.setAttribute("aria-pressed","false");}
+}
+function setPersona(p){
+  state.persona=p; saveState();
+  $("#personaAdmin").classList.toggle("on", p==="admin");
+  $("#personaCoach").classList.toggle("on", p==="coach");
+  toast(p==="coach"?"Coach view — you can view and suggest, not edit.":"Admin view — you can edit and publish.");
+  renderScreen(state.ui.screen);
+}
+
+/* ---------- screen 0 · Start ---------- */
+function renderStart(){
+  var hasLibs=state.libraries.length>0;
+  var tplBtns=Object.keys(TEMPLATES).map(function(sp){
+    return '<button class="startcard" onclick="startTemplate(\''+sp+'\')"><b>'+sp+' template</b><br><span class="small muted">'+(sp==="Cricket"?"Batting › Defense › Forward defense, 1 drill":"Strokes › Freestyle › Push and glide on back, 1 drill")+'<br>Loads only when you pick it.</span></button>';
+  }).join("");
+  $("#scr-0").innerHTML=
+  '<h1>Build your library</h1>'+
+  '<p class="muted">One Library per sport, built like Programs. Start completely blank — nothing exists yet until you create it. A library is the coaching syllabus for one sport: its skill areas and skill families, and the sub-skills with their drills and homework, organised by the stages in your Academy pathway.</p>'+
+  (hasLibs?'':'<div class="empty"><h2>Nothing here yet</h2><p class="muted">No libraries, no programs, no sub-skills. Pick a way to start below — or take the guided tour first to see what the finished shape looks like.</p></div>')+
+  '<div class="startgrid">'+
+    '<button class="startcard" onclick="document.getElementById(\'tplPick\').style.display=document.getElementById(\'tplPick\').style.display===\'none\'?\'block\':\'none\'"><b>Start from a Quixera template</b><br><span class="small muted">A small starter library you can change. Nothing loads until you pick one.</span></button>'+
+    '<button class="startcard" onclick="goCreate(\'import\')"><b>Import from a spreadsheet</b><br><span class="small muted">Paste rows: Skill area, Skill family, Sub-skill, Stage. Preview and fix problems before anything is created.</span></button>'+
+    '<button class="startcard" '+(hasLibs?'onclick="goCreate(\'copy\')"':'disabled title="No library exists yet to copy"')+'><b>Copy one of your libraries</b><br><span class="small muted">'+(hasLibs?"Start a new sport from a library you already built.":"No library exists yet to copy.")+'</span></button>'+
+    '<button class="startcard" onclick="goCreate(\'scratch\')"><b>Start from scratch</b><br><span class="small muted">Empty structure — you add the skill areas, families and sub-skills yourself.</span></button>'+
+  '</div>'+
+  '<div id="tplPick" class="card" style="display:none;margin-top:16px"><h3>Pick a template</h3><p class="small muted">Only the template you pick is loaded. You can edit or delete everything it adds.</p><div class="startgrid">'+tplBtns+'</div></div>'+
+  '<div class="card"><h3>What you can do here</h3><ul>'+
+  '<li><b>Build a library</b> — skill areas, families, sub-skills with a Stage map and an assessment definition for each assessed stage, plus a shared drill bank.</li>'+
+  '<li><b>Build a program</b> — pick a library, pick the stage, and choose the sub-skills for the programme. Classes come next; they are not in this version.</li>'+
+  '<li><b>Set up pathways</b> — one pathway per sport in Academy settings: levels, age groups, cut-off date, and moving-up rules.</li>'+
+  '<li><b>Coach view</b> — switch to Coach at the top to see the library the way a coach sees it on their phone, and suggest changes.</li></ul>'+
+  '<p><a href="https://apatel85.github.io/Dashboards/SkillLibrary/" target="_blank" rel="noopener">See the guided tour with sample data ›</a> <span class="small muted">(the canned mockup — it shows the finished shape with example data; this builder starts blank)</span></p></div>'+
+  (hasLibs?'<div class="card"><h3>Your libraries</h3>'+state.libraries.map(function(l){return '<p><button class="ghost" onclick="openLibrary(\''+l.id+'\')">'+esc(l.name)+'</button> <span class="small muted">'+esc(l.sport)+' · '+countSubs(l)+' sub-skills · '+(l.published?"Published v"+l.version:"Draft")+'</span></p>'}).join("")+'</div>':"");
+}
+function startTemplate(sport){
+  if(state.libraries.some(function(l){return l.sport===sport})){ toast("A "+sport+" library already exists — open it from the landing page instead."); return; }
+  var lib=loadTemplate(sport);
+  if(!lib){toast("No template for that sport yet."); return;}
+  state.libraries.push(lib); state.ui.lib=lib.id; saveState();
+  toast(sport+" template loaded — 1 skill area, 1 family, 1 sub-skill, 1 drill. Change anything.");
+  openLibrary(lib.id);
+}
+
+/* ---------- screen 1 · Landing LB01 ---------- */
+var landingTab="all";
+function renderLanding(){
+  var q=(state.ui.q||"").toLowerCase();
+  var libs=state.libraries.filter(function(l){
+    if(landingTab==="pub"&&!l.published) return false;
+    if(landingTab==="draft"&&l.published&&!l.draftChanges.length) return false;
+    if(landingTab==="arch"&&!l.archived) return false;
+    if(landingTab!=="arch"&&l.archived) return false;
+    if(!q) return true;
+    var hay=[l.name,l.sport,l.origin].concat(allSubs(l).map(function(x){return x.sub.name+" "+x.fam.name+" "+x.area.name})).concat(l.drills.map(function(d){return d.name})).join(" ").toLowerCase();
+    return hay.indexOf(q)>-1;
+  });
+  var waiting=state.libraries.reduce(function(a,l){return a+l.suggestions.filter(function(s){return s.status==="Waiting"}).length},0);
+  var html='<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><h2 style="margin:0">Skill Library</h2><span style="flex:1"></span>'+
+    '<button onclick="goScreen(8)">Suggestions'+(waiting?' <span class="badge warn">'+waiting+"</span>":"")+'</button>'+
+    '<button class="primary" onclick="goCreate(\'scratch\')">Create Library</button></div>'+
+    '<p class="muted">Define the skills you coach in each sport. One library per sport; shared libraries sit below.</p>'+
+    '<div class="tabs" role="tablist" aria-label="Library status">'+
+    [["all","All"],["pub","Published"],["draft","Draft"],["arch","Archived"]].map(function(t){return '<button class="'+(landingTab===t[0]?"on":"")+'" onclick="landingTab=\''+t[0]+'\';renderLanding()">'+t[1]+"</button>"}).join("")+'</div>'+
+    '<div class="toolbar"><input type="search" placeholder="Search libraries, skill areas, families, sub-skills and drills…" aria-label="Search libraries" value="'+esc(state.ui.q||"")+'" oninput="state.ui.q=this.value;renderLanding();var e=document.querySelector(\'#scr-1 input[type=search]\');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length)}"></div>';
+  if(!state.libraries.length){
+    html+='<div class="empty"><h2>Build your first library</h2><p class="muted">Start from a Quixera template, import a spreadsheet, or build from scratch. A library holds what you coach for one sport: its skill areas and skill families, and the sub-skills with their drills and homework, organised by stage.</p><p><button class="primary" onclick="goScreen(0)">Choose how to start</button></p></div>';
+  } else if(!libs.length){
+    html+='<div class="empty"><h2>No libraries match</h2><p class="muted">Try a different search or status tab.</p></div>';
+  } else {
+    html+=libs.map(function(l){
+      var c=completeness(l); var exp=!!state.ui.expanded[l.id];
+      var subRows=exp?l.areas.map(function(ar){var ac=areaCompleteness(l,ar);
+        return '<div class="subrow" onclick="openLibraryAt(\''+l.id+'\',\''+ar.id+'\')"><span><b>'+esc(ar.name)+'</b>'+(ar.type?' <span class="small muted">'+esc(ar.type)+"</span>":"")+(ar.changed?'<span class="bluedot" title="Has unpublished changes"></span>':"")+'</span><span class="comp">'+ac.total+' sub-skills · Stage set on '+ac.staged+' of '+ac.total+' · Assessment on '+ac.assessed+' of '+ac.total+' · Drills on '+ac.drilled+" of "+ac.total+"</span></div>"}).join(""):"";
+      return '<div class="librow"><div class="libhead" onclick="toggleLibRow(\''+l.id+'\')">'+
+        '<span class="mono">'+esc((l.sport||"?").slice(0,2).toUpperCase())+"</span>"+
+        '<span style="flex:1;min-width:200px"><b>'+esc(l.name)+"</b> "+(l.scope==="shared"?'<span class="pill">Shared · all sports</span>':"")+(l.archived?' <span class="badge">Archived</span>':"")+'<div class="meta"><span>'+esc(l.origin)+"</span><span>"+(l.published?"Published v"+l.version:"Not published yet")+(l.draftChanges.length?" · Draft v"+(l.version+1)+" · "+l.draftChanges.length+" change"+(l.draftChanges.length===1?"":"s"):"")+"</span><span>"+esc(pathwaySummary(l.sport))+"</span><span>"+countSubs(l)+" sub-skills · "+l.drills.length+" drills · "+l.programs+" program"+(l.programs===1?"":"s")+"</span><span>Editor: "+esc(l.editors[0]||"You")+"</span><span>"+l.suggestions.filter(function(s){return s.status==="Waiting"}).length+" waiting suggestions</span></div></span>"+
+        '<span class="muted">'+(exp?"▾":"▸")+"</span></div>"+
+        (exp?'<div class="libbody">'+subRows+'<p style="margin-top:10px"><button class="primary" onclick="openLibrary(\''+l.id+'\')">Open library</button> <button onclick="goEdit(\''+l.id+'\')">Edit library</button></p></div>':"")+"</div>";
+    }).join("");
+    var shared=state.libraries.filter(function(l){return l.scope==="shared"});
+    if(shared.length){
+      html+='<h3 style="margin-top:24px">Shared libraries</h3>'+shared.map(function(l){return '<p><button class="ghost" onclick="openLibrary(\''+l.id+'\')">'+esc(l.name)+'</button> <span class="small muted">'+countSubs(l)+' sub-skills</span></p>'}).join("");
+    }
+  }
+  $("#scr-1").innerHTML=html;
+}
+function toggleLibRow(id){ state.ui.expanded[id]=!state.ui.expanded[id]; saveState(); renderLanding(); }
+function openLibrary(id){ state.ui.lib=id; state.ui.ltab="skills"; state.ui.lview="tree"; state.ui.stageFilter=""; state.ui.q=""; saveState(); goScreen(2); }
+function openLibraryAt(id, areaId){ openLibrary(id); setTimeout(function(){var el=document.querySelector('[data-area="'+areaId+'"]'); if(el) el.scrollIntoView({behavior:"smooth",block:"start"})},80); }
+function goEdit(id){ if(id){state.ui.lib=id;} state.ui.editSec="details"; saveState(); goScreen(5); }
+
+/* ---------- screen 2 · Library page LB20 ---------- */
+function curLib(){ return libById(state.ui.lib) }
+function renderLibraryPage(){
+  var lib=curLib();
+  if(!lib){ $("#scr-2").innerHTML='<div class="empty"><h2>No library open</h2><p class="muted">Pick a library from the landing page, or create one.</p><p><button class="primary" onclick="goScreen(1)">Go to libraries</button></p></div>'; return; }
+  var isCoach=state.persona==="coach";
+  var waiting=lib.suggestions.filter(function(s){return s.status==="Waiting"}).length;
+  var stageOpts=stageOptions(lib.sport);
+  var html='<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><h2 style="margin:0">'+esc(lib.name)+'</h2>'+(lib.scope==="shared"?'<span class="pill">Shared · all sports</span>':"")+'<span style="flex:1"></span>'+
+    (isCoach?'<button class="primary" onclick="openSugForm(\''+lib.id+'\',null)">Suggest a change</button>':'<button class="primary" onclick="goEdit(\''+lib.id+'\')">Edit library</button>')+"</div>"+
+    '<p class="muted" style="margin-top:6px">'+esc(lib.desc||"No description yet.")+"</p>"+
+    '<div class="verbar"><span class="pill">'+(lib.published?"Published · v"+lib.version:"Not published yet")+"</span>"+
+    (lib.draftChanges.length?'<span class="pill" style="background:#FFF4E0;color:var(--amber)">Draft v'+(lib.version+1)+" · "+lib.draftChanges.length+" change"+(lib.draftChanges.length===1?"":"s")+' · <a href="#" onclick="goEdit(\''+lib.id+'\');return false">Continue editing</a></span>':"")+
+    '<span class="small muted">Editor: '+esc(lib.editors[0]||"You")+'</span><span class="small muted" style="margin-left:auto">Saved in this browser</span></div>'+
+    '<div class="tabs" role="tablist" aria-label="Library sections">'+
+    [["skills","Skills"],["sugg","Suggestions"+(waiting?" "+waiting:"")],["access","Access"],["vers","Versions"]].map(function(t){return '<button class="'+(state.ui.ltab===t[0]?"on":"")+'" onclick="state.ui.ltab=\''+t[0]+'\';saveState();renderLibraryPage()">'+t[1]+"</button>"}).join("")+"</div>";
+  if(state.ui.ltab==="skills"){
+    html+='<div class="toolbar"><input type="search" id="treeSearch" placeholder="Search sub-skills and drills…" aria-label="Search the library" value="'+esc(state.ui.q||"")+'" oninput="state.ui.q=this.value;filterTree()">'+
+    '<select id="stageFilter" aria-label="Stage filter" onchange="state.ui.stageFilter=this.value;saveState();filterTree()"><option value="">All stages</option>'+stageOpts.map(function(s){return '<option'+(state.ui.stageFilter===s?" selected":"")+">"+esc(s)+"</option>"}).join("")+"</select>"+
+    '<span style="flex:1"></span>'+
+    '<div class="tabs" style="margin:0">'+[["all","All"],["nodrill","Needs drills"],["noassess","No assessed stage"],["changed","Changed"],["retired","Retired"]].map(function(t){return '<button class="'+(state.ui.lstatus===t[0]?"on":"")+'" onclick="state.ui.lstatus=\''+t[0]+'\';saveState();renderLibraryPage()">'+t[1]+"</button>"}).join("")+"</div>"+
+    '<div class="tabs" style="margin:0">'+[["tree","Tree"],["prog","Progression"],["drills","Drills"]].map(function(t){return '<button class="'+(state.ui.lview===t[0]?"on":"")+'" onclick="state.ui.lview=\''+t[0]+'\';saveState();renderLibraryPage()">'+t[1]+"</button>"}).join("")+"</div></div>"+
+    '<div id="treeView" style="display:'+(state.ui.lview==="tree"?"block":"none")+'"></div>'+
+    '<div id="progView" style="display:'+(state.ui.lview==="prog"?"block":"none")+'"><p class="small muted">Families by stage. A filled cell shows assessed sub-skills (with introduce/revisit underneath); a gap cell is a stage with nothing yet. Click a gap to add a sub-skill there.</p><div id="matrixBox"></div></div>'+
+    '<div id="drillsView" style="display:'+(state.ui.lview==="drills"?"block":"none")+'"><div class="toolbar"><input type="search" id="drillSearch" placeholder="Search the drill bank…" aria-label="Search drills" oninput="renderDrillsView()"><select id="drillArea" aria-label="Filter by skill area" onchange="renderDrillsView()"><option value="">All skill areas</option>'+lib.areas.map(function(a){return "<option>"+esc(a.name)+"</option>"}).join("")+'</select>'+(isCoach?"":'<button class="primary" onclick="openDrillForm(\''+lib.id+'\',null)">New drill</button>')+'</div><div id="drillList"></div></div>';
+  } else if(state.ui.ltab==="sugg"){
+    html+='<p class="small muted">Suggestions from coaches, waiting for an admin. '+(isCoach?"You are viewing as a coach — suggest a change from a sub-skill or here.":"Review one to see the two-column diff.")+"</p><div id='libSuggList'>"+suggRowsHTML(lib)+"</div>"+
+    (isCoach?'<p><button class="primary" onclick="openSugForm(\''+lib.id+'\',null)">Suggest a change</button></p>':'<p><button onclick="goScreen(8)">Open the full suggestions queue ›</button></p>');
+  } else if(state.ui.ltab==="access"){
+    html+='<div class="card"><h3>Who can use this library</h3>'+
+    '<p><b>All coaches</b> can view and suggest changes. <b>Admins</b> can edit and publish.</p>'+
+    '<p class="small muted">Visibility: <b>All programs</b> — used by '+lib.programs+' program'+(lib.programs===1?"":"s")+'. Coaches see the library in the coach view and in session plans.</p>'+
+    '<h4>Editors</h4>'+(lib.editors.length?lib.editors.map(function(e,i){return '<p>'+esc(e)+(isCoach?"":' <button class="mini danger" onclick="removeEditor(\''+lib.id+'\','+i+')">Remove</button>')+"</p>"}).join(""):'<p class="muted">No editor set yet — you are the editor.</p>')+
+    (isCoach?"":'<div class="fieldrow"><div class="field"><label for="newEd">Add editor</label><input id="newEd" placeholder="Coach name, e.g. Rohan Gupta"></div><button class="primary" onclick="addEditor(\''+lib.id+'\')">Add editor</button></div>')+
+    '</div>';
+  } else if(state.ui.ltab==="vers"){
+    html+='<div class="card"><h3>Versions</h3>'+
+    (lib.versions.length||lib.published?'<table><thead><tr><th>Version</th><th>Published on</th><th>Published by</th><th>What changed</th><th>Programs on this version</th><th></th></tr></thead><tbody>'+
+    (lib.draftChanges.length?'<tr><td><span class="pill">Draft v'+(lib.version+1)+'</span></td><td>—</td><td>You</td><td>'+lib.draftChanges.length+' change'+(lib.draftChanges.length===1?"":"s")+'</td><td>—</td><td></td></tr>':"")+
+    lib.versions.slice().reverse().map(function(v){return '<tr><td><b>v'+v.v+'</b></td><td>'+esc(v.date)+'</td><td>'+esc(v.by)+'</td><td>'+esc(v.note||"")+'</td><td>'+v.programs+'</td><td><button class="mini" onclick="viewVersion(\''+lib.id+'\','+v.v+')">View this version</button></td></tr>'}).join("")+
+    '</tbody></table>':'<p class="muted">No published version yet. Publish from Review and publish to create v1.</p>')+
+    '<p class="small muted">Programs keep the published version while you edit. When you publish, running programs get an update notice to apply it or keep the old version. Sessions already taught never change.</p></div>';
+  }
+  $("#scr-2").innerHTML=html;
+  if(state.ui.ltab==="skills"){
+    renderTree();
+    if(state.ui.lview==="prog") renderMatrix();
+    if(state.ui.lview==="drills") renderDrillsView();
+  }
+}
+function suggRowsHTML(lib){
+  if(!lib.suggestions.length) return '<div class="empty"><h3>No suggestions yet</h3><p class="muted">Coaches suggest changes from the coach view. Nothing is waiting.</p></div>';
+  return lib.suggestions.map(function(s){
+    return '<div class="sugrow"><span style="flex:1"><b>'+esc(s.type)+'</b> · '+esc(s.item)+'<br><span class="small muted">'+esc(s.coach)+' · '+esc(s.from)+' · '+esc(s.status)+'</span><br><span class="small">'+esc(s.note)+'</span></span>'+
+    (s.status==="Waiting"?'<button class="mini" onclick="openSugReview(\''+lib.id+'\',\''+s.id+'\')">Review</button>':'<span class="badge">'+esc(s.status)+'</span>')+"</div>";
+  }).join("");
+}
+function filterTree(){ var lib=curLib(); if(lib) renderTree(); }
+function treeFiltered(lib){
+  var q=(state.ui.q||"").toLowerCase(); var st=state.ui.lstatus; var stage=state.ui.stageFilter;
+  return allSubs(lib).filter(function(x){
+    var s=x.sub;
+    if(s.retired && st!=="retired") return false;
+    if(!s.retired && st==="retired") return false;
+    if(st==="nodrill" && s.drills.length>0) return false;
+    if(st==="noassess" && (s.allStages||s.stages.some(function(r){return r.role==="Assessed"}))) return false;
+    if(st==="changed" && !s.changed && !s.isNew) return false;
+    if(stage && !stageMatches(s, stage)) return false;
+    if(q){var hay=(s.name+" "+s.code+" "+x.fam.name+" "+x.area.name+" "+s.drills.map(function(d){var dr=drillById(lib,d.drillId);return dr?dr.name:""}).join(" ")).toLowerCase(); if(hay.indexOf(q)<0) return false;}
+    return true;
+  });
+}
+function renderTree(){
+  var lib=curLib(); if(!lib) return;
+  var el=$("#treeView"); if(!el) return;
+  var isCoach=state.persona==="coach";
+  if(!lib.areas.length){
+    el.innerHTML='<div class="empty"><h3>No skill areas yet</h3><p class="muted">Skill areas are the big areas you coach, like Batting or Bowling. Each one holds skill families, like Defense or Scoring Shots, and every sub-skill sits in a family.</p>'+(isCoach?"":'<p><button class="primary" onclick="goEdit(\''+lib.id+'\')">Add your first skill area</button></p>')+"</div>";
+    return;
+  }
+  var vis=treeFiltered(lib);
+  var html='<table><thead><tr><th>Sub-skill</th><th>Code</th><th>Stages</th><th>Drills</th><th>Homework</th><th>Used in</th></tr></thead><tbody>';
+  lib.areas.forEach(function(ar){
+    html+='<tr class="area" data-area="'+ar.id+'"><td colspan="6">'+esc(ar.name)+(ar.type?' <span class="small muted">'+esc(ar.type)+"</span>":"")+(ar.changed?'<span class="bluedot" title="Has unpublished changes"></span>':"")+"</td></tr>";
+    ar.families.forEach(function(fam){
+      html+='<tr class="fam"><td colspan="6" style="padding-left:24px">'+esc(fam.name)+(fam.changed?'<span class="bluedot" title="Has unpublished changes"></span>':"")+"</td></tr>";
+      var subs=fam.subs.filter(function(s){return vis.some(function(v){return v.sub.id===s.id})});
+      if(!subs.length){ html+='<tr><td colspan="6" style="padding-left:40px" class="muted small">No sub-skills match here.</td></tr>'; }
+      subs.forEach(function(s){
+        html+='<tr class="sub'+(s.retired?" strike":"")+'" onclick="openSub(\''+s.id+'\')"><td style="padding-left:40px">'+(s.isNew?'<span class="newtag">New</span> ':"")+(s.changed?'<span class="badge warn">Edited</span> ':"")+esc(s.name)+(s.retired?' <span class="badge">Retired</span>':"")+'</td><td><code>'+esc(s.code||"—")+"</code></td><td>"+subStageChips(s)+"</td><td>"+s.drills.length+"</td><td>"+s.homework.length+"</td><td>"+(s.usedIn?s.usedIn.length:0)+" program"+((s.usedIn?s.usedIn.length:0)===1?"":"s")+"</td></tr>";
+      });
+      if(!isCoach) html+='<tr><td colspan="6" style="padding-left:40px"><input class="inline-add" placeholder="Add a sub-skill to '+esc(fam.name)+'…  (Enter adds it)" aria-label="Add a sub-skill to '+esc(fam.name)+'" onkeydown="inlineAdd(event,this,\''+ar.id+'\',\''+fam.id+'\')" onpaste="pasteAdd(event,this,\''+ar.id+'\',\''+fam.id+'\')"></td></tr>';
+    });
+  });
+  html+="</tbody></table>";
+  if(!isCoach) html+='<p style="margin-top:12px"><button onclick="goEdit(\''+lib.id+'\')">Edit structure — add, rename or reorder areas and families</button> <button onclick="importMoreRows(\''+lib.id+'\')">Import more rows</button></p>';
+  el.innerHTML=html;
+}
+function inlineAdd(e, input, areaId, famId){
+  if(e.key!=="Enter") return;
+  var name=input.value.trim(); if(!name) return;
+  var lib=curLib(); if(!lib) return;
+  var fam=findFam(lib, areaId, famId); if(!fam) return;
+  if(fam.subs.some(function(s){return s.name.toLowerCase()===name.toLowerCase() && !s.retired})){
+    toast("“"+name+"” already exists in "+fam.name+". Open it and add a stage instead."); return;
+  }
+  var s=newSub(lib, areaId, famId, name); s.code=autoCode(lib, s);
+  s.stages=[{stage:stageOptions(lib.sport)[0]||"", role:"Assessed", check:"", pass:"", scoring:"Pass / not yet", points:""}];
+  fam.subs.push(s); markChanged(lib,"added",s.name,"New sub-skill in "+fam.name);
+  saveState(); input.value=""; renderTree(); if(state.ui.screen===4) renderTreeInto("createTree"); toast("“"+name+"” added — it still needs drills. Open it to add a stage map and drills.");
+  openSub(s.id);
+}
+function pasteAdd(e, input, areaId, famId){
+  e.preventDefault();
+  var text=(e.clipboardData||window.clipboardData).getData("text");
+  var lines=text.split(/\r?\n/).map(function(l){return l.trim()}).filter(Boolean);
+  if(lines.length<2){ input.value=text; return; }
+  if(!confirm("Add "+lines.length+" sub-skills to this family?")) return;
+  var lib=curLib(); var fam=findFam(lib, areaId, famId); var added=0;
+  lines.forEach(function(name){
+    if(fam.subs.some(function(s){return s.name.toLowerCase()===name.toLowerCase() && !s.retired})) return;
+    var s=newSub(lib, areaId, famId, name); s.code=autoCode(lib, s);
+    s.stages=[{stage:stageOptions(lib.sport)[0]||"", role:"Assessed", check:"", pass:"", scoring:"Pass / not yet", points:""}];
+    fam.subs.push(s); markChanged(lib,"added",s.name,"New sub-skill in "+fam.name); added++;
+  });
+  saveState(); renderTree(); if(state.ui.screen===4) renderTreeInto("createTree"); toast(added+" sub-skill"+(added===1?"":"s")+" added.");
+}
+function findFam(lib, areaId, famId){
+  var ar=lib.areas.find(function(a){return a.id===areaId}); if(!ar) return null;
+  return ar.families.find(function(f){return f.id===famId})||null;
+}
+function renderMatrix(){
+  var lib=curLib(); if(!lib) return;
+  var stages=stageOptions(lib.sport);
+  var html='<div style="overflow-x:auto"><table class="matrix"><thead><tr><th>Skill family</th>'+stages.map(function(s){return "<th>"+esc(s)+"</th>"}).join("")+"</tr></thead><tbody>";
+  var gaps=0;
+  lib.areas.forEach(function(ar){ar.families.forEach(function(fam){
+    html+="<tr><td>"+esc(ar.name)+" › "+esc(fam.name)+"</td>";
+    stages.forEach(function(st){
+      var atStage=fam.subs.filter(function(s){return !s.retired && s.stages.some(function(r){return r.stage===st && r.role==="Assessed"})});
+      var rev=fam.subs.filter(function(s){return !s.retired && s.stages.some(function(r){return r.stage===st && r.role!=="Assessed"})});
+      if(atStage.length) html+='<td class="filled" onclick="toast(\''+esc(atStage.map(function(s){return s.name}).join(", "))+'\')">'+atStage.length+(rev.length?'<br><span class="tiny muted">+'+rev.length+" revisit</span>":"")+"</td>";
+      else { gaps++; html+='<td class="gap" onclick="matrixGapAdd(\''+ar.id+'\',\''+fam.id+'\',\''+esc(st)+'\')">gap · +</td>'; }
+    });
+    html+="</tr>";
+  })});
+  html+="</tbody></table></div>";
+  var noAssess=allSubs(lib).filter(function(x){return !x.sub.allStages && !x.sub.stages.some(function(r){return r.role==="Assessed"})}).length;
+  html+='<p class="small muted" style="margin-top:8px">'+gaps+" gaps · "+noAssess+" sub-skill"+(noAssess===1?"":"s")+" with no assessment defined. A gap is a warning, never a blocker — you can publish before every stage is filled.</p>";
+  var box=$("#matrixBox"); if(box) box.innerHTML=html;
+}
+function matrixGapAdd(areaId, famId, stage){
+  var lib=curLib(); var fam=findFam(lib, areaId, famId); if(!fam) return;
+  var s=newSub(lib, areaId, famId, ""); s.code=""; 
+  s.stages=[{stage:stage, role:"Assessed", check:"", pass:"", scoring:"Pass / not yet", points:""}];
+  fam.subs.push(s); state.ui.sub=s.id; saveState(); goScreen(3);
+  toast("New sub-skill at "+stage+" — give it a name and a pass standard.");
+}
+function renderDrillsView(){
+  var lib=curLib(); if(!lib) return;
+  var q=(($("#drillSearch")||{}).value||"").toLowerCase();
+  var area=(($("#drillArea")||{}).value||"");
+  var list=lib.drills.filter(function(d){
+    if(area && d.area!==area) return false;
+    if(q && (d.name+" "+d.code).toLowerCase().indexOf(q)<0) return false;
+    return true;
+  });
+  var el=$("#drillList"); if(!el) return;
+  if(!lib.drills.length){ el.innerHTML='<div class="empty"><h3>No drills yet</h3><p class="muted">Drills live in the library’s drill bank and can be linked to many sub-skills. Add the first one from a sub-skill, or here.</p>'+(state.persona==="coach"?"":'<p><button class="primary" onclick="openDrillForm(\''+lib.id+'\',null)">New drill</button></p>')+"</div>"; return; }
+  el.innerHTML=list.map(function(d){
+    return '<div class="drillcard"><b>'+esc(d.name)+'</b> <span class="small muted">'+esc(d.code)+' · '+d.minutes+' min · '+esc(d.format)+' · '+esc(d.type)+'</span><br><span class="small muted">Used by '+drillUseCount(lib,d.id)+' sub-skill'+(drillUseCount(lib,d.id)===1?"":"s")+(d.area?' · '+esc(d.area):"")+'</span><br><span class="small">'+esc(d.how||"")+'</span>'+
+    (state.persona==="coach"?"":' <button class="mini" onclick="openDrillForm(\''+lib.id+'\',\''+d.id+'\')">Edit drill</button>')+"</div>";
+  }).join("") || '<p class="muted">No drills match.</p>';
+}
+function addEditor(libId){
+  var lib=libById(libId); var v=($("#newEd")||{}).value||""; v=v.trim(); if(!v) return;
+  lib.editors.push(v); markChanged(lib,"edited","Access","Added editor "+v); saveState(); renderLibraryPage(); toast(v+" added as an editor.");
+}
+function removeEditor(libId, i){
+  var lib=libById(libId);
+  if(lib.editors.length<=1 && !confirm("Remove the last editor? The library will have no editor until one is added.")) return;
+  var name=lib.editors.splice(i,1)[0]; markChanged(lib,"edited","Access","Removed editor "+name); saveState(); renderLibraryPage(); toast(name+" removed as editor.");
+}
+function viewVersion(libId, v){
+  var lib=libById(libId); var ver=lib.versions.find(function(x){return x.v===v});
+  openModal('<h3>'+esc(lib.name)+' — v'+v+' (read-only)</h3><p class="small muted">Published '+esc(ver.date)+' by '+esc(ver.by)+' · '+ver.programs+' programs on this version</p><p>'+esc(ver.note||"")+'</p><p class="small muted">This is a read-only view of an old version. The current published version is v'+lib.version+'.</p><p style="text-align:right"><button onclick="closeModal()">Close</button></p>');
+}
+
+/* ---------- modal helpers ---------- */
+function openModal(html){ $("#modalHost").innerHTML='<div class="modal" style="display:block"><div class="modalcard">'+html+"</div></div>"; }
+function closeModal(){ $("#modalHost").innerHTML=""; }
+
+/* ---------- screen 3 · Sub-skill page LB21 ---------- */
+function openSub(id){ var lib=curLib(); if(!lib) return; state.ui.sub=id; saveState(); goScreen(3); }
+function curSubCtx(){ var lib=curLib(); if(!lib) return null; var x=findSub(lib, state.ui.sub); return x; }
+function renderSub(){
+  var lib=curLib(); var ctx=curSubCtx();
+  if(!lib||!ctx){ $("#scr-3").innerHTML='<div class="empty"><h2>No sub-skill open</h2><p class="muted">Open a sub-skill from the library page.</p><p><button class="primary" onclick="goScreen(2)">Back to library</button></p></div>'; return; }
+  var s=ctx.sub, area=ctx.area, fam=ctx.fam;
+  var isCoach=state.persona==="coach";
+  var stages=stageOptions(lib.sport);
+  /* outline rail */
+  var outline=lib.areas.map(function(ar){
+    return "<b>"+esc(ar.name)+"</b>"+ar.families.map(function(f){
+      return "<b style='padding-left:12px'>"+esc(f.name)+"</b>"+f.subs.map(function(x){
+        return '<a href="#" class="'+(x.id===s.id?"on":"")+' sub" style="padding-left:24px" onclick="openSub(\''+x.id+'\');return false">'+esc(x.name)+'</a>';
+      }).join("");
+    }).join("");
+  }).join("");
+  /* stage map rows */
+  var stageRows=s.stages.map(function(r,i){
+    var assess=r.role==="Assessed";
+    var inner='<div class="stageRow"><span class="step'+(assess?" on":"")+'">'+esc(r.role)+'</span>'+
+      '<select class="inline" '+(isCoach?"disabled":"")+' onchange="setStageField(\''+s.id+'\','+i+',\'stage\',this.value)">'+
+      (r.stage?"":'<option value="">Pick a '+esc(stageLabel(lib.sport))+'</option>')+
+      stages.map(function(o){return '<option'+(r.stage===o?" selected":"")+">"+esc(o)+"</option>"}).join("")+
+      (r.stage && stages.indexOf(r.stage)<0 ? '<option selected>'+esc(r.stage)+"</option>" : "")+
+      '</select>'+
+      '<select class="inline" '+(isCoach?"disabled":"")+' onchange="setStageField(\''+s.id+'\','+i+',\'role\',this.value)">'+["Assessed","Introduce","Revisit"].map(function(x){return '<option'+(r.role===x?" selected":"")+">"+x+"</option>"}).join("")+"</select>"+
+      (isCoach?"":'<button class="mini danger" onclick="removeStageRow(\''+s.id+'\','+i+')" aria-label="Remove stage row">Remove</button>')+"</div>";
+    if(assess){
+      inner+='<div class="card" style="margin:-4px 0 12px 0"><h4>How it is assessed — '+esc(r.stage)+'</h4>'+
+      '<div class="field"><label>What the coach checks</label><input style="width:100%" value="'+esc(r.check||"")+'" placeholder="e.g. Block 10 dropped balls into the safe zone" '+(isCoach?"disabled":"")+' onchange="setStageField(\''+s.id+'\','+i+',\'check\',this.value)"></div>'+
+      '<div class="field"><label>Pass standard</label><input style="width:100%" value="'+esc(r.pass||"")+'" placeholder="e.g. 7 of 10 clean blocks, shape held" '+(isCoach?"disabled":"")+' onchange="setStageField(\''+s.id+'\','+i+',\'pass\',this.value)"></div>'+
+      '<div class="fieldrow"><div class="field"><label>Scoring type</label><select style="width:100%" '+(isCoach?"disabled":"")+' onchange="setStageField(\''+s.id+'\','+i+',\'scoring\',this.value)">'+["Pass / not yet","Count out of N","Timed or measured","Observed over several sessions","Rating scale"].map(function(x){return '<option'+(r.scoring===x?" selected":"")+">"+x+"</option>"}).join("")+"</select></div>"+
+      '<div class="field"><label>Points (optional)</label><input type="number" min="0" style="width:100%" value="'+esc(r.points||"")+'" '+(isCoach?"disabled":"")+' onchange="setStageField(\''+s.id+'\','+i+',\'points\',this.value)"></div></div>'+
+      (isCoach?"":'<p><button class="mini" onclick="copyStageRow(\''+s.id+'\','+i+')">Copy this assessment to a new assessed row</button></p>')+"</div>";
+    } else {
+      inner+='<p class="small muted" style="margin:-4px 0 12px 0">Introduce and Revisit stages carry no pass standard — athletes practise here, they are checked elsewhere.</p>';
+    }
+    return inner;
+  }).join("");
+  /* drills */
+  var drillRows=s.drills.map(function(link){
+    var d=drillById(lib, link.drillId); if(!d) return "";
+    var n=drillUseCount(lib, d.id);
+    return '<div class="drillcard"><b>'+esc(d.name)+'</b> <span class="small muted">'+esc(d.code)+" · "+d.minutes+" min · "+esc(d.format)+"</span>"+(n>1?' <span class="pill">Shared · '+n+' sub-skills</span>':"")+
+    '<br><span class="small">'+esc(d.how||"")+"</span>"+
+    (link.variation?'<br><span class="small"><b>Variation for this sub-skill:</b> '+esc(link.variation)+"</span>":"")+
+    (isCoach?"":'<br><button class="mini" onclick="editVariation(\''+s.id+'\',\''+d.id+'\')">Variation for this sub-skill</button> <button class="mini" onclick="openDrillForm(\''+lib.id+'\',\''+d.id+'\',\''+s.id+'\')">Edit drill</button> <button class="mini danger" onclick="unlinkDrill(\''+s.id+'\',\''+d.id+'\')">Remove from this sub-skill</button>')+"</div>";
+  }).join("");
+  var hwRows=s.homework.map(function(h,i){
+    return '<div class="drillcard"><b>'+esc(h.title)+'</b><br><span class="small">'+esc(h.text)+'</span><br><span class="small muted">'+esc(h.freq||"")+"</span>"+(isCoach?"":' <button class="mini danger" onclick="removeHomework(\''+s.id+'\','+i+')">Remove</button>')+"</div>";
+  }).join("");
+  var buildsOpts=allSubs(lib).filter(function(x){return x.sub.id!==s.id && !x.sub.retired}).map(function(x){return '<option value="'+x.sub.id+'"'+(s.buildsOn===x.sub.id?" selected":"")+">"+esc(x.sub.name)+" ("+esc(x.fam.name)+")</option>"}).join("");
+  var chain=[]; var cur=s; var guard=0;
+  while(cur && guard++<5){ chain.unshift(cur.name); cur=cur.buildsOn?subById(lib, cur.buildsOn):null; }
+  var progStrip=chain.map(function(n,i){return '<span class="step'+(i===chain.length-1?" on":"")+'">'+esc(n)+"</span>"+(i<chain.length-1?'<span class="arr">→</span>':"")}).join("");
+  var usedIn=(s.usedIn||[]).map(function(p){return "<li>"+esc(p)+"</li>"}).join("");
+  var changes=(lib.draftChanges||[]).filter(function(c){return c.target===s.name}).map(function(c){return "<li>"+esc(c.kind)+" — "+esc(c.detail)+"</li>"}).join("");
+  var suggHere=lib.suggestions.filter(function(x){return x.item.indexOf(s.name)>-1});
+  $("#scr-3").innerHTML=
+  '<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="ghost" onclick="goScreen(2)">‹ Back to library</button>'+
+  '<span class="small muted">'+esc(lib.name)+" › "+esc(area.name)+" › "+esc(fam.name)+' › <b>'+esc(s.name||"(unnamed sub-skill)")+"</b></span><span style='flex:1'></span>"+
+  '<span class="small muted" id="autosave">Saved just now</span>'+
+  (isCoach?'<button class="primary" onclick="openSugForm(\''+lib.id+'\',\''+s.id+'\')">Suggest a change</button>':'<button onclick="goScreen(2)">Done</button>')+"</div>"+
+  '<div class="subgrid" style="margin-top:12px"><nav class="railnav" aria-label="Library tree">'+outline+'</nav><div>'+
+  /* Basics */
+  '<div class="sectioncard"><h3>Basics</h3>'+
+  '<div class="field"><label>Sub-skill name</label><input id="ssName" style="width:100%" value="'+esc(s.name)+'" '+(isCoach?"disabled":"")+' onchange="renameSub(\''+s.id+'\',this.value)"><p class="hint">One thing athletes learn, like “Forward defense”. Names are unique within a family.</p></div>'+
+  '<div class="fieldrow"><div class="field"><label>Code</label><input style="width:100%" value="'+esc(s.code)+'" placeholder="Auto-generated" '+(isCoach||s.autoCode?"disabled":"")+' onchange="setSubCode(\''+s.id+'\',this.value)"><p class="hint" id="codeErr"></p></div>'+
+  '<div class="field"><label>&nbsp;</label><label class="small"><input type="checkbox" '+(s.autoCode?"checked":"")+' '+(isCoach?"disabled":"")+' onchange="toggleAutoCode(\''+s.id+'\',this.checked)"> Auto-generate code</label></div></div>'+
+  '<div class="fieldrow"><div class="field"><label>Skill area</label><select style="width:100%" '+(isCoach?"disabled":"")+' onchange="moveSub(\''+s.id+'\',\'area\',this.value)">'+lib.areas.map(function(a){return '<option value="'+a.id+'"'+(a.id===area.id?" selected":"")+">"+esc(a.name)+"</option>"}).join("")+'</select></div>'+
+  '<div class="field"><label>Skill family</label><select style="width:100%" '+(isCoach?"disabled":"")+' onchange="moveSub(\''+s.id+'\',\'fam\',this.value)">'+area.families.map(function(f){return '<option value="'+f.id+'"'+(f.id===fam.id?" selected":"")+">"+esc(f.name)+"</option>"}).join("")+'</select></div></div>'+
+  '<div class="field"><label>Builds on <span class="small muted">(the sub-skill athletes learn first — same library, usually the same family)</span></label><select style="width:100%" '+(isCoach?"disabled":"")+' onchange="setSubField(\''+s.id+'\',\'buildsOn\',this.value||null)"><option value="">None — this is the first step</option>'+buildsOpts+'</select>'+
+  (chain.length>1?'<p class="hint">Chain: '+chain.map(esc).join(" → ")+"</p>":"")+'</div>'+
+  '<div class="field"><label><input type="checkbox" '+(s.allStages?"checked":"")+' '+(isCoach?"disabled":"")+' onchange="setSubField(\''+s.id+'\',\'allStages\',this.checked)"> Applies at every stage</label><p class="hint">Tick this for things like a warm-up routine that every stage does. It replaces the stage rows below.</p></div>'+
+  (isCoach?"":'<p><button class="danger" onclick="openRemoveSub(\''+s.id+'\')">Retire or merge this sub-skill…</button></p>')+"</div>"+
+  /* Stage map */
+  '<div class="sectioncard"><h3>Stage map</h3><p class="small muted">One row per stage or stage range. Assessed rows carry their own pass standard; Introduce and Revisit rows do not. At least one Assessed row is needed — a sub-skill with none shows an amber “No assessed stage” warning and does not appear in stage-filtered program pickers until fixed.</p>'+
+  (s.allStages?'<p><span class="chip grey">All stages</span> — this sub-skill applies at every stage.</p>':stageRows)+
+  (isCoach?"":'<p><button onclick="addStageRow(\''+s.id+'\')">Add a stage row</button> <button class="ghost" onclick="addStageRange(\''+s.id+'\')">Add a stage range</button></p>')+"</div>"+
+  /* Coaching */
+  '<div class="sectioncard"><h3>Coaching</h3>'+
+  '<div class="field"><label>Coaching points (for coaches) — one per line</label><textarea rows="3" style="width:100%" '+(isCoach?"disabled":"")+' onchange="setSubField(\''+s.id+'\',\'points\',this.value.split(/\\n/).map(function(x){return x.trim()}).filter(Boolean))">'+esc(s.points.join("\n"))+'</textarea></div>'+
+  '<div class="field"><label>What families see (optional) — one sentence</label><input style="width:100%" value="'+esc(s.ican)+'" placeholder="Start with “I can…”" '+(isCoach?"disabled":"")+' onchange="setSubField(\''+s.id+'\',\'ican\',this.value)"><p class="hint">Families see this on the parent report. <span class="hintchip">Families see: '+esc(s.ican||"—")+"</span></p></div></div>"+
+  /* Drills */
+  '<div class="sectioncard"><h3>Drills</h3><p class="small muted">Drills live in the library’s drill bank and can be linked to many sub-skills.</p>'+drillRows+
+  (isCoach?"":'<div class="fieldrow"><div class="field"><label>Use an existing drill</label><select id="linkDrillSel" style="width:100%"><option value="">Pick a drill from the bank…</option>'+lib.drills.filter(function(d){return !s.drills.some(function(l){return l.drillId===d.id})}).map(function(d){return '<option value="'+d.id+'">'+esc(d.name)+" · "+d.minutes+" min · "+esc(d.format)+"</option>"}).join("")+'</select></div><button class="primary" onclick="linkDrill(\''+s.id+'\')">Link drill</button></div><p><button onclick="openDrillForm(\''+lib.id+'\',null,\''+s.id+'\')">Write a new drill</button> <span class="small muted">A new drill is saved to the bank and linked here.</span></p>')+"</div>"+
+  /* Homework */
+  '<div class="sectioncard"><h3>Homework</h3><p class="small muted">Practice athletes do at home. Set a drill as homework, or write one.</p>'+hwRows+
+  (isCoach?"":'<p><button onclick="openHomeworkForm(\''+s.id+'\')">Write homework</button></p>')+"</div>"+
+  /* Restrictions */
+  '<div class="sectioncard"><h3>Restrictions</h3>'+
+  '<div class="field"><label>Not before (stage)</label><select style="width:100%" '+(isCoach?"disabled":"")+' onchange="setSubRestr(\''+s.id+'\',\'notBefore\',this.value)"><option value="">No restriction</option>'+stages.map(function(o){return '<option'+(s.restrictions.notBefore===o?" selected":"")+">"+esc(o)+"</option>"}).join("")+'</select><p class="hint">e.g. heading practice is “Not before U12”.</p></div>'+
+  '<div class="field"><label>Limit</label><input style="width:100%" value="'+esc(s.restrictions.limit)+'" placeholder="e.g. Max 4 overs per session for U13" '+(isCoach?"disabled":"")+' onchange="setSubRestr(\''+s.id+'\',\'limit\',this.value)"></div>'+
+  '<div class="field"><label>Required equipment for safety</label><input style="width:100%" value="'+esc(s.restrictions.equipment)+'" placeholder="e.g. Helmet, hard-ball pads" '+(isCoach?"disabled":"")+' onchange="setSubRestr(\''+s.id+'\',\'equipment\',this.value)"></div></div>'+
+  '</div>'+
+  /* right rail */
+  '<div><div class="card"><h4>Used in programs</h4>'+(usedIn?"<ul>"+usedIn+"</ul>":'<p class="small muted">Not in any program yet.</p>')+"</div>"+
+  '<div class="card"><h4>Progression</h4><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+progStrip+"</div></div>"+
+  '<div class="card"><h4>Changes in this draft</h4>'+(changes?"<ul>"+changes+"</ul>":'<p class="small muted">No changes yet.</p>')+"</div>"+
+  '<div class="card"><h4>Suggestions</h4>'+(suggHere.length?suggHere.map(function(x){return "<p class='small'>"+esc(x.type)+" — "+esc(x.status)+"</p>"}).join(""):'<p class="small muted">No suggestions on this sub-skill.</p>')+"</div>"+
+  '<div class="card"><h4>Coach view</h4><p class="small muted">Coaches see a read-only version of this page: the same sections, no editing. <button class="ghost" onclick="goScreen(7)">Open coach view</button></p></div></div></div>'+
+  '<div style="display:flex;gap:8px;justify-content:space-between;margin-top:8px"><button onclick="stepSub(-1)">‹ Previous</button><button class="primary" onclick="saveNext()">Save and next ›</button></div>';
+}
+function touchSave(){ var a=$("#autosave"); if(a){a.textContent="Saving…"; setTimeout(function(){a.textContent="Saved just now"},500);} }
+function setSubField(id, field, value){
+  var lib=curLib(); var s=subById(lib, id); if(!s) return;
+  var old=s[field]; s[field]=value;
+  if(field==="buildsOn"||field==="allStages"||field==="ican") { /* no change marker for these */ }
+  if(!s.isNew && !s.changed && JSON.stringify(old)!==JSON.stringify(value)){ s.changed=true; s.was=s.was||null; markChanged(lib,"edited",s.name,"Edited "+field); }
+  saveState(); touchSave();
+}
+function setSubRestr(id, field, value){
+  var lib=curLib(); var s=subById(lib, id); if(!s) return;
+  s.restrictions[field]=value; saveState(); touchSave();
+}
+function renameSub(id, name){
+  var lib=curLib(); var ctx=findSub(lib, id); if(!ctx) return;
+  name=(name||"").trim(); var s=ctx.sub;
+  if(!name){ toast("A sub-skill needs a name."); renderSub(); return; }
+  if(ctx.fam.subs.some(function(x){return x.id!==id && x.name.toLowerCase()===name.toLowerCase() && !x.retired})){
+    toast("“"+name+"” already exists in "+ctx.fam.name+"."); renderSub(); return;
+  }
+  if(s.name && s.name!==name && !s.changed){ s.changed=true; s.was=s.name; markChanged(lib,"edited",name,"Renamed — was “"+s.name+"”",s.name); }
+  s.name=name; if(s.autoCode) s.code=autoCode(lib, s);
+  saveState(); touchSave(); renderSub();
+}
+function setSubCode(id, code){
+  var lib=curLib(); var s=subById(lib, id); if(!s) return;
+  code=(code||"").trim();
+  if(codeTaken(lib, code, id)){ var el=$("#codeErr"); if(el) el.textContent="That code is already used in this library."; toast("Code already used in this library."); renderSub(); return; }
+  s.code=code; saveState(); touchSave();
+}
+function toggleAutoCode(id, on){
+  var lib=curLib(); var s=subById(lib, id); if(!s) return;
+  s.autoCode=on; if(on) s.code=autoCode(lib, s);
+  saveState(); renderSub();
+}
+function moveSub(id, kind, newId){
+  var lib=curLib(); var ctx=findSub(lib, id); if(!ctx) return;
+  var s=ctx.sub;
+  if(kind==="area"){
+    var ar=lib.areas.find(function(a){return a.id===newId}); if(!ar||!ar.families.length) return;
+    ctx.fam.subs=ctx.fam.subs.filter(function(x){return x.id!==id});
+    s.areaId=ar.id; s.famId=ar.families[0].id; ar.families[0].subs.push(s);
+  } else {
+    var fam=findFam(lib, s.areaId, newId); if(!fam) return;
+    ctx.fam.subs=ctx.fam.subs.filter(function(x){return x.id!==id});
+    s.famId=fam.id; fam.subs.push(s);
+  }
+  if(s.autoCode) s.code=autoCode(lib, s);
+  saveState(); renderSub(); toast("Moved.");
+}
+function setStageField(id, i, field, value){
+  var lib=curLib(); var s=subById(lib, id); if(!s||!s.stages[i]) return;
+  s.stages[i][field]=value;
+  if(!s.isNew && !s.changed){ s.changed=true; markChanged(lib,"edited",s.name,"Stage map changed"); }
+  saveState(); touchSave(); if(field==="role") renderSub();
+}
+function addStageRow(id){
+  var lib=curLib(); var s=subById(lib, id); if(!s) return;
+  var opts=stageOptions(lib.sport);
+  s.stages.push({stage:opts[0]||"", role:"Assessed", check:"", pass:"", scoring:"Pass / not yet", points:""});
+  saveState(); renderSub();
+}
+function addStageRange(id){
+  var lib=curLib(); var s=subById(lib, id); if(!s) return;
+  var opts=stageOptions(lib.sport);
+  if(opts.length<2){ toast("This pathway has too few stages for a range."); return; }
+  s.stages.push({stage:opts[0]+" to "+opts[1], role:"Assessed", check:"", pass:"", scoring:"Pass / not yet", points:""});
+  saveState(); renderSub(); toast("Range added — edit it to pick the exact stages.");
+}
+function removeStageRow(id, i){
+  var lib=curLib(); var s=subById(lib, id); if(!s) return;
+  if(s.stages.length<=1 && !s.allStages){ toast("A sub-skill needs at least one stage row. Tick “Applies at every stage” instead, or keep the row."); return; }
+  s.stages.splice(i,1); saveState(); renderSub();
+}
+function copyStageRow(id, i){
+  var lib=curLib(); var s=subById(lib, id); if(!s||!s.stages[i]) return;
+  var c=clone(s.stages[i]); var opts=stageOptions(lib.sport);
+  var idx=opts.indexOf(c.stage); c.stage=opts[idx+1]||c.stage;
+  s.stages.push(c); saveState(); renderSub(); toast("Assessment copied to a new assessed row — check the stage and pass standard.");
+}
+function stepSub(d){
+  var lib=curLib(); if(!lib) return;
+  var list=allSubs(lib); var idx=list.findIndex(function(x){return x.sub.id===state.ui.sub});
+  var n=idx+d; if(n>=0&&n<list.length){ state.ui.sub=list[n].sub.id; saveState(); renderSub(); }
+}
+function saveNext(){ touchSave(); stepSub(1); }
+function linkDrill(subId){
+  var lib=curLib(); var s=subById(lib, subId); var sel=$("#linkDrillSel"); if(!sel||!sel.value) return;
+  s.drills.push({drillId:sel.value, variation:""}); saveState(); renderSub(); toast("Drill linked.");
+}
+function unlinkDrill(subId, drillId){
+  var lib=curLib(); var s=subById(lib, subId); if(!s) return;
+  s.drills=s.drills.filter(function(d){return d.drillId!==drillId}); saveState(); renderSub();
+}
+function editVariation(subId, drillId){
+  var lib=curLib(); var s=subById(lib, subId); if(!s) return;
+  var link=s.drills.find(function(d){return d.drillId===drillId}); if(!link) return;
+  var v=prompt("Variation for this sub-skill (optional) — how this drill is different here:", link.variation||"");
+  if(v===null) return; link.variation=v.trim(); saveState(); renderSub();
+}
+function removeHomework(subId, i){
+  var lib=curLib(); var s=subById(lib, subId); if(!s) return;
+  s.homework.splice(i,1); saveState(); renderSub();
+}
+function openHomeworkForm(subId){
+  openModal('<h3>Write homework</h3>'+
+  '<div class="field"><label>Title</label><input id="hwTitle" style="width:100%" placeholder="e.g. Wall blocking"></div>'+
+  '<div class="field"><label>What athletes do</label><textarea id="hwText" rows="3" style="width:100%" placeholder="e.g. Against a wall, take your stance and block 15 tennis balls back with a straight bat."></textarea></div>'+
+  '<div class="field"><label>How often</label><select id="hwFreq" style="width:100%"><option>After each session</option><option>Twice a week</option><option>Daily</option></select></div>'+
+  '<p style="text-align:right"><button onclick="closeModal()">Cancel</button> <button class="primary" onclick="saveHomework(\''+subId+'\')">Add homework</button></p>');
+}
+function saveHomework(subId){
+  var lib=curLib(); var s=subById(lib, subId); if(!s) return;
+  var t=($("#hwTitle")||{}).value||""; var x=($("#hwText")||{}).value||"";
+  if(!t.trim()||!x.trim()){ toast("Homework needs a title and instructions."); return; }
+  s.homework.push({title:t.trim(), text:x.trim(), freq:($("#hwFreq")||{}).value||""});
+  saveState(); closeModal(); renderSub(); toast("Homework added.");
+}
+function openRemoveSub(subId){
+  var lib=curLib(); var ctx=findSub(lib, subId); if(!ctx) return;
+  var s=ctx.sub;
+  var used=(s.usedIn||[]).length;
+  var targets=allSubs(lib).filter(function(x){return x.sub.id!==subId && !x.sub.retired});
+  openModal('<h3>Retire or merge “'+esc(s.name)+'”?</h3>'+
+  '<p class="small muted">Sub-skills are never deleted — they are retired or merged, so sessions already taught and athlete records keep working.</p>'+
+  '<div class="radiocards">'+
+  '<label class="radiocard"><input type="radio" name="rmode" value="merge" '+(used?"checked":"")+'><span><b>Merge into another sub-skill</b><br><span class="small muted">Drills, homework and revisited stages move across. Session items follow.</span></span></label>'+
+  '<label class="radiocard"><input type="radio" name="rmode" value="retire" '+(!used?"checked":"")+'><span><b>Retire</b><br><span class="small muted">Leaves pickers and new programs; stays on sessions already taught. The row shows “Retired in v'+(lib.version+1)+'” and can be restored.</span></span></label>'+
+  '</div>'+
+  '<div class="field"><label>Merge into</label><select id="mergeTarget" style="width:100%">'+targets.map(function(x){return '<option value="'+x.sub.id+'">'+esc(x.sub.name)+" ("+esc(x.fam.name)+")</option>"}).join("")+'</select></div>'+
+  '<p style="text-align:right"><button onclick="closeModal()">Cancel</button> <button class="primary" onclick="doRemoveSub(\''+subId+'\')">'+(used?"Merge":"Retire")+'</button></p>');
+}
+function doRemoveSub(subId){
+  var lib=curLib(); var ctx=findSub(lib, subId); if(!ctx) return;
+  var mode=(document.querySelector('input[name=rmode]:checked')||{}).value||"retire";
+  var s=ctx.sub;
+  if(mode==="merge"){
+    var t=subById(lib, ($("#mergeTarget")||{}).value);
+    if(t){ s.drills.forEach(function(d){ if(!t.drills.some(function(x){return x.drillId===d.drillId})) t.drills.push(d); });
+      s.homework.forEach(function(h){ t.homework.push(h); });
+      s.stages.forEach(function(r){ if(r.role!=="Assessed" && !t.stages.some(function(x){return x.stage===r.stage})) t.stages.push(r); });
+      markChanged(lib,"removed",s.name,"Merged into "+t.name);
+    }
+    ctx.fam.subs=ctx.fam.subs.filter(function(x){return x.id!==subId});
+    saveState(); closeModal(); toast("“"+s.name+"” merged.");
+  } else {
+    s.retired=true; markChanged(lib,"removed",s.name,"Retired in v"+(lib.version+1));
+    saveState(); closeModal(); toast("“"+s.name+"” retired — it stays on taught sessions and can be restored.");
+  }
+  renderLibraryPage(); goScreen(2);
+}
+
+/* ---------- one drill form, everywhere ---------- */
+function openDrillForm(libId, drillId, subId){
+  var lib=libById(libId); if(!lib) return;
+  var d=drillId?drillById(lib, drillId):newDrill(lib, "");
+  var shared=drillId?drillUseCount(lib, drillId):0;
+  openModal('<h3>'+(drillId?"Edit drill":"New drill")+'</h3>'+
+  (shared>1?'<p class="small" style="background:#FFF4E0;padding:8px 10px;border-radius:8px">Shared drill — used by '+shared+' sub-skills. Changes apply to all of them unless you make a copy.</p>':"")+
+  '<div class="field"><label>Drill name *</label><input id="dfName" style="width:100%" value="'+esc(d.name)+'"></div>'+
+  '<div class="fieldrow"><div class="field"><label>Minutes *</label><div class="fieldrow"><button class="mini" onclick="dfMin(-5)">−5</button><input id="dfMin" type="number" min="1" max="120" value="'+d.minutes+'" style="width:80px"><button class="mini" onclick="dfMin(5)">+5</button></div></div>'+
+  '<div class="field"><label>Format</label><select id="dfFormat" style="width:100%">'+["Coach-fed","Pairs","Small group","Game","Individual"].map(function(x){return '<option'+(d.format===x?" selected":"")+">"+x+"</option>"}).join("")+'</select></div>'+
+  '<div class="field"><label>Type</label><select id="dfType" style="width:100%">'+["Warm-up","Technical practice","Game or match play","Fitness","Cool-down"].map(function(x){return '<option'+(d.type===x?" selected":"")+">"+x+"</option>"}).join("")+'</select></div></div>'+
+  '<div class="field"><label>Equipment (optional)</label><input id="dfEquip" style="width:100%" value="'+esc(d.equip||"")+'" placeholder="e.g. 10 tennis balls, 1 bat"></div>'+
+  '<div class="field"><label>How to run it</label><textarea id="dfHow" rows="3" maxlength="1000" style="width:100%" oninput="document.getElementById(\'dfCount\').textContent=this.value.length+\' / 1000\'">'+esc(d.how||"")+'</textarea><p class="hint"><span id="dfCount">'+(d.how||"").length+' / 1000</span></p></div>'+
+  '<div class="field"><label>Video or image (optional)</label><input type="file" id="dfMedia" accept="video/*,image/*" onchange="document.getElementById(\'dfMediaName\').textContent=this.files[0]?this.files[0].name:\'\'"><p class="hint">Demo: the file is not uploaded — only its name is kept. '+(d.mediaName?"Attached: "+esc(d.mediaName):"")+' <span id="dfMediaName"></span></p></div>'+
+  '<details><summary style="cursor:pointer;min-height:44px">Set-up and safety</summary>'+
+  '<div class="field"><label>Space</label><input id="dfSpace" style="width:100%" value="'+esc(d.space||"")+'"></div>'+
+  '<div class="fieldrow"><div class="field"><label>Group size</label><input id="dfGroup" style="width:100%" value="'+esc(d.group||"")+'" placeholder="e.g. Pairs, 6–8 athletes"></div>'+
+  '<div class="field"><label>Coaches needed</label><input id="dfRatio" style="width:100%" value="'+esc(d.ratio||"")+'" placeholder="e.g. 1 coach : 8 athletes"></div></div>'+
+  '<div class="field"><label>Safety notes</label><textarea id="dfSafety" rows="2" style="width:100%">'+esc(d.safety||"")+'</textarea></div></details>'+
+  '<details><summary style="cursor:pointer;min-height:44px">Coaching</summary>'+
+  '<div class="field"><label>Coaching points (one per line)</label><textarea id="dfPoints" rows="2" style="width:100%">'+esc((d.points||[]).join("\n"))+'</textarea></div>'+
+  '<div class="fieldrow"><div class="field"><label>Make it easier</label><input id="dfEasier" style="width:100%" value="'+esc(d.easier||"")+'"></div>'+
+  '<div class="field"><label>Make it harder</label><input id="dfHarder" style="width:100%" value="'+esc(d.harder||"")+'"></div></div></details>'+
+  '<div class="field"><label><input type="checkbox" id="dfHw" '+(d.alsoHomework?"checked":"")+'> Also use as homework</label></div>'+
+  '<p style="text-align:right">'+(drillId?'<button class="danger" onclick="deleteDrill(\''+lib.id+'\',\''+d.id+'\',\''+(subId||"")+'\')">Remove drill</button> ':"")+'<button onclick="closeModal()">Cancel</button> <button class="primary" onclick="saveDrill(\''+lib.id+'\',\''+(drillId||"")+'\',\''+(subId||"")+'\')">Save drill</button></p>');
+}
+function dfMin(d){ var el=$("#dfMin"); el.value=Math.max(1,Math.min(120,(+el.value||10)+d)); }
+function saveDrill(libId, drillId, subId){
+  var lib=libById(libId); if(!lib) return;
+  var name=(($("#dfName")||{}).value||"").trim();
+  var min=+($("#dfMin")||{}).value||10;
+  if(!name){ toast("A drill needs a name."); return; }
+  if(!min||min<1){ toast("Minutes must be at least 1."); return; }
+  var vals={name:name, minutes:min, format:$("#dfFormat").value, type:$("#dfType").value,
+    equip:$("#dfEquip").value.trim(), how:$("#dfHow").value.trim(),
+    mediaName:($("#dfMediaName")||{}).textContent||"",
+    space:$("#dfSpace").value.trim(), group:$("#dfGroup").value.trim(), ratio:$("#dfRatio").value.trim(),
+    safety:$("#dfSafety").value.trim(), points:$("#dfPoints").value.split(/\n/).map(function(x){return x.trim()}).filter(Boolean),
+    easier:$("#dfEasier").value.trim(), harder:$("#dfHarder").value.trim(), alsoHomework:$("#dfHw").checked};
+  var d;
+  if(!drillId){
+    d=newDrill(lib, name); Object.assign(d, vals); d.id=uid(); d.code="D"+String(lib.drills.length+1).padStart(2,"0");
+    lib.drills.push(d); markChanged(lib,"added",d.name,"New drill in the bank");
+    if(subId){ var s=subById(lib, subId); if(s){ s.drills.push({drillId:d.id, variation:""}); if(d.alsoHomework) s.homework.push({title:d.name, text:d.how, freq:"After each session"}); } }
+    saveState(); closeModal(); toast("Drill saved to the bank"+(subId?" and linked.":"."));
+  } else {
+    d=drillById(lib, drillId); if(!d){ closeModal(); return; }
+    var shared=drillUseCount(lib, drillId);
+    if(shared>1 && !confirm("This drill is shared by "+shared+" sub-skills. OK = edit it for all of them. Cancel = make a copy for this sub-skill only.")){
+      var copy=clone(d); copy.id=uid(); copy.code="D"+String(lib.drills.length+1).padStart(2,"0"); Object.assign(copy, vals);
+      lib.drills.push(copy);
+      if(subId){ var s2=subById(lib, subId); if(s2){ s2.drills=s2.drills.map(function(l){return l.drillId===drillId?{drillId:copy.id, variation:l.variation}:l}); } }
+      saveState(); closeModal(); renderAll(); toast("A copy was made for this sub-skill; the shared drill is unchanged."); return;
+    }
+    Object.assign(d, vals); markChanged(lib,"edited",d.name,"Drill edited");
+    saveState(); closeModal(); renderAll(); toast("Drill saved — changes apply to all sub-skills that use it.");
+  }
+  renderAll();
+}
+function deleteDrill(libId, drillId, subId){
+  var lib=libById(libId); var d=drillById(lib, drillId); if(!d) return;
+  if(!confirm("Remove “"+d.name+"” from the drill bank? Sub-skills using it will lose the link.")) return;
+  lib.drills=lib.drills.filter(function(x){return x.id!==drillId});
+  allSubs(lib).forEach(function(x){ x.sub.drills=x.sub.drills.filter(function(l){return l.drillId!==drillId}); });
+  saveState(); closeModal(); renderAll(); toast("Drill removed.");
+}
+
+/* ---------- screen 4 · Create library (3-step wizard) ---------- */
+var cs=null;
+function goCreate(start){
+  var lib=null;
+  if(start==="copy"){
+    var src=state.libraries[0];
+    if(!src){ toast("No library exists yet to copy."); return; }
+    lib=cloneLibrary(src);
+    state.libraries.push(lib);
+  } else {
+    lib=newLibrary("Cricket", "", "sport");
+    state.libraries.push(lib);
+  }
+  state.ui.lib=lib.id;
+  cs={step:1, sport:lib.sport, start:start||"scratch", scope:"sport", imp:{text:"", rows:[], done:false}};
+  saveState(); goScreen(4);
+}
+function cloneLibrary(src){
+  var lib=clone(src); lib.id=uid(); lib.name="Copy of "+src.name; lib.origin="Copied from "+src.name;
+  lib.version=0; lib.published=false; lib.draftChanges=[]; lib.versions=[]; lib._snapshot=null;
+  var drillMap={};
+  lib.drills.forEach(function(d){ var nid=uid(); drillMap[d.id]=nid; d.id=nid; });
+  lib.areas.forEach(function(ar){ar.id=uid(); ar.families.forEach(function(f){f.id=uid(); f.subs.forEach(function(s){s.id=uid(); s.areaId=ar.id; s.famId=f.id; s.isNew=true; s.usedIn=[]; s.drills.forEach(function(l){l.drillId=drillMap[l.drillId]||l.drillId});})})});
+  lib.suggestions=[]; lib.editors=clone(src.editors||[]);
+  return lib;
+}
+function recloneCopy(srcId){
+  var src=libById(srcId); if(!src) return;
+  var old=curLib();
+  state.libraries=state.libraries.filter(function(l){return l.id!==old.id});
+  var lib=cloneLibrary(src); state.libraries.push(lib);
+  state.ui.lib=lib.id; cs.sport=lib.sport;
+  saveState(); renderCreate(); toast("Now copying from "+src.name+" — pick the new sport below.");
+}
+function setCS(k,v){ cs[k]=v; if(k==="sport"){var lib=curLib(); if(lib){var old=lib.sport; lib.sport=v; if(!lib.name||lib.name===(old+" Library")) lib.name=v+" Library"; ensurePathway(v);} } renderCreate(); }
+function renderCreate(){
+  var lib=curLib();
+  if(!lib||!cs){ $("#scr-4").innerHTML='<div class="empty"><h2>No library being created</h2><p class="muted">Start from the landing page or the start screen.</p><p><button class="primary" onclick="goScreen(0)">Choose how to start</button></p></div>'; return; }
+  var html='<h2>Create a library</h2><ul class="rail" aria-label="Create steps">'+
+    [1,2,3].map(function(n){return '<li class="'+(cs.step===n?"on":cs.step>n?"done":"")+'">'+n+" · "+["Start","Skills","Review and publish"][n-1]+"</li>"}).join("")+"</ul>"+
+    '<p class="small muted">'+esc(lib.sport)+" · "+(cs.start==="template"?"Quixera template":cs.start==="import"?"Import from a spreadsheet":cs.start==="copy"?"Copy of a library":"Start from scratch")+" · Draft — nothing is published yet</p>"+
+    '<div id="createBody"></div>';
+  $("#scr-4").innerHTML=html;
+  if(cs.step===1) renderCreateStep1(lib);
+  else if(cs.step===2) renderCreateStep2(lib);
+  else renderCreateStep3(lib);
+}
+function renderCreateStep1(lib){
+  var p=pathwayFor(lib.sport);
+  var body='<div class="card"><h3>Step 1 · Start</h3>'+
+  '<div class="field"><label>Sport</label><div class="sportcards">'+SPORTS.map(function(sp){
+    var used=state.libraries.some(function(l){return l.sport===sp && l.id!==lib.id});
+    return '<button class="sportcard'+(cs.sport===sp?" on":"")+'" '+(used?"disabled title='Already has a library — one library per sport'":"")+' onclick="setCS(\'sport\',\''+sp+'\')"><b>'+sp+'</b>'+(used?'<br><span class="small muted">Already has a library</span>':"")+"</button>";
+  }).join("")+"</div></div>"+
+  '<div class="field"><label>Library name</label><input style="width:100%;max-width:420px" value="'+esc(lib.name)+'" onchange="var l=curLib();l.name=this.value.trim()||l.sport+\' Library\';saveState()"><p class="hint">Programs in this sport use this library. Coaches see its name when they plan sessions.</p></div>'+
+  '<div class="field"><label>Pathway (read-only — set in Academy settings)</label><p>'+esc(pathwaySummary(lib.sport))+' · <a href="#" onclick="goScreen(6);return false">Edit in settings</a></p></div>'+
+  '<div class="field"><label>This library is for</label><div class="radiocards">'+
+  '<label class="radiocard'+(cs.scope==="sport"?" on":"")+'"><input type="radio" name="scope" '+(cs.scope==="sport"?"checked":"")+' onchange="cs.scope=\'sport\';renderCreate()"><span><b>One sport</b><br><span class="small muted">'+esc(lib.sport)+' only.</span></span></label>'+
+  '<label class="radiocard'+(cs.scope==="shared"?" on":"")+'"><input type="radio" name="scope" '+(cs.scope==="shared"?"checked":"")+' onchange="cs.scope=\'shared\';renderCreate()"><span><b>All sports (shared)</b><br><span class="small muted">For things every sport uses — e.g. Athletic development, Character and mindset, Injury prevention and warm-ups.</span></span></label>'+
+  '</div></div>'+
+  '<div class="field"><label>How do you want to start?</label><div class="radiocards">'+
+  '<label class="radiocard'+(cs.start==="template"?" on":"")+'"><input type="radio" name="start" '+(cs.start==="template"?"checked":"")+' onchange="cs.start=\'template\';renderCreate()"><span><b>Quixera template</b> <span class="pill">Recommended</span><br><span class="small muted">A small starter library you can change. Cricket: Batting › Defense › Forward defense with 1 drill. Swimming: Strokes › Freestyle › Push and glide on back with 1 drill.</span></span></label>'+
+  '<label class="radiocard'+(cs.start==="import"?" on":"")+'"><input type="radio" name="start" '+(cs.start==="import"?"checked":"")+' onchange="cs.start=\'import\';renderCreate()"><span><b>Import from a spreadsheet</b><br><span class="small muted">Paste rows — Skill area, Skill family, Sub-skill, Stage — then preview and fix problems before anything is created.</span></span></label>'+
+  '<label class="radiocard'+(cs.start==="copy"?" on":"")+'"><input type="radio" name="start" '+(cs.start==="copy"?"checked":"")+' onchange="cs.start=\'copy\';renderCreate()"><span><b>Copy one of your libraries</b><br><span class="small muted">'+(state.libraries.length>1?"Start a new sport from a library you already built.":"No other library exists yet to copy.")+'</span></span></label>'+
+  '<label class="radiocard'+(cs.start==="scratch"?" on":"")+'"><input type="radio" name="start" '+(cs.start==="scratch"?"checked":"")+' onchange="cs.start=\'scratch\';renderCreate()"><span><b>Start from scratch</b><br><span class="small muted">Empty structure — you add the skill areas, families and sub-skills yourself in step 2.</span></span></label>'+
+  '</div></div>'+
+  '<div id="startExtra"></div>'+
+  '<div class="stepnav"><span><button onclick="saveDraftExit()">Save draft</button></span><button class="primary" onclick="createStep1Next()">Next: Skills ›</button></div></div>';
+  $("#createBody").innerHTML=body;
+  if(cs.start==="import") renderImportBoards(lib);
+  if(cs.start==="copy"){
+    var ex2=$("#startExtra");
+    ex2.innerHTML='<div class="card"><h4>Copy from</h4><p class="small">The copy goes to a new sport — pick the library to copy from, then pick the new sport above. Codes are regenerated for the new sport.</p><select style="width:100%;max-width:420px" onchange="recloneCopy(this.value)">'+state.libraries.filter(function(l){return l.id!==lib.id}).map(function(l){return '<option value="'+l.id+'">'+esc(l.name)+" ("+esc(l.sport)+")</option>"}).join("")+'</select></div>';
+  }
+  if(cs.start==="template"){
+    var ex=$("#startExtra");
+    ex.innerHTML='<div class="card"><h4>Template preview</h4><p class="small">Picking a template loads it when you press Next. '+(TEMPLATES[cs.sport]?"<b>"+esc(cs.sport)+"</b>: "+(cs.sport==="Cricket"?"1 skill area (Batting), 1 family (Defense), 1 sub-skill (Forward defense) with a stage map and 1 drill.":"1 strand (Strokes), 1 family (Freestyle), 1 sub-skill (Push and glide on back) with a stage map and 1 drill."):"No template for "+esc(cs.sport)+" yet — pick Cricket or Swimming, or start from scratch.")+'</p></div>';
+  }
+}
+function createStep1Next(){
+  var lib=curLib(); if(!lib) return;
+  lib.scope=cs.scope; ensurePathway(lib.sport);
+  if(cs.start==="template"){
+    var t=TEMPLATES[cs.sport];
+    if(!t){ toast("No template for "+lib.sport+" yet — pick Cricket or Swimming, or choose another way to start."); return; }
+    var loaded=loadTemplate(cs.sport);
+    var idx=state.libraries.findIndex(function(l){return l.id===lib.id});
+    state.libraries[idx]=loaded; state.ui.lib=loaded.id; lib=loaded;
+    toast("Template loaded — edit anything, then publish when ready.");
+    cs.step=2; saveState(); renderCreate(); return;
+  }
+  if(cs.start==="import"){
+    if(!cs.imp.done){ toast("Finish the import first — paste rows, check the preview, then press “Use these rows”."); return; }
+    cs.step=2; saveState(); renderCreate(); return;
+  }
+  if(cs.start==="copy"){
+    /* A copy goes to a NEW sport (Excel row 5: "Copy to a new sport"). Re-skin and regenerate codes. */
+    lib.sport=cs.sport; lib.name=cs.sport+" Library";
+    allSubs(lib).forEach(function(x){ x.sub.autoCode=true; x.sub.code=autoCode(lib, x.sub); });
+    saveState();
+    toast("Copy created for "+cs.sport+" — edit it in step 2.");
+    cs.step=2; saveState(); renderCreate(); return;
+  }
+  cs.step=2; saveState(); renderCreate();
+}
+function saveDraftExit(){ saveState(); toast("Draft saved — it is on the landing page as a draft. Reopen it any time."); goScreen(1); }
+
+/* --- import: Upload → Map → Check → Done (Excel row 8) --- */
+function renderImportBoards(lib){
+  var imp=cs.imp;
+  var host=$("#startExtra"); if(!host) return;
+  if(!imp.stage){
+    host.innerHTML='<div class="card"><h4>Import from a spreadsheet — 1 · Upload</h4>'+
+    '<p class="small muted">Paste tab-separated rows with four columns: <b>Skill area, Skill family, Sub-skill, Stage</b>. One sub-skill per row. Stages must match your pathway ('+esc(stageOptions(lib.sport).slice(0,6).join(", "))+(stageOptions(lib.sport).length>6?", …":"")+').</p>'+
+    '<p><button class="mini" onclick="downloadImportTemplate()">Download our template</button></p>'+
+    '<textarea id="impText" class="mono" rows="7" style="width:100%" placeholder="Batting\tDefense\tForward defense\tU11 Silver\nBatting\tDefense\tBack-foot defense\tU12 Silver">'+esc(imp.text||"")+'</textarea>'+
+    '<p><button class="primary" onclick="importParse()">Preview rows ›</button></p></div>';
+  } else if(imp.stage==="map"){
+    host.innerHTML='<div class="card"><h4>Import — 2 · Map columns</h4><p class="small muted">We matched your columns automatically. Change a mapping if it is wrong.</p>'+
+    imp.cols.map(function(c,i){return '<div class="fieldrow"><div class="field"><label>Column '+(i+1)+' ('+esc(c.sample||"—")+')</label><select onchange="cs.imp.cols['+i+'].map=this.value">'+["(ignore)","Skill area","Skill family","Sub-skill","Stage"].map(function(o){return '<option'+(c.map===o?" selected":"")+">"+o+"</option>"}).join("")+'</select></div></div>'}).join("")+
+    '<p class="small muted">Preview — first 20 rows:</p>'+importPreviewHTML(imp.rows.slice(0,20))+
+    '<p><button onclick="cs.imp.stage=null;renderCreate()">‹ Back</button> <button class="primary" onclick="importCheck()">Check rows ›</button></p></div>';
+  } else if(imp.stage==="check"){
+    var ok=imp.rows.filter(function(r){return !r.problem && !r.skip}).length;
+    var prob=imp.rows.filter(function(r){return r.problem && !r.skip}).length;
+    var skipped=imp.rows.filter(function(r){return r.skip}).length;
+    var areas=new Set(), fams=new Set();
+    imp.rows.filter(function(r){return !r.skip}).forEach(function(r){areas.add(r.area); fams.add(r.area+"|"+r.fam)});
+    host.innerHTML='<div class="card"><h4>Import — 3 · Check</h4>'+
+    '<p><b>Will create '+areas.size+' skill area'+(areas.size===1?"":"s")+', '+fams.size+' skill families, '+ok+' sub-skills · '+prob+' problem row'+(prob===1?"":"s")+' · '+skipped+' skipped.</b></p>'+
+    importPreviewHTML(imp.rows, true)+
+    '<p><button onclick="cs.imp.stage=\'map\';renderCreate()">‹ Back to mapping</button> <button class="primary" onclick="importApply()">Use these rows</button></p></div>';
+  }
+}
+function importPreviewHTML(rows, editable){
+  return '<div style="overflow-x:auto"><table class="importprev"><thead><tr><th>Skill area</th><th>Skill family</th><th>Sub-skill</th><th>Stage</th><th>'+(editable?"Fix / skip":"Status")+'</th></tr></thead><tbody>'+
+  rows.map(function(r,i){
+    var st=r.skip?'<span class="badge">Skipped</span>':r.problem?'<span class="badge warn">'+esc(r.problem)+'</span>':'<span class="badge">OK</span>';
+    var fix=editable&&r.problem?'<select class="inline" onchange="importFixStage('+r.idx+',this.value)"><option value="">Fix stage…</option>'+stageOptions(curLib().sport).map(function(o){return '<option'+(r.stage===o?" selected":"")+">"+esc(o)+"</option>"}).join("")+'</select> <button class="mini" onclick="importSkip('+r.idx+')">Skip row</button>':"";
+    return '<tr class="'+(r.skip?"skip":r.problem?"prob":"")+'"><td>'+esc(r.area)+'</td><td>'+esc(r.fam)+'</td><td>'+esc(r.sub)+'</td><td>'+esc(r.stage)+'</td><td>'+st+" "+fix+"</td></tr>";
+  }).join("")+"</tbody></table></div>";
+}
+function downloadImportTemplate(){
+  var blob=new Blob(["Skill area\tSkill family\tSub-skill\tStage\nBatting\tDefense\tForward defense\tU11 Silver\nBatting\tDefense\tBack-foot defense\tU12 Silver\n"],{type:"text/tab-separated-values"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="skill-library-import-template.tsv"; a.click();
+}
+function importParse(){
+  var lib=curLib(); var text=($("#impText")||{}).value||"";
+  cs.imp.text=text;
+  var lines=text.split(/\r?\n/).map(function(l){return l.trim()}).filter(Boolean);
+  if(lines.length<1){ toast("Paste at least one row first."); return; }
+  var rows=lines.map(function(l){return l.split(/\t/).map(function(c){return c.trim()})});
+  var header=rows[0].some(function(c){return /skill area|family|sub-?skill|stage/i.test(c)});
+  if(header) rows=rows.slice(1);
+  var cols=[0,1,2,3].map(function(i){
+    var sample=rows[0]?rows[0][i]||"":"";
+    var map="(ignore)";
+    if(header){ var h=lines[0].split(/\t/)[i]||""; if(/skill area/i.test(h)) map="Skill area"; else if(/family/i.test(h)) map="Skill family"; else if(/sub-?skill/i.test(h)) map="Sub-skill"; else if(/stage/i.test(h)) map="Stage"; }
+    else map=["Skill area","Skill family","Sub-skill","Stage"][i];
+    return {map:map, sample:sample};
+  });
+  cs.imp.cols=cols; cs.imp.rows=mapImportRows(rows, cols); cs.imp.stage="map"; renderCreate();
+}
+function mapImportRows(rows, cols){
+  var lib=curLib(); var stages=stageOptions(lib.sport);
+  var idx={area:cols.findIndex(function(c){return c.map==="Skill area"}), fam:cols.findIndex(function(c){return c.map==="Skill family"}), sub:cols.findIndex(function(c){return c.map==="Sub-skill"}), stage:cols.findIndex(function(c){return c.map==="Stage"})};
+  return rows.map(function(r,i){
+    var area=idx.area>-1?r[idx.area]||"":"", fam=idx.fam>-1?r[idx.fam]||"":"", sub=idx.sub>-1?r[idx.sub]||"":"", stage=idx.stage>-1?r[idx.stage]||"":"";
+    var problem="";
+    if(!sub) problem="Missing sub-skill name";
+    else if(!area) problem="Missing skill area";
+    else if(!fam) problem="Missing skill family";
+    else if(stage && stages.indexOf(stage)<0) problem="Stage not in pathway";
+    return {idx:i, area:area, fam:fam, sub:sub, stage:stage, problem:problem, skip:false};
+  });
+}
+function importCheck(){
+  var lines=(cs.imp.text||"").split(/\r?\n/).map(function(l){return l.trim()}).filter(Boolean);
+  var rows=lines.map(function(l){return l.split(/\t/).map(function(c){return c.trim()})});
+  if(rows[0] && rows[0].some(function(c){return /skill area|family|sub-?skill|stage/i.test(c)})) rows=rows.slice(1);
+  cs.imp.rows=mapImportRows(rows, cs.imp.cols); cs.imp.stage="check"; renderCreate();
+}
+function importFixStage(idx, stage){ var r=cs.imp.rows.find(function(x){return x.idx===idx}); if(!r) return; r.stage=stage; r.problem=stageOptions(curLib().sport).indexOf(stage)<0?"Stage not in pathway":""; renderCreate(); }
+function importSkip(idx){ var r=cs.imp.rows.find(function(x){return x.idx===idx}); if(!r) return; r.skip=!r.skip; renderCreate(); }
+function importApply(){
+  var lib=curLib(); var rows=cs.imp.rows.filter(function(r){return !r.skip && !r.problem});
+  if(!rows.length){ toast("No usable rows — fix the problems or skip them first."); return; }
+  rows.forEach(function(r){
+    var ar=lib.areas.find(function(a){return a.name.toLowerCase()===r.area.toLowerCase()});
+    if(!ar){ ar={id:uid(), name:r.area, type:"", families:[]}; lib.areas.push(ar); }
+    var fam=ar.families.find(function(f){return f.name.toLowerCase()===r.fam.toLowerCase()});
+    if(!fam){ fam={id:uid(), name:r.fam, subs:[]}; ar.families.push(fam); }
+    if(fam.subs.some(function(s){return s.name.toLowerCase()===r.sub.toLowerCase() && !s.retired})) return;
+    var s=newSub(lib, ar.id, fam.id, r.sub); s.code=autoCode(lib, s);
+    if(r.stage) s.stages=[{stage:r.stage, role:"Assessed", check:"", pass:"", scoring:"Pass / not yet", points:""}];
+    else s.stages=[];
+    fam.subs.push(s); markChanged(lib,"added",s.name,"Imported from spreadsheet");
+  });
+  cs.imp.done=true; cs.step=2; saveState(); renderCreate();
+  toast(rows.length+" sub-skills imported. Now add drills and stage maps in step 2.");
+}
+function importMoreRows(libId){
+  state.ui.lib=libId; cs={step:1, sport:libById(libId).sport, start:"import", scope:libById(libId).scope, imp:{text:"", rows:[], done:false}};
+  saveState(); goScreen(4);
+}
+function renderCreateStep2(lib){
+  var html='<div class="card"><h3>Step 2 · Skills — structure and sub-skills in one table</h3>'+
+  '<p class="small muted">Add skill areas, then families, then sub-skills — in any order. Double-click a name to rename it. <span class="kbd">Enter</span> adds a row; paste several lines to add several at once. Missing stages and drills never block Next.</p>'+
+  '<div id="createTree"></div>'+
+  '<div class="fieldrow" style="margin-top:12px"><div class="field"><label>Add a skill area</label><input id="newAreaName" placeholder="e.g. Batting"></div><button class="primary" onclick="createAddArea()">Add skill area</button></div>'+
+  '<p class="small muted">Suggested for '+esc(lib.sport)+': '+(lib.sport==="Cricket"?"Batting, Bowling, Fielding, Fitness, The code":lib.sport==="Swimming"?"Strokes, Starts and turns, Water safety":lib.sport==="Tennis"?"Groundstrokes, Serve, Volley, Footwork":lib.sport==="Football"?"Passing, Shooting, Defending, Goalkeeping":"Skill areas you coach — add your own.")+'</p>'+
+  '<div class="stepnav"><span><button onclick="cs.step=1;renderCreate()">‹ Back: Start</button> <button onclick="saveDraftExit()">Save draft</button></span><button class="primary" onclick="createStep2Next()">Next: Review and publish ›</button></div></div>';
+  $("#createBody").innerHTML=html;
+  renderTreeInto("createTree");
+}
+function renderTreeInto(elId){
+  var lib=curLib(); var el=document.getElementById(elId); if(!lib||!el) return;
+  if(!lib.areas.length){ el.innerHTML='<div class="empty"><h3>No skill areas yet</h3><p class="muted">Add your first skill area below.</p></div>'; return; }
+  var html='<table><thead><tr><th>Structure</th><th>Sub-skills</th><th></th></tr></thead><tbody>';
+  lib.areas.forEach(function(ar, ai){
+    html+='<tr class="area"><td>'+esc(ar.name)+(ar.type?' <span class="small muted">'+esc(ar.type)+"</span>":"")+'</td><td>'+ar.families.reduce(function(a,f){return a+f.subs.length},0)+'</td><td style="white-space:nowrap">'+
+    '<button class="mini iconbtn" onclick="renameInline(\'area\',\''+ar.id+'\')" aria-label="Rename '+esc(ar.name)+'">Rename</button> '+
+    '<button class="mini iconbtn" onclick="moveArea(\''+ar.id+'\',-1)" aria-label="Move up">↑</button><button class="mini iconbtn" onclick="moveArea(\''+ar.id+'\',1)" aria-label="Move down">↓</button> '+
+    '<button class="mini danger" onclick="removeArea(\''+ar.id+'\')">Remove</button></td></tr>';
+    ar.families.forEach(function(fam, fi){
+      html+='<tr class="fam"><td style="padding-left:24px">'+esc(fam.name)+'</td><td>'+fam.subs.length+'</td><td style="white-space:nowrap">'+
+      '<button class="mini iconbtn" onclick="renameInline(\'fam\',\''+fam.id+'\')">Rename</button> '+
+      '<button class="mini iconbtn" onclick="moveFam(\''+ar.id+'\',\''+fam.id+'\',-1)">↑</button><button class="mini iconbtn" onclick="moveFam(\''+ar.id+'\',\''+fam.id+'\',1)">↓</button> '+
+      '<button class="mini danger" onclick="removeFamily(\''+ar.id+'\',\''+fam.id+'\')">Remove</button></td></tr>';
+      fam.subs.forEach(function(s){
+        html+='<tr class="sub" onclick="openSub(\''+s.id+'\')"><td style="padding-left:40px">'+(s.isNew?'<span class="newtag">New</span> ':"")+esc(s.name)+'</td><td>'+subStageChips(s)+'</td><td><span class="small muted">'+s.drills.length+' drill'+(s.drills.length===1?"":"s")+'</span></td></tr>';
+      });
+      html+='<tr><td colspan="3" style="padding-left:40px"><input class="inline-add" placeholder="Add a sub-skill to '+esc(fam.name)+'…  (Enter adds it)" onkeydown="inlineAdd(event,this,\''+ar.id+'\',\''+fam.id+'\')" onpaste="pasteAdd(event,this,\''+ar.id+'\',\''+fam.id+'\')"></td></tr>';
+    });
+    html+='<tr><td colspan="3" style="padding-left:24px"><div class="fieldrow"><input id="fam-'+ar.id+'" placeholder="Add a skill family to '+esc(ar.name)+'…"><button class="mini" onclick="createAddFamily(\''+ar.id+'\')">Add family</button></div></td></tr>';
+  });
+  html+="</tbody></table>";
+  el.innerHTML=html;
+}
+function createAddArea(){
+  var lib=curLib(); var v=($("#newAreaName")||{}).value||""; v=v.trim(); if(!v) return;
+  if(lib.areas.some(function(a){return a.name.toLowerCase()===v.toLowerCase()})){ toast("That skill area already exists."); return; }
+  lib.areas.push({id:uid(), name:v, type:"", families:[]});
+  markChanged(lib,"added",v,"New skill area"); saveState(); renderCreate();
+}
+function createAddFamily(areaId){
+  var lib=curLib(); var ar=lib.areas.find(function(a){return a.id===areaId}); if(!ar) return;
+  var v=(($("#fam-"+areaId))||{}).value||""; v=v.trim(); if(!v) return;
+  if(ar.families.some(function(f){return f.name.toLowerCase()===v.toLowerCase()})){ toast("That family already exists in "+ar.name+"."); return; }
+  ar.families.push({id:uid(), name:v, subs:[]});
+  markChanged(lib,"added",v,"New family in "+ar.name); saveState(); renderCreate();
+}
+function renameInline(kind, id){
+  var lib=curLib();
+  var cur=kind==="area"?lib.areas.find(function(a){return a.id===id}):null;
+  if(!cur){ lib.areas.forEach(function(a){var f=a.families.find(function(x){return x.id===id}); if(f) cur=f;}); }
+  if(!cur) return;
+  var v=prompt("Rename to:", cur.name); if(v===null) return; v=v.trim(); if(!v||v===cur.name) return;
+  if(!cur.changed && lib.published){ cur.changed=true; }
+  var was=cur.name; cur.name=v;
+  markChanged(lib,"edited",v,"Renamed — was “"+was+"”",was);
+  saveState(); renderAll(); toast("Renamed.");
+}
+function moveArea(id, d){
+  var lib=curLib(); var i=lib.areas.findIndex(function(a){return a.id===id}); var j=i+d;
+  if(i<0||j<0||j>=lib.areas.length) return;
+  var t=lib.areas[i]; lib.areas[i]=lib.areas[j]; lib.areas[j]=t; saveState(); renderCreate();
+}
+function moveFam(areaId, famId, d){
+  var lib=curLib(); var ar=lib.areas.find(function(a){return a.id===areaId}); if(!ar) return;
+  var i=ar.families.findIndex(function(f){return f.id===famId}); var j=i+d;
+  if(i<0||j<0||j>=ar.families.length) return;
+  var t=ar.families[i]; ar.families[i]=ar.families[j]; ar.families[j]=t; saveState(); renderCreate();
+}
+function removeArea(id){
+  var lib=curLib(); var ar=lib.areas.find(function(a){return a.id===id}); if(!ar) return;
+  var n=countSubs({areas:[ar]});
+  if(!confirm("Remove skill area “"+ar.name+"”"+(n?" and its "+n+" sub-skill"+(n===1?"":"s"):"")+"? This cannot be undone once published.")) return;
+  lib.areas=lib.areas.filter(function(a){return a.id!==id});
+  markChanged(lib,"removed",ar.name,"Skill area removed"); saveState(); renderCreate();
+}
+function removeFamily(areaId, famId){
+  var lib=curLib(); var ar=lib.areas.find(function(a){return a.id===areaId}); if(!ar) return;
+  var fam=ar.families.find(function(f){return f.id===famId}); if(!fam) return;
+  if(!confirm("Remove family “"+fam.name+"”"+(fam.subs.length?" and its "+fam.subs.length+" sub-skill"+(fam.subs.length===1?"":"s"):"")+"? You can move the sub-skills first from the sub-skill page.")) return;
+  ar.families=ar.families.filter(function(f){return f.id!==famId});
+  markChanged(lib,"removed",fam.name,"Family removed from "+ar.name); saveState(); renderCreate();
+}
+function createStep2Next(){
+  var lib=curLib();
+  if(!countSubs(lib)){ toast("Add at least one sub-skill before review — or save as a draft and come back."); return; }
+  cs.step=3; saveState(); renderCreate();
+}
+function renderCreateStep3(lib){
+  var c=completeness(lib);
+  var noAssess=allSubs(lib).filter(function(x){return !x.sub.allStages && !x.sub.stages.some(function(r){return r.role==="Assessed"})});
+  var noDrill=allSubs(lib).filter(function(x){return x.sub.drills.length===0});
+  var noIcan=allSubs(lib).filter(function(x){return !x.sub.ican});
+  var blockers=[]; var warnings=[];
+  if(!c.total) blockers.push("No sub-skills yet — add at least one in step 2.");
+  if(noAssess.length) warnings.push(noAssess.length+" sub-skill"+(noAssess.length===1?"":"s")+" with no assessed stage. They will not appear in stage-filtered program pickers until fixed.");
+  if(noDrill.length) warnings.push(noDrill.length+" sub-skill"+(noDrill.length===1?"":"s")+" with no drills.");
+  if(noIcan.length) warnings.push(noIcan.length+" sub-skill"+(noIcan.length===1?"":"s")+" with no family-facing “I can” line.");
+  var html='<div class="card"><h3>Step 3 · Review and publish</h3>'+
+  '<div class="checks">'+
+  (blockers.length?blockers.map(function(b){return '<div class="row bad"><b>✕ Blocker</b><span>'+esc(b)+'</span></div>'}).join(""):'<div class="row"><b>✓ No blockers</b><span>Ready to publish.</span></div>')+
+  warnings.map(function(w){return '<div class="row warn"><b>⚠ Warning</b><span>'+esc(w)+'</span></div>'}).join("")+
+  '</div>'+
+  '<h4>Summary</h4><p>'+c.total+' sub-skills · Stage set on '+c.staged+' of '+c.total+' · Assessment on '+c.assessed+' of '+c.total+' · Drills on '+c.drilled+' of '+c.total+'</p>'+
+  '<p><button class="ghost" onclick="state.ui.lib=\''+lib.id+'\';state.ui.lview=\'prog\';goScreen(2)">See the progression matrix ›</button></p>'+
+  (lib.version>0?'<div class="field"><label>What changed (shown to coaches) *</label><textarea id="pubNote" rows="2" style="width:100%" placeholder="e.g. Stage maps added to Batting; one new drill."></textarea></div>':"")+
+  '<div class="field"><label>When</label><p><label class="small"><input type="radio" name="pubwhen" checked> Publish now</label> <label class="small"><input type="radio" name="pubwhen" onchange="document.getElementById(\'pubDate\').style.display=\'inline-block\'"> Publish on a date</label> <input type="date" id="pubDate" style="display:none"> <label class="small"><input type="radio" name="pubwhen"> Start of next term</label></p></div>'+
+  '<div class="stepnav"><span><button onclick="cs.step=2;renderCreate()">‹ Back: Skills</button> <button onclick="saveDraftExit()">Save draft</button></span><button class="primary" '+(blockers.length?"disabled":"")+' onclick="publishLibrary(\''+lib.id+'\')">Publish library</button></div></div>';
+  $("#createBody").innerHTML=html;
+}
+function publishLibrary(libId){
+  var lib=libById(libId); if(!lib) return;
+  var note=(($("#pubNote")||{}).value||"").trim();
+  if(lib.version>0 && !note){ toast("Add a short “What changed” note — coaches see it."); return; }
+  var wasDraft=lib.draftChanges.length;
+  lib.version=lib.version+1; lib.published=true;
+  lib._snapshot=JSON.stringify({areas:lib.areas, drills:lib.drills});
+  lib.versions.push({v:lib.version, date:new Date().toISOString().slice(0,10), by:"You", note:note||"First published version", programs:lib.programs||0});
+  allSubs(lib).forEach(function(x){ x.sub.isNew=false; x.sub.changed=false; });
+  lib.areas.forEach(function(a){a.changed=false; a.families.forEach(function(f){f.changed=false})});
+  lib.draftChanges=[];
+  saveState(); cs=null;
+  toast("Published as v"+lib.version+". New programs use v"+lib.version+"; running programs will be asked whether to apply it.");
+  openLibrary(libId);
+}
+
+/* ---------- screen 5 · Edit mode (shared NC02 shell) ---------- */
+function renderEdit(){
+  var lib=curLib();
+  if(!lib){ $("#scr-5").innerHTML='<div class="empty"><h2>No library open</h2><p class="muted">Open a library first.</p><p><button class="primary" onclick="goScreen(1)">Go to libraries</button></p></div>'; return; }
+  var sec=state.ui.editSec||"details";
+  var html='<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><h2 style="margin:0">Edit '+esc(lib.name)+'</h2>'+
+    '<span class="pill">'+(lib.published?"Published · v"+lib.version:"Not published yet")+"</span>"+
+    (lib.draftChanges.length?'<span class="pill" style="background:#FFF4E0;color:var(--amber)">Editing draft v'+(lib.version+1)+'</span>':"")+
+    '<span class="small muted">Editor: '+esc(lib.editors[0]||"You")+'</span><span style="flex:1"></span>'+
+    '<button onclick="discardDraft(\''+lib.id+'\')">Discard draft</button>'+
+    '<button class="primary" onclick="openPublishDialog(\''+lib.id+'\')">Review and publish</button></div>'+
+    '<p class="small muted" style="margin-top:8px">Changes save to draft v'+(lib.version+1)+'. When you publish, new programs use v'+(lib.version+1)+'. Running and upcoming programs get an update notice to apply it or keep v'+lib.version+'. Programs keep v'+lib.version+' while you edit.</p>'+
+    '<div class="tabs" role="tablist" aria-label="Edit sections">'+
+    '<button class="'+(sec==="details"?"on":"")+'" onclick="state.ui.editSec=\'details\';saveState();renderEdit()">Library details</button>'+
+    '<button class="'+(sec==="skills"?"on":"")+'" onclick="state.ui.editSec=\'skills\';saveState();renderEdit()">Skills '+(lib.draftChanges.length?'<span class="badge warn">'+lib.draftChanges.length+' change'+(lib.draftChanges.length===1?"":"s")+'</span>':"")+'</button></div>';
+  if(sec==="details"){
+    html+='<div class="card">'+
+    '<div class="field"><label>Library name</label><input style="width:100%;max-width:420px" value="'+esc(lib.name)+'" onchange="var l=curLib();l.name=this.value.trim()||l.name;saveState();touchSave()"></div>'+
+    '<div class="field"><label>Description</label><textarea rows="2" style="width:100%" onchange="var l=curLib();l.desc=this.value;saveState();touchSave()">'+esc(lib.desc||"")+'</textarea></div>'+
+    '<div class="field"><label>Sport</label><p>'+esc(lib.sport)+' — can’t change once a library is published. For another sport, create a new library.</p></div>'+
+    '<div class="field"><label>Pathway (read-only — set in Academy settings)</label><p>'+esc(pathwaySummary(lib.sport))+' · <a href="#" onclick="goScreen(6);return false">Edit pathway</a></p></div>'+
+    '<div class="field"><label>Origin</label><p>'+esc(lib.origin)+'</p></div>'+
+    '<p><button class="mini" onclick="state.ui.editSec=\'details\';toast(\'Section reverted to the published version.\');renderEdit()">Revert this section</button></p></div>';
+  } else {
+    html+='<p class="small muted">The same nested table as the library page, in edit mode. <span class="newtag">New</span> rows get a green left bar; Edited rows show what changed with Undo; Removed rows stay struck through until publish.</p>'+
+    '<div id="editTree"></div>'+
+    '<div class="card"><h3>Changes in this draft ('+lib.draftChanges.length+')</h3>'+
+    (lib.draftChanges.length?'<ul>'+lib.draftChanges.map(function(c,i){return '<li><b>'+esc(c.kind)+'</b> — '+esc(c.target)+(c.detail?' — '+esc(c.detail):"")+(c.was?' <span class="was">Was “'+esc(c.was)+'”</span> <button class="mini" onclick="undoDraftChange(\''+lib.id+'\','+i+')">Undo</button>':"")+"</li>"}).join("")+"</ul>":'<p class="small muted">No changes yet.</p>')+'</div>'+
+    '<p><button onclick="importMoreRows(\''+lib.id+'\')">Import more rows</button> <button onclick="goScreen(2)">Save and exit</button></p>';
+  }
+  $("#scr-5").innerHTML=html;
+  if(sec==="skills"){ var el=$("#editTree"); if(el){ renderTreeIntoEdit(el); } }
+}
+function renderTreeIntoEdit(el){
+  /* reuse the LB20 tree by temporarily pointing renderTree at this element */
+  var saved=document.getElementById("treeView");
+  var fake=document.createElement("div"); fake.id="treeView"; el.appendChild(fake);
+  renderTree();
+  el.innerHTML=fake.innerHTML; fake.remove();
+}
+function undoDraftChange(libId, i){
+  var lib=libById(libId); if(!lib) return;
+  var c=lib.draftChanges[i]; if(!c) return;
+  if(c.was){
+    allSubs(lib).forEach(function(x){ if(x.sub.name===c.target && x.sub.was===c.was){ x.sub.name=c.was; x.sub.changed=false; } });
+    lib.areas.forEach(function(a){ if(a.name===c.target){a.name=c.was; a.changed=false;} a.families.forEach(function(f){ if(f.name===c.target){f.name=c.was; f.changed=false;} }); });
+  }
+  lib.draftChanges.splice(i,1); saveState(); renderEdit(); toast("Change undone.");
+}
+function discardDraft(libId){
+  var lib=libById(libId); if(!lib) return;
+  if(!lib.draftChanges.length){ toast("No draft changes to discard."); return; }
+  if(!confirm("Discard draft v"+(lib.version+1)+"? The "+lib.draftChanges.length+" change"+(lib.draftChanges.length===1?"":"s")+" will be lost. Programs keep v"+lib.version+".")) return;
+  /* Simplest honest implementation: restore from the last published snapshot if one exists. */
+  if(lib._snapshot){ var snap=JSON.parse(lib._snapshot); var keep={id:lib.id, name:lib.name, sport:lib.sport, scope:lib.scope, origin:lib.origin, desc:lib.desc, version:lib.version, published:lib.published, versions:lib.versions, editors:lib.editors, programs:lib.programs, created:lib.created, archived:lib.archived};
+    Object.assign(lib, keep, {areas:snap.areas, drills:snap.drills, suggestions:lib.suggestions, draftChanges:[]});
+  } else { lib.draftChanges=[]; allSubs(lib).forEach(function(x){x.sub.changed=false; x.sub.isNew=false;}); }
+  saveState(); renderEdit(); toast("Draft discarded — back to v"+lib.version+".");
+}
+function openPublishDialog(libId){
+  var lib=libById(libId); if(!lib) return;
+  var c=completeness(lib);
+  var noAssess=allSubs(lib).filter(function(x){return !x.sub.allStages && !x.sub.stages.some(function(r){return r.role==="Assessed"})});
+  var noDrill=allSubs(lib).filter(function(x){return x.sub.drills.length===0});
+  var stdChanges=lib.draftChanges.filter(function(ch){return /assessment|stage|pass/i.test(ch.detail||"")});
+  openModal('<h3>Review and publish — draft v'+(lib.version+1)+'</h3>'+
+  '<div class="checks">'+
+  (c.total?'<div class="row"><b>✓ No blockers</b><span>Ready to publish.</span></div>':'<div class="row bad"><b>✕ Blocker</b><span>No sub-skills yet.</span></div>')+
+  (noAssess.length?'<div class="row warn"><b>⚠ Warning</b><span>'+noAssess.length+' sub-skill'+(noAssess.length===1?"":"s")+' with no assessed stage.</span></div>':"")+
+  (noDrill.length?'<div class="row warn"><b>⚠ Warning</b><span>'+noDrill.length+' sub-skill'+(noDrill.length===1?"":"s")+' with no drills.</span></div>':"")+
+  '</div>'+
+  '<h4 style="margin-top:16px">What changed ('+lib.draftChanges.length+')</h4>'+
+  (lib.draftChanges.length?'<ul class="small">'+lib.draftChanges.map(function(ch){return '<li><b>'+esc(ch.target)+'</b> — '+esc(ch.kind)+(ch.detail?' — '+esc(ch.detail):"")+(stdChanges.indexOf(ch)>-1?' <span class="badge warn">Affects assessment</span>':"")+"</li>"}).join("")+"</ul>":'<p class="small muted">No changes in this draft.</p>')+
+  '<div class="field"><label for="whatChanged">What changed (shown to coaches) *</label><textarea id="whatChanged" rows="2" style="width:100%" placeholder="e.g. Stage maps added to Batting; one new drill."></textarea></div>'+
+  '<div class="field"><label>Running programs</label><p><label class="small"><input type="radio" name="runprog" checked> Apply at the end of this term</label><br><label class="small"><input type="radio" name="runprog"> Apply now</label><br><label class="small"><input type="radio" name="runprog"> Keep v'+lib.version+' (coaches decide)</label></p></div>'+
+  '<div class="field"><label>When</label><p><label class="small"><input type="radio" name="when" checked> Publish now</label> <label class="small"><input type="radio" name="when"> Publish on a date</label> <label class="small"><input type="radio" name="when"> Start of next term</label></p></div>'+
+  '<p style="text-align:right"><button onclick="closeModal()">Keep editing</button> <button class="primary" onclick="publishFromDialog(\''+lib.id+'\')">Publish v'+(lib.version+1)+'</button></p>');
+}
+function publishFromDialog(libId){
+  var lib=libById(libId); if(!lib) return;
+  var note=(($("#whatChanged")||{}).value||"").trim();
+  if(!note){ toast("Add a short “What changed” note — coaches see it."); return; }
+  lib._snapshot=JSON.stringify({areas:lib.areas, drills:lib.drills});
+  closeModal();
+  var tmp=$("#pubNote"); /* publishLibrary reads #pubNote; provide the note via a temp field */
+  var holder=document.createElement("textarea"); holder.id="pubNote"; holder.style.display="none"; holder.value=note; document.body.appendChild(holder);
+  publishLibrary(libId);
+  holder.remove();
+}
+
+/* ---------- screen 6 · Pathways ---------- */
+function renderPathways(){
+  var sports=Object.keys(state.pathways);
+  state.libraries.forEach(function(l){ if(sports.indexOf(l.sport)<0) sports.push(l.sport); });
+  var html='<h2>Pathways — Academy settings</h2>'+
+  '<p class="muted">One pathway per sport. Libraries inherit the pathway read-only; there is no per-library override in v1. Changing a pathway here re-labels every library that uses it. Values in use are archived, never deleted.</p>';
+  if(!sports.length){
+    html+='<div class="empty"><h2>No pathways yet</h2><p class="muted">Add a sport to set up its pathway — levels, age groups, cut-off date, and moving-up rules.</p></div>';
+  }
+  sports.forEach(function(sp){ html+=pathwayCardHTML(sp); });
+  html+='<div class="card"><h3>Add a sport</h3><div class="fieldrow"><div class="field"><label>Sport</label><select id="newPathSport" style="width:100%">'+SPORTS.filter(function(s){return sports.indexOf(s)<0}).map(function(s){return "<option>"+s+"</option>"}).join("")+'</select></div><button class="primary" onclick="addPathway()">Add pathway</button></div><p class="small muted">Presets: Youth cricket U9–U18 × White, Silver, Gold, Purple · Swim Stage 1–7 · Tennis Red, Orange, Green, Yellow ball · Martial arts belts.</p></div>';
+  $("#scr-6").innerHTML=html;
+}
+function addPathway(){
+  var sp=(($("#newPathSport")||{}).value||""); if(!sp) return;
+  ensurePathway(sp); saveState(); renderPathways(); toast(sp+" pathway added — edit its levels and age groups below.");
+}
+function pathwayCardHTML(sp){
+  var p=ensurePathway(sp);
+  var inUse=function(name){ return state.libraries.some(function(l){return l.sport===sp && allSubs(l).some(function(x){return x.sub.stages.some(function(r){return r.stage===name || r.stage.indexOf(name+" ")===0})})}); };
+  var levels=p.levels.map(function(l,i){
+    var prof=p.profiles&&p.profiles[l.name];
+    return '<p><span class="levelchip" style="background:'+esc(l.color)+'">'+esc(l.name)+'</span> '+
+    '<button class="mini" onclick="toggleProf(\'prof-'+esc(sp)+'-'+i+'\')">Stage profile ▾</button> '+
+    '<button class="mini" onclick="moveLevel(\''+esc(sp)+'\','+i+',-1)">↑</button><button class="mini" onclick="moveLevel(\''+esc(sp)+'\','+i+',1)">↓</button> '+
+    '<button class="mini" onclick="renameLevel(\''+esc(sp)+'\','+i+')">Rename</button> '+
+    '<button class="mini danger" onclick="removeLevel(\''+esc(sp)+'\','+i+')">'+(inUse(l.name)?"Archive":"Remove")+'</button>'+
+    '<div id="prof-'+esc(sp)+'-'+i+'" style="display:none" class="card"><div class="field"><label>What it means (for coaches)</label><input style="width:100%" value="'+esc(prof?prof.means:"")+'" onchange="setProfile(\''+esc(sp)+'\',\''+esc(l.name)+'\',\'means\',this.value)"></div>'+
+    '<div class="field"><label>Shown to families (120 chars)</label><input style="width:100%" maxlength="120" value="'+esc(prof?prof.families:"")+'" onchange="setProfile(\''+esc(sp)+'\',\''+esc(l.name)+'\',\'families\',this.value)"></div>'+
+    '<div class="fieldrow"><div class="field"><label>Typical age</label><input style="width:100%" value="'+esc(prof?prof.age:"")+'" onchange="setProfile(\''+esc(sp)+'\',\''+esc(l.name)+'\',\'age\',this.value)"></div>'+
+    '<div class="field"><label>Equipment and format</label><input style="width:100%" value="'+esc(prof?prof.equip:"")+'" onchange="setProfile(\''+esc(sp)+'\',\''+esc(l.name)+'\',\'equip\',this.value)"></div>'+
+    '<div class="field"><label>Group size and coach ratio</label><input style="width:100%" value="'+esc(prof?prof.group:"")+'" placeholder="e.g. 12 athletes, 1 coach : 12" onchange="setProfile(\''+esc(sp)+'\',\''+esc(l.name)+'\',\'group\',this.value)"></div></div></div></p>';
+  }).join("");
+  var ages=p.ages.map(function(a){
+    var rule=p.ageRules[a]||{kind:"under", n:parseInt((a.match(/\d+/)||["0"])[0],10)||0};
+    var preview=agePreview(p, a, rule);
+    return '<p><b>'+esc(a)+'</b> <span class="small muted">'+esc(preview)+'</span> '+
+    '<select class="inline" onchange="setAgeRule(\''+esc(sp)+'\',\''+esc(a)+'\',\'kind\',this.value)"><option value="under"'+(rule.kind==="under"?" selected":"")+'>Under N on the cut-off date</option><option value="range"'+(rule.kind==="range"?" selected":"")+'>Age range (from–to)</option><option value="over"'+(rule.kind==="over"?" selected":"")+'>N and over</option><option value="none"'+(rule.kind==="none"?" selected":"")+'>No age rule (placed by coach)</option></select> '+
+    '<button class="mini danger" onclick="removeAge(\''+esc(sp)+'\',\''+esc(a)+'\')">Archive</button></p>';
+  }).join("");
+  return '<div class="profcard"><h3>'+esc(sp)+'</h3>'+
+  '<p><b>Pathway shape:</b> '+["age-level","levels","ages"].map(function(sh){return '<label class="small"><input type="radio" name="shape-'+esc(sp)+'" '+(p.shape===sh?"checked":"")+' onchange="setShape(\''+esc(sp)+'\',\''+sh+'\')"> '+({ "age-level":"Age groups and skill levels","levels":"Levels only","ages":"Age groups only"})[sh]+"</label>"}).join("")+"</p>"+
+  '<p><b>Levels (in order):</b></p>'+levels+
+  '<p><button class="mini" onclick="addLevel(\''+esc(sp)+'\')">Add a level</button></p>'+
+  '<p><b>Age groups:</b></p>'+(ages||'<p class="small muted">None — levels only.</p>')+
+  '<p><button class="mini" onclick="addAge(\''+esc(sp)+'\')">Add an age group</button> · <b>Cut-off date:</b> <input class="inline" value="'+esc(p.cutoff||"")+'" placeholder="e.g. Sep 1" onchange="setCutoff(\''+esc(sp)+'\',this.value)" style="width:110px"> <span class="small muted">Default: uses the academy default (Sep 1).</span></p>'+
+  '<p><span class="badge later">Later</span> <b>Moving up.</b> An athlete completes a stage when: '+["coach","all","points"].map(function(m){return '<label class="small"><input type="radio" name="move-'+esc(sp)+'" '+(p.movingUp.complete===m?"checked":"")+' onchange="setMoveUp(\''+esc(sp)+'\',\'complete\',\''+m+'\')"> '+({"coach":"A coach decides","all":"All assessed sub-skills in the stage are passed","points":"They reach a points total"})[m]+"</label>"}).join("")+'<br>'+
+  'When an athlete moves to the next age group: '+["first","keep"].map(function(m){return '<label class="small"><input type="radio" name="agemove-'+esc(sp)+'" '+(p.movingUp.ageMove===m?"checked":"")+' onchange="setMoveUp(\''+esc(sp)+'\',\'ageMove\',\''+m+'\')"> '+({"first":"Start at the first level again","keep":"Keep their level"})[m]+"</label>"}).join("")+'<br>'+
+  '<span class="small muted">Enforcement of these rules is later — they are recorded here now so the team agrees on them.</span></p></div>';
+}
+function agePreview(p, a, rule){
+  var cut=p.cutoff||"Sep 1";
+  if(rule.kind==="under") return a+" = under "+(rule.n||"?")+" on "+cut;
+  if(rule.kind==="range") return a+" = ages "+(rule.from||"?")+" to "+(rule.to||"?")+" on "+cut;
+  if(rule.kind==="over") return a+" = "+(rule.n||"?")+" and over";
+  return a+" — placed by coach";
+}
+function toggleProf(id){ var el=document.getElementById(id); if(el) el.style.display=el.style.display==="none"?"":"none"; }
+function setProfile(sp, level, field, value){ var p=ensurePathway(sp); p.profiles=p.profiles||{}; p.profiles[level]=p.profiles[level]||{}; p.profiles[level][field]=value; saveState(); }
+function setShape(sp, shape){ var p=ensurePathway(sp); p.shape=shape; saveState(); renderPathways(); }
+function setCutoff(sp, v){ var p=ensurePathway(sp); p.cutoff=v.trim(); saveState(); }
+function setMoveUp(sp, field, v){ var p=ensurePathway(sp); p.movingUp[field]=v; saveState(); }
+function addLevel(sp){ var p=ensurePathway(sp); var n=prompt("New level name:", ""); if(!n) return; n=n.trim(); if(!n) return; p.levels.push({name:n, color:"#0D7C66"}); saveState(); renderPathways(); }
+function renameLevel(sp, i){ var p=ensurePathway(sp); var v=prompt("Rename level:", p.levels[i].name); if(v===null) return; v=v.trim(); if(!v) return; p.levels[i].name=v; saveState(); renderPathways(); }
+function moveLevel(sp, i, d){ var p=ensurePathway(sp); var j=i+d; if(j<0||j>=p.levels.length) return; var t=p.levels[i]; p.levels[i]=p.levels[j]; p.levels[j]=t; saveState(); renderPathways(); }
+function removeLevel(sp, i){ var p=ensurePathway(sp); var name=p.levels[i].name;
+  var used=state.libraries.some(function(l){return l.sport===sp && allSubs(l).some(function(x){return x.sub.stages.some(function(r){return r.stage===name || r.stage.indexOf(name+" ")===0})})});
+  if(used){ if(!confirm("“"+name+"” is used by sub-skills. Archive it instead of deleting? Everything that uses it keeps it.")) return; p.levels[i].archived=true; }
+  else { if(!confirm("Remove level “"+name+"”?")) return; p.levels.splice(i,1); }
+  saveState(); renderPathways(); }
+function addAge(sp){ var p=ensurePathway(sp); var n=prompt("New age group name (e.g. U15):", ""); if(!n) return; n=n.trim(); if(!n||p.ages.indexOf(n)>-1) return; p.ages.push(n); p.ageRules[n]={kind:"under", n:parseInt((n.match(/\d+/)||["0"])[0],10)||0}; saveState(); renderPathways(); }
+function setAgeRule(sp, a, field, v){ var p=ensurePathway(sp); p.ageRules[a]=p.ageRules[a]||{kind:"under", n:0}; p.ageRules[a][field]=v; saveState(); renderPathways(); }
+function removeAge(sp, a){ var p=ensurePathway(sp); if(!confirm("Archive age group “"+a+"”? Everything that uses it keeps it.")) return; p.ages=p.ages.filter(function(x){return x!==a}); saveState(); renderPathways(); }
+
+/* ---------- screen 7 · Coach mobile (390px) ---------- */
+var phoneSub=null;
+function renderPhone(){
+  var libs=state.libraries.filter(function(l){return !l.archived});
+  if(!libs.length){ $("#scr-7").innerHTML='<h2>Coach mobile view</h2><div class="empty"><h2>No libraries yet</h2><p class="muted">Build a library first — then coaches can look up drills here on their phone.</p><p><button class="primary" onclick="goScreen(0)">Build your first library</button></p></div>'; return; }
+  var lib=libById(state.ui.lib)||libs[0];
+  var stages=stageOptions(lib.sport);
+  var sel=state.coachStage[lib.id]||stages[0]||"";
+  var subs=allSubs(lib).filter(function(x){return !x.sub.retired && stageMatches(x.sub, sel)});
+  var html='<h2>Coach mobile view</h2><p class="muted">390px, one thumb, all tap targets at least 44px. The stage selector is the primary control above the tree and remembers the last choice. The sub-skill opens as a full-screen sheet with Drills first, then Homework, and a fixed “Suggest a change” button at the bottom.</p>'+
+  '<div class="phone"><div class="phonebar">Skill Library · Coach</div><div class="phwrap">'+
+  '<div class="field"><label>Library</label><select style="width:100%" onchange="state.ui.lib=this.value;phoneSub=null;saveState();renderPhone()">'+libs.map(function(l){return '<option value="'+l.id+'"'+(l.id===lib.id?" selected":"")+">"+esc(l.name)+"</option>"}).join("")+'</select></div>'+
+  '<div class="field"><label>Show stage</label><select style="width:100%" onchange="state.coachStage[\''+lib.id+'\']=this.value;saveState();renderPhone()">'+stages.map(function(s){return '<option'+(s===sel?" selected":"")+">"+esc(s)+"</option>"}).join("")+'</select></div>'+
+  '<input type="search" placeholder="Search sub-skills and drills…" aria-label="Search" style="width:100%;margin-bottom:8px" oninput="phoneSearch(this.value)">'+
+  '<div id="phoneTree">'+
+  lib.areas.map(function(ar){
+    var fams=ar.families.map(function(f){
+      var ss=f.subs.filter(function(s){return !s.retired && stageMatches(s, sel)});
+      if(!ss.length) return "";
+      return '<div class="phfam" style="padding-left:16px"><span><b>'+esc(f.name)+'</b></span><span class="muted">'+ss.length+'</span></div>'+
+      ss.map(function(s){return '<div class="phsub" onclick="openPhoneSub(\''+s.id+'\')">'+esc(s.name)+'<br><span class="small muted">'+s.drills.length+' drill'+(s.drills.length===1?"":"s")+" · "+s.homework.length+' homework</span></div>'}).join("");
+    }).join("");
+    return fams?'<div class="phfam"><span><b>'+esc(ar.name).toUpperCase()+'</b></span></div>'+fams:"";
+  }).join("")+
+  '</div>'+
+  (phoneSub?phoneSheetHTML(lib, phoneSub):"")+
+  '</div></div>'+
+  '<p class="small muted" style="text-align:center;margin-top:8px">Coach view is read-only. Coaches never edit the library from here — they suggest changes.</p>';
+  $("#scr-7").innerHTML=html;
+}
+function phoneSearch(q){ q=q.toLowerCase(); document.querySelectorAll("#phoneTree .phsub").forEach(function(el){ el.style.display=el.textContent.toLowerCase().indexOf(q)>-1?"":"none"; }); }
+function openPhoneSub(id){ phoneSub=id; renderPhone(); setTimeout(function(){var el=document.getElementById("phoneSheet"); if(el) el.scrollIntoView({behavior:"smooth"})},60); }
+function phoneSheetHTML(lib, subId){
+  var ctx=findSub(lib, subId); if(!ctx) return "";
+  var s=ctx.sub;
+  var drills=s.drills.map(function(link){ var d=drillById(lib, link.drillId); if(!d) return "";
+    return '<div class="drillcard"><b>'+esc(d.name)+'</b> <span class="small muted">'+d.minutes+" min · "+esc(d.format)+"</span><br><span class='small'>"+esc(d.how||"")+"</span>"+(link.variation?'<br><span class="small"><b>Variation:</b> '+esc(link.variation)+"</span>":"")+"</div>";
+  }).join("") || '<p class="small muted">No drills linked yet.</p>';
+  var hw=s.homework.map(function(h){ return '<div class="drillcard"><b>'+esc(h.title)+'</b><br><span class="small">'+esc(h.text)+'</span><br><span class="small muted">'+esc(h.freq||"")+"</span></div>"; }).join("") || '<p class="small muted">No homework yet.</p>';
+  var assess=s.stages.filter(function(r){return r.role==="Assessed"});
+  return '<div id="phoneSheet" class="phonesheet" style="display:block;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px">'+
+  '<h3 style="margin-top:0">'+esc(s.name)+'</h3><p class="small muted">'+esc(ctx.area.name)+" › "+esc(ctx.fam.name)+'</p>'+
+  (assess.length?'<p><b>How it is assessed:</b> '+esc(assess[0].check||"")+' — '+esc(assess[0].pass||"")+'</p>':"")+
+  '<h4>Drills</h4>'+drills+'<h4>Homework</h4>'+hw+
+  '<p><button class="primary" style="width:100%" onclick="openSugForm(\''+lib.id+'\',\''+s.id+'\')">Suggest a change</button></p>'+
+  '<p><button onclick="phoneSub=null;renderPhone()">Close</button></p></div>';
+}
+
+/* ---------- screen 8 · Suggestions queue ---------- */
+var sugFilter={type:"all", from:"all"};
+function allSuggestions(){
+  var out=[];
+  state.libraries.forEach(function(l){ l.suggestions.forEach(function(s){ out.push({lib:l, s:s}); }); });
+  return out;
+}
+function renderSugg(){
+  var items=allSuggestions().filter(function(x){
+    if(sugFilter.type!=="all"&&x.s.type!==sugFilter.type) return false;
+    if(sugFilter.from!=="all"&&x.s.from!==sugFilter.from) return false;
+    return true;
+  });
+  var waiting=items.filter(function(x){return x.s.status==="Waiting"}).length;
+  var html='<h2>Suggestions queue</h2><p class="muted">Suggestions from coaches across all libraries. Review one to see what the library has now against what was suggested.</p>'+
+  (state.libraries.length?'':'<div class="empty"><h2>No libraries yet</h2><p class="muted">Suggestions appear here once a library exists and a coach suggests a change.</p></div>')+
+  '<div class="toolbar"><span class="small"><b>Type:</b></span><div class="tabs" style="margin:0">'+
+  [["all","All"],["New drill","New drill"],["Change a sub-skill","Change a sub-skill"],["Flag a problem","Flag a problem"]].map(function(t){return '<button class="'+(sugFilter.type===t[0]?"on":"")+'" onclick="sugFilter.type=\''+t[0]+'\';renderSugg()">'+t[1]+"</button>"}).join("")+"</div>"+
+  '<span class="small"><b>From:</b></span><div class="tabs" style="margin:0">'+
+  [["all","All"],["Library","Library"],["Session plan","Session plan"],["Program","Program"]].map(function(t){return '<button class="'+(sugFilter.from===t[0]?"on":"")+'" onclick="sugFilter.from=\''+t[0]+'\';renderSugg()">'+t[1]+"</button>"}).join("")+"</div></div>"+
+  '<div id="bulkBar" style="display:none;gap:8px;align-items:center;margin-bottom:12px"><span id="bulkTxt" class="small"></span><button class="primary" onclick="bulkAct(\'approve\')">Approve selected</button><button onclick="bulkAct(\'decline\')">Decline selected</button></div>'+
+  '<div id="sugList">'+(items.length?items.map(function(x){
+    return '<div class="sugrow"><input type="checkbox" data-sug="'+x.s.id+'" data-lib="'+x.lib.id+'" onchange="updBulk()"><span style="flex:1"><b>'+esc(x.s.type)+'</b> · '+esc(x.s.item)+'<br><span class="small muted">'+esc(x.lib.name)+" · "+esc(x.s.coach)+" · "+esc(x.s.from)+" · "+esc(x.s.status)+'</span><br><span class="small">'+esc(x.s.note)+'</span></span>'+
+    (x.s.status==="Waiting"?'<button class="mini" onclick="openSugReview(\''+x.lib.id+'\',\''+x.s.id+'\')">Review</button>':'<span class="badge">'+esc(x.s.status)+'</span>')+"</div>";
+  }).join(""):'<div class="empty"><h3>All caught up</h3><p class="muted">No suggestions match these filters.</p></div>')+"</div>"+
+  '<div id="sugReview"></div>';
+  $("#scr-8").innerHTML=html;
+}
+function updBulk(){
+  var n=document.querySelectorAll("#sugList input:checked").length;
+  var bar=$("#bulkBar"); if(!bar) return;
+  bar.style.display=n?"flex":"none";
+  var t=$("#bulkTxt"); if(t) t.textContent=n+" selected";
+}
+function bulkAct(a){
+  var boxes=document.querySelectorAll("#sugList input:checked");
+  boxes.forEach(function(c){ var lib=libById(c.dataset.lib); if(!lib) return; var s=lib.suggestions.find(function(x){return x.id===c.dataset.sug}); if(s&&s.status==="Waiting"){ sugApply(lib, s, a==="approve"?"Approved":"Declined"); } });
+  saveState(); renderSugg(); toast(boxes.length+" suggestion"+(boxes.length===1?"":"s")+" "+(a==="approve"?"approved and added to the draft.":"declined."));
+}
+function openSugForm(libId, subId){
+  var lib=libById(libId); if(!lib) return;
+  var sub=subId?subById(lib, subId):null;
+  openModal('<h3>Suggest a change</h3><p class="small muted">'+esc(lib.name)+(sub?" › "+esc(sub.name):"")+'</p>'+
+  '<div class="field"><label>What kind of change?</label><select id="sugType" style="width:100%" onchange="sugTypeFields(\''+lib.id+'\',\''+(subId||"")+'\')"><option>Change a sub-skill</option><option>Add or change a drill</option><option>Flag a problem</option></select></div>'+
+  '<div id="sugFields"></div>'+
+  '<div class="field"><label>Why? *</label><textarea id="sugWhy" rows="2" style="width:100%" placeholder="Say why — what you saw in the session, or what is wrong."></textarea></div>'+
+  '<div class="field"><label>Your name</label><input id="sugCoach" style="width:100%" value="You (coach)"></div>'+
+  '<p style="text-align:right"><button onclick="closeModal()">Cancel</button> <button class="primary" onclick="saveSuggestion(\''+lib.id+'\',\''+(subId||"")+'\')">Send suggestion</button></p>');
+  sugTypeFields(libId, subId);
+}
+function sugTypeFields(libId, subId){
+  var lib=libById(libId); var t=(($("#sugType")||{}).value||"Change a sub-skill");
+  var sub=subId?subById(lib, subId):null;
+  var host=$("#sugFields"); if(!host) return;
+  if(t==="Add or change a drill"){
+    host.innerHTML='<div class="field"><label>Drill name</label><input id="sugDrillName" style="width:100%" placeholder="e.g. Machine feeds: playing late"></div>'+
+    '<div class="fieldrow"><div class="field"><label>Minutes</label><input id="sugDrillMin" type="number" value="10" style="width:100%"></div>'+
+    '<div class="field"><label>Equipment</label><input id="sugDrillEquip" style="width:100%" placeholder="e.g. Bowling machine, 2 lanes"></div></div>'+
+    '<div class="field"><label>How to run it</label><textarea id="sugDrillHow" rows="2" style="width:100%"></textarea></div>'+
+    (sub?'<input type="hidden" id="sugSubId" value="'+sub.id+'">':"");
+  } else if(t==="Change a sub-skill"){
+    var opts=sub?'<option value="'+sub.id+'">'+esc(sub.name)+"</option>":allSubs(lib).map(function(x){return '<option value="'+x.sub.id+'">'+esc(x.sub.name)+" ("+esc(x.fam.name)+")</option>"}).join("");
+    host.innerHTML='<div class="field"><label>Sub-skill</label><select id="sugSubId" style="width:100%">'+opts+'</select></div>'+
+    '<div class="field"><label>What should change?</label><textarea id="sugChange" rows="2" style="width:100%" placeholder="e.g. Add an Assessed row at U13 Gold with a harder pass standard."></textarea></div>';
+  } else {
+    var opts2=sub?'<option value="'+sub.id+'">'+esc(sub.name)+"</option>":allSubs(lib).map(function(x){return '<option value="'+x.sub.id+'">'+esc(x.sub.name)+" ("+esc(x.fam.name)+")</option>"}).join("");
+    host.innerHTML='<div class="field"><label>About</label><select id="sugSubId" style="width:100%">'+opts2+'</select></div>'+
+    '<div class="field"><label>What is the problem?</label><textarea id="sugChange" rows="2" style="width:100%" placeholder="e.g. Hard-ball catching needs a helmet requirement."></textarea></div>';
+  }
+}
+function saveSuggestion(libId, subId){
+  var lib=libById(libId); if(!lib) return;
+  var type=(($("#sugType")||{}).value||"Change a sub-skill");
+  var why=(($("#sugWhy")||{}).value||"").trim();
+  if(!why){ toast("Add a short “Why” — the admin needs to know what you saw."); return; }
+  var s={id:uid(), type:type==="Add or change a drill"?"New drill":type, from:"Library", coach:(($("#sugCoach")||{}).value||"You (coach)").trim(), note:why, status:"Waiting", item:"", payload:null};
+  if(type==="Add or change a drill"){
+    var dn=(($("#sugDrillName")||{}).value||"").trim(); if(!dn){ toast("Name the drill."); return; }
+    s.item=dn+(subId?" — "+(subById(lib, subId)||{}).name:"");
+    s.payload={drill:{name:dn, minutes:+($("#sugDrillMin").value||10), equip:($("#sugDrillEquip").value||"").trim(), how:($("#sugDrillHow").value||"").trim()}, subId:subId||null};
+    s.note=why; s.from="Session plan";
+  } else {
+    var sid=(($("#sugSubId")||{}).value||""); var sub=subById(lib, sid);
+    s.item=(sub?sub.name:"")+" — "+(($("#sugChange")||{}).value||"").trim().slice(0,80);
+    s.payload={subId:sid, change:(($("#sugChange")||{}).value||"").trim()};
+    s.now=sub?("Stages: "+sub.stages.map(function(r){return r.stage+" "+r.role}).join(", ")):"";
+    s.sugg=s.payload.change;
+  }
+  lib.suggestions.push(s); saveState(); closeModal(); renderAll();
+  toast("Suggestion sent — the admin will review it. Coaches never edit the library directly.");
+}
+function openSugReview(libId, sugId){
+  var lib=libById(libId); var s=lib.suggestions.find(function(x){return x.id===sugId}); if(!s) return;
+  var nowHtml="", suggHtml="";
+  if(s.payload && s.payload.drill){
+    nowHtml='<p class="small muted">No new drill here yet.</p>';
+    suggHtml='<p><b>'+esc(s.payload.drill.name)+'</b></p><p class="small">Minutes: '+s.payload.drill.minutes+'<br>Equipment: '+esc(s.payload.drill.equip||"—")+'<br>How to run it: '+esc(s.payload.drill.how||"—")+'</p>';
+  } else if(s.payload && s.payload.subId){
+    var sub=subById(lib, s.payload.subId);
+    nowHtml='<p>'+esc(s.now||(sub?sub.name:""))+'</p>';
+    suggHtml='<p><span class="hl">'+esc(s.sugg||"")+'</span></p>';
+  } else { nowHtml='<p class="small muted">Current state.</p>'; suggHtml='<p>'+esc(s.note)+'</p>'; }
+  var host=$("#sugReview");
+  if(host){
+    host.innerHTML='<div class="card"><h3>Review suggestion</h3><p class="small muted">'+esc(s.coach)+' · '+esc(s.from)+' · '+esc(s.type)+' · '+esc(s.item)+'</p>'+
+    '<div class="diff"><div><h4>Now in the library</h4>'+nowHtml+'</div><div><h4>Suggested</h4>'+suggHtml+'</div></div>'+
+    '<p class="small muted"><b>Why:</b> “'+esc(s.note)+'”</p>'+
+    '<p>Approving adds it to the '+esc(lib.name)+' draft. You publish it with the change summary, like any edit.</p>'+
+    '<p style="text-align:right"><button class="danger" onclick="sugDecide(\''+lib.id+'\',\''+s.id+'\',\'decline\')">Decline</button> <button onclick="sugDecide(\''+lib.id+'\',\''+s.id+'\',\'edit\')">Edit, then approve</button> <button class="primary" onclick="sugDecide(\''+lib.id+'\',\''+s.id+'\',\'approve\')">Approve</button></p></div>';
+    host.scrollIntoView({behavior:"smooth"});
+  }
+}
+function sugApply(lib, s, status){
+  s.status=status;
+  if(status==="Approved" && s.payload){
+    if(s.payload.drill){
+      var d=newDrill(lib, s.payload.drill.name); Object.assign(d, s.payload.drill); d.id=uid(); d.code="D"+String(lib.drills.length+1).padStart(2,"0");
+      lib.drills.push(d);
+      if(s.payload.subId){ var sub=subById(lib, s.payload.subId); if(sub) sub.drills.push({drillId:d.id, variation:""}); }
+      markChanged(lib,"added",d.name,"New drill, from "+s.coach+"'s suggestion");
+      s.status="Approved · in next version";
+    } else if(s.payload.subId){
+      var sub2=subById(lib, s.payload.subId);
+      if(sub2){ sub2.changed=true; markChanged(lib,"edited",sub2.name,"Suggestion applied: "+s.payload.change); }
+      s.status="Approved · in next version";
+    } else { s.status="Approved · in next version"; }
+  }
+}
+function sugDecide(libId, sugId, what){
+  var lib=libById(libId); var s=lib.suggestions.find(function(x){return x.id===sugId}); if(!s) return;
+  if(what==="decline"){
+    var note=prompt("Decline with a note (the coach will see it):", "");
+    if(note===null) return;
+    s.status="Declined"; s.declineNote=note.trim();
+    saveState(); renderSugg(); toast("Suggestion declined — the coach was told.");
+  } else if(what==="edit"){
+    toast("Edit the library first, then approve from the queue.");
+    openSugReview(libId, sugId);
+  } else {
+    sugApply(lib, s, "Approved"); saveState(); renderSugg(); toast("Suggestion approved and added to the draft.");
+  }
+}
+
+/* ---------- screens 9-11 · Programs ---------- */
+var pc=null;
+function renderPrograms(){
+  var libs=state.libraries.filter(function(l){return !l.archived});
+  var tab=state.ui.progTab||"running";
+  var list=state.programs.filter(function(p){return tab==="running"?p.status==="running":p.status==="draft"});
+  var html='<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><h2 style="margin:0">Programs</h2><span style="flex:1"></span>'+
+  '<button class="primary" '+(libs.length?"":'disabled title="Build a library first"')+' onclick="goProgramCreate()">New program</button></div>'+
+  '<p class="muted">Programs are built from a library you created: pick the sport and stage, then choose the sub-skills. '+(libs.length?"":"Build a library first — programs need a library to draw their curriculum from.")+'</p>'+
+  '<div class="tabs" role="tablist" aria-label="Program status">'+
+  [["running","Running"],["draft","Drafts"]].map(function(t){return '<button class="'+(tab===t[0]?"on":"")+'" onclick="state.ui.progTab=\''+t[0]+'\';saveState();renderPrograms()">'+t[1]+"</button>"}).join("")+"</div>";
+  if(!state.programs.length){
+    html+='<div class="empty"><h2>No programs yet</h2><p class="muted">A program is a set of sessions for one sport, age group and skill level, planned from a library.</p>'+(libs.length?'<p><button class="primary" onclick="goProgramCreate()">Create your first program</button></p>':"")+"</div>";
+  } else if(!list.length){
+    html+='<div class="empty"><h2>No '+(tab==="running"?"running":"draft")+' programs</h2></div>';
+  } else {
+    html+=list.map(function(p){
+      var lib=libById(p.libId);
+      return '<div class="progcard" onclick="openProgram(\''+p.id+'\')"><b>'+esc(p.name)+'</b> <span class="pill">'+esc(p.status)+'</span><br><span class="small muted">'+esc(p.sport)+" · "+esc(p.ageGroup||"")+(p.level?" · "+esc(p.level):"")+" · "+esc(lib?lib.name:"")+" · "+p.curriculum.length+' sub-skills</span></div>';
+    }).join("");
+  }
+  $("#scr-9").innerHTML=html;
+}
+function openProgram(id){ state.ui.progId=id; saveState(); goScreen(11); }
+function goProgramCreate(){
+  var libs=state.libraries.filter(function(l){return !l.archived});
+  if(!libs.length){ toast("Build a library first — programs draw their curriculum from a library."); return; }
+  var lib=libs[0];
+  pc={step:1, name:"", sport:lib.sport, libId:lib.id, ageGroup:"", level:"Any level", seg:"this", selected:{}};
+  saveState(); goScreen(10);
+}
+function progStage(){
+  if(!pc) return "";
+  if(!pc.ageGroup) return pc.level==="Any level"?"":pc.level;
+  return pc.level==="Any level"?pc.ageGroup:pc.ageGroup+" "+pc.level;
+}
+function renderProgramCreate(){
+  if(!pc){ $("#scr-10").innerHTML='<div class="empty"><h2>No program being created</h2><p><button class="primary" onclick="goScreen(9)">Go to programs</button></p></div>'; return; }
+  var lib=libById(pc.libId);
+  var html='<h2>Create a program</h2><ul class="rail" aria-label="Create program steps">'+
+    [1,2,3].map(function(n){return '<li class="'+(pc.step===n?"on":pc.step>n?"done":"")+'">'+n+" · "+["Basics","Curriculum","Review and publish"][n-1]+"</li>"}).join("")+"</ul>"+
+    '<p class="small muted">'+esc(pc.sport)+" · "+esc(lib?lib.name:"")+'</p><div id="progCreateBody"></div>';
+  $("#scr-10").innerHTML=html;
+  if(pc.step===1) renderProgStep1(lib);
+  else if(pc.step===2) renderProgStep2(lib);
+  else renderProgStep3(lib);
+}
+function renderProgStep1(lib){
+  var p=ensurePathway(pc.sport);
+  var body='<div class="card"><h3>Step 1 · Basics</h3>'+
+  '<div class="field"><label>Program name</label><input style="width:100%;max-width:420px" value="'+esc(pc.name)+'" placeholder="e.g. U12 Batting Foundations" onchange="pc.name=this.value.trim()"></div>'+
+  '<div class="field"><label>Sport</label><select style="width:100%;max-width:420px" onchange="pc.sport=this.value;pc.libId=(state.libraries.find(function(l){return l.sport===pc.sport})||{}).id;pc.ageGroup=\'\';renderProgramCreate()">'+state.libraries.filter(function(l){return !l.archived}).map(function(l){return '<option'+(l.sport===pc.sport?" selected":"")+">"+esc(l.sport)+"</option>"}).join("")+'</select></div>'+
+  '<div class="fieldrow"><div class="field"><label>Age group</label><select style="width:100%" onchange="pc.ageGroup=this.value"><option value="">Pick an age group…</option>'+(p.ages||[]).map(function(a){return '<option'+(pc.ageGroup===a?" selected":"")+">"+esc(a)+"</option>"}).join("")+'</select></div>'+
+  '<div class="field"><label>Skill level</label><select style="width:100%" onchange="pc.level=this.value"><option'+(pc.level==="Any level"?" selected":"")+'>Any level</option>'+p.levels.map(function(l){return '<option'+(pc.level===l.name?" selected":"")+">"+esc(l.name)+"</option>"}).join("")+'</select></div></div>'+
+  '<p class="small muted">Only this sport’s pathway lists are shown — the same lists the library uses.</p>'+
+  '<div class="stepnav"><span><button onclick="goScreen(9)">Cancel</button></span><button class="primary" onclick="progStep1Next()">Next: Curriculum ›</button></div></div>';
+  $("#progCreateBody").innerHTML=body;
+}
+function progStep1Next(){
+  if(!pc.name){ toast("Give the program a name."); return; }
+  if(!pc.ageGroup && !(ensurePathway(pc.sport).ages||[]).length===false){ /* ages optional for levels-only sports */ }
+  pc.step=2; saveState(); renderProgramCreate();
+}
+function progSegOf(sub, stage){
+  if(!stage) return "this";
+  var opts=stageOptions(pc.sport);
+  var assessIdx=opts.indexOf(stage);
+  var roles=sub.stages.map(function(r){return r});
+  var assessed=roles.filter(function(r){return r.role==="Assessed"});
+  if(assessed.some(function(r){return r.stage===stage})) return "this";
+  var before=assessed.some(function(r){return opts.indexOf(r.stage)>-1 && opts.indexOf(r.stage)<assessIdx});
+  var after=assessed.some(function(r){return opts.indexOf(r.stage)>-1 && opts.indexOf(r.stage)>assessIdx});
+  if(before) return "earlier";
+  if(after) return "next";
+  if(roles.some(function(r){return r.stage===stage})) return "this";
+  return "outside";
+}
+function renderProgStep2(lib){
+  var stage=progStage();
+  var seg=pc.seg||"this";
+  var items=allSubs(lib).map(function(x){
+    var s=x.sub; if(s.retired) return null;
+    var sg=progSegOf(s, stage);
+    return {x:x, sg:sg};
+  }).filter(Boolean);
+  var shown=items.filter(function(it){ return seg==="all"?true:it.sg===seg; });
+  shown.sort(function(a,b){
+    var ra=a.x.sub.stages.some(function(r){return r.role==="Assessed"})?0:1;
+    var rb=b.x.sub.stages.some(function(r){return r.role==="Assessed"})?0:1;
+    return ra-rb;
+  });
+  var thisCount=items.filter(function(it){return it.sg==="this"}).length;
+  var chosen=Object.keys(pc.selected).filter(function(k){return pc.selected[k]}).length;
+  var body='<div class="card"><h3>Step 2 · Curriculum</h3>'+
+  '<p class="small muted">Pick sub-skills from <b>'+esc(lib.name)+'</b> for <b>'+esc(stage||"any stage")+'</b>. Assessed sub-skills come first, then Introduce / Revisit. Any sub-skill can still be added — picks outside this stage get an “Outside this stage” badge.</p>'+
+  '<div class="seg" role="tablist" aria-label="Stage segments">'+[["this","This stage"],["earlier","Earlier stages (revision)"],["next","Next stage (stretch)"],["all","All"]].map(function(t){return '<button class="'+(seg===t[0]?"on":"")+'" onclick="pc.seg=\''+t[0]+'\';renderProgramCreate()">'+t[1]+"</button>"}).join("")+"</div>"+
+  '<p class="small" style="margin-top:10px">This stage needs about <b>'+thisCount+' session'+(thisCount===1?"":"s")+'</b> (one per sub-skill, as a rough guide); this programme has <b>'+chosen+'</b> sub-skill'+(chosen===1?"":"s")+' picked.</p>'+
+  (shown.length?'<table><thead><tr><th></th><th>Sub-skill</th><th>Stages</th><th></th></tr></thead><tbody>'+
+  shown.map(function(it){ var s=it.x.sub;
+    return '<tr><td><input type="checkbox" '+(pc.selected[s.id]?"checked":"")+' onchange="pc.selected[\''+s.id+'\']=this.checked;renderProgramCreate()"></td><td>'+esc(s.name)+'<br><span class="small muted">'+esc(it.x.area.name)+" › "+esc(it.x.fam.name)+'</span></td><td>'+subStageChips(s)+'</td><td>'+(it.sg==="outside"?'<span class="badge warn">Outside this stage</span>':it.sg==="earlier"?'<span class="badge">Revision</span>':it.sg==="next"?'<span class="badge">Stretch</span>':"")+'</td></tr>';
+  }).join("")+"</tbody></table>":'<div class="empty"><h3>Nothing at this stage yet</h3><p class="muted">No sub-skills match this segment. Try “All”, or add sub-skills to the library first.</p></div>')+
+  '<div class="stepnav"><span><button onclick="pc.step=1;renderProgramCreate()">‹ Back: Basics</button></span><button class="primary" onclick="progStep2Next()">Next: Review and publish ›</button></div></div>';
+  $("#progCreateBody").innerHTML=body;
+}
+function progStep2Next(){
+  var chosen=Object.keys(pc.selected).filter(function(k){return pc.selected[k]});
+  if(!chosen.length){ toast("Pick at least one sub-skill for the curriculum."); return; }
+  pc.step=3; saveState(); renderProgramCreate();
+}
+function renderProgStep3(lib){
+  var chosen=Object.keys(pc.selected).filter(function(k){return pc.selected[k]});
+  var rows=chosen.map(function(id){
+    var x=findSub(lib, id); if(!x) return "";
+    return "<li>"+esc(x.sub.name)+" — "+esc(x.area.name)+" › "+esc(x.fam.name)+" "+subStageChips(x.sub)+"</li>";
+  }).join("");
+  var body='<div class="card"><h3>Step 3 · Review and publish</h3>'+
+  '<dl class="kv"><dt>Program</dt><dd>'+esc(pc.name)+'</dd><dt>Sport</dt><dd>'+esc(pc.sport)+'</dd><dt>Stage</dt><dd>'+esc(progStage()||"Any stage")+'</dd><dt>Library</dt><dd>'+esc(lib.name)+'</dd><dt>Curriculum</dt><dd>'+chosen.length+' sub-skills</dd></dl>'+
+  '<ul>'+rows+'</ul>'+
+  '<div class="checks"><div class="row"><b>✓ No blockers</b><span>Ready to publish.</span></div></div>'+
+  '<div class="stepnav"><span><button onclick="pc.step=2;renderProgramCreate()">‹ Back: Curriculum</button></span><button class="primary" onclick="publishProgram()">Publish program</button></div></div>';
+  $("#progCreateBody").innerHTML=body;
+}
+function publishProgram(){
+  var lib=libById(pc.libId);
+  var prog={id:uid(), name:pc.name, sport:pc.sport, ageGroup:pc.ageGroup, level:pc.level, libId:pc.libId, status:"running",
+    curriculum:Object.keys(pc.selected).filter(function(k){return pc.selected[k]}).map(function(id){return {subId:id, segment:progSegOf(subById(lib,id), progStage())}}),
+    created:new Date().toISOString().slice(0,10)};
+  state.programs.push(prog);
+  if(lib){ lib.programs=(lib.programs||0)+1; var subs=prog.curriculum; subs.forEach(function(c){ var s=subById(lib, c.subId); if(s){ s.usedIn=s.usedIn||[]; if(s.usedIn.indexOf(prog.name)<0) s.usedIn.push(prog.name); } }); }
+  pc=null; saveState();
+  toast("Program published and running.");
+  state.ui.progId=prog.id; goScreen(11);
+}
+function renderProgramPage(){
+  var prog=state.programs.find(function(p){return p.id===state.ui.progId});
+  if(!prog){ $("#scr-11").innerHTML='<div class="empty"><h2>No program open</h2><p><button class="primary" onclick="goScreen(9)">Go to programs</button></p></div>'; return; }
+  var lib=libById(prog.libId);
+  var stage=(prog.ageGroup||"")+(prog.level&&prog.level!=="Any level"?" "+prog.level:"");
+  var html='<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="ghost" onclick="goScreen(9)">‹ Back to programs</button><h2 style="margin:0">'+esc(prog.name)+'</h2><span class="pill">'+esc(prog.status)+'</span></div>'+
+  '<div class="card"><h3>Basics</h3><dl class="kv"><dt>Sport</dt><dd>'+esc(prog.sport)+'</dd><dt>Stage</dt><dd>'+esc(stage||"Any stage")+'</dd><dt>Library</dt><dd>'+esc(lib?lib.name:"")+'</dd><dt>Created</dt><dd>'+esc(prog.created||"")+'</dd></dl></div>'+
+  '<div class="card"><h3>Curriculum ('+prog.curriculum.length+' sub-skills)</h3>'+
+  (prog.curriculum.length?'<ul>'+prog.curriculum.map(function(c){ var x=lib?findSub(lib, c.subId):null; if(!x) return ""; return "<li>"+esc(x.sub.name)+" — "+esc(x.area.name)+" › "+esc(x.fam.name)+" "+subStageChips(x.sub)+(c.segment==="outside"?' <span class="badge warn">Outside this stage</span>':"")+"</li>"; }).join("")+"</ul>":'<p class="muted">No sub-skills yet.</p>')+
+  '</div>'+
+  '<div class="card"><h3>Sessions</h3><p><span class="badge later">Classes: coming next</span></p><p class="small muted">Sessions and classes are planned here. Class creation (the New Class flow) is out of v1 — it is not built in this version.</p></div>';
+  $("#scr-11").innerHTML=html;
+}
+
+/* ---------- init + keyboard ---------- */
+document.addEventListener("keydown", function(e){
+  if(e.key==="Escape"){ closeModal(); var m=$("#keysModal"); if(m) m.style.display="none"; return; }
+  var tag=(e.target&&e.target.tagName)||"";
+  if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT") return;
+  if(e.key==="/"){ e.preventDefault(); var s=document.querySelector(".screen.on input[type=search]"); if(s) s.focus(); return; }
+  if(e.key==="?"){ document.getElementById("keysModal").style.display="block"; return; }
+  if(state.ui.screen===3){
+    if(e.key==="j"||e.key==="J") stepSub(-1);
+    if(e.key==="k"||e.key==="K") stepSub(1);
+  }
+  if(e.key==="n"||e.key==="N"){ if(state.ui.screen===2){ var inp=document.querySelector("#treeView .inline-add"); if(inp) inp.focus(); } }
+});
+loadState();
+buildNav();
+$("#personaAdmin").classList.toggle("on", state.persona==="admin");
+$("#personaCoach").classList.toggle("on", state.persona==="coach");
+goScreen(state.ui.screen||0);
+renderAll();
+</script>
+</body>
+</html>
