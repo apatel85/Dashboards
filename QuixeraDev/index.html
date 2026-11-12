@@ -287,14 +287,11 @@ function exportJira(all){
   const ids=all?Object.keys(EXPORT_DATA)
     :[...document.querySelectorAll('.expcb:checked')].map(b=>b.dataset.id);
   if(!ids.length){alert('Tick “Export to Jira” on at least one card first, or use Export all.');return;}
-  const q=v=>{v=String(v==null?'':v);return /[",
-]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const q=v=>{v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
   const head=['Summary','Description','Issue Type','Priority','Labels'];
   const lines=ids.map(id=>EXPORT_DATA[id]).filter(Boolean)
     .map(r=>[r.summary,r.description,r.issuetype,r.priority,r.labels].map(q).join(','));
-  const csv='﻿'+head.join(',')+'
-'+lines.join('
-');
+  const csv='\uFEFF'+head.join(',')+'\n'+lines.join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   const d=new Date();
