@@ -9,8 +9,8 @@
 ## 2026-11-12 — Daily Brief revamp goes live (Mock B)
 - **Request:** Ankit liked the Mock B revamp — make it live in the TradeDesk app.
 - **Change:** Daily Brief only; all other tabs, the pipeline, Schwab polling, auth, and the invite list untouched. New computed "Today in 10 seconds" box (market mood in one plain sentence + #1 candidate's trigger/stop, from live daily-brief.json — nothing hardcoded); every breakout card now shows its rank and, without tapping, a plain-English "Why:" line built from the scan's own attribute checks and a highlighted "What could go wrong:" line with the stop and its $/% distance below the live price; headings de-jargoned ("Stocks to watch today", "Options expiring today — can go to zero today", "Options expiring tomorrow"); phone view keeps only rank + name + price + why + risk; sticky top-call bar on phones above the bottom nav. "Look at these today" top-3 strip removed (superseded by the summary box). Why/risk lines render on all ranked rows, not just the top 5 — the live app has no separate full-list tab, so cutting to 5 would have removed information.
-- **Version:** v2026-11-12a (bundle index-DqIRv9Vz.js).
-- **Verified:** local build passes; live bundle check pending at push time — see the follow-up note below.
+- **Version:** v2026-11-12a (commit cab57cf, bundle index-DqIRv9Vz.js).
+- **Verified:** yes — live dist/index.html serves index-DqIRv9Vz.js; live bundle contains "Today in 10 seconds", "What could go wrong", "Stocks to watch today", "Options expiring today" and version string v2026-11-12a; "Look at these today" 0 hits; daily-brief.json untouched (Nov 12 data). Pending Ankit: on-device phone check.
 
 ## 2026-11-11 — gate screens leak nothing (privacy fix)
 - **Request:** Dipesh's sign-in showed a "Setup needed" screen naming Ankit, the SQL file, and Supabase. Make sure the app gives out no such information to anyone.
