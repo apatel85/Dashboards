@@ -3,7 +3,7 @@
 Data-driven: bugs live in data/base.json (QA team + Arlo) plus bugs/*.json (QA Capture).
 Three segments: QA team retest | Arlo dev pass | Manual captures.
 Re-run to regenerate. Reconciliation: when a fix lands, set status to "Fixed" (after re-verifying) and republish."""
-import base64, io, json, os, re
+import base64, io, json, os, re, shutil, subprocess
 from datetime import date
 from urllib.parse import urlparse
 from PIL import Image
@@ -893,11 +893,11 @@ function exportJira(all){
   const ids=all?Object.keys(EXPORT_DATA)
     :[...document.querySelectorAll('.expcb:checked')].map(b=>b.dataset.id);
   if(!ids.length){alert('Tick “Export to Jira” on at least one card first, or use Export all.');return;}
-  const q=v=>{v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const q=v=>{v=String(v==null?'':v);return /[",\\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
   const head=['Summary','Description','Issue Type','Priority','Labels'];
   const lines=ids.map(id=>EXPORT_DATA[id]).filter(Boolean)
     .map(r=>[r.summary,r.description,r.issuetype,r.priority,r.labels].map(q).join(','));
-  const csv='\uFEFF'+head.join(',')+'\n'+lines.join('\n');
+  const csv='\\uFEFF'+head.join(',')+'\\n'+lines.join('\\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   const d=new Date();
@@ -913,6 +913,21 @@ dashWireIdentity();
 document.getElementById("gatepw").addEventListener("keydown", e=>{ if(e.key==="Enter") unlockGate(); });
 try{ if(sessionStorage.getItem("qxr_gate")==="1") showContent(); }catch(e){}
 </script></body></html>"""
+
+# Guard (2026-11-12): a single unescaped \n in the Jira CSV quoter broke the
+# whole gate script block, so Unlock did nothing — and PAYLOAD-decode checks
+# could not catch it. Syntax-check every emitted <script> block with node
+# when available; refuse to publish a build whose JS does not parse.
+_node = shutil.which("node")
+if _node:
+    for _i, _js in enumerate(re.findall(r"<script[^>]*>(.*?)</script>", HTML, re.S)):
+        _tmp = os.path.join(HERE, ".jscheck-%d.js" % _i)
+        with open(_tmp, "w") as _f:
+            _f.write(_js)
+        _r = subprocess.run([_node, "--check", _tmp], capture_output=True, text=True)
+        os.remove(_tmp)
+        if _r.returncode != 0:
+            raise SystemExit("JS syntax error in script block %d — refusing to write a broken dashboard:\n%s" % (_i, _r.stderr))
 
 with open(OUT, "w") as f:
     f.write(HTML)
