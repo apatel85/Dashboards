@@ -1,0 +1,170 @@
+/**
+ * Mock B styles for the Options tab.
+ * Uses ONLY --mb-* tokens from mockb-tokens.css — no hardcoded colours.
+ * The DteCard (components/Dte.tsx) and LottoScanner (components/Lotto.tsx)
+ * internals are untouched; they are restyled here via their existing classes.
+ */
+
+.mb-options .mb-card-head {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  font-family: var(--mb-font-ui);
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.mb-options .mb-card-head:hover {
+  background: var(--mb-raised);
+}
+
+.mb-options .mb-card-head:focus-visible {
+  outline: 2px solid var(--mb-blue);
+  outline-offset: -2px;
+}
+
+.mb-options .mb-card-chev {
+  margin-left: auto;
+  color: var(--mb-faint);
+  font-size: 14px;
+}
+
+.mb-options .mb-count-badge ~ .mb-card-chev {
+  margin-left: 10px;
+}
+
+.mb-options .mb-card-body {
+  padding: 4px 16px 16px;
+}
+
+/* Risk note kept from the live tab, in Mock B panel form. */
+.mb-options-note {
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-left: 3px solid var(--mb-amber);
+  border-radius: var(--mb-radius-sm);
+  padding: 12px 14px;
+  color: var(--mb-dim);
+}
+
+.mb-options-note b {
+  color: var(--mb-text);
+}
+
+/* DTE focus grids: single column on phone, two columns from tablet up. */
+.mb-options-grid {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .mb-options-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* DteCard restyle (existing classes, Mock B surfaces). */
+.mb-options .dte-card {
+  background: var(--mb-raised);
+  border-color: var(--mb-border);
+  border-radius: var(--mb-radius);
+  margin-bottom: 0;
+}
+
+.mb-options .dte-card .dte-toggle {
+  min-height: var(--mb-tap);
+  color: var(--mb-blue);
+}
+
+/* ── How-to-read guide ───────────────────────────────────────────── */
+.mb-guide-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mb-guide-list li {
+  padding: 10px 0;
+  border-top: 1px solid var(--mb-border-soft);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mb-dim);
+}
+
+.mb-guide-list li:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.mb-guide-list li:last-child {
+  padding-bottom: 0;
+}
+
+.mb-guide-list strong {
+  color: var(--mb-text);
+}
+
+/* ── Lotto scanner, restyled via its existing classes ───────────── */
+.mb-lotto-wrap .section-head h3 {
+  font-family: var(--mb-font-display);
+  font-size: 18px;
+  color: var(--mb-text);
+}
+
+.mb-lotto-wrap .section-head .muted {
+  color: var(--mb-dim);
+}
+
+.mb-lotto-wrap .collapse-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mb-lotto-wrap .collapse-row .link-btn {
+  min-height: var(--mb-tap);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  color: var(--mb-blue);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.mb-lotto-wrap .signal-card {
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+}
+
+.mb-lotto-wrap .signal-card.open {
+  border-color: var(--mb-border);
+}
+
+.mb-lotto-wrap .signal-head {
+  min-height: var(--mb-tap);
+}
+
+.mb-lotto-wrap .signal-head:hover {
+  background: var(--mb-panel);
+}
+
+.mb-lotto-wrap .signal-sub {
+  color: var(--mb-dim);
+}
+
+.mb-lotto-wrap .stat-strip {
+  background: var(--mb-panel);
+  border-color: var(--mb-border);
+}
+
+.mb-lotto-wrap .ticket-box {
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  padding: 10px 12px;
+}
+
+.mb-lotto-wrap .footnote-line {
+  color: var(--mb-dim);
+}

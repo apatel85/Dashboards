@@ -1,0 +1,189 @@
+/**
+ * Mock B — Reference tab. Colours/typography come ONLY from --mb-* tokens
+ * (src/mockb-tokens.css); no hardcoded hex values in this file.
+ */
+
+.mb-ref-cardhead {
+  width: 100%;
+  background: none;
+  border: 0;
+  font-family: var(--mb-font-ui);
+  text-align: left;
+}
+
+.mb-ref-chevron {
+  color: var(--mb-faint);
+  font-size: 14px;
+}
+
+.mb-ref-body {
+  border-top: 1px solid var(--mb-border-soft);
+  padding: 14px 16px 16px;
+}
+
+/* ── Glossary search ───────────────────────────────────────────── */
+
+.mb-ref-search-label {
+  display: block;
+  color: var(--mb-dim);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.mb-ref-search {
+  width: 100%;
+  min-height: var(--mb-tap);
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  color: var(--mb-text);
+  font-family: var(--mb-font-ui);
+  font-size: 14px;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+}
+
+.mb-ref-search:focus {
+  outline: 2px solid var(--mb-blue);
+  outline-offset: 1px;
+}
+
+.mb-ref-search::placeholder {
+  color: var(--mb-faint);
+}
+
+.mb-ref-matchline {
+  color: var(--mb-dim);
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.mb-ref-empty {
+  color: var(--mb-dim);
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 12px 0 0;
+}
+
+/* ── Definition groups ─────────────────────────────────────────── */
+
+.mb-ref-group {
+  margin-top: 18px;
+}
+
+.mb-ref-group:first-of-type {
+  margin-top: 12px;
+}
+
+.mb-ref-group-title {
+  font-family: var(--mb-font-display);
+  font-size: 17px;
+  color: var(--mb-text);
+  margin: 0 0 4px;
+}
+
+.mb-ref-list {
+  margin: 0;
+  padding: 0;
+}
+
+.mb-ref-term {
+  padding: 12px 0;
+  border-top: 1px solid var(--mb-border-soft);
+}
+
+.mb-ref-term:first-child {
+  border-top: 0;
+}
+
+.mb-ref-term-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--mb-text);
+  margin: 0 0 3px;
+}
+
+.mb-ref-term-meaning {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mb-dim);
+  margin: 0;
+}
+
+/* ── Files & counts table ──────────────────────────────────────── */
+
+.mb-ref-note {
+  color: var(--mb-dim);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+
+.mb-ref-tablewrap {
+  overflow-x: auto;
+}
+
+.mb-ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.mb-ref-table th,
+.mb-ref-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-top: 1px solid var(--mb-border-soft);
+  vertical-align: top;
+  color: var(--mb-text);
+}
+
+.mb-ref-table thead th {
+  border-top: 0;
+  color: var(--mb-dim);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mb-ref-file {
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.mb-ref-numcol {
+  text-align: right;
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.mb-ref-table th.mb-ref-numcol {
+  text-align: right;
+}
+
+.mb-ref-asof {
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  color: var(--mb-dim);
+  white-space: nowrap;
+}
+
+.mb-ref-missing {
+  display: block;
+  color: var(--mb-amber);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ── Phone: table scrolls inside the card, never the page ─────── */
+
+@media (max-width: 767px) {
+  .mb-ref-table th,
+  .mb-ref-table td {
+    padding: 10px 6px;
+  }
+}

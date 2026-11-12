@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import '../mockb-congress.css';
 import {
   Badge,
   SectionHead,
@@ -59,6 +60,18 @@ function daysAgoLabel(days: number): string {
   if (days < 1) return 'today';
   const d = Math.round(days);
   return d === 1 ? '1d ago' : `${d}d ago`;
+}
+
+/** Plain-English recency for the Newest filings card: "today" /
+ * "yesterday" / "N days ago", measured from the disclosure date when
+ * known, else the trade date (prefixed "traded"). */
+function disclosedAgoLabel(t: CongressTrade): string {
+  const d = t.disclosed_date ?? t.tx_date;
+  const days = Math.floor((Date.now() - Date.parse(`${d}T12:00:00Z`)) / 86400000);
+  const prefix = t.disclosed_date ? '' : 'traded ';
+  if (!isFinite(days) || days <= 0) return `${prefix}today`;
+  if (days === 1) return `${prefix}yesterday`;
+  return `${prefix}${days} days ago`;
 }
 
 interface AggRow {
@@ -335,6 +348,8 @@ export default function CongressGovTab() {
   const [tradeSort, setTradeSort] = useState<{ key: TradeSortKey; dir: 1 | -1 }>({ key: 'date', dir: -1 });
   /** Deep-linked trade row (from the Daily Brief) to highlight + scroll to. */
   const [highlightKey, setHighlightKey] = useState<string | null>(null);
+  /** Newest filings card (Mock B card 01): collapsed by default. */
+  const [newestOpen, setNewestOpen] = useState(false);
 
   const committeesByMember = useMemo(() => {
     const m = new Map<string, { name: string; role?: string | null }[]>();
@@ -490,6 +505,37 @@ export default function CongressGovTab() {
     return m || null;
   }, [data]);
 
+  /** Newest filings: the 10 most recently disclosed trades in the current
+   * branch (disclosure date desc, trade date as fallback). Live data only. */
+  const newest = useMemo(() => {
+    if (!data) return [];
+    return [...data]
+      .sort((a, b) => {
+        const ka = a.disclosed_date ?? a.tx_date;
+        const kb = b.disclosed_date ?? b.tx_date;
+        return ka === kb ? 0 : ka < kb ? 1 : -1;
+      })
+      .slice(0, 10);
+  }, [data]);
+
+  /** Jump from a Newest filings row to that exact trade in the Trades view:
+   * same pattern as the Daily Brief deep link — search set to the ticker /
+   * member, other filters reset so the trade is visible, newest-first sort,
+   * row highlighted + scrolled to by the existing effect. */
+  const goToTrade = (t: CongressTrade) => {
+    setView('trades');
+    setQuery(t.ticker ?? t.member);
+    setChamber('all');
+    setType('all');
+    setClusterOnly(false);
+    setCommittee('all');
+    setMinAmount(0);
+    setKeyFilter(null);
+    setPage(0);
+    setTradeSort({ key: 'date', dir: -1 });
+    setHighlightKey(tradeKey(t));
+  };
+
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const pageRows = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
@@ -583,10 +629,10 @@ export default function CongressGovTab() {
   const isExec = branch === 'executive';
 
   return (
-    <section className="tab">
+    <section className="tab mb-congress">
       <header className="tab-header">
-        <h2>Congress &amp; Gov</h2>
-        <p className="muted">
+        <h2 className="mb-tabhead">Congress &amp; Gov</h2>
+        <p className="mb-lede">
           {isExec ? (
             <>
               {data.length.toLocaleString('en-US')} White House / executive disclosures
@@ -616,6 +662,65 @@ export default function CongressGovTab() {
         <button className={isExec ? 'active' : ''} onClick={() => switchBranch('executive')}>
           White House
         </button>
+      </div>
+
+      {/* 01 Newest filings: the 10 most recently disclosed trades. Tap a row
+          to open that trade in the Trades view. Collapsed by default. */}
+      <div className="mb-card mb-newest">
+        <button
+          type="button"
+          className="mb-card-head"
+          onClick={() => setNewestOpen((o) => !o)}
+          aria-expanded={newestOpen}
+        >
+          <span className="mb-card-num">01</span>
+          <span className="mb-card-title">Newest filings</span>
+          <span className="mb-card-sub">
+            10 most recently disclosed trades
+          </span>
+          <span className="mb-count-badge">{newest.length}</span>
+          <span className="mb-chev" aria-hidden="true">{newestOpen ? '▾' : '▸'}</span>
+        </button>
+        {newestOpen && newest.length > 0 && (
+          <div className="mb-newest-list">
+            {newest.map((t) => (
+              <button
+                key={tradeKey(t)}
+                type="button"
+                className="mb-newest-row"
+                onClick={() => goToTrade(t)}
+                title="Open this trade in the Trades view"
+              >
+                <span className="mb-newest-member">
+                  {t.member}
+                  <span className="mb-newest-sub">
+                    {t.chamber === 'Executive'
+                      ? [t.role, t.agency].filter(Boolean).join(' · ') || '—'
+                      : [t.party, t.state].filter(Boolean).join(' · ') || '—'}
+                  </span>
+                </span>
+                <span className="mb-newest-trade">
+                  <Badge tone={TYPE_TONE[t.trade_type] ?? 'dim'}>{t.trade_type}</Badge>
+                  {t.ticker ? (
+                    <TvLink ticker={t.ticker} />
+                  ) : (
+                    <span className="assetname" title={t.asset_name}>{trunc(t.asset_name, 30)}</span>
+                  )}
+                </span>
+                <span className="mb-newest-amt num">{t.amount_range}</span>
+                <span className="mb-newest-date num">
+                  {fmtDateY(t.disclosed_date ?? t.tx_date)} · {disclosedAgoLabel(t)}
+                </span>
+              </button>
+            ))}
+            <p className="mb-newest-foot">
+              Tap a row to open that trade in the Trades view.
+            </p>
+          </div>
+        )}
+        {newestOpen && newest.length === 0 && (
+          <p className="mb-newest-foot">No filings in this branch yet.</p>
+        )}
       </div>
 
       <div className={`callout${isExec ? '' : ' warn'}`}>

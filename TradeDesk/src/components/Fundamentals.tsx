@@ -9,6 +9,17 @@ function fmtPct(v: number | null): string {
   return isNum(v) ? `${(v * 100).toFixed(1)}%` : '—';
 }
 
+/**
+ * Dividend yield display guard: upstream stores some foreign-bank yields
+ * as percent-points (e.g. 3.97) instead of a ratio (0.0397), which rendered
+ * as +397%. A ratio above 1 (=100% yield) is not a real dividend yield,
+ * so treat values > 1 as percent-points. (Pipeline data fix still open.)
+ */
+function fmtYield(v: number | null): string {
+  if (!isNum(v)) return '—';
+  return v > 1 ? `${v.toFixed(1)}%` : `${(v * 100).toFixed(1)}%`;
+}
+
 function fmtNum(v: number | null, digits = 2): string {
   return isNum(v) ? v.toFixed(digits) : '—';
 }
@@ -64,7 +75,7 @@ export function Fundamentals({ ticker }: { ticker: string }) {
     ['revenue_cagr_3y', 'Rev 3Y CAGR', fmtPct(f.revenue_cagr_3y)],
     ['eps_growth_expected', 'EPS growth (est)', fmtPct(f.eps_growth_expected)],
     ['beta', 'Beta', fmtNum(f.beta)],
-    ['div_yield', 'Div yield', fmtPct(f.div_yield)],
+    ['div_yield', 'Div yield', fmtYield(f.div_yield)],
     ['market_cap', 'Mkt cap', fmtCap(f.market_cap)],
   ];
 

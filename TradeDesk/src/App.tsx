@@ -5,28 +5,39 @@ import { DefinitionsDrawer, FundamentalsPill } from './components/DefinitionsDra
 import { TabErrorBoundary } from './components/ErrorBoundary';
 import DailyBriefTab from './tabs/DailyBrief';
 import OptionsTab from './tabs/Options';
+import ScannerTab from './tabs/Scanner';
 import EarningsTab from './tabs/Earnings';
 import CongressGovTab from './tabs/CongressGov';
+import InsidersTab from './tabs/Insiders';
 import ResearchTab from './tabs/Research';
-import SignalsTab from './tabs/Signals';
 import PerformanceTab from './tabs/Performance';
-import ScreenerTab from './tabs/Screener';
 import DeepDiveTab from './tabs/DeepDive';
+import NewsTab from './tabs/News';
+import ReferenceTab from './tabs/Reference';
 import AdminTab from './tabs/Admin';
 import { supabase } from './lib/supabase';
 import { SCHWAB_AUTH_START_URL, useSchwabLive } from './lib/useSchwabLive';
 import type { TabDef, TabId } from './types';
+import './mockb-tokens.css';
+import './mockb-shell.css';
 
+/**
+ * Mock B command-center tab order — numbered 01–12, exactly as the mockup.
+ * Signals is absorbed by Scanner; Screener's table + presets live in
+ * Deep Dive. Reference carries the 33 definitions + data-file inventory.
+ */
 const TABS: TabDef[] = [
   { id: 'brief', label: 'Daily Brief', dataFile: 'daily-brief.json' },
   { id: 'options', label: 'Options', dataFile: 'lotto.json' },
-  { id: 'signals', label: 'Signals', dataFile: 'signals.json' },
+  { id: 'scanner', label: 'Scanner', dataFile: 'signals.json' },
+  { id: 'congress', label: 'Congress', dataFile: 'congress.json' },
+  { id: 'insiders', label: 'Insiders', dataFile: 'insiders.json' },
   { id: 'earnings', label: 'Earnings', dataFile: 'earnings.json' },
-  { id: 'congress', label: 'Congress & Gov', dataFile: 'congress.json' },
   { id: 'research', label: 'Research', dataFile: 'research.json' },
-  { id: 'deepdive', label: 'Deep Dive', dataFile: 'signals.json' },
   { id: 'performance', label: 'Performance', dataFile: 'performance.json' },
-  { id: 'screener', label: 'Screener', dataFile: 'fundamentals.json' },
+  { id: 'deepdive', label: 'Deep Dive', dataFile: 'signals.json' },
+  { id: 'news', label: 'News', dataFile: 'news.json' },
+  { id: 'reference', label: 'Reference', dataFile: '' },
 ];
 
 const TAB_IDS = TABS.map((t) => t.id);
@@ -38,7 +49,7 @@ const ADMIN_TAB: TabDef = { id: 'admin', label: 'Admin', dataFile: 'tradedesk_in
 const ALL_TAB_IDS = [...TAB_IDS, 'admin'] as TabId[];
 
 /** Build version — bump on every push so we can confirm what's live. */
-export const BUILD_VERSION = '2026-11-12a';
+export const BUILD_VERSION = '2026-11-12b';
 
 /** "14:32:05" in ET for the Schwab pill's updated time. */
 function fmtClockET(ms: number): string {
@@ -113,45 +124,12 @@ function tabFromHash(): TabId {
   return (ALL_TAB_IDS as string[]).includes(h) ? h : 'brief';
 }
 
-/** Mobile bottom nav: Today / Options / Congress / Search. */
-function BottomNav({
-  active,
-  onTab,
-  onSearch,
-}: {
-  active: TabId;
-  onTab: (id: TabId) => void;
-  onSearch: () => void;
-}) {
-  const item = (id: TabId, label: string) => (
-    <button
-      key={id}
-      className={`bottomnav-btn${active === id ? ' active' : ''}`}
-      onClick={() => onTab(id)}
-      aria-current={active === id ? 'page' : undefined}
-    >
-      {label}
-    </button>
-  );
-  return (
-    <nav className="bottomnav" aria-label="TradeDesk sections">
-      {item('brief', 'Today')}
-      {item('options', 'Options')}
-      {item('congress', 'Congress')}
-      <button className="bottomnav-btn" onClick={onSearch}>
-        Search
-      </button>
-    </nav>
-  );
-}
-
 function Shell() {
   const [active, setActive] = useState<TabId>(tabFromHash);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [defsOpen, setDefsOpen] = useState(false);
 
-  // Admin tab: visible only to admins. Non-admins never see it in the menu,
-  // the tab row, or the bottom nav — and a #admin hash falls back to brief.
+  // Admin tab: visible only to admins. Non-admins never see it in the tab
+  // row — and a #admin hash falls back to brief.
   const invite = useInvite();
   const isAdmin = invite?.isAdmin ?? false;
   const visibleTabs = isAdmin ? [...TABS, ADMIN_TAB] : TABS;
@@ -165,43 +143,9 @@ function Shell() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  // Escape closes the side menu; lock body scroll while it is open.
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMenuOpen(false);
-    };
-    window.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [menuOpen]);
-
   const select = (id: TabId) => {
     setActive(id);
     window.location.hash = id === 'brief' ? '' : id;
-  };
-
-  const goTab = (id: TabId) => {
-    select(id);
-    setMenuOpen(false);
-  };
-
-  const openDefs = () => {
-    setMenuOpen(false);
-    setDefsOpen(true);
-  };
-
-  /** Bottom-nav Search: jump to the Daily Brief and focus its ticker search. */
-  const focusBriefSearch = () => {
-    select('brief');
-    setMenuOpen(false);
-    window.setTimeout(() => {
-      document.getElementById('brief-search')?.focus();
-    }, 80);
   };
 
   const signOut = async () => {
@@ -209,56 +153,13 @@ function Shell() {
   };
 
   return (
-    <div className="app">
-      {/* Side menu: slide-in drawer on phone/tablet, persistent sidebar on desktop. */}
-      <aside className={`sidebar${menuOpen ? ' open' : ''}`} aria-label="TradeDesk sections">
-        <div className="sidebar-brand">
-          <span className="brand-mark" aria-hidden="true">◈</span>
-          <span className="brand">TradeDesk</span>
-          <button
-            className="sidebar-close"
-            onClick={() => setMenuOpen(false)}
-            aria-label="Close menu"
-          >
-            ✕
-          </button>
-        </div>
-        <nav className="sidebar-nav">
-          {visibleTabs.map((t) => (
-            <button
-              key={t.id}
-              className={`sidebar-item${activeTab === t.id ? ' active' : ''}`}
-              onClick={() => goTab(t.id)}
-              aria-current={activeTab === t.id ? 'page' : undefined}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-section">
-          <button className="sidebar-item sidebar-defs" onClick={openDefs}>
-            <span aria-hidden="true">📖</span> Understanding Fundamentals
-          </button>
-        </div>
-        <div className="sidebar-foot muted small">
-          Research &amp; education only, not financial advice.
-        </div>
-      </aside>
-      {menuOpen && <div className="scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
-
+    <div className="app mb-shell">
       <div className="main-col">
-        <header className="topbar">
+        <header className="topbar mb-topbar">
           <div className="brand-row">
-            <button
-              className="hamburger"
-              onClick={() => setMenuOpen(true)}
-              aria-label="Open menu"
-              aria-expanded={menuOpen}
-            >
-              ☰
-            </button>
             <span className="brand-mark" aria-hidden="true">◈</span>
-            <h1 className="brand">TradeDesk</h1>
+            <h1 className="brand mb-brand">TradeDesk</h1>
+            <span className="mb-topbar-sub muted small">Research &amp; education only, not financial advice.</span>
           </div>
           <div className="topbar-actions">
             <button
@@ -275,47 +176,57 @@ function Shell() {
           </div>
         </header>
 
-        <nav className="tabnav" role="tablist" aria-label="TradeDesk sections">
-          {visibleTabs.map((t) => (
+        {/* Mock B tab bar: numbered pills under the header, wrapping. */}
+        <nav className="tabnav mb-tabbar" role="tablist" aria-label="TradeDesk sections">
+          {visibleTabs.map((t, i) => (
             <button
               key={t.id}
               role="tab"
               aria-selected={activeTab === t.id}
-              className={`tabbtn${activeTab === t.id ? ' active' : ''}`}
+              className={`tabbtn mb-tabbtn${activeTab === t.id ? ' active' : ''}`}
               onClick={() => select(t.id)}
             >
+              <span className="mb-tabnum" aria-hidden="true">
+                {String(i + 1).padStart(2, '0')}
+              </span>
               {t.label}
             </button>
           ))}
         </nav>
 
-        <main className="content">
+        <main className="content mb-content">
           <TabErrorBoundary tabName="Daily Brief" key={`brief-${activeTab}`}>
-            {activeTab === 'brief' && <DailyBriefTab onOpenTab={goTab} />}
+            {activeTab === 'brief' && <DailyBriefTab onOpenTab={select} />}
           </TabErrorBoundary>
           <TabErrorBoundary tabName="Options" key={`options-${activeTab}`}>
             {activeTab === 'options' && <OptionsTab />}
           </TabErrorBoundary>
-          <TabErrorBoundary tabName="Signals" key={`signals-${activeTab}`}>
-            {activeTab === 'signals' && <SignalsTab />}
+          <TabErrorBoundary tabName="Scanner" key={`scanner-${activeTab}`}>
+            {activeTab === 'scanner' && <ScannerTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Congress" key={`congress-${activeTab}`}>
+            {activeTab === 'congress' && <CongressGovTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Insiders" key={`insiders-${activeTab}`}>
+            {activeTab === 'insiders' && <InsidersTab />}
           </TabErrorBoundary>
           <TabErrorBoundary tabName="Earnings" key={`earnings-${activeTab}`}>
             {activeTab === 'earnings' && <EarningsTab />}
           </TabErrorBoundary>
-          <TabErrorBoundary tabName="Congress & Gov" key={`congress-${activeTab}`}>
-            {activeTab === 'congress' && <CongressGovTab />}
-          </TabErrorBoundary>
           <TabErrorBoundary tabName="Research" key={`research-${activeTab}`}>
             {activeTab === 'research' && <ResearchTab />}
-          </TabErrorBoundary>
-          <TabErrorBoundary tabName="Deep Dive" key={`deepdive-${activeTab}`}>
-            {activeTab === 'deepdive' && <DeepDiveTab />}
           </TabErrorBoundary>
           <TabErrorBoundary tabName="Performance" key={`performance-${activeTab}`}>
             {activeTab === 'performance' && <PerformanceTab />}
           </TabErrorBoundary>
-          <TabErrorBoundary tabName="Screener" key={`screener-${activeTab}`}>
-            {activeTab === 'screener' && <ScreenerTab />}
+          <TabErrorBoundary tabName="Deep Dive" key={`deepdive-${activeTab}`}>
+            {activeTab === 'deepdive' && <DeepDiveTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="News" key={`news-${activeTab}`}>
+            {activeTab === 'news' && <NewsTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Reference" key={`reference-${activeTab}`}>
+            {activeTab === 'reference' && <ReferenceTab />}
           </TabErrorBoundary>
           {isAdmin && (
             <TabErrorBoundary tabName="Admin" key={`admin-${activeTab}`}>
@@ -331,7 +242,6 @@ function Shell() {
         </footer>
       </div>
 
-      <BottomNav active={activeTab} onTab={goTab} onSearch={focusBriefSearch} />
       <DefinitionsDrawer open={defsOpen} onClose={() => setDefsOpen(false)} />
       <FundamentalsPill onOpen={() => setDefsOpen(true)} />
     </div>

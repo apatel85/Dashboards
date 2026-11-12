@@ -1,0 +1,557 @@
+/**
+ * Mock B restyle for the Congress & Gov tab.
+ * Uses ONLY --mb-* tokens from mockb-tokens.css (never a hardcoded hex).
+ * Scoped under .mb-congress so the legacy global classes keep working
+ * elsewhere; existing class names are kept and restyled here.
+ */
+
+/* ---------- Tab header ---------- */
+.mb-congress .tab-header {
+  margin-bottom: 12px;
+}
+.mb-congress .mb-tabhead {
+  margin-bottom: 6px;
+}
+.mb-congress .mb-lede {
+  margin-bottom: 8px;
+}
+.mb-congress .plain-note {
+  color: var(--mb-dim);
+  line-height: 1.55;
+}
+
+/* ---------- Segmented controls (branch + view + sorts) ---------- */
+.mb-congress .seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  padding: 4px;
+}
+.mb-congress .seg-large {
+  margin-bottom: 12px;
+}
+.mb-congress .seg button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--mb-dim);
+  font-family: var(--mb-font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--mb-pill);
+  padding: 0 14px;
+  min-height: var(--mb-tap);
+  cursor: pointer;
+  transition: background var(--mb-anim), color var(--mb-anim);
+}
+.mb-congress .seg button:hover {
+  color: var(--mb-text);
+}
+.mb-congress .seg button.active {
+  background: var(--mb-active-bg);
+  color: var(--mb-active-text);
+}
+
+/* ---------- Callout (disclosure lag / coverage) ---------- */
+.mb-congress .callout {
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-left: 3px solid var(--mb-blue);
+  border-radius: var(--mb-radius);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.mb-congress .callout.warn {
+  border-left-color: var(--mb-amber);
+}
+.mb-congress .callout p {
+  color: var(--mb-dim);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 6px 0 0;
+}
+.mb-congress .callout .detail-label {
+  color: var(--mb-text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---------- Newest filings card ---------- */
+.mb-congress .mb-newest .mb-card-head {
+  width: 100%;
+  background: none;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  padding: 14px 16px;
+}
+.mb-congress .mb-newest .mb-card-head:hover .mb-card-title {
+  color: var(--mb-blue);
+}
+.mb-congress .mb-chev {
+  color: var(--mb-faint);
+  font-size: 13px;
+  margin-left: 4px;
+}
+.mb-congress .mb-newest-list {
+  border-top: 1px solid var(--mb-border-soft);
+}
+.mb-congress .mb-newest-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  width: 100%;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--mb-border-soft);
+  padding: 10px 16px;
+  min-height: var(--mb-tap);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--mb-text);
+}
+.mb-congress .mb-newest-row:first-child {
+  border-top: 0;
+}
+.mb-congress .mb-newest-row:hover,
+.mb-congress .mb-newest-row:focus-visible {
+  background: var(--mb-raised);
+}
+.mb-congress .mb-newest-row:focus-visible {
+  outline: 2px solid var(--mb-blue);
+  outline-offset: -2px;
+}
+.mb-congress .mb-newest-member {
+  flex: 1 1 160px;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mb-congress .mb-newest-sub {
+  display: block;
+  color: var(--mb-dim);
+  font-size: 12px;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mb-congress .mb-newest-trade {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.mb-congress .mb-newest-amt {
+  font-family: var(--mb-font-mono);
+  font-size: 13px;
+  color: var(--mb-text);
+  white-space: nowrap;
+}
+.mb-congress .mb-newest-date {
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  color: var(--mb-dim);
+  white-space: nowrap;
+}
+.mb-congress .mb-newest-foot {
+  padding: 10px 16px 12px;
+  margin: 0;
+  border-top: 1px solid var(--mb-border-soft);
+  color: var(--mb-faint);
+  font-size: 12px;
+}
+
+/* ---------- Flow infographic ---------- */
+.mb-congress .flow-info {
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.mb-congress .flow-bar {
+  height: 10px;
+  background: var(--mb-border-soft);
+  border-radius: var(--mb-pill);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.mb-congress .flow-bar-buy {
+  height: 100%;
+  background: var(--mb-green);
+  border-radius: var(--mb-pill);
+}
+.mb-congress .flow-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+.mb-congress .flow-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  padding: 10px 12px;
+  min-height: var(--mb-tap);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--mb-text);
+  transition: border-color var(--mb-anim);
+}
+.mb-congress .flow-tile:hover {
+  border-color: var(--mb-dim);
+}
+.mb-congress .flow-tile.active {
+  border-color: var(--mb-blue);
+  box-shadow: inset 0 0 0 1px var(--mb-blue);
+}
+.mb-congress .flow-tile-num {
+  font-family: var(--mb-font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--mb-text);
+}
+.mb-congress .flow-tile.up .flow-tile-num {
+  color: var(--mb-green);
+}
+.mb-congress .flow-tile.down .flow-tile-num {
+  color: var(--mb-red);
+}
+.mb-congress .flow-tile-label {
+  font-size: 12px;
+  color: var(--mb-dim);
+}
+.mb-congress .flow-info .plain-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+}
+
+/* ---------- Filter bar ---------- */
+.mb-congress .filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.mb-congress .filterbar .filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mb-congress .filterbar .filter > span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mb-faint);
+}
+.mb-congress .filterbar select,
+.mb-congress .filterbar input[type='text'] {
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  color: var(--mb-text);
+  font-family: var(--mb-font-ui);
+  font-size: 14px;
+  padding: 0 12px;
+  min-height: var(--mb-tap);
+}
+.mb-congress .filterbar select:focus,
+.mb-congress .filterbar input[type='text']:focus {
+  outline: 2px solid var(--mb-blue);
+  outline-offset: -1px;
+}
+.mb-congress .filterbar .filter.grow {
+  flex: 1 1 200px;
+}
+.mb-congress .filterbar .filter.grow input {
+  width: 100%;
+}
+.mb-congress .filterbar .filter.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--mb-tap);
+}
+.mb-congress .filterbar .filter.check > span {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mb-text);
+}
+.mb-congress .filterbar .filter.check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--mb-blue);
+}
+
+/* ---------- Active filter chip row ---------- */
+.mb-congress .activefilter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  padding: 6px 8px 6px 16px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--mb-text);
+}
+.mb-congress .btn-ghost {
+  appearance: none;
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  color: var(--mb-text);
+  font-family: var(--mb-font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 14px;
+  min-height: var(--mb-tap);
+  cursor: pointer;
+}
+.mb-congress .btn-ghost:hover:not(:disabled) {
+  border-color: var(--mb-dim);
+}
+.mb-congress .btn-ghost:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ---------- Section heads ---------- */
+.mb-congress .section-head {
+  margin: 18px 0 10px;
+}
+.mb-congress .section-head h3 {
+  font-family: var(--mb-font-display);
+  font-size: 20px;
+  color: var(--mb-text);
+  margin: 0 0 2px;
+}
+.mb-congress .section-head .muted {
+  color: var(--mb-dim);
+}
+
+/* ---------- Tables (By-stock + Trades): aligned header/row grid ---------- */
+.mb-congress .table-scroll {
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius);
+  overflow-x: auto;
+}
+.mb-congress .dtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.mb-congress .dtable th {
+  font-family: var(--mb-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mb-faint);
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--mb-border);
+  white-space: nowrap;
+}
+.mb-congress .dtable th.r,
+.mb-congress .dtable td.r,
+.mb-congress .dtable td.num {
+  text-align: right;
+  font-family: var(--mb-font-mono);
+  font-size: 13px;
+}
+.mb-congress .dtable td {
+  padding: 11px 14px;
+  border-top: 1px solid var(--mb-border-soft);
+  color: var(--mb-text);
+  vertical-align: middle;
+}
+.mb-congress .dtable tbody tr:first-child td {
+  border-top: 0;
+}
+.mb-congress .dtable tr.clickable {
+  cursor: pointer;
+}
+.mb-congress .dtable tr.clickable:hover td {
+  background: var(--mb-raised);
+}
+.mb-congress .dtable .linklike {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-transform: inherit;
+  letter-spacing: inherit;
+}
+.mb-congress .dtable .linklike:hover {
+  color: var(--mb-text);
+}
+.mb-congress .dtable td .up,
+.mb-congress .dtable td.up {
+  color: var(--mb-green);
+}
+.mb-congress .dtable td .down,
+.mb-congress .dtable td.down {
+  color: var(--mb-red);
+}
+.mb-congress .dtable tr.trade-highlight td {
+  background: var(--mb-raised);
+  box-shadow: inset 3px 0 0 var(--mb-amber);
+}
+.mb-congress .dtable .lateflag {
+  color: var(--mb-red);
+}
+.mb-congress .dtable .subname {
+  display: block;
+  color: var(--mb-dim);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.mb-congress .dtable .assetname {
+  color: var(--mb-text);
+}
+.mb-congress .dtable .doclink {
+  color: var(--mb-blue);
+  text-decoration: none;
+  font-weight: 600;
+}
+.mb-congress .dtable .doclink:hover {
+  text-decoration: underline;
+}
+.mb-congress .dtable .detail-row td {
+  background: var(--mb-raised);
+}
+.mb-congress .dtable .detail-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mb-faint);
+}
+
+/* ---------- Notable cards ---------- */
+.mb-congress .notable-list {
+  display: grid;
+  gap: 8px;
+}
+.mb-congress .notable-card {
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius);
+  padding: 12px 14px;
+}
+.mb-congress .notable-card.open {
+  border-color: var(--mb-dim);
+}
+.mb-congress .notable-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  min-height: var(--mb-tap);
+}
+.mb-congress .notable-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mb-congress .notable-amt {
+  margin-left: auto;
+  font-family: var(--mb-font-mono);
+  font-size: 13px;
+  color: var(--mb-text);
+}
+.mb-congress .notable-sub {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--mb-dim);
+}
+.mb-congress .notable-detail {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--mb-border-soft);
+}
+
+/* ---------- Committee chips, pager, footnotes ---------- */
+.mb-congress .ctag {
+  display: inline-block;
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  padding: 2px 9px;
+  font-size: 11px;
+  color: var(--mb-dim);
+  background: var(--mb-raised);
+  white-space: nowrap;
+}
+.mb-congress .ctag.dim {
+  color: var(--mb-faint);
+}
+.mb-congress .pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 12px 0 4px;
+}
+.mb-congress .pager .muted {
+  color: var(--mb-dim);
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+}
+.mb-congress .footnote-line {
+  color: var(--mb-faint);
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 10px 0 0;
+}
+.mb-congress .panel {
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius);
+  padding: 14px 16px;
+}
+.mb-congress .panel .muted {
+  color: var(--mb-dim);
+}
+
+/* ---------- Phone: single column, rows wrap ---------- */
+@media (max-width: 767px) {
+  .mb-congress .flow-tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .mb-congress .mb-newest-date {
+    flex-basis: 100%;
+  }
+}

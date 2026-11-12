@@ -1,3 +1,4 @@
+import '../mockb-brief.css';
 import { useEffect, useMemo, useState } from 'react';
 import EmptyState from '../components/EmptyState';
 import {
@@ -105,6 +106,56 @@ function TenSecondsBox({ brief }: { brief: DailyBrief }) {
     <div className="ten-seconds" role="status">
       <span className="ten-seconds-title">Today in 10 seconds</span>
       <p>{line}</p>
+    </div>
+  );
+}
+
+/**
+ * Mock B "01 Market mood" summary card — always visible (summary cards
+ * never collapse). One plain sentence (REGIME_PLAIN) + a breadth bar:
+ * hot vs weak sectors from the live brief, with counts labelled.
+ */
+function MoodCard({ brief }: { brief: DailyBrief }) {
+  const hot = brief.sectors.hot.length;
+  const weak = brief.sectors.weak.length;
+  const total = hot + weak;
+  const hotPct = total > 0 ? (hot / total) * 100 : 50;
+  return (
+    <div className="mb-card mb-mood-card">
+      <div className="mb-card-head mb-card-head-static">
+        <span className="mb-card-num">01</span>
+        <span className="mb-card-title">Market mood</span>
+        <span className="mb-count-badge">
+          {hot} hot · {weak} weak
+        </span>
+      </div>
+      <div className="mb-card-body">
+        <p className="mb-mood-sentence">{REGIME_PLAIN[brief.market_regime]}</p>
+        {total > 0 ? (
+          <>
+            <div
+              className="mb-breadth-bar"
+              role="img"
+              aria-label={`${hot} hot sectors vs ${weak} weak sectors`}
+              title={`${hot} hot sectors vs ${weak} weak sectors`}
+            >
+              <div className="mb-breadth-hot" style={{ width: `${hotPct}%` }} />
+              <div className="mb-breadth-weak" style={{ width: `${100 - hotPct}%` }} />
+            </div>
+            <div className="mb-breadth-labels">
+              <span className="mb-breadth-label hot">{hot} hot</span>
+              <span className="mb-breadth-label weak">{weak} weak</span>
+            </div>
+            <p className="mb-breadth-names">
+              <b>Hot:</b> {brief.sectors.hot.map((s) => s.sector).join(', ') || '—'}
+              <br />
+              <b>Weak:</b> {brief.sectors.weak.map((s) => s.sector).join(', ') || '—'}
+            </p>
+          </>
+        ) : (
+          <p className="muted small">No sector data in this run.</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -881,10 +932,10 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
 
   return (
     <section className="tab">
-      <div className="panel brief-head">
+      <div className="panel brief-head mb-card mb-brief-head">
         <div className="brief-head-main">
           <div className="eyebrow">Daily Brief · {brief.universe}</div>
-          <h2>{fmtFullDate(brief.brief_date)}</h2>
+          <h2 className="mb-tabhead">{fmtFullDate(brief.brief_date)}</h2>
         </div>
         <div className="brief-head-side">
           <Badge tone={REGIME_TONE[brief.market_regime]}>{REGIME_LABEL[brief.market_regime]}</Badge>
@@ -893,6 +944,8 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
       </div>
 
       <AlertsSection onOpenTab={onOpenTab} />
+
+      <MoodCard brief={brief} />
 
       <div className="mood-banner">
         <span className="mood-label">Today</span>
@@ -903,7 +956,7 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
 
       <TenSecondsBox brief={brief} />
 
-      <div className="feed-controls">
+      <div className="feed-controls mb-search-rail">
         <input
           id="brief-search"
           className="screener-search feed-search"
@@ -913,6 +966,26 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search breakout candidates by ticker or company name"
         />
+        {brief.breakout_candidates.length > 0 && (
+          <div className="mb-quick-row" role="group" aria-label="Quick picks — top breakout tickers">
+            <span className="mb-quick-label">Quick picks:</span>
+            {brief.breakout_candidates.slice(0, 5).map((c) => {
+              const active = q === c.ticker.toLowerCase();
+              return (
+                <button
+                  key={c.ticker}
+                  type="button"
+                  className={`mb-quick-chip${active ? ' on' : ''}`}
+                  onClick={() => setQuery(active ? '' : c.ticker)}
+                  aria-pressed={active}
+                  title={`Search ${c.ticker}`}
+                >
+                  {c.ticker}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="feed-chips" role="group" aria-label="Filter the feed">
           {FILTERS.map((f) => (
             <button
@@ -935,6 +1008,7 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
           />
           {hasCandidates ? (
             visibleCandidates.length > 0 ? (
+              <>
               <div className="feed-list">
                 {visibleCandidates.map((c) => (
                   <BreakoutCard
@@ -947,6 +1021,12 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
                   />
                 ))}
               </div>
+              {!q && onOpenTab && (
+                <button type="button" className="mb-see-all" onClick={() => onOpenTab('scanner')}>
+                  See all {brief.breakout_candidates.length} breakout candidates in Scanner →
+                </button>
+              )}
+              </>
             ) : (
               <EmptyState
                 dataFile="public/data/daily-brief.json"

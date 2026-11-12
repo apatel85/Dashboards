@@ -1,0 +1,121 @@
+/* Performance tab — Mock B editorial-ledger format.
+ * Numbered collapsed cards, serif display headings, --mb-* tokens only.
+ * Layout/table/chip primitives come from the app's global styles.css;
+ * this file only adds Mock B card chrome and the "Why picked" toggle. */
+
+.mb-perf {
+  font-family: var(--mb-font-ui);
+  color: var(--mb-text);
+}
+
+/* Card head is a real button (keyboard accessible, 44px tap target). */
+.mb-perf .mb-card-head {
+  width: 100%;
+  background: none;
+  border: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.mb-perf .mb-card-head:focus-visible {
+  outline: 2px solid var(--mb-blue);
+  outline-offset: -2px;
+}
+
+.mb-chev {
+  color: var(--mb-faint);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.mb-card-body {
+  padding: 0 16px 16px;
+}
+
+.mb-card-body .footnote-line {
+  margin-top: 12px;
+}
+
+/* "Why picked" toggle on each tracked-idea row. */
+.mb-why-btn {
+  min-height: var(--mb-tap);
+  padding: 8px 14px;
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  background: var(--mb-raised);
+  color: var(--mb-blue);
+  font-family: var(--mb-font-ui);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mb-why-btn:hover {
+  border-color: var(--mb-blue);
+}
+
+.mb-why-btn:focus-visible {
+  outline: 2px solid var(--mb-blue);
+  outline-offset: 2px;
+}
+
+.mb-why-btn[aria-expanded="true"] {
+  border-color: var(--mb-blue);
+  color: var(--mb-text);
+}
+
+/* The revealed why-record: numbers the snapshot recorded + a plain note
+ * where the written reasons will appear once the pipeline records them. */
+.mb-why-panel {
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.mb-why-panel h4 {
+  font-family: var(--mb-font-display);
+  font-size: 15px;
+  color: var(--mb-text);
+  margin: 0 0 10px;
+}
+
+.mb-why-list {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.mb-why-list > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.mb-why-list dt {
+  color: var(--mb-dim);
+  font-size: 13px;
+  min-width: 180px;
+}
+
+.mb-why-list dd {
+  color: var(--mb-text);
+  font-size: 13px;
+  margin: 0;
+}
+
+.mb-why-note {
+  color: var(--mb-dim);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+@media (max-width: 767px) {
+  .mb-why-list dt {
+    min-width: 0;
+    width: 100%;
+  }
+}

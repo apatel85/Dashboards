@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import { useInvite } from '../auth/AuthGate';
+import '../mockb-tokens.css';
+import '../mockb-admin.css';
 
 interface InviteRow {
   email: string;
@@ -136,85 +138,99 @@ export default function AdminTab() {
   };
 
   return (
-    <div>
-      <div className="section-head">
-        <h3>Admin — who can use TradeDesk</h3>
-      </div>
-      <p className="muted" style={{ maxWidth: 640 }}>
-        Only you can see this tab. Anyone on this list can sign in; anyone not
-        on it sees &ldquo;Access not granted&rdquo; after signing in. Admins can
-        add and remove people — members can only use the app.
-      </p>
-      <p className="muted small" style={{ maxWidth: 640 }}>
-        Note: the raw data files behind the app are public web pages by design,
-        so this list controls who can use the terminal and the live Schwab
-        feed — not who can download the raw data files.
-      </p>
-
-      <form onSubmit={addInvite} className="admin-add">
-        <input
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          placeholder="person@example.com"
-          value={newEmail}
-          onChange={(e) => setNewEmail(e.target.value)}
-          aria-label="Email address to invite"
-        />
-        <button type="submit" className="btn btn-primary" disabled={busy === 'add'}>
-          Add invite
-        </button>
-      </form>
-      {formMsg && (
-        <p className={`status status-${formMsg.kind === 'ok' ? 'sent' : 'error'}`} role="status">
-          {formMsg.text}
-        </p>
-      )}
-
-      {loading ? (
-        <p className="muted">Loading the invite list…</p>
-      ) : error ? (
-        <p className="status status-error" role="status">
-          {error}{' '}
-          <button className="btn btn-ghost" onClick={() => void load()}>
-            Try again
-          </button>
-        </p>
-      ) : rows.length === 0 ? (
-        <p className="muted">Nobody is on the list yet — add an email above.</p>
-      ) : (
-        <div className="admin-list">
-          {rows.map((row) => (
-            <div key={row.email} className="panel admin-row">
-              <div className="admin-who">
-                <div className="admin-email">{row.email}</div>
-                <div className="muted small">
-                  {row.role === 'admin' ? 'Admin' : 'Member'}
-                  {' · '}added {fmtDate(row.created_at)}
-                  {row.invited_by ? ` · by ${row.invited_by}` : ''}
-                  {row.email === me ? ' · that\u2019s you' : ''}
-                </div>
-              </div>
-              <div className="admin-actions">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => void toggleRole(row)}
-                  disabled={busy === `role:${row.email}`}
-                >
-                  {row.role === 'admin' ? 'Make member' : 'Make admin'}
-                </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => void removeInvite(row)}
-                  disabled={busy === `rm:${row.email}`}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
+    <div className="mb-admin">
+      <div className="mb-card">
+        <div className="mb-card-head">
+          <span className="mb-card-num">01</span>
+          <span className="mb-card-title">Who can use TradeDesk</span>
+          <span className="mb-count-badge">
+            {loading ? '…' : `${rows.length} ${rows.length === 1 ? 'person' : 'people'}`}
+          </span>
         </div>
-      )}
+        <div className="mb-admin-body">
+          <p className="mb-lede">
+            Only you can see this tab. Anyone on this list can sign in; anyone not
+            on it sees &ldquo;Access not granted&rdquo; after signing in. Admins can
+            add and remove people — members can only use the app.
+          </p>
+          <p className="mb-admin-note">
+            Note: the raw data files behind the app are public web pages by design,
+            so this list controls who can use the terminal and the live Schwab
+            feed — not who can download the raw data files.
+          </p>
+
+          <form onSubmit={addInvite} className="mb-admin-add">
+            <input
+              className="mb-admin-input"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="person@example.com"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              aria-label="Email address to invite"
+            />
+            <button type="submit" className="mb-btn mb-btn-primary" disabled={busy === 'add'}>
+              Add invite
+            </button>
+          </form>
+          {formMsg && (
+            <p
+              className={`mb-admin-status mb-admin-status-${formMsg.kind === 'ok' ? 'ok' : 'err'}`}
+              role="status"
+            >
+              {formMsg.text}
+            </p>
+          )}
+
+          {loading ? (
+            <p className="mb-admin-empty">Loading the invite list…</p>
+          ) : error ? (
+            <p className="mb-admin-status mb-admin-status-err" role="status">
+              {error}{' '}
+              <button className="mb-btn" onClick={() => void load()}>
+                Try again
+              </button>
+            </p>
+          ) : rows.length === 0 ? (
+            <p className="mb-admin-empty">Nobody is on the list yet — add an email above.</p>
+          ) : (
+            <div className="mb-admin-list">
+              {rows.map((row) => (
+                <div key={row.email} className="mb-admin-row">
+                  <div className="mb-admin-who">
+                    <div className="mb-admin-email">{row.email}</div>
+                    <div className="mb-admin-meta">
+                      <span className={`mb-role${row.role === 'admin' ? ' mb-role-admin' : ''}`}>
+                        {row.role === 'admin' ? 'Admin' : 'Member'}
+                      </span>
+                      {' · '}added {fmtDate(row.created_at)}
+                      {row.invited_by ? ` · by ${row.invited_by}` : ''}
+                      {row.email === me ? ' · that\u2019s you' : ''}
+                    </div>
+                  </div>
+                  <div className="mb-admin-actions">
+                    <button
+                      className="mb-btn"
+                      onClick={() => void toggleRole(row)}
+                      disabled={busy === `role:${row.email}`}
+                    >
+                      {row.role === 'admin' ? 'Make member' : 'Make admin'}
+                    </button>
+                    <button
+                      className="mb-btn mb-btn-danger"
+                      onClick={() => void removeInvite(row)}
+                      disabled={busy === `rm:${row.email}`}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,178 @@
+/**
+ * Mock B — News tab. Colours/typography come ONLY from --mb-* tokens
+ * (src/mockb-tokens.css); no hardcoded hex values in this file.
+ */
+
+.mb-news-asof {
+  color: var(--mb-dim);
+  font-size: 13px;
+  font-family: var(--mb-font-mono);
+  margin: 0 0 16px;
+}
+
+.mb-news-cardhead {
+  width: 100%;
+  background: none;
+  border: 0;
+  font-family: var(--mb-font-ui);
+  text-align: left;
+}
+
+.mb-news-chevron {
+  color: var(--mb-faint);
+  font-size: 14px;
+}
+
+.mb-news-body {
+  border-top: 1px solid var(--mb-border-soft);
+  padding: 14px 16px 16px;
+}
+
+/* ── Filters ─────────────────────────────────────────────────── */
+
+.mb-news-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.mb-news-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.mb-news-field-search {
+  flex: 1;
+  min-width: 200px;
+}
+
+.mb-news-label {
+  color: var(--mb-dim);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mb-news-control {
+  min-height: var(--mb-tap);
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  color: var(--mb-text);
+  font-family: var(--mb-font-ui);
+  font-size: 14px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.mb-news-control:focus {
+  outline: 2px solid var(--mb-blue);
+  outline-offset: 1px;
+}
+
+.mb-news-control::placeholder {
+  color: var(--mb-faint);
+}
+
+/* ── Headline rows ───────────────────────────────────────────── */
+
+.mb-news-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mb-news-row {
+  padding: 14px 0;
+  border-top: 1px solid var(--mb-border-soft);
+}
+
+.mb-news-row:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.mb-news-title {
+  display: block;
+  color: var(--mb-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-decoration: none;
+  margin-bottom: 8px;
+}
+
+.mb-news-title:hover,
+.mb-news-title:focus-visible {
+  color: var(--mb-blue);
+  text-decoration: underline;
+}
+
+.mb-news-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--mb-dim);
+}
+
+.mb-news-publisher {
+  color: var(--mb-dim);
+}
+
+.mb-news-time {
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  color: var(--mb-faint);
+}
+
+/* ── Empty states + pagination ───────────────────────────────── */
+
+.mb-news-empty {
+  color: var(--mb-dim);
+  font-size: 14px;
+  line-height: 1.55;
+  padding: 12px 0;
+}
+
+.mb-news-empty p {
+  margin: 0 0 12px;
+}
+
+.mb-news-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--mb-border-soft);
+  padding-top: 14px;
+  margin-top: 4px;
+}
+
+.mb-news-pager .mb-back:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mb-news-pageinfo {
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  color: var(--mb-dim);
+  white-space: nowrap;
+}
+
+/* ── Phone: filters stack full-width ─────────────────────────── */
+
+@media (max-width: 767px) {
+  .mb-news-filters {
+    flex-direction: column;
+  }
+
+  .mb-news-field,
+  .mb-news-field-search {
+    min-width: 0;
+  }
+}

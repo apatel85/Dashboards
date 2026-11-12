@@ -1,0 +1,221 @@
+/**
+ * Mock B — Admin tab styles.
+ * Uses ONLY --mb-* tokens from mockb-tokens.css (no hardcoded colours).
+ * Restyle only: layout order, copy, guards and Supabase logic are unchanged.
+ */
+
+.mb-admin {
+  font-family: var(--mb-font-ui);
+  color: var(--mb-text);
+}
+
+/* The single numbered card holds the whole tab. Not collapsible. */
+.mb-admin .mb-card-head {
+  cursor: default;
+}
+
+.mb-admin-body {
+  padding: 0 16px 16px;
+}
+
+.mb-admin-body .mb-lede {
+  margin-bottom: 10px;
+}
+
+.mb-admin-note {
+  color: var(--mb-dim);
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 640px;
+  margin: 0 0 16px;
+}
+
+/* ── Add-email form ───────────────────────────────────────────── */
+
+.mb-admin-add {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 12px;
+}
+
+.mb-admin-input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--mb-tap);
+  padding: 10px 14px;
+  font-family: var(--mb-font-ui);
+  font-size: 15px;
+  color: var(--mb-text);
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  outline: none;
+}
+
+.mb-admin-input::placeholder {
+  color: var(--mb-faint);
+}
+
+.mb-admin-input:focus {
+  border-color: var(--mb-blue);
+}
+
+/* ── Buttons (Mock B: white primary, outlined secondary/danger) ── */
+
+.mb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--mb-tap);
+  padding: 10px 18px;
+  font-family: var(--mb-font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  border-radius: var(--mb-pill);
+  border: 1px solid var(--mb-border);
+  background: var(--mb-panel);
+  color: var(--mb-text);
+  cursor: pointer;
+  transition: opacity var(--mb-anim);
+  white-space: nowrap;
+}
+
+.mb-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.mb-btn-primary {
+  background: var(--mb-active-bg);
+  border-color: var(--mb-active-bg);
+  color: var(--mb-active-text);
+}
+
+.mb-btn-danger {
+  background: transparent;
+  border-color: var(--mb-red);
+  color: var(--mb-red);
+}
+
+/* ── Status messages ──────────────────────────────────────────── */
+
+.mb-admin-status {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  border-radius: var(--mb-radius-sm);
+  background: var(--mb-raised);
+}
+
+.mb-admin-status-ok {
+  border: 1px solid var(--mb-green);
+  color: var(--mb-green-soft);
+}
+
+.mb-admin-status-err {
+  border: 1px solid var(--mb-red);
+  color: var(--mb-red);
+}
+
+.mb-admin-status .mb-btn {
+  margin-left: 8px;
+  min-height: 36px;
+  padding: 6px 14px;
+}
+
+/* ── Invite list ──────────────────────────────────────────────── */
+
+.mb-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mb-admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border-soft);
+  border-radius: var(--mb-radius-sm);
+}
+
+.mb-admin-who {
+  min-width: 0;
+}
+
+.mb-admin-email {
+  font-family: var(--mb-font-mono);
+  font-size: 14px;
+  color: var(--mb-text);
+  overflow-wrap: anywhere;
+}
+
+.mb-admin-meta {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--mb-dim);
+}
+
+.mb-admin-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Outlined role pill (Mock B outlined-pill pattern). */
+.mb-role {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  padding: 2px 8px;
+  color: var(--mb-dim);
+}
+
+.mb-role-admin {
+  border-color: var(--mb-green);
+  color: var(--mb-green-soft);
+}
+
+.mb-admin-empty {
+  color: var(--mb-dim);
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── Phone: stack the form and each row's actions ─────────────── */
+
+@media (max-width: 767px) {
+  .mb-admin-add {
+    flex-direction: column;
+  }
+
+  .mb-admin-add .mb-btn {
+    width: 100%;
+  }
+
+  .mb-admin-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mb-admin-actions {
+    flex-direction: column;
+  }
+
+  .mb-admin-actions .mb-btn {
+    width: 100%;
+  }
+}

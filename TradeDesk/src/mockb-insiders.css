@@ -1,0 +1,480 @@
+/* Insiders tab — Mock B editorial-ledger styling.
+ * Uses ONLY --mb-* tokens from mockb-tokens.css (never a hardcoded hex).
+ * Shared primitives (.mb-tabhead, .mb-lede, .mb-card, .mb-card-head,
+ * .mb-card-num, .mb-card-title, .mb-card-sub, .mb-count-badge) come from
+ * mockb-tokens.css; this file adds only Insiders-specific rules. */
+
+.ins-tab {
+  font-family: var(--mb-font-ui);
+  color: var(--mb-text);
+}
+
+.ins-tab .num {
+  font-family: var(--mb-font-mono);
+}
+
+/* ── Header lines ─────────────────────────────────────────────── */
+
+.ins-fresh {
+  color: var(--mb-dim);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 4px;
+}
+
+.ins-fresh b {
+  color: var(--mb-text);
+  font-weight: 600;
+}
+
+.ins-disclaimer {
+  color: var(--mb-faint);
+  font-size: 12px;
+  margin: 0 0 16px;
+}
+
+/* ── Card heads (chevron sits after the count badge) ──────────── */
+
+.ins-card-head {
+  width: 100%;
+  background: none;
+  border: 0;
+  text-align: left;
+  font-family: inherit;
+}
+
+.ins-chevron {
+  color: var(--mb-faint);
+  font-size: 14px;
+  flex: 0 0 auto;
+}
+
+.ins-card-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--mb-border-soft);
+}
+
+.ins-hint {
+  color: var(--mb-dim);
+  font-size: 13px;
+  margin: 14px 0 10px;
+}
+
+/* ── 01 · Transaction mix ─────────────────────────────────────── */
+
+.ins-mixbar {
+  display: flex;
+  height: 14px;
+  border-radius: var(--mb-pill);
+  overflow: hidden;
+  background: var(--mb-raised);
+  margin-bottom: 12px;
+}
+
+.ins-mix-seg {
+  height: 100%;
+  min-width: 0;
+}
+
+.ins-seg-buy {
+  background: var(--mb-green);
+}
+
+.ins-seg-sell {
+  background: var(--mb-red);
+}
+
+.ins-seg-other {
+  background: var(--mb-faint);
+}
+
+.ins-mix-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ins-mix-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--mb-tap);
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  color: var(--mb-text);
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ins-mix-row:hover {
+  border-color: var(--mb-dim);
+}
+
+.ins-mix-active {
+  border-color: var(--mb-blue);
+  outline: 1px solid var(--mb-blue);
+}
+
+.ins-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.ins-dot-buy {
+  background: var(--mb-green);
+}
+
+.ins-dot-sell {
+  background: var(--mb-red);
+}
+
+.ins-dot-other {
+  background: var(--mb-faint);
+}
+
+.ins-mix-label {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ins-mix-note {
+  color: var(--mb-dim);
+  font-size: 13px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ins-mix-count {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ins-mix-pct {
+  color: var(--mb-dim);
+  font-size: 13px;
+  width: 40px;
+  text-align: right;
+  flex: 0 0 auto;
+}
+
+.ins-other-codes {
+  margin-top: 14px;
+}
+
+.ins-code-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 4px 16px;
+  color: var(--mb-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ins-code-list b {
+  color: var(--mb-text);
+  font-family: var(--mb-font-mono);
+  font-weight: 600;
+}
+
+/* ── 02 · Controls ────────────────────────────────────────────── */
+
+.ins-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding-top: 14px;
+  margin-bottom: 12px;
+}
+
+.ins-search {
+  flex: 1 1 220px;
+  min-height: var(--mb-tap);
+  padding: 0 14px;
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  color: var(--mb-text);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.ins-search::placeholder {
+  color: var(--mb-faint);
+}
+
+.ins-search:focus {
+  outline: 1px solid var(--mb-blue);
+  border-color: var(--mb-blue);
+}
+
+.ins-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ins-pill {
+  min-height: var(--mb-tap);
+  padding: 0 16px;
+  background: transparent;
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  color: var(--mb-dim);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ins-pill:hover {
+  color: var(--mb-text);
+  border-color: var(--mb-dim);
+}
+
+.ins-pill-active {
+  background: var(--mb-active-bg);
+  border-color: var(--mb-active-bg);
+  color: var(--mb-active-text);
+  font-weight: 700;
+}
+
+.ins-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mb-dim);
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.ins-sort select {
+  min-height: var(--mb-tap);
+  padding: 0 10px;
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  color: var(--mb-text);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ── 02 · Table ───────────────────────────────────────────────── */
+
+.ins-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--mb-border-soft);
+  border-radius: var(--mb-radius-sm);
+}
+
+.ins-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 640px;
+}
+
+.ins-table th {
+  text-align: left;
+  color: var(--mb-faint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--mb-border);
+  white-space: nowrap;
+}
+
+.ins-table th.num,
+.ins-table td.num {
+  text-align: right;
+}
+
+.ins-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--mb-border-soft);
+  vertical-align: middle;
+}
+
+.ins-row {
+  cursor: pointer;
+}
+
+.ins-row:hover {
+  background: var(--mb-raised);
+}
+
+.ins-row-open {
+  background: var(--mb-raised);
+}
+
+.ins-owner {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ins-code {
+  display: inline-block;
+  min-width: 26px;
+  text-align: center;
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--mb-pill);
+  border: 1px solid var(--mb-border);
+  color: var(--mb-dim);
+}
+
+.ins-code-P {
+  color: var(--mb-green);
+  border-color: var(--mb-green);
+}
+
+.ins-code-S {
+  color: var(--mb-red);
+  border-color: var(--mb-red);
+}
+
+.ins-expand-btn {
+  min-width: var(--mb-tap);
+  min-height: var(--mb-tap);
+  background: none;
+  border: 0;
+  color: var(--mb-faint);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ins-detail-row td {
+  background: var(--mb-raised);
+  padding: 0;
+}
+
+.ins-detail {
+  padding: 16px;
+}
+
+.ins-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px 20px;
+  margin-bottom: 16px;
+}
+
+.ins-detail-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ins-detail-label {
+  color: var(--mb-faint);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ins-detail-value {
+  color: var(--mb-text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+/* ── Pager + empty states ─────────────────────────────────────── */
+
+.ins-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+}
+
+.ins-page-btn {
+  min-height: var(--mb-tap);
+  padding: 0 18px;
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  color: var(--mb-text);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ins-page-btn:disabled {
+  color: var(--mb-faint);
+  border-color: var(--mb-border-soft);
+  cursor: default;
+}
+
+.ins-page-label {
+  color: var(--mb-dim);
+  font-size: 13px;
+  text-align: center;
+}
+
+.ins-empty-note {
+  color: var(--mb-dim);
+  font-size: 14px;
+  line-height: 1.55;
+  padding: 8px 0 4px;
+}
+
+.ins-empty {
+  padding: 20px 16px;
+}
+
+.ins-empty-title {
+  font-family: var(--mb-font-display);
+  font-size: 18px;
+  color: var(--mb-text);
+  margin-bottom: 6px;
+}
+
+.ins-empty p {
+  color: var(--mb-dim);
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.ins-empty code {
+  font-family: var(--mb-font-mono);
+  color: var(--mb-text);
+}
+
+/* ── Phone: let the mix note wrap instead of truncating ───────── */
+
+@media (max-width: 767px) {
+  .ins-mix-note {
+    white-space: normal;
+    overflow: visible;
+  }
+
+  .ins-mix-row {
+    flex-wrap: wrap;
+  }
+
+  .ins-sort {
+    margin-left: 0;
+  }
+}

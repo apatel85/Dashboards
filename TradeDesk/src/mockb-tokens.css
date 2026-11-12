@@ -1,0 +1,119 @@
+/**
+ * Mock B design tokens — command-center editorial-ledger system.
+ * Grounded in the Mock B mockup as inspected (build dc4e668d) and in
+ * Ankit's phone screenshots of it (2026-11-12): near-black navy page,
+ * slightly raised dark panels, serif display headings, numbered tab pills
+ * (white active pill, dark text), outlined Chart pills, green trigger /
+ * red stop numbers, outlined sentiment pills.
+ *
+ * Every tab's own CSS file (src/mockb-<tab>.css) uses ONLY these variables
+ * for colour/typography — never a hardcoded hex. The live app's existing
+ * --bg/--text tokens stay for the pre-Mock B shell until the shell is
+ * converted; new Mock B surfaces use --mb-*.
+ */
+:root {
+  /* Surfaces */
+  --mb-bg: #07090d;
+  --mb-panel: #10151d;
+  --mb-raised: #161d28;
+  --mb-border: #232d3d;
+  --mb-border-soft: #1a2230;
+
+  /* Text */
+  --mb-text: #e8edf5;
+  --mb-dim: #8b98ab;
+  --mb-faint: #5a6577;
+
+  /* Signal colours */
+  --mb-green: #00d084;
+  --mb-green-soft: #34d399;
+  --mb-red: #ff4d5e;
+  --mb-amber: #f5a623;
+  --mb-blue: #6aa9ff;
+  --mb-blue-dim: #3fa9f5;
+
+  /* Active tab pill: white background, dark text (Mock B signature) */
+  --mb-active-bg: #f2f4f8;
+  --mb-active-text: #0b0e13;
+
+  /* Typography */
+  --mb-font-display: Georgia, 'Times New Roman', Times, serif;
+  --mb-font-ui: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mb-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Shape + motion */
+  --mb-radius: 12px;
+  --mb-radius-sm: 8px;
+  --mb-pill: 999px;
+  --mb-tap: 44px;
+  --mb-anim: 150ms ease;
+}
+
+/* Shared Mock B primitives (used by every tab — do not redefine per tab) */
+.mb-tabhead {
+  font-family: var(--mb-font-display);
+  color: var(--mb-text);
+  font-size: 28px;
+  line-height: 1.15;
+  margin: 0 0 6px;
+}
+.mb-lede {
+  color: var(--mb-dim);
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 640px;
+  margin: 0 0 16px;
+}
+.mb-card {
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.mb-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  min-height: var(--mb-tap);
+}
+.mb-card-num {
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  color: var(--mb-faint);
+}
+.mb-card-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--mb-text);
+}
+.mb-card-sub {
+  color: var(--mb-dim);
+  font-size: 13px;
+}
+.mb-count-badge {
+  margin-left: auto;
+  font-family: var(--mb-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--mb-dim);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.mb-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--mb-border);
+  background: var(--mb-panel);
+  color: var(--mb-text);
+  border-radius: var(--mb-pill);
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  min-height: var(--mb-tap);
+}

@@ -1,7 +1,7 @@
+import '../mockb-performance.css';
 import { useMemo, useState } from 'react';
 import {
   Badge,
-  SectionHead,
   Stat,
   TvLink,
   LoadingPanel,
@@ -151,6 +151,7 @@ function PredRow({ row }: { row: PredictionRow }) {
 
 function PredictionSection() {
   const { data, loading, error } = useJsonData<PredictionPerformanceFile>('prediction-performance.json');
+  const [open, setOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState<PredTypeFilter>('all');
   const [resultFilter, setResultFilter] = useState<PredResultFilter>('all');
   const [sortKey, setSortKey] = useState<PredSortKey>('date');
@@ -179,17 +180,49 @@ function PredictionSection() {
   };
   const sortArrow = (key: PredSortKey) => (sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '');
 
-  if (loading) return <LoadingPanel what="daily prediction tracking" />;
+  const countLabel = loading
+    ? 'loading…'
+    : data
+      ? `${data.summary.breakout.tracked + data.summary.lotto.tracked} recorded`
+      : 'no data yet';
+
+  const head = (
+    <button type="button" className="mb-card-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+      <span className="mb-card-num">01</span>
+      <span className="mb-card-title">Daily predictions — did they work?</span>
+      <span className="mb-card-sub">Breakouts &amp; option plays, graded</span>
+      <span className="mb-count-badge">{countLabel}</span>
+      <span className="mb-chev" aria-hidden="true">{open ? '▾' : '▸'}</span>
+    </button>
+  );
+
+  if (loading) {
+    return (
+      <section className="mb-card">
+        {head}
+        {open && (
+          <div className="mb-card-body">
+            <LoadingPanel what="daily prediction tracking" />
+          </div>
+        )}
+      </section>
+    );
+  }
+
   if (error || !data) {
     return (
-      <div className="panel">
-        <SectionHead title="Daily predictions — did they work?" sub="Breakout candidates and 0DTE option plays, graded against what actually happened" />
-        <div className="empty-title">Tracking starts with the next morning pipeline run</div>
-        <p className="muted">
-          Every breakout candidate and 0DTE option play the app suggests will be recorded here
-          and graded as the market answers — no history has been published yet.
-        </p>
-      </div>
+      <section className="mb-card">
+        {head}
+        {open && (
+          <div className="mb-card-body">
+            <div className="empty-title">Tracking starts with the next morning pipeline run</div>
+            <p className="muted">
+              Every breakout candidate and 0DTE option play the app suggests will be recorded here
+              and graded as the market answers — no history has been published yet.
+            </p>
+          </div>
+        )}
+      </section>
     );
   }
 
@@ -197,103 +230,150 @@ function PredictionSection() {
   const l = data.summary.lotto;
 
   return (
-    <div className="panel">
-      <SectionHead
-        title="Daily predictions — did they work?"
-        sub={`Tracking since ${data.history_since ? fmtDate(data.history_since) : 'today'} · ${b.tracked + l.tracked} suggestions recorded · updated ${fmtDate(data.as_of)}`}
-      />
-      <p className="muted small plain-note">
-        Every breakout candidate and 0DTE option play the app suggests gets recorded the morning
-        it appears, then graded against what the stock actually did. <b>Breakout</b> = the stock
-        was near its 52-week high and we said it would break higher. <b>Option</b> = a 0DTE/1DTE
-        lottery ticket — a small, cheap bet on a big same-day move. A breakout <b>wins</b> when the
-        price hits the trigger before the stop within 10 trading days. An option <b>wins</b> when
-        the ticket would be worth more than it cost.
-      </p>
+    <section className="mb-card">
+      {head}
+      {open && (
+        <div className="mb-card-body">
+          <p className="muted small">
+            Tracking since {data.history_since ? fmtDate(data.history_since) : 'today'} · {b.tracked + l.tracked} suggestions recorded · updated {fmtDate(data.as_of)}
+          </p>
+          <p className="muted small plain-note">
+            Every breakout candidate and 0DTE option play the app suggests gets recorded the morning
+            it appears, then graded against what the stock actually did. <b>Breakout</b> = the stock
+            was near its 52-week high and we said it would break higher. <b>Option</b> = a 0DTE/1DTE
+            lottery ticket — a small, cheap bet on a big same-day move. A breakout <b>wins</b> when the
+            price hits the trigger before the stop within 10 trading days. An option <b>wins</b> when
+            the ticket would be worth more than it cost.
+          </p>
 
-      <div className="muted small" style={{ margin: '10px 0 4px' }}><b>Breakouts</b></div>
-      <div className="perf-stats">
-        <Stat label="Tracked" value={String(b.tracked)} />
-        <Stat label="Finished" value={String(b.graded)} />
-        <Stat label="Hit trigger" value={fmtRate(b.trigger_rate)} accent={b.trigger_rate != null && b.trigger_rate >= 50 ? 'up' : undefined} />
-        <Stat label="Win rate" value={fmtRate(b.win_rate)} accent={b.win_rate != null && b.win_rate >= 50 ? 'up' : b.win_rate != null ? 'down' : undefined} />
-        <Stat label="Avg R (10d)" value={fmtR(b.avg_r_10d)} accent={b.avg_r_10d != null && b.avg_r_10d > 0 ? 'up' : b.avg_r_10d != null ? 'down' : undefined} />
-      </div>
+          <div className="muted small" style={{ margin: '10px 0 4px' }}><b>Breakouts</b></div>
+          <div className="perf-stats">
+            <Stat label="Tracked" value={String(b.tracked)} />
+            <Stat label="Finished" value={String(b.graded)} />
+            <Stat label="Hit trigger" value={fmtRate(b.trigger_rate)} accent={b.trigger_rate != null && b.trigger_rate >= 50 ? 'up' : undefined} />
+            <Stat label="Win rate" value={fmtRate(b.win_rate)} accent={b.win_rate != null && b.win_rate >= 50 ? 'up' : b.win_rate != null ? 'down' : undefined} />
+            <Stat label="Avg R (10d)" value={fmtR(b.avg_r_10d)} accent={b.avg_r_10d != null && b.avg_r_10d > 0 ? 'up' : b.avg_r_10d != null ? 'down' : undefined} />
+          </div>
 
-      <div className="muted small" style={{ margin: '10px 0 4px' }}><b>0DTE / 1DTE options</b></div>
-      <div className="perf-stats">
-        <Stat label="Tracked" value={String(l.tracked)} />
-        <Stat label="Finished" value={String(l.graded)} />
-        <Stat label="Hit trigger" value={fmtRate(l.trigger_rate)} accent={l.trigger_rate != null && l.trigger_rate >= 50 ? 'up' : undefined} />
-        <Stat label="Win rate" value={fmtRate(l.win_rate)} accent={l.win_rate != null && l.win_rate >= 50 ? 'up' : l.win_rate != null ? 'down' : undefined} />
-        <Stat label="Avg ticket" value={l.avg_modeled_multiple != null ? `${l.avg_modeled_multiple.toFixed(1)}×` : '—'} accent={l.avg_modeled_multiple != null && l.avg_modeled_multiple > 1 ? 'up' : l.avg_modeled_multiple != null ? 'down' : undefined} />
-      </div>
+          <div className="muted small" style={{ margin: '10px 0 4px' }}><b>0DTE / 1DTE options</b></div>
+          <div className="perf-stats">
+            <Stat label="Tracked" value={String(l.tracked)} />
+            <Stat label="Finished" value={String(l.graded)} />
+            <Stat label="Hit trigger" value={fmtRate(l.trigger_rate)} accent={l.trigger_rate != null && l.trigger_rate >= 50 ? 'up' : undefined} />
+            <Stat label="Win rate" value={fmtRate(l.win_rate)} accent={l.win_rate != null && l.win_rate >= 50 ? 'up' : l.win_rate != null ? 'down' : undefined} />
+            <Stat label="Avg ticket" value={l.avg_modeled_multiple != null ? `${l.avg_modeled_multiple.toFixed(1)}×` : '—'} accent={l.avg_modeled_multiple != null && l.avg_modeled_multiple > 1 ? 'up' : l.avg_modeled_multiple != null ? 'down' : undefined} />
+          </div>
 
-      <div className="chips" style={{ marginTop: 12 }}>
-        {(['all', 'breakout', 'lotto'] as PredTypeFilter[]).map((t) => (
-          <button key={t} className={`chip-btn${typeFilter === t ? ' on' : ''}`} onClick={() => setTypeFilter(t)}>
-            {t === 'all' ? 'All' : t === 'breakout' ? 'Breakouts' : 'Options'}
-          </button>
-        ))}
-        <span style={{ width: 12 }} />
-        {(['all', 'won', 'lost', 'running', 'other'] as PredResultFilter[]).map((t) => (
-          <button key={t} className={`chip-btn${resultFilter === t ? ' on' : ''}`} onClick={() => setResultFilter(t)}>
-            {t === 'all' ? 'Any result' : t === 'won' ? 'Won' : t === 'lost' ? 'Lost' : t === 'running' ? 'Still running' : 'Other'}
-          </button>
-        ))}
-      </div>
+          <div className="chips" style={{ marginTop: 12 }}>
+            {(['all', 'breakout', 'lotto'] as PredTypeFilter[]).map((t) => (
+              <button key={t} className={`chip-btn${typeFilter === t ? ' on' : ''}`} onClick={() => setTypeFilter(t)}>
+                {t === 'all' ? 'All' : t === 'breakout' ? 'Breakouts' : 'Options'}
+              </button>
+            ))}
+            <span style={{ width: 12 }} />
+            {(['all', 'won', 'lost', 'running', 'other'] as PredResultFilter[]).map((t) => (
+              <button key={t} className={`chip-btn${resultFilter === t ? ' on' : ''}`} onClick={() => setResultFilter(t)}>
+                {t === 'all' ? 'Any result' : t === 'won' ? 'Won' : t === 'lost' ? 'Lost' : t === 'running' ? 'Still running' : 'Other'}
+              </button>
+            ))}
+          </div>
 
-      {rows.length === 0 ? (
-        <p className="muted" style={{ marginTop: 12 }}>Nothing matches these filters yet.</p>
-      ) : (
-        <div className="table-scroll" style={{ marginTop: 8 }}>
-          <table className="dtable slim">
-            <thead>
-              <tr>
-                <th>
-                  <button className="linklike" onClick={() => toggleSort('date')}>
-                    Date{sortArrow('date')}
-                  </button>
-                </th>
-                <th>
-                  <button className="linklike" onClick={() => toggleSort('ticker')}>
-                    Ticker{sortArrow('ticker')}
-                  </button>
-                </th>
-                <th>What we said</th>
-                <th>What happened</th>
-                <th>
-                  <button className="linklike" onClick={() => toggleSort('result')}>
-                    Result{sortArrow('result')}
-                  </button>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <PredRow key={`${r.date}|${r.type}|${r.ticker}`} row={r} />
-              ))}
-            </tbody>
-          </table>
+          {rows.length === 0 ? (
+            <p className="muted" style={{ marginTop: 12 }}>Nothing matches these filters yet.</p>
+          ) : (
+            <div className="table-scroll" style={{ marginTop: 8 }}>
+              <table className="dtable slim">
+                <thead>
+                  <tr>
+                    <th>
+                      <button className="linklike" onClick={() => toggleSort('date')}>
+                        Date{sortArrow('date')}
+                      </button>
+                    </th>
+                    <th>
+                      <button className="linklike" onClick={() => toggleSort('ticker')}>
+                        Ticker{sortArrow('ticker')}
+                      </button>
+                    </th>
+                    <th>What we said</th>
+                    <th>What happened</th>
+                    <th>
+                      <button className="linklike" onClick={() => toggleSort('result')}>
+                        Result{sortArrow('result')}
+                      </button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <PredRow key={`${r.date}|${r.type}|${r.ticker}`} row={r} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="muted small footnote-line">
+            Breakouts are graded on daily closing prices over the 10 trading days after the suggestion
+            (returns also shown at 5 / 10 / 30 days). <b>R</b> = how much the trade made or lost as a
+            multiple of what was risked — +1R means it made back its risk, −1R means the stop was hit.
+            Option values are <b>modeled</b>, not real trades: the ticket's worth is estimated from the
+            stock's actual close on expiry day, with no bid/ask or slippage. Some plays can't be graded
+            when the scan ran after the market closed that day — those are marked "Can't grade" and
+            left out of the win rates. History starts {data.history_since ? fmtDate(data.history_since) : 'today'} and grows every morning.
+          </p>
         </div>
       )}
-      <p className="muted small footnote-line">
-        Breakouts are graded on daily closing prices over the 10 trading days after the suggestion
-        (returns also shown at 5 / 10 / 30 days). <b>R</b> = how much the trade made or lost as a
-        multiple of what was risked — +1R means it made back its risk, −1R means the stop was hit.
-        Option values are <b>modeled</b>, not real trades: the ticket's worth is estimated from the
-        stock's actual close on expiry day, with no bid/ask or slippage. Some plays can't be graded
-        when the scan ran after the market closed that day — those are marked "Can't grade" and
-        left out of the win rates. History starts {data.history_since ? fmtDate(data.history_since) : 'today'} and grows every morning.
+    </section>
+  );
+}
+
+/* ── research recommendations ─────────────────────────────────────── */
+
+/* Why an idea was picked — built only from the fields the snapshot
+ * actually records. performance.json carries NO `reasons` object
+ * (and PerformanceItem defines none), so there is no written thesis,
+ * invalidation, or evidence breakdown to show yet; the panel says so
+ * plainly instead of inventing one. When the pipeline starts recording
+ * `reasons`, this panel is where they render. */
+function WhyPanel({ item }: { item: PerformanceItem }) {
+  return (
+    <div className="mb-why-panel">
+      <h4>Why {item.ticker} was picked</h4>
+      <dl className="mb-why-list">
+        <div>
+          <dt>Picked on</dt>
+          <dd>
+            {item.recommended_date ? fmtDate(item.recommended_date) : '—'}
+            {item.rec_price != null ? ` at ${fmtMoney(item.rec_price)}` : ''}
+          </dd>
+        </div>
+        <div>
+          <dt>Chance of a rise in 30 days</dt>
+          <dd>{item.p_up != null ? `${item.p_up}% — the research guess at the time` : '—'}</dd>
+        </div>
+        <div>
+          <dt>Research score</dt>
+          <dd>{item.score != null ? String(item.score) : '—'}</dd>
+        </div>
+        <div>
+          <dt>Since then</dt>
+          <dd>{item.pct_change != null ? fmtPct(item.pct_change / 100) : '—'}</dd>
+        </div>
+      </dl>
+      <p className="mb-why-note">
+        The full why-record — the written thesis, what would prove it wrong, and the
+        evidence behind the score — starts with the next pipeline snapshot. This
+        snapshot only recorded the numbers above, so there is no written reason to
+        show yet.
       </p>
     </div>
   );
 }
 
-/* ── research recommendations (existing) ─────────────────────────── */
-
 function PerfRow({ item }: { item: PerformanceItem }) {
   const [open, setOpen] = useState(false);
+  const [whyOpen, setWhyOpen] = useState(false);
+  const showDetail = open || whyOpen;
   return (
     <>
       <tr
@@ -320,11 +400,23 @@ function PerfRow({ item }: { item: PerformanceItem }) {
         <td data-th="P(up 30d)">
           {item.p_up != null ? <Badge tone={item.p_up >= 60 ? 'green' : item.p_up >= 50 ? 'dim' : 'red'}>{item.p_up}%</Badge> : '—'}
         </td>
+        <td data-th="Why picked">
+          <button
+            type="button"
+            className="mb-why-btn"
+            aria-expanded={whyOpen}
+            aria-label={`Why ${item.ticker} was picked`}
+            onClick={(e) => { e.stopPropagation(); setWhyOpen((w) => !w); }}
+          >
+            {whyOpen ? 'Hide why' : 'Why picked'}
+          </button>
+        </td>
       </tr>
-      {open && (
+      {showDetail && (
         <tr className="detail-row">
-          <td colSpan={6}>
-            <Fundamentals ticker={item.ticker} />
+          <td colSpan={7}>
+            {whyOpen && <WhyPanel item={item} />}
+            {open && <Fundamentals ticker={item.ticker} />}
           </td>
         </tr>
       )}
@@ -334,6 +426,7 @@ function PerfRow({ item }: { item: PerformanceItem }) {
 
 function ResearchSection() {
   const { data, loading, error } = useJsonData<PerformanceFile>('performance.json');
+  const [open, setOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
@@ -374,85 +467,136 @@ function ResearchSection() {
 
   const sortArrow = (key: SortKey) => (sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '');
 
-  if (loading) return <LoadingPanel what="recommendation performance" />;
-  if (error) return <ErrorPanel file="performance.json" error={error} />;
+  const countLabel = loading ? 'loading…' : `${data?.count ?? 0} ideas tracked`;
+
+  const head = (
+    <button type="button" className="mb-card-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+      <span className="mb-card-num">02</span>
+      <span className="mb-card-title">Recommendation performance</span>
+      <span className="mb-card-sub">How past research ideas actually did</span>
+      <span className="mb-count-badge">{countLabel}</span>
+      <span className="mb-chev" aria-hidden="true">{open ? '▾' : '▸'}</span>
+    </button>
+  );
+
+  if (loading) {
+    return (
+      <section className="mb-card">
+        {head}
+        {open && (
+          <div className="mb-card-body">
+            <LoadingPanel what="recommendation performance" />
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="mb-card">
+        {head}
+        {open && (
+          <div className="mb-card-body">
+            <ErrorPanel file="performance.json" error={error} />
+          </div>
+        )}
+      </section>
+    );
+  }
+
   if (!data || !data.items.length) {
     return (
-      <div className="panel">
-        <div className="empty-title">No recommendations tracked yet</div>
-        <p className="muted">
-          The performance tracker fills in once the research agent publishes its first ideas
-          and the morning pipeline prices them.
-        </p>
-      </div>
+      <section className="mb-card">
+        {head}
+        {open && (
+          <div className="mb-card-body">
+            <div className="empty-title">No recommendations tracked yet</div>
+            <p className="muted">
+              The performance tracker fills in once the research agent publishes its first ideas
+              and the morning pipeline prices them.
+            </p>
+          </div>
+        )}
+      </section>
     );
   }
 
   return (
-    <div className="tabpane">
-      <SectionHead
-        title="Recommendation performance"
-        sub={`${data.count} ideas tracked · prices ${data.quotes_as_of ? `as of ${fmtDate(data.quotes_as_of)}` : 'delayed'} · research only, not financial advice`}
-      />
-      <p className="muted small plain-note">
-        This grades our own research: how every past idea actually did after we published
-        it. It tells us which kinds of ideas work and which do not, so the research keeps
-        getting better. <b>P(up 30d)</b> is what the research guessed at the time.
-      </p>
+    <section className="mb-card">
+      {head}
+      {open && (
+        <div className="mb-card-body">
+          <p className="muted small">
+            {data.count} ideas tracked · prices {data.quotes_as_of ? `as of ${fmtDate(data.quotes_as_of)}` : 'delayed'} · research only, not financial advice
+          </p>
+          <p className="muted small plain-note">
+            This grades our own research: how every past idea actually did after we published
+            it. It tells us which kinds of ideas work and which do not, so the research keeps
+            getting better. <b>P(up 30d)</b> is what the research guessed at the time.
+          </p>
 
-      {stats ? (
-        <div className="perf-stats">
-          <Stat label="Tracked" value={String(stats.n)} />
-          <Stat label="Avg. return" value={fmtPct(stats.avg / 100)} accent={stats.avg > 0 ? 'up' : stats.avg < 0 ? 'down' : undefined} />
-          <Stat label="Win rate" value={`${Math.round(stats.winRate)}%`} />
-          <Stat label="Best" value={`${stats.best.ticker} ${fmtPct((stats.best.pct_change as number) / 100)}`} accent="up" />
-          <Stat label="Worst" value={`${stats.worst.ticker} ${fmtPct((stats.worst.pct_change as number) / 100)}`} accent="down" />
+          {stats ? (
+            <div className="perf-stats">
+              <Stat label="Tracked" value={String(stats.n)} />
+              <Stat label="Avg. return" value={fmtPct(stats.avg / 100)} accent={stats.avg > 0 ? 'up' : stats.avg < 0 ? 'down' : undefined} />
+              <Stat label="Win rate" value={`${Math.round(stats.winRate)}%`} />
+              <Stat label="Best" value={`${stats.best.ticker} ${fmtPct((stats.best.pct_change as number) / 100)}`} accent="up" />
+              <Stat label="Worst" value={`${stats.worst.ticker} ${fmtPct((stats.worst.pct_change as number) / 100)}`} accent="down" />
+            </div>
+          ) : null}
+
+          <div className="table-scroll">
+            <table className="dtable slim">
+              <thead>
+                <tr>
+                  <th>
+                    <button className="linklike" onClick={() => toggleSort('ticker')}>
+                      Ticker{sortArrow('ticker')}
+                    </button>
+                  </th>
+                  <th>
+                    <button className="linklike" onClick={() => toggleSort('date')}>
+                      Recommended{sortArrow('date')}
+                    </button>
+                  </th>
+                  <th className="r">At rec.</th>
+                  <th className="r">Now</th>
+                  <th className="r">
+                    <button className="linklike" onClick={() => toggleSort('pct')}>
+                      % since rec.{sortArrow('pct')}
+                    </button>
+                  </th>
+                  <th>P(up 30d)</th>
+                  <th>Why picked</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((i) => (
+                  <PerfRow key={i.ticker} item={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted small footnote-line">
+            "At rec." = daily close on or before the recommendation date. "Now" = latest pipeline
+            quote snapshot (~15-min delayed, {data.quotes_as_of ? fmtDate(data.quotes_as_of) : 'unavailable'}).
+            A ticker is tracked from its earliest recommendation. Updated {fmtDate(data.as_of)}.
+          </p>
         </div>
-      ) : null}
-
-      <div className="table-scroll">
-        <table className="dtable slim">
-          <thead>
-            <tr>
-              <th>
-                <button className="linklike" onClick={() => toggleSort('ticker')}>
-                  Ticker{sortArrow('ticker')}
-                </button>
-              </th>
-              <th>
-                <button className="linklike" onClick={() => toggleSort('date')}>
-                  Recommended{sortArrow('date')}
-                </button>
-              </th>
-              <th className="r">At rec.</th>
-              <th className="r">Now</th>
-              <th className="r">
-                <button className="linklike" onClick={() => toggleSort('pct')}>
-                  % since rec.{sortArrow('pct')}
-                </button>
-              </th>
-              <th>P(up 30d)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((i) => (
-              <PerfRow key={i.ticker} item={i} />
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="muted small footnote-line">
-        "At rec." = daily close on or before the recommendation date. "Now" = latest pipeline
-        quote snapshot (~15-min delayed, {data.quotes_as_of ? fmtDate(data.quotes_as_of) : 'unavailable'}).
-        A ticker is tracked from its earliest recommendation. Updated {fmtDate(data.as_of)}.
-      </p>
-    </div>
+      )}
+    </section>
   );
 }
 
 export default function PerformanceTab() {
   return (
-    <div className="tabpane">
+    <div className="tabpane mb-perf">
+      <h1 className="mb-tabhead">Performance</h1>
+      <p className="mb-lede">
+        Did our own calls work? Every breakout and option play we suggested, graded against
+        what actually happened — plus how every research idea has done since we published it.
+      </p>
       <PredictionSection />
       <ResearchSection />
     </div>

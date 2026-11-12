@@ -1,0 +1,336 @@
+/**
+ * Mock B — Deep Dive tab. Colours/typography come ONLY from --mb-* tokens
+ * (src/mockb-tokens.css); no hardcoded hex values in this file.
+ */
+
+/* ── Restyle the inherited live panels to Mock B ──────────────── */
+
+.mb-deepdive .panel {
+  background: var(--mb-panel);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius);
+  color: var(--mb-text);
+}
+
+.mb-deepdive .muted {
+  color: var(--mb-dim);
+}
+
+.mb-deepdive .empty-title {
+  font-family: var(--mb-font-display);
+  color: var(--mb-text);
+  font-size: 18px;
+}
+
+/* Search form: white Analyse button (Mock B active-pill treatment). */
+.mb-deepdive .dd-search .btn {
+  background: var(--mb-active-bg);
+  color: var(--mb-active-text);
+  border: 1px solid var(--mb-active-bg);
+  border-radius: var(--mb-pill);
+  min-height: var(--mb-tap);
+  padding: 10px 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mb-deepdive .dd-search .btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.mb-deepdive .dd-search input {
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  color: var(--mb-text);
+  min-height: var(--mb-tap);
+}
+
+.mb-deepdive .dd-search input::placeholder {
+  color: var(--mb-faint);
+}
+
+.mb-deepdive .dd-search input:focus {
+  outline: 2px solid var(--mb-blue);
+  outline-offset: 1px;
+}
+
+.mb-deepdive .dd-quick .chip-btn {
+  min-height: var(--mb-tap);
+  padding: 8px 14px;
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  background: var(--mb-raised);
+  color: var(--mb-text);
+  cursor: pointer;
+}
+
+/* Range bar inside the Snapshot card. */
+.mb-deepdive .rangebar {
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border-soft);
+}
+
+.mb-deepdive .rangebar-fill {
+  background: var(--mb-blue);
+}
+
+.mb-deepdive .rangebar-marker {
+  background: var(--mb-text);
+}
+
+/* ── Collapsible card head (button reset over .mb-card-head) ──── */
+
+.mb-dd-cardhead {
+  width: 100%;
+  background: none;
+  border: 0;
+  font-family: var(--mb-font-ui);
+  text-align: left;
+}
+
+.mb-dd-cardhead:focus-visible {
+  outline: 2px solid var(--mb-blue);
+  outline-offset: -2px;
+}
+
+.mb-dd-body {
+  border-top: 1px solid var(--mb-border-soft);
+  padding: 14px 16px 16px;
+}
+
+.mb-dd-chev {
+  color: var(--mb-faint);
+  font-size: 14px;
+  margin-left: 4px;
+}
+
+/* ── Filters ─────────────────────────────────────────────────── */
+
+.mb-dd-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.mb-dd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.mb-dd-field-search {
+  flex: 1;
+  min-width: 200px;
+}
+
+.mb-dd-label {
+  color: var(--mb-dim);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mb-dd-control {
+  min-height: var(--mb-tap);
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  color: var(--mb-text);
+  font-family: var(--mb-font-ui);
+  font-size: 14px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.mb-dd-control:focus {
+  outline: 2px solid var(--mb-blue);
+  outline-offset: 1px;
+}
+
+.mb-dd-control::placeholder {
+  color: var(--mb-faint);
+}
+
+/* ── Preset chips ────────────────────────────────────────────── */
+
+.mb-dd-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.mb-dd-chip {
+  min-height: var(--mb-tap);
+  padding: 8px 14px;
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  background: var(--mb-raised);
+  color: var(--mb-text);
+  font-family: var(--mb-font-ui);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mb-dd-chip.on {
+  background: var(--mb-active-bg);
+  color: var(--mb-active-text);
+  border-color: var(--mb-active-bg);
+  font-weight: 700;
+}
+
+.mb-dd-clear {
+  min-height: var(--mb-tap);
+  padding: 8px 12px;
+  background: none;
+  border: 0;
+  color: var(--mb-blue);
+  font-family: var(--mb-font-ui);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ── Notes, footnotes, empty states ──────────────────────────── */
+
+.mb-dd-note {
+  color: var(--mb-dim);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+
+.mb-dd-note b {
+  color: var(--mb-text);
+}
+
+.mb-dd-active-filters {
+  color: var(--mb-text);
+}
+
+.mb-dd-foot {
+  color: var(--mb-faint);
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  margin: 12px 0 0;
+}
+
+.mb-dd-empty {
+  color: var(--mb-dim);
+  font-size: 14px;
+  line-height: 1.55;
+  padding: 12px 0;
+  margin: 0;
+}
+
+/* ── Tables ──────────────────────────────────────────────────── */
+
+.mb-dd-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mb-dd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 520px;
+}
+
+.mb-dd-table th,
+.mb-dd-table td {
+  padding: 10px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--mb-border-soft);
+  color: var(--mb-text);
+  white-space: nowrap;
+}
+
+.mb-dd-table th {
+  color: var(--mb-dim);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mb-dd-table th.sortable {
+  cursor: pointer;
+  min-height: var(--mb-tap);
+}
+
+.mb-dd-table .num {
+  font-family: var(--mb-font-mono);
+  text-align: right;
+}
+
+.mb-dd-table th.num {
+  text-align: right;
+}
+
+.mb-dd-table td.up {
+  color: var(--mb-green);
+}
+
+.mb-dd-table td.down {
+  color: var(--mb-red);
+}
+
+.mb-dd-table tr.clickable {
+  cursor: pointer;
+}
+
+.mb-dd-table tr.clickable:hover td {
+  background: var(--mb-raised);
+}
+
+.mb-dd-table tr.detail-row td {
+  white-space: normal;
+  background: var(--mb-raised);
+  padding: 12px;
+}
+
+/* ── Pager ───────────────────────────────────────────────────── */
+
+.mb-dd-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--mb-border-soft);
+  padding-top: 14px;
+  margin-top: 4px;
+}
+
+.mb-dd-pager .mb-back:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.mb-dd-pageinfo {
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  color: var(--mb-dim);
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* ── Phone: filters stack full-width ─────────────────────────── */
+
+@media (max-width: 767px) {
+  .mb-dd-filters {
+    flex-direction: column;
+  }
+
+  .mb-dd-field,
+  .mb-dd-field-search {
+    min-width: 0;
+  }
+
+  .mb-dd-pageinfo {
+    white-space: normal;
+  }
+}

@@ -1,0 +1,285 @@
+/**
+ * Mock B — Earnings tab.
+ * Uses ONLY --mb-* tokens from mockb-tokens.css (never a hardcoded hex).
+ * The shared .dtable / .table-scroll / .scorebar / .badge primitives come
+ * from styles.css; this file restyles them inside .mb-earnings only.
+ */
+
+.mb-earnings .tab-header {
+  margin-bottom: 14px;
+}
+
+/* ── Numbered card ─────────────────────────────────────────────── */
+.mb-earnings .mb-card-head {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.mb-earnings .mb-chev {
+  color: var(--mb-dim);
+  font-size: 15px;
+  line-height: 1;
+  margin-left: 2px;
+}
+
+.mb-earnings .mb-card-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--mb-border-soft);
+}
+
+/* ── Toolbar: search + filters + sort ──────────────────────────── */
+.mb-earnings .mb-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  padding-top: 14px;
+}
+
+.mb-earnings .mb-search,
+.mb-earnings .mb-filter select {
+  min-height: var(--mb-tap);
+  background: var(--mb-raised);
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  color: var(--mb-text);
+  font-family: var(--mb-font-ui);
+  font-size: 14px;
+  padding: 10px 12px;
+}
+
+.mb-earnings .mb-search {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.mb-earnings .mb-search::placeholder {
+  color: var(--mb-faint);
+}
+
+.mb-earnings .mb-search:focus,
+.mb-earnings .mb-filter select:focus {
+  outline: 2px solid var(--mb-blue);
+  outline-offset: 1px;
+}
+
+.mb-earnings .mb-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 1 auto;
+}
+
+.mb-earnings .mb-filter-label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mb-faint);
+}
+
+.mb-earnings .mb-filter select {
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.mb-earnings .mb-showing {
+  margin: 12px 0 0;
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  color: var(--mb-dim);
+}
+
+.mb-earnings .mb-legend {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--mb-faint);
+}
+
+.mb-earnings .mb-legend b {
+  color: var(--mb-dim);
+  font-weight: 600;
+}
+
+.mb-earnings .mb-empty {
+  margin: 18px 0 4px;
+  color: var(--mb-dim);
+  font-size: 14px;
+}
+
+/* ── Table: shared aligned grid ──────────────────────────────────
+ * The <table> itself is the shared grid: every numeric column is
+ * right-aligned under its header (th.r / td.r). The H / P / C header
+ * never wraps. Below 767px the existing .dtable card-transform takes
+ * over (thead hidden, data-th labels) — no horizontal page scroll. */
+.mb-earnings .mb-table-scroll {
+  margin-top: 14px;
+  border-color: var(--mb-border);
+  background: var(--mb-panel);
+}
+
+.mb-earnings .mb-earnings-table {
+  background: var(--mb-panel);
+}
+
+.mb-earnings .mb-earnings-table th {
+  color: var(--mb-faint);
+  border-bottom-color: var(--mb-border);
+  white-space: nowrap;
+}
+
+.mb-earnings .mb-earnings-table td {
+  border-bottom-color: var(--mb-border-soft);
+  color: var(--mb-text);
+  vertical-align: middle;
+}
+
+.mb-earnings .mb-earnings-table tr.clickable:hover td {
+  background: color-mix(in srgb, var(--mb-blue) 6%, transparent);
+}
+
+.mb-earnings .mb-earnings-table tr.detail-row td {
+  background: var(--mb-raised);
+}
+
+.mb-earnings .mb-hpc-head {
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Right-aligned numeric cells: the number and its bar sit under the
+ * header, not floating left. */
+.mb-earnings .mb-earnings-table td.r {
+  text-align: right;
+}
+
+/* ── Implied-move bar (under the number) ───────────────────────── */
+.mb-earnings .mb-move-num {
+  display: block;
+  font-family: var(--mb-font-mono);
+  font-size: 13px;
+  color: var(--mb-text);
+}
+
+.mb-earnings .mb-move-bar {
+  display: block;
+  height: 6px;
+  margin: 6px 0 0 auto;
+  width: 84px;
+  max-width: 100%;
+  background: var(--mb-border-soft);
+  border-radius: var(--mb-pill);
+  overflow: hidden;
+}
+
+.mb-earnings .mb-move-fill {
+  display: block;
+  height: 100%;
+  background: var(--mb-blue);
+  border-radius: var(--mb-pill);
+}
+
+/* ── H / P / C coloured bars, number beside each bar ─────────────
+ * ScoreBar already renders bar + number; restyle its track/fills
+ * with Mock B tokens and right-align the stack under its header. */
+.mb-earnings .mb-hpc {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-end;
+}
+
+.mb-earnings .mb-hpc .minibar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mb-earnings .mb-hpc .minibar-label {
+  font-family: var(--mb-font-mono);
+  font-size: 11px;
+  color: var(--mb-faint);
+  width: 10px;
+  text-align: center;
+}
+
+.mb-earnings .mb-hpc .scorebar {
+  background: var(--mb-border-soft);
+  border-color: var(--mb-border);
+}
+
+.mb-earnings .mb-hpc .scorebar-fill.hi {
+  background: var(--mb-green);
+}
+
+.mb-earnings .mb-hpc .scorebar-fill.mid {
+  background: var(--mb-amber);
+}
+
+.mb-earnings .mb-hpc .scorebar-fill.lo {
+  background: var(--mb-red);
+}
+
+.mb-earnings .mb-hpc .scorebar-num {
+  color: var(--mb-text);
+  font-family: var(--mb-font-mono);
+}
+
+/* ── EPS BEAT / MISS chips ─────────────────────────────────────── */
+.mb-earnings .mb-eps-chip {
+  display: block;
+  margin-top: 5px;
+}
+
+.mb-earnings .mb-eps-chip .badge {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+}
+
+.mb-earnings .mb-eps-chip .b-green {
+  color: var(--mb-green);
+  border-color: color-mix(in srgb, var(--mb-green) 40%, transparent);
+  background: color-mix(in srgb, var(--mb-green) 8%, transparent);
+}
+
+.mb-earnings .mb-eps-chip .b-red {
+  color: var(--mb-red);
+  border-color: color-mix(in srgb, var(--mb-red) 40%, transparent);
+  background: color-mix(in srgb, var(--mb-red) 8%, transparent);
+}
+
+/* ── Detail rows keep the shared look on Mock B surfaces ───────── */
+.mb-earnings .detail-label {
+  color: var(--mb-faint);
+}
+
+.mb-earnings .detail-facts {
+  color: var(--mb-dim);
+}
+
+.mb-earnings .detail-facts b {
+  color: var(--mb-text);
+}
+
+/* ── Phone: toolbar stacks, controls stay full-width tappable ──── */
+@media (max-width: 767px) {
+  .mb-earnings .mb-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mb-earnings .mb-search,
+  .mb-earnings .mb-filter select {
+    width: 100%;
+  }
+
+  .mb-earnings .mb-card-sub {
+    flex-basis: 100%;
+  }
+
+  /* Card-transform rows: implied-move bar hugs the right edge. */
+  .mb-earnings .mb-move-bar {
+    margin-left: auto;
+  }
+}

@@ -1,0 +1,139 @@
+/**
+ * Mock B shell — tab bar, header, content column, footer.
+ * The tab bar is Mock B's signature: numbered pills under the header,
+ * wrapping to two rows on narrow screens; the ACTIVE pill is white with
+ * dark text. No sidebar, no bottom nav — the tab bar is the only nav.
+ */
+
+.mb-shell {
+  background: var(--mb-bg);
+  color: var(--mb-text);
+}
+
+.mb-shell .main-col {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 16px 32px;
+}
+
+/* Header: brand left, actions right. Serif brand, plain sub-note. */
+.mb-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0 10px;
+  border-bottom: 1px solid var(--mb-border-soft);
+  flex-wrap: wrap;
+}
+
+.mb-brand {
+  font-family: var(--mb-font-display);
+  font-size: 26px;
+  line-height: 1;
+  margin: 0;
+  color: var(--mb-text);
+}
+
+.mb-topbar-sub {
+  margin-left: 8px;
+}
+
+/* Numbered tab bar */
+.mb-tabbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0 4px;
+}
+
+.mb-tabbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--mb-tap);
+  padding: 8px 14px;
+  border: 1px solid var(--mb-border);
+  border-radius: var(--mb-pill);
+  background: var(--mb-panel);
+  color: var(--mb-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--mb-font-ui);
+}
+
+.mb-tabbtn:hover {
+  border-color: var(--mb-dim);
+}
+
+.mb-tabbtn.active {
+  background: var(--mb-active-bg);
+  border-color: var(--mb-active-bg);
+  color: var(--mb-active-text);
+}
+
+.mb-tabbtn.active .mb-tabnum {
+  color: var(--mb-faint);
+}
+
+.mb-tabnum {
+  font-family: var(--mb-font-mono);
+  font-size: 11px;
+  color: var(--mb-faint);
+  font-weight: 400;
+}
+
+/* Content column */
+.mb-content {
+  padding-top: 16px;
+}
+
+.mb-content .tab-header h2,
+.mb-content h2 {
+  font-family: var(--mb-font-display);
+  color: var(--mb-text);
+}
+
+/* Phone: tab bar scrolls horizontally instead of wrapping tall */
+@media (max-width: 767px) {
+  .mb-shell .main-col {
+    padding: 0 12px 96px;
+  }
+
+  .mb-tabbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 8px;
+  }
+
+  .mb-tabbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mb-tabbtn {
+    flex: 0 0 auto;
+  }
+
+  .mb-topbar-sub {
+    display: none;
+  }
+}
+
+/* Tablet: two-column content where tabs use .mb-two-col */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mb-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+}
+
+/* Desktop: reading column stays centred, wide tables get room */
+@media (min-width: 1024px) {
+  .mb-shell .main-col {
+    max-width: 1180px;
+  }
+}

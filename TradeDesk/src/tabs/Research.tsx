@@ -1,3 +1,5 @@
+import { Fragment, useState } from 'react';
+import '../mockb-research.css';
 import {
   ScoreBar,
   Badge,
@@ -15,9 +17,13 @@ import { fmtMoney, fmtPct, fmtTimeET, prettify } from '../lib/format';
 import { Fundamentals } from '../components/Fundamentals';
 import type { ResearchIdea } from '../types';
 
-function IdeaCard({ idea }: { idea: ResearchIdea }) {
+/**
+ * Full case for one idea — the former IdeaCard body, unchanged in content.
+ * Rendered only inside the expanded row of the coverage table.
+ */
+function IdeaDetail({ idea }: { idea: ResearchIdea }) {
   return (
-    <article className="panel idea-card">
+    <div className="mb-research-detail">
       <header className="idea-head">
         <div>
           <TvLink ticker={idea.ticker} className="big" />
@@ -115,12 +121,14 @@ function IdeaCard({ idea }: { idea: ResearchIdea }) {
 
       <div className="muted small">Updated {fmtTimeET(idea.updated_at)}</div>
       <Fundamentals ticker={idea.ticker} />
-    </article>
+    </div>
   );
 }
 
 export default function ResearchTab() {
   const { data, loading, error } = useJsonData<ResearchIdea[]>('research.json');
+  // One expanded row at a time; null = everything collapsed (default).
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   if (loading) return <LoadingPanel what="research ideas" />;
   if (error)
@@ -154,24 +162,106 @@ export default function ResearchTab() {
   }
 
   const ranked = [...data].sort((a, b) => b.score - a.score);
+  const toggle = (ticker: string) =>
+    setExpanded((cur) => (cur === ticker ? null : ticker));
+
   return (
-    <section className="tab">
+    <section className="tab mb-research">
       <header className="tab-header">
-        <h2>Research</h2>
-        <p className="muted">
+        <h2 className="mb-tabhead">Research</h2>
+        <p className="mb-lede">
           {ranked.length} ranked ideas · bull-vs-bear debated · scores 0–100.
         </p>
         <p className="muted small plain-note">
           Each idea is a stock our research team (four analysts, then a bull-vs-bear debate)
           scored 0–100 — higher is stronger. <b>P(up 30d)</b> is its guess at the chance
-          the stock closes higher in 30 days. Tap an idea for the full reasoning, trigger,
+          the stock closes higher in 30 days. Tap a row for the full reasoning, trigger,
           stop, and what would prove it wrong.
         </p>
       </header>
-      <div className="idea-list">
-        {ranked.map((idea) => (
-          <IdeaCard key={idea.ticker} idea={idea} />
-        ))}
+
+      <div className="mb-card">
+        <div className="mb-card-head">
+          <span className="mb-card-num">01</span>
+          <span className="mb-card-title">Coverage at a glance — all {ranked.length} ideas</span>
+          <span className="mb-count-badge">{ranked.length} ideas</span>
+        </div>
+        <div className="mb-research-scroll">
+          <table className="mb-research-table">
+            <thead>
+              <tr>
+                <th scope="col">Ticker</th>
+                <th scope="col">Score</th>
+                <th scope="col">P(up 30d)</th>
+                <th scope="col">Stage · RS</th>
+                <th scope="col">Trigger</th>
+                <th scope="col">Stop</th>
+                <th scope="col">Sentiment</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranked.map((idea) => {
+                const open = expanded === idea.ticker;
+                return (
+                  <Fragment key={idea.ticker}>
+                    <tr
+                      key={idea.ticker}
+                      className={`mb-research-row${open ? ' is-open' : ''}`}
+                      onClick={() => toggle(idea.ticker)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggle(idea.ticker);
+                        }
+                      }}
+                      tabIndex={0}
+                      aria-expanded={open}
+                      aria-controls={`research-detail-${idea.ticker}`}
+                    >
+                      <td className="mb-research-ticker">
+                        <TvLink ticker={idea.ticker} />
+                        <span className="mb-research-chevron" aria-hidden="true">
+                          {open ? '▾' : '▸'}
+                        </span>
+                      </td>
+                      <td>
+                        <ScoreBar value={idea.score} small />
+                      </td>
+                      <td className="num">
+                        {idea.p_up != null ? `${idea.p_up}%` : '—'}
+                      </td>
+                      <td>
+                        {idea.stage}
+                        <span className="muted">
+                          {' '}· RS {idea.rs_rank != null ? idea.rs_rank : '—'}
+                        </span>
+                      </td>
+                      <td className="num mb-research-trigger">
+                        {fmtMoney(idea.trigger_price)}
+                      </td>
+                      <td className="num mb-research-stop">
+                        {fmtMoney(idea.stop_price)}
+                      </td>
+                      <td>
+                        <SignalBadge signal={idea.sentiment} />
+                      </td>
+                    </tr>
+                    {open ? (
+                      <tr
+                        key={`${idea.ticker}-detail`}
+                        className="mb-research-detail-row"
+                      >
+                        <td colSpan={7} id={`research-detail-${idea.ticker}`}>
+                          <IdeaDetail idea={idea} />
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   );
