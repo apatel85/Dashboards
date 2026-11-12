@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill Library — Redesign Demo · Quixera</title>
+<style>
+:root{--primary:#0D7C66;--primary-dark:#0A5F4E;--primary-soft:#E3F2EE;--ink:#1A2B26;--muted:#5B6B65;--line:#E3E8E5;--bg:#F6F8F7;--warn-bg:#FFF4E0;--warn-border:#E8A13A;--bad-bg:#FDECEA;--bad-border:#D64541;--good-bg:#EAF7EF;--amber:#B7791F}
+*{box-sizing:border-box}
+html{font-size:16px}
+body{margin:0;font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
+h1,h2,h3,h4{margin:0 0 8px;line-height:1.25}
+h1{font-size:28px}h2{font-size:22px}h3{font-size:17px}h4{font-size:15px}
+p{margin:0 0 10px}
+a{color:var(--primary-dark)}
+button{min-height:44px;min-width:44px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:14px;cursor:pointer}
+button:hover{background:#F2F6F3}
+button.primary{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
+button.primary:hover{background:var(--primary-dark)}
+button.ghost{border-color:transparent;background:transparent;color:var(--primary-dark);padding:6px 10px}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{font:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);min-height:44px}
+input[type=checkbox],input[type=radio]{min-height:0;padding:0;accent-color:var(--primary)}
+label{font-weight:600}
+.small{font-size:13px}.tiny{font-size:12px}.muted{color:var(--muted)}
+.kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 6px;font-size:12px;background:#fff}
+code{background:#F0F3F1;border-radius:4px;padding:1px 6px;font-size:13px}
+/* top bar */
+.topbar{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#fff;border-bottom:1px solid var(--line);padding:10px 16px}
+.topbar .brand{font-weight:800;font-size:16px;color:var(--primary-dark)}
+.topbar .demobadge{background:var(--primary-soft);color:var(--primary-dark);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
+.topbar select{min-height:44px;max-width:280px}
+.guide{background:#FFF8E1;border-bottom:1px solid #F0DFA8;padding:10px 16px;font-size:14px}
+/* admin nav */
+.appnav{position:fixed;left:0;top:61px;width:196px;height:calc(100vh - 61px);overflow:auto;background:#fff;border-right:1px solid var(--line);padding:12px 8px;z-index:40}
+.appnav .cap{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px 12px 4px}
+.appnav a{display:block;padding:9px 12px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14px;min-height:40px}
+.appnav a:hover{background:#F2F6F3}
+.appnav a.on{background:var(--primary-soft);font-weight:700;color:var(--primary-dark)}
+.appnav a .nb{float:right;background:#EDEFF0;border-radius:999px;padding:0 7px;font-size:11px}
+@media(min-width:1101px){.wrap{margin-left:196px}}
+@media(max-width:1100px){.appnav{display:none}}
+/* layout */
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+.screen{display:none}
+.screen.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border-color:transparent;background:transparent;border-radius:999px;padding:8px 14px}
+.tabs button.on{background:var(--ink);color:#fff;font-weight:700}
+.pill{display:inline-block;background:var(--primary-soft);color:var(--primary-dark);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}
+.badge{display:inline-block;background:#EDEFF0;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}
+.badge.warn{background:var(--warn-bg);color:var(--amber)}
+.badge.bad{background:var(--bad-bg);color:#9B2C28}
+.badge.later{background:#E8EEF7;color:#2B4C7E}
+.chip{display:inline-block;background:var(--primary-soft);color:var(--primary-dark);border:1px solid #BFE0D6;border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600;margin:2px 4px 2px 0}
+.chip.solid{background:var(--primary);color:#fff;border-color:var(--primary)}
+.chip.grey{background:#F0F3F1;color:var(--muted);border-color:var(--line)}
+.role{display:inline-block;background:#EDEFF0;border-radius:6px;padding:3px 8px;font-size:12px;font-weight:700;margin-right:6px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.toolbar input[type=search]{flex:1;min-width:200px}
+.verbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:12px 0}
+/* landing */
+.librow{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.libhead{padding:14px 16px;cursor:pointer;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.libhead:hover{background:#F8FAF9}
+.mono{flex:0 0 44px;width:44px;height:44px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.libbody{padding:0 16px 12px}
+.meta{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:4px}
+.subrow{display:flex;gap:10px;align-items:baseline;padding:10px 8px;border-top:1px solid var(--line);cursor:pointer;border-radius:8px}
+.subrow:hover{background:#F8FAF9}
+.subrow .comp{margin-left:auto;text-align:right;font-size:13px;color:var(--muted)}
+.bluedot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563EB;margin-left:4px}
+/* tables */
+table{width:100%;border-collapse:collapse;background:#fff;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+tr.area td{background:#F2F6F3;font-weight:700}
+tr.fam td{background:#FAFBFA;font-weight:600}
+tr.sub{cursor:pointer}
+tr.sub:hover td{background:#F8FAF9}
+tr.sub.sel td{background:var(--primary-soft)}
+tr.sub td:first-child{max-width:340px}
+.strike{text-decoration:line-through;color:var(--muted)}
+.newtag{background:#D9F2E4;color:#14663B;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700}
+.was{background:#FFF4E0;border-radius:6px;padding:2px 8px;font-size:12px}
+.drag{color:var(--muted);cursor:grab;margin-right:6px}
+.inline-add{width:100%;max-width:420px;border-style:dashed}
+/* matrix */
+.matrix td,.matrix th{text-align:center}
+.matrix td.filled{background:var(--primary-soft);font-weight:700;cursor:pointer}
+.matrix td.gap{background:#FFF8E1;color:var(--amber);cursor:pointer;border:1px dashed var(--warn-border)}
+.matrix td:first-child,.matrix th:first-child{text-align:left}
+/* sections (sub-skill) */
+.subgrid{display:grid;grid-template-columns:200px 1fr 240px;gap:16px;align-items:start}
+@media(max-width:900px){.subgrid{grid-template-columns:1fr}}
+.railnav a{display:block;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14px;min-height:44px}
+.railnav a:hover{background:#F2F6F3}
+.railnav a.on{background:var(--primary-soft);font-weight:700;color:var(--primary-dark)}
+.railnav a.sub{padding-left:24px}
+.sectioncard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;max-width:760px}
+.field{margin-bottom:12px}
+.field label{display:block;margin-bottom:4px}
+.hint{font-size:13px;color:var(--muted);margin-top:4px}
+.hintchip{display:inline-block;background:#FFF1CC;border-radius:999px;padding:2px 10px;font-size:12px}
+.stageRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px}
+.step{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
+.step.on{border-color:var(--primary);background:var(--primary-soft);font-weight:700}
+.arr{color:var(--muted)}
+/* create */
+.rail{display:flex;gap:8px;list-style:none;padding:0;margin:0 0 16px}
+.rail li{flex:1;border-top:4px solid var(--line);padding-top:8px;font-size:13px;color:var(--muted)}
+.rail li.on{border-color:var(--primary);color:var(--ink);font-weight:700}
+.rail li.done{border-color:var(--primary);color:var(--primary-dark)}
+.sportcards{display:flex;gap:8px;flex-wrap:wrap}
+.sportcard{text-align:left;min-width:120px}
+.sportcard.on{border-color:var(--primary);background:var(--primary-soft)}
+.radiocards{display:grid;gap:8px}
+.radiocard{display:flex;gap:10px;align-items:flex-start;text-align:left}
+.radiocard.on{border-color:var(--primary);background:var(--primary-soft)}
+.stepnav{display:flex;justify-content:space-between;gap:8px;margin-top:16px;flex-wrap:wrap}
+.checks .row{display:flex;gap:10px;align-items:baseline;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff}
+.checks .row.warn{background:var(--warn-bg);border-color:var(--warn-border)}
+.checks .row.bad{background:var(--bad-bg);border-color:var(--bad-border)}
+/* modal + toast */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:80}
+.modal .modalcard,.modalcard{background:#fff;border-radius:12px;max-width:640px;margin:8vh auto;padding:20px;max-height:84vh;overflow:auto}
+.modalcard h3{margin-bottom:8px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;display:none;z-index:90;max-width:90vw}
+/* suggestions */
+.sugrow{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fff}
+.sugrow input[type=checkbox]{margin-top:6px;min-width:20px;min-height:20px}
+.diff{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.diff>div{border:1px solid var(--line);border-radius:10px;padding:12px}
+.diff .hl{background:#FFF4E0;border-radius:6px;padding:4px 6px}
+/* coach phone */
+.phone{width:390px;max-width:100%;margin:0 auto;border:1px solid var(--line);border-radius:28px;overflow:hidden;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+.phonebar{background:var(--primary);color:#fff;padding:14px 16px;font-weight:700}
+.phwrap{padding:12px 14px 90px}
+.phfam{display:flex;justify-content:space-between;align-items:center;padding:14px 8px;border-bottom:1px solid var(--line);cursor:pointer;min-height:44px}
+.phsub{padding:12px 8px 12px 20px;border-bottom:1px solid var(--line);cursor:pointer;min-height:44px}
+.drillcard{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.phonesheet{border-top:1px solid var(--line);background:#fff}
+/* misc */
+.tourmap{width:100%}
+.tourmap td:first-child{white-space:nowrap;font-weight:700}
+.empty{border:2px dashed var(--line);border-radius:12px;padding:28px;text-align:center;background:#fff}
+.tcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px}
+.tcard{border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left;background:#fff}
+.profcard{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;background:#fff}
+.levelchip{display:inline-block;border-radius:6px;padding:4px 10px;color:#fff;font-weight:700;font-size:13px;margin:2px 4px 2px 0}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span class="brand">Quixera · Skill Library</span>
+  <span class="demobadge">Redesign demo</span>
+  <select id="screenSel" aria-label="Go to screen" onchange="goScreen(+this.value)"></select>
+  <span style="flex:1"></span>
+  <button id="guideToggle" onclick="toggleGuide()" aria-pressed="false">Show guidance notes</button>
+  <button onclick="document.getElementById('keysModal').style.display='block'" aria-label="Keyboard shortcuts">?</button>
+</header>
+<div id="guideBar" class="guide" style="display:none"></div>
+<nav class="appnav" aria-label="Admin navigation">
+<div class="cap">Quixera admin</div>
+<a href="#" onclick="return false">Dashboard</a>
+<a href="#" onclick="return false">People</a>
+<a href="#" onclick="return false">Schedule</a>
+<a href="#" onclick="return false">Academy</a>
+<a href="#" onclick="return false">Programs</a>
+<a href="#" class="on" onclick="return false">Skill Library</a>
+<a href="#" onclick="return false">Waitlist</a>
+<a href="#" onclick="return false">Inquiries</a>
+<a href="#" onclick="return false">Leads</a>
+<a href="#" onclick="return false">Memberships</a>
+<a href="#" onclick="return false">Memberships &amp; Packages</a>
+<a href="#" onclick="return false">Events</a>
+<a href="#" onclick="return false">Facilities</a>
+<a href="#" onclick="return false">Bookings</a>
+<a href="#" onclick="return false">Inbox <span class="nb">4</span></a>
+<a href="#" onclick="return false">Finance</a>
+<a href="#" onclick="return false">Insights</a>
+<a href="#" onclick="return false">Settings</a>
+<a href="#" onclick="return false">Help &amp; Legal</a>
+</nav>
+<main class="wrap">
+
+<!-- ================= SCREEN 0 · START ================= -->
+<section class="screen" id="scr-0">
+  <h1>Skill Library — redesigned</h1>
+  <p class="muted">One Library per sport, built like Programs: a grouped landing that expands, a library page that is the read view, and a full-page sub-skill editor — with the same create, edit and publish shells programs use. Underneath, one Pathway per sport in Academy settings; each library is a Skill tree (renamable labels) and a Drill bank; each sub-skill has a Stage map with at least one assessed stage.</p>
+  <div class="card">
+    <h3>Tour map — click any screen to open it</h3>
+    <table class="tourmap">
+      <tbody>
+        <tr><td><button onclick="goScreen(1)">1 · Libraries landing (LB01)</button></td><td>Grouped landing that expands; one search across everything; completeness lines per skill area.</td></tr>
+        <tr><td><button onclick="goScreen(2)">2 · Library page (LB20)</button></td><td>The read view: nested tree, progression matrix, drill bank, versions, suggestions, access.</td></tr>
+        <tr><td><button onclick="goScreen(3)">3 · Sub-skill page (LB21)</button></td><td>Full-page editor: stage map with pass standards, coaching, how it is assessed, drills, homework, restrictions.</td></tr>
+        <tr><td><button onclick="goScreen(4)">4 · Create library</button></td><td>3-step shared shell (Start → Skills → Review and publish) plus the 4-board import flow.</td></tr>
+        <tr><td><button onclick="goScreen(5)">5 · Edit mode</button></td><td>Shared edit shell: change markers, undo, publish review dialog.</td></tr>
+        <tr><td><button onclick="goScreen(6)">6 · Pathways</button></td><td>One pathway per sport in Academy settings — libraries inherit it read-only.</td></tr>
+        <tr><td><button onclick="goScreen(7)">7 · Coach mobile</button></td><td>390px coach view: stage selector, drills first, one thumb.</td></tr>
+        <tr><td><button onclick="goScreen(8)">8 · Suggestions queue</button></td><td>Cross-library queue with two-column review and the approval explainer.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h3>Four settled decisions (do not re-litigate)</h3>
+    <ol>
+      <li><b>One sub-skill per skill, with a Stage map.</b> Assessed rows carry their own pass standard; Introduce and Revisit rows carry none; at least one Assessed row, pre-created.</li>
+      <li><b>One pathway per sport, in Academy settings.</b> Libraries inherit it read-only; no per-library override in v1.</li>
+      <li><b>Assessment definition captured now, per Assessed stage</b> — what the coach checks, pass standard, scoring type, points. Recording results per athlete is later.</li>
+      <li><b>Shared full-screen workflow shell, slimmed 4 → 3 steps:</b> Start, Skills, Review and publish. Edit uses the shared edit shell with two sections; later versions publish through the shared publish review dialog.</li>
+    </ol>
+    <p class="small muted">Style: brand primary #0D7C66, DM Sans, 4px / 8px spacing grid, tap targets at least 44 × 44 px, WCAG 2.2 AA contrast. Admin screens: structured density, persistent filters, keyboard-friendly. Coach screens: mobile, one thumb.</p>
+    <p class="small"><b>Replaces today's design:</b> flat landing table, 4-step wizard, 520px drawer editor, free age-group / skill-level tag pairs, “Core sub-skill” / “Doesn't count” / points fields, three STEP cards on the empty state, and the “Library settings” page.</p>
+  </div>
+</section>
+
+<!-- ================= SCREEN 1 · LANDING LB01 ================= -->
+<section class="screen" id="scr-1">
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <h2 style="margin:0">Skill Library</h2>
+    <span style="flex:1"></span>
+    <button onclick="goScreen(8)">Suggestions <span class="badge warn">3</span></button>
+    <button class="primary" onclick="goCreate('template')">Create Library</button>
+  </div>
+  <p class="muted">Define the skills you coach in each sport. One library per sport; shared libraries sit below.</p>
+  <div class="tabs" role="tablist" aria-label="Library status">
+    <button class="on" data-ltab="all" onclick="setLandingTab(this)">All</button>
+    <button data-ltab="pub" onclick="setLandingTab(this)">Published</button>
+    <button data-ltab="draft" onclick="setLandingTab(this)">Draft</button>
+    <button data-ltab="arch" onclick="setLandingTab(this)">Archived</button>
+  </div>
+  <div class="toolbar">
+    <input type="search" id="libSearch" placeholder="Search libraries, skill areas, families, sub-skills and drills…" aria-label="Search libraries" oninput="filterLanding()">
+    <label class="small"><input type="checkbox" id="emptyToggle"> Show empty state</label>
+  </div>
+  <div id="landingMain">
+    <div id="libList"></div>
+    <h3 style="margin-top:24px">Shared libraries</h3>
+    <div id="sharedList"></div>
+  </div>
+  <div id="landingEmpty" style="display:none">
+    <div class="empty">
+      <h2>Build your first library</h2>
+      <p class="muted">Start from a Quixera template, import a spreadsheet, or build from scratch.</p>
+      <div class="tcards">
+        <button class="tcard" onclick="goCreate('template')"><b>Quixera template</b><br><span class="small muted">7 skill areas · 180 sub-skills · Preview</span></button>
+        <button class="tcard" onclick="goScreen(4);initCreate('import')"><b>Import from a spreadsheet</b><br><span class="small muted">Bring a syllabus you already have</span></button>
+        <button class="tcard" onclick="goCreate('scratch')"><b>Start from scratch</b><br><span class="small muted">Empty structure — add skill areas yourself</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SCREEN 2 · LIBRARY PAGE LB20 ================= -->
+<section class="screen" id="scr-2">
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <h2 style="margin:0" id="libTitle">Cricket Library</h2>
+    <span style="flex:1"></span>
+    <button class="primary" onclick="goEdit()">Edit library</button>
+  </div>
+  <p class="muted" style="margin-top:6px" id="libDesc">Skills pathway for the academy, U9 to Adult, following the KRCA syllabus.</p>
+  <div class="verbar">
+    <span class="pill" id="libVerPill">Published, v4</span>
+    <span class="pill" id="libDraftPill" style="background:#FFF4E0;color:var(--amber)">Draft v5 · 6 changes · <a href="#" onclick="goEdit();return false">Continue editing</a></span>
+    <span class="small muted">👤 Sarah Chen is editing</span>
+    <span class="small muted" style="margin-left:auto">Saved just now</span>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Library sections">
+    <button class="on" data-ltab="skills" onclick="setLTab(this)">Skills</button>
+    <button data-ltab="sugg" onclick="setLTab(this)">Suggestions 3</button>
+    <button data-ltab="access" onclick="setLTab(this)">Access</button>
+    <button data-ltab="vers" onclick="setLTab(this)">Versions</button>
+  </div>
+  <div id="ltab-skills">
+    <div class="toolbar">
+      <input type="search" id="treeSearch" placeholder="Search sub-skills and drills…" aria-label="Search the library" oninput="filterTree()">
+      <select id="stageFilter" aria-label="Stage filter" onchange="filterTree()">
+        <option value="">All stages</option>
+        <option>U9 White</option><option>U10 Silver</option><option>U11 Silver</option><option>U12 Silver</option><option>U13 Gold</option><option>U14 Gold</option>
+      </select>
+      <span style="flex:1"></span>
+      <div class="tabs" style="margin:0">
+        <button class="on" data-st="all" onclick="setStatusTab(this)">All</button>
+        <button data-st="nodrill" onclick="setStatusTab(this)">Needs drills</button>
+        <button data-st="noassess" onclick="setStatusTab(this)">No assessed stage</button>
+        <button data-st="changed" onclick="setStatusTab(this)">Changed</button>
+        <button data-st="retired" onclick="setStatusTab(this)">Retired</button>
+      </div>
+      <div class="tabs" style="margin:0">
+        <button class="on" data-view="tree" onclick="setView(this)">Tree</button>
+        <button data-view="prog" onclick="setView(this)">Progression</button>
+        <button data-view="drills" onclick="setView(this)">Drills</button>
+      </div>
+    </div>
+    <div id="treeView"></div>
+    <div id="progView" style="display:none">
+      <p class="small muted">Families by stage. A filled cell shows assessed sub-skills (with introduce/revisit underneath); a gap cell is a stage with nothing yet. Click a cell to see what is there.</p>
+      <div id="matrixBox"></div>
+    </div>
+    <div id="drillsView" style="display:none">
+      <div class="toolbar">
+        <input type="search" id="drillSearch" placeholder="Search the drill bank…" aria-label="Search drills" oninput="renderDrills()">
+        <select id="drillArea" aria-label="Filter by skill area" onchange="renderDrills()">
+          <option value="">All skill areas</option><option>Batting</option><option>Bowling</option><option>Fielding</option><option>Fitness</option><option>Groundstrokes</option><option>Strokes</option>
+        </select>
+      </div>
+      <div id="drillList"></div>
+    </div>
+  </div>
+  <div id="ltab-sugg" style="display:none">
+    <p class="small muted">Suggestions from coaches, waiting for an admin. Review one to see the two-column diff.</p>
+    <div id="libSuggList"></div>
+    <button onclick="goScreen(8)">Open the full suggestions queue ›</button>
+  </div>
+  <div id="ltab-access" style="display:none">
+    <div class="card">
+      <h3>Who can use this library</h3>
+      <p><b>All coaches</b> can view and suggest changes. <b>Admins</b> can edit and publish.</p>
+      <p class="small muted">Visibility: <b>All programs</b> — used by 5 programs. Coaches see the library in the coach view and in session plans.</p>
+      <p><button class="ghost" onclick="toast('Access settings — who can edit, who can view. (Demo slice.)')">Manage access</button></p>
+    </div>
+  </div>
+  <div id="ltab-vers" style="display:none">
+    <div class="card">
+      <h3>Versions</h3>
+      <table>
+        <thead><tr><th>Version</th><th>Published on</th><th>Published by</th><th>What changed</th><th>Programs on this version</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill">Draft v5</span></td><td>—</td><td>Sarah Chen</td><td>6 changes: Forward defense edited, Defense at pace retired, Late cut added, 3 more</td><td>—</td></tr>
+          <tr><td><b>v4</b></td><td>Aug 2026</td><td>Sarah Chen</td><td>Added stage maps to all Batting sub-skills</td><td>5</td></tr>
+          <tr><td><b>v3</b></td><td>May 2026</td><td>Sarah Chen</td><td>New drill bank structure</td><td>0</td></tr>
+          <tr><td><b>v2</b></td><td>Feb 2026</td><td>Rohan Gupta</td><td>First published version</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <p class="small muted">Programs keep v4 while you edit. When you publish v5, running programs get an update notice to apply it or keep v4.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SCREEN 3 · SUB-SKILL PAGE LB21 ================= -->
+<section class="screen" id="scr-3">
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <button class="ghost" onclick="goScreen(2)">‹ Back to library</button>
+    <span class="small muted">Cricket Library › Batting › Defense › <b id="ssCrumb">Forward defense</b></span>
+    <span style="flex:1"></span>
+    <span class="small muted" id="autosave">Saved just now</span>
+    <button onclick="goScreen(2)">Done</button>
+  </div>
+  <div class="subgrid" style="margin-top:12px">
+    <nav class="railnav" id="ssOutline" aria-label="Library tree"></nav>
+    <div id="ssBody"></div>
+    <div>
+      <div class="card"><h4>Used in</h4><div id="ssUsed"></div></div>
+      <div class="card"><h4>Progression</h4><div id="ssProg" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"></div></div>
+      <div class="card"><h4>Changes in this draft</h4><div id="ssChanges"></div></div>
+      <div class="card"><h4>Suggestions</h4><div id="ssSugg"></div></div>
+      <div class="card"><h4>Coach view</h4><p class="small muted">Coaches see a read-only drawer: the same sections, no editing. <button class="ghost" onclick="goScreen(7)">Open coach view</button></p></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:space-between;margin-top:8px">
+    <button id="ssPrev" onclick="stepSub(-1)">‹ Previous</button>
+    <button class="primary" id="ssNext" onclick="saveNext()">Save and next ›</button>
+  </div>
+</section>
+
+<!-- ================= SCREEN 4 · CREATE LIBRARY ================= -->
+<section class="screen" id="scr-4">
+  <h2>Create a library</h2>
+  <ul class="rail" aria-label="Create steps">
+    <li id="rail1" class="on">1 · Start</li>
+    <li id="rail2">2 · Skills</li>
+    <li id="rail3">3 · Review and publish</li>
+  </ul>
+  <p class="small muted" id="railSummary">Cricket · Quixera template</p>
+  <div id="createBody"></div>
+</section>
+
+<!-- ================= SCREEN 5 · EDIT MODE ================= -->
+<section class="screen" id="scr-5">
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <h2 style="margin:0">Edit Cricket Library</h2>
+    <span class="pill">Published, v4</span>
+    <span class="pill" style="background:#FFF4E0;color:var(--amber)">Editing draft v5</span>
+    <span class="small muted">👤 Sarah Chen is editing</span>
+    <span style="flex:1"></span>
+    <button onclick="goScreen(2)">Discard draft</button>
+    <button class="primary" onclick="openPublish()">Review and publish</button>
+  </div>
+  <p class="small muted" style="margin-top:8px">Changes save to draft v5. When you publish, new programs use v5. Running and upcoming programs get an update notice to apply it or keep v4. Programs keep v4 while you edit.</p>
+  <div class="tabs" role="tablist" aria-label="Edit sections">
+    <button class="on" data-esec="details" onclick="setESec(this)">Library details</button>
+    <button data-esec="skills" onclick="setESec(this)">Skills <span class="badge warn">6 changes</span></button>
+  </div>
+  <div id="esec-details">
+    <div class="card">
+      <div class="field"><label>Library name</label><input value="Cricket Library" style="width:100%;max-width:420px" onchange="touchSave()"></div>
+      <div class="field"><label>Description</label><textarea rows="2" style="width:100%">Skills pathway for the academy, U9 to Adult, following the KRCA syllabus.</textarea></div>
+      <div class="field"><label>Pathway (read-only — set in Academy settings)</label><p>U9 to U18 × White, Silver, Gold, Purple · Cut-off Sep 1 · <a href="#" onclick="goScreen(6);return false">Edit pathway</a></p></div>
+      <div class="field"><label>Origin</label><p>Licensed from KRCA, v4, locked core</p></div>
+    </div>
+  </div>
+  <div id="esec-skills" style="display:none">
+    <p class="small muted">The same nested table as the library page, in edit mode. <span class="newtag">New</span> rows get a green left bar; Edited rows show what changed with Undo; Removed rows stay struck through until publish.</p>
+    <div id="editTree"></div>
+  </div>
+  <div id="publishModal" class="modal">
+    <div class="modalcard">
+      <h3>Review and publish — draft v5</h3>
+      <div class="checks">
+        <div class="row"><b>✓ No blockers</b><span>Ready to publish.</span></div>
+        <div class="row warn"><b>⚠ Warning</b><span>12 sub-skills have no drills.</span></div>
+        <div class="row warn"><b>⚠ Warning</b><span>No sub-skills at Adult.</span></div>
+      </div>
+      <h4 style="margin-top:16px">What changed (6)</h4>
+      <ul class="small">
+        <li><b>Forward defense</b> — Edited: pass standard was “6 of 10 clean blocks”. <span class="badge warn">Affects assessment</span></li>
+        <li><b>Defense at pace</b> — Retired in v5.</li>
+        <li><b>Late cut</b> — New sub-skill in Scoring shots.</li>
+        <li><b>Machine feeds: playing late</b> — New drill, from Rohan Gupta's suggestion.</li>
+        <li><b>High catch</b> — Added restriction: helmet required for hard-ball catching.</li>
+        <li><b>Warm-up routine</b> — Marked “Applies at every stage”.</li>
+      </ul>
+      <div class="field"><label for="whatChanged">What changed (shown to coaches)</label><textarea id="whatChanged" rows="2" style="width:100%">Stage maps and pass standards added to Batting; Defense at pace retired; one new drill from Rohan's suggestion.</textarea></div>
+      <div class="field"><label>Running programs</label><p><label class="small"><input type="radio" name="runprog" checked> Apply at the end of this term</label><br><label class="small"><input type="radio" name="runprog"> Apply now</label><br><label class="small"><input type="radio" name="runprog"> Keep v4 (coaches decide)</label></p></div>
+      <div class="field"><label>When</label><p><label class="small"><input type="radio" name="when" checked> Publish now</label> <label class="small"><input type="radio" name="when"> Publish on a date</label> <label class="small"><input type="radio" name="when"> Start of next term</label></p></div>
+      <p style="text-align:right"><button onclick="closePublish()">Keep editing</button> <button class="primary" onclick="closePublish();toast('Cricket Library published as v5. New programs use v5; running programs were notified.');goScreen(2)">Publish v5</button></p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SCREEN 6 · PATHWAYS ================= -->
+<section class="screen" id="scr-6">
+  <h2>Pathways — Academy settings</h2>
+  <p class="muted">One pathway per sport. Libraries inherit the pathway read-only; there is no per-library override in v1. Changing a pathway here re-labels every library that uses it.</p>
+  <div class="profcard">
+    <h3>Cricket</h3>
+    <p><b>Pathway shape:</b>
+      <label class="small"><input type="radio" name="shape-c" checked> Age groups and skill levels</label>
+      <label class="small"><input type="radio" name="shape-c"> Levels only</label>
+      <label class="small"><input type="radio" name="shape-c"> Age groups only</label></p>
+    <p><b>Levels (in order):</b> <span class="levelchip" style="background:#9AA5B1">White</span><span class="levelchip" style="background:#8E9AAF">Silver</span><span class="levelchip" style="background:#C9A227">Gold</span><span class="levelchip" style="background:#6C4AB6">Purple</span></p>
+    <p><b>Age groups:</b> U9, U10, U11, U12, U13, U14, U15, U16, U17, U18, Adult · <b>Cut-off date:</b> Sep 1</p>
+    <p><button class="ghost" onclick="toggleProf('prof-cricket')">Stage profile — what U11 Silver means ▾</button></p>
+    <div id="prof-cricket" style="display:none">
+      <p class="small"><b>U11 Silver</b> — What it means: athletes defend a straight ball and bowl a repeatable length. Shown to families: “Silver is where skills start to be checked.” Typical age: 10–11. Equipment and format: hard ball, 20-over games. Group size and ratio: 12 athletes, 1 coach : 12.</p>
+    </div>
+    <p><span class="badge later">Later</span> <b>Moving up.</b> An athlete completes a stage when: <label class="small"><input type="radio" name="move-c" checked> A coach decides</label> <label class="small"><input type="radio" name="move-c"> All assessed sub-skills passed</label> <label class="small"><input type="radio" name="move-c"> They reach a points total</label><br>
+    When an athlete moves to the next age group: <label class="small"><input type="radio" name="age-c" checked> Start at the first level again</label> <label class="small"><input type="radio" name="age-c"> Keep their level</label><br>
+    <span class="small muted">Enforcement of these rules is later — for now they are recorded here so the team agrees on them.</span></p>
+  </div>
+  <div class="profcard">
+    <h3>Swimming</h3>
+    <p><b>Pathway shape:</b>
+      <label class="small"><input type="radio" name="shape-s"> Age groups and skill levels</label>
+      <label class="small"><input type="radio" name="shape-s" checked> Levels only</label>
+      <label class="small"><input type="radio" name="shape-s"> Age groups only</label></p>
+    <p><b>Stages (in order):</b> <span class="levelchip" style="background:#0D7C66">Stage 1</span><span class="levelchip" style="background:#0D7C66">Stage 2</span><span class="levelchip" style="background:#0D7C66">Stage 3</span><span class="levelchip" style="background:#0D7C66">Stage 4</span><span class="levelchip" style="background:#0D7C66">Stage 5</span><span class="levelchip" style="background:#0D7C66">Stage 6</span><span class="levelchip" style="background:#0D7C66">Stage 7</span></p>
+    <p><b>Age groups:</b> none — levels only · <b>Cut-off date:</b> —</p>
+    <p><button class="ghost" onclick="toggleProf('prof-swim')">Stage profile — what Stage 2 means ▾</button></p>
+    <div id="prof-swim" style="display:none">
+      <p class="small"><b>Stage 2</b> — What it means: the swimmer floats and glides with confidence. Shown to families: “Stage 2 is about water confidence.” Typical age: 5–7. Equipment and format: 25 m pool, floats allowed. Group size and ratio: 6 swimmers, 1 coach : 6.</p>
+    </div>
+  </div>
+  <p class="small muted">Football has no pathway yet — <button class="ghost" onclick="toast('Pathway setup for Football — pick a shape, levels and age groups. (Demo slice.)')">set one up</button>. Tennis uses Red, Orange, Green, Yellow ball (set in its own card in the live app).</p>
+</section>
+
+<!-- ================= SCREEN 7 · COACH MOBILE ================= -->
+<section class="screen" id="scr-7">
+  <h2>Coach mobile view</h2>
+  <p class="muted">390px, one thumb, all tap targets at least 44px. The stage selector is the primary control above the tree and remembers the last choice. The sub-skill opens as a full-screen sheet with Drills first, then Homework, and a fixed “Suggest a change” button at the bottom.</p>
+  <div class="phone">
+    <div class="phonebar">Skill Library · Coach</div>
+    <div id="phoneBody"></div>
+    <div id="phoneSheet" class="phonesheet" style="display:none"></div>
+  </div>
+  <p class="small muted" style="text-align:center;margin-top:8px">Demo slice: coach view is shown for Cricket. Stage selection persists across sessions.</p>
+</section>
+
+<!-- ================= SCREEN 8 · SUGGESTIONS QUEUE ================= -->
+<section class="screen" id="scr-8">
+  <h2>Suggestions queue</h2>
+  <p class="muted">Suggestions from coaches across all libraries. Review one to see what the library has now against what was suggested.</p>
+  <div class="toolbar">
+    <span class="small"><b>Type:</b></span>
+    <div class="tabs" style="margin:0">
+      <button class="on" data-f="type" data-v="all" onclick="setSugFilter(this)">All</button>
+      <button data-f="type" data-v="New drill" onclick="setSugFilter(this)">New drill</button>
+      <button data-f="type" data-v="Change a sub-skill" onclick="setSugFilter(this)">Change a sub-skill</button>
+      <button data-f="type" data-v="Flag a problem" onclick="setSugFilter(this)">Flag a problem</button>
+    </div>
+    <span class="small"><b>From:</b></span>
+    <div class="tabs" style="margin:0">
+      <button class="on" data-f="from" data-v="all" onclick="setSugFilter(this)">All</button>
+      <button data-f="from" data-v="Library" onclick="setSugFilter(this)">Library</button>
+      <button data-f="from" data-v="Session plan" onclick="setSugFilter(this)">Session plan</button>
+      <button data-f="from" data-v="Program" onclick="setSugFilter(this)">Program</button>
+    </div>
+  </div>
+  <div id="bulkBar" style="display:none;gap:8px;align-items:center;margin-bottom:12px">
+    <span id="bulkTxt" class="small"></span>
+    <button class="primary" onclick="bulkAct('approve')">Approve selected</button>
+    <button onclick="bulkAct('decline')">Decline selected</button>
+  </div>
+  <div id="sugList"></div>
+  <div id="sugReview"></div>
+</section>
+
+<footer>
+  <p>Source: Skill Library design review, Nov 11, 2026 — 62 feedback rows; paradigm per the Excel review (Recommended paradigm, Calls for AS, Feedback by screen). Current-design names, counts and copy reconciled against the 88-board Program Creation design export (Nov 11, 2026). Demo mockup: sample data only, not the live app. Never touches the live Quixera app.</p>
+</footer>
+</main>
+
+<div id="keysModal" class="modal">
+  <div class="modalcard">
+    <h3>Keyboard shortcuts</h3>
+    <p><span class="kbd">/</span> Search · <span class="kbd">↑</span> <span class="kbd">↓</span> Move through the tree · <span class="kbd">Enter</span> Open · <span class="kbd">N</span> New sub-skill · <span class="kbd">F2</span> Rename · <span class="kbd">?</span> This list · <span class="kbd">Esc</span> Close</p>
+    <p style="text-align:right"><button onclick="document.getElementById('keysModal').style.display='none'">Close</button></p>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+/* ============ DATA (sample only) ============ */
+var LIBS={
+ cricket:{name:"Cricket Library",mono:"CR",version:"v4",pub:"Aug 2026",draft:"v5 · 6 changes",pathway:"U9 to U18 × White, Silver, Gold, Purple · Cut-off Sep 1",count:"5 skill areas · 47 sub-skills",programs:5,editor:"Sarah Chen",origin:"Licensed from KRCA, v4, locked core",sugg:3,areas:[
+  {name:"Batting",type:"Technical",comp:"Stage set on 28 of 28 · Assessment on 22 of 28 · Drills on 25 of 28",changed:true,families:[
+    {name:"Defense",subs:[
+      {id:"grip",name:"Grip, stance, guard & both defenses",code:"KRCA-U9-W-GRP-01",stages:[{s:"U9 White",role:"Introduce"},{s:"U10 Silver",role:"Assessed"}],drills:["Pairs cricket","Block 10 dropped balls","Shadow batting"],hw:"Take your stance in front of a mirror; check grip, base and eye line, then push the bat back. Hold for 2 seconds.",used:3,buildsOn:null,points:["Grip, base and eye line","Bat and pad together"],ican:"I can set up correctly and defend with a straight bat",check:"Show grip, stance and guard, then block 6 balls",pass:"Grip and stance correct, 5 of 6 blocks",scoring:"Count out of N",assessStage:"U10 Silver"},
+      {id:"fd",name:"Forward defense",code:"KRCA-U9-W-SHD-01",stages:[{s:"U9 White",role:"Introduce"},{s:"U11 Silver",role:"Assessed"},{s:"U13 Gold",role:"Assessed",note:"harder standard"}],drills:["Pairs cricket","Block 10 dropped balls","Machine feeds: playing late","Shadow batting"],hw:"Against a wall, take your stance and block 15 tennis balls back with a straight bat. Ask a parent to check your grip. — After each session / Twice a week / Daily",used:3,buildsOn:null,points:["Head still, eyes level","Front elbow high","Bat and pad together"],ican:"I can block a straight ball safely",check:"Block 10 dropped balls into the safe zone",pass:"7 of 10 clean blocks, shape held",scoring:"Count out of N",assessStage:"U11 Silver",changed:true},
+      {id:"dap",name:"Defense at pace",code:"KRCA-U13-G-SHD-03",stages:[{s:"U12 Silver",role:"Introduce"},{s:"U14 Gold",role:"Assessed"}],drills:["Block 10 dropped balls","Machine feeds: playing late","Pairs cricket"],hw:"Shadow batting, 5 minutes · Wall blocking, 10 balls",used:2,buildsOn:"Back-foot defense",points:["Short backlift","Play beside the body"],ican:"I can defend faster bowling safely",check:"Block 10 balls at pace into the safe zone",pass:"7 of 10 clean blocks, shape held",scoring:"Count out of N",assessStage:"U14 Gold",retired:true},
+      {id:"lvb",name:"Leaving the ball",code:"KRCA-U12-S-LVB-01",stages:[{s:"U12 Silver",role:"Assessed"}],drills:["Pairs cricket","Block 10 dropped balls"],hw:"Shadow batting, 5 minutes",used:1,buildsOn:"Forward defense",points:["Watch the line","Leave outside off stump"],ican:"I can leave a ball I don't need to play",check:"Leave 6 balls outside off stump",pass:"5 of 6 correct leaves",scoring:"Count out of N",assessStage:"U12 Silver"},
+      {id:"bfd",name:"Back-foot defense",code:"KRCA-U12-S-BFD-01",stages:[{s:"U12 Silver",role:"Assessed"}],drills:["Pairs cricket","Block 10 dropped balls","Machine feeds: playing late"],hw:"Shadow batting, 5 minutes",used:2,buildsOn:"Forward defense",points:["Back foot across","Play under the eyes"],ican:"I can defend off the back foot",check:"Block 8 back-foot balls",pass:"6 of 8 clean blocks",scoring:"Count out of N",assessStage:"U12 Silver"},
+      {id:"pls",name:"Playing late against spin",code:"KRCA-U14-G-PLS-01",stages:[{s:"U14 Gold",role:"Assessed"}],drills:["Machine feeds: playing late","Pairs cricket"],hw:"—",used:1,buildsOn:"Defense at pace",points:["Wait for the ball","Play late under the eyes"],ican:"I can play spin late",check:"Play 10 spin balls late",pass:"7 of 10 played late, shape held",scoring:"Count out of N",assessStage:"U14 Gold"}
+    ]},
+    {name:"Scoring shots",subs:[
+      {id:"cut",name:"Cut shot",code:"KRCA-U11-S-CUT-01",stages:[{s:"U13 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"Shadow batting, 5 minutes",used:2,buildsOn:"Forward defense",points:["Rock back early","Cut down, beside the body"],ican:"I can cut a short ball away safely",check:"Cut 6 short balls past point",pass:"4 of 6 controlled cuts",scoring:"Count out of N",assessStage:"U13 Gold"},
+      {id:"pul",name:"Pull shot",code:"KRCA-U12-S-PUL-01",stages:[{s:"U12 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"Shadow batting, 5 minutes",used:2,buildsOn:"Forward defense",points:["Rock back","Roll the wrists"],ican:"I can pull a short ball",check:"Pull 6 short balls",pass:"4 of 6 controlled",scoring:"Count out of N",assessStage:"U12 Silver"},
+      {id:"cov",name:"Cover drive",code:"KRCA-U13-G-COV-01",stages:[{s:"U13 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Forward defense",points:["Head over the ball","Full face"],ican:"I can drive through the covers",check:"Drive 6 balls through cover",pass:"4 of 6 on the ground",scoring:"Count out of N",assessStage:"U13 Gold"},
+      {id:"sdr",name:"Straight drive",code:"KRCA-U11-S-SDR-01",stages:[{s:"U11 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"Shadow batting, 5 minutes",used:2,buildsOn:"Forward defense",points:["Straight bat","Step to the pitch"],ican:"I can drive straight",check:"Drive 6 balls straight",pass:"4 of 6 along the ground",scoring:"Count out of N",assessStage:"U11 Silver"},
+      {id:"swp",name:"Sweep shot",code:"KRCA-U13-G-SWP-01",stages:[{s:"U13 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Back-foot defense",points:["Get low","Sweep with the turn"],ican:"I can sweep a full ball",check:"Sweep 6 balls",pass:"4 of 6 controlled",scoring:"Count out of N",assessStage:"U13 Gold"},
+      {id:"hok",name:"Hook shot",code:"KRCA-U14-G-HOK-01",stages:[{s:"U14 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Defense at pace",points:["Roll the wrists","Keep it down"],ican:"I can hook a short ball down",check:"Hook 6 balls along the ground",pass:"4 of 6 kept down",scoring:"Count out of N",assessStage:"U14 Gold"},
+      {id:"lct",name:"Late cut",code:"KRCA-U13-G-LCT-01",stages:[{s:"U13 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Cut shot",points:["Wait, wait, wait","Guide it fine"],ican:"I can late-cut",check:"Late-cut 6 balls",pass:"4 of 6 controlled",scoring:"Count out of N",assessStage:"U13 Gold"},
+      {id:"ond",name:"On-drive",code:"KRCA-U12-S-OND-01",stages:[{s:"U12 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Forward defense",points:["Step to the pitch","Through mid-on"],ican:"I can on-drive",check:"On-drive 6 balls",pass:"4 of 6 along the ground",scoring:"Count out of N",assessStage:"U12 Silver"},
+      {id:"flk",name:"Flick off the pads",code:"KRCA-U12-S-FLK-01",stages:[{s:"U12 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Forward defense",points:["Flick with the wrists"],ican:"I can flick off my pads",check:"Flick 6 balls to leg",pass:"4 of 6 controlled",scoring:"Count out of N",assessStage:"U12 Silver"}
+    ]},
+    {name:"Running",subs:[
+      {id:"cal",name:"Calling",code:"KRCA-U9-W-CAL-01",stages:[{s:"U9 White",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:2,buildsOn:null,points:["Call early and loud"],ican:"I can call for a run",check:"Call correctly in 6 run chances",pass:"5 of 6 correct calls",scoring:"Count out of N",assessStage:"U9 White"},
+      {id:"trn",name:"Turning for a second run",code:"KRCA-U11-S-TRN-01",stages:[{s:"U11 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Calling",points:["Turn low and fast"],ican:"I can turn for a second run",check:"Complete 4 second runs",pass:"3 of 4 in control",scoring:"Count out of N",assessStage:"U11 Silver"},
+      {id:"sld",name:"Sliding the bat in",code:"KRCA-U11-S-SLD-01",stages:[{s:"U11 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Calling",points:["Slide the bat, don't dive"],ican:"I can slide my bat in safely",check:"Slide the bat in 4 times",pass:"3 of 4 safe",scoring:"Count out of N",assessStage:"U11 Silver"},
+      {id:"bkp",name:"Backing up",code:"KRCA-U9-W-BKP-01",stages:[{s:"U9 White",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:2,buildsOn:null,points:["Back up every ball"],ican:"I back up every ball",check:"Back up in 6 chances",pass:"5 of 6",scoring:"Count out of N",assessStage:"U9 White"}
+    ]}
+  ]},
+  {name:"Bowling",type:"Technical",comp:"Stage set on 15 of 15 · Assessment on 13 of 15 · Drills on 14 of 15",families:[
+    {name:"Pace bowling",subs:[
+      {id:"run",name:"Run-up and delivery stride",code:"KRCA-U9-W-PAC-01",stages:[{s:"U9 White",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:2,buildsOn:null,points:["Smooth run-up","Front arm pulls through"],ican:"I can bowl with a smooth run-up",check:"Bowl 6 balls with a repeatable stride",pass:"5 of 6 with a straight front arm",scoring:"Count out of N",assessStage:"U9 White"},
+      {id:"wri",name:"Wrist position at release",code:"KRCA-U9-W-WRI-01",stages:[{s:"U9 White",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Run-up and delivery stride",points:["Wrist behind the ball"],ican:"I can release with a straight wrist",check:"Release 6 balls with a straight wrist",pass:"5 of 6",scoring:"Count out of N",assessStage:"U9 White"},
+      {id:"fol",name:"Follow-through",code:"KRCA-U10-S-FOL-01",stages:[{s:"U10 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Run-up and delivery stride",points:["Follow through to the target"],ican:"I can follow through",check:"Follow through on 6 balls",pass:"5 of 6",scoring:"Count out of N",assessStage:"U10 Silver"},
+      {id:"len",name:"Bowl a good length",code:"KRCA-U11-S-LEN-01",stages:[{s:"U11 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:2,buildsOn:"Run-up and delivery stride",points:["Hit the top of off stump"],ican:"I can bowl a good length",check:"Land 8 of 12 balls on a good length",pass:"8 of 12",scoring:"Count out of N",assessStage:"U11 Silver"},
+      {id:"yrk",name:"Bowl a yorker",code:"KRCA-U13-G-YRK-01",stages:[{s:"U13 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Bowl a good length",points:["Full, at the toes"],ican:"I can bowl a yorker",check:"Bowl 6 yorkers",pass:"3 of 6 on target",scoring:"Count out of N",assessStage:"U13 Gold"},
+      {id:"slo",name:"Slower ball",code:"KRCA-U13-G-SLO-01",stages:[{s:"U13 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Bowl a good length",points:["Same arm speed, slower ball"],ican:"I can bowl a slower ball",check:"Bowl 6 slower balls",pass:"4 of 6 deceive the batter",scoring:"Count out of N",assessStage:"U13 Gold"},
+      {id:"bnc",name:"Bouncer",code:"KRCA-U14-G-BNC-01",stages:[{s:"U14 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Bowl a good length",points:["Short, into the pitch"],ican:"I can bowl a bouncer safely",check:"Bowl 6 bouncers at chest height",pass:"4 of 6 at the right height",scoring:"Count out of N",assessStage:"U14 Gold"},
+      {id:"out",name:"Outswinger",code:"KRCA-U12-S-OUT-01",stages:[{s:"U12 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Run-up and delivery stride",points:["Shiny side in","Wrist cocked"],ican:"I can swing the ball away",check:"Swing 6 balls away",pass:"4 of 6 swing",scoring:"Count out of N",assessStage:"U12 Silver"}
+    ]},
+    {name:"Spin bowling",subs:[
+      {id:"lgs",name:"Leg-spin stock ball",code:"KRCA-U11-S-LGS-01",stages:[{s:"U11 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:null,points:["Rip it, loop it"],ican:"I can bowl a leg-spinner",check:"Bowl 6 leg-spinners",pass:"4 of 6 turn",scoring:"Count out of N",assessStage:"U11 Silver"},
+      {id:"ofs",name:"Off-spin stock ball",code:"KRCA-U11-S-OFS-01",stages:[{s:"U11 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:null,points:["Fingers over the ball"],ican:"I can bowl an off-spinner",check:"Bowl 6 off-spinners",pass:"4 of 6 turn",scoring:"Count out of N",assessStage:"U11 Silver"},
+      {id:"goo",name:"Googly",code:"KRCA-U13-G-GOO-01",stages:[{s:"U13 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Leg-spin stock ball",points:["Same action, other way"],ican:"I can bowl a googly",check:"Bowl 6 googlies",pass:"3 of 6 turn the other way",scoring:"Count out of N",assessStage:"U13 Gold"},
+      {id:"top",name:"Top-spinner",code:"KRCA-U13-G-TOP-01",stages:[{s:"U13 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Leg-spin stock ball",points:["Over the top"],ican:"I can bowl a top-spinner",check:"Bowl 6 top-spinners",pass:"4 of 6 dip",scoring:"Count out of N",assessStage:"U13 Gold"},
+      {id:"arm",name:"Arm ball",code:"KRCA-U12-S-ARM-01",stages:[{s:"U12 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Off-spin stock ball",points:["Skid it on"],ican:"I can bowl an arm ball",check:"Bowl 6 arm balls",pass:"4 of 6 skid on",scoring:"Count out of N",assessStage:"U12 Silver"},
+      {id:"flt",name:"Flight and loop",code:"KRCA-U12-S-FLT-01",stages:[{s:"U12 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Off-spin stock ball",points:["Toss it up, invite the drive"],ican:"I can flight the ball",check:"Bowl 6 balls with loop",pass:"4 of 6 with loop",scoring:"Count out of N",assessStage:"U12 Silver"},
+      {id:"fld",name:"Bowl to a field",code:"KRCA-U14-G-FLD-01",stages:[{s:"U14 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Flight and loop",points:["Bowl to your field"],ican:"I can bowl to a field",check:"Bowl 12 balls to the set field",pass:"8 of 12 to plan",scoring:"Count out of N",assessStage:"U14 Gold"}
+    ]}
+  ]},
+  {name:"Fielding",type:"Technical",comp:"Stage set on 11 of 11 · Assessment on 10 of 11 · Drills on 11 of 11",families:[
+    {name:"Catching",subs:[
+      {id:"hc",name:"High catch",code:"KRCA-U11-S-CTC-01",stages:[{s:"U11 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:null,points:["Hands soft, fingers up","Watch it all the way in"],ican:"I can catch a high ball safely",check:"Catch 8 of 10 high balls",pass:"8 of 10 clean catches",scoring:"Count out of N",assessStage:"U11 Silver",restrict:"Helmet required for hard-ball catching"},
+      {id:"lwc",name:"Low catch",code:"KRCA-U9-W-LWC-01",stages:[{s:"U9 White",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:null,points:["Fingers down","Soft hands"],ican:"I can take a low catch",check:"Catch 8 of 10 low balls",pass:"8 of 10",scoring:"Count out of N",assessStage:"U9 White"},
+      {id:"cob",name:"Catch off the bat",code:"KRCA-U11-S-COB-01",stages:[{s:"U11 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"High catch",points:["Stay low, watch the edge"],ican:"I can catch off the bat",check:"Catch 6 of 10 edges",pass:"6 of 10",scoring:"Count out of N",assessStage:"U11 Silver"},
+      {id:"bnd",name:"Boundary catch",code:"KRCA-U13-G-BND-01",stages:[{s:"U13 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"High catch",points:["Judge the rope"],ican:"I can take a boundary catch",check:"Take 4 of 6 boundary catches",pass:"4 of 6",scoring:"Count out of N",assessStage:"U13 Gold"},
+      {id:"ohc",name:"One-handed catch",code:"KRCA-U13-G-OHC-01",stages:[{s:"U13 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"High catch",points:["Strong top hand"],ican:"I can catch one-handed",check:"Catch 6 of 10 one-handed",pass:"6 of 10",scoring:"Count out of N",assessStage:"U13 Gold"}
+    ]},
+    {name:"Ground fielding",subs:[
+      {id:"lgb",name:"Long barrier",code:"KRCA-U9-W-LGB-01",stages:[{s:"U9 White",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:null,points:["Body behind the ball"],ican:"I can stop the ball with a long barrier",check:"Stop 8 of 10 balls",pass:"8 of 10",scoring:"Count out of N",assessStage:"U9 White"},
+      {id:"put",name:"Pick-up and throw",code:"KRCA-U10-S-PUT-01",stages:[{s:"U10 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Long barrier",points:["Pick up clean, throw flat"],ican:"I can pick up and throw",check:"Pick up and hit the stumps 4 of 8 times",pass:"4 of 8",scoring:"Count out of N",assessStage:"U10 Silver"},
+      {id:"rel",name:"Relay throw",code:"KRCA-U12-S-REL-01",stages:[{s:"U12 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Pick-up and throw",points:["Relay, don't throw from the rope"],ican:"I can relay a throw",check:"Relay 6 balls to the keeper",pass:"5 of 6 on target",scoring:"Count out of N",assessStage:"U12 Silver"},
+      {id:"but",name:"Backing up the throw",code:"KRCA-U11-S-BUT-01",stages:[{s:"U11 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:null,points:["Be behind the stumps"],ican:"I back up every throw",check:"Back up in 6 chances",pass:"5 of 6",scoring:"Count out of N",assessStage:"U11 Silver"},
+      {id:"sls",name:"Sliding stop",code:"KRCA-U13-G-SLS-01",stages:[{s:"U13 Gold",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Long barrier",points:["Slide, don't dive head-first"],ican:"I can stop the ball with a slide",check:"Stop 6 of 8 balls with a slide",pass:"6 of 8",scoring:"Count out of N",assessStage:"U13 Gold"},
+      {id:"uaf",name:"Underarm flick",code:"KRCA-U12-S-UAF-01",stages:[{s:"U12 Silver",role:"Assessed"}],drills:["Pairs cricket"],hw:"—",used:1,buildsOn:"Pick-up and throw",points:["Flick underarm at the stumps"],ican:"I can flick at the stumps",check:"Hit the stumps 4 of 8 times",pass:"4 of 8",scoring:"Count out of N",assessStage:"U12 Silver"}
+    ]}
+  ]},
+  {name:"Fitness",type:"Physical",comp:"Stage set on 4 of 4 · Assessment on 1 of 4 · Drills on 2 of 4",subs:[
+    {id:"wu",name:"Warm-up routine",code:"KRCA-ALL-WUP-01",allStages:true,stages:[],drills:[],hw:"—",used:1,buildsOn:null,points:["Raise the heart rate","Mobilise the joints"],ican:"I can warm up safely",check:"Complete the warm-up routine",pass:"All stations completed",scoring:"Pass / not yet",assessStage:null}
+  ]},
+  {name:"The code",type:"Character and conduct",comp:"Stage set on 3 of 3 · Assessment on 3 of 3 · Drills on 0 of 3",subs:[
+    {id:"code",name:"The code: basics",code:"KRCA-ALL-COD-01",stages:[{s:"U9 White",role:"Assessed"}],drills:[],hw:"—",used:2,buildsOn:null,points:["Respect the game","Respect each other"],ican:"I follow the code",check:"Coach sign-off across 3 sessions",pass:"Sign-off in 3 sessions",scoring:"Pass / not yet",assessStage:"U9 White"}
+  ]}
+ ]},
+ swimming:{name:"Swimming Library",mono:"SW",version:"v2",pub:"Sep 2026",draft:null,pathway:"Stage 1 to 7",count:"1 strand · 12 sub-skills",programs:2,editor:"Sarah Chen",origin:"Started from a Quixera template",sugg:0,areas:[
+  {name:"Strokes",type:"Strand",comp:"Stage set on 12 of 12 · Assessment on 11 of 12 · Drills on 9 of 12",families:[
+    {name:"Freestyle",subs:[
+      {id:"pgb",name:"Push and glide on back",code:"SWIM-S2-FS-01",stages:[{s:"Stage 2",role:"Assessed"},{s:"Stage 3",role:"Revisit"}],drills:["Float and glide"],hw:"—",used:1,buildsOn:null,points:["Streamline","Kick gently"],ican:"I can float on my back for 5 seconds without help",check:"Push and glide on back for 5 seconds",pass:"5 seconds without help",scoring:"Pass / not yet",assessStage:"Stage 2"},
+      {id:"fc10",name:"Swim 10 m front crawl without stopping",code:"SWIM-S3-FS-02",stages:[{s:"Stage 3",role:"Assessed"}],drills:["Front crawl lengths"],hw:"—",used:1,buildsOn:"Push and glide on back",points:["Face in the water","Steady kick"],ican:"I can float on my back for 5 seconds without help",check:"Swim 10 m front crawl without stopping",pass:"Completes 10 m, face in water, no floor touch",scoring:"Pass / not yet",assessStage:"Stage 3"}
+    ]}
+  ]}
+ ]},
+ tennis:{name:"Tennis Library",mono:"TE",version:"v1",pub:"Oct 2026",draft:null,pathway:"Red, Orange, Green, Yellow ball",count:"3 areas · 9 sub-skills",programs:1,editor:"Sarah Chen",origin:"Built by your academy",sugg:0,areas:[
+  {name:"Groundstrokes",type:"Technical",comp:"Stage set on 9 of 9 · Assessment on 8 of 9 · Drills on 9 of 9",families:[
+    {name:"Forehand",subs:[
+      {id:"tf",name:"Topspin forehand",code:"TEN-R-FH-01",stages:[{s:"Red",role:"Assessed"}],drills:["Rally 10"],hw:"—",used:1,buildsOn:null,points:["Low to high","Brush up the back of the ball"],ican:"I can rally 10 balls with a partner over the net",check:"Rally 10 balls over the net",pass:"10-ball rally twice",scoring:"Count out of N",assessStage:"Red"}
+    ]}
+  ]}
+ ]}
+};
+var DRILLS=[
+ {code:"D01",name:"Block 10 dropped balls",min:15,format:"Pairs",type:"Technical practice",area:"Batting",used:4,equip:"10 tennis balls, 1 bat",space:"1 lane",group:"Pairs",ratio:"1 coach : 12 athletes",safety:"—",points:["Bat and pad together","Head still"],easier:"Drop from lower",harder:"Faster drops",hw:false},
+ {code:"D02",name:"Shadow batting",min:5,format:"Individual",type:"Warm-up",area:"Batting",used:3,equip:"No equipment",space:"Any",group:"Whole group",ratio:"1 coach : 20 athletes",safety:"—",points:["Check grip, base and eye line"],easier:"—",harder:"Add a ball",hw:true},
+ {code:"D03",name:"Float and glide",min:10,format:"Pairs",type:"Technical practice",area:"Strokes",used:1,equip:"Pool, 1 lane",space:"Pool",group:"4–6 athletes",ratio:"1 coach : 6 athletes",safety:"Lifeguard present",points:["Streamline","Kick gently"],easier:"With a float",harder:"Without a float",hw:false},
+ {code:"D04",name:"Front crawl lengths",min:15,format:"Individual",type:"Technical practice",area:"Strokes",used:1,equip:"Pool, 1 lane",space:"Pool",group:"4–6 athletes",ratio:"1 coach : 6 athletes",safety:"Lifeguard present",points:["Face in the water","Steady kick"],easier:"Shorter distance",harder:"Longer distance",hw:false},
+ {code:"D05",name:"Throwing at the stumps",min:10,format:"Pairs",type:"Technical practice",area:"Fielding",used:2,equip:"6 balls, 1 set of stumps",space:"1 lane",group:"Pairs",ratio:"1 coach : 12 athletes",safety:"—",points:["Throw flat","Aim at the base"],easier:"Closer in",harder:"Further out",hw:false},
+ {code:"D06",name:"Catching in a circle",min:10,format:"Small group",type:"Technical practice",area:"Fielding",used:2,equip:"4 balls",space:"Circle",group:"6–8 athletes",ratio:"1 coach : 12 athletes",safety:"—",points:["Soft hands","Watch it in"],easier:"Underarm throws",harder:"Faster throws",hw:false},
+ {code:"D07",name:"Run-up drills",min:10,format:"Individual",type:"Technical practice",area:"Bowling",used:1,equip:"Cones",space:"1 lane",group:"Whole group",ratio:"1 coach : 12 athletes",safety:"—",points:["Same stride every ball"],easier:"Walk-through",harder:"Full pace",hw:false},
+ {code:"D08",name:"Target bowling",min:15,format:"Individual",type:"Technical practice",area:"Bowling",used:2,equip:"Cones, target",space:"1 lane",group:"Pairs",ratio:"1 coach : 12 athletes",safety:"—",points:["Hit the top of off stump"],easier:"Bigger target",harder:"Smaller target",hw:false},
+ {code:"D09",name:"Underarm feeds",min:10,format:"Pairs",type:"Technical practice",area:"Batting",used:2,equip:"6 tennis balls",space:"1 lane",group:"Pairs",ratio:"1 coach : 12 athletes",safety:"—",points:["Watch the ball onto the bat"],easier:"Slower feeds",harder:"Faster feeds",hw:false},
+ {code:"D10",name:"High catching",min:10,format:"Small group",type:"Technical practice",area:"Fielding",used:2,equip:"4 balls",space:"Open space",group:"6–8 athletes",ratio:"1 coach : 12 athletes",safety:"Helmets on for hard ball.",points:["Fingers up","Watch it all the way in"],easier:"Underarm lobs",harder:"Higher throws",hw:false},
+ {code:"D11",name:"Warm-up games",min:10,format:"Small group",type:"Warm-up",area:"Fitness",used:1,equip:"Cones, bibs",space:"Field",group:"Whole group",ratio:"1 coach : 20 athletes",safety:"—",points:["Raise the heart rate"],easier:"—",harder:"Add competition",hw:false},
+ {code:"D12",name:"Relay races",min:10,format:"Small group",type:"Warm-up",area:"Fitness",used:1,equip:"Cones",space:"Field",group:"Whole group",ratio:"1 coach : 20 athletes",safety:"—",points:["Run in straight lines"],easier:"—",harder:"Add a baton",hw:false},
+ {code:"D13",name:"Pairs cricket",min:20,format:"Pairs",type:"Game or match play",area:"Batting",used:5,equip:"1 bat, 1 ball, 2 sets of stumps",space:"1 lane",group:"Pairs",ratio:"1 coach : 12 athletes",safety:"Helmets on for hard ball.",points:["Play the ball late","Run between wickets"],easier:"Tennis ball",harder:"Hard ball",hw:false},
+ {code:"D14",name:"Pick-up and throw relay",min:10,format:"Small group",type:"Technical practice",area:"Fielding",used:1,equip:"4 balls, 2 sets of stumps",space:"Field",group:"6–8 athletes",ratio:"1 coach : 12 athletes",safety:"—",points:["Pick up clean, throw flat"],easier:"Closer in",harder:"Further out",hw:false},
+ {code:"D15",name:"Underarm flick game",min:10,format:"Pairs",type:"Technical practice",area:"Fielding",used:1,equip:"4 balls, 1 set of stumps",space:"Field",group:"Pairs",ratio:"1 coach : 12 athletes",safety:"—",points:["Flick underarm at the stumps"],easier:"Closer in",harder:"Further out",hw:false},
+ {code:"D16",name:"Bowl at the cones",min:10,format:"Individual",type:"Technical practice",area:"Bowling",used:1,equip:"Cones",space:"1 lane",group:"Pairs",ratio:"1 coach : 12 athletes",safety:"—",points:["Land it on a length"],easier:"Bigger target",harder:"Smaller target",hw:false},
+ {code:"D17",name:"Rally 10",min:10,format:"Pairs",type:"Game or match play",area:"Groundstrokes",used:2,equip:"1 mini net, 12 red balls",space:"60 ft court",group:"4–8 athletes",ratio:"1 coach : 8 athletes",safety:"—",points:["Keep the rally going, not winners"],easier:"Bigger target area",harder:"Rally with direction",hw:false},
+ {code:"D18",name:"Machine feeds: playing late",min:40,format:"Coach-fed",type:"Technical practice",area:"Batting",used:2,equip:"Bowling machine, 2 lanes",space:"2 lanes",group:"6–8 athletes",ratio:"1 coach : 8 athletes",safety:"Helmets on for hard ball.",points:["Hold the shot until the ball passes the front pad","Play it late under the eyes"],easier:"Slower feeds",harder:"Faster feeds",hw:false,how:"Machine at 95 km/h, 6 balls each. Batters hold the shot until the ball passes the front pad, then play it late under the eyes.",why:"We ran this on Tuesday instead of nets. Each batter got twice the balls, and the faster feeds made them wait for it. — Rohan Gupta, from the session plan."}
+];
+var SUGGS=[
+ {id:1,type:"New drill",from:"Session plan",coach:"Rohan Gupta",lib:"Cricket Library",item:"Machine feeds: playing late",note:"Suggested from Tuesday's session plan — each batter got twice the balls, and the faster feeds made them wait for it.",status:"Waiting"},
+ {id:2,type:"Change a sub-skill",from:"Library",coach:"Kavya Rao",lib:"Cricket Library",item:"Forward defense — add U13 Gold assessed row",note:"U13s are ready for the harder standard.",status:"Waiting",now:"Assessed U11 Silver — 7 of 10 clean blocks, shape held",sugg:"Assessed U13 Gold — 8 of 10 clean blocks against pace, shape held"},
+ {id:3,type:"Flag a problem",from:"Program",coach:"Vikram Singh",lib:"Cricket Library",item:"High catch — safety note missing",note:"Hard-ball catching needs a helmet requirement.",status:"Waiting"}
+];
+var SCREENS=[
+ {id:0,name:"0 · Start — tour map",guide:"Start screen — proves the tour order and the four settled decisions (Excel: Calls for AS)."},
+ {id:1,name:"1 · Libraries landing (LB01)",guide:"Row 5: grouped landing that expands · Row 14: one search across library, area, family, sub-skill and drill · Row 1: completeness line per skill area."},
+ {id:2,name:"2 · Library page (LB20)",guide:"Row 11: one table for create, edit and view · Row 13: progression matrix with gap cells · Row 7: drill bank as a flat view."},
+ {id:3,name:"3 · Sub-skill page (LB21)",guide:"Row 24: stage map with pass standards · Row 23: section order Basics → Stage map → Coaching → How it is assessed → Drills → Homework → Restrictions · Row 41: Done returns to the same place."},
+ {id:4,name:"4 · Create library",guide:"Row 12: shared full-screen shell, slimmed 4 → 3 steps (Start, Skills, Review and publish) · Row 38: import as four boards — Upload, Map columns, Check, Done."},
+ {id:5,name:"5 · Edit mode",guide:"Row 33: change markers — New, Edited with “Was …” and Undo, Removed struck through with Undo · Row 40: publish review dialog."},
+ {id:6,name:"6 · Pathways",guide:"Row 4: one pathway per sport in Academy settings; libraries inherit it read-only · Row 6: moving-up rules marked Later."},
+ {id:7,name:"7 · Coach mobile",guide:"Row 9: coach mobile, one thumb · Row 10: stage selector as the primary control · Row 19: drills first in the sub-skill sheet."},
+ {id:8,name:"8 · Suggestions queue",guide:"Row 62: suggestions queue across libraries · Row 55: two-column review with the approval explainer."}
+];
+
+/* ============ HELPERS ============ */
+function $(s){return document.querySelector(s)}
+function esc(x){return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function toast(msg){var t=$("#toast");t.textContent=msg;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(function(){t.style.display="none"},3200)}
+function chip(s){
+  if(s.allStages)return '<span class="chip grey">All stages</span>';
+  return (s.stages||[]).map(function(x){return '<span class="chip '+(x.role==="Assessed"?"solid":"")+'">'+esc(x.s)+" · "+esc(x.role)+'</span>'}).join("");
+}
+function allSubs(libKey){
+  var out=[];
+  LIBS[libKey].areas.forEach(function(a){
+    (a.families||[]).forEach(function(f){f.subs.forEach(function(s){out.push({s:s,area:a.name,fam:f.name})})});
+    (a.subs||[]).forEach(function(s){out.push({s:s,area:a.name,fam:null})});
+  });
+  return out;
+}
+var currentLib="cricket", curSub="fd", landingTab="all", lStatus="all", lView="tree", curScreen=0, expanded={cricket:true};
+
+/* ============ NAVIGATION ============ */
+function goScreen(id){
+  curScreen=id;
+  document.querySelectorAll(".screen").forEach(function(el){el.classList.remove("on")});
+  var el=$("#scr-"+id);if(el)el.classList.add("on");
+  var sel=$("#screenSel");if(sel)sel.value=String(id);
+  var gb=$("#guideBar");if(gb.style.display!=="none")gb.textContent="Guidance: "+SCREENS[id].guide;
+  window.scrollTo(0,0);
+}
+function buildNav(){
+  $("#screenSel").innerHTML=SCREENS.map(function(s){return '<option value="'+s.id+'">'+esc(s.name)+'</option>'}).join("");
+}
+function toggleGuide(){
+  var gb=$("#guideBar"),btn=$("#guideToggle");
+  var on=gb.style.display==="none";
+  gb.style.display=on?"block":"none";
+  btn.textContent=on?"Hide guidance notes":"Show guidance notes";
+  btn.setAttribute("aria-pressed",String(on));
+  if(on)gb.textContent="Guidance: "+SCREENS[curScreen].guide;
+}
+
+/* ============ LANDING (LB01) ============ */
+function renderLanding(){
+  var html="";
+  Object.keys(LIBS).forEach(function(key){html+=libRowHTML(key)});
+  $("#libList").innerHTML=html;
+  $("#sharedList").innerHTML='<div class="librow"><div class="libhead" onclick="toast(\'Shared library — used by Cricket, Swimming and Tennis.\')"><span class="mono" style="background:#5B6B65">SH</span><div><b>Athletic development</b><br><span class="meta"><span>All sports (shared)</span><span>2 skill areas · 9 sub-skills</span><span>Used by 3 programs</span></span></div></div></div>'
+   +'<div class="librow"><div class="libhead" onclick="toast(\'Shared library — used by Cricket and Tennis.\')"><span class="mono" style="background:#5B6B65">SH</span><div><b>Character and mindset</b><br><span class="meta"><span>All sports (shared)</span><span>1 skill area · 4 sub-skills</span><span>Used by 2 programs</span></span></div></div></div>';
+}
+function libRowHTML(key){
+  var L=LIBS[key];
+  var search=[L.name,L.origin,L.pathway].concat(allSubs(key).map(function(x){return x.s.name+" "+(x.s.code||"")+" "+x.area+" "+(x.fam||"")})).concat(DRILLS.map(function(d){return d.name})).join(" ").toLowerCase();
+  var draft=L.draft?'<span class="pill" style="background:#FFF4E0;color:var(--amber)">Draft '+esc(L.draft)+'</span>':"";
+  var html='<div class="librow" data-lib="'+key+'" data-search="'+esc(search)+'">'
+   +'<div class="libhead" onclick="toggleLib(\''+key+'\')"><span class="mono">'+esc(L.mono)+'</span><div style="flex:1;min-width:220px"><b>'+esc(L.name)+'</b> <span class="pill">Published, '+esc(L.version)+'</span> '+draft+'<br>'
+   +'<span class="meta"><span>'+esc(L.origin)+'</span><span>'+esc(L.version)+' published '+esc(L.pub)+'</span><span>'+esc(L.pathway)+'</span><span>'+esc(L.count)+'</span><span>Used by '+L.programs+' programs</span><span>👤 '+esc(L.editor)+'</span>'+(L.sugg?'<span class="badge warn">'+L.sugg+' waiting suggestions</span>':"")+'</span></div><button class="ghost" aria-label="Library actions" title="Library actions" onclick="event.stopPropagation();libMenu(\''+key+'\')">⋯</button></div>';
+  if(expanded[key]){
+    html+='<div class="libbody">';
+    L.areas.forEach(function(a){
+      var subs=0;(a.families||[]).forEach(function(f){subs+=f.subs.length});subs+=(a.subs||[]).length;
+      html+='<div class="subrow" onclick="openArea(\''+key+'\',\''+esc(a.name)+'\')"><span><b>'+esc(a.name)+'</b> <span class="muted small">'+esc(a.type||"")+'</span>'+(a.changed?'<span class="bluedot" title="Has unpublished changes"></span>':"")+'<br><span class="small muted">'+subs+' sub-skills</span></span><span class="comp">'+esc(a.comp)+'</span></div>';
+    });
+    html+='<p style="margin:10px 0 0"><button onclick="event.stopPropagation();openArea(\''+key+'\',\''+esc(L.areas[0].name)+'\')">Open library</button> <button class="ghost" onclick="event.stopPropagation();goScreen(4);initCreate(\'template\')">Create a copy</button></p></div>';
+  }
+  return html+'</div>';
+}
+function toggleLib(key){expanded[key]=!expanded[key];renderLanding()}
+function setLandingTab(btn){document.querySelectorAll("#scr-1 [data-ltab]").forEach(function(b){b.classList.remove("on")});btn.classList.add("on");landingTab=btn.dataset.ltab;filterLanding()}
+function filterLanding(){
+  var q=($("#libSearch").value||"").toLowerCase();
+  document.querySelectorAll("#scr-1 .librow").forEach(function(row){
+    var tabOk = landingTab==="all" || (landingTab==="pub") || (landingTab==="draft"&&row.dataset.lib==="cricket") || (landingTab==="arch"&&false);
+    var qOk = !q || (row.dataset.search||"").indexOf(q)>-1;
+    row.style.display=(tabOk&&qOk)?"":"none";
+  });
+}
+function openArea(key,area){currentLib=key;renderLibraryPage();goScreen(2);setTimeout(function(){var el=document.querySelector('[data-area="'+area+'"]');if(el){el.scrollIntoView({behavior:"smooth",block:"start"})}},80);toast("Opened "+LIBS[key].name+" at "+area)}
+function goCreate(tpl){goScreen(4);initCreate(tpl||null)}
+</script>
+
+<script>
+/* ============ LIBRARY PAGE (LB20) ============ */
+function goEdit(){goScreen(5);renderEditTree()}
+function setLTab(btn){document.querySelectorAll("#scr-2 [data-ltab]").forEach(function(b){b.classList.remove("on")});btn.classList.add("on");
+ ["skills","sugg","access","vers"].forEach(function(t){$("#ltab-"+t).style.display=(btn.dataset.ltab===t)?"":"none"})}
+function setStatusTab(btn){document.querySelectorAll("#scr-2 [data-st]").forEach(function(b){b.classList.remove("on")});btn.classList.add("on");lStatus=btn.dataset.st;filterTree()}
+function setView(btn){document.querySelectorAll("#scr-2 [data-view]").forEach(function(b){b.classList.remove("on")});btn.classList.add("on");lView=btn.dataset.view;
+ $("#treeView").style.display=lView==="tree"?"":"none";$("#progView").style.display=lView==="prog"?"":"none";$("#drillsView").style.display=lView==="drills"?"":"none";
+ if(lView==="prog")renderMatrix(); if(lView==="drills")renderDrills()}
+function stageMatch(s,stage){if(!stage)return true;if(s.allStages)return true;return (s.stages||[]).some(function(x){return x.s===stage||x.s.indexOf(stage.split(" · ")[0])>-1})}
+function renderLibraryPage(){
+  var L=LIBS[currentLib];
+  $("#libTitle").textContent=L.name;
+  $("#libDesc").textContent=L.name==="Cricket Library"?"Skills pathway for the academy, U9 to Adult, following the KRCA syllabus.":(L.name==="Swimming Library"?"Learn-to-swim pathway, Stage 1 to 7.":"Red, Orange, Green, Yellow ball pathway.");
+  $("#libVerPill").textContent="Published, "+L.version;
+  $("#libDraftPill").style.display=L.draft?"":"none";
+  if(L.draft)$("#libDraftPill").innerHTML="Draft "+esc(L.draft)+' · <a href="#" onclick="goEdit();return false">Continue editing</a>';
+  var suggCount=SUGGS.filter(function(s){return s.lib===L.name}).length;
+  document.querySelector('[data-ltab="sugg"]').textContent="Suggestions "+suggCount;
+  renderTree("view");
+  renderLibSugg();
+}
+function treeRowsHTML(mode){
+  var L=LIBS[currentLib], html='<table aria-label="Skill tree"><thead><tr><th>Name</th><th>Code</th><th>Stages</th><th>Drills</th><th>Homework</th><th>Used in</th><th></th></tr></thead><tbody>';
+  L.areas.forEach(function(a){
+    var fams=a.families||[], subs=0;
+    fams.forEach(function(f){subs+=f.subs.length}); subs+=(a.subs||[]).length;
+    html+='<tr class="area" data-area="'+esc(a.name)+'"><td colspan="2">▾ '+esc(a.name)+' <span class="muted small">'+esc(a.type||"")+'</span> '+(a.changed?'<span class="bluedot" title="Has unpublished changes"></span>':"")+'</td><td colspan="5" class="muted small">'+fams.length+' families · '+subs+' sub-skills</td></tr>';
+    fams.forEach(function(f){
+      html+='<tr class="fam"><td style="padding-left:24px">▾ '+esc(f.name)+'</td><td></td><td></td><td></td><td></td><td>'+f.subs.length+' sub-skills</td><td>'+(mode==="edit"?'<button class="ghost" onclick="removeFamily(\''+esc(f.name)+'\')">⋯</button>':"")+'</td></tr>';
+      f.subs.forEach(function(s){html+=subRowHTML(s,48,mode,a.name,f.name)});
+    });
+    (a.subs||[]).forEach(function(s){html+=subRowHTML(s,24,mode,a.name,null)});
+    if(mode!=="view"){
+      html+='<tr><td colspan="7" style="padding-left:48px"><input class="inline-add" placeholder="Add a sub-skill to '+esc(a.name)+'… (Enter adds it; paste several lines to add many)" onkeydown="inlineAdd(event,this,\''+esc(a.name)+'\',null)" onpaste="pasteAdd(event,this)"></td></tr>';
+    }
+  });
+  return html+'</tbody></table><p class="small muted">Keyboard: <span class="kbd">/</span> search · <span class="kbd">↑</span><span class="kbd">↓</span> move · <span class="kbd">Enter</span> open · <span class="kbd">N</span> new sub-skill · <span class="kbd">F2</span> rename · <span class="kbd">?</span> all shortcuts</p>';
+}
+function subRowHTML(s,indent,mode,area,fam){
+  var cls=s.retired?"strike":"";
+  var mark="";
+  if(mode==="edit"&&s.id==="lct")mark='<span class="newtag">New</span> ';
+  if(mode==="edit"&&s.id==="fd")mark='<span class="was">Edited — Was “Forward defence”</span> <button class="ghost" onclick="undoChange(\'fd\')">Undo</button> ';
+  if(mode==="edit"&&s.retired)mark='<button class="ghost" onclick="undoChange(\'dap\')">Undo</button> ';
+  var drag=(mode==="view")?"":'<span class="drag" title="Drag to reorder">⋮⋮</span> ';
+  return '<tr class="sub'+(s.id===curSub?" sel":"")+'" data-sub="'+s.id+'" data-name="'+esc(s.name.toLowerCase())+'" data-code="'+esc((s.code||"").toLowerCase())+'" data-drills="'+s.drills.length+'" data-assessed="'+((s.stages||[]).some(function(x){return x.role==="Assessed"})?1:0)+'" data-retired="'+(s.retired?1:0)+'" data-changed="'+(s.changed?1:0)+'" onclick="'+(mode==="view"?'openSub(\''+s.id+'\')':"")+'">'
+   +'<td style="padding-left:'+indent+'px">'+drag+mark+'<span class="'+cls+'">'+esc(s.name)+'</span>'+(s.restrict?' <span title="Restriction">🛡</span>':"")+'</td>'
+   +'<td><code>'+esc(s.code||"")+'</code></td><td>'+chip(s)+'</td><td>'+(s.drills.length?s.drills.length:"—")+'</td><td>'+(s.hw&&s.hw!=="—"?"✓":"—")+'</td><td>'+s.used+' programs</td><td></td></tr>';
+}
+function renderTree(mode){
+  var el = mode==="edit" ? $("#editTree") : mode==="create" ? $("#createTree") : $("#treeView");
+  if(el) el.innerHTML = treeRowsHTML(mode);
+}
+function filterTree(scope){
+  var q,rows;
+  if(scope==="createTree"){rows=document.querySelectorAll("#createTree tr.sub");var inp=document.querySelector("#scr-4 .toolbar input");q=(inp?inp.value:"").toLowerCase();}
+  else{q=($("#treeSearch").value||"").toLowerCase();rows=document.querySelectorAll("#treeView tr.sub");}
+  var stage=scope==="createTree"?null:$("#stageFilter").value;
+  rows.forEach(function(r){
+    var name=r.dataset.name, code=r.dataset.code;
+    var qOk=!q||name.indexOf(q)>-1||code.indexOf(q)>-1;
+    if(scope==="createTree"){r.style.display=qOk?"":"none";return}
+    var s=allSubs(currentLib).find(function(x){return x.s.id===r.dataset.sub});
+    var stOk=!stage||(s&&stageMatch(s.s,stage));
+    var tabOk=true;
+    if(lStatus==="nodrill")tabOk=r.dataset.drills==="0";
+    if(lStatus==="noassess")tabOk=r.dataset.assessed==="0";
+    if(lStatus==="changed")tabOk=r.dataset.changed==="1";
+    if(lStatus==="retired")tabOk=r.dataset.retired==="1";
+    r.style.display=(qOk&&stOk&&tabOk)?"":"none";
+  });
+}
+function renderMatrix(){
+  if(currentLib!=="cricket"){$("#matrixBox").innerHTML='<p class="muted">Progression matrix is shown for the Cricket Library in this demo slice.</p>';return}
+  var cols=["U9 White","U10 Silver","U11 Silver","U12 Silver","U13 Gold","U14 Gold"];
+  var fams=[];LIBS[currentLib].areas.forEach(function(a){(a.families||[]).forEach(function(f){fams.push({area:a.name,name:f.name,subs:f.subs})})});
+  var gaps=0, html='<table class="matrix"><thead><tr><th>Skill family</th>'+cols.map(function(c){return "<th>"+esc(c)+"</th>"}).join("")+'</tr></thead><tbody>';
+  fams.forEach(function(f){
+    html+="<tr><td><b>"+esc(f.name)+"</b><br><span class='muted small'>"+esc(f.area)+"</span></td>";
+    cols.forEach(function(c){
+      var ass=0,intro=0;
+      f.subs.forEach(function(s){(s.stages||[]).forEach(function(x){if(x.s===c){if(x.role==="Assessed")ass++;else intro++}})});
+      if(ass===0&&intro===0){gaps++;html+='<td class="gap" title="Gap — no sub-skill here yet" onclick="toast(\'Add a sub-skill to '+esc(f.name)+' at '+esc(c)+' (opens the sub-skill page prefilled).\')">+ gap</td>'}
+      else{html+='<td class="filled" onclick="toast(\''+esc(f.name)+' · '+esc(c)+': '+ass+' assessed'+(intro?', '+intro+' introduce/revisit':'')+'\')">'+ass+(intro?'<br><span class="muted small" style="font-weight:400">'+intro+' intro</span>':"")+'</td>'}
+    });
+    html+="</tr>";
+  });
+  html+="</tbody></table>";
+  html+='<p style="margin-top:10px"><b>'+gaps+' gaps</b> · Missing stages are a warning, never an error — they never block publishing. <span class="muted small">Footer counts are computed live from the sample data in this demo.</span></p>';
+  $("#matrixBox").innerHTML=html;
+}
+function renderDrills(){
+  var q=(($("#drillSearch").value||"").toLowerCase());
+  var area=$("#drillArea").value;
+  var list=DRILLS.filter(function(d){return (!q||d.name.toLowerCase().indexOf(q)>-1||d.code.toLowerCase().indexOf(q)>-1)&&(!area||d.area===area)});
+  $("#drillList").innerHTML=list.map(function(d){
+    return '<div class="card" style="margin-bottom:8px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b>'+esc(d.code)+' · '+esc(d.name)+'</b><span class="badge grey">'+esc(d.type)+'</span><span class="muted small">'+d.min+' min · '+esc(d.format)+'</span><span class="badge">Shared · '+d.used+' sub-skills</span><span style="flex:1"></span><button class="ghost" onclick="toggleDrill(\''+d.code+'\')">Details</button></div>'
+    +'<div id="drill-'+d.code+'" style="display:none;margin-top:10px"><p><b>How to run it:</b> '+esc(d.how||"As written in the drill.")+'</p>'
+    +(d.why?'<p class="small"><b>Why it works:</b> '+esc(d.why)+'</p>':"")
+    +'<p class="small"><b>Set-up and safety:</b> Equipment: '+esc(d.equip)+' · Space: '+esc(d.space)+' · Group: '+esc(d.group)+' · Coaches: '+esc(d.ratio)+' · Safety: '+esc(d.safety)+'</p>'
+    +'<p class="small"><b>Coaching points:</b> '+d.points.map(esc).join(" · ")+'</p>'
+    +'<p class="small"><b>Make it easier:</b> '+esc(d.easier)+' · <b>Make it harder:</b> '+esc(d.harder)+'</p>'
+    +'<p class="small muted">Editing a shared drill shows “This drill is used by '+d.used+' sub-skills. Changes apply to all.” with Edit for all / Make a copy for this sub-skill.</p></div></div>';
+  }).join("")||'<p class="muted">No drills match.</p>';
+}
+function toggleDrill(code){var el=$("#drill-"+code);el.style.display=el.style.display==="none"?"block":"none"}
+function renderLibSugg(){
+  var list=SUGGS.filter(function(s){return s.lib===LIBS[currentLib].name});
+  $("#libSuggList").innerHTML=list.map(function(s){
+    return '<div class="sugrow"><input type="checkbox" aria-label="Select suggestion" onchange="updBulk()"><span><b>'+esc(s.item)+'</b><br><span class="small muted">'+esc(s.type)+' · From '+esc(s.from)+' · '+esc(s.coach)+' · '+esc(s.lib)+'</span><br><span class="small">'+esc(s.note)+'</span></span><span style="flex:1"></span><button onclick="openSugReview('+s.id+')">Review</button></div>';
+  }).join("")||'<p class="muted">No suggestions on this library.</p>';
+}
+
+/* ============ SUB-SKILL PAGE (LB21) ============ */
+function openSub(id){curSub=id;renderSub();goScreen(3)}
+function renderSub(){
+  var list=allSubs(currentLib), idx=list.findIndex(function(x){return x.s.id===curSub});
+  if(idx<0){idx=0;curSub=list[0].s.id}
+  var cur=list[idx], s=cur.s;
+  $("#ssCrumb").textContent=s.name;
+  $("#ssPrev").disabled=idx===0; $("#ssNext").disabled=idx===list.length-1;
+  var ol='<div class="small muted" style="margin-bottom:6px">'+esc(LIBS[currentLib].name)+'</div>';
+  LIBS[currentLib].areas.forEach(function(a){
+    ol+='<a href="#" onclick="return false"><b>'+esc(a.name)+'</b></a>';
+    (a.families||[]).forEach(function(f){ol+='<a href="#" onclick="return false" class="sub">› '+esc(f.name)+'</a>';
+      f.subs.forEach(function(x){ol+='<a href="#" onclick="openSub(\''+x.id+'\');return false" class="sub'+(x.id===curSub?" on":"")+'" style="padding-left:40px">· '+esc(x.name)+'</a>'})});
+    (a.subs||[]).forEach(function(x){ol+='<a href="#" onclick="openSub(\''+x.id+'\');return false" class="sub'+(x.id===curSub?" on":"")+'" style="padding-left:40px">· '+esc(x.name)+'</a>'});
+  });
+  $("#ssOutline").innerHTML=ol;
+  var stageRows=(s.stages||[]).map(function(x){
+    var inner='<span class="role">'+esc(x.s)+'</span> <span class="chip '+(x.role==="Assessed"?"solid":"")+'">'+esc(x.role)+'</span>';
+    if(x.role==="Assessed")inner+='<span class="small">Pass standard: '+esc(s.pass)+'</span>';
+    if(x.note)inner+='<span class="badge warn">'+esc(x.note)+'</span>';
+    return '<div class="stageRow">'+inner+'</div>';
+  }).join("");
+  if(s.allStages)stageRows='<div class="stageRow"><input type="checkbox" checked> <b>Applies at every stage</b> <span class="small muted">(e.g. warm-up routine, code of conduct)</span> <span class="chip grey">All stages</span></div>';
+  else stageRows+='<div class="stageRow"><input type="checkbox"> Applies at every stage <span class="small muted">(e.g. warm-up routine, code of conduct)</span></div><button class="ghost" onclick="toast(\'Stage added. One stage can appear only once per sub-skill.\')">+ Add stage</button>';
+  var assessed=(s.stages||[]).filter(function(x){return x.role==="Assessed"});
+  var assessHtml=assessed.length?assessed.map(function(x,i){
+    return '<div class="field"><b>'+esc(x.s)+' — Assessed</b>'
+    +'<div class="small"><b>What the coach checks:</b> '+esc(s.check)+'</div>'
+    +'<div class="small"><b>Pass standard:</b> '+esc(s.pass)+'</div>'
+    +'<div class="small"><b>Scoring type:</b> '+esc(s.scoring)+' · <b>Points or weight:</b> optional</div>'
+    +(i===1?'<button class="ghost" onclick="toast(\'Copied from '+esc(assessed[0].s)+'\')">Copy from '+esc(assessed[0].s)+'</button>':"")+'</div>';
+  }).join(""):'<p class="small muted">No assessed stage yet — this sub-skill shows an amber “No assessed stage” warning and does not appear in stage-filtered program pickers until fixed. It never blocks publishing.</p>';
+  assessHtml+='<p class="small"><span class="badge later">Later</span> Recording results per athlete and level-up rules: coming later.</p>';
+  var prev=list.find(function(x){return x.s.name===s.buildsOn});var next=list.find(function(x){return x.s.buildsOn===s.name});
+  function chainStep(x,on){return '<span class="step'+(on?" on":"")+'">'+esc(x.s.name)+'<br><span class="tiny">'+esc(x.s.assessStage||"")+'</span></span>'}
+  var progHtml=(prev?chainStep(prev,false)+'<span class="arr">→</span>':"")+chainStep(cur,true)+(next?'<span class="arr">→</span>'+chainStep(next,false):"");
+  var changes=s.retired?'<p><span class="badge bad">Retired in v5</span> <button class="ghost" onclick="undoChange(\'dap\')">Undo</button></p>':(s.changed?'<p><span class="badge warn">Edited</span> Was “Forward defence” <button class="ghost" onclick="undoChange(\'fd\')">Undo</button></p>':"<p class='small muted'>No changes in this draft.</p>");
+  var suggHere=SUGGS.filter(function(x){return x.item.indexOf(s.name)===0});
+  $("#ssBody").innerHTML=
+   '<div class="sectioncard"><h3>Basics</h3>'
+   +'<div class="field"><label>Sub-skill name *</label><input value="'+esc(s.name)+'" style="width:100%" onchange="touchSave()"></div>'
+   +'<div class="field"><label>Code</label><input value="'+esc(s.code||"")+'" style="width:100%;max-width:280px" onchange="touchSave()"> <button class="ghost" onclick="toast(\'Code auto-generated: library prefix + first assessed stage + family abbreviation + number.\')">Auto-generate</button><div class="hint">Name is unique within its skill family. Code is unique in the library. To teach it at another stage, add the stage to its stage map — never copy the sub-skill.</div></div>'
+   +'<p class="small"><b>Where it sits:</b> '+esc(cur.area)+(cur.fam?" › "+esc(cur.fam):"")+'</p>'
+   +'<p class="small"><b>Builds on:</b> '+(s.buildsOn?esc(s.buildsOn):"—")+'</p></div>'
+   +'<div class="sectioncard"><h3>Stage map</h3><p class="small muted">Assessed is where athletes are checked against the standard. Add Introduce or Revisit where coaches also teach it. Every sub-skill has at least one Assessed row.</p>'+stageRows+'</div>'
+   +'<div class="sectioncard"><h3>Coaching</h3><p><b>Coaching points (for coaches):</b></p><ul>'+(s.points||["—"]).map(function(p){return "<li>"+esc(p)+"</li>"}).join("")+'</ul><div class="field"><label>What families see (optional)</label><input value="'+esc(s.ican||"")+'" style="width:100%" onchange="touchSave()"><div class="hint">Start with “I can…” <span class="hintchip">Families see: '+esc(s.ican||"")+'</span></div></div></div>'
+   +'<div class="sectioncard"><h3>How it is assessed</h3>'+assessHtml+'</div>'
+   +'<div class="sectioncard"><h3>Drills</h3><p>'+s.drills.map(function(d){var dd=DRILLS.find(function(x){return x.name===d});return '<span class="chip">'+esc(d)+(dd?' · '+dd.min+' min':"")+'</span>'}).join(" ")+'</p><button onclick="toast(\'Pick drills from the bank — shared drills show “Shared · N sub-skills”.\')">Use an existing drill</button> <button onclick="toast(\'New drill saves to the bank and links here.\')">Write a new drill</button></div>'
+   +'<div class="sectioncard"><h3>Homework</h3><p>'+esc(s.hw||"—")+'</p>'+(s.hw&&s.hw.indexOf("parent")>-1?'<p class="small">🛡 Needs an adult · What they need: tennis ball and a wall</p>':"")+'</div>'
+   +'<div class="sectioncard"><h3>Restrictions</h3>'+(s.restrict?'<p>🛡 '+esc(s.restrict)+'</p>':"<p class='small muted'>No restrictions on this sub-skill.</p>")+'<button class="ghost" onclick="toast(\'Restriction added.\')">+ Add restriction</button><p class="small muted">Example (football): Heading practice — Not before U12.</p></div>';
+  $("#ssUsed").innerHTML="<p>Used in <b>"+s.used+" programs</b></p><p class='small muted'>Every reference stores sub-skill ID, stage and library version.</p><button class='ghost' onclick=\"toast('Programs using this sub-skill (full list in the live app).')\">See programs</button>";
+  $("#ssProg").innerHTML=progHtml;
+  $("#ssChanges").innerHTML=changes;
+  $("#ssSugg").innerHTML=suggHere.length?suggHere.map(function(x){return "<p><b>"+esc(x.item)+"</b><br><span class='small'>"+esc(x.type)+" · "+esc(x.coach)+" · "+esc(x.note)+"</span></p>"}).join(""):"<p class='small muted'>No suggestions on this sub-skill.</p>";
+  $("#autosave").textContent="Saved just now";
+}
+function touchSave(){$("#autosave").textContent="Saving…";setTimeout(function(){$("#autosave").textContent="Saved just now"},600)}
+function stepSub(d){var list=allSubs(currentLib),idx=list.findIndex(function(x){return x.s.id===curSub});var n=idx+d;if(n>=0&&n<list.length){curSub=list[n].s.id;renderSub()}}
+function saveNext(){touchSave();stepSub(1)}
+function undoChange(id){toast("Change undone — the row is back to the published v4.")}
+
+/* ============ CREATE LIBRARY (3 steps + import) ============ */
+var cs={step:1,sport:"Cricket",start:"template",scope:"sport",imp:0};
+function initCreate(tpl){cs={step:1,sport:"Cricket",start:tpl==="copy"?"copy":(tpl==="import"?"import":(tpl==="scratch"?"scratch":"template")),scope:"sport",imp:0};renderCreate()}
+function setCS(k,v){cs[k]=v;renderCreate()}
+function renderCreate(){
+  [1,2,3].forEach(function(n){var li=$("#rail"+n);li.className=n<cs.step?"done":(n===cs.step?"on":"")});
+  $("#railSummary").textContent=cs.step===1?"Cricket · Quixera template":(cs.step===2?"7 areas · 47 sub-skills · 12 without an assessed stage":"2 blockers");
+  var b=$("#createBody");
+  if(cs.step===1){b.innerHTML=step1HTML()}
+  if(cs.step===2){b.innerHTML=step2HTML();renderTree("create")}
+  if(cs.step===3){b.innerHTML=step3HTML()}
+}
+function step1HTML(){
+  var sports=["Cricket","Swimming","Tennis","Football"].map(function(sp){
+    var noPath=sp==="Football";
+    return '<button type="button" class="sportcard'+(cs.sport===sp?" on":"")+'" onclick="setCS(\'sport\',\''+sp+'\')"><b>'+sp+'</b><br><span class="small muted">'+(noPath?"Set up its pathway first":"Pathway ready")+'</span>'+(noPath?' <a href="#" onclick="event.stopPropagation();goScreen(6);return false">Set up pathway</a>':"")+'</button>';
+  }).join("");
+  var pathway={Cricket:"U9 to U18 × White, Silver, Gold, Purple · Edit in settings",Swimming:"Stage 1 to 7 · Edit in settings",Tennis:"Red, Orange, Green, Yellow ball · Edit in settings",Football:"No pathway yet"}[cs.sport];
+  var starts=[
+    {k:"template",t:"Quixera template for "+cs.sport, d:"7 skill areas · 180 sub-skills · Preview",def:true},
+    {k:"import",t:"Import from a spreadsheet",d:"Bring a syllabus you already have (CSV or Excel)"},
+    {k:"copy",t:"Copy one of your libraries",d:"Cricket Library · Swimming Library · Tennis Library"},
+    {k:"scratch",t:"Start from scratch",d:"Empty structure — add skill areas yourself"}
+  ].map(function(s){
+    return '<button type="button" class="radiocard'+(cs.start===s.k?" on":"")+'" onclick="setCS(\'start\',\''+s.k+'\')"><input type="radio" '+(cs.start===s.k?"checked":"")+' aria-label="'+esc(s.t)+'"><span><b>'+esc(s.t)+'</b>'+(s.def?' <span class="badge">Default</span>':"")+'<br><span class="small muted">'+esc(s.d)+'</span>'+(s.k==="template"&&cs.start==="template"?' <a href="#" onclick="event.stopPropagation();toast(\'Template preview: 7 skill areas · 180 sub-skills · Batting, Bowling, Fielding, Fitness, The code…\');return false">Preview</a>':"")+'</span></button>';
+  }).join("");
+  var imp = cs.start==="import" ? importHTML() : "";
+  return '<h3>Step 1 · Start</h3>'
+  +'<div class="field"><label>This library is for:</label><label class="small"><input type="radio" name="scope" '+(cs.scope==="sport"?"checked":"")+' onchange="setCS(\'scope\',\'sport\')"> One sport</label> <label class="small"><input type="radio" name="scope" '+(cs.scope==="shared"?"checked":"")+' onchange="setCS(\'scope\',\'shared\')"> All sports (shared)</label>'
+  +(cs.scope==="shared"?'<div class="hint">Examples: Athletic development · Character and mindset · Injury prevention and warm-ups. Shared libraries show under “Shared libraries” on the landing, and each sport card notes “Also uses: Athletic development”.</div>':"")+'</div>'
+  +(cs.scope==="sport"?'<div class="field"><label>Sport</label><div class="sportcards">'+sports+'</div></div>'
+  +'<div class="field"><label for="libName">Library name</label><input id="libName" value="'+esc(cs.sport)+' Library" style="width:100%;max-width:420px"></div>'
+  +'<div class="field"><label>Pathway</label><p>'+esc(pathway)+'</p></div>':"")
+  +'<div class="field"><label>How do you want to start?</label><div class="radiocards">'+starts+'</div></div>'
+  +imp
+  +'<div class="stepnav"><span></span><span><button onclick="toast(\'Draft saved. Reopening returns to the step you left.\')">Save draft</button> <button class="primary" onclick="setCS(\'step\',2)">Next: Skills ›</button></span></div>';
+}
+function importHTML(){
+  var boards=[
+   "<b>1 · Upload.</b> Drop your CSV or Excel here. <button onclick=\"toast('Template downloaded.')\">Download our template</button><br><span class='small muted'>Sample preview: KRCA syllabus, 188 coded items.</span>",
+   "<b>2 · Map columns.</b> Detected headers auto-matched ✓: Skill area → Skill area, Sub-skill name → Sub-skill name, Code → Code, Stage → Stage. 20-row preview below. Unknown age groups or levels are mapped once to the sport's pathway, never added as new stages.",
+   "<b>3 · Check.</b> Will create 7 skill areas, 13 skill families, 188 sub-skills, 240 drills · 4 levels mapped to your pathway · 6 rows skipped.<br><span class='small'>Problem rows: <b>Row 42</b> — missing name <button class='ghost' onclick=\"toast('Row 42 fixed inline.')\">Fix</button> <button class='ghost'>Skip</button> · <b>Row 87</b> — unknown stage <button class='ghost' onclick=\"toast('Row 87 mapped to U12 Silver.')\">Fix</button> <button class='ghost'>Skip</button> · <b>Row 103</b> — duplicate code <button class='ghost'>Skip</button></span>",
+   "<b>4 · Done.</b> Everything is in the draft. <button class='primary' onclick=\"setCS('step',2)\">Continue to Skills step ›</button>"
+  ];
+  return '<div class="card"><h3>Import from a spreadsheet</h3><div class="tabs">'+boards.map(function(_,i){return '<button class="'+(cs.imp===i?"on":"")+'" onclick="cs.imp='+i+';renderCreate()">'+["Upload","Map columns","Check","Done"][i]+'</button>'}).join("")+'</div><p>'+boards[cs.imp]+'</p></div>';
+}
+function step2HTML(){
+  return '<h3>Step 2 · Skills</h3><p class="small muted">Structure and sub-skills in one table, in any order. Typing a name and pressing Enter adds a name-only row and keeps focus; pasting several lines adds one sub-skill per line after a confirm chip. New rows show a neutral “Needs drills” marker. Missing stages or drills never block Next — they appear as warnings on Review.</p>'
+  +'<div class="toolbar"><input type="search" placeholder="Search sub-skills and drills…" aria-label="Search" oninput="filterTree(\'createTree\')"><span class="badge">From the Quixera Cricket template</span><button class="ghost" onclick="toast(\'7 suggested skill areas added from the template.\')">Add all 7 suggestions</button></div>'
+  +'<div id="createTree"></div>'
+  +'<p class="small"><span class="hintchip">Stages copied from Forward defense</span> <span class="muted">— a sub-skill added in a family inherits the stage map of the previous one added in this session. Drills do not carry over.</span></p>'
+  +'<div class="stepnav"><button onclick="setCS(\'step\',1)">‹ Back</button><span><button onclick="toast(\'Draft saved.\')">Save draft</button> <button class="primary" onclick="setCS(\'step\',3)">Next: Review and publish ›</button></span></div>';
+}
+function step3HTML(){
+  return '<h3>Step 3 · Review and publish</h3>'
+  +'<div class="checks"><div class="row"><b>✓ No blockers</b><span>Ready to publish.</span></div>'
+  +'<div class="row warn"><b>⚠ Warning</b><span>12 sub-skills have no drills. <a href="#" onclick="setCS(\'step\',2);return false">Show</a></span></div>'
+  +'<div class="row warn"><b>⚠ Warning</b><span>No sub-skills at Adult. <a href="#" onclick="setCS(\'step\',2);return false">Show</a></span></div>'
+  +'<div class="row warn"><b>⚠ Warning</b><span>3 sub-skills have no family-facing line.</span></div></div>'
+  +'<p style="margin-top:10px"><a href="#" onclick="goScreen(2);setView(document.querySelector(\'[data-view=prog]\'));return false">Coverage — open the Progression view (read-only)</a> · <span class="muted small">188 sub-skills have an assessment: 176 of 188</span></p>'
+  +'<div class="field"><label for="wc2">What changed (shown to coaches)</label><textarea id="wc2" rows="2" style="width:100%">First published version of the Cricket Library, from the Quixera template.</textarea></div>'
+  +'<div class="field"><label>When</label><label class="small"><input type="radio" name="when2" checked> Publish now</label> <label class="small"><input type="radio" name="when2"> Publish on a date</label> <label class="small"><input type="radio" name="when2"> Start of next term</label></div>'
+  +'<div class="stepnav"><button onclick="setCS(\'step\',2)">‹ Back</button><span><button onclick="toast(\'Draft saved.\')">Save draft</button> <button class="primary" onclick="toast(\'Cricket Library published as v1. New programs use v1.\');goScreen(1)">Publish library</button></span></div>';
+}
+function inlineAdd(e,input,area,fam){
+  if(e.key==="Enter"&&input.value.trim()){toast("Added “"+input.value.trim()+"” to "+area+(fam?" › "+fam:"")+" — click the row to add its stage map and drills.");input.value="";e.preventDefault()}
+}
+function pasteAdd(e,input){
+  var text=(e.clipboardData||window.clipboardData).getData("text")||"";
+  var lines=text.split(/\n/).map(function(x){return x.trim()}).filter(Boolean);
+  if(lines.length>1){e.preventDefault();var ok=confirm("Add "+lines.length+" sub-skills?");if(ok)toast(lines.length+" sub-skills added.");}
+}
+</script>
+
+<script>
+/* ============ EDIT MODE ============ */
+function setESec(btn){document.querySelectorAll("#scr-5 [data-esec]").forEach(function(b){b.classList.remove("on")});btn.classList.add("on");
+ $("#esec-details").style.display=btn.dataset.esec==="details"?"":"none";$("#esec-skills").style.display=btn.dataset.esec==="skills"?"":"none"}
+function renderEditTree(){renderTree("edit")}
+function removeFamily(name){
+  var m=document.createElement("div");
+  m.className="modal";m.id="removeFamModal";
+  m.innerHTML='<div class="modalcard"><h3>Remove '+esc(name)+'? The family has 6 sub-skills.</h3>'
+  +'<p>What happens to its sub-skills?</p>'
+  +'<p><label><input type="radio" name="rf" checked> Move them to another family (default)</label><br><label><input type="radio" name="rf"> Remove them too</label></p>'
+  +'<p class="small muted">Removal is staged as a change until you publish. You can undo it before publishing.</p>'
+  +'<p style="text-align:right"><button onclick="document.getElementById(\'removeFamModal\').remove()">Cancel</button> <button class="primary" onclick="document.getElementById(\'removeFamModal\').remove();toast(\'Removal staged in draft v5.\')">Remove '+esc(name)+'</button></p></div>';
+  document.body.appendChild(m);
+}
+function openPublish(){$("#publishModal").style.display="block"}
+function closePublish(){$("#publishModal").style.display="none"}
+
+/* ============ PATHWAYS ============ */
+function toggleProf(id){var el=$("#"+id);el.style.display=el.style.display==="none"?"":"none"}
+
+/* ============ COACH MOBILE ============ */
+var phone={view:"list",stage:"U12 · Silver",sub:null};
+var PH_STAGES=["U9 White","U10 Silver","U11 Silver","U12 Silver","U13 Gold","U14 Gold"];
+function renderPhone(){
+  var b=$("#phoneBody");
+  if(phone.view==="list"){
+    b.innerHTML='<div class="phwrap">'+Object.keys(LIBS).map(function(k){var L=LIBS[k];
+      return '<div class="card" style="cursor:pointer" onclick="'+(k==="cricket"?"phone.view='skills';renderPhone()":"toast('Demo slice: coach view is shown for Cricket.')")+'"><b>'+esc(L.name)+'</b><br><span class="small muted">'+esc(L.pathway)+' · '+L.count+'</span><br><span class="small">'+esc(L.origin)+'</span></div>'}).join("")
+      +'<div class="card"><b>Shared libraries</b><br><span class="small muted">Athletic development · Character and mindset</span></div></div>';
+    $("#phoneSheet").style.display="none";
+  } else if(phone.view==="skills"){
+    var L=LIBS.cricket;
+    var opts=PH_STAGES.map(function(s){return '<option'+(s===phone.stage?" selected":"")+'>'+s+'</option>'}).join("");
+    var html='<div class="phwrap"><p class="small muted">Cricket Library · '+esc(L.origin)+'</p>'
+    +'<label class="small"><b>Show:</b> <select onchange="phone.stage=this.value.split(\' · \')[0];renderPhone()" style="min-height:44px">'+opts+'</select></label>'
+    +'<input type="search" placeholder="Search the library" aria-label="Search" style="width:100%;margin:8px 0" oninput="phoneSearch(this.value)">'
+    +'<div id="phoneTree">';
+    L.areas.forEach(function(a){
+      (a.families||[]).forEach(function(f){
+        var subs=f.subs.filter(function(s){return stageMatch(s,phone.stage)});
+        html+='<div class="phfam" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'\':\'none\'"><b>'+esc(f.name)+'</b><span>'+subs.length+' at this stage</span></div><div>';
+        subs.forEach(function(s){html+='<div class="phsub" onclick="openPhoneSub(\''+s.id+'\')"><b>'+esc(s.name)+'</b><br><span class="small muted">'+(s.stages||[]).map(function(x){return x.s+" "+x.role}).join(" · ")+' · '+s.drills.length+' drills</span></div>'});
+        html+='</div>';
+      });
+      (a.subs||[]).forEach(function(s){
+        if(stageMatch(s,phone.stage))html+='<div class="phfam" onclick="openPhoneSub(\''+s.id+'\')"><b>'+esc(s.name)+'</b><span>All stages</span></div>';
+      });
+    });
+    html+='</div></div>';
+    b.innerHTML=html;$("#phoneSheet").style.display="none";
+  }
+}
+function phoneSearch(q){q=q.toLowerCase();document.querySelectorAll("#phoneTree .phsub").forEach(function(el){el.style.display=el.textContent.toLowerCase().indexOf(q)>-1?"":"none"})}
+function openPhoneSub(id){
+  var s=allSubs("cricket").find(function(x){return x.s.id===id});if(!s)return;s=s.s;
+  $("#phoneSheet").innerHTML='<div class="phwrap"><div style="display:flex;gap:8px;align-items:center"><button class="ghost" onclick="renderPhone()">‹ Back</button><h3 style="margin:0">'+esc(s.name)+'</h3></div>'
+  +'<p class="small muted">'+esc(s.code||"")+' · Assessed at '+esc(s.assessStage||"")+'</p>'
+  +'<p><b>How it is assessed</b><br><span class="small">'+esc(s.check)+' — pass: '+esc(s.pass)+' ('+esc(s.scoring)+')</span></p>'
+  +'<h4>Drills</h4>'+s.drills.map(function(d){var dd=DRILLS.find(function(x){return x.name===d});if(!dd)return '<div class="drillcard"><b>'+esc(d)+'</b></div>';
+    return '<div class="drillcard"><b>'+esc(dd.name)+'</b> <span class="badge">'+dd.min+' min</span><br><span class="small muted">'+esc(dd.format)+' · '+esc(dd.type)+'</span><br><span class="small"><b>How to run it:</b> '+esc(dd.how||"As written in the drill.")+'</span><br><span class="small"><b>Why:</b> '+esc(dd.why||"—")+'</span></div>'}).join("")
+  +'<h4>Homework</h4><p class="small">'+esc(s.hw||"—")+'</p>'
+  +'<p class="small muted">Coaching points: '+(s.points||[]).map(esc).join(" · ")+'</p>'
+  +'<p><button class="primary" style="width:100%" onclick="toast(\'Suggestion sent to Sarah Chen. She approves it with the change summary at publish.\')">Suggest a change</button></p></div>';
+  $("#phoneSheet").style.display="block";
+}
+
+/* ============ SUGGESTIONS QUEUE ============ */
+var sugFilter={type:null,from:null};
+function setSugFilter(btn){
+  var g=btn.dataset.f;
+  document.querySelectorAll("#scr-8 [data-f='"+g+"']").forEach(function(b){b.classList.remove("on")});btn.classList.add("on");
+  sugFilter[g]=btn.dataset.v==="all"?null:btn.dataset.v;renderSugList();
+}
+function renderSugList(){
+  var list=SUGGS.filter(function(s){return (!sugFilter.type||s.type===sugFilter.type)&&(!sugFilter.from||s.from===sugFilter.from)});
+  $("#sugList").innerHTML=list.map(function(s){
+    return '<div class="sugrow"><input type="checkbox" aria-label="Select suggestion" onchange="updBulk()"><span class="badge '+(s.type==="Flag a problem"?"bad":"grey")+'">'+esc(s.type)+'</span><span><b>'+esc(s.item)+'</b><br><span class="small muted">From '+esc(s.from)+' · '+esc(s.coach)+' · '+esc(s.lib)+' · '+esc(s.status)+'</span><br><span class="small">'+esc(s.note)+'</span></span><span style="flex:1"></span><button onclick="openSugReview('+s.id+')">Review</button></div>';
+  }).join("")||'<p class="muted">No suggestions match these filters.</p>';
+  updBulk();
+}
+function updBulk(){
+  var n=document.querySelectorAll("#sugList input:checked").length;
+  $("#bulkBar").style.display=n?"flex":"none";
+  $("#bulkTxt").textContent=n+" selected";
+}
+function bulkAct(a){var n=document.querySelectorAll("#sugList input:checked").length;toast(n+" suggestion"+(n===1?"":"s")+" "+(a==="approve"?"approved and added to the Cricket Library draft.":"declined."));document.querySelectorAll("#sugList input:checked").forEach(function(c){c.checked=false});updBulk()}
+function openSugReview(id){
+  var s=SUGGS.find(function(x){return x.id===id});if(!s)return;
+  $("#sugReview").innerHTML='<div class="card"><p><b>Review suggestion</b> — '+esc(s.type)+' · From '+esc(s.from)+' · '+esc(s.coach)+' · '+esc(s.lib)+'</p>'
+  +'<p class="small"><b>Coach note:</b> '+esc(s.note)+'</p>'
+  +(s.now?'<div class="diff"><div><h4>Now in the library</h4><p>'+esc(s.now)+'</p></div><div><h4>Suggested</h4><p class="hl">'+esc(s.sugg)+'</p></div></div>':"")
+  +(s.type==="New drill"?'<div class="diff"><div><h4>Now in the library</h4><p class="muted small">No drill like this in the bank.</p></div><div><h4>Suggested</h4><p class="hl">Machine feeds: playing late — 40 min · Coach-fed · Bowling machine, 2 lanes.<br>How to run it: Machine at 95 km/h, 6 balls each. Batters hold the shot until the ball passes the front pad, then play it late under the eyes.</p></div></div>':"")
+  +'<p class="small muted">Approving adds it to the Cricket Library draft. You publish it with the change summary, like any edit, and '+esc(s.coach)+' sees it’s approved.</p>'
+  +'<p><button class="primary" onclick="sugDecide('+s.id+',\'approved\')">Approve</button> <button onclick="sugDecide('+s.id+',\'approved with edits\')">Edit then approve</button> <button onclick="sugDecide('+s.id+',\'declined\')">Decline</button></p></div>';
+  $("#sugReview").scrollIntoView({behavior:"smooth"});
+}
+function sugDecide(id,what){var s=SUGGS.find(function(x){return x.id===id});if(s)s.status=what==="declined"?"Declined":"Approved";toast("Suggestion "+what+".");renderSugList();$("#sugReview").innerHTML=""}
+
+/* ============ LIBRARY MENU ============ */
+function libMenu(key){
+  var L=LIBS[key];var m=document.createElement("div");m.className="modal";m.id="libMenuModal";
+  m.innerHTML='<div class="modalcard"><h3>'+esc(L.name)+'</h3>'
+  +'<p><button class="primary" onclick="document.getElementById(\'libMenuModal\').remove();goScreen(4);initCreate(\'copy\');toast(\'Copied to a new sport — pick the sport and pathway on Step 1.\')">Copy to a new sport</button></p>'
+  +'<p><button onclick="document.getElementById(\'libMenuModal\').remove();toast(\'Exported the full library — skill tree, stage map and drill bank — as a spreadsheet.\')">Export to spreadsheet</button></p>'
+  +'<p><button disabled title="Used by '+L.programs+' programs">Archive</button> <span class="small muted">Used by '+L.programs+' programs — archive is not available. <a href="#" onclick="document.getElementById(\'libMenuModal\').remove();goScreen(2);return false">See programs</a></span></p>'
+  +'<p style="text-align:right"><button onclick="document.getElementById(\'libMenuModal\').remove()">Close</button></p></div>';
+  document.body.appendChild(m);
+}
+
+/* ============ INIT ============ */
+document.addEventListener("DOMContentLoaded",function(){
+  buildNav();renderLanding();renderLibraryPage();renderPhone();renderSugList();renderEditTree();
+  var et=$("#emptyToggle");if(et)et.addEventListener("change",function(){$("#landingMain").style.display=et.checked?"none":"";$("#landingEmpty").style.display=et.checked?"":"none"});
+  goScreen(0);
+});
+</script>
+</body>
+</html>
