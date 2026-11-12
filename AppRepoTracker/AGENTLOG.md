@@ -1,5 +1,10 @@
 # AGENTLOG — AppRepoTracker
 
+## 2026-11-12 — v1.0.13 — UX Design Skill entry updated to v1.1.0
+- Request: push the updated ux-design skill (Navigation N1–N12) to GitHub as v1.1.0 and update the tracker (Ankit, App Sprints chat, 2026-11-12).
+- Change: "UX Design Skill" entry updated from v1.0.0 to v1.1.0 (Updated 2026-11-12); description now notes the Navigation section is the N1–N12 decision from the Nov 12 navigation debate; source line updated to v1.1.0.
+- Verification: tracker index verified byte-identical to the edited copy; live tracker page returns HTTP 200 and shows v1.1.0.
+
 ## 2026-11-12 — v1.0.12 — Added UX Design Skill entry
 - Request: publish the ux-design skill to GitHub with version control and add it to the App Repo Tracker (Ankit, App Sprints chat, 2026-11-12).
 - Change: added "UX Design Skill (v1.0.0)" at the top of Documents / Plans (the global design standard — SKILL.md + skill.yaml, version-controlled at ux-design-skill/ on GitHub; a skill, not an app, so no live URL). Counts updated to 45 entries / 9 documents / plans.
