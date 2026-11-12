@@ -1,4 +1,4 @@
--- TradeDesk invite list (allow-list) — run ONCE in the Supabase SQL editor
+-- TradeDesk invite list (allow-list) — run ONCE in the SQL editor
 -- (Dashboard → SQL Editor → New query → paste → Run).
 --
 -- What this does:
@@ -13,15 +13,22 @@
 --     admin policy never has to read the same table through RLS (which
 --     would recurse). It only answers "is the caller an admin?".
 --
--- FAIL-CLOSED: until this file has been run, the app's login gate shows
--- "Setup needed" to everyone (including Ankit) and renders no app content.
--- Run this file BEFORE deploying the app version that enforces the list.
+-- FAIL-CLOSED: until this file has been run, the app's login gate shows a
+-- generic "couldn't check your access" screen to everyone (including the
+-- admin) and renders no app content. Run this file BEFORE deploying the
+-- app version that enforces the list.
 --
--- SEED: the first admin is Ankit's TradeDesk sign-in email
--- (apatel85@gmail.com) — the only person who sees the Admin tab until
--- more admins are added there. If the email ever needs changing:
---   update public.tradedesk_invites set email = 'correct@example.com'
---   where role = 'admin';
+-- PRIVACY: the seed block below is commented out on purpose — real email
+-- addresses do not belong in this file once the table is seeded, because
+-- the repo is public. The live table is already seeded. Only uncomment
+-- and fill in real emails if you ever recreate the table from scratch.
+
+-- SEED (only for a fresh setup — uncomment and replace the placeholders):
+-- insert into public.tradedesk_invites (email, role, invited_by)
+-- values
+--   ('admin@example.com', 'admin', 'setup'),
+--   ('member@example.com', 'member', 'admin@example.com')
+-- on conflict (email) do nothing;
 
 create table if not exists public.tradedesk_invites (
   email text primary key,
@@ -88,10 +95,5 @@ grant select, insert, update, delete
   on table public.tradedesk_invites to authenticated;
 revoke all on table public.tradedesk_invites from anon;
 
--- SEED: the first admin (Ankit's TradeDesk sign-in email) and the first
--- invitee, who can sign in as soon as the gate goes live.
-insert into public.tradedesk_invites (email, role, invited_by)
-values
-  ('apatel85@gmail.com', 'admin', 'setup'),
-  ('dipeshp@gmail.com', 'member', 'apatel85@gmail.com')
-on conflict (email) do nothing;
+-- (Seed block removed — see the commented-out block above. The live table
+-- is already seeded; real emails are never stored in this public file.)

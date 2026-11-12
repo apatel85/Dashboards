@@ -24,10 +24,14 @@ export function useInvite(): InviteInfo | null {
  *
  * Invite states after sign-in:
  *   allowed — row exists: the app renders, with the role attached.
- *   denied  — signed in but no row: no app content, "ask Ankit for an invite".
- *   setup   — the invites table is missing/unreadable: no app content, the
- *             admin is told to run the setup SQL. Fails closed on purpose.
- *   error   — anything else (e.g. network): retry, no app content.
+ *   denied  — signed in but no row: no app content, generic message.
+ *   error   — anything else (table missing, network, …): generic message
+ *             with a retry. Fails closed on purpose.
+ *
+ * PRIVACY RULE: no gate screen ever names the admin, the invite file, or
+ * the backend — a stranger who signs in must learn nothing about who runs
+ * this app or how it is set up. Setup instructions live in the repo SQL
+ * file's comments and in chat, never on screen.
  */
 export default function AuthGate({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<unknown | null>(null);
@@ -35,7 +39,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<Status>({ kind: 'idle', message: '' });
   const [invite, setInvite] = useState<InviteInfo | null>(null);
-  const [inviteState, setInviteState] = useState<'checking' | 'allowed' | 'denied' | 'setup' | 'error'>('checking');
+  const [inviteState, setInviteState] = useState<'checking' | 'allowed' | 'denied' | 'error'>('checking');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -70,16 +74,10 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         .maybeSingle();
       if (cancelled) return;
       if (error) {
-        // Table missing (not yet set up) — PostgREST reports it as
-        // PGRST205 / "Could not find the table". Fail closed to setup.
-        const msg = `${error.code ?? ''} ${error.message ?? ''}`;
-        if (error.code === 'PGRST205' || /could not find the table/i.test(msg) || error.code === '42P01') {
-          setInvite(null);
-          setInviteState('setup');
-        } else {
-          setInvite(null);
-          setInviteState('error');
-        }
+        // Any lookup failure (table missing, network, …) fails closed to
+        // the same generic screen — never reveal which one or why.
+        setInvite(null);
+        setInviteState('error');
         return;
       }
       if (!data) {
@@ -207,29 +205,6 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (inviteState === 'setup') {
-    return (
-      <div className="gate">
-        <div className="gate-card">
-          <div className="brand">TradeDesk</div>
-          <p className="gate-sub">Setup needed</p>
-          <p className="muted" style={{ textAlign: 'left' }}>
-            The invite list hasn&apos;t been set up yet. Ankit: run the file{' '}
-            <code>TradeDesk/supabase/tradedesk-invites-table.sql</code> in the
-            Supabase SQL editor, with your own sign-in email on the seed line,
-            then reload this page.
-          </p>
-          <button className="btn btn-secondary" onClick={signOut}>
-            Sign out
-          </button>
-          <p className="footnote">
-            Research and education only — not financial advice.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   if (inviteState === 'denied') {
     return (
       <div className="gate">
@@ -237,8 +212,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
           <div className="brand">TradeDesk</div>
           <p className="gate-sub">Access not granted</p>
           <p className="muted" style={{ textAlign: 'left' }}>
-            You&apos;re signed in, but this email isn&apos;t on the TradeDesk
-            invite list. Ask Ankit to add it, then sign in again.
+            You&apos;re signed in, but this email doesn&apos;t have access to
+            this app. If you were given access, contact the person who shared
+            the link with you, then sign in again.
           </p>
           <button className="btn btn-secondary" onClick={signOut}>
             Sign out
@@ -256,10 +232,10 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       <div className="gate">
         <div className="gate-card">
           <div className="brand">TradeDesk</div>
-          <p className="gate-sub">Couldn&apos;t check your invite</p>
+          <p className="gate-sub">Couldn&apos;t check your access</p>
           <p className="muted" style={{ textAlign: 'left' }}>
-            Something went wrong checking the invite list. Check your
-            connection and try again.
+            Something went wrong checking access. Check your connection and
+            try again.
           </p>
           <button className="btn btn-primary" onClick={() => window.location.reload()}>
             Try again
