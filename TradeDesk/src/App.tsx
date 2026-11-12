@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import AuthGate, { useInvite } from './auth/AuthGate';
 import LiveQuoteButton from './components/LiveQuoteButton';
-import { DefinitionsDrawer, FundamentalsPill } from './components/DefinitionsDrawer';
+import { DefinitionsDrawer } from './components/DefinitionsDrawer';
 import { TabErrorBoundary } from './components/ErrorBoundary';
 import DailyBriefTab from './tabs/DailyBrief';
 import OptionsTab from './tabs/Options';
@@ -49,7 +49,7 @@ const ADMIN_TAB: TabDef = { id: 'admin', label: 'Admin', dataFile: 'tradedesk_in
 const ALL_TAB_IDS = [...TAB_IDS, 'admin'] as TabId[];
 
 /** Build version — bump on every push so we can confirm what's live. */
-export const BUILD_VERSION = '2026-11-12c';
+export const BUILD_VERSION = '2026-11-12d';
 
 /** "14:32:05" in ET for the Schwab pill's updated time. */
 function fmtClockET(ms: number): string {
@@ -153,48 +153,43 @@ function Shell() {
   };
 
   return (
-    <div className="app mb-shell">
-      <div className="main-col">
-        <header className="topbar mb-topbar">
-          <div className="brand-row">
-            <span className="brand-mark" aria-hidden="true">◈</span>
-            <h1 className="brand mb-brand">TradeDesk</h1>
-            <span className="mb-topbar-sub muted small">Research &amp; education only, not financial advice.</span>
-          </div>
-          <div className="topbar-actions">
-            <button
-              className="btn btn-ghost fund-shortcut"
-              onClick={() => setDefsOpen(true)}
-              title="Understanding Fundamentals — every number in plain English"
-            >
-              ? Fundamentals
-            </button>
-            <LiveQuoteButton />
-            <button className="btn btn-ghost" onClick={signOut}>
-              Sign out
-            </button>
-          </div>
-        </header>
+    <div className="shell">
+      <header className="page-head">
+        <h1>TradeDesk</h1>
+        <div className="topbar-actions">
+          <button
+            className="btn btn-ghost fund-shortcut"
+            onClick={() => setDefsOpen(true)}
+            title="Understanding Fundamentals — every number in plain English"
+          >
+            ? Fundamentals
+          </button>
+          <LiveQuoteButton />
+          <button className="btn btn-ghost" onClick={signOut}>
+            Sign out
+          </button>
+        </div>
+      </header>
 
-        {/* Mock B tab bar: numbered pills under the header, wrapping. */}
-        <nav className="tabnav mb-tabbar" role="tablist" aria-label="TradeDesk sections">
-          {visibleTabs.map((t, i) => (
-            <button
-              key={t.id}
-              role="tab"
-              aria-selected={activeTab === t.id}
-              className={`tabbtn mb-tabbtn${activeTab === t.id ? ' active' : ''}`}
-              onClick={() => select(t.id)}
-            >
-              <span className="mb-tabnum" aria-hidden="true">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              {t.label}
-            </button>
-          ))}
-        </nav>
+      {/* Mock B tab bar: numbered pills under the head. */}
+      <nav className="tabbar" role="tablist" aria-label="TradeDesk sections">
+        {visibleTabs.map((t, i) => (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={activeTab === t.id}
+            className="tab-btn"
+            onClick={() => select(t.id)}
+          >
+            <span className="tab-n" aria-hidden="true">
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            {t.label}
+          </button>
+        ))}
+      </nav>
 
-        <main className="content mb-content">
+      <main>
           <TabErrorBoundary tabName="Daily Brief" key={`brief-${activeTab}`}>
             {activeTab === 'brief' && <DailyBriefTab onOpenTab={select} />}
           </TabErrorBoundary>
@@ -233,17 +228,15 @@ function Shell() {
               {activeTab === 'admin' && <AdminTab />}
             </TabErrorBoundary>
           )}
-        </main>
+      </main>
 
-        <footer className="footer">
-          TradeDesk — research and education only, not financial advice.
-          <span className="muted"> · v{BUILD_VERSION}</span>
-          <SchwabPill />
-        </footer>
-      </div>
+      <footer className="footer">
+        TradeDesk — research and education only, not financial advice.
+        <span className="muted"> · v{BUILD_VERSION}</span>
+        <SchwabPill />
+      </footer>
 
       <DefinitionsDrawer open={defsOpen} onClose={() => setDefsOpen(false)} />
-      <FundamentalsPill onOpen={() => setDefsOpen(true)} />
     </div>
   );
 }

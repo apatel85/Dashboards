@@ -1,20 +1,99 @@
-/* TradeDesk — dark trading-terminal aesthetic */
+/* TradeDesk — Mock B command-center design system (light editorial ledger) */
 
 :root {
-  --bg: #0a0e14;
-  --bg-panel: #10151d;
-  --bg-raised: #161d28;
-  --border: #232d3d;
-  --text: #d7dee9;
-  --text-dim: #8b98ab;
-  --text-faint: #5a6577;
-  --green: #00d084;
-  --red: #ff4d5e;
-  --amber: #f5a623;
-  --accent: #3fa9f5;
-  --radius: 6px;
-  --font-ui: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --bg: #edf0f3;
+  --panel: #ffffff;
+  --panel-2: #f2f5f8;
+  --panel-3: #e9edf2;
+  --ink: #0f1620;
+  --muted: #44546a;
+  --faint: #5b6c82;
+  --line: #ccd4de;
+  --line-soft: #dde3ea;
+  --up: #0b7a4a;
+  --up-bg: #e2f3ea;
+  --down: #bc3524;
+  --down-bg: #fbe9e5;
+  --info: #1c5cb4;
+  --info-bg: #e4edfa;
+  --signal: #f2a71b;
+  --signal-ink: #211300;
+  --signal-soft: #fdf0d3;
+  --desk: #10161f;
+  --desk-ink: #eef3f9;
+  --desk-muted: #b3c0d1;
+  --desk-line: #2c3949;
+  --focus: #1c5cb4;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --move: 200ms ease;
+  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Libre Franklin', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Mock B aliases used by the tab stylesheets. */
+  --mb-bg: var(--bg);
+  --mb-panel: var(--panel);
+  --mb-panel-2: var(--panel-2);
+  --mb-ink: var(--ink);
+  --mb-muted: var(--muted);
+  --mb-faint: var(--faint);
+  --mb-line: var(--line);
+  --mb-line-soft: var(--line-soft);
+  --mb-up: var(--up);
+  --mb-up-bg: var(--up-bg);
+  --mb-down: var(--down);
+  --mb-down-bg: var(--down-bg);
+  --mb-accent: var(--info);
+  --mb-accent-bg: var(--info-bg);
+  --mb-active-bg: var(--ink);
+  --mb-active-text: var(--bg);
+  --mb-font-display: var(--font-display);
+  --mb-font-ui: var(--font-ui);
+  --mb-font-mono: var(--font-mono);
+  --mb-radius: var(--r-lg);
+  --mb-anim: var(--move);
+  /* Legacy aliases so the pre-Mock-B rules keep working on the new tokens. */
+  --bg-panel: var(--panel);
+  --bg-raised: var(--panel-2);
+  --border: var(--line);
+  --text: var(--ink);
+  --text-dim: var(--muted);
+  --text-faint: var(--faint);
+  --green: var(--up);
+  --red: var(--down);
+  --amber: var(--signal);
+  --accent: var(--info);
+  --radius: var(--r-md);
+  --radius-lg: var(--r-lg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #080b0f;
+    --panel: #10161f;
+    --panel-2: #171f2c;
+    --panel-3: #202a3a;
+    --ink: #e9eef5;
+    --muted: #b7c2d1;
+    --faint: #8a97a9;
+    --line: #26313f;
+    --line-soft: #1d2733;
+    --up: #39cf8f;
+    --up-bg: #0f2a20;
+    --down: #f07a67;
+    --down-bg: #33100c;
+    --info: #7db4f0;
+    --info-bg: #12263f;
+    --signal: #f2a71b;
+    --signal-ink: #211300;
+    --signal-soft: #3a2c07;
+    --desk: #0b0f14;
+    --desk-ink: #eef3f9;
+    --desk-muted: #b3c0d1;
+    --desk-line: #2c3949;
+    --focus: #7db4f0;
+  }
 }
 
 * {
@@ -31,9 +110,27 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-ui);
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 15px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Mock B base: 44px minimum tap targets; visible keyboard focus. */
+button,
+select,
+summary,
+input:not([type='checkbox'], [type='radio']) {
+  min-height: 2.75rem;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 code {
@@ -54,7 +151,7 @@ code {
   justify-content: center;
   padding: 24px;
   background:
-    radial-gradient(600px 300px at 50% -80px, rgba(63, 169, 245, 0.08), transparent),
+    radial-gradient(600px 300px at 50% -80px, var(--info-bg), transparent),
     var(--bg);
 }
 
@@ -144,8 +241,10 @@ code {
 /* ── Buttons ───────────────────────────────────────────────── */
 
 .btn {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  color: var(--ink);
   cursor: pointer;
   font-family: var(--font-ui);
   font-size: 13px;
@@ -161,13 +260,13 @@ code {
 }
 
 .btn-primary {
-  background: var(--green);
-  border-color: var(--green);
-  color: #04120b;
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #00b873;
+  background: var(--desk);
 }
 
 .btn-secondary {
@@ -196,23 +295,18 @@ code {
 
 .app {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  max-width: 1200px;
+  max-width: 1140px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 24px 20px 40px;
 }
 
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  background: var(--bg);
+  gap: 12px;
+  padding: 0 0 14px;
+  border-bottom: 2px solid var(--ink);
 }
 
 .brand-row {
@@ -230,12 +324,12 @@ code {
 /* Live (delayed) quote button states */
 .livebtn.live-on {
   color: var(--green);
-  border-color: rgba(0, 208, 132, 0.4);
+  border-color: var(--up);
 }
 
 .livebtn.btn-warn {
   color: var(--amber);
-  border-color: rgba(245, 166, 35, 0.4);
+  border-color: var(--signal);
 }
 
 /* Green dot marking a live (delayed) price in a cell */
@@ -301,6 +395,7 @@ code {
 .signal-card {
   padding: 0;
   overflow: hidden;
+  border-radius: var(--r-lg);
 }
 
 .signal-card.open {
@@ -393,9 +488,10 @@ code {
 }
 
 .brand {
+  font-family: var(--font-display);
   font-size: 19px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   margin: 0;
 }
 
@@ -413,15 +509,16 @@ code {
 }
 
 .tabbtn {
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  color: var(--text-dim);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  color: var(--ink);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
-  padding: 8px 14px;
+  min-height: 48px;
+  padding: 12px 14px;
   white-space: nowrap;
 }
 
@@ -431,9 +528,9 @@ code {
 }
 
 .tabbtn.active {
-  color: var(--green);
-  background: rgba(0, 208, 132, 0.08);
-  border-color: rgba(0, 208, 132, 0.35);
+  color: var(--bg);
+  background: var(--ink);
+  border-color: var(--ink);
 }
 
 .content {
@@ -446,7 +543,8 @@ code {
 }
 
 .tab-header h2 {
-  font-size: 17px;
+  font-family: var(--font-display);
+  font-size: 28px;
   font-weight: 700;
   margin: 0 0 4px;
 }
@@ -465,7 +563,7 @@ code {
 .panel {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--r-lg);
   padding: 18px;
 }
 
@@ -587,14 +685,14 @@ code {
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--text-faint);
-  padding: 10px 12px;
+  padding: 8px 8px 8px 0;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
 .dtable td {
-  padding: 9px 12px;
-  border-bottom: 1px solid rgba(35, 45, 61, 0.6);
+  padding: 10px 8px 10px 0;
+  border-bottom: 1px solid var(--line-soft);
   vertical-align: top;
 }
 
@@ -612,7 +710,7 @@ code {
 }
 
 .dtable tr.clickable:hover td {
-  background: rgba(63, 169, 245, 0.04);
+  background: var(--info-bg);
 }
 
 .dtable tr.detail-row td {
@@ -661,7 +759,7 @@ code {
 
 /* Deep-linked trade row (from the Daily Brief): stays visibly marked. */
 .dtable tr.trade-highlight td {
-  background: rgba(63, 169, 245, 0.14);
+  background: var(--info-bg);
 }
 
 /* Mobile-only helpers (desktop default: hidden; shown in the ≤640px query) */
@@ -672,9 +770,9 @@ code {
 /* Segmented control (view toggles, sort toggles) */
 .seg {
   display: inline-flex;
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
   padding: 3px;
   gap: 2px;
 }
@@ -692,8 +790,8 @@ code {
 }
 
 .seg button.active {
-  background: var(--accent);
-  color: #fff;
+  background: var(--ink);
+  color: var(--bg);
 }
 
 .seg-large {
@@ -736,7 +834,7 @@ code {
 .notable-card {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--r-lg);
   overflow: hidden;
   min-width: 0;
 }
@@ -797,7 +895,7 @@ code {
   padding: 2px 8px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(96, 165, 250, 0.08);
+  background: var(--info-bg);
   color: var(--text);
   white-space: nowrap;
 }
@@ -887,10 +985,10 @@ code {
   text-transform: uppercase;
 }
 
-.b-green { color: var(--green); border-color: rgba(0, 208, 132, 0.4); background: rgba(0, 208, 132, 0.08); }
-.b-red { color: var(--red); border-color: rgba(255, 77, 94, 0.4); background: rgba(255, 77, 94, 0.08); }
-.b-amber { color: var(--amber); border-color: rgba(245, 166, 35, 0.4); background: rgba(245, 166, 35, 0.08); }
-.b-blue { color: var(--accent); border-color: rgba(63, 169, 245, 0.4); background: rgba(63, 169, 245, 0.08); }
+.b-green { color: var(--green); border-color: var(--up); background: var(--up-bg); }
+.b-red { color: var(--red); border-color: var(--down); background: var(--down-bg); }
+.b-amber { color: var(--amber); border-color: var(--signal); background: var(--signal-soft); }
+.b-blue { color: var(--accent); border-color: var(--info); background: var(--info-bg); }
 .b-dim { color: var(--text-dim); }
 .b-outline { color: var(--text-dim); background: transparent; }
 
@@ -913,7 +1011,7 @@ code {
   color: var(--text-dim);
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 999px;
   padding: 2px 7px;
   white-space: nowrap;
 }
@@ -981,8 +1079,8 @@ code {
 
 .section-head h3 {
   margin: 0;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
 }
 
 .eyebrow {
@@ -1125,7 +1223,7 @@ code {
 .dte-card {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--r-lg);
   padding: 14px;
   margin-bottom: 12px;
 }
@@ -1307,14 +1405,14 @@ code {
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
-  border: 1px solid rgba(63, 169, 245, 0.35);
+  border: 1px solid var(--info);
   border-radius: 4px;
   padding: 2px 8px;
   white-space: nowrap;
 }
 
 .doclink:hover {
-  background: rgba(63, 169, 245, 0.12);
+  background: var(--info-bg);
 }
 
 .lateflag {
@@ -1584,7 +1682,7 @@ code {
 
   /* Deep-linked row keeps its highlight in card mode too. */
   .dtable tr.trade-highlight {
-    background: rgba(63, 169, 245, 0.14);
+    background: var(--info-bg);
   }
 
   .dtable tr.detail-row td::before {
@@ -1681,12 +1779,12 @@ code {
 .level-src { flex: 1 1 100%; }
 .futures-gamma { margin-bottom: 12px; }
 .futures-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.gex-alerts { margin-bottom: 12px; border-left: 3px solid var(--amber, #d97706); }
+.gex-alerts { margin-bottom: 12px; border-left: 3px solid var(--amber, var(--signal)); }
 .alert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .alert-row { display: flex; gap: 8px; align-items: flex-start; font-size: 0.92rem; }
-.watch-star { color: var(--amber, #d97706); }
+.watch-star { color: var(--amber, var(--signal)); }
 .watch-star-btn { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--muted); padding: 0 4px; }
-.watch-star-btn.on { color: var(--amber, #d97706); }
+.watch-star-btn.on { color: var(--amber, var(--signal)); }
 .search-input { flex: 1 1 160px; min-width: 140px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 0.92rem; }
 .linklike { background: none; border: none; color: var(--accent); cursor: pointer; padding: 4px 0; }
 .small-seg button { padding: 4px 10px; font-size: 0.85rem; }
@@ -1750,21 +1848,25 @@ code {
 }
 
 .tv-pill {
-  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--accent);
-  border: 1px solid rgba(63, 169, 245, 0.4);
-  background: rgba(63, 169, 245, 0.08);
-  border-radius: 4px;
-  padding: 3px 7px;
+  color: var(--info);
+  border: 1px solid var(--info);
+  background: var(--info-bg);
+  border-radius: 999px;
+  padding: 4px 8px;
   margin-left: 5px;
   white-space: nowrap;
 }
 
 .tv-link:hover .tv-pill {
-  background: rgba(63, 169, 245, 0.18);
+  background: var(--info-bg);
 }
 
 /* ── Unusual-options chips ─────────────────────────────────────── */
@@ -1894,10 +1996,10 @@ body {
 }
 .fundamentals-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
-@media (max-width: 640px) {
+@media (min-width: 920px) {
   .fundamentals-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -1920,10 +2022,10 @@ body {
 
 /* Fundamentals peer coloring */
 .fund-good {
-  color: #34d399;
+  color: var(--up);
 }
 .fund-bad {
-  color: #f87171;
+  color: var(--down);
 }
 
 /* Collapse-all row */
@@ -1935,7 +2037,7 @@ body {
   background: none;
   border: none;
   padding: 0;
-  color: var(--accent, #60a5fa);
+  color: var(--accent, var(--info));
   cursor: pointer;
   font-size: 12px;
   text-decoration: underline;
@@ -1945,7 +2047,7 @@ body {
 .valuation-block {
   margin-top: 10px;
   padding-top: 8px;
-  border-top: 1px solid var(--border, #2a2f3a);
+  border-top: 1px solid var(--border, var(--line));
 }
 .valuation-rows {
   display: flex;
@@ -1970,17 +2072,17 @@ body {
   flex: 1;
   min-width: 160px;
   padding: 8px 10px;
-  border: 1px solid var(--border, #2a2f3a);
+  border: 1px solid var(--border, var(--line));
   border-radius: 6px;
-  background: var(--bg-panel, #161b24);
+  background: var(--bg-panel, var(--panel));
   color: inherit;
   font-size: 13px;
 }
 .screener-select {
   padding: 8px 10px;
-  border: 1px solid var(--border, #2a2f3a);
+  border: 1px solid var(--border, var(--line));
   border-radius: 6px;
-  background: var(--bg-panel, #161b24);
+  background: var(--bg-panel, var(--panel));
   color: inherit;
   font-size: 13px;
 }
@@ -1988,7 +2090,7 @@ body {
   margin-bottom: 8px;
 }
 .chip-btn {
-  border: 1px solid var(--border, #2a2f3a);
+  border: 1px solid var(--border, var(--line));
   background: transparent;
   border-radius: 999px;
   padding: 4px 12px;
@@ -1997,8 +2099,8 @@ body {
   cursor: pointer;
 }
 .chip-btn.on {
-  background: var(--accent-dim, #1e3a5f);
-  border-color: var(--accent, #60a5fa);
+  background: var(--accent-dim, var(--info-bg));
+  border-color: var(--accent, var(--info));
 }
 .screener-table th.sortable {
   cursor: pointer;
@@ -2060,14 +2162,14 @@ body {
   top: 0;
   bottom: 0;
   border-radius: 999px;
-  background: rgba(96, 165, 250, 0.35);
+  background: var(--info);
 }
 .rangebar-marker {
   position: absolute;
   top: -3px;
   width: 2px;
   height: 14px;
-  background: var(--accent, #60a5fa);
+  background: var(--accent, var(--info));
   transform: translateX(-1px);
 }
 
@@ -2110,7 +2212,7 @@ body {
   margin-bottom: 12px;
 }
 .flow-bar {
-  height: 10px;
+  height: 28px;
   border-radius: 999px;
   background: var(--red);
   overflow: hidden;
@@ -2143,7 +2245,7 @@ body {
 }
 .flow-tile.active {
   border-color: var(--accent);
-  background: rgba(63, 169, 245, 0.12);
+  background: var(--info-bg);
 }
 .flow-tile.up .flow-tile-num {
   color: var(--green);
@@ -2284,8 +2386,8 @@ body {
 
 .sidebar-item.active {
   color: var(--green);
-  background: rgba(0, 208, 132, 0.08);
-  border-color: rgba(0, 208, 132, 0.35);
+  background: var(--up-bg);
+  border-color: var(--up);
 }
 
 .sidebar-section {
@@ -2300,11 +2402,6 @@ body {
 .sidebar-foot {
   margin-top: auto;
   padding: 12px 6px 0;
-}
-
-/* ── Bottom nav (phone only) ───────────────────────────────────────── */
-.bottomnav {
-  display: none;
 }
 
 /* ── Definitions drawer (right slide-over) ─────────────────────────── */
@@ -2509,7 +2606,7 @@ body {
 .feed-card {
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--r-lg);
   overflow: hidden;
   min-width: 0;
 }
@@ -2552,10 +2649,53 @@ body {
 }
 
 .feed-card-score {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  display: block;
+  width: 58px;
+  flex: none;
+  text-align: right;
+}
+
+/* Mock B .score block: 21px mono number on top, 5px bar, "Score" cap. */
+.feed-card-score .scorebar {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 5px;
+  min-width: 0;
+  background: var(--panel-3);
+  border: none;
+  border-radius: 999px;
+  margin-top: 32px;
+}
+
+.feed-card-score .scorebar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.feed-card-score .scorebar-num {
+  position: absolute;
+  right: 0;
+  bottom: 10px;
+  font-family: var(--font-mono);
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+  min-width: 0;
+}
+
+.feed-card-score .scorebar::after {
+  content: 'Score';
+  position: absolute;
+  right: 0;
+  top: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .feed-chev {
@@ -2605,11 +2745,10 @@ body {
 
 /* ── Revamp: "Today in 10 seconds" + Why / Risk lines ────────────── */
 .ten-seconds {
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--green);
-  border-radius: 8px;
-  padding: 12px 14px;
+  background: var(--panel);
+  border: 1.5px solid var(--ink);
+  border-radius: var(--r-lg);
+  padding: 16px 18px 14px;
   margin: 12px 0 4px;
 }
 
@@ -2622,9 +2761,11 @@ body {
 }
 
 .ten-seconds p {
-  margin: 5px 0 0;
-  font-size: 14px;
-  line-height: 1.55;
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .feed-card-titlerow {
@@ -2659,28 +2800,85 @@ body {
   margin: 8px 0 0;
   font-size: 13.5px;
   line-height: 1.5;
-  background: var(--bg-raised);
-  border-left: 3px solid var(--amber);
-  border-radius: 6px;
+  background: var(--down-bg);
+  border-radius: var(--r-md);
   padding: 8px 10px;
 }
 
-/* Sticky top-call bar — phone only, above the bottom nav. */
-.topcall-bar {
+.feed-risk b,
+.feed-risk strong {
+  color: var(--down);
+}
+
+/* Sticky bottom call — Mock B .topcall. Phones only (<=919px): fixed bar,
+   10px inset + safe-area, dark desk background, amber button. It never
+   appears on desktop (display:none above 919px); body padding clears it. */
+.topcall {
   display: none;
 }
 
-.topcall-spacer {
-  display: none;
-}
-
-@media (max-width: 767px) {
-  /* Phone rows keep only rank + name + price + why + risk. */
-  .feed-verdict {
-    display: none;
+@media (max-width: 919px) {
+  .topcall {
+    display: flex;
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    z-index: 60;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    background: var(--desk);
+    color: var(--desk-ink);
+    border: 1px solid var(--desk-line);
+    border-radius: var(--r-lg);
+    padding: 10px 12px 10px 14px;
+    box-shadow: 0 12px 32px rgba(16, 22, 31, 0.28);
   }
 
-  .feed-card-score .scorebar {
+  .topcall .tc-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13.5px;
+    line-height: 1.4;
+    min-width: 0;
+  }
+
+  .topcall .tc-k {
+    display: inline-block;
+    width: fit-content;
+    background: var(--signal);
+    color: var(--signal-ink);
+    font: 700 10.5px/1 var(--font-mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 4px 8px;
+  }
+
+  .topcall button {
+    flex: none;
+    background: var(--signal);
+    color: var(--signal-ink);
+    border: none;
+    border-radius: 999px;
+    font-family: var(--font-ui);
+    font-size: 13.5px;
+    font-weight: 800;
+    min-height: 44px;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+
+  body {
+    padding-bottom: 84px;
+  }
+}
+
+/* Phone rows keep only rank + name + price + why + risk. */
+@media (max-width: 767px) {
+  .feed-verdict {
     display: none;
   }
 
@@ -2694,85 +2892,47 @@ body {
   .feed-card .pmline {
     display: none;
   }
+}
 
-  .topcall-bar {
-    display: flex;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: calc(54px + env(safe-area-inset-bottom));
-    z-index: 55;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    width: 100%;
-    background: var(--bg-raised);
-    border: none;
-    border-top: 1px solid var(--border);
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: 13px;
-    font-weight: 600;
-    padding: 11px 14px;
-    cursor: pointer;
-    text-align: left;
+/* Mock B: score block + Chart pill hide at 640px and below. */
+@media (max-width: 640px) {
+  .feed-card-score {
+    display: none;
   }
 
-  .topcall-spacer {
-    display: block;
-    height: 44px;
+  .feed-card .tv-pill {
+    display: none;
+  }
+}
+
+/* Mock B: stats stack at 430px and below. */
+@media (max-width: 430px) {
+  .mb-breadth-labels {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .feed-keynums {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}
+
+/* Mock B: earnings grid collapses at 760px and below (the expanded-row
+   detail grid goes single-column inside the Earnings tab). */
+@media (max-width: 760px) {
+  .mb-earnings .detail-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 /* ── Responsive: phone (~390px) ────────────────────────────────────── */
 @media (max-width: 767px) {
-  /* Bottom nav replaces the top tab row; hamburger opens the drawer. */
-  .tabnav {
-    display: none;
-  }
-
+  /* Mock B: the tab bar stays visible on phones (3-per-row at <=560px);
+     there is no bottom nav — the sticky bottom call is the phone bar. */
   .alerts-items {
     grid-template-columns: 1fr;
-  }
-
-  .bottomnav {
-    display: flex;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 50;
-    background: var(--bg-panel);
-    border-top: 1px solid var(--border);
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-  }
-
-  .bottomnav-btn {
-    flex: 1;
-    min-width: 0;
-    background: transparent;
-    border: none;
-    border-radius: var(--radius);
-    color: var(--text-dim);
-    font-family: var(--font-ui);
-    font-size: 13px;
-    font-weight: 600;
-    padding: 10px 4px;
-    cursor: pointer;
-  }
-
-  .bottomnav-btn.active {
-    color: var(--green);
-    background: rgba(0, 208, 132, 0.08);
-  }
-
-  /* Pill sits above the bottom nav; footer clears it. */
-  .fund-pill {
-    bottom: 72px;
-  }
-
-  .footer {
-    padding-bottom: 76px;
   }
 
   .top3-strip {
@@ -2791,10 +2951,7 @@ body {
 
 /* ── Responsive: tablet (768–1023px) ───────────────────────────────── */
 @media (min-width: 768px) and (max-width: 1023px) {
-  /* Top tab row stays; hamburger drawer; no bottom nav. */
-  .bottomnav {
-    display: none;
-  }
+  /* Top tab row stays; no bottom nav (Mock B has none). */
 
   .fund-pill {
     bottom: 16px;
@@ -2850,9 +3007,9 @@ body {
     padding-left: 20px;
   }
 
-  /* Two-column feed on wide screens; cards size to content. */
+  /* Mock B: single-column feed at every width; the rail sits beside it. */
   .feed-list {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     align-items: start;
   }
 
@@ -2936,7 +3093,7 @@ body {
   margin-right: -6px;
 }
 .alert-item-clickable:hover {
-  background: rgba(63, 169, 245, 0.06);
+  background: var(--info-bg);
 }
 .alert-item-clickable:focus-visible {
   outline: 2px solid var(--accent);
@@ -3036,7 +3193,7 @@ body {
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: rgba(255, 77, 94, 0.12);
+  background: var(--down-bg);
 }
 
 @media (max-width: 767px) {

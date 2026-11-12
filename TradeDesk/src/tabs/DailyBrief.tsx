@@ -161,8 +161,8 @@ function MoodCard({ brief }: { brief: DailyBrief }) {
 }
 
 /**
- * Sticky top-call bar (phone only, above the bottom nav). Tap jumps to the
- * #1 idea's card. Plain wording, same numbers as the summary box.
+ * Sticky bottom call (Mock B .topcall — phones only, <=919px). Tap jumps to
+ * the #1 idea's card. Plain wording, same numbers as the summary box.
  */
 function TopCallBar({
   brief,
@@ -174,21 +174,18 @@ function TopCallBar({
   const top = brief.breakout_candidates[0];
   if (!top || top.trigger_price == null || top.stop_price == null) return null;
   return (
-    <>
-      <button
-        type="button"
-        className="topcall-bar"
-        onClick={() => onJump(top.ticker)}
-        title="Tap to open the #1 idea"
-      >
+    <div className="topcall" role="region" aria-label="Top call today">
+      <div className="tc-main">
+        <span className="tc-k">Top call</span>
         <span>
-          <b>#1 {top.ticker}</b> · break above {fmtMoney(top.trigger_price)} · off below{' '}
+          <span className="mono">#1 {top.ticker}</span> · break above {fmtMoney(top.trigger_price)} · off below{' '}
           {fmtMoney(top.stop_price)}
         </span>
-        <span aria-hidden="true">↑</span>
+      </div>
+      <button type="button" onClick={() => onJump(top.ticker)} title="Tap to open the #1 idea">
+        Open #1
       </button>
-      <div className="topcall-spacer" aria-hidden="true" />
-    </>
+    </div>
   );
 }
 
@@ -943,19 +940,8 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
         </div>
       </div>
 
-      <AlertsSection onOpenTab={onOpenTab} />
-
-      <MoodCard brief={brief} />
-
-      <div className="mood-banner">
-        <span className="mood-label">Today</span>
-        <p>
-          {REGIME_LEAD[brief.market_regime]} {brief.regime_notes}
-        </p>
-      </div>
-
-      <TenSecondsBox brief={brief} />
-
+      <div className="layout">
+        <aside className="rail">
       <div className="feed-controls mb-search-rail">
         <input
           id="brief-search"
@@ -999,6 +985,19 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
           ))}
         </div>
       </div>
+          <MoodCard brief={brief} />
+        </aside>
+        <div>
+          <AlertsSection onOpenTab={onOpenTab} />
+
+          <div className="mood-banner">
+        <span className="mood-label">Today</span>
+        <p>
+          {REGIME_LEAD[brief.market_regime]} {brief.regime_notes}
+        </p>
+      </div>
+
+      <TenSecondsBox brief={brief} />
 
       {showBreakouts && (
         <>
@@ -1096,6 +1095,9 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
           <NewsSection />
         </>
       )}
+
+        </div>
+      </div>
 
       <TopCallBar brief={brief} onJump={jumpTo} />
     </section>

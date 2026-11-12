@@ -1,52 +1,109 @@
 /**
  * Mock B design tokens — command-center editorial-ledger system.
- * Grounded in the Mock B mockup as inspected (build dc4e668d) and in
- * Ankit's phone screenshots of it (2026-11-12): near-black navy page,
- * slightly raised dark panels, serif display headings, numbered tab pills
- * (white active pill, dark text), outlined Chart pills, green trigger /
- * red stop numbers, outlined sentiment pills.
  *
- * Every tab's own CSS file (src/mockb-<tab>.css) uses ONLY these variables
- * for colour/typography — never a hardcoded hex. The live app's existing
- * --bg/--text tokens stay for the pre-Mock B shell until the shell is
- * converted; new Mock B surfaces use --mb-*.
+ * VERBATIM from the Mock B mockup as attached by Ankit
+ * (TradeDesk_Mock_B___Command_center__6.html, extracted 2026-11-12).
+ * Light-first: the page is a light newspaper ledger (#edf0f3). Dark exists
+ * ONLY under prefers-color-scheme. The 2026-11-12b dark-first reading
+ * (#07090d bg, Georgia/Inter/JetBrains Mono) was wrong — it described the
+ * old app, not Mock B — and is what made the live build look nothing like
+ * the mockup. Do not reintroduce dark-first tokens.
+ *
+ * --mb-* aliases: the 12 tab CSS files use ONLY these names.
+ * Legacy aliases (--bg-panel, --text, --green, …): the pre-Mock B shared
+ * primitives in styles.css use these names. Both alias sets point at the
+ * spec tokens, so one token change re-skins the whole app in both modes.
  */
-:root {
-  /* Surfaces */
-  --mb-bg: #07090d;
-  --mb-panel: #10151d;
-  --mb-raised: #161d28;
-  --mb-border: #232d3d;
-  --mb-border-soft: #1a2230;
+:root{
+  color-scheme: light dark;
+  --bg:#edf0f3;
+  --panel:#ffffff;
+  --panel-2:#f2f5f8;
+  --panel-3:#e9edf2;
+  --ink:#0f1620;
+  --muted:#44546a;
+  --faint:#5b6c82;
+  --line:#ccd4de;
+  --line-soft:#dde3ea;
+  --up:#0b7a4a;
+  --up-bg:#e2f3ea;
+  --down:#bc3524;
+  --down-bg:#fbe9e5;
+  --info:#1c5cb4;
+  --info-bg:#e4edfa;
+  --signal:#f2a71b;
+  --signal-ink:#211300;
+  --signal-soft:#fdf0d3;
+  --desk:#10161f;
+  --desk-ink:#eef3f9;
+  --desk-muted:#b3c0d1;
+  --desk-line:#2c3949;
+  --focus:#1c5cb4;
+  --r-sm:6px; --r-md:10px; --r-lg:14px;
+  --move:200ms ease;
 
-  /* Text */
-  --mb-text: #e8edf5;
-  --mb-dim: #8b98ab;
-  --mb-faint: #5a6577;
+  /* Legacy aliases (styles.css shared primitives). */
+  --bg-panel:var(--panel);
+  --bg-raised:var(--panel-2);
+  --border:var(--line);
+  --text:var(--ink);
+  --text-dim:var(--muted);
+  --text-faint:var(--faint);
+  --green:var(--up);
+  --red:var(--down);
+  --amber:var(--signal);
+  --accent:var(--info);
+  --radius:var(--r-md);
+  --font-ui:"Libre Franklin", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Signal colours */
-  --mb-green: #00d084;
-  --mb-green-soft: #34d399;
-  --mb-red: #ff4d5e;
-  --mb-amber: #f5a623;
-  --mb-blue: #6aa9ff;
-  --mb-blue-dim: #3fa9f5;
-
-  /* Active tab pill: white background, dark text (Mock B signature) */
-  --mb-active-bg: #f2f4f8;
-  --mb-active-text: #0b0e13;
-
-  /* Typography */
-  --mb-font-display: Georgia, 'Times New Roman', Times, serif;
-  --mb-font-ui: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --mb-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-
-  /* Shape + motion */
-  --mb-radius: 12px;
-  --mb-radius-sm: 8px;
-  --mb-pill: 999px;
-  --mb-tap: 44px;
-  --mb-anim: 150ms ease;
+  /* --mb-* aliases (the 12 tab CSS files). */
+  --mb-bg:var(--bg);
+  --mb-panel:var(--panel);
+  --mb-raised:var(--panel-2);
+  --mb-border:var(--line);
+  --mb-border-soft:var(--line-soft);
+  --mb-text:var(--ink);
+  --mb-dim:var(--muted);
+  --mb-faint:var(--faint);
+  --mb-green:var(--up);
+  --mb-green-soft:var(--up);
+  --mb-red:var(--down);
+  --mb-amber:var(--signal);
+  --mb-blue:var(--info);
+  --mb-blue-dim:var(--info);
+  --mb-active-bg:var(--ink);
+  --mb-active-text:var(--bg);
+  --mb-font-display:"Newsreader", Georgia, "Times New Roman", serif;
+  --mb-font-ui:"Libre Franklin", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mb-font-mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --mb-radius:var(--r-lg);
+  --mb-radius-sm:var(--r-md);
+  --mb-pill:999px;
+  --mb-tap:44px;
+  --mb-anim:var(--move);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#080b0f;
+    --panel:#10161f;
+    --panel-2:#151e2a;
+    --panel-3:#0b1119;
+    --ink:#e9eef5;
+    --muted:#a7b4c6;
+    --faint:#8798ad;
+    --line:#2a3646;
+    --line-soft:#1e2938;
+    --up:#3ed08d;
+    --up-bg:rgba(46,194,126,.13);
+    --down:#ff7d68;
+    --down-bg:rgba(242,96,76,.13);
+    --info:#7db1ff;
+    --info-bg:rgba(88,166,255,.12);
+    --signal-soft:rgba(245,165,36,.12);
+    --desk:#131c28;
+    --focus:#7db1ff;
+  }
 }
 
 /* Shared Mock B primitives (used by every tab — do not redefine per tab) */

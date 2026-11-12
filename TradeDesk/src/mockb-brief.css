@@ -79,6 +79,15 @@
   border-radius: var(--mb-radius);
   padding: 12px 14px;
 }
+/* In the 348px rail the controls stack vertically (the ≥1024px row rule
+   in styles.css would otherwise squeeze input + chips side by side). */
+.rail .mb-search-rail {
+  flex-direction: column;
+  align-items: stretch;
+}
+.rail .mb-search-rail .feed-search {
+  max-width: none;
+}
 .mb-quick-row {
   display: flex;
   flex-wrap: wrap;

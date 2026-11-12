@@ -1,139 +1,44 @@
 /**
- * Mock B shell — tab bar, header, content column, footer.
- * The tab bar is Mock B's signature: numbered pills under the header,
- * wrapping to two rows on narrow screens; the ACTIVE pill is white with
- * dark text. No sidebar, no bottom nav — the tab bar is the only nav.
+ * Mock B shell — verbatim from the Mock B mockup spec (2026-11-12).
+ * Light-first ledger: 1140px shell, 2px ink page-head rule with a serif H1,
+ * numbered tab pills, 348px sticky rail at ≥920px, sticky bottom call at
+ * ≤919px only — never a sticky top bar. The 2026-11-12b shell (1180px,
+ * white-on-dark active pill, sidebar language) was the old app's shell
+ * mislabelled as Mock B; this file replaces it.
  */
 
-.mb-shell {
-  background: var(--mb-bg);
-  color: var(--mb-text);
+.shell{ max-width:1140px; margin:0 auto; padding:24px 20px 40px; }
+
+/* Page head: serif title left, actions right, 2px ink rule underneath. */
+.page-head{ display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:8px 24px; border-bottom:2px solid var(--ink); padding-bottom:14px; }
+.page-head h1{ font-family:"Newsreader", Georgia, serif; font-size:34px; font-weight:700; letter-spacing:-.01em; line-height:1.1; }
+.page-head .topbar-actions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.dateline{ color:var(--muted); font-size:13px; text-align:right; }
+.dateline .mono{ color:var(--ink); font-weight:600; }
+
+/* Layout: single column below 920px; 348px sticky rail + fluid main above. */
+.layout{ display:block; margin-top:20px; }
+@media (min-width:920px){
+  .layout{ display:grid; grid-template-columns:348px minmax(0,1fr); gap:28px; align-items:start; }
+  .rail{ position:sticky; top:20px; }
 }
 
-.mb-shell .main-col {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 16px 32px;
+/* Rail children stack with breathing room (search rail, then mood). */
+.layout .rail > * + *{ margin-top:16px; }
+
+/* Tab bar: numbered pills under the head; active pill is ink-on-bg. */
+.tabbar{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.tab-btn{
+  flex:1 1 auto; min-height:48px; padding:10px 14px; border-radius:var(--r-md);
+  border:1px solid var(--line); background:var(--panel); color:var(--muted);
+  font:700 14px "Libre Franklin", sans-serif; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
 }
+.tab-btn .tab-n{ font:700 11px "IBM Plex Mono", monospace; color:var(--faint); }
+.tab-btn:hover{ border-color:var(--ink); color:var(--ink); }
+.tab-btn[aria-selected="true"]{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.tab-btn[aria-selected="true"] .tab-n{ color:var(--bg); opacity:.65; }
+@media (max-width:560px){ .tab-btn{ flex:1 1 30%; font-size:13px; padding:10px 8px; } }
 
-/* Header: brand left, actions right. Serif brand, plain sub-note. */
-.mb-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 0 10px;
-  border-bottom: 1px solid var(--mb-border-soft);
-  flex-wrap: wrap;
-}
-
-.mb-brand {
-  font-family: var(--mb-font-display);
-  font-size: 26px;
-  line-height: 1;
-  margin: 0;
-  color: var(--mb-text);
-}
-
-.mb-topbar-sub {
-  margin-left: 8px;
-}
-
-/* Numbered tab bar */
-.mb-tabbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 12px 0 4px;
-}
-
-.mb-tabbtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: var(--mb-tap);
-  padding: 8px 14px;
-  border: 1px solid var(--mb-border);
-  border-radius: var(--mb-pill);
-  background: var(--mb-panel);
-  color: var(--mb-text);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: var(--mb-font-ui);
-}
-
-.mb-tabbtn:hover {
-  border-color: var(--mb-dim);
-}
-
-.mb-tabbtn.active {
-  background: var(--mb-active-bg);
-  border-color: var(--mb-active-bg);
-  color: var(--mb-active-text);
-}
-
-.mb-tabbtn.active .mb-tabnum {
-  color: var(--mb-faint);
-}
-
-.mb-tabnum {
-  font-family: var(--mb-font-mono);
-  font-size: 11px;
-  color: var(--mb-faint);
-  font-weight: 400;
-}
-
-/* Content column */
-.mb-content {
-  padding-top: 16px;
-}
-
-.mb-content .tab-header h2,
-.mb-content h2 {
-  font-family: var(--mb-font-display);
-  color: var(--mb-text);
-}
-
-/* Phone: tab bar scrolls horizontally instead of wrapping tall */
-@media (max-width: 767px) {
-  .mb-shell .main-col {
-    padding: 0 12px 96px;
-  }
-
-  .mb-tabbar {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 8px;
-  }
-
-  .mb-tabbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .mb-tabbtn {
-    flex: 0 0 auto;
-  }
-
-  .mb-topbar-sub {
-    display: none;
-  }
-}
-
-/* Tablet: two-column content where tabs use .mb-two-col */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .mb-two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    align-items: start;
-  }
-}
-
-/* Desktop: reading column stays centred, wide tables get room */
-@media (min-width: 1024px) {
-  .mb-shell .main-col {
-    max-width: 1180px;
-  }
-}
+/* Footer: centred, faint, ruled off from the content. */
+footer, .footer{ margin-top:30px; border-top:1px solid var(--line); padding-top:14px; text-align:center; color:var(--faint); font-size:11.5px; line-height:1.6; }
