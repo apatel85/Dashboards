@@ -1,55 +1,60 @@
 # App Sprints
 
-## What App Sprints is
+One pipeline for every new app or website: research first, design second. No design starts until a short, bounded research pass has written down the non-technical user's job and mental model — and no design is done until one real person has tried the core task. That rule is the unanimous outcome of the five-leader UX debate (Norman, Nielsen, Krug, Wroblewski, Hall): "Evidence Before Pixels."
 
-App Sprints is a small, plain-language pipeline for turning an idea for an app into a real design — with research first, building second.
+Live intake app: https://apatel85.github.io/Dashboards/AppSprints/
 
-You describe the idea in the intake form. We research it before anyone designs or builds anything. You get the findings back in writing. Only then does design start.
+## What this is
 
-## The pipeline
+App Sprints is the intake and research front door. It does not build apps. It collects the brief, runs the Phase 0 research, and hands the design step a one-page Research Receipt to approve first. Real apps are built under the main Dashboards folder, never here.
 
-1. **Intake** — Fill in `index.html` (open it in any browser; no build step, no sign-in). It asks three quick sorting questions, then five short questions, then follow-ups that only appear when they apply to your answers. On submit it creates a brief — as structured data and as plain text — for you to paste into the App Sprints side chat.
-2. **Phase 0 research sprint** — We check what already exists, who the app is really for, and what could go wrong. No building yet.
-3. **Research Receipt** — A short, plain summary of the findings, with a clear go or no-go. It lives next to the intake, as `research-receipt.md`.
-4. **Design** — If the receipt says go, design starts from the research, not from a blank page.
+## How a sprint works
 
-## The watcher
+1. **Intake.** Open the intake app above and answer a few questions (about 2 minutes). It starts with a sprint name — one name per request — then three classifiers that change the follow-up questions: who uses it (just me / my team / public), how many kinds of users (one type / several roles), and how often (daily / once in a while). Then the five questions: what are we building, who is the non-technical user, the one core task, what it should never do or show, and where it will be used. "Don't know" is a valid answer everywhere; the agent fills gaps from research and flags them as assumptions.
+2. **Brief.** The app builds a structured brief (JSON + plain text). Copy it and paste it in the App Sprints chat. That is the manual request path, and it works any time.
+3. **Filing.** The agent files the brief at `sprints/<sprint-name>/intake.json` with `status: "new"`. One folder per request, so every sprint stays organized.
+4. **Phase 0 research.** The agent runs the six steps, each bounded:
+   - (1) The job in the user's own words.
+   - (2) User-language harvest — words real users use, and jargon to avoid.
+   - (3) How people solve it today without the product.
+   - (4) Competitor audit — 3 closest products, first screen, core-task flow, one strength, one confusion point each. 30-minute cap.
+   - (5) Screen-size map of the core task at 360 / 768 / 1024px+.
+   - (6) Pattern Router — the job type picks the UI pattern, the app-vs-website rule applies, industry adjustments added.
+5. **Research Receipt.** The agent writes a one-page `research-receipt.md` in the sprint folder and posts it in the App Sprints chat. Status becomes `receipt-ready`.
+6. **Confirm or correct.** You say "looks right" or correct one line. Status becomes `confirmed`. Only then does design start — and the revamp or new app is built under the main Dashboards folder, using the Receipt as its brief.
+7. **The real-user test.** Before any design is called done, one real person tries the core task on a real device.
 
-A watcher checks the `sprints/` folder daily at about 8am ET.
+## The daily watcher
 
-It is token-efficient on purpose: it lists the `sprints/` folder and only acts when an intake has status `"new"`. If nothing is new, it stays silent — no message, no work.
+A scheduled check runs every morning around 08:00 ET. It is token-efficient by design: it first lists the `sprints/` folder and compares it against its local state file. If no intake with `status: "new"` has appeared or changed, it stops silently and says nothing. If a new intake exists, it processes only that named intake — runs Phase 0, writes the Receipt, sets status to `receipt-ready`, and posts the Receipt in the App Sprints chat.
 
-When it finds a new intake, it runs the Phase 0 research sprint for it and writes the Research Receipt into that intake's folder.
+Manual requests in the App Sprints chat work any time and do not wait for the watcher.
 
-## How to request a sprint manually
+## The app-create gate
 
-If you do not want to wait for the daily run:
+Whenever anyone asks to create an app or website, the agent first checks whether a Phase 0 Research Receipt exists for it. If it is missing, the agent says so plainly and suggests running a research sprint before designing. Phase 0 is never silently skipped for a new app. See the "App-create gate" section in the global ux-design skill.
 
-1. Fill in the intake form and copy the brief (JSON or plain text — either works).
-2. Paste it in the App Sprints side chat.
-3. Ask for a manual run.
-
-## Folder structure
-
-One folder per request, under `sprints/`. Each intake lives at `sprints/<intake-name>/` and holds `intake.json` and `research-receipt.md`:
+## Folder layout
 
 ```
 AppSprints/
-  index.html          Intake form (this app)
-  README.md           This file
-  AGENTLOG.md         Change log, newest first
+  index.html            Intake app (v1.0.0, single file, no external dependencies)
+  README.md             This file
+  AGENTLOG.md           Change log, newest first
   sprints/
-    <intake-name>/
-      intake.json           The brief, as structured data
-      research-receipt.md   The Phase 0 findings (added by the sprint)
+    README.md           Folder convention, intake.json schema, status values
+    <sprint-name>/
+      intake.json           Structured brief + status
+      research-receipt.md   One-page Receipt, once Phase 0 is done
 ```
 
-Every intake has its own kebab-case name, suggested from the one-sentence description in the form and editable before submit. The folder is `sprints/<name>/`.
+## Sprint statuses
 
-## Where apps are actually built
+- `new` — brief filed, research not started yet.
+- `in-research` — Phase 0 is running.
+- `receipt-ready` — Receipt written, waiting for the user to confirm or correct.
+- `confirmed` — user approved the Receipt; design may start.
 
-Actual apps are built under the main Dashboards folder, never inside AppSprints. AppSprints holds only intakes, briefs, and Research Receipts.
+## Sprints so far
 
-## Version
-
-1.0.0
+- `tradedesk-revamp-2026-11-12` — first sprint. Revamp of TradeDesk (live stock-research app) under the new UX/UI skill, Mock B command-center layout already chosen for the Daily Brief. Receipt ready, awaiting confirmation.
