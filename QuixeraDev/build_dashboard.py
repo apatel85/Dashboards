@@ -176,7 +176,7 @@ SEV_ORDER = ["High", "Medium", "Low", "Info"]
 SEV_COLOR = {"High": "#b91c1c", "Medium": "#b45309", "Low": "#4d7c0f", "Info": "#1d4ed8"}
 STATUS_COLOR = {"Open": "#b91c1c", "Partly fixed": "#b45309", "Still failing": "#7f1d1d",
                 "Blocked": "#6b7280", "Fixed": "#15803d"}
-SOURCE_LABEL = {"arlo": "Arlo dev pass", "team": "QA team retest", "manual": "Manual capture", "mobile": "📱 Mobile testing"}
+SOURCE_LABEL = {"arlo": "Arlo dev pass", "team": "QA team retest", "manual": "Manual capture", "mobile": "📱 Mobile testing", "lanek": "🛣️ Lane K"}
 SEGMENTS = [
     ("team", "🧪 Tested by the QA team",
      "Bugs from the QA team's 2026-10-15 retest report — 186 retests (159 Fixed · 19 Partly fixed · 6 Still failing · 2 Blocked) plus 16 new bugs they filed."),
@@ -186,6 +186,8 @@ SEGMENTS = [
      "Bugs you flagged yourself with the QA Capture extension — click trail, screenshots and clips attached automatically."),
     ("mobile", "📱 Mobile testing",
      "Guardian + coach Android app findings from the emulator pass — each with repro steps and screenshots."),
+    ("lanek", "🛣️ Lane K",
+     "Lane K pricing-model QA on dev (Nov 11, 2026 plan) — 21 tickets ready for product QA, 7 waiting on engineering. Findings filed here reference their QXR ticket number."),
 ]
 
 def esc(s):
@@ -414,6 +416,7 @@ for src, title, desc in SEGMENTS:
     n = sum(1 for b in BUGS if b["source"] == src)
     n_open = sum(1 for b in BUGS if b["source"] == src and b["status"] == "Open")
     empty_msg = ('Nothing here yet — mobile findings from the emulator pass will appear here.' if src == 'mobile'
+                 else 'Nothing here yet — Lane K findings will appear here once the dev pass runs. Scope: 21 tickets ready for QA (Facility 10 · Guardian 7 · backend-only 2 · Guardian mobile 1 · Coach 1); 7 wait on engineering (602, 604, 638, 599 + partly-ready 581, 583, 586).' if src == 'lanek'
                  else 'Nothing here yet — flag an issue with the QA Capture extension and it will appear in this segment.')
     segments += f"""
     <section class="seg" data-src="{src}">
@@ -628,6 +631,7 @@ INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=
 <div class="stat clickable" data-seg="arlo" title="Show only Arlo bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["arlo"]) + """</div><div class="l">🤖 Arlo pass — tap to filter</div></div>
 <div class="stat clickable" data-seg="manual" title="Show only manual captures"><div class="n" style="color:#1e3a5f">""" + str(n_src["manual"]) + """</div><div class="l">🚩 Manual — tap to filter</div></div>
 <div class="stat clickable" data-seg="mobile" title="Show only mobile testing bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["mobile"]) + """</div><div class="l">📱 Mobile testing — tap to filter</div></div>
+<div class="stat clickable" data-seg="lanek" title="Show only Lane K bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["lanek"]) + """</div><div class="l">🛣️ Lane K — tap to filter</div></div>
 <div class="stat clickable" data-seg="open" title="Show only open bugs"><div class="n" style="color:#b91c1c">""" + str(n_open) + """</div><div class="l">Open now — tap to filter</div></div>
 </div>""" + HEALTH_HTML + """</header>
 <div class="toolbar">
