@@ -111,8 +111,8 @@
       <strong>How it works</strong>
       <ol>
         <li>Fill in this form (about 2 minutes). Leave anything blank if you do not know it.</li>
-        <li>Press <strong>Build my brief</strong> and copy it.</li>
-        <li>Paste it in the <strong>App Sprints</strong> chat. The agent files it, runs the research, and posts your Receipt there.</li>
+        <li>Press <strong>Build my brief</strong>, then <strong>Send to GitHub</strong> — it opens a prefilled issue for you to submit under your own GitHub login. No password or key is stored here.</li>
+        <li>The watcher files it into the sprint folder, runs the research, and posts your Receipt in the <strong>App Sprints</strong> chat. Copy-and-paste in the chat still works if you prefer it.</li>
         <li>You say “looks right” or correct one line — only then does design start.</li>
       </ol>
     </div>
@@ -255,16 +255,17 @@
     </section>
 
     <button type="submit" class="btn btn-primary" id="buildBtn">Build my brief</button>
-    <p class="hint" style="margin-top:10px">Nothing leaves your browser until you copy it. This page sends nothing anywhere by itself.</p>
+    <p class="hint" style="margin-top:10px">This page sends nothing anywhere by itself. Sending to GitHub opens github.com, where you submit the issue under your own login.</p>
   </form>
 
   <section class="card" id="output" aria-labelledby="h-out" tabindex="-1">
     <h2 id="h-out">Your brief is ready</h2>
-    <p class="sub">Copy it and paste it in the App Sprints chat. The agent files it, runs the Phase 0 research, and posts your Research Receipt there.</p>
+    <p class="sub">Send it to GitHub and the watcher files it and runs the Phase 0 research — or copy it and paste it in the App Sprints chat instead.</p>
     <div class="done-note" id="folderNote"></div>
     <h3 style="font-size:16px;margin:0 0 8px">Plain-text brief</h3>
     <pre id="briefText" aria-label="Plain text brief"></pre>
     <div class="out-actions">
+      <button type="button" class="btn btn-primary" id="sendGithub">Send to GitHub</button>
       <button type="button" class="btn btn-ghost btn-small" id="copyText">Copy brief text</button>
       <button type="button" class="btn btn-ghost btn-small" id="copyJson">Copy brief as JSON</button>
     </div>
@@ -274,9 +275,9 @@
   </section>
 
   <footer>
-    <p><strong>What this app does:</strong> turns your answers into a structured brief for a research sprint. It does not run the research itself and it does not build anything — the agent does that after you paste the brief in the App Sprints chat.</p>
-    <p><strong>What happens next:</strong> the agent files the brief under <code>sprints/&lt;sprint-name&gt;/intake.json</code>, runs the six Phase 0 research steps, and posts a one-page Research Receipt for you to confirm or correct. Only then does design start. Real apps are built under the main Dashboards folder, never here.</p>
-    <p>App Sprints v1.0.0 — 2026-11-12</p>
+    <p><strong>What this app does:</strong> turns your answers into a structured brief for a research sprint. It does not run the research itself and it does not build anything — the agent does that after your brief reaches the repo.</p>
+    <p><strong>What happens next:</strong> press Send to GitHub and submit the prefilled issue under your own login. The watcher files the brief under <code>sprints/&lt;sprint-name&gt;/intake.json</code>, runs the six Phase 0 research steps, and posts a one-page Research Receipt for you to confirm or correct. Only then does design start. You can also copy the brief and paste it in the App Sprints chat instead. Real apps are built under the main Dashboards folder, never here.</p>
+    <p>App Sprints v1.1.0 — 2026-11-12</p>
   </footer>
 </div>
 <script>
@@ -373,7 +374,7 @@
       sprint: val("sprintName"),
       created: todayStamp(),
       status: "new",
-      source: "App Sprints intake app v1.0.0",
+      source: "App Sprints intake app v1.1.0",
       classifiers: {
         audience: state.audience || null,
         user_types: state.userTypes || null,
@@ -488,6 +489,15 @@
     $("output").classList.add("open");
     $("copyText").onclick = function(){ copyText(text, "Brief text"); };
     $("copyJson").onclick = function(){ copyText(json, "Brief JSON"); };
+    var issueTitle = "Sprint intake: " + brief.sprint;
+    var issueBody = text + "\n\n```json\n" + json + "\n```";
+    var issueUrl = "https://github.com/apatel85/Dashboards/issues/new"
+      + "?title=" + encodeURIComponent(issueTitle)
+      + "&body=" + encodeURIComponent(issueBody)
+      + "&labels=sprint-intake";
+    $("sendGithub").onclick = function(){
+      window.open(issueUrl, "_blank", "noopener");
+    };
     $("output").focus();
     $("output").scrollIntoView({ behavior: "smooth", block: "start" });
   });

@@ -11,8 +11,8 @@ App Sprints is the intake and research front door. It does not build apps. It co
 ## How a sprint works
 
 1. **Intake.** Open the intake app above and answer a few questions (about 2 minutes). It starts with a sprint name — one name per request — then three classifiers that change the follow-up questions: who uses it (just me / my team / public), how many kinds of users (one type / several roles), and how often (daily / once in a while). Then the five questions: what are we building, who is the non-technical user, the one core task, what it should never do or show, and where it will be used. "Don't know" is a valid answer everywhere; the agent fills gaps from research and flags them as assumptions.
-2. **Brief.** The app builds a structured brief (JSON + plain text). Copy it and paste it in the App Sprints chat. That is the manual request path, and it works any time.
-3. **Filing.** The agent files the brief at `sprints/<sprint-name>/intake.json` with `status: "new"`. One folder per request, so every sprint stays organized.
+2. **Brief.** The app builds a structured brief (JSON + plain text). Press **Send to GitHub**: it opens a prefilled issue in `apatel85/Dashboards` (title `Sprint intake: <name>`, label `sprint-intake`) — submit it under your own GitHub login and the watcher picks it up. Copying the brief and pasting it in the App Sprints chat still works any time as the fallback.
+3. **Filing.** The watcher files the brief at `sprints/<sprint-name>/intake.json` with `status: "new"` (for briefs pasted in the chat, the agent files it the same way). One folder per request, so every sprint stays organized.
 4. **Phase 0 research.** The agent runs the six steps, each bounded:
    - (1) The job in the user's own words.
    - (2) User-language harvest — words real users use, and jargon to avoid.
@@ -26,7 +26,7 @@ App Sprints is the intake and research front door. It does not build apps. It co
 
 ## The daily watcher
 
-A scheduled check runs every morning around 08:00 ET. It is token-efficient by design: it first lists the `sprints/` folder and compares it against its local state file. If no intake with `status: "new"` has appeared or changed, it stops silently and says nothing. If a new intake exists, it processes only that named intake — runs Phase 0, writes the Receipt, sets status to `receipt-ready`, and posts the Receipt in the App Sprints chat.
+A scheduled check runs every morning around 08:24 ET. It is token-efficient by design: it first lists the `sprints/` folder and compares it against its local state file, and lists open issues titled `Sprint intake: ...` in the repo. If no intake with `status: "new"` has appeared or changed and no new intake issue exists, it stops silently and says nothing. If a new intake exists, it processes only that named intake — runs Phase 0, writes the Receipt, sets status to `receipt-ready`, and posts the Receipt in the App Sprints chat. For a new intake issue, it files the brief from the issue body into `sprints/<name>/intake.json` first, then runs the same Phase 0 flow. Processed issue numbers are recorded in the state file so each issue is handled once. Note: the stored GitHub token cannot comment on or close issues (no Issues write scope), so filed issues stay open until closed by hand; the `sprint-intake` label also does not exist yet and is ignored by GitHub until someone creates it in repo Settings → Labels — the watcher matches issues by title, so neither blocks the flow.
 
 Manual requests in the App Sprints chat work any time and do not wait for the watcher.
 
@@ -38,7 +38,7 @@ Whenever anyone asks to create an app or website, the agent first checks whether
 
 ```
 AppSprints/
-  index.html            Intake app (v1.0.0, single file, no external dependencies)
+  index.html            Intake app (v1.1.0, single file, no external dependencies)
   README.md             This file
   AGENTLOG.md           Change log, newest first
   sprints/
