@@ -6,6 +6,13 @@
 - Backtest-before-adopt: no strategy ships without historical validation.
 - Free data sources only. He trades ES/NQ futures options 0DTE/1DTE, SPX 0DTE/1DTE.
 
+## 2026-11-12 — Performance "Why picked" now shows the real reasons (fix)
+
+- **Request:** follow-up to the Mock B port — the Performance tab's "Why each idea was picked" toggle was built from a stale local copy of `performance.json` (0 items, no `reasons`) and told the user "there is no written reason to show yet". The live file has 9 items, all with a full `reasons` record.
+- **Change:** `PerformanceItem` in `types.ts` gains the `reasons` field (thesis, invalidation, 8-part score_breakdown with notes/scores/weights, congress_buys, insider_clusters, unusual_options, sentiment, stage, trend_template_pass, quality_flags). `WhyPanel` now renders the written thesis ("The idea, in one paragraph"), invalidation ("What would prove it wrong"), the score breakdown in plain-English labels, smart-money + setup facts, and quality flags — all from the live snapshot, nothing invented. The "no written reason" note now appears only for snapshots that genuinely lack `reasons`. No other tab touched.
+- **Version:** v2026-11-12c (bundle index-DYTNl3uF.js).
+- **Verified:** local build clean; bundle contains v2026-11-12c and the new section headings. Pending Ankit: on-device check of the Why toggle on a tracked idea (final gate).
+
 ## 2026-11-12 — Full Mock B port goes live (all 12 tabs)
 
 - **Request:** Ankit: "I need all the current features in format of Mock B. If new modules need to be created to get all the live features, do that and design it." Replace the whole old-format app with Mock B's command-center layout (last full-data version, 12 tabs), keeping every live feature.

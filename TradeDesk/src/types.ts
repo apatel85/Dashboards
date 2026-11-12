@@ -474,6 +474,19 @@ export interface LottoFile {
 
 /* ── recommendation performance tracker ─────────────────────────── */
 
+export interface PerformanceReasons {
+  score_breakdown?: { attribute: string; note: string; score: number; weight: number }[];
+  congress_buys?: number;
+  insider_clusters?: unknown[];
+  unusual_options?: boolean;
+  sentiment?: string | null;
+  trend_template_pass?: boolean;
+  stage?: string | null;
+  quality_flags?: string[];
+  thesis?: string | null;
+  invalidation?: string | null;
+}
+
 export interface PerformanceItem {
   ticker: string;
   name: string;
@@ -484,6 +497,7 @@ export interface PerformanceItem {
   pct_change: number | null;
   p_up: number | null;
   score: number | null;
+  reasons?: PerformanceReasons | null;
 }
 
 export interface PerformanceFile {

@@ -329,13 +329,23 @@ function PredictionSection() {
 
 /* ── research recommendations ─────────────────────────────────────── */
 
-/* Why an idea was picked — built only from the fields the snapshot
- * actually records. performance.json carries NO `reasons` object
- * (and PerformanceItem defines none), so there is no written thesis,
- * invalidation, or evidence breakdown to show yet; the panel says so
- * plainly instead of inventing one. When the pipeline starts recording
- * `reasons`, this panel is where they render. */
+/* Why an idea was picked — rendered from the `reasons` snapshot the
+ * pipeline records per idea (thesis, invalidation, 8-part score
+ * breakdown, smart-money facts, quality flags). Older snapshots without
+ * `reasons` fall back to the recorded numbers plus a plain note. */
+const REASON_LABELS: Record<string, string> = {
+  earnings_acceleration: 'Earnings speeding up',
+  trend_relative_strength: 'Beating the market',
+  base_quality_volume: 'Quality + volume',
+  estimate_revisions: 'Analyst estimates',
+  catalyst_in_window: 'Catalyst coming up',
+  smart_money: 'Smart money',
+  sector_market: 'Sector + market',
+  float_short_interest: 'Float + short interest',
+};
+
 function WhyPanel({ item }: { item: PerformanceItem }) {
+  const r = item.reasons ?? null;
   return (
     <div className="mb-why-panel">
       <h4>Why {item.ticker} was picked</h4>
@@ -360,12 +370,73 @@ function WhyPanel({ item }: { item: PerformanceItem }) {
           <dd>{item.pct_change != null ? fmtPct(item.pct_change / 100) : '—'}</dd>
         </div>
       </dl>
-      <p className="mb-why-note">
-        The full why-record — the written thesis, what would prove it wrong, and the
-        evidence behind the score — starts with the next pipeline snapshot. This
-        snapshot only recorded the numbers above, so there is no written reason to
-        show yet.
-      </p>
+      {r ? (
+        <>
+          {r.thesis ? (
+            <div className="mb-why-block">
+              <h5>The idea, in one paragraph</h5>
+              <p>{r.thesis}</p>
+            </div>
+          ) : null}
+          {r.invalidation ? (
+            <div className="mb-why-block">
+              <h5>What would prove it wrong</h5>
+              <p>{r.invalidation}</p>
+            </div>
+          ) : null}
+          {r.score_breakdown && r.score_breakdown.length > 0 ? (
+            <div className="mb-why-block">
+              <h5>What went into the score</h5>
+              <ul className="mb-why-breakdown">
+                {r.score_breakdown.map((b) => (
+                  <li key={b.attribute}>
+                    <span className="mb-why-attr">
+                      {REASON_LABELS[b.attribute] ?? b.attribute.replace(/_/g, ' ')}
+                      {' — '}
+                      <b>{b.score}</b>
+                      <span className="muted"> · weight {Math.round(b.weight * 100)}%</span>
+                    </span>
+                    {b.note ? <span className="mb-why-note-text">{b.note}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <div className="mb-why-block">
+            <h5>Smart money + setup</h5>
+            <ul className="mb-why-facts">
+              {r.congress_buys != null && r.congress_buys > 0 ? (
+                <li>{r.congress_buys} clustered congressional {r.congress_buys === 1 ? 'buy' : 'buys'}</li>
+              ) : null}
+              {r.insider_clusters && r.insider_clusters.length > 0 ? (
+                <li>{r.insider_clusters.length} insider buying {r.insider_clusters.length === 1 ? 'cluster' : 'clusters'}</li>
+              ) : null}
+              {r.unusual_options ? <li>Unusual options activity flagged</li> : null}
+              {r.sentiment ? <li>Overall mood at pick time: {r.sentiment}</li> : null}
+              {r.stage ? <li>Chart stage: {r.stage}</li> : null}
+              {r.trend_template_pass != null ? (
+                <li>{r.trend_template_pass ? 'Passed' : 'Did not pass'} the trend checklist</li>
+              ) : null}
+            </ul>
+          </div>
+          {r.quality_flags && r.quality_flags.length > 0 ? (
+            <div className="mb-why-block">
+              <h5>Worth knowing</h5>
+              <ul className="mb-why-flags">
+                {r.quality_flags.map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <p className="mb-why-note">
+          This snapshot only recorded the numbers above — no written thesis or
+          evidence breakdown was saved with it, so there is no written reason
+          to show yet.
+        </p>
+      )}
     </div>
   );
 }
