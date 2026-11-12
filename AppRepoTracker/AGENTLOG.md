@@ -1,5 +1,10 @@
 # AGENTLOG — AppRepoTracker
 
+## 2026-11-11 — v1.0.8 — Added Market Research Runner entry
+- Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
+- Change: added "Market Research Runner" at the top of Live Apps (new site that runs market research: framing wizard, eight-phase workspace with competitor/SWOT/leverage/cost builders, commission brief with Copy for the Market Research chat, browser-local request queue, results library reading the viewer's published research; same shared-password gate as the viewer; link to MarketResearchRunner/, Updated 2026-11-11, thread Quixera Enhancement — Nov 11, 2026). Live Apps stay sorted most-recent-first, so the Nov 11 entry leads. Counts updated to 41 entries / 24 live apps.
+- Verification: entry placement and counts checked in the pushed index.html; Pages URL re-checked after deploy.
+
 ## 2026-11-11 — v1.0.7 — Added Skill Library — Redesign Demo entry
 - Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
 - Change: added "Skill Library — Redesign Demo" at the top of Live Apps (interactive click-through mockup of the redesigned Skill Library: 9 screens — tour map, Libraries landing LB01, Library page LB20, Sub-skill page LB21, 3-step Create shell with 4-board import flow, Edit mode with change markers and publish review dialog, Pathways, 390px coach mobile view, Suggestions queue; sample data reconciled against the 88-board design export and the 62-row Excel review; link to SkillLibrary/, Updated 2026-11-11, thread Quixera Enhancement — Nov 11, 2026). Live Apps stay sorted most-recent-first, so the Nov 11 entry leads. Counts updated to 40 entries / 23 live apps.
