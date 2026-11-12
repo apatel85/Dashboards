@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill Library — Demo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #0D7C66; --primary-dark: #0A5E4E; --primary-soft: #E6F4F0;
+    --ink: #1A1A1A; --muted: #5B6470; --line: #E3E6EA; --bg: #F7F8F7;
+    --card: #FFFFFF; --amber-bg: #FFF7E6; --amber-ink: #7A5200;
+    --green-bg: #EAF6F1; --red: #B42318; --red-bg: #FDECEA;
+  }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: 'DM Sans', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink); font-size: 17px; line-height: 1.5; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px 16px 110px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 6px 0 14px; }
+  .topbar .brand { font-size: 19px; font-weight: 700; }
+  .topbar .brand span { color: var(--primary); }
+  .step { font-size: 14px; color: var(--muted); font-weight: 600; }
+  .step b { color: var(--primary); }
+  .gear { min-width: 48px; min-height: 48px; border: 1px solid var(--line); background: #fff; border-radius: 12px; font-size: 20px; cursor: pointer; }
+  h1 { font-size: 26px; line-height: 1.25; margin: 4px 0 6px; letter-spacing: -0.01em; }
+  .helper { font-size: 16px; color: var(--muted); margin-bottom: 20px; }
+  .helper b { color: var(--ink); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .card h2 { font-size: 18px; margin-bottom: 4px; }
+  .card .sub { font-size: 15px; color: var(--muted); }
+  .label { display: block; font-size: 14px; font-weight: 700; margin: 14px 0 6px; }
+  .label .plain { font-weight: 400; color: var(--muted); }
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    width: 100%; min-height: 52px; padding: 12px 14px; font-size: 17px; font-family: inherit;
+    border: 1.5px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink);
+  }
+  textarea { min-height: 84px; resize: vertical; }
+  input:focus, select:focus, textarea:focus { outline: 3px solid var(--primary-soft); border-color: var(--primary); }
+  .btn { display: block; width: 100%; min-height: 52px; padding: 13px 16px; font-size: 17px; font-weight: 700; font-family: inherit;
+    border: 0; border-radius: 12px; background: var(--primary); color: #fff; cursor: pointer; text-align: center; margin-top: 16px; }
+  .btn:active { background: var(--primary-dark); }
+  .btn:disabled { background: #B9C4BF; cursor: not-allowed; }
+  .btn.secondary { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
+  .quiet { display: block; width: 100%; text-align: center; background: none; border: 0; color: var(--primary);
+    font-size: 15px; font-weight: 600; font-family: inherit; min-height: 48px; cursor: pointer; margin-top: 8px; }
+  .quiet.danger { color: var(--red); }
+  .sports { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 8px 0 4px; }
+  .sport { min-height: 96px; border: 2px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer;
+    display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 14px 16px; font-family: inherit; text-align: left; }
+  .sport .ico { font-size: 30px; line-height: 1; margin-bottom: 6px; }
+  .sport .nm { font-size: 18px; font-weight: 700; }
+  .sport .nt { font-size: 13px; color: var(--muted); }
+  .sport.sel { border-color: var(--primary); background: var(--primary-soft); }
+  .areacard { display: block; width: 100%; text-align: left; background: #fff; border: 1.5px solid var(--line);
+    border-radius: 14px; padding: 16px; margin-bottom: 12px; cursor: pointer; font-family: inherit; }
+  .areacard .t { font-size: 19px; font-weight: 700; }
+  .areacard .s { font-size: 14px; color: var(--muted); margin-top: 2px; }
+  .areacard.sel { border-color: var(--primary); background: var(--primary-soft); }
+  .row { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; min-height: 56px; }
+  .row button.rowbtn { flex: 1; text-align: left; background: none; border: 0; font-family: inherit; font-size: 17px; cursor: pointer; padding: 0; }
+  .row .meta { font-size: 14px; color: var(--muted); }
+  .row.grey { background: #F4F5F5; color: var(--muted); }
+  .chip { display: inline-block; font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--primary-soft); color: var(--primary-dark); margin: 2px 4px 2px 0; white-space: nowrap; }
+  .chip.warn { background: var(--amber-bg); color: var(--amber-ink); }
+  .chip.grey { background: #EEF0F1; color: var(--muted); }
+  .chip.new { background: var(--green-bg); color: var(--primary-dark); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--amber-bg); color: var(--amber-ink); }
+  .banner { border-radius: 12px; padding: 12px 14px; font-size: 15px; margin-bottom: 14px; }
+  .banner.example { background: var(--primary-soft); color: var(--primary-dark); }
+  .banner.ok { background: var(--green-bg); color: var(--primary-dark); }
+  .banner.warn { background: var(--amber-bg); color: var(--amber-ink); }
+  .banner.err { background: var(--red-bg); color: var(--red); }
+  .checks { list-style: none; margin: 6px 0; }
+  .checks li { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 16px; }
+  .checks li:last-child { border-bottom: 0; }
+  .checks .ok-tick { color: var(--primary); font-weight: 700; }
+  .checks .warn-tick { color: var(--amber-ink); font-weight: 700; }
+  .section { border-top: 1px solid var(--line); padding-top: 16px; margin-top: 20px; }
+  .section:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+  .section h2 { font-size: 19px; margin-bottom: 2px; }
+  .section .sec-sub { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+  .preview { background: var(--primary-soft); border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+  .preview .say { font-size: 13px; font-weight: 700; color: var(--primary-dark); text-transform: uppercase; letter-spacing: 0.04em; }
+  .preview p { font-size: 16px; margin-top: 4px; }
+  .inline-add { display: flex; gap: 8px; margin-top: 8px; }
+  .inline-add input { flex: 1; }
+  .inline-add button { min-width: 96px; min-height: 52px; border-radius: 12px; border: 0; background: var(--primary); color: #fff; font-weight: 700; font-size: 16px; font-family: inherit; cursor: pointer; }
+  .bottomnav { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line);
+    display: flex; z-index: 20; }
+  .bottomnav .navinner { max-width: 640px; margin: 0 auto; display: flex; width: 100%; }
+  .bottomnav button { flex: 1; min-height: 64px; border: 0; background: none; font-family: inherit; font-size: 15px; font-weight: 700;
+    color: var(--muted); cursor: pointer; padding-bottom: 10px; }
+  .bottomnav button .ni { display: block; font-size: 22px; line-height: 1.2; }
+  .bottomnav button.on { color: var(--primary); }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 20px 20px 0 0;
+    max-width: 640px; margin: 0 auto; padding: 18px 18px 30px; max-height: 88vh; overflow-y: auto; z-index: 40;
+    box-shadow: 0 -6px 30px rgba(0,0,0,0.18); }
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 30; }
+  .drill { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
+  .drill .dt { font-weight: 700; font-size: 16px; }
+  .drill .dm { font-size: 14px; color: var(--muted); }
+  .small { font-size: 14px; color: var(--muted); }
+  .center { text-align: center; }
+  .big-num { font-size: 44px; font-weight: 700; color: var(--primary); }
+  .foot-note { font-size: 13px; color: var(--muted); text-align: center; margin-top: 22px; line-height: 1.5; }
+  .foot-note button { background: none; border: 0; color: var(--primary); font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; padding: 4px 6px; }
+  .checkline { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .checkline input[type=checkbox] { width: 26px; height: 26px; min-width: 26px; margin-top: 2px; accent-color: var(--primary); }
+  .checkline .ct { font-size: 17px; font-weight: 600; }
+  .checkline .cs { font-size: 14px; color: var(--muted); }
+  .levelpick { display: flex; gap: 8px; }
+  .levelpick select { flex: 1; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div id="sheetRoot"></div>
+<script>
+"use strict";
+/* Skill Library Demo — a fresh, simple rebuild. One journey, five steps.
+   Plain words first; product terms always arrive with their meaning beside them. */
+var LS_KEY = "skillLibraryDemo-v1";
+var PRIMARY = "#0D7C66";
+
+var SPORT_PRESETS = {
+  "Cricket":   { levels: ["White", "Silver", "Gold", "Purple"], ages: ["U9", "U10", "U11", "U12", "U13", "U14", "U18", "Adult"], cutoff: "Sep 1" },
+  "Football":  { levels: ["Beginner", "Intermediate", "Advanced"], ages: ["U7", "U9", "U11", "U13", "U15", "U17"], cutoff: "Sep 1" },
+  "Tennis":    { levels: ["Red", "Orange", "Green", "Yellow"], ages: ["U8", "U10", "U12", "Adult"], cutoff: "Jan 1" },
+  "Swimming":  { levels: ["Stage 1", "Stage 2", "Stage 3", "Stage 4", "Stage 5", "Stage 6", "Stage 7"], ages: [], cutoff: "" }
+};
+var SPORT_ICONS = { "Cricket": "🏏", "Football": "⚽", "Tennis": "🎾", "Swimming": "🏊" };
+var SPORT_NOTES = { "Cricket": "Batting, bowling, fielding", "Football": "Passing, shooting, defending", "Tennis": "Colour-ball stages", "Swimming": "Stroke stages 1 to 7" };
+
+var uidCounter = 1;
+function uid() { return "id" + (Date.now().toString(36)) + (uidCounter++); }
+function esc(s) {
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function todayStr() {
+  var d = new Date();
+  var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear();
+}
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+/* ---------- example library (one small example, clearly labeled) ---------- */
+function exampleState() {
+  var sub = {
+    id: uid(), name: "Forward defense", code: "CRI-BAT-DEF-01",
+    ican: "I can block a straight ball safely.",
+    points: ["Head still, eyes level", "Front elbow high", "Bat and pad together"],
+    levels: [{ stage: "U11 · Silver", kind: "Assessed", check: "Block 10 dropped balls into the safe zone", pass: "7 of 10 clean blocks, shape held" }],
+    drills: [{ id: uid(), name: "Pairs cricket", minutes: 10, how: "In pairs, one feeds gentle underarm balls and the other blocks them with a straight bat. Swap after 10 balls." }],
+    homework: [{ id: uid(), title: "Shadow batting", how: "Take your stance in front of a mirror; check grip, base and eye line, then push the bat back. Hold for 2 seconds. 5 minutes." }],
+    retired: false, isNew: false
+  };
+  return {
+    library: {
+      sport: "Cricket", name: "Cricket Library", version: 1, published: true, publishedAt: todayStr(),
+      whatChanged: "First version",
+      pathway: clone(SPORT_PRESETS["Cricket"]),
+      areas: [{ id: uid(), name: "Batting", families: [{ id: uid(), name: "Defense", subs: [sub] }] }]
+    },
+    programs: [],
+    suggestions: [],
+    isExample: true
+  };
+}
+function blankState() {
+  return { library: null, programs: [], suggestions: [], isExample: false };
+}
+function loadState() {
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    if (raw) { var s = JSON.parse(raw); if (s && typeof s === "object") return s; }
+  } catch (e) {}
+  return exampleState();
+}
+function saveState() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
+
+var state = loadState();
+var ui = { screen: "start", areaId: null, familyId: null, subId: null, progId: null,
+  coachAge: "", coachLevel: "", progAge: "", progLevel: "", importOpen: false, addDrillOpen: false,
+  newLevelOpen: false, removeOpen: false, suggestOpen: false, sheetSubId: null };
+var draft = { sport: "", name: "", progName: "", sessions: 12 };
+
+/* ---------- helpers over the state ---------- */
+function lib() { return state.library; }
+function areas() { return lib() ? lib().areas : []; }
+function findArea(id) { var a = areas(); for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }
+function findFamily(areaId, famId) {
+  var a = findArea(areaId); if (!a) return null;
+  for (var i = 0; i < a.families.length; i++) if (a.families[i].id === famId) return a.families[i];
+  return null;
+}
+function allSubs() {
+  var out = [];
+  areas().forEach(function (a) {
+    a.families.forEach(function (f) {
+      f.subs.forEach(function (s) { out.push({ sub: s, area: a, family: f }); });
+    });
+  });
+  return out;
+}
+function findSub(id) {
+  var all = allSubs();
+  for (var i = 0; i < all.length; i++) if (all[i].sub.id === id) return all[i];
+  return null;
+}
+function subCount() { return allSubs().filter(function (x) { return !x.sub.retired; }).length; }
+function subHasLevel(s) { return s.levels && s.levels.length > 0; }
+function subHasDrills(s) { return s.drills && s.drills.length > 0; }
+function stageLabel(age, level) {
+  if (age && level) return age + " · " + level;
+  if (level) return level;
+  if (age) return age;
+  return "All levels";
+}
+function subStages(s) {
+  return (s.levels || []).map(function (l) { return l.stage; });
+}
+function subMatchesStage(s, stage) {
+  if (!stage) return true;
+  var stages = subStages(s);
+  if (stages.indexOf("All levels") !== -1) return true;
+  return stages.indexOf(stage) !== -1;
+}
+function autoCode(subName) {
+  var p = (lib().sport || "LIB").slice(0, 3).toUpperCase();
+  var n = subCount() + 1;
+  var code = p + "-" + ("00" + n).slice(-3);
+  return code;
+}
+function stepOf(screen) {
+  return { start: 1, build: 2, sub: 3, publish: 4, program: 5, programview: 5 }[screen] || 0;
+}
+function go(screen) {
+  ui.screen = screen;
+  if (screen !== "sub") { ui.subId = ui.subId; }
+  render();
+  window.scrollTo(0, 0);
+}
+function topbar(step) {
+  var stepHtml = step ? '<div class="step">Step <b>' + step + ' of 5</b></div>' : '<div class="step">Demo</div>';
+  var gear = '<button class="gear" onclick="go(\'settings\')" aria-label="Settings">⚙️</button>';
+  return '<div class="topbar"><div class="brand">Skill <span>Library</span></div>' + stepHtml + gear + '</div>';
+}
+function bottomNav(active) {
+  if (!lib()) return "";
+  function b(name, icon, screen) {
+    return '<button class="' + (active === screen ? 'on' : '') + '" onclick="go(\'' + screen + '\')"><span class="ni">' + icon + '</span>' + name + '</button>';
+  }
+  return '<div class="bottomnav"><div class="navinner">' + b("Library", "📚", "library") + b("Program", "🗓️", "programlist") + b("Coach", "🏅", "coach") + '</div></div>';
+}
+function exampleBanner() {
+  if (!state.isExample) return "";
+  return '<div class="banner example"><b>Example library.</b> This is a small sample so you can see how it works. Tap <b>Start empty</b> below to clear it and build your own.</div>';
+}
+function footLinks() {
+  return '<div class="foot-note">Saved in this browser only. ' +
+    '<button onclick="exportWorkspace()">Export</button> · ' +
+    '<button onclick="document.getElementById(\'importFile\').click()">Import</button> · ' +
+    '<button onclick="startEmpty()">Start empty</button>' +
+    '<input type="file" id="importFile" accept="application/json" style="display:none" onchange="importWorkspaceFile(event)"></div>';
+}
+/* ================= SCREEN 1 — START ================= */
+function importCardHtml() {
+  if (!ui.importOpen) return "";
+  return '<div class="card"><h2>Import a list</h2><p class="sub">Paste rows from a spreadsheet. One line per thing athletes learn: <b>Group &nbsp;|&nbsp; Smaller group &nbsp;|&nbsp; What they learn</b> — separated by tabs or commas.</p>' +
+    '<label class="label" for="importText">Your list</label>' +
+    '<textarea id="importText" placeholder="Batting\tDefense\tForward defense&#10;Batting\tDefense\tBack-foot defense"></textarea>' +
+    '<button class="btn secondary" onclick="previewImport()">Preview what will be added</button>' +
+    '<div id="importPreview"></div></div>';
+}
+function renderStart() {
+  var sel = draft.sport || (lib() ? lib().sport : "");
+  var nameVal = draft.name || (lib() ? lib().name : "");
+  var sportsHtml = Object.keys(SPORT_PRESETS).map(function (sp) {
+    return '<button type="button" class="sport' + (sel === sp ? ' sel' : '') + '" onclick="pickSport(\'' + sp + '\')">' +
+      '<span class="ico">' + SPORT_ICONS[sp] + '</span><span class="nm">' + sp + '</span>' +
+      '<span class="nt">' + SPORT_NOTES[sp] + '</span></button>';
+  }).join("");
+  var importHtml = importCardHtml();
+  var html = topbar(1) + exampleBanner() +
+    '<h1>What sport is this library for?</h1>' +
+    '<p class="helper">A library is the list of <b>everything you coach in one sport</b> — the groups, and the things athletes learn inside them.</p>' +
+    '<div class="sports">' + sportsHtml + '</div>' +
+    '<label class="label" for="libName">Library name</label>' +
+    '<input type="text" id="libName" value="' + esc(nameVal) + '" placeholder="Cricket Library" oninput="draft.name=this.value">' +
+    '<div id="startErr"></div>' +
+    '<button class="btn" onclick="continueStart()">Continue</button>' +
+    '<button class="quiet" onclick="toggleImport()">' + (ui.importOpen ? 'Hide import' : 'Import a list instead') + '</button>' +
+    importHtml + footLinks();
+  return html;
+}
+function pickSport(sp) {
+  draft.sport = sp;
+  draft.name = sp + " Library";
+  render();
+}
+function continueStart() {
+  var nameEl = document.getElementById("libName");
+  var name = (nameEl ? nameEl.value : draft.name || "").trim();
+  var sport = draft.sport || (lib() ? lib().sport : "");
+  var err = document.getElementById("startErr");
+  if (!sport) {
+    if (err) err.innerHTML = '<div class="banner err" style="margin-top:12px">Pick a sport first — tap one of the cards above.</div>';
+    return;
+  }
+  if (!name) name = sport + " Library";
+  if (!lib() || lib().sport !== sport) {
+    if (lib() && lib().sport !== sport && !confirm("Start a new " + sport + " library? Your current " + lib().sport + " library will be replaced. Export first if you want to keep it.")) return;
+    state.library = {
+      sport: sport, name: name, version: 0, published: false, publishedAt: "",
+      whatChanged: "", pathway: clone(SPORT_PRESETS[sport]), areas: []
+    };
+    state.isExample = false;
+    ui.areaId = null; ui.familyId = null;
+  } else {
+    lib().name = name;
+  }
+  saveState();
+  go("build");
+}
+function toggleImport() { ui.importOpen = !ui.importOpen; render(); }
+function previewImport() {
+  var ta = document.getElementById("importText");
+  var raw = ta ? ta.value : "";
+  var rows = parseImport(raw);
+  var prev = document.getElementById("importPreview");
+  if (!prev) return;
+  if (!rows.ok.length && !rows.bad.length) {
+    prev.innerHTML = '<div class="banner warn" style="margin-top:12px">Nothing to preview yet — paste at least one line.</div>';
+    return;
+  }
+  var h = '<div class="preview" style="margin-top:12px"><div class="say">Will add</div>';
+  rows.ok.forEach(function (r) { h += '<p>' + esc(r.area) + ' › ' + esc(r.family) + ' › <b>' + esc(r.sub) + '</b></p>'; });
+  if (rows.bad.length) {
+    h += '<div class="say" style="color:var(--amber-ink);margin-top:8px">Skipped — needs all three parts</div>';
+    rows.bad.forEach(function (b) { h += '<p>' + esc(b) + '</p>'; });
+  }
+  h += '<button class="btn" style="margin-top:12px" onclick="confirmImport()">Add ' + rows.ok.length + ' to the library</button></div>';
+  prev.innerHTML = h;
+  window._importRows = rows.ok;
+}
+function parseImport(raw) {
+  var ok = [], bad = [];
+  raw.split(/\r?\n/).forEach(function (line) {
+    if (!line.trim()) return;
+    var parts = line.split(/\t|,/).map(function (p) { return p.trim(); }).filter(function (p) { return p; });
+    if (parts.length >= 3) ok.push({ area: parts[0], family: parts[1], sub: parts[2] });
+    else bad.push(line);
+  });
+  return { ok: ok, bad: bad };
+}
+function confirmImport() {
+  var rows = window._importRows || [];
+  if (!lib()) {
+    var sport = draft.sport || "Cricket";
+    state.library = { sport: sport, name: sport + " Library", version: 0, published: false, publishedAt: "", whatChanged: "", pathway: clone(SPORT_PRESETS[sport]), areas: [] };
+    state.isExample = false;
+  }
+  rows.forEach(function (r) {
+    var area = areas().find(function (a) { return a.name.toLowerCase() === r.area.toLowerCase(); });
+    if (!area) { area = { id: uid(), name: r.area, families: [] }; lib().areas.push(area); }
+    var fam = area.families.find(function (f) { return f.name.toLowerCase() === r.family.toLowerCase(); });
+    if (!fam) { fam = { id: uid(), name: r.family, subs: [] }; area.families.push(fam); }
+    fam.subs.push({ id: uid(), name: r.sub, code: "", ican: "", points: [], levels: [{ stage: "", kind: "Assessed", check: "", pass: "" }], drills: [], homework: [], retired: false, isNew: true });
+  });
+  saveState();
+  ui.importOpen = false;
+  go("build");
+}
+
+/* ================= SCREEN 2 — BUILD ================= */
+function renderBuild() {
+  if (!lib()) return renderStart();
+  var L = lib();
+  var html = topbar(2) + exampleBanner() +
+    '<h1>What do you teach?</h1>' +
+    '<p class="helper">Add <b>groups</b> (the big areas, like Batting), then the <b>things athletes learn</b> inside them. Tap any group to open it.</p>';
+  if (!areas().length) {
+    html += '<div class="card"><h2>Nothing here yet</h2><p class="sub">Start with one group — for example, Batting, Bowling or Fielding.</p>' +
+      '<div class="inline-add"><input type="text" id="newArea" placeholder="Group name, e.g. Batting" aria-label="Group name"><button onclick="addArea()">Add</button></div></div>';
+  } else {
+    html += areas().map(function (a) {
+      var famCount = a.families.length;
+      var sCount = 0; a.families.forEach(function (f) { sCount += f.subs.filter(function (s) { return !s.retired; }).length; });
+      var sel = ui.areaId === a.id ? ' sel' : '';
+      return '<button type="button" class="areacard' + sel + '" onclick="selectArea(\'' + a.id + '\')">' +
+        '<span class="t">' + esc(a.name) + '</span><span class="s">' + famCount + ' smaller group' + (famCount === 1 ? '' : 's') + ' · ' + sCount + ' thing' + (sCount === 1 ? '' : 's') + ' athletes learn</span></button>';
+    }).join("");
+    html += '<button class="quiet" onclick="showAreaAdd()">+ Add a skill area</button><div id="areaAdd"></div>';
+  }
+  if (ui.areaId) {
+    var area = findArea(ui.areaId);
+    if (area) {
+      html += '<div class="card"><h2>' + esc(area.name) + '</h2><p class="sub">Smaller groups inside ' + esc(area.name) + ' — for example, Defense inside Batting.</p>';
+      if (!area.families.length) {
+        html += '<p class="sub" style="margin-top:8px">No smaller groups yet. Add one below.</p>';
+      }
+      area.families.forEach(function (f) {
+        var live = f.subs.filter(function (s) { return !s.retired; });
+        var open = ui.familyId === f.id;
+        html += '<div class="row"><button type="button" class="rowbtn" onclick="selectFamily(\'' + f.id + '\')"><b>' + esc(f.name) + '</b><br><span class="meta">' + live.length + ' thing' + (live.length === 1 ? '' : 's') + ' athletes learn</span></button>' +
+          '<span aria-hidden="true">' + (open ? '▾' : '▸') + '</span></div>';
+        if (open) {
+          if (!live.length) html += '<p class="small" style="margin:4px 0 10px">Nothing here yet — add the first thing athletes learn below.</p>';
+          live.forEach(function (s) {
+            var chips = (s.levels || []).map(function (l) { return '<span class="chip">' + esc(l.stage) + '</span>'; }).join("");
+            var noLevel = (!s.levels || !s.levels.length) ? '<span class="chip warn">No level set</span>' : '';
+            var noDrill = (!s.drills || !s.drills.length) ? '<span class="chip warn">No drills</span>' : '';
+            html += '<div class="row"><button type="button" class="rowbtn" onclick="openSub(\'' + s.id + '\')"><b>' + esc(s.name) + '</b>' +
+              (s.isNew ? ' <span class="chip new">New</span>' : '') + '<br>' + chips + noLevel + noDrill + '</button>' +
+              '<span aria-hidden="true">›</span></div>';
+          });
+        }
+      });
+      html += '<button class="btn" onclick="addGroupPrompt()">Add a group</button>' +
+        '<div id="groupAdd"></div>' +
+        '<button class="btn secondary" onclick="addSubPrompt()">Add something athletes learn</button>' +
+        '<div id="subAdd"></div></div>';
+    }
+  }
+  html += '<button class="quiet" onclick="toggleImport()">' + (ui.importOpen ? 'Hide import' : 'Import a list') + '</button>' + importCardHtml() +
+    '<button class="btn" onclick="go(\'publish\')">Done building — review</button>' +
+    '<button class="quiet" onclick="go(\'library\')">See the library as coaches see it</button>' + footLinks();
+  return html;
+}
+function selectArea(id) {
+  ui.areaId = (ui.areaId === id) ? null : id;
+  if (ui.areaId !== id) ui.familyId = null;
+  render();
+}
+function selectFamily(id) {
+  ui.familyId = (ui.familyId === id) ? null : id;
+  render();
+}
+function showAreaAdd() {
+  var el = document.getElementById("areaAdd");
+  if (el) el.innerHTML = '<div class="inline-add"><input type="text" id="newArea" placeholder="Group name, e.g. Bowling" aria-label="Group name"><button onclick="addArea()">Add</button></div>';
+  var inp = document.getElementById("newArea"); if (inp) inp.focus();
+}
+function addArea() {
+  var inp = document.getElementById("newArea");
+  var name = inp ? inp.value.trim() : "";
+  if (!name) return;
+  var area = { id: uid(), name: name, families: [] };
+  lib().areas.push(area);
+  ui.areaId = area.id; ui.familyId = null;
+  saveState(); render();
+}
+function addGroupPrompt() {
+  var el = document.getElementById("groupAdd");
+  if (el) el.innerHTML = '<div class="inline-add"><input type="text" id="newFamily" placeholder="Smaller group, e.g. Defense" aria-label="Smaller group name"><button onclick="addFamily()">Add</button></div>';
+  var inp = document.getElementById("newFamily"); if (inp) inp.focus();
+}
+function addFamily() {
+  var inp = document.getElementById("newFamily");
+  var name = inp ? inp.value.trim() : "";
+  var area = findArea(ui.areaId);
+  if (!name || !area) return;
+  var fam = { id: uid(), name: name, subs: [] };
+  area.families.push(fam);
+  ui.familyId = fam.id;
+  saveState(); render();
+}
+function addSubPrompt() {
+  var area = findArea(ui.areaId);
+  var fams = area ? area.families : [];
+  if (!fams.length) {
+    var el = document.getElementById("subAdd");
+    if (el) el.innerHTML = '<div class="banner warn" style="margin-top:12px">Add a smaller group first — every thing athletes learn sits inside one.</div>';
+    return;
+  }
+  var opts = fams.map(function (f) { return '<option value="' + f.id + '"' + (ui.familyId === f.id ? ' selected' : '') + '>' + esc(f.name) + '</option>'; }).join("");
+  var el2 = document.getElementById("subAdd");
+  if (el2) el2.innerHTML = '<label class="label" for="newSubFam">Smaller group</label><select id="newSubFam">' + opts + '</select>' +
+    '<div class="inline-add"><input type="text" id="newSub" placeholder="What athletes learn, e.g. Forward defense" aria-label="What athletes learn"><button onclick="addSub()">Add</button></div>';
+  var inp = document.getElementById("newSub"); if (inp) inp.focus();
+}
+function addSub() {
+  var inp = document.getElementById("newSub");
+  var famSel = document.getElementById("newSubFam");
+  var name = inp ? inp.value.trim() : "";
+  if (!name || !famSel) return;
+  var fam = findFamily(ui.areaId, famSel.value);
+  if (!fam) return;
+  var sub = { id: uid(), name: name, code: "", ican: "", points: [], levels: [{ stage: "", kind: "Assessed", check: "", pass: "" }], drills: [], homework: [], retired: false, isNew: true };
+  fam.subs.push(sub);
+  saveState();
+  openSub(sub.id);
+}
+
+/* ================= SCREEN 3 — SUB-SKILL ================= */
+function renderSub() {
+  var found = findSub(ui.subId);
+  if (!found || !lib()) return renderBuild();
+  var s = found.sub, area = found.area, family = found.family;
+  var L = lib();
+  var pw = L.pathway;
+  var html = topbar(3) +
+    '<h1>' + esc(s.name) + '</h1>' +
+    '<p class="helper">One thing athletes learn, in ' + esc(area.name) + ' › ' + esc(family.name) + '. Fill in what it is, how you check it, and the drills.</p>';
+  html += '<div class="section"><h2>What it is</h2><p class="sec-sub">The name, and the line families see.</p>' +
+    '<label class="label" for="subName">Name</label>' +
+    '<input type="text" id="subName" value="' + esc(s.name) + '">' +
+    '<label class="label" for="subIcan">What families see <span class="plain">— one sentence, start with “I can…”</span></label>' +
+    '<input type="text" id="subIcan" value="' + esc(s.ican || '') + '" placeholder="I can block a straight ball safely.">' +
+    '<div class="preview" id="icanPreview"><div class="say">Families see</div><p>' + esc(s.ican || 'Add the “I can” line above and families will see it here.') + '</p></div>' +
+    '<label class="label" for="subPoints">Coaching points <span class="plain">— one per line, for coaches</span></label>' +
+    '<textarea id="subPoints" placeholder="Head still, eyes level&#10;Front elbow high">' + esc((s.points || []).join("\n")) + '</textarea></div>';
+  html += '<div class="section"><h2>How you check it</h2><p class="sec-sub">The levels it is checked at. Each checked level has its own test — that is the stage map, in plain words.</p><div id="levelRows">';
+  (s.levels || []).forEach(function (lv, i) { html += levelRowHtml(lv, i); });
+  html += '</div><button class="quiet" onclick="addLevelRow()">+ Add another level</button></div>';
+  html += '<div class="section"><h2>Drills</h2><p class="sec-sub">What coaches run in a session to practise it.</p><div id="drillList">';
+  (s.drills || []).forEach(function (d) {
+    html += '<div class="drill"><div class="dt">' + esc(d.name) + '</div><div class="dm">' + (d.minutes || 10) + ' minutes</div><div class="small">' + esc(d.how || '') + '</div></div>';
+  });
+  if (!(s.drills || []).length) html += '<p class="small">No drills yet — add the first one below.</p>';
+  html += '</div><div id="drillAdd"></div>' +
+    '<button class="btn secondary" onclick="showDrillAdd()">Add a drill</button></div>';
+  html += '<div class="section"><h2>Homework</h2><p class="sec-sub">Optional — what athletes do at home.</p>';
+  (s.homework || []).forEach(function (h) {
+    html += '<div class="drill"><div class="dt">' + esc(h.title) + '</div><div class="small">' + esc(h.how || '') + '</div></div>';
+  });
+  html += '<div class="inline-add"><input type="text" id="hwTitle" placeholder="Homework, e.g. Shadow batting"><button onclick="addHomework()">Add</button></div></div>';
+  html += '<button class="btn" onclick="saveSub()">Save</button>' +
+    '<button class="quiet" onclick="go(\'build\')">Back to the list — don’t save</button>' +
+    '<button class="quiet danger" onclick="showRemoveSub()">Remove this</button>';
+  return html;
+}
+function levelRowHtml(lv, i) {
+  var pw = lib().pathway;
+  var ageOpts = '', levelOpts = '';
+  var curAge = (lv.age !== undefined) ? lv.age : "";
+  var curLevel = (lv.level !== undefined) ? lv.level : "";
+  if (!lv.age && !lv.level && lv.stage && lv.stage.indexOf(" · ") !== -1) { var p = lv.stage.split(" · "); curAge = p[0]; curLevel = p[1]; }
+  else if (!lv.age && !lv.level && lv.stage) { curLevel = lv.stage; }
+  if (pw.ages && pw.ages.length) {
+    ageOpts = '<option value="">Any age</option>' + pw.ages.map(function (a) { return '<option' + (a === curAge ? ' selected' : '') + '>' + a + '</option>'; }).join("");
+  }
+  levelOpts = '<option value="">Pick a level</option>' + pw.levels.map(function (l) { return '<option' + (l === curLevel ? ' selected' : '') + '>' + l + '</option>'; }).join("");
+  var ageSel = (pw.ages && pw.ages.length) ? '<select id="lvAge' + i + '" aria-label="Age group">' + ageOpts + '</select>' : '';
+  return '<div class="card" style="margin-bottom:10px">' +
+    '<div class="levelpick">' + ageSel + '<select id="lvLevel' + i + '" aria-label="Level">' + levelOpts + '</select></div>' +
+    '<label class="label" for="lvCheck' + i + '">What the coach checks</label>' +
+    '<input type="text" id="lvCheck' + i + '" value="' + esc(lv.check || '') + '" placeholder="e.g. Block 10 dropped balls into the safe zone">' +
+    '<label class="label" for="lvPass' + i + '">What counts as a pass</label>' +
+    '<input type="text" id="lvPass' + i + '" value="' + esc(lv.pass || '') + '" placeholder="e.g. 7 of 10 clean blocks, shape held">' +
+    '<label class="label">Checked, or just practised here?</label>' +
+    '<select id="lvKind' + i + '"><option' + (lv.kind === 'Assessed' ? ' selected' : '') + '>Assessed</option><option' + (lv.kind === 'Introduce' ? ' selected' : '') + '>Introduce</option><option' + (lv.kind === 'Revisit' ? ' selected' : '') + '>Revisit</option></select>' +
+    '<button class="quiet danger" onclick="removeLevelRow(' + i + ')">Remove this level</button></div>';
+}
+function openSub(id) {
+  ui.subId = id; ui.addDrillOpen = false;
+  go("sub");
+}
+function captureSubForm() {
+  var found = findSub(ui.subId); if (!found) return null;
+  var s = found.sub;
+  var nameEl = document.getElementById("subName");
+  var icanEl = document.getElementById("subIcan");
+  var ptsEl = document.getElementById("subPoints");
+  if (nameEl && nameEl.value.trim()) s.name = nameEl.value.trim();
+  if (icanEl) s.ican = icanEl.value.trim();
+  if (ptsEl) s.points = ptsEl.value.split("\n").map(function (x) { return x.trim(); }).filter(function (x) { return x; });
+  var rows = [];
+  (s.levels || []).forEach(function (lv, i) {
+    var ageEl = document.getElementById("lvAge" + i);
+    var lvlEl = document.getElementById("lvLevel" + i);
+    var chkEl = document.getElementById("lvCheck" + i);
+    var pasEl = document.getElementById("lvPass" + i);
+    var kndEl = document.getElementById("lvKind" + i);
+    var age = ageEl ? ageEl.value : (lv.age || "");
+    var level = lvlEl ? lvlEl.value : (lv.level || "");
+    rows.push({ stage: stageLabel(age, level), age: age, level: level,
+      kind: kndEl ? kndEl.value : (lv.kind || "Assessed"),
+      check: chkEl ? chkEl.value.trim() : (lv.check || ""), pass: pasEl ? pasEl.value.trim() : (lv.pass || "") });
+  });
+  s.levels = rows;
+  return found;
+}
+function addLevelRow() {
+  var found = captureSubForm(); if (!found) return;
+  found.sub.levels.push({ stage: "", age: "", level: "", kind: "Assessed", check: "", pass: "" });
+  render();
+}
+function removeLevelRow(i) {
+  var found = captureSubForm(); if (!found) return;
+  found.sub.levels.splice(i, 1);
+  render();
+}
+function showDrillAdd() {
+  var el = document.getElementById("drillAdd");
+  if (el) el.innerHTML = '<label class="label" for="drillName">Drill name</label><input type="text" id="drillName" placeholder="e.g. Pairs cricket">' +
+    '<label class="label" for="drillMin">Minutes</label><input type="number" id="drillMin" value="10" min="1" max="120">' +
+    '<label class="label" for="drillHow">How to run it</label><textarea id="drillHow" placeholder="What the coach does, step by step."></textarea>' +
+    '<button class="btn secondary" onclick="addDrill()">Add drill</button>';
+  var inp = document.getElementById("drillName"); if (inp) inp.focus();
+}
+function addDrill() {
+  var found = captureSubForm(); if (!found) return;
+  var name = (document.getElementById("drillName") || {}).value || "";
+  name = name.trim();
+  if (!name) return;
+  var min = parseInt(((document.getElementById("drillMin") || {}).value || "10"), 10) || 10;
+  var how = ((document.getElementById("drillHow") || {}).value || "").trim();
+  found.sub.drills = found.sub.drills || [];
+  found.sub.drills.push({ id: uid(), name: name, minutes: min, how: how });
+  saveState(); render();
+}
+function addHomework() {
+  var found = captureSubForm(); if (!found) return;
+  var inp = document.getElementById("hwTitle");
+  var title = inp ? inp.value.trim() : "";
+  if (!title) return;
+  found.sub.homework = found.sub.homework || [];
+  found.sub.homework.push({ id: uid(), title: title, how: "" });
+  saveState(); render();
+}
+function saveSub() {
+  var found = captureSubForm(); if (!found) return;
+  var s = found.sub;
+  s.levels = (s.levels || []).filter(function (l) { return l.level || l.age; });
+  if (!s.code) s.code = autoCode(s.name);
+  s.isNew = false;
+  saveState();
+  go("build");
+}
+function showRemoveSub() {
+  var found = findSub(ui.subId); if (!found) return;
+  var sheet = document.getElementById("sheetRoot");
+  sheet.innerHTML = '<div class="scrim" onclick="closeSheet()"></div><div class="sheet">' +
+    '<h1 style="font-size:22px">Remove “' + esc(found.sub.name) + '”?</h1>' +
+    '<p class="helper">We never delete things athletes have already been taught. Pick what happens instead.</p>' +
+    '<button class="btn" onclick="retireSub()">Retire it — leave it on past sessions</button>' +
+    '<button class="quiet" onclick="closeSheet()">Keep it</button></div>';
+}
+function retireSub() {
+  var found = findSub(ui.subId); if (!found) return;
+  found.sub.retired = true;
+  saveState(); closeSheet(); go("build");
+}
+function closeSheet() { document.getElementById("sheetRoot").innerHTML = ""; }
+/* ================= SCREEN 4 — PUBLISH ================= */
+function renderPublish() {
+  if (!lib()) return renderStart();
+  var L = lib();
+  var subs = allSubs().filter(function (x) { return !x.sub.retired; });
+  var withLevel = subs.filter(function (x) { return subHasLevel(x.sub); }).length;
+  var withDrills = subs.filter(function (x) { return subHasDrills(x.sub); }).length;
+  var missingDrills = subs.length - withDrills;
+  var missingLevel = subs.length - withLevel;
+  var html = topbar(4) + exampleBanner() +
+    '<h1>Ready to share it with coaches?</h1>' +
+    '<p class="helper">Publishing puts version ' + (L.version + 1) + ' of <b>' + esc(L.name) + '</b> in front of your coaches. You can keep editing afterwards.</p>';
+  if (!subs.length) {
+    html += '<div class="banner err"><b>Nothing to publish yet.</b> Add at least one thing athletes learn first.</div>' +
+      '<button class="btn" onclick="go(\'build\')">Back to building</button>' + footLinks();
+    return html;
+  }
+  html += '<div class="card"><ul class="checks">' +
+    '<li><span class="ok-tick">✓</span> ' + subs.length + ' thing' + (subs.length === 1 ? '' : 's') + ' athletes learn</li>' +
+    '<li><span class="' + (withLevel === subs.length ? 'ok-tick' : 'warn-tick') + '">' + (withLevel === subs.length ? '✓' : '!') + '</span> ' + withLevel + ' of ' + subs.length + ' have a level set' + (missingLevel ? ' — ' + missingLevel + ' will not show in level lists until you set one' : '') + '</li>' +
+    '<li><span class="' + (withDrills === subs.length ? 'ok-tick' : 'warn-tick') + '">' + (withDrills === subs.length ? '✓' : '!') + '</span> ' + withDrills + ' of ' + subs.length + ' have drills' + (missingDrills ? ' — ' + missingDrills + ' missing drills, that’s OK, you can publish now' : '') + '</li>' +
+    '</ul></div>' +
+    '<label class="label" for="whatChanged">What changed <span class="plain">— optional, coaches see this note</span></label>' +
+    '<input type="text" id="whatChanged" value="' + esc(L.whatChanged || '') + '" placeholder="e.g. First version of the Cricket library">' +
+    '<button class="btn" onclick="publishLibrary()">Publish library</button>' +
+    '<button class="quiet" onclick="go(\'build\')">Back to building</button>' + footLinks();
+  return html;
+}
+function publishLibrary() {
+  var L = lib(); if (!L) return;
+  var note = document.getElementById("whatChanged");
+  if (note) L.whatChanged = note.value.trim();
+  L.version = (L.version || 0) + 1;
+  L.published = true;
+  L.publishedAt = todayStr();
+  state.isExample = false;
+  saveState();
+  ui.screen = "published";
+  render();
+  window.scrollTo(0, 0);
+}
+function renderPublished() {
+  var L = lib();
+  return topbar(4) + '<div class="center" style="padding-top:24px"><div class="big-num">✓</div>' +
+    '<h1>Published — coaches can now use it</h1>' +
+    '<p class="helper">Version ' + L.version + ' of ' + esc(L.name) + ' is live for your coaches.</p></div>' +
+    '<button class="btn" onclick="go(\'program\')">Create a program from it</button>' +
+    '<button class="quiet" onclick="go(\'library\')">See the library</button>' + footLinks();
+}
+
+/* ================= SCREEN 5 — PROGRAM ================= */
+function renderProgram() {
+  if (!lib()) {
+    return topbar(5) + '<h1>Make a program</h1><p class="helper">Programs are built from a library. Start a library first, then come back here.</p>' +
+      '<button class="btn" onclick="go(\'start\')">Start a library</button>' + footLinks();
+  }
+  var L = lib();
+  var pw = L.pathway;
+  if (pw.ages && pw.ages.length && !ui.progAge) ui.progAge = pw.ages[0];
+  if (pw.levels.length && !ui.progLevel) ui.progLevel = pw.levels[0];
+  var ageOpts = (pw.ages && pw.ages.length) ? pw.ages.map(function (a) { return '<option' + (ui.progAge === a ? ' selected' : '') + '>' + a + '</option>'; }).join("") : '';
+  var lvlOpts = pw.levels.map(function (l) { return '<option' + (ui.progLevel === l ? ' selected' : '') + '>' + l + '</option>'; }).join("");
+  var stage = stageLabel(ui.progAge, ui.progLevel);
+  var subs = allSubs().filter(function (x) { return !x.sub.retired; });
+  var inStage = subs.filter(function (x) { return subMatchesStage(x.sub, stage); });
+  var outStage = subs.filter(function (x) { return !subMatchesStage(x.sub, stage); });
+  var checked = window._progChecked || {};
+  var html = topbar(5) +
+    '<h1>Make a program from this library</h1>' +
+    '<p class="helper">Pick a level, tick the things athletes will learn, and publish. Coaches plan sessions from this list.</p>' +
+    '<label class="label" for="progName">Program name</label>' +
+    '<input type="text" id="progName" value="' + esc(draft.progName || '') + '" placeholder="e.g. U12 Batting Foundations" oninput="draft.progName=this.value">' +
+    '<label class="label">Level for this program <span class="plain">— from the ' + esc(L.sport) + ' pathway</span></label>' +
+    '<div class="levelpick">' + (ageOpts ? '<select id="progAge" onchange="progStageChange()" aria-label="Age group">' + ageOpts + '</select>' : '') +
+    '<select id="progLevel" onchange="progStageChange()" aria-label="Level">' + lvlOpts + '</select></div>' +
+    '<label class="label" for="progSessions">Number of sessions</label>' +
+    '<input type="number" id="progSessions" value="' + (draft.sessions || 12) + '" min="1" max="52" oninput="draft.sessions=this.value">' +
+    '<p class="small" style="margin-top:6px">This level needs about ' + (inStage.length * 2) + ' sessions to cover; this programme has ' + (draft.sessions || 12) + '.</p>' +
+    '<div class="section"><h2>What athletes will learn</h2><p class="sec-sub">Ticked items are in the program. Greyed items are from a different level — you can still tick them.</p>';
+  if (!subs.length) html += '<p class="small">Nothing in the library yet — add things athletes learn first.</p>';
+  inStage.forEach(function (x) {
+    var on = checked[x.sub.id] !== false;
+    html += checklineHtml(x, on, false);
+  });
+  outStage.forEach(function (x) {
+    var on = checked[x.sub.id] === true;
+    html += checklineHtml(x, on, true);
+  });
+  html += '</div><div id="progErr"></div>' +
+    '<button class="btn" onclick="publishProgram()">Publish program</button>' +
+    '<button class="quiet" onclick="go(\'library\')">Back to the library</button>' + footLinks();
+  return html;
+}
+function checklineHtml(x, on, grey) {
+  var s = x.sub;
+  var chips = (s.levels || []).map(function (l) { return '<span class="chip">' + esc(l.stage) + '</span>'; }).join("");
+  return '<label class="checkline' + (grey ? ' grey' : '') + '" style="display:flex;cursor:pointer">' +
+    '<input type="checkbox" data-sub="' + s.id + '" ' + (on ? 'checked' : '') + ' onchange="progCheck(this)">' +
+    '<span><span class="ct">' + esc(s.name) + '</span>' + (grey ? ' <span class="tag">Different level</span>' : '') +
+    '<br><span class="cs">' + esc(x.area.name) + ' › ' + esc(x.family.name) + '</span><br>' + chips + '</span></label>';
+}
+function progCheck(el) {
+  window._progChecked = window._progChecked || {};
+  window._progChecked[el.getAttribute("data-sub")] = el.checked;
+}
+function progStageChange() {
+  var a = document.getElementById("progAge");
+  var l = document.getElementById("progLevel");
+  if (a) ui.progAge = a.value;
+  if (l) ui.progLevel = l.value;
+  render();
+}
+function publishProgram() {
+  var L = lib(); if (!L) return;
+  var nameEl = document.getElementById("progName");
+  var name = nameEl ? nameEl.value.trim() : draft.progName;
+  var err = document.getElementById("progErr");
+  if (!name) {
+    if (err) err.innerHTML = '<div class="banner err" style="margin-top:12px">Give the program a name first.</div>';
+    return;
+  }
+  var checked = window._progChecked || {};
+  var stage = stageLabel(ui.progAge, ui.progLevel);
+  var subs = allSubs().filter(function (x) { return !x.sub.retired; });
+  var picked = subs.filter(function (x) {
+    if (checked[x.sub.id] === true) return true;
+    if (checked[x.sub.id] === false) return false;
+    return subMatchesStage(x.sub, stage);
+  }).map(function (x) { return x.sub.id; });
+  if (!picked.length) {
+    if (err) err.innerHTML = '<div class="banner err" style="margin-top:12px">Tick at least one thing athletes will learn.</div>';
+    return;
+  }
+  var sess = parseInt((document.getElementById("progSessions") || {}).value || draft.sessions || 12, 10) || 12;
+  var prog = { id: uid(), name: name, sport: L.sport, age: ui.progAge, level: ui.progLevel, stage: stage, sessions: sess, subIds: picked, published: true, created: todayStr() };
+  state.programs.push(prog);
+  draft.progName = ""; window._progChecked = {};
+  saveState();
+  ui.progId = prog.id;
+  go("programview");
+}
+function renderProgramView() {
+  var p = null;
+  (state.programs || []).forEach(function (x) { if (x.id === ui.progId) p = x; });
+  if (!p) return renderProgramList();
+  var subs = allSubs().filter(function (x) { return p.subIds.indexOf(x.sub.id) !== -1; });
+  var html = topbar(5) +
+    '<h1>' + esc(p.name) + '</h1>' +
+    '<p class="helper">' + esc(p.sport) + ' · ' + esc(p.stage) + ' · ' + p.sessions + ' sessions · Published ' + esc(p.created) + '</p>' +
+    '<div class="card"><h2>What athletes will learn</h2>';
+  subs.forEach(function (x) {
+    html += '<div class="row"><div style="flex:1"><b>' + esc(x.sub.name) + '</b><br><span class="meta">' + esc(x.area.name) + ' › ' + esc(x.family.name) + '</span></div></div>';
+  });
+  html += '</div><p class="small">Classes: coming next — this demo stops at the program.</p>' +
+    '<button class="btn" onclick="go(\'programlist\')">All programs</button>' +
+    '<button class="quiet" onclick="go(\'library\')">Back to the library</button>' + footLinks();
+  return html;
+}
+function renderProgramList() {
+  var html = topbar(0) + bottomNav("programlist") +
+    '<h1>Programs</h1><p class="helper">Programs are built from a library. Coaches plan sessions from these lists.</p>';
+  var list = state.programs || [];
+  if (!list.length) {
+    html += '<div class="card"><h2>No programs yet</h2><p class="sub">Make your first program from the library — pick a level, tick what athletes learn, publish.</p></div>';
+  } else {
+    list.forEach(function (p) {
+      html += '<div class="row"><button type="button" class="rowbtn" onclick="ui.progId=\'' + p.id + '\';go(\'programview\')"><b>' + esc(p.name) + '</b><br><span class="meta">' + esc(p.stage) + ' · ' + p.sessions + ' sessions · ' + p.subIds.length + ' things to learn</span></button><span aria-hidden="true">›</span></div>';
+    });
+  }
+  html += '<button class="btn" onclick="go(\'program\')">Make a program</button>' + footLinks();
+  return html;
+}
+
+/* ================= LIBRARY PAGE ================= */
+function renderLibrary() {
+  if (!lib()) {
+    return topbar(0) + '<h1>Your library</h1><p class="helper">A library is everything you coach in one sport.</p>' +
+      '<div class="card"><h2>Nothing here yet</h2><p class="sub">Start with a sport and build your first library — it takes about two minutes.</p></div>' +
+      '<button class="btn" onclick="go(\'start\')">Start a library</button>' + footLinks();
+  }
+  var L = lib();
+  var verLine = L.published ? ("Version " + L.version + " · Published " + esc(L.publishedAt || "today")) : "Draft — not published yet";
+  var html = topbar(0) + bottomNav("library") + exampleBanner() +
+    '<h1>' + esc(L.name) + '</h1><p class="helper">' + esc(verLine) + ' · ' + esc(L.sport) + ' pathway</p>';
+  if (!areas().length) {
+    html += '<div class="card"><h2>Nothing here yet</h2><p class="sub">Add the first group you teach.</p></div>';
+  }
+  areas().forEach(function (a) {
+    html += '<div class="card"><h2>' + esc(a.name) + '</h2>';
+    a.families.forEach(function (f) {
+      var live = f.subs.filter(function (s) { return !s.retired; });
+      html += '<p style="font-weight:700;margin-top:10px">' + esc(f.name) + '</p>';
+      if (!live.length) html += '<p class="small">Nothing here yet.</p>';
+      live.forEach(function (s) {
+        var chips = (s.levels || []).map(function (l) { return '<span class="chip">' + esc(l.stage) + '</span>'; }).join("");
+        html += '<div class="row"><button type="button" class="rowbtn" onclick="openSub(\'' + s.id + '\')"><b>' + esc(s.name) + '</b><br>' + chips +
+          ((!s.levels || !s.levels.length) ? '<span class="chip warn">No level set</span>' : '') +
+          ((!s.drills || !s.drills.length) ? '<span class="chip warn">No drills</span>' : '') + '</button><span aria-hidden="true">›</span></div>';
+      });
+    });
+    html += '</div>';
+  });
+  html += '<button class="btn" onclick="go(\'build\')">Edit this library</button>';
+  var waiting = (state.suggestions || []).filter(function (s) { return s.status === "waiting"; });
+  html += '<div class="section"><h2>Suggestions (' + waiting.length + ')</h2><p class="sec-sub">Ideas from coaches. Approve one and it goes into the next version.</p>';
+  if (!waiting.length) html += '<p class="small">No suggestions waiting. Coaches can suggest a change from the Coach tab.</p>';
+  waiting.forEach(function (sg) {
+    html += '<div class="card"><b>' + esc(sg.what) + '</b><p class="sub">' + esc(sg.subName) + ' · ' + esc(sg.by) + '</p><p style="font-size:15px;margin-top:6px">“' + esc(sg.why) + '”</p>' +
+      '<div class="inline-add"><button onclick="decideSuggestion(\'' + sg.id + '\',\'approved\')" style="flex:1">Approve</button>' +
+      '<button onclick="decideSuggestion(\'' + sg.id + '\',\'declined\')" style="flex:1;background:#fff;color:var(--red);border:1.5px solid var(--red)">Decline</button></div></div>';
+  });
+  html += '</div>' + footLinks();
+  return html;
+}
+function decideSuggestion(id, status) {
+  (state.suggestions || []).forEach(function (s) { if (s.id === id) s.status = status; });
+  saveState(); render();
+}
+
+/* ================= COACH VIEW ================= */
+function renderCoach() {
+  if (!lib()) {
+    return topbar(0) + bottomNav("coach") + '<h1>Coach view</h1><p class="helper">What coaches see on their phone at the pitch.</p>' +
+      '<div class="card"><h2>No library yet</h2><p class="sub">Build a library first, then coaches can look up drills here.</p></div>' +
+      '<button class="btn" onclick="go(\'start\')">Start a library</button>' + footLinks();
+  }
+  var L = lib();
+  var pw = L.pathway;
+  if (!ui.coachAge && pw.ages && pw.ages.length) ui.coachAge = pw.ages[0];
+  if (!ui.coachLevel && pw.levels.length) ui.coachLevel = pw.levels[0];
+  var stage = stageLabel(ui.coachAge, ui.coachLevel);
+  var ageOpts = (pw.ages && pw.ages.length) ? pw.ages.map(function (a) { return '<option' + (ui.coachAge === a ? ' selected' : '') + '>' + a + '</option>'; }).join("") : '';
+  var lvlOpts = pw.levels.map(function (l) { return '<option' + (ui.coachLevel === l ? ' selected' : '') + '>' + l + '</option>'; }).join("");
+  var subs = allSubs().filter(function (x) { return !x.sub.retired && subMatchesStage(x.sub, stage); });
+  var html = topbar(0) + bottomNav("coach") +
+    '<h1>' + esc(L.name) + '</h1><p class="helper">Pick a level. You see only what is taught at that level.</p>' +
+    '<label class="label">Show level</label><div class="levelpick">' + (ageOpts ? '<select id="coachAge" onchange="coachStageChange()" aria-label="Age group">' + ageOpts + '</select>' : '') +
+    '<select id="coachLevel" onchange="coachStageChange()" aria-label="Level">' + lvlOpts + '</select></div>';
+  if (!subs.length) {
+    html += '<div class="card" style="margin-top:14px"><h2>Nothing at ' + esc(stage) + ' yet</h2><p class="sub">Try another level, or add things athletes learn at this level.</p></div>';
+  }
+  subs.forEach(function (x) {
+    var s = x.sub;
+    html += '<div class="row"><button type="button" class="rowbtn" onclick="openCoachSheet(\'' + s.id + '\')"><b>' + esc(s.name) + '</b><br><span class="meta">' + esc(x.area.name) + ' › ' + esc(x.family.name) + ' · ' + (s.drills || []).length + ' drill' + ((s.drills || []).length === 1 ? '' : 's') + '</span></button><span aria-hidden="true">›</span></div>';
+  });
+  html += footLinks();
+  return html;
+}
+function coachStageChange() {
+  var a = document.getElementById("coachAge");
+  var l = document.getElementById("coachLevel");
+  if (a) ui.coachAge = a.value;
+  if (l) ui.coachLevel = l.value;
+  render();
+}
+function openCoachSheet(id) {
+  var found = findSub(id); if (!found) return;
+  var s = found.sub;
+  var html = '<div class="scrim" onclick="closeSheet()"></div><div class="sheet">' +
+    '<h1 style="font-size:22px">' + esc(s.name) + '</h1>' +
+    '<p class="helper">' + esc(found.area.name) + ' › ' + esc(found.family.name) + '</p>' +
+    '<h2 style="font-size:18px;margin-bottom:6px">Drills</h2>';
+  (s.drills || []).forEach(function (d) {
+    html += '<div class="drill"><div class="dt">' + esc(d.name) + ' · ' + (d.minutes || 10) + ' min</div><div class="small">' + esc(d.how || '') + '</div></div>';
+  });
+  if (!(s.drills || []).length) html += '<p class="small">No drills yet.</p>';
+  html += '<h2 style="font-size:18px;margin:14px 0 6px">Homework</h2>';
+  (s.homework || []).forEach(function (h) {
+    html += '<div class="drill"><div class="dt">' + esc(h.title) + '</div><div class="small">' + esc(h.how || '') + '</div></div>';
+  });
+  if (!(s.homework || []).length) html += '<p class="small">No homework yet.</p>';
+  if (s.ican) html += '<div class="preview" style="margin-top:14px"><div class="say">Families see</div><p>' + esc(s.ican) + '</p></div>';
+  html += '<button class="btn" onclick="openSuggest(\'' + s.id + '\')">Suggest a change</button>' +
+    '<button class="quiet" onclick="closeSheet()">Close</button></div>';
+  document.getElementById("sheetRoot").innerHTML = html;
+}
+function openSuggest(id) {
+  var found = findSub(id); if (!found) return;
+  var html = '<div class="scrim" onclick="closeSheet()"></div><div class="sheet">' +
+    '<h1 style="font-size:22px">Suggest a change</h1>' +
+    '<p class="helper">For <b>' + esc(found.sub.name) + '</b>. The library editor reviews it — you never edit the library from here.</p>' +
+    '<label class="label" for="sgWhat">What would you change?</label>' +
+    '<input type="text" id="sgWhat" placeholder="e.g. Add a video to the drill">' +
+    '<label class="label" for="sgWhy">Why? <span class="plain">— required, so the editor understands</span></label>' +
+    '<textarea id="sgWhy" placeholder="e.g. The U12s could not follow the card without seeing it."></textarea>' +
+    '<div id="sgErr"></div>' +
+    '<button class="btn" onclick="saveSuggestion(\'' + id + '\')">Send suggestion</button>' +
+    '<button class="quiet" onclick="closeSheet()">Cancel</button></div>';
+  document.getElementById("sheetRoot").innerHTML = html;
+}
+function saveSuggestion(id) {
+  var found = findSub(id); if (!found) return;
+  var what = ((document.getElementById("sgWhat") || {}).value || "").trim();
+  var why = ((document.getElementById("sgWhy") || {}).value || "").trim();
+  var err = document.getElementById("sgErr");
+  if (!what || !why) {
+    if (err) err.innerHTML = '<div class="banner err" style="margin-top:12px">Tell us what and why — both are needed.</div>';
+    return;
+  }
+  state.suggestions = state.suggestions || [];
+  state.suggestions.push({ id: uid(), subId: id, subName: found.sub.name, what: what, why: why, by: "Coach", status: "waiting" });
+  saveState();
+  document.getElementById("sheetRoot").innerHTML = '<div class="scrim" onclick="closeSheet()"></div><div class="sheet center">' +
+    '<div class="big-num">✓</div><h1 style="font-size:22px">Suggestion sent</h1>' +
+    '<p class="helper">The library editor will review it. You will hear back here.</p>' +
+    '<button class="btn" onclick="closeSheet()">Done</button></div>';
+}
+
+/* ================= SETTINGS (PATHWAY) ================= */
+function renderSettings() {
+  var L = lib();
+  var pw = L ? L.pathway : clone(SPORT_PRESETS["Cricket"]);
+  var sport = L ? L.sport : "Cricket";
+  var html = topbar(0) +
+    '<h1>Pathway — ' + esc(sport) + '</h1>' +
+    '<p class="helper">The levels and age groups for this sport. Every library in this sport uses the same pathway, so a child is “U12 Silver” in every group.</p>' +
+    '<label class="label" for="pwLevels">Levels <span class="plain">— one per line, in order</span></label>' +
+    '<textarea id="pwLevels">' + esc(pw.levels.join("\n")) + '</textarea>' +
+    '<label class="label" for="pwAges">Age groups <span class="plain">— one per line, in order; leave empty if this sport has levels only</span></label>' +
+    '<textarea id="pwAges">' + esc((pw.ages || []).join("\n")) + '</textarea>' +
+    '<label class="label" for="pwCutoff">Cut-off date <span class="plain">— e.g. Sep 1; the day ages are counted from</span></label>' +
+    '<input type="text" id="pwCutoff" value="' + esc(pw.cutoff || '') + '" placeholder="Sep 1">' +
+    '<p class="small" style="margin-top:14px">Stage profiles (what each level means, equipment, group size) and moving-up rules: Later — noted here, not built in this demo.</p>' +
+    '<button class="btn" onclick="saveSettings()">Save pathway</button>' +
+    '<button class="quiet" onclick="go(\'library\')">Back to the library</button>' + footLinks();
+  return html;
+}
+function saveSettings() {
+  if (!lib()) { go("start"); return; }
+  var lv = document.getElementById("pwLevels");
+  var ag = document.getElementById("pwAges");
+  var co = document.getElementById("pwCutoff");
+  var levels = lv ? lv.value.split("\n").map(function (x) { return x.trim(); }).filter(function (x) { return x; }) : [];
+  if (!levels.length) return;
+  lib().pathway.levels = levels;
+  lib().pathway.ages = ag ? ag.value.split("\n").map(function (x) { return x.trim(); }).filter(function (x) { return x; }) : [];
+  lib().pathway.cutoff = co ? co.value.trim() : "";
+  saveState();
+  go("library");
+}
+/* ================= RENDER + APP ACTIONS ================= */
+function render() {
+  var app = document.getElementById("app");
+  var html = "";
+  switch (ui.screen) {
+    case "start": html = renderStart(); break;
+    case "build": html = renderBuild(); break;
+    case "sub": html = renderSub(); break;
+    case "publish": html = renderPublish(); break;
+    case "published": html = renderPublished(); break;
+    case "program": html = renderProgram(); break;
+    case "programview": html = renderProgramView(); break;
+    case "programlist": html = renderProgramList(); break;
+    case "library": html = renderLibrary(); break;
+    case "coach": html = renderCoach(); break;
+    case "settings": html = renderSettings(); break;
+    default: html = renderStart();
+  }
+  app.innerHTML = html;
+}
+function startEmpty() {
+  if (!confirm("Start empty? This clears the current library, programs and suggestions in this browser. Export first if you want to keep them.")) return;
+  state = blankState();
+  ui = { screen: "start", areaId: null, familyId: null, subId: null, progId: null, coachAge: "", coachLevel: "", progAge: "", progLevel: "", importOpen: false, addDrillOpen: false, newLevelOpen: false, removeOpen: false, suggestOpen: false, sheetSubId: null };
+  draft = { sport: "", name: "", progName: "", sessions: 12 };
+  window._progChecked = {};
+  saveState();
+  go("start");
+}
+function exportWorkspace() {
+  var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "skill-library-demo.json";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function importWorkspaceFile(ev) {
+  var f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  var r = new FileReader();
+  r.onload = function () {
+    try {
+      var s = JSON.parse(r.result);
+      if (!s || typeof s !== "object" || !("library" in s)) throw new Error("bad file");
+      state = s;
+      state.programs = state.programs || [];
+      state.suggestions = state.suggestions || [];
+      saveState();
+      ui.screen = "library";
+      render();
+    } catch (e) {
+      alert("That file could not be read as a Skill Library workspace. Nothing was changed.");
+    }
+  };
+  r.readAsText(f);
+  ev.target.value = "";
+}
+
+/* init: open on the library if one exists, otherwise on Start */
+if (lib()) { ui.screen = "library"; draft.sport = lib().sport; draft.name = lib().name; }
+render();
+</script>
+</body>
+</html>
+
+
