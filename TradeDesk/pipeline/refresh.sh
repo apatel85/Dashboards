@@ -35,6 +35,8 @@ echo "--- 7/16 earnings ---"
 node fetch-earnings.mjs
 echo "--- 8/16 quotes snapshot (non-fatal) ---"
 node build-quotes.mjs || echo "[pipeline] WARNING: quotes snapshot failed"
+echo "--- 8b/16 trade performance: price at trade vs now (non-fatal) ---"
+node build-trade-performance.mjs || echo "[pipeline] WARNING: trade performance failed — keeping previous congress.json / executive.json"
 echo "--- 9/16 daily brief ($*) ---"
 node build-brief.mjs "$@"
 echo "--- 10/16 recommendation performance tracker (non-fatal) ---"
