@@ -705,6 +705,46 @@ code {
   text-align: right;
 }
 
+/* ── One numeric-alignment system for every table ───────────────────
+ * Two markers used to mean "number" — `r` (right) on headers and `num`
+ * (mono) on body cells — and they were never linked, so headers sat
+ * right while their figures sat left (Scanner breakout table,
+ * Performance) or the reverse (Deep Dive fundamentals browser). From
+ * here on both markers mean right-aligned on th AND td alike, in every
+ * table class below. Any numeric column whose header lacks `r`/`num`
+ * is a bug — the header must carry the same marker as its cells.
+ * (Card mode ≤640px already right-aligns .dtable td values under their
+ * floated labels, and .detail-row td stays left via its own rule.) */
+.dtable th.num,
+.dtable td.num,
+.mb-table th.r,
+.mb-table td.r,
+.mb-table th.num,
+.mb-table td.num,
+.mb-dd-table th.r,
+.mb-dd-table td.r,
+.mb-dd-table th.num,
+.mb-dd-table td.num,
+.mb-research-table th.r,
+.mb-research-table td.r,
+.mb-research-table th.num,
+.mb-research-table td.num,
+.mb-ref-table th.r,
+.mb-ref-table td.r,
+.mb-ref-table th.num,
+.mb-ref-table td.num,
+.ins-table th.r,
+.ins-table td.r,
+.ins-table th.num,
+.ins-table td.num,
+/* Records is the one numeric column marked `mb-ref-numcol`, not `num`:
+ * the plain `.mb-ref-numcol` rule loses to `.mb-ref-table td`
+ * (0,1,0 vs 0,1,1), so its figures sat left under a right header. */
+.mb-ref-table th.mb-ref-numcol,
+.mb-ref-table td.mb-ref-numcol {
+  text-align: right;
+}
+
 .dtable tr.clickable {
   cursor: pointer;
 }

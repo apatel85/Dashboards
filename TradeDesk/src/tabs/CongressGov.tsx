@@ -1053,18 +1053,18 @@ export default function CongressGovTab() {
                         </button>
                       </th>
                       <th>Type</th>
-                      <th>
+                      <th className="r">
                         <button className="linklike" onClick={() => toggleTradeSort('amount')}>
                           Amount{sortArrow('amount')}
                         </button>
                       </th>
-                      <th>
+                      <th className="r">
                         <button className="linklike" onClick={() => toggleTradeSort('date')}>
                           Disclosed{sortArrow('date')}
                         </button>
                       </th>
                       <th className="hide-md">Branch</th>
-                      <th className="hide-narrow">Traded</th>
+                      <th className="hide-narrow r">Traded</th>
                       <th className="hide-md">Lag</th>
                       <th className="hide-md">Signal</th>
                       <th className="hide-md">Filing</th>

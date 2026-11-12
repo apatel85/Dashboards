@@ -192,10 +192,10 @@ export default function ResearchTab() {
               <tr>
                 <th scope="col">Ticker</th>
                 <th scope="col">Score</th>
-                <th scope="col">P(up 30d)</th>
+                <th scope="col" className="num">P(up 30d)</th>
                 <th scope="col">Stage · RS</th>
-                <th scope="col">Trigger</th>
-                <th scope="col">Stop</th>
+                <th scope="col" className="num">Trigger</th>
+                <th scope="col" className="num">Stop</th>
                 <th scope="col">Sentiment</th>
               </tr>
             </thead>

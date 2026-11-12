@@ -913,7 +913,12 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
     const name = (getFund(c.ticker)?.name ?? c.name).toLowerCase();
     return c.ticker.toLowerCase().includes(q) || name.includes(q);
   });
-  const showBreakouts = filter === 'all' || filter === 'breakouts';
+  // A typed query is a breakout search: it must show the breakout
+  // results (and the "N matches" / no-match state) no matter which
+  // filter chip is active. The old gating hid the whole breakout section
+  // whenever the chip wasn't All/Breakouts, so typing while e.g.
+  // Congress was active blanked the feed and the search looked dead.
+  const showBreakouts = filter === 'all' || filter === 'breakouts' || q !== '';
   const showOptions = (filter === 'all' || filter === 'options') && !q;
   const showCongress = (filter === 'all' || filter === 'congress') && !q;
   const showRest = filter === 'all' && !q;

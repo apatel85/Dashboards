@@ -7,6 +7,19 @@ function parseDay(s: string): Date {
   return new Date(s + 'T12:00:00Z');
 }
 
+/**
+ * Parse a date value the pipeline may have written either way: a bare
+ * "YYYY-MM-DD" day, or a full ISO timestamp ("2026-11-12T22:57:08.646Z").
+ * The old code always appended 'T12:00:00Z', which turned a full
+ * timestamp into "...T22:57:08.646ZT12:00:00Z" — an Invalid Date that
+ * toLocaleDateString() renders literally as "Invalid Date" (no throw).
+ * Returns null for anything unparseable instead of an Invalid Date.
+ */
+function parseDateValue(s: string): Date | null {
+  const d = s.includes('T') ? new Date(s) : parseDay(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export function fmtMoney(n: number | null | undefined, digits = 2): string {
   if (n == null || !isFinite(n)) return DASH;
   return (
@@ -55,15 +68,13 @@ export function fmtCompactMoney(n: number | null | undefined): string {
 /** "Oct 15" */
 export function fmtDate(s: string | null | undefined): string {
   if (!s) return DASH;
-  try {
-    return parseDay(s).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      timeZone: 'UTC',
-    });
-  } catch {
-    return DASH;
-  }
+  const d = parseDateValue(s);
+  if (!d) return DASH;
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 /**
@@ -74,47 +85,41 @@ export function fmtDate(s: string | null | undefined): string {
  */
 export function fmtDateY(s: string | null | undefined): string {
   if (!s) return DASH;
-  try {
-    return parseDay(s).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      timeZone: 'UTC',
-    });
-  } catch {
-    return DASH;
-  }
+  const d = parseDateValue(s);
+  if (!d) return DASH;
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 /** "Thu, Oct 15" */
 export function fmtDayLabel(s: string | null | undefined): string {
   if (!s) return DASH;
-  try {
-    return parseDay(s).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      timeZone: 'UTC',
-    });
-  } catch {
-    return DASH;
-  }
+  const d = parseDateValue(s);
+  if (!d) return DASH;
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 /** "Thu, Oct 15, 2026" */
 export function fmtFullDate(s: string | null | undefined): string {
   if (!s) return DASH;
-  try {
-    return parseDay(s).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      timeZone: 'UTC',
-    });
-  } catch {
-    return DASH;
-  }
+  const d = parseDateValue(s);
+  if (!d) return DASH;
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 const etDate = new Intl.DateTimeFormat('en-US', {

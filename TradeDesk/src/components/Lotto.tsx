@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import { Badge, SectionHead, TvLink } from './ui';
 import { Fundamentals } from './Fundamentals';
 import { prettifyOptions } from '../lib/format';
+import { useForceOpenCard, useForceOpenState, type ForceOpen } from '../lib/useForceOpen';
 import type { LottoCandidate, LottoFile } from '../types';
 
 const SETUP_LABEL: Record<string, string> = {
@@ -16,18 +16,17 @@ function dirTone(d: string): 'green' | 'red' | 'amber' {
   return d === 'CALL' ? 'green' : d === 'PUT' ? 'red' : 'amber';
 }
 
-function LottoCard({ c, rank, forceOpen }: { c: LottoCandidate; rank: number; forceOpen: boolean | null }) {
-  const [open, setOpen] = useState(rank < 3);
-  const isOpen = forceOpen ?? open;
+function LottoCard({ c, rank, force }: { c: LottoCandidate; rank: number; force: ForceOpen | null }) {
+  const { isOpen, toggle } = useForceOpenCard(force, rank < 3);
   return (
     <div className={`signal-card${isOpen ? ' open' : ''}`}>
       <div
         className="signal-head"
         role="button"
         tabIndex={0}
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') setOpen((o) => !o);
+          if (e.key === 'Enter' || e.key === ' ') toggle();
         }}
       >
         <span className="rank num">#{rank + 1}</span>
@@ -134,7 +133,7 @@ function LottoCard({ c, rank, forceOpen }: { c: LottoCandidate; rank: number; fo
 }
 
 export function LottoScanner({ lotto }: { lotto: LottoFile | null }) {
-  const [forceOpen, setForceOpen] = useState<boolean | null>(null);
+  const { force, expandAll, collapseAll } = useForceOpenState();
   if (!lotto) return null;
   const vs = lotto.validation_summary ?? {};
   const keys = Object.keys(vs);
@@ -145,9 +144,9 @@ export function LottoScanner({ lotto }: { lotto: LottoFile | null }) {
         sub={`as of ${lotto.as_of} · ${lotto.candidates_considered} names scored · tap a card for trigger, invalidation and targets`}
       />
       <div className="collapse-row">
-        <button className="link-btn" onClick={() => setForceOpen(true)}>Expand all</button>
+        <button className="link-btn" onClick={expandAll}>Expand all</button>
         <span className="muted"> · </span>
-        <button className="link-btn" onClick={() => setForceOpen(false)}>Collapse all</button>
+        <button className="link-btn" onClick={collapseAll}>Collapse all</button>
       </div>
       {keys.length > 0 && (
         <div className="chip-row">
@@ -160,7 +159,7 @@ export function LottoScanner({ lotto }: { lotto: LottoFile | null }) {
       )}
       <div className="signal-list">
         {lotto.candidates.map((c, i) => (
-          <LottoCard key={c.ticker} c={c} rank={i} forceOpen={forceOpen} />
+          <LottoCard key={c.ticker} c={c} rank={i} force={force} />
         ))}
       </div>
       <p className="muted small footnote-line">

@@ -17,6 +17,7 @@ import { FuturesGamma, GexAlerts, TickerGamma, useWatchlist } from '../component
 import { Playbook } from '../components/Playbook';
 import { Fundamentals } from '../components/Fundamentals';
 import { fmtDate, fmtMoney, fmtTimeET, prettify, prettifyOptions } from '../lib/format';
+import { useForceOpenCard, useForceOpenState, type ForceOpen } from '../lib/useForceOpen';
 import type {
   BreakoutCandidate,
   DailyBrief,
@@ -233,9 +234,9 @@ function BreakoutSection({ brief }: { brief: DailyBrief }) {
           <table className="mb-table">
             <thead>
               <tr>
-                <th>#</th>
+                <th className="r">#</th>
                 <th>Ticker</th>
-                <th>Score</th>
+                <th className="r">Score</th>
                 <th className="r">Price</th>
                 <th className="r">Trigger</th>
                 <th className="r">Stop</th>
@@ -286,17 +287,16 @@ function SignalCard({
   gexAt,
   watched,
   onToggleWatch,
-  forceOpen,
+  force,
 }: {
   m: Merged;
   gex: GexTicker | null;
   gexAt?: string;
   watched: boolean;
   onToggleWatch: () => void;
-  forceOpen: boolean | null;
+  force: ForceOpen | null;
 }) {
-  const [open, setOpen] = useState(false);
-  const isOpen = forceOpen ?? open;
+  const { isOpen, toggle } = useForceOpenCard(force, false);
   const { sig, idea } = m;
   const lp = useLivePrice(sig.ticker, null);
   return (
@@ -305,9 +305,9 @@ function SignalCard({
         className="mb-signal-main"
         role="button"
         tabIndex={0}
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') setOpen((o) => !o);
+          if (e.key === 'Enter' || e.key === ' ') toggle();
         }}
         aria-expanded={isOpen}
       >
@@ -427,7 +427,7 @@ function SignalsSection({
   const [dir, setDir] = useState<DirFilter>('all');
   const [sort, setSort] = useState<SortKey>('signal');
   const [query, setQuery] = useState('');
-  const [forceOpen, setForceOpen] = useState<boolean | null>(null);
+  const { force, expandAll, collapseAll } = useForceOpenState();
 
   const gexByTicker = useMemo(() => {
     const m = new Map<string, GexTicker>();
@@ -515,11 +515,11 @@ function SignalsSection({
       {merged.length > 0 ? (
         <>
           <div className="mb-collapse-row">
-            <button type="button" className="mb-link-btn" onClick={() => setForceOpen(true)}>
+            <button type="button" className="mb-link-btn" onClick={expandAll}>
               Expand all
             </button>
             <span className="muted"> · </span>
-            <button type="button" className="mb-link-btn" onClick={() => setForceOpen(false)}>
+            <button type="button" className="mb-link-btn" onClick={collapseAll}>
               Collapse all
             </button>
             <span className="muted small"> — tap a card for the thesis, levels and flow detail</span>
@@ -533,7 +533,7 @@ function SignalsSection({
                 gexAt={gex?.computed_at}
                 watched={watched.includes(m.sig.ticker)}
                 onToggleWatch={() => toggleWatch(m.sig.ticker)}
-                forceOpen={forceOpen}
+                force={force}
               />
             ))}
           </div>

@@ -62,9 +62,9 @@ function predHappened(row: PredictionRow): string {
     if (!o || o.status === 'open') {
       return `Running${o?.last_close != null ? ` · now ${fmtMoney(o.last_close)}` : ''}${o?.r_now != null ? ` · ${o.r_now >= 0 ? '+' : ''}${o.r_now.toFixed(1)}R so far` : ''}`;
     }
-    if (o.status === 'trigger-hit') return `Hit trigger day ${o.trigger_day}${o.ret_10d != null ? ` · ${fmtPct(o.ret_10d)} at 10 days` : ''}`;
+    if (o.status === 'trigger-hit') return `Hit trigger day ${o.trigger_day}${o.ret_10d != null ? ` · ${fmtPctFrac(o.ret_10d)} at 10 days` : ''}`;
     if (o.status === 'stop-hit') return `Hit stop day ${o.stop_day}`;
-    return `Never triggered${o.ret_10d != null ? ` · ${fmtPct(o.ret_10d)} at 10 days` : ''}`;
+    return `Never triggered${o.ret_10d != null ? ` · ${fmtPctFrac(o.ret_10d)} at 10 days` : ''}`;
   }
   if (!o || o.status === 'open') return `Expires ${row.expiry ? fmtDate(row.expiry) : '—'} — not settled yet`;
   if (o.ungradable) return `Couldn't grade — scan ran after the close`;
@@ -78,6 +78,17 @@ function fmtRate(v: number | null | undefined): string {
 function fmtR(v: number | null | undefined): string {
   if (v == null) return '—';
   return `${v >= 0 ? '+' : ''}${v.toFixed(2)}R`;
+}
+
+/**
+ * Prediction outcomes store returns as fractions (0.018 = +1.8%), while
+ * fmtPct expects percent units (1.8 = +1.8%). The old code passed the
+ * fraction straight to fmtPct, so every return rendered as ±0.0%.
+ * performance.json's pct_change is the opposite convention — already a
+ * percent — and must NOT be scaled (see the /100 removals below).
+ */
+function fmtPctFrac(v: number | null | undefined): string {
+  return v == null ? '—' : fmtPct(v * 100);
 }
 
 function PredRow({ row }: { row: PredictionRow }) {
@@ -111,12 +122,12 @@ function PredRow({ row }: { row: PredictionRow }) {
                   {row.outcome ? (
                     <>
                       <br />
-                      Best move in 10 days: {row.outcome.mfe != null ? fmtPct(row.outcome.mfe) : '—'}
-                      {' · '}worst dip: {row.outcome.mae != null ? fmtPct(row.outcome.mae) : '—'}
+                      Best move in 10 days: {row.outcome.mfe != null ? fmtPctFrac(row.outcome.mfe) : '—'}
+                      {' · '}worst dip: {row.outcome.mae != null ? fmtPctFrac(row.outcome.mae) : '—'}
                       <br />
-                      Return: 5 days {row.outcome.ret_5d != null ? fmtPct(row.outcome.ret_5d) : '—'}
-                      {' · '}10 days {row.outcome.ret_10d != null ? fmtPct(row.outcome.ret_10d) : '—'}
-                      {' · '}30 days {row.outcome.ret_30d != null ? fmtPct(row.outcome.ret_30d) : '—'}
+                      Return: 5 days {row.outcome.ret_5d != null ? fmtPctFrac(row.outcome.ret_5d) : '—'}
+                      {' · '}10 days {row.outcome.ret_10d != null ? fmtPctFrac(row.outcome.ret_10d) : '—'}
+                      {' · '}30 days {row.outcome.ret_30d != null ? fmtPctFrac(row.outcome.ret_30d) : '—'}
                       {' · '}R at 10 days: {fmtR(row.outcome.r_10d)}
                     </>
                   ) : null}
@@ -133,7 +144,7 @@ function PredRow({ row }: { row: PredictionRow }) {
                       <br />
                       Closed at expiry: {row.outcome.expiry_close != null ? fmtMoney(row.outcome.expiry_close) : '—'}
                       {' · '}trigger hit: {row.outcome.triggered == null ? '—' : row.outcome.triggered ? 'yes' : 'no'}
-                      {' · '}modeled ticket value: {row.outcome.modeled_multiple != null ? `${row.outcome.modeled_multiple.toFixed(1)}× the premium (${fmtPct(row.outcome.modeled_return ?? 0)})` : '—'}
+                      {' · '}modeled ticket value: {row.outcome.modeled_multiple != null ? `${row.outcome.modeled_multiple.toFixed(1)}× the premium (${fmtPctFrac(row.outcome.modeled_return)})` : '—'}
                       <br />
                       <span className="muted">Option values are modeled, not real trades — we estimate what the ticket would be worth from the stock's actual move. No real money was involved.</span>
                     </>
@@ -285,7 +296,7 @@ function PredictionSection() {
               <table className="dtable slim">
                 <thead>
                   <tr>
-                    <th>
+                    <th className="r">
                       <button className="linklike" onClick={() => toggleSort('date')}>
                         Date{sortArrow('date')}
                       </button>
@@ -367,7 +378,7 @@ function WhyPanel({ item }: { item: PerformanceItem }) {
         </div>
         <div>
           <dt>Since then</dt>
-          <dd>{item.pct_change != null ? fmtPct(item.pct_change / 100) : '—'}</dd>
+          <dd>{item.pct_change != null ? fmtPct(item.pct_change) : '—'}</dd>
         </div>
       </dl>
       {r ? (
@@ -466,7 +477,7 @@ function PerfRow({ item }: { item: PerformanceItem }) {
           {item.current_price != null ? fmtMoney(item.current_price) : '—'}
         </td>
         <td data-th="% since rec." className={`num ${pctTone(item.pct_change)}`}>
-          <b>{item.pct_change != null ? fmtPct(item.pct_change / 100) : '—'}</b>
+          <b>{item.pct_change != null ? fmtPct(item.pct_change) : '—'}</b>
         </td>
         <td data-th="P(up 30d)">
           {item.p_up != null ? <Badge tone={item.p_up >= 60 ? 'green' : item.p_up >= 50 ? 'dim' : 'red'}>{item.p_up}%</Badge> : '—'}
@@ -610,10 +621,10 @@ function ResearchSection() {
           {stats ? (
             <div className="perf-stats">
               <Stat label="Tracked" value={String(stats.n)} />
-              <Stat label="Avg. return" value={fmtPct(stats.avg / 100)} accent={stats.avg > 0 ? 'up' : stats.avg < 0 ? 'down' : undefined} />
+              <Stat label="Avg. return" value={fmtPct(stats.avg)} accent={stats.avg > 0 ? 'up' : stats.avg < 0 ? 'down' : undefined} />
               <Stat label="Win rate" value={`${Math.round(stats.winRate)}%`} />
-              <Stat label="Best" value={`${stats.best.ticker} ${fmtPct((stats.best.pct_change as number) / 100)}`} accent="up" />
-              <Stat label="Worst" value={`${stats.worst.ticker} ${fmtPct((stats.worst.pct_change as number) / 100)}`} accent="down" />
+              <Stat label="Best" value={`${stats.best.ticker} ${fmtPct(stats.best.pct_change as number)}`} accent="up" />
+              <Stat label="Worst" value={`${stats.worst.ticker} ${fmtPct(stats.worst.pct_change as number)}`} accent="down" />
             </div>
           ) : null}
 
@@ -626,7 +637,7 @@ function ResearchSection() {
                       Ticker{sortArrow('ticker')}
                     </button>
                   </th>
-                  <th>
+                  <th className="r">
                     <button className="linklike" onClick={() => toggleSort('date')}>
                       Recommended{sortArrow('date')}
                     </button>

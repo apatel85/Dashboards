@@ -348,7 +348,7 @@ function FundamentalsBrowser() {
                   <thead>
                     <tr>
                       {FUND_COLUMNS.map((c) => (
-                        <th key={c.key} scope="col" onClick={() => toggleSort(c.key)} className="sortable">
+                        <th key={c.key} scope="col" onClick={() => toggleSort(c.key)} className={c.key === 'ticker' ? 'sortable' : 'sortable num'}>
                           {c.label}{sortKey === c.key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}
                         </th>
                       ))}

@@ -15,6 +15,7 @@ import { FuturesGamma, GexAlerts, TickerGamma, useWatchlist } from '../component
 import { Playbook } from '../components/Playbook';
 import { Fundamentals } from '../components/Fundamentals';
 import { fmtDate, fmtMoney, fmtTimeET } from '../lib/format';
+import { useForceOpenCard, useForceOpenState, type ForceOpen } from '../lib/useForceOpen';
 import type { ResearchIdea, SignalTicker, SignalsFile, GexChangesFile, GexFile, GexTicker } from '../types';
 
 type DirFilter = 'all' | 'accumulation' | 'distribution';
@@ -62,17 +63,16 @@ function SignalCard({
   gexAt,
   watched,
   onToggleWatch,
-  forceOpen,
+  force,
 }: {
   m: Merged;
   gex: GexTicker | null;
   gexAt?: string;
   watched: boolean;
   onToggleWatch: () => void;
-  forceOpen: boolean | null;
+  force: ForceOpen | null;
 }) {
-  const [open, setOpen] = useState(false);
-  const isOpen = forceOpen ?? open;
+  const { isOpen, toggle } = useForceOpenCard(force, false);
   const { sig, idea } = m;
   const lp = useLivePrice(sig.ticker, null);
   return (
@@ -81,9 +81,9 @@ function SignalCard({
         className="signal-main"
         role="button"
         tabIndex={0}
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') setOpen((o) => !o);
+          if (e.key === 'Enter' || e.key === ' ') toggle();
         }}
       >
         <span className="signal-top">
@@ -194,7 +194,7 @@ export default function SignalsTab() {
   const [dir, setDir] = useState<DirFilter>('all');
   const [sort, setSort] = useState<SortKey>('signal');
   const [query, setQuery] = useState('');
-  const [forceOpen, setForceOpen] = useState<boolean | null>(null);
+  const { force, expandAll, collapseAll } = useForceOpenState();
 
   const gexByTicker = useMemo(() => {
     const m = new Map<string, GexTicker>();
@@ -302,9 +302,9 @@ export default function SignalsTab() {
             sub="Tap a card for the thesis, levels and flow detail"
           />
           <div className="collapse-row">
-            <button className="link-btn" onClick={() => setForceOpen(true)}>Expand all</button>
+            <button className="link-btn" onClick={expandAll}>Expand all</button>
             <span className="muted"> · </span>
-            <button className="link-btn" onClick={() => setForceOpen(false)}>Collapse all</button>
+            <button className="link-btn" onClick={collapseAll}>Collapse all</button>
           </div>
           <div className="signal-list">
             {merged.slice(0, 60).map((m) => (
@@ -315,7 +315,7 @@ export default function SignalsTab() {
                 gexAt={gex?.computed_at}
                 watched={watched.includes(m.sig.ticker)}
                 onToggleWatch={() => toggleWatch(m.sig.ticker)}
-                forceOpen={forceOpen}
+                force={force}
               />
             ))}
           </div>
