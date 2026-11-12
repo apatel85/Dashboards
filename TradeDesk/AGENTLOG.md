@@ -6,6 +6,12 @@
 - Backtest-before-adopt: no strategy ships without historical validation.
 - Free data sources only. He trades ES/NQ futures options 0DTE/1DTE, SPX 0DTE/1DTE.
 
+## 2026-11-12 — Daily Brief revamp goes live (Mock B)
+- **Request:** Ankit liked the Mock B revamp — make it live in the TradeDesk app.
+- **Change:** Daily Brief only; all other tabs, the pipeline, Schwab polling, auth, and the invite list untouched. New computed "Today in 10 seconds" box (market mood in one plain sentence + #1 candidate's trigger/stop, from live daily-brief.json — nothing hardcoded); every breakout card now shows its rank and, without tapping, a plain-English "Why:" line built from the scan's own attribute checks and a highlighted "What could go wrong:" line with the stop and its $/% distance below the live price; headings de-jargoned ("Stocks to watch today", "Options expiring today — can go to zero today", "Options expiring tomorrow"); phone view keeps only rank + name + price + why + risk; sticky top-call bar on phones above the bottom nav. "Look at these today" top-3 strip removed (superseded by the summary box). Why/risk lines render on all ranked rows, not just the top 5 — the live app has no separate full-list tab, so cutting to 5 would have removed information.
+- **Version:** v2026-11-12a (bundle index-DqIRv9Vz.js).
+- **Verified:** local build passes; live bundle check pending at push time — see the follow-up note below.
+
 ## 2026-11-11 — gate screens leak nothing (privacy fix)
 - **Request:** Dipesh's sign-in showed a "Setup needed" screen naming Ankit, the SQL file, and Supabase. Make sure the app gives out no such information to anyone.
 - **Change:** AuthGate gate-failure screens are now generic — "Access not granted" and "Couldn't check your access" (with Try again), no admin name, no file path, no backend mention anywhere on screen; the 'setup' state is folded into the generic error state (privacy rule noted in the code). Seed emails scrubbed from the public repo copy of `tradedesk-invites-table.sql` (seed block commented out with placeholders; live table already seeded). Dipesh's "Setup needed" was most likely transient PostgREST schema-cache staleness after the table was created — the retry button now covers it; if he then gets "Access not granted", his sign-in email differs from the seeded one.

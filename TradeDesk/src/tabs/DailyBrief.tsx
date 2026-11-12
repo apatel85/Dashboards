@@ -63,18 +63,101 @@ function firstSentence(s: string): string {
   return (m ? m[0] : t).trim();
 }
 
+/** Plain-English rendering of the scan's own checks (attributes). */
+const ATTRIBUTE_PLAIN: Record<string, string> = {
+  near_52w_high: 'near its 52-week high',
+  relative_strength: 'stronger than the market over 3 months',
+  volume_expansion: 'volume running above average',
+  above_50d: 'above its 50-day average',
+};
+
+/** "Why:" line — the checks that fired, in plain words. */
+function whyLine(c: BreakoutCandidate): string {
+  const bits = (c.attributes ?? []).map((a) => ATTRIBUTE_PLAIN[a] ?? prettify(a));
+  return bits.join(' · ');
+}
+
+/** Plain one-sentence market read, by regime. */
+const REGIME_PLAIN: Record<MarketRegime, string> = {
+  uptrend: 'The market is in an uptrend.',
+  downtrend: 'The market is in a downtrend.',
+  choppy: 'The market is choppy.',
+  unknown: 'Market mood is unclear.',
+};
+
 /**
- * Verdict-first breakout card. Upfront: verdict, ticker + company name,
- * score, and the key numbers (price, trigger, stop). Tap to expand the
- * full detail — thesis, attributes, catalyst, fundamentals.
+ * "Today in 10 seconds" — the whole brief in one box, computed from the
+ * live morning data: mood + #1 candidate's trigger/stop. Never hardcoded.
+ */
+function TenSecondsBox({ brief }: { brief: DailyBrief }) {
+  const top = brief.breakout_candidates[0];
+  let line = REGIME_PLAIN[brief.market_regime];
+  if (top) {
+    if (top.trigger_price != null && top.stop_price != null) {
+      line += ` Start with #1 ${top.ticker} — watch for a break above ${fmtMoney(top.trigger_price)}. The idea is off below ${fmtMoney(top.stop_price)}.`;
+    } else if (top.stop_price != null) {
+      line += ` Start with #1 ${top.ticker} — the idea is off below ${fmtMoney(top.stop_price)}.`;
+    } else {
+      line += ` Start with #1 ${top.ticker} (score ${top.score}).`;
+    }
+  }
+  return (
+    <div className="ten-seconds" role="status">
+      <span className="ten-seconds-title">Today in 10 seconds</span>
+      <p>{line}</p>
+    </div>
+  );
+}
+
+/**
+ * Sticky top-call bar (phone only, above the bottom nav). Tap jumps to the
+ * #1 idea's card. Plain wording, same numbers as the summary box.
+ */
+function TopCallBar({
+  brief,
+  onJump,
+}: {
+  brief: DailyBrief;
+  onJump: (ticker: string) => void;
+}) {
+  const top = brief.breakout_candidates[0];
+  if (!top || top.trigger_price == null || top.stop_price == null) return null;
+  return (
+    <>
+      <button
+        type="button"
+        className="topcall-bar"
+        onClick={() => onJump(top.ticker)}
+        title="Tap to open the #1 idea"
+      >
+        <span>
+          <b>#1 {top.ticker}</b> · break above {fmtMoney(top.trigger_price)} · off below{' '}
+          {fmtMoney(top.stop_price)}
+        </span>
+        <span aria-hidden="true">↑</span>
+      </button>
+      <div className="topcall-spacer" aria-hidden="true" />
+    </>
+  );
+}
+
+/**
+ * Verdict-first breakout card. Upfront: rank, verdict, ticker + company
+ * name, score, and the key numbers (price, trigger, stop). The "Why:" line
+ * (the scan's own checks, in plain words) and the "What could go wrong:"
+ * line (stop + its distance below today's price, computed live) show
+ * WITHOUT tapping. Tap to expand the full detail — thesis, attributes,
+ * catalyst, fundamentals.
  */
 function BreakoutCard({
   c,
+  rank,
   companyName,
   expanded,
   onToggle,
 }: {
   c: BreakoutCandidate;
+  rank: number;
   companyName: string;
   expanded: boolean;
   onToggle: () => void;
@@ -89,6 +172,14 @@ function BreakoutCard({
       ? (lp.price - lp.prevClose) / lp.prevClose
       : null;
   const verdict = firstSentence(c.thesis) || `${c.ticker} is setting up: ${c.setup}.`;
+  const why = whyLine(c);
+  const price = lp.price ?? c.price;
+  const risk =
+    c.stop_price != null && price != null
+      ? price <= c.stop_price
+        ? `the price is already below the ${fmtMoney(c.stop_price)} exit — this idea is off.`
+        : `the idea is off below ${fmtMoney(c.stop_price)} — ${fmtMoney(price - c.stop_price)} (${(((price - c.stop_price) / price) * 100).toFixed(1)}%) below today's price of ${fmtMoney(price)}.`
+      : null;
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -108,10 +199,15 @@ function BreakoutCard({
       >
         <div className="feed-card-head">
           <div className="feed-card-id">
-            {/* Stop the TvLink click from also toggling the card. */}
-            <span onClick={(e) => e.stopPropagation()}>
-              <TvLink ticker={c.ticker} />
-            </span>
+            <div className="feed-card-titlerow">
+              <span className="feed-rank num" title={`Rank ${rank} by score`}>
+                #{rank}
+              </span>
+              {/* Stop the TvLink click from also toggling the card. */}
+              <span onClick={(e) => e.stopPropagation()}>
+                <TvLink ticker={c.ticker} />
+              </span>
+            </div>
             <span className="subname">{companyName}</span>
           </div>
           <div className="feed-card-score">
@@ -120,6 +216,16 @@ function BreakoutCard({
           </div>
         </div>
         <p className="feed-verdict">{verdict}</p>
+        {why ? (
+          <p className="feed-why">
+            <b>Why:</b> {why}
+          </p>
+        ) : null}
+        {risk ? (
+          <p className="feed-risk">
+            <b>What could go wrong:</b> {risk}
+          </p>
+        ) : null}
         <div className="feed-keynums">
           <span className="feed-num">
             <span className="feed-num-label">
@@ -138,11 +244,11 @@ function BreakoutCard({
               </span>
             ) : null}
           </span>
-          <span className="feed-num">
+          <span className="feed-num feed-num-trigger">
             <span className="feed-num-label">Trigger</span>
             <span className="num up">{fmtMoney(c.trigger_price)}</span>
           </span>
-          <span className="feed-num">
+          <span className="feed-num feed-num-stop">
             <span className="feed-num-label">Stop</span>
             <span className="num down">{fmtMoney(c.stop_price)}</span>
           </span>
@@ -288,7 +394,10 @@ function DteSection({ brief }: { brief: DailyBrief }) {
     <>
       {zero.length > 0 && (
         <>
-          <SectionHead title="0DTE focus" sub="Expires today · index options" />
+          <SectionHead
+            title="Options expiring today — can go to zero today"
+            sub="Expires today · index options"
+          />
           <div className="dte-grid">
             {zero.map((p) => (
               <DteCard key={p.ticker} p={p} />
@@ -298,7 +407,7 @@ function DteSection({ brief }: { brief: DailyBrief }) {
       )}
       {one.length > 0 && (
         <>
-          <SectionHead title="1DTE focus" sub="Expires tomorrow · index options" />
+          <SectionHead title="Options expiring tomorrow" sub="Expires tomorrow · index options" />
           <div className="dte-grid">
             {one.map((p) => (
               <DteCard key={p.ticker} p={p} />
@@ -756,7 +865,6 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
     const name = (getFund(c.ticker)?.name ?? c.name).toLowerCase();
     return c.ticker.toLowerCase().includes(q) || name.includes(q);
   });
-  const top3 = brief.breakout_candidates.slice(0, 3);
   const showBreakouts = filter === 'all' || filter === 'breakouts';
   const showOptions = (filter === 'all' || filter === 'options') && !q;
   const showCongress = (filter === 'all' || filter === 'congress') && !q;
@@ -793,6 +901,8 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
         </p>
       </div>
 
+      <TenSecondsBox brief={brief} />
+
       <div className="feed-controls">
         <input
           id="brief-search"
@@ -817,28 +927,10 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
         </div>
       </div>
 
-      {showBreakouts && !q && top3.length > 0 && (
-        <>
-          <SectionHead title="Look at these today" sub="Top 3 by score · tap to open the card" />
-          <div className="top3-strip">
-            {top3.map((c) => (
-              <button key={c.ticker} className="top3-tile" onClick={() => jumpTo(c.ticker)}>
-                <span className="top3-ticker num">{c.ticker}</span>
-                <span className="top3-name">{getFund(c.ticker)?.name ?? c.name}</span>
-                <span className="top3-score">
-                  Score <b>{c.score}</b>
-                </span>
-                <span className="top3-setup">{c.setup}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
       {showBreakouts && (
         <>
           <SectionHead
-            title="Breakout candidates"
+            title="Stocks to watch today"
             sub={q ? `${visibleCandidates.length} match${visibleCandidates.length === 1 ? '' : 'es'} · 1–2 week window` : '1–2 week window · tap a card for the full detail'}
           />
           {hasCandidates ? (
@@ -848,6 +940,7 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
                   <BreakoutCard
                     key={c.ticker}
                     c={c}
+                    rank={brief.breakout_candidates.indexOf(c) + 1}
                     companyName={getFund(c.ticker)?.name ?? c.name}
                     expanded={expanded === c.ticker}
                     onToggle={() => setExpanded((cur) => (cur === c.ticker ? null : c.ticker))}
@@ -923,6 +1016,8 @@ export default function DailyBriefTab({ onOpenTab }: { onOpenTab?: (id: TabId) =
           <NewsSection />
         </>
       )}
+
+      <TopCallBar brief={brief} onJump={jumpTo} />
     </section>
   );
 }

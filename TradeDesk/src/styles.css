@@ -2603,6 +2603,127 @@ body {
   margin-top: 10px;
 }
 
+/* ── Revamp: "Today in 10 seconds" + Why / Risk lines ────────────── */
+.ten-seconds {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 12px 0 4px;
+}
+
+.ten-seconds-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--green);
+}
+
+.ten-seconds p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.feed-card-titlerow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.feed-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.feed-why {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.feed-risk {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  background: var(--bg-raised);
+  border-left: 3px solid var(--amber);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+/* Sticky top-call bar — phone only, above the bottom nav. */
+.topcall-bar {
+  display: none;
+}
+
+.topcall-spacer {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  /* Phone rows keep only rank + name + price + why + risk. */
+  .feed-verdict {
+    display: none;
+  }
+
+  .feed-card-score .scorebar {
+    display: none;
+  }
+
+  .feed-num-trigger,
+  .feed-num-stop,
+  .feed-num-setup {
+    display: none;
+  }
+
+  .feed-card .pm-range,
+  .feed-card .pmline {
+    display: none;
+  }
+
+  .topcall-bar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(54px + env(safe-area-inset-bottom));
+    z-index: 55;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    background: var(--bg-raised);
+    border: none;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 11px 14px;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .topcall-spacer {
+    display: block;
+    height: 44px;
+  }
+}
+
 /* ── Responsive: phone (~390px) ────────────────────────────────────── */
 @media (max-width: 767px) {
   /* Bottom nav replaces the top tab row; hamburger opens the drawer. */
