@@ -14,6 +14,7 @@ It is **PUBLIC** — never put secrets, API keys, or personal data in any file h
 | Dir | App |
 |---|---|
 | TradeDesk/ | stock research hub |
+| TradeDeskV2/ | TradeDesk with the cleaner UI — reads TradeDesk's data, never edits it |
 | WagWise/ | dog-care PWA |
 | QuixeraDev/ | QA Capture dashboard + extension |
 | QuixeraDemo/ | Quixera UX demo replica (live app is read-only, never touch) |
