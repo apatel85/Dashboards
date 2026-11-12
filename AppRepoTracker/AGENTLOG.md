@@ -1,5 +1,11 @@
 # AGENTLOG — AppRepoTracker
 
+## 2026-11-12 — v1.0.12 — Added UX Design Skill entry
+- Request: publish the ux-design skill to GitHub with version control and add it to the App Repo Tracker (Ankit, App Sprints chat, 2026-11-12).
+- Change: added "UX Design Skill (v1.0.0)" at the top of Documents / Plans (the global design standard — SKILL.md + skill.yaml, version-controlled at ux-design-skill/ on GitHub; a skill, not an app, so no live URL). Counts updated to 45 entries / 9 documents / plans.
+- Verification: entry links to the GitHub folder; tracker still loads.
+
+
 ## 2026-11-12 — v1.0.11 — Added App Sprints entry
 - Request: standing rule — every new app/dashboard gets an App Repo entry by default; updated directly in GitHub, Muse artifact not touched.
 - Change: added "App Sprints" at the top of Live Apps (adaptive intake form for Phase 0 research sprints before any new app is designed; three classifier questions branch to relevant follow-ups, five intake questions, submit generates JSON + plain-text brief for the App Sprints side chat; one folder per request under sprints/<name>/ with intake.json and research-receipt.md; daily watcher runs Phase 0 for new intakes only; first sprint TradeDesk revamp, Receipt ready). Live Apps stay sorted most-recent-first, so the Nov 12 entry leads. Counts updated to 44 entries / 27 live apps.
