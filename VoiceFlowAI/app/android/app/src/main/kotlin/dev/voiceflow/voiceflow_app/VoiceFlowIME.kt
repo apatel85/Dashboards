@@ -21,7 +21,11 @@ class VoiceFlowIME : InputMethodService() {
     // Test seam (spike only): adb broadcasts text; we format it via Dart and commit it.
     private val seam = object : BroadcastReceiver() {
         override fun onReceive(c: Context, i: Intent) {
-            format(i.getStringExtra("text") ?: "", 0)
+            if (i.action == "dev.voiceflow.S1A_TRANSCRIBE") {
+                transcribe(i.getStringExtra("dir") ?: "", i.getStringExtra("wav") ?: "")
+            } else {
+                format(i.getStringExtra("text") ?: "", 0)
+            }
         }
     }
 
@@ -30,6 +34,7 @@ class VoiceFlowIME : InputMethodService() {
         ImeEngine.get(this) // cold start begins here
         warmup()
         val f = IntentFilter("dev.voiceflow.S3_FORMAT")
+        f.addAction("dev.voiceflow.S1A_TRANSCRIBE")
         if (Build.VERSION.SDK_INT >= 33) {
             registerReceiver(seam, f, Context.RECEIVER_EXPORTED)
         } else {
@@ -42,6 +47,20 @@ class VoiceFlowIME : InputMethodService() {
             text = "VoiceFlow (S3 spike)"
             setOnClickListener { format("um this is a test", 0) }
         }
+
+    /** Spike S1-Android: Dart runs sherpa-onnx on a WAV file; we log the numbers. */
+    private fun transcribe(dir: String, wav: String) {
+        ImeEngine.get(this).invokeMethod("transcribe",
+            mapOf("dir" to dir, "wav" to wav,
+                "encoder" to "base.en-encoder.int8.onnx",
+                "decoder" to "base.en-decoder.int8.onnx",
+                "tokens" to "base.en-tokens.txt"),
+            object : MethodChannel.Result {
+                override fun success(r: Any?) { Log.i("S3", "S1A_RESULT $r") }
+                override fun error(code: String, msg: String?, d: Any?) { Log.e("S3", "S1A_ERROR $code $msg") }
+                override fun notImplemented() { Log.e("S3", "S1A_NOT_IMPLEMENTED") }
+            })
+    }
 
     /** Pings Dart until it answers; logs the true cold start (engine create -> Dart ready). */
     private fun warmup() {
