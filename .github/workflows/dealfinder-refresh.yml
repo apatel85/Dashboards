@@ -1,0 +1,47 @@
+name: DealFinder weekly refresh
+
+# Fridays 12:00 UTC = 07:00 EST / 08:00 EDT — new circulars mostly land
+# Friday for the East Windsor stores (probe 2026-11-12), so a Friday run
+# catches the new week. GitHub's scheduler can fire late on this repo; the
+# pipeline is idempotent (upserts keyed on flyer/item/validity), so a late
+# run is harmless and never duplicates rows.
+on:
+  schedule:
+    - cron: '0 12 * * 5'
+  workflow_dispatch:
+    inputs:
+      zip:
+        description: 'ZIP code(s), comma-separated (default 08520)'
+        required: false
+        default: '08520'
+      dry_run:
+        description: 'Dry run (fetch + normalize, no DB writes)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    name: Fetch flyer prices & update Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run DealFinder pipeline
+        working-directory: DealFinder/pipeline
+        env:
+          # Public project URL (public by design — same value baked into apps).
+          SUPABASE_URL: https://iknfvddnevudpjtyxkbh.supabase.co
+          # Service-role key: repo secret, set by Ankit. Never log it, never
+          # commit it. The pipeline exits if it is missing.
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node fetch-prices.mjs --zip "${{ inputs.zip || '08520' }}" ${{ inputs.dry_run == 'true' && '--dry-run' || '' }}
