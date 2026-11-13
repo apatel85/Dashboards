@@ -15,3 +15,8 @@ export 'src/adapters/polish_chain.dart';
 export 'src/adapters/gemini_adapter.dart';
 export 'src/adapters/openai_adapter.dart';
 export 'src/adapters/proxy_adapter.dart';
+export 'src/model_spec.dart';
+export 'src/model_manager.dart';
+export 'src/tar_extractor.dart';
+export 'src/wav.dart';
+export 'src/wer.dart';

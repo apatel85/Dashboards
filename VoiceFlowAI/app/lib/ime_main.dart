@@ -16,9 +16,13 @@ void imeMain() {
       case 'format':
         final args = Map<String, dynamic>.from(call.arguments as Map);
         lang ??= LangData.fromJsonString(
-            await rootBundle.loadString('assets/lang/en.json'));
-        final profile = Profile.fromJsonString(await rootBundle
-            .loadString('assets/profiles/${args['profile'] ?? 'business'}.json'));
+          await rootBundle.loadString('assets/lang/en.json'),
+        );
+        final profile = Profile.fromJsonString(
+          await rootBundle.loadString(
+            'assets/profiles/${args['profile'] ?? 'business'}.json',
+          ),
+        );
         return RuleFormatter(lang!).format(args['text'] as String, profile);
       case 'transcribe':
         // Spike S1-Android: run Whisper via sherpa-onnx on a WAV file.
@@ -26,17 +30,20 @@ void imeMain() {
         final dir = a['dir'] as String;
         so.initBindings();
         final sw = Stopwatch()..start();
-        final rec = so.OfflineRecognizer(so.OfflineRecognizerConfig(
-          model: so.OfflineModelConfig(
-            whisper: so.OfflineWhisperModelConfig(
+        final rec = so.OfflineRecognizer(
+          so.OfflineRecognizerConfig(
+            model: so.OfflineModelConfig(
+              whisper: so.OfflineWhisperModelConfig(
                 encoder: '$dir/${a['encoder']}',
                 decoder: '$dir/${a['decoder']}',
                 language: 'en',
-                task: 'transcribe'),
-            tokens: '$dir/${a['tokens']}',
-            numThreads: 2,
+                task: 'transcribe',
+              ),
+              tokens: '$dir/${a['tokens']}',
+              numThreads: 2,
+            ),
           ),
-        ));
+        );
         final loadMs = sw.elapsedMilliseconds;
         final w = so.readWave(a['wav'] as String);
         sw

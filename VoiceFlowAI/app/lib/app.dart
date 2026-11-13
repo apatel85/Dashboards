@@ -1,5 +1,7 @@
-import 'package:flutter_localizations/flutter_localizations.dart' show GlobalWidgetsLocalizations;
+import 'package:flutter_localizations/flutter_localizations.dart'
+    show GlobalWidgetsLocalizations;
 import 'package:material_ui/material_ui.dart';
+
 import 'l10n/app_localizations.dart';
 import 'state/app_controller.dart';
 import 'theme.dart';
@@ -11,17 +13,17 @@ class VoiceFlowApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        onGenerateTitle: (c) => AppLocalizations.of(c).appName,
-        debugShowCheckedModeBanner: false,
-        theme: buildTheme(Brightness.light),
-        darkTheme: buildTheme(Brightness.dark),
-        themeMode: ThemeMode.system,
-        localizationsDelegates: [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: AppShell(controller: controller),
-      );
+    onGenerateTitle: (c) => AppLocalizations.of(c).appName,
+    debugShowCheckedModeBanner: false,
+    theme: buildTheme(Brightness.light),
+    darkTheme: buildTheme(Brightness.dark),
+    themeMode: ThemeMode.system,
+    localizationsDelegates: [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+    ],
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: AppShell(controller: controller),
+  );
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
+
 import '../l10n/app_localizations.dart';
 import '../state/app_controller.dart';
 import '../state/dictation_state.dart';
@@ -9,7 +10,12 @@ import '../theme.dart';
 /// has an icon AND text. This is the in-window rendering; the native
 /// click-through overlay window arrives with the hotkey slice.
 class StatusPill extends StatefulWidget {
-  const StatusPill({super.key, required this.controller, this.onAction, this.onUndo});
+  const StatusPill({
+    super.key,
+    required this.controller,
+    this.onAction,
+    this.onUndo,
+  });
   final AppController controller;
   final void Function(NoticeKind)? onAction;
   final VoidCallback? onUndo;
@@ -18,7 +24,8 @@ class StatusPill extends StatefulWidget {
   State<StatusPill> createState() => _StatusPillState();
 }
 
-class _StatusPillState extends State<StatusPill> with SingleTickerProviderStateMixin {
+class _StatusPillState extends State<StatusPill>
+    with SingleTickerProviderStateMixin {
   late final Ticker _ticker;
   int _shownSecond = -1;
 
@@ -71,11 +78,14 @@ class _StatusPillState extends State<StatusPill> with SingleTickerProviderStateM
         fg = cs.onPrimaryContainer;
         lead = const Icon(Icons.mic, size: 20);
         text = t.stateListening;
-        trailing = Row(mainAxisSize: MainAxisSize.min, children: [
-          _Bars(level: c.level, animate: !reduceMotion, color: fg),
-          const SizedBox(width: 8),
-          Text(_mmss(c.listeningFor.elapsed)),
-        ]);
+        trailing = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _Bars(level: c.level, animate: !reduceMotion, color: fg),
+            const SizedBox(width: 8),
+            Text(_mmss(c.listeningFor.elapsed)),
+          ],
+        );
       case DictationUiState.processing:
         lead = const _Spinner();
         text = t.stateProcessing;
@@ -127,8 +137,10 @@ class _StatusPillState extends State<StatusPill> with SingleTickerProviderStateM
                 lead,
                 Text(text),
                 if (c.state == DictationUiState.listening)
-                  Text(t.profileLabel(c.profile.name),
-                      style: Theme.of(context).textTheme.labelSmall),
+                  Text(
+                    t.profileLabel(c.profile.name),
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
                 ?trailing,
               ],
             ),
@@ -139,31 +151,38 @@ class _StatusPillState extends State<StatusPill> with SingleTickerProviderStateM
   }
 
   static String _noticeText(AppLocalizations t, NoticeKind k) => switch (k) {
-        NoticeKind.noSpeech => t.noticeNoSpeech,
-        NoticeKind.noMicrophone => t.noticeNoMicrophone,
-        NoticeKind.modelMissing => t.noticeModelMissing,
-        NoticeKind.insertFailed => t.noticeInsertFailed,
-        NoticeKind.adminWindow => t.noticeAdminWindow,
-        NoticeKind.passwordField => t.noticePasswordField,
-        NoticeKind.cloudLimit => t.noticeCloudLimit,
-      };
+    NoticeKind.noSpeech => t.noticeNoSpeech,
+    NoticeKind.noMicrophone => t.noticeNoMicrophone,
+    NoticeKind.modelMissing => t.noticeModelMissing,
+    NoticeKind.insertFailed => t.noticeInsertFailed,
+    NoticeKind.adminWindow => t.noticeAdminWindow,
+    NoticeKind.passwordField => t.noticePasswordField,
+    NoticeKind.cloudLimit => t.noticeCloudLimit,
+  };
 
   static String _actionText(AppLocalizations t, NoticeKind k) => switch (k) {
-        NoticeKind.noMicrophone => t.actionOpenSettings,
-        NoticeKind.modelMissing => t.actionDownload,
-        _ => t.actionCopy,
-      };
+    NoticeKind.noMicrophone => t.actionOpenSettings,
+    NoticeKind.modelMissing => t.actionDownload,
+    _ => t.actionCopy,
+  };
 }
 
 class _Spinner extends StatelessWidget {
   const _Spinner();
   @override
   Widget build(BuildContext context) => const SizedBox(
-      width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2));
+    width: 18,
+    height: 18,
+    child: CircularProgressIndicator(strokeWidth: 2),
+  );
 }
 
 class _Bars extends StatelessWidget {
-  const _Bars({required this.level, required this.animate, required this.color});
+  const _Bars({
+    required this.level,
+    required this.animate,
+    required this.color,
+  });
   final double level;
   final bool animate;
   final Color color;
@@ -173,16 +192,21 @@ class _Bars extends StatelessWidget {
     final base = animate ? level : 0.5; // reduced motion: static bars
     return SizedBox(
       height: 20,
-      child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        for (final h in heights)
-          Container(
-            width: 3,
-            height: 4 + 16 * (h * (0.3 + 0.7 * base)).clamp(0, 1),
-            margin: const EdgeInsets.symmetric(horizontal: 1),
-            decoration:
-                BoxDecoration(color: color, borderRadius: BorderRadius.circular(kRadius)),
-          ),
-      ]),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (final h in heights)
+            Container(
+              width: 3,
+              height: 4 + 16 * (h * (0.3 + 0.7 * base)).clamp(0, 1),
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(kRadius),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

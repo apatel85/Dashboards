@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:voiceflow_core/voiceflow_core.dart';
+
 import 'assets_loader.dart';
 import 'dictation_state.dart';
 
@@ -14,8 +16,10 @@ class RecentDictation {
 /// the same methods; the UI only reads this object.
 class AppController extends ChangeNotifier {
   AppController(this.assets, {this.hotkey = 'F9'})
-      : _profile = assets.profiles.firstWhere((p) => p.id == 'business',
-            orElse: () => assets.profiles.first);
+    : _profile = assets.profiles.firstWhere(
+        (p) => p.id == 'business',
+        orElse: () => assets.profiles.first,
+      );
 
   final AppAssets assets;
   final String hotkey;
@@ -38,7 +42,8 @@ class AppController extends ChangeNotifier {
 
   /// Runs text through the real on-device rule formatter (used by "Try it" and
   /// the Style page examples).
-  String format(String text, [Profile? p]) => _formatter.format(text, p ?? _profile);
+  String format(String text, [Profile? p]) =>
+      _formatter.format(text, p ?? _profile);
 
   /// Spec §9.1 rule 3: the Listening state must be visible immediately, so this
   /// flips state synchronously and only then lets audio start.
@@ -70,7 +75,9 @@ class AppController extends ChangeNotifier {
   }
 
   void markInserted(String text) {
-    lastWordCount = text.trim().isEmpty ? 0 : text.trim().split(RegExp(r'\s+')).length;
+    lastWordCount = text.trim().isEmpty
+        ? 0
+        : text.trim().split(RegExp(r'\s+')).length;
     recent.insert(0, RecentDictation(text, DateTime.now()));
     if (recent.length > 3) recent.removeLast();
     state = DictationUiState.inserted;

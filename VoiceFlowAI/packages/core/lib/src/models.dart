@@ -8,8 +8,13 @@ abstract class AudioSource {
 
 class SttModelConfig {
   final String id;
+
+  /// Directory that holds the model files.
   final String path;
-  const SttModelConfig(this.id, this.path);
+
+  /// Role -> file name inside [path], e.g. encoder / decoder / tokens.
+  final Map<String, String> files;
+  const SttModelConfig(this.id, this.path, {this.files = const {}});
 }
 
 class SttResult {

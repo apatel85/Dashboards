@@ -3,9 +3,11 @@
 // this file uses their `legacy.dart` bridge (0.5.x API). Migrate when it is removed.
 import 'dart:io';
 import 'dart:ui' show Locale;
+
 import 'package:flutter/services.dart';
 import 'package:tray_manager/legacy.dart';
 import 'package:window_manager/legacy.dart';
+
 import '../l10n/app_localizations.dart';
 import '../state/app_controller.dart';
 
@@ -41,21 +43,39 @@ class DesktopShell with TrayListener, WindowListener {
   }
 
   Future<void> _refreshMenu() async {
-    await trayManager.setContextMenu(Menu(items: [
-      MenuItem(key: 'status', label: '${t.appName}: ${t.stateIdle}', disabled: true),
-      MenuItem.separator(),
-      MenuItem.submenu(
-        label: t.navStyle,
-        submenu: Menu(items: [
-          for (final p in c.assets.profiles)
-            MenuItem.checkbox(key: 'profile:${p.id}', label: p.name, checked: p.id == c.profile.id),
-        ]),
+    await trayManager.setContextMenu(
+      Menu(
+        items: [
+          MenuItem(
+            key: 'status',
+            label: '${t.appName}: ${t.stateIdle}',
+            disabled: true,
+          ),
+          MenuItem.separator(),
+          MenuItem.submenu(
+            label: t.navStyle,
+            submenu: Menu(
+              items: [
+                for (final p in c.assets.profiles)
+                  MenuItem.checkbox(
+                    key: 'profile:${p.id}',
+                    label: p.name,
+                    checked: p.id == c.profile.id,
+                  ),
+              ],
+            ),
+          ),
+          MenuItem(
+            key: 'copy',
+            label: t.actionCopy,
+            disabled: c.recent.isEmpty,
+          ),
+          MenuItem.separator(),
+          MenuItem(key: 'open', label: t.appName),
+          MenuItem(key: 'quit', label: 'Quit'),
+        ],
       ),
-      MenuItem(key: 'copy', label: t.actionCopy, disabled: c.recent.isEmpty),
-      MenuItem.separator(),
-      MenuItem(key: 'open', label: t.appName),
-      MenuItem(key: 'quit', label: 'Quit'),
-    ]));
+    );
   }
 
   @override

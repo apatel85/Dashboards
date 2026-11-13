@@ -9,7 +9,9 @@ const kFontFallback = ['Segoe UI', 'Roboto', 'Arial'];
 
 ThemeData buildTheme(Brightness b) {
   final scheme = ColorScheme.fromSeed(seedColor: kAccent, brightness: b);
-  final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadius));
+  final shape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(kRadius),
+  );
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
@@ -24,8 +26,12 @@ ThemeData buildTheme(Brightness b) {
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadius)),
     ),
-    filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(shape: shape)),
-    outlinedButtonTheme: OutlinedButtonThemeData(style: OutlinedButton.styleFrom(shape: shape)),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(shape: shape),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(shape: shape),
+    ),
     navigationRailTheme: NavigationRailThemeData(
       backgroundColor: scheme.surfaceContainerLow,
       indicatorColor: scheme.primaryContainer,
