@@ -1,8 +1,30 @@
-# DealFinder — P2: backend + pipeline
+# DealFinder — live grocery best-price finder
 
-**Status:** P2 code delivered 2026-11-12. Live runs are blocked on Ankit's two
-manual steps below (DDL + repo secret) — nothing here runs against Supabase
-until then. The live app frontend is P3; this folder is backend only.
+**Status:** P2 DONE Nov 13, 2026 (first live prices in Supabase for ZIP 08520:
+53 stores, 237 items, 90 flyers, 254 prices; weekly pipeline Fridays 12:00 UTC).
+**P3 DONE Nov 13, 2026 (v1.0.0):** live app at
+https://apatel85.github.io/Dashboards/DealFinder/ — search, scan, deals, list,
+tracked items, 30-day history, all reading live prices from the `dealfinder`
+schema. No account; list + tracked items live in the browser only.
+
+## Live app (P3)
+
+- `index.html` + `app.js` + `config.js` — static frontend (same bright
+  supermarket style as the mockup, compact mobile first). Reads prices via
+  PostgREST with the public anon key + `Accept-Profile: dealfinder`.
+- Search by item name (client-side over the ZIP's prices); scan by UPC
+  (text entry + camera via BarcodeDetector where supported); Deals = items
+  with a real was-price; My list priced by store (cheapest basket +
+  split-the-list saving); Track = watch an item, alert when today's best
+  falls below its 30-day average (history still building — one snapshot so
+  far, so no alert can fire yet; never invented).
+- Price rules: every price shows store + flyer end date; a price with a
+  limit-style condition (e.g. "when you buy 5 or more") is never crowned
+  the best price; loyalty/card conditions are shown on the row.
+- ShopRite has no flyer data yet (no Flipp flyer for 08520) — it simply
+  doesn't appear until a second source covers it.
+
+## What P2 is
 
 ## What P2 is
 
