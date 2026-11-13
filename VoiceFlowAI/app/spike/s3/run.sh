@@ -15,7 +15,8 @@ echo "---- focus/IME state"
 adb shell dumpsys window | grep -E "mCurrentFocus" | head -2
 adb shell dumpsys input_method | grep -E "mCurMethodId|mCurClient|mInputShown|mCurFocusedWindow|mBoundToMethod|mServiceConnection" | head -8
 echo "current_ime=$(adb shell settings get secure default_input_method | tr -d '\r')"
-adb shell am broadcast -a dev.voiceflow.S3_FORMAT -p $PKG --es text "um we shipped twelve features" >/dev/null
+# Quote for the DEVICE shell (adb strips host-side quotes; unquoted, text became just "um").
+adb shell "am broadcast -a dev.voiceflow.S3_FORMAT -p $PKG --es text 'um we shipped twelve features'" >/dev/null
 for i in $(seq 1 20); do
   adb logcat -d S3:I '*:S' | grep -q "committed2=" && break
   sleep 1
