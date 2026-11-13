@@ -88,6 +88,16 @@ void main() {
       expect(s.cloudPolish, isFalse); // off by default
       expect(s.cloudActive, isFalse);
     });
+    test('onboarding + mic device survive a save/load round trip', () {
+      final s = Settings()
+        ..onboardingDone = true
+        ..micDeviceId = 'dev-7';
+      final back =
+          Settings.fromJson(jsonDecode(s.export()) as Map<String, dynamic>);
+      expect(back.onboardingDone, isTrue);
+      expect(back.micDeviceId, 'dev-7');
+      expect(Settings.fromJson({}).onboardingDone, isFalse);
+    });
     test('cloud needs consent', () {
       final s = Settings()..cloudPolish = true;
       expect(s.cloudActive, isFalse);

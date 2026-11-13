@@ -36,6 +36,7 @@ Uint8List wav(List<int> samples,
 }
 
 void main() {
+  levelTests();
   group('parseWav', () {
     test('mono 16 kHz passes through', () {
       final p = parseWav(wav([1, -2, 300]));
@@ -85,6 +86,26 @@ void main() {
     test('empty reference', () {
       expect(wordErrorRate('', ''), 0);
       expect(wordErrorRate('', 'x'), 1);
+    });
+  });
+}
+
+void levelTests() {
+  group('pcmLevel', () {
+    test('silence is 0', () => expect(pcmLevel(Uint8List(3200)), 0));
+    test('empty is 0', () => expect(pcmLevel(Uint8List(0)), 0));
+    test('loud tone is near the top and monotonic with amplitude', () {
+      Uint8List tone(int amp) {
+        final b = ByteData(3200);
+        for (var i = 0; i < 1600; i++) {
+          b.setInt16(i * 2, i.isEven ? amp : -amp, Endian.little);
+        }
+        return b.buffer.asUint8List();
+      }
+
+      expect(pcmLevel(tone(30000)), greaterThan(0.9));
+      expect(pcmLevel(tone(1000)), lessThan(pcmLevel(tone(8000))));
+      expect(pcmLevel(tone(32767)), lessThanOrEqualTo(1.0));
     });
   });
 }

@@ -156,4 +156,105 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trayStillRunning => 'VoiceFlow is still running here';
+
+  @override
+  String get recordButton => 'Record';
+
+  @override
+  String get stopButton => 'Stop';
+
+  @override
+  String get recordHint =>
+      'Press Record, speak, then press Stop. The text is copied for you.';
+
+  @override
+  String get onbTitle => 'Set up VoiceFlow';
+
+  @override
+  String onbStep(int n) {
+    return 'Step $n of 4';
+  }
+
+  @override
+  String get onbWelcomeTitle => 'Welcome';
+
+  @override
+  String get onbWelcomeBody => 'VoiceFlow turns your voice into clean text.';
+
+  @override
+  String get onbMicTitle => 'Choose your microphone';
+
+  @override
+  String get onbMicHint => 'Say something. The bar moves when we can hear you.';
+
+  @override
+  String get onbMicAllow => 'Allow microphone';
+
+  @override
+  String get onbMicNone => 'No microphone found';
+
+  @override
+  String get onbMicDenied =>
+      'Microphone access is off. Turn it on in system settings.';
+
+  @override
+  String get onbModelTitle => 'Download the speech model';
+
+  @override
+  String onbModelBody(int size) {
+    return 'One-time download, $size MB. After this, dictation works offline.';
+  }
+
+  @override
+  String get onbDownload => 'Download';
+
+  @override
+  String get onbPause => 'Pause';
+
+  @override
+  String get onbRetry => 'Try again';
+
+  @override
+  String onbDownloading(int percent) {
+    return 'Downloading… $percent%';
+  }
+
+  @override
+  String get onbVerifying => 'Checking the file…';
+
+  @override
+  String get onbExtracting => 'Unpacking… this takes about 30 seconds';
+
+  @override
+  String get onbInstalled => 'Speech model installed';
+
+  @override
+  String get onbPaused => 'Paused. Your progress is saved.';
+
+  @override
+  String get onbModelFailed =>
+      'The download did not finish. Your progress is saved.';
+
+  @override
+  String get onbModelIntegrity =>
+      'The file failed its safety check and was discarded. Try again.';
+
+  @override
+  String get onbTryTitle => 'Try it';
+
+  @override
+  String get onbTrySentence =>
+      'Read this aloud: “Hi John, thanks for the update. Can we meet Thursday?”';
+
+  @override
+  String get onbNext => 'Next';
+
+  @override
+  String get onbBack => 'Back';
+
+  @override
+  String get onbSkip => 'Skip';
+
+  @override
+  String get onbDone => 'You\'re set';
 }

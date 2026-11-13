@@ -3,13 +3,16 @@ import 'package:material_ui/material_ui.dart';
 
 import '../l10n/app_localizations.dart';
 import '../state/app_controller.dart';
+import '../state/dictation_service.dart';
+import 'record_button.dart';
 import 'status_pill.dart';
 
 /// Home: status, hotkey reminder, "Try it" box (also the copy-mode fallback,
 /// spec §2), last 3 dictations.
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.controller});
+  const HomePage({super.key, required this.controller, this.service});
   final AppController controller;
+  final DictationService? service;
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -56,6 +59,16 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     StatusPill(controller: c),
+                    if (widget.service != null) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          RecordButton(controller: c, service: widget.service!),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(t.recordHint)),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     Text(t.homeHotkeyReminder(c.hotkey)),
                     const SizedBox(height: 4),

@@ -20,6 +20,8 @@ class Settings {
   String cloudPreset = 'proxy'; // proxy | ollama | custom
   String ollamaUrl = 'http://localhost:11434/v1';
   String ollamaModel = '';
+  bool onboardingDone = false;
+  String? micDeviceId;
   List<String> activePacks = ['general_business'];
   List<String> dictionary = [];
   Map<String, String> corrections = {};
@@ -42,6 +44,8 @@ class Settings {
         'cloudPreset': cloudPreset,
         'ollamaUrl': ollamaUrl,
         'ollamaModel': ollamaModel,
+        'onboardingDone': onboardingDone,
+        'micDeviceId': micDeviceId,
         'activePacks': activePacks,
         'dictionary': dictionary,
         'corrections': corrections,
@@ -87,6 +91,8 @@ class Settings {
     s.cloudPreset = j['cloudPreset'] as String? ?? 'proxy';
     s.ollamaUrl = j['ollamaUrl'] as String? ?? s.ollamaUrl;
     s.ollamaModel = j['ollamaModel'] as String? ?? '';
+    s.onboardingDone = j['onboardingDone'] as bool? ?? false;
+    s.micDeviceId = j['micDeviceId'] as String?;
     s.activePacks =
         List<String>.from(j['activePacks'] as List? ?? s.activePacks);
     s.dictionary = List<String>.from(j['dictionary'] as List? ?? const []);

@@ -351,6 +351,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'VoiceFlow is still running here'**
   String get trayStillRunning;
+
+  /// No description provided for @recordButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Record'**
+  String get recordButton;
+
+  /// No description provided for @stopButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stopButton;
+
+  /// No description provided for @recordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Record, speak, then press Stop. The text is copied for you.'**
+  String get recordHint;
+
+  /// No description provided for @onbTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up VoiceFlow'**
+  String get onbTitle;
+
+  /// No description provided for @onbStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {n} of 4'**
+  String onbStep(int n);
+
+  /// No description provided for @onbWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome'**
+  String get onbWelcomeTitle;
+
+  /// No description provided for @onbWelcomeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'VoiceFlow turns your voice into clean text.'**
+  String get onbWelcomeBody;
+
+  /// No description provided for @onbMicTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your microphone'**
+  String get onbMicTitle;
+
+  /// No description provided for @onbMicHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Say something. The bar moves when we can hear you.'**
+  String get onbMicHint;
+
+  /// No description provided for @onbMicAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow microphone'**
+  String get onbMicAllow;
+
+  /// No description provided for @onbMicNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No microphone found'**
+  String get onbMicNone;
+
+  /// No description provided for @onbMicDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access is off. Turn it on in system settings.'**
+  String get onbMicDenied;
+
+  /// No description provided for @onbModelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the speech model'**
+  String get onbModelTitle;
+
+  /// No description provided for @onbModelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time download, {size} MB. After this, dictation works offline.'**
+  String onbModelBody(int size);
+
+  /// No description provided for @onbDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get onbDownload;
+
+  /// No description provided for @onbPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get onbPause;
+
+  /// No description provided for @onbRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get onbRetry;
+
+  /// No description provided for @onbDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading… {percent}%'**
+  String onbDownloading(int percent);
+
+  /// No description provided for @onbVerifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the file…'**
+  String get onbVerifying;
+
+  /// No description provided for @onbExtracting.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpacking… this takes about 30 seconds'**
+  String get onbExtracting;
+
+  /// No description provided for @onbInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech model installed'**
+  String get onbInstalled;
+
+  /// No description provided for @onbPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused. Your progress is saved.'**
+  String get onbPaused;
+
+  /// No description provided for @onbModelFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The download did not finish. Your progress is saved.'**
+  String get onbModelFailed;
+
+  /// No description provided for @onbModelIntegrity.
+  ///
+  /// In en, this message translates to:
+  /// **'The file failed its safety check and was discarded. Try again.'**
+  String get onbModelIntegrity;
+
+  /// No description provided for @onbTryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try it'**
+  String get onbTryTitle;
+
+  /// No description provided for @onbTrySentence.
+  ///
+  /// In en, this message translates to:
+  /// **'Read this aloud: “Hi John, thanks for the update. Can we meet Thursday?”'**
+  String get onbTrySentence;
+
+  /// No description provided for @onbNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onbNext;
+
+  /// No description provided for @onbBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get onbBack;
+
+  /// No description provided for @onbSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onbSkip;
+
+  /// No description provided for @onbDone.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re set'**
+  String get onbDone;
 }
 
 class _AppLocalizationsDelegate

@@ -2,13 +2,15 @@ import 'package:material_ui/material_ui.dart';
 
 import '../l10n/app_localizations.dart';
 import '../state/app_controller.dart';
+import '../state/dictation_service.dart';
 import 'home_page.dart';
 import 'style_page.dart';
 
 /// Left-navigation shell (spec §9.3 main window).
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.controller});
+  const AppShell({super.key, required this.controller, this.service});
   final AppController controller;
+  final DictationService? service;
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -28,7 +30,7 @@ class _AppShellState extends State<AppShell> {
       (Icons.settings_outlined, t.navSettings),
     ];
     final pages = <Widget>[
-      HomePage(controller: widget.controller),
+      HomePage(controller: widget.controller, service: widget.service),
       StylePage(controller: widget.controller),
       for (var i = 2; i < items.length; i++) _Later(title: items[i].$2),
     ];

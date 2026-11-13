@@ -20,3 +20,4 @@ export 'src/model_manager.dart';
 export 'src/tar_extractor.dart';
 export 'src/wav.dart';
 export 'src/wer.dart';
+export 'src/audio_level.dart';
