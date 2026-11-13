@@ -8,6 +8,20 @@
  *    ignores range params). Fields: symbol, name, marketCap ("$…"), 
  *    epsForecast ("$4.45"), time (time-pre-market / time-after-hours).
  *    NOTE: no revenue-forecast field exists → rev_est_b is null (honest).
+ *  - PAST 60 days (same Nasdaq calendar, looped backwards): rows carry
+ *    the ACTUAL reported EPS in `eps` and the surprise % in `surprise`
+ *    (verified: (eps - epsForecast) / epsForecast == surprise). 60 days,
+ *    not 30: a 30-day window can never show a 30-trading-day move (only
+ *    ~22 trading days elapse in 30 calendar days), so the window is 60
+ *    days and the 30d figure populates for reports older than ~42 days.
+ *    Past entries get status 'reported' plus post-earnings performance vs
+ *    the close on the report date: perf_1d/7d/30d = closes 1/7/30 trading
+ *    days after the report; perf_to_date = latest close. Null where the
+ *    window hasn't elapsed yet. Past entries are lean (no options chain,
+ *    no SEC health, no news — the point is the price reaction, and the
+ *    full enrichment would triple the runtime); capped at 100 by market
+ *    cap. Sector comes from the previous run's fundamentals.json sidecar
+ *    when available, else 'Unknown'.
  *  - Yahoo v8 chart: current price + price timestamp + 52w high/low.
  *  - Yahoo v7 options: REAL implied_move_pct from the ATM straddle of the
  *    first expiration AFTER the earnings date (never a sector table).
@@ -52,6 +66,8 @@ import {
 const __dir = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = process.env.OUT_DIR || path.join(__dir, 'data');
 const WINDOW_DAYS = 14;
+const PAST_DAYS = 60;
+const MAX_PAST = 100;
 const MIN_MKTCAP = 2e9;
 const MAX_TICKERS = 60;
 // Quotes older than this many calendar days are dropped, never scored.
@@ -270,9 +286,11 @@ async function main() {
       cap_tier: capTier(u.marketCap),
       reporting_date: u.reporting_date,
       report_time: u.report_time,
+      status: 'upcoming',
       eps_est: u.eps_est,
       eps_actual: null, // reports in the future in a forward calendar
-      rev_est_b: null,  // Nasdaq calendar carries no revenue forecast (documented)
+      surprise_pct: null,
+      rev_est_b: null, // Nasdaq calendar carries no revenue forecast (documented)
       rev_actual_b: null,
       current_price: price,
       price_ts: priceTs,
@@ -285,8 +303,140 @@ async function main() {
       insider_signal: insiderSignal,
       political_signal: politicalSignal,
       news,
+      // Post-earnings performance: upcoming rows have none yet.
+      baseline_price: null,
+      baseline_date: null,
+      perf_1d_pct: null,
+      perf_1d_date: null,
+      perf_7d_pct: null,
+      perf_7d_date: null,
+      perf_30d_pct: null,
+      perf_30d_date: null,
+      perf_to_date_pct: null,
+      perf_as_of: null,
     });
   }
+
+  // ── Step 4: past 60 days — reported earnings + price reaction ──────────
+  // Nasdaq past-date rows carry the actual EPS (`eps`) and surprise %.
+  // Performance is measured from the close on the report date (or the last
+  // close before it when the report fell on a non-trading day).
+  const pastRows = [];
+  for (let i = 1; i <= PAST_DAYS; i++) {
+    const d = addDays(today, -i);
+    try {
+      const j = await fetchJson(`https://api.nasdaq.com/api/calendar/earnings?date=${d}`, {
+        label: `nasdaq earnings calendar (past) ${d}`,
+      });
+      const rws = j?.data?.rows || [];
+      console.log(`[earnings] past ${d}: ${rws.length} rows`);
+      for (const r of rws) pastRows.push({ ...r, _date: d });
+    } catch (e) {
+      console.error(`[earnings] past calendar fetch FAILED for ${d}: ${e.message} — continuing`);
+    }
+  }
+  const pastSeen = new Map();
+  for (const r of pastRows) {
+    const symbol = String(r.symbol || '').trim().toUpperCase();
+    if (!/^[A-Z]{1,5}$/.test(symbol)) continue;
+    const mktCap = parseMoney(r.marketCap);
+    if (mktCap == null || mktCap < MIN_MKTCAP) continue;
+    const epsActual = parseMoney(r.eps);
+    if (epsActual == null) continue; // not actually reported yet in the feed
+    if (pastSeen.has(symbol)) continue;
+    pastSeen.set(symbol, {
+      ticker: symbol,
+      name: String(r.name || '').trim() || symbol,
+      marketCap: mktCap,
+      reporting_date: r._date,
+      eps_est: parseMoney(r.epsForecast),
+      eps_actual: epsActual,
+      surprise_pct: parseMoney(r.surprise),
+      report_time: r.time === 'time-pre-market' ? 'BMO' : r.time === 'time-after-hours' ? 'AMC' : 'UNKNOWN',
+    });
+  }
+  const pastUniverse = [...pastSeen.values()]
+    .sort((a, b) => b.marketCap - a.marketCap)
+    .slice(0, MAX_PAST);
+  console.log(`[earnings] ${pastUniverse.length} past tickers (≥$${MIN_MKTCAP / 1e9}B mktcap, top ${MAX_PAST})`);
+
+  // Sector / industry from the previous run's fundamentals (fresh ≤7d).
+  let fundMap = {};
+  try {
+    const f = JSON.parse(fs.readFileSync(path.join(OUT_DIR, 'fundamentals.json'), 'utf8'));
+    const ageDays = f?.as_of ? (Date.now() - new Date(f.as_of).getTime()) / 86400000 : 999;
+    if (ageDays <= 7 && f?.fundamentals) fundMap = f.fundamentals;
+  } catch {
+    // No usable fundamentals sidecar — sectors stay 'Unknown'.
+  }
+
+  for (const u of pastUniverse) {
+    console.log(`[earnings] past ${u.ticker} (reported ${u.reporting_date})`);
+    let bars = [];
+    try {
+      const ch = await yahooChart(u.ticker, { interval: '1d', range: '6mo' });
+      const ts = ch?.chart?.result?.[0]?.timestamp || [];
+      const closes = ch?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || [];
+      for (let i = 0; i < ts.length; i++) {
+        if (closes[i] == null) continue;
+        bars.push({ date: unixToDate(ts[i]), close: r2(closes[i]), ts: ts[i] });
+      }
+    } catch (e) {
+      console.error(`[earnings] past ${u.ticker}: chart fetch failed: ${e.message} — perf null`);
+    }
+    // Baseline: last close on or before the report date.
+    let baseIdx = -1;
+    for (let i = 0; i < bars.length; i++) {
+      if (bars[i].date <= u.reporting_date) baseIdx = i;
+      else break;
+    }
+    const base = baseIdx >= 0 ? bars[baseIdx] : null;
+    const closeAt = (n) => {
+      if (!base || baseIdx + n >= bars.length) return null;
+      return bars[baseIdx + n];
+    };
+    const pct = (b) => (base && b && base.close > 0 ? r2(((b.close / base.close) - 1) * 100, 1) : null);
+    const d1 = closeAt(1), d7 = closeAt(7), d30 = closeAt(30);
+    const last = bars.length ? bars[bars.length - 1] : null;
+    const fund = fundMap[u.ticker] || {};
+    entries.push({
+      ticker: u.ticker,
+      name: fund.name || u.name,
+      sector: fund.sector || 'Unknown',
+      industry: fund.industry || 'Unknown',
+      cap_tier: capTier(u.marketCap),
+      reporting_date: u.reporting_date,
+      report_time: u.report_time,
+      status: 'reported',
+      eps_est: u.eps_est,
+      eps_actual: u.eps_actual,
+      surprise_pct: u.surprise_pct,
+      rev_est_b: null,
+      rev_actual_b: null,
+      current_price: last ? last.close : null,
+      price_ts: last ? msToIso(last.ts * 1000) : null,
+      implied_move_pct: null, // post-report: the options-implied move is meaningless
+      iv_rank: null,
+      health_score: null, // lean past rows: no SEC enrichment (see header)
+      prob_up_pct: null,
+      conviction: null,
+      streak: [],
+      insider_signal: 'neutral',
+      political_signal: 'neutral',
+      news: [],
+      baseline_price: base ? base.close : null,
+      baseline_date: base ? base.date : null,
+      perf_1d_pct: pct(d1),
+      perf_1d_date: d1 ? d1.date : null,
+      perf_7d_pct: pct(d7),
+      perf_7d_date: d7 ? d7.date : null,
+      perf_30d_pct: pct(d30),
+      perf_30d_date: d30 ? d30.date : null,
+      perf_to_date_pct: pct(last),
+      perf_as_of: last ? last.date : null,
+    });
+  }
+  console.log(`[earnings] past entries added: ${pastUniverse.length}`);
 
   entries.sort((a, b) =>
     a.reporting_date !== b.reporting_date
