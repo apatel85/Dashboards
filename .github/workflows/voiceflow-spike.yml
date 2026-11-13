@@ -23,10 +23,16 @@ jobs:
           echo "475bc7052ce299c007f6d5d5407ba8601f819a2867f6eecee510ed17df581542  w.tar.bz2" | sha256sum -c -
           tar xjf w.tar.bz2
       - run: dart pub get
-      - name: S1 transcribe + timing
+      - name: S1 transcribe + timing (exe with DLLs beside it, like a real app)
         run: |
+          # `dart run` loads Windows' own old System32 onnxruntime.dll (v1.17.1) and
+          # crashes. A real app ships its DLLs next to the exe, which Windows searches first.
+          mkdir out
+          dart compile exe s1.dart -o out/s1.exe
+          PKG="$(cygpath "$LOCALAPPDATA")/Pub/Cache/hosted/pub.dev/sherpa_onnx_windows-2.0.1/windows/x64"
+          cp "$PKG"/*.dll out/
           M=sherpa-onnx-whisper-base.en
-          dart run s1.dart $M base.en-encoder.int8.onnx base.en-decoder.int8.onnx base.en-tokens.txt $M/test_wavs/0.wav $M/test_wavs/1.wav | tee s1-windows.log
+          ./out/s1.exe $M base.en-encoder.int8.onnx base.en-decoder.int8.onnx base.en-tokens.txt $M/test_wavs/0.wav $M/test_wavs/1.wav | tee s1-windows.log
       - uses: actions/upload-artifact@v4.6.0
         with:
           name: s1-windows-log
