@@ -146,8 +146,11 @@ CREATE TABLE IF NOT EXISTS dealfinder.alerts (
   created_at       timestamptz NOT NULL DEFAULT now()
 );
 
+-- NOTE (fix 2026-11-13): created_at::date depends on the session timezone,
+-- so Postgres refuses it in an index (42P17: must be IMMUTABLE). Pinning UTC
+-- makes the expression immutable.
 CREATE UNIQUE INDEX IF NOT EXISTS alerts_one_per_day
-  ON dealfinder.alerts (tracked_item_id, (created_at::date));
+  ON dealfinder.alerts (tracked_item_id, ((created_at AT TIME ZONE 'UTC')::date));
 
 -- --------------------------------------------------------------------------
 -- Indexes (query paths the app and pipeline use).
