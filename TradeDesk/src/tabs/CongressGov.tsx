@@ -9,9 +9,9 @@ import {
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { Fundamentals } from '../components/Fundamentals';
-import { fmtDateY, fmtInt, fmtCompactMoney } from '../lib/format';
+import { fmtDateY, fmtInt, fmtCompactMoney, fmtMoney, fmtPct } from '../lib/format';
 import { takeCongressDeepLink } from '../lib/congressDeepLink';
-import type { CongressTrade, MemberCommittees } from '../types';
+import type { CongressTrade, MemberCommittees, TradePerformanceMeta } from '../types';
 
 const PAGE_SIZE = 50;
 const AGG_PAGE_SIZE = 25;
@@ -33,7 +33,7 @@ type TypeFilter = 'all' | 'buy' | 'sell' | 'exchange';
 type View = 'agg' | 'notable' | 'trades';
 type AggSort = 'amount' | 'officials';
 type NotableWindow = 7 | 30 | 90;
-type TradeSortKey = 'date' | 'amount' | 'member' | 'asset';
+type TradeSortKey = 'date' | 'amount' | 'member' | 'asset' | 'perf';
 
 const TYPE_TONE: Record<string, 'green' | 'red' | 'amber'> = {
   buy: 'green',
@@ -124,6 +124,30 @@ function MemberSub({ t, committees }: { t: CongressTrade; committees: { name: st
   );
 }
 
+/** Plain verb for the performance line, per trade direction. */
+function perfVerb(t: CongressTrade): string {
+  return t.trade_type === 'buy' ? 'Bought' : t.trade_type === 'sell' ? 'Sold' : 'Exchanged';
+}
+
+/**
+ * "Bought at $86.10 · now $97.44 · +13.2%" — the three performance
+ * numbers, or "—" when the trade is outside the priced window.
+ * perf_pct is the RAW price change since the trade (same for buys and
+ * sells); the verb is what makes the direction readable.
+ */
+function TradePerfText({ t }: { t: CongressTrade }) {
+  if (t.price_at_trade == null || t.price_now == null) return <span className="muted">—</span>;
+  return (
+    <span>
+      {perfVerb(t)} at <b className="num">{fmtMoney(t.price_at_trade)}</b>
+      {' · '}now <b className="num">{fmtMoney(t.price_now)}</b>
+      {' · '}
+      <b className={`num ${t.perf_pct != null && t.perf_pct >= 0 ? 'up' : 'down'}`}>{fmtPct(t.perf_pct)}</b>
+      {t.perf_as_of ? <span className="muted small"> · {fmtDateY(t.perf_as_of)}</span> : null}
+    </span>
+  );
+}
+
 function TradeRow({
   t,
   committees,
@@ -172,6 +196,18 @@ function TradeRow({
           </Badge>
         </td>
         <td data-th="Traded" className="num hide-narrow">{fmtDateY(t.tx_date)}</td>
+        <td data-th="Since trade" className="num r">
+          {t.perf_pct != null ? (
+            <span
+              className={t.perf_pct >= 0 ? 'up' : 'down'}
+              title={`${perfVerb(t)} at ${fmtMoney(t.price_at_trade)} · now ${fmtMoney(t.price_now)}${t.perf_as_of ? ` · as of ${fmtDateY(t.perf_as_of)}` : ''}`}
+            >
+              {fmtPct(t.perf_pct)}
+            </span>
+          ) : (
+            <span className="muted" title="Trade is outside the 90-day performance window">—</span>
+          )}
+        </td>
         <td
           data-th="Lag"
           className={`num hide-md${late ? ' lateflag' : ''}`}
@@ -194,8 +230,17 @@ function TradeRow({
       </tr>
       {open && (
         <tr className="detail-row">
-          <td colSpan={10}>
+          <td colSpan={11}>
             <div className="mdetail">
+              <div className="mfull">
+                <span className="detail-label">Performance since trade</span>
+                <div>
+                  <TradePerfText t={t} />
+                  {t.price_at_trade == null && (
+                    <span className="muted small"> · Trade is outside the 90-day performance window.</span>
+                  )}
+                </div>
+              </div>
               <div className="only-sm mgrid">
                 <span>
                   <span className="detail-label">Branch</span>
@@ -307,6 +352,12 @@ function NotableRow({ item, committees }: { item: NotableItem; committees: { nam
               <div>{t.chamber === 'Executive' ? t.role ?? '—' : t.chamber}</div>
             </span>
             <span>
+              <span className="detail-label">Since trade</span>
+              <div className="num">
+                <TradePerfText t={t} />
+              </div>
+            </span>
+            <span>
               <span className="detail-label">Filing</span>
               <div>
                 {t.doc_url ? (
@@ -328,6 +379,9 @@ function NotableRow({ item, committees }: { item: NotableItem; committees: { nam
 export default function CongressGovTab() {
   const { data: congressData, loading: cLoading, error: cError } = useJsonData<CongressTrade[]>('congress.json');
   const { data: execData, loading: eLoading, error: eError } = useJsonData<CongressTrade[]>('executive.json');
+  // Performance window meta (trade-performance.json); missing file = the
+  // footnote falls back to a static line, never an error state.
+  const { data: perfMeta } = useJsonData<TradePerformanceMeta>('trade-performance.json');
   // Committee mapping is a static file (119th Congress); missing file = no
   // chips/filter yet, never an error state.
   const { data: committeesData } = useJsonData<MemberCommittees[]>('congress-committees.json');
@@ -471,6 +525,14 @@ export default function CongressGovTab() {
             return a.member.localeCompare(b.member) * dir;
           case 'asset':
             return (a.ticker ?? a.asset_name).localeCompare(b.ticker ?? b.asset_name) * dir;
+          case 'perf': {
+            // Unpriced rows (outside the window) sort last in both directions.
+            const pa = a.perf_pct, pb = b.perf_pct;
+            if (pa == null && pb == null) return 0;
+            if (pa == null) return 1;
+            if (pb == null) return -1;
+            return (pa - pb) * dir;
+          }
           case 'date':
           default: {
             const ka = a.disclosed_date ?? a.tx_date;
@@ -564,7 +626,7 @@ export default function CongressGovTab() {
     setTradeSort((s) =>
       s.key === key
         ? { key, dir: s.dir === 1 ? -1 : 1 }
-        : { key, dir: key === 'date' || key === 'amount' ? -1 : 1 },
+        : { key, dir: key === 'date' || key === 'amount' || key === 'perf' ? -1 : 1 },
     );
     resetPage();
   };
@@ -1034,7 +1096,7 @@ export default function CongressGovTab() {
         <>
           <SectionHead
             title="Disclosed trades"
-            sub={`${filtered.length.toLocaleString('en-US')} matching · sorted by ${tradeSort.key === 'date' ? 'disclosure date' : tradeSort.key} ${tradeSort.dir === 1 ? '↑' : '↓'} · tap a column header to re-sort · tap a row for detail`}
+            sub={`${filtered.length.toLocaleString('en-US')} matching · sorted by ${tradeSort.key === 'date' ? 'disclosure date' : tradeSort.key === 'perf' ? 'performance since trade' : tradeSort.key} ${tradeSort.dir === 1 ? '↑' : '↓'} · tap a column header to re-sort · tap a row for detail`}
           />
           {pageRows.length > 0 ? (
             <>
@@ -1065,6 +1127,11 @@ export default function CongressGovTab() {
                       </th>
                       <th className="hide-md">Branch</th>
                       <th className="hide-narrow r">Traded</th>
+                      <th className="r">
+                        <button className="linklike" onClick={() => toggleTradeSort('perf')} title="Price change since the trade date">
+                          Since trade{sortArrow('perf')}
+                        </button>
+                      </th>
                       <th className="hide-md">Lag</th>
                       <th className="hide-md">Signal</th>
                       <th className="hide-md">Filing</th>
@@ -1103,6 +1170,18 @@ export default function CongressGovTab() {
             Amounts are disclosed as ranges only. “Cluster” marks {isExec ? 'assets' : 'tickers'} bought by
             2+ distinct {isExec ? 'officials' : 'members'} within ~7 days. Filing links go to the
             official {isExec ? 'disclosure record' : 'House Clerk / Senate disclosure PDFs'}.
+            {' '}“Since trade” is the raw price change from the trade date to today — for a buy
+            that&rsquo;s the gain, for a sale it&rsquo;s what the stock did after they sold.
+            {perfMeta ? (
+              <>
+                {' '}Performance covers {isExec
+                  ? `White House trades from ${fmtDateY(perfMeta.executive.from)} to ${fmtDateY(perfMeta.executive.to)}`
+                  : `Congress trades from ${fmtDateY(perfMeta.congress.from)} to ${fmtDateY(perfMeta.congress.to)}`};
+                older trades show —.
+              </>
+            ) : (
+              <> Performance covers recent trades only; older trades show —.</>
+            )}
           </p>
         </>
       )}
