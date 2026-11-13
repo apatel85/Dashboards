@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>DealFinder — Best grocery prices near you</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Libre+Franklin:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --bg:#f4f7ec;
+        --surface:#ffffff;
+        --surface-2:#eef4e2;
+        --ink:#14230f;
+        --ink-2:#43523a;
+        --ink-3:#6d7c60;
+        --line:#dce5cb;
+        --green:#178a3c;
+        --green-deep:#0f6b2c;
+        --green-soft:#e2f4e4;
+        --amber:#ffb703;
+        --amber-soft:#fff3d1;
+        --red:#d64541;
+        --red-soft:#fdeceb;
+        --tag:#178a3c;
+        --shadow:0 2px 10px rgba(30,60,20,.08), 0 1px 2px rgba(30,60,20,.06);
+        --shadow-lg:0 10px 30px rgba(20,50,15,.16);
+        --r-sm:8px; --r-md:14px; --r-lg:20px;
+        --rail-w:348px;
+        --bar-h:76px;
+      }
+      @media (prefers-color-scheme: dark){
+        :root{
+          --bg:#0e150c;
+          --surface:#182114;
+          --surface-2:#1f2c1a;
+          --ink:#eef5e6;
+          --ink-2:#bcc9ae;
+          --ink-3:#8b9a7d;
+          --line:#2c3d24;
+          --green:#3fbf63;
+          --green-deep:#5fd383;
+          --green-soft:#17351f;
+          --amber:#ffc233;
+          --amber-soft:#3a2f10;
+          --red:#ff7a72;
+          --red-soft:#3d1d1a;
+          --tag:#2ea34f;
+          --shadow:0 2px 10px rgba(0,0,0,.35);
+          --shadow-lg:0 10px 30px rgba(0,0,0,.5);
+        }
+      }
+      *{box-sizing:border-box}
+      html{-webkit-text-size-adjust:100%}
+      body{
+        margin:0;background:var(--bg);color:var(--ink);
+        font-family:"Libre Franklin",system-ui,sans-serif;font-size:15.5px;line-height:1.45;
+      }
+      h1,h2,h3,.disp{font-family:"Archivo","Libre Franklin",sans-serif;letter-spacing:-.01em}
+      .mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+      button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+      input{font:inherit}
+      :focus-visible{outline:3px solid var(--amber);outline-offset:2px;border-radius:6px}
+      .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+
+      /* ---------- Live notice ---------- */
+      .notice{
+        background:var(--amber-soft);border-bottom:1px solid var(--amber);
+        font-size:13px;color:var(--ink);padding:8px 0;
+      }
+      .notice .wrap{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+      .notice b{font-family:"Archivo",sans-serif}
+      .notice span{color:var(--ink-2)}
+
+      /* ---------- Layout: rail + main (desktop) ---------- */
+      .layout{display:block}
+      .rail{display:none}
+      @media (min-width:920px){
+        .layout{display:grid;grid-template-columns:var(--rail-w) 1fr;gap:28px;align-items:start;max-width:1180px;margin:0 auto;padding:0 20px}
+        .rail{display:block;position:sticky;top:20px;padding:22px 0 40px}
+        main{padding:22px 0 48px;min-width:0}
+      }
+      main{padding:16px 0 calc(var(--bar-h) + 34px)}
+      @media (min-width:920px){ main{padding-bottom:48px} }
+
+      /* ---------- Rail ---------- */
+      .rail-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+      .rail-card h3{margin:0 0 4px;font-size:15px}
+      .rail-card .sub{font-size:12.5px;color:var(--ink-3);margin:0 0 12px}
+      .rail nav{display:flex;flex-direction:column;gap:2px}
+      .rail-nav-btn{
+        display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+        padding:11px 12px;border-radius:12px;min-height:48px;font-weight:600;font-size:15px;color:var(--ink-2);
+      }
+      .rail-nav-btn .n{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);width:20px}
+      .rail-nav-btn:hover{background:var(--surface-2)}
+      .rail-nav-btn[aria-current="page"]{background:var(--green-soft);color:var(--ink)}
+      .rail-nav-btn[aria-current="page"] .n{color:var(--green-deep)}
+      .rail-nav-btn .cnt{margin-left:auto;background:var(--green);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px}
+      .rail-deal{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px dashed var(--line)}
+      .rail-deal:first-of-type{border-top:0}
+      .rail-deal .nm{font-weight:600;font-size:14px}
+      .rail-deal .st{font-size:12px;color:var(--ink-3)}
+      .rail-deal .pr{font-family:"IBM Plex Mono",monospace;font-weight:700;color:var(--green-deep);white-space:nowrap}
+      .rail-store{display:flex;justify-content:space-between;padding:7px 0;font-size:14px;border-top:1px dashed var(--line)}
+      .rail-store:first-of-type{border-top:0}
+      .rail-store .d{color:var(--ink-3);font-size:12.5px}
+
+      /* ---------- Search hero ---------- */
+      .hero h1{font-size:clamp(28px,5.4vw,40px);font-weight:900;line-height:1.05;margin:6px 0 6px}
+      .hero h1 .hl{background:linear-gradient(transparent 62%, var(--amber) 62%);padding:0 2px}
+      .hero p.lede{margin:0 0 18px;color:var(--ink-2);font-size:16px;max-width:56ch}
+      .searchbar{
+        display:flex;gap:8px;background:var(--surface);border:2px solid var(--green);
+        border-radius:16px;padding:6px;box-shadow:var(--shadow-lg);
+      }
+      .searchbar input{
+        flex:1;min-width:0;border:0;background:none;color:var(--ink);
+        font-size:17px;padding:10px 8px;min-height:48px;
+      }
+      .searchbar input::placeholder{color:var(--ink-3)}
+      .searchbar input:focus{outline:none}
+      .searchbar:focus-within{outline:3px solid var(--amber);outline-offset:2px}
+      .btn-scan{
+        display:flex;align-items:center;gap:8px;background:var(--green);color:#fff;
+        font-family:"Archivo",sans-serif;font-weight:800;font-size:16px;
+        border-radius:11px;padding:0 20px;min-height:48px;white-space:nowrap;
+      }
+      .btn-scan:hover{background:var(--green-deep)}
+      .btn-scan svg{flex:none}
+      .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+      .chip{
+        background:var(--surface);border:1px solid var(--line);border-radius:999px;
+        padding:9px 15px;font-weight:600;font-size:14px;min-height:40px;box-shadow:var(--shadow);
+      }
+      .chip:hover{border-color:var(--green);color:var(--green-deep)}
+      .fresh-note{font-size:12.5px;color:var(--ink-3);margin-top:12px}
+      .fresh-note b{color:var(--ink-2)}
+
+      /* ---------- Section heads ---------- */
+      .sec-head{display:flex;align-items:baseline;gap:10px;margin:30px 0 12px}
+      .sec-head h2{font-size:21px;font-weight:800;margin:0}
+      .sec-head .hint{font-size:13px;color:var(--ink-3)}
+      .sec-head .right{margin-left:auto;font-size:13px;color:var(--ink-3)}
+
+      /* ---------- Product rows ---------- */
+      .results{display:flex;flex-direction:column;gap:12px}
+      @media (min-width:640px) and (max-width:919px){
+        .results{display:grid;grid-template-columns:1fr 1fr;align-items:start}
+      }
+      .card{
+        background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+        box-shadow:var(--shadow);overflow:hidden;
+      }
+      .card.best{border:2px solid var(--green)}
+      .card-top{display:flex;gap:14px;padding:16px 16px 12px;width:100%;text-align:left;align-items:flex-start}
+      button.card-top{min-height:44px}
+      .thumb{
+        flex:none;width:58px;height:58px;border-radius:14px;display:grid;place-items:center;
+        font-size:30px;background:var(--surface-2);
+      }
+      .card-main{flex:1;min-width:0}
+      .card-name{font-family:"Archivo",sans-serif;font-weight:800;font-size:17.5px;line-height:1.2}
+      .card-meta{font-size:13px;color:var(--ink-3);margin-top:2px}
+      .price-block{text-align:right;flex:none}
+      .price-big{font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:26px;line-height:1;color:var(--ink)}
+      .price-store{font-size:13px;font-weight:700;color:var(--green-deep);margin-top:3px}
+      .price-unit{font-size:12px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace}
+      .tagrow{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 12px 88px;margin-top:-4px}
+      @media (max-width:480px){ .tagrow{padding-left:16px} }
+      .tag{
+        font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+        border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:5px;
+      }
+      .tag-best{background:var(--green);color:#fff}
+      .tag-save{background:var(--amber);color:#3d2c00}
+      .tag-soft{background:var(--surface-2);color:var(--ink-2);text-transform:none;letter-spacing:0;font-weight:600}
+      .tag-loyal{background:var(--amber-soft);color:var(--ink-2);text-transform:none;letter-spacing:0;font-weight:600}
+      .gap-line{padding:0 16px 14px 88px;font-size:13.5px;color:var(--ink-2);margin-top:-6px}
+      @media (max-width:480px){ .gap-line{padding-left:16px} }
+      .gap-line b{color:var(--ink)}
+      .card-actions{display:flex;gap:8px;padding:0 16px 16px 88px}
+      @media (max-width:480px){ .card-actions{padding-left:16px} }
+      .btn-add{
+        background:var(--ink);color:var(--bg);font-weight:700;border-radius:999px;
+        padding:10px 18px;min-height:44px;font-size:14.5px;
+      }
+      .btn-add.added{background:var(--green);color:#fff}
+      .btn-ghost{
+        border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;min-height:44px;
+        font-weight:600;font-size:14.5px;color:var(--ink-2);background:var(--surface);
+      }
+      .compare{display:none;border-top:1px dashed var(--line);padding:6px 16px 14px}
+      .card.open .compare{display:block}
+      .compare table{width:100%;border-collapse:collapse;font-size:14.5px}
+      .compare th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);text-align:left;padding:8px 6px 4px;font-weight:700}
+      .compare th.r,.compare td.r{text-align:right}
+      .compare td{padding:8px 6px;border-top:1px solid var(--line)}
+      .compare tr.win td{background:var(--green-soft);font-weight:700}
+      .compare .p{font-family:"IBM Plex Mono",monospace;font-weight:600}
+      .compare .u{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-3)}
+      .compare .fresh{font-size:12px;color:var(--ink-3)}
+      .chev{transition:transform .2s ease;color:var(--ink-3);flex:none;margin-top:4px}
+      .card.open .chev{transform:rotate(180deg)}
+      @media (prefers-reduced-motion: reduce){ .chev{transition:none} }
+      .empty{
+        background:var(--surface);border:1.5px dashed var(--line);border-radius:var(--r-lg);
+        padding:28px 20px;text-align:center;color:var(--ink-2);
+      }
+      .empty b{color:var(--ink);display:block;font-size:16px;margin-bottom:4px}
+
+      /* ---------- Basket totals ---------- */
+      .basket-strip{display:grid;gap:10px}
+      @media (min-width:640px){ .basket-strip{grid-template-columns:repeat(3,1fr)} }
+      .basket-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;box-shadow:var(--shadow)}
+      .basket-card.win{border:2px solid var(--green);background:var(--green-soft)}
+      .basket-card .store{font-family:"Archivo",sans-serif;font-weight:800;font-size:16px;display:flex;align-items:center;gap:8px}
+      .basket-card .total{font-family:"IBM Plex Mono",monospace;font-size:30px;font-weight:700;margin:6px 0 2px}
+      .basket-card .note{font-size:13px;color:var(--ink-2)}
+      .basket-card .miss{font-size:12.5px;color:var(--red);margin-top:4px}
+
+      /* ---------- Deals ---------- */
+      .deal-grid{display:grid;gap:12px}
+      @media (min-width:640px){ .deal-grid{grid-template-columns:1fr 1fr} }
+      .deal-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px;display:flex;gap:14px}
+      .deal-card .thumb{width:52px;height:52px;font-size:27px}
+      .deal-off{
+        font-family:"Archivo",sans-serif;font-weight:900;background:var(--red);color:#fff;
+        border-radius:10px;padding:3px 9px;font-size:14px;display:inline-block;
+      }
+      .deal-name{font-weight:800;font-family:"Archivo",sans-serif;font-size:16.5px;margin-top:6px}
+      .deal-prices{display:flex;gap:10px;align-items:baseline;margin-top:2px}
+      .deal-now{font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:21px;color:var(--green-deep)}
+      .deal-was{font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--ink-3);text-decoration:line-through}
+      .deal-meta{font-size:12.5px;color:var(--ink-3);margin-top:3px}
+      .deal-card .btn-add{margin-left:auto;align-self:flex-start;flex:none}
+
+      /* ---------- Scan ---------- */
+      .scan-box{
+        background:var(--ink);color:var(--bg);border-radius:var(--r-lg);padding:26px 20px;text-align:center;
+      }
+      @media (prefers-color-scheme: dark){ .scan-box{background:#050805;border:1px solid var(--line);color:#eef5e6} }
+      .scan-frame{
+        margin:14px auto;max-width:340px;height:150px;border:3px solid var(--amber);border-radius:16px;
+        display:grid;place-items:center;background:repeating-linear-gradient(90deg,#fff 0 3px,transparent 3px 7px,#fff 7px 8px,transparent 8px 14px,#fff 14px 17px,transparent 17px 21px);
+        opacity:.95;
+      }
+      .scan-frame span{background:var(--ink);color:var(--amber);font-family:"IBM Plex Mono",monospace;font-size:12px;padding:4px 10px;border-radius:6px}
+      .scan-box h2{margin:0;font-size:22px}
+      .scan-box p{color:inherit;opacity:.75;font-size:14px;max-width:46ch;margin:8px auto 0}
+      .btn-bigscan{
+        background:var(--amber);color:#241a00;font-family:"Archivo",sans-serif;font-weight:900;font-size:17px;
+        border-radius:999px;padding:14px 30px;min-height:52px;margin-top:18px;
+      }
+      .upc-form{display:flex;gap:8px;margin-top:14px}
+      .upc-form input{
+        flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);
+        padding:12px 14px;min-height:48px;font-family:"IBM Plex Mono",monospace;font-size:15px;color:var(--ink);
+      }
+      .upc-form button{background:var(--ink);color:var(--bg);border-radius:12px;padding:0 20px;font-weight:700;min-height:48px}
+      .plain-note{font-size:13.5px;color:var(--ink-2);background:var(--surface-2);border-radius:12px;padding:12px 14px;margin-top:14px}
+      .plain-note b{color:var(--ink)}
+
+      /* ---------- List ---------- */
+      .list-row{
+        display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
+        border-radius:var(--r-md);padding:12px 14px;box-shadow:var(--shadow);
+      }
+      .list-row .thumb{width:44px;height:44px;font-size:24px;border-radius:11px}
+      .list-row .nm{font-weight:700;font-size:15.5px}
+      .list-row .bs{font-size:12.5px;color:var(--ink-3)}
+      .list-row .bp{margin-left:auto;text-align:right}
+      .list-row .bp .p{font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:17px}
+      .list-row .bp .s{font-size:12px;color:var(--green-deep);font-weight:700}
+      .qty{display:flex;align-items:center;gap:2px}
+      .qty button{
+        width:38px;height:38px;border-radius:10px;background:var(--surface-2);font-weight:800;font-size:17px;
+        display:grid;place-items:center;
+      }
+      .qty .n{min-width:26px;text-align:center;font-family:"IBM Plex Mono",monospace;font-weight:700}
+      .btn-remove{color:var(--red);font-size:13px;font-weight:600;padding:8px;min-height:38px}
+      .list-stack{display:flex;flex-direction:column;gap:9px}
+      .split-banner{
+        background:var(--green);color:#fff;border-radius:var(--r-lg);padding:18px;margin-top:16px;
+      }
+      .split-banner .t{font-family:"IBM Plex Mono",monospace;font-size:30px;font-weight:700}
+      .split-banner h3{margin:0 0 2px;font-size:17px}
+      .split-banner p{margin:4px 0 0;font-size:13.5px;opacity:.92}
+
+      /* ---------- More / index ---------- */
+      .index-group{margin-bottom:22px}
+      .index-group h3{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin:0 0 8px;font-family:"Libre Franklin",sans-serif;font-weight:700}
+      .index-row{
+        display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);
+        border:1px solid var(--line);border-radius:var(--r-md);padding:15px 16px;min-height:56px;
+        font-weight:700;font-size:16px;box-shadow:var(--shadow);margin-bottom:8px;
+      }
+      .index-row .d{margin-left:auto;color:var(--ink-3);font-weight:500;font-size:13px;text-align:right}
+      .index-row .arr{color:var(--ink-3);font-weight:400}
+      .fact{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow);margin-bottom:12px}
+      .fact h3{margin:0 0 6px;font-size:17px}
+      .fact p{margin:0 0 8px;color:var(--ink-2);font-size:14.5px}
+      .fact p:last-child{margin-bottom:0}
+      .fact .src{font-size:12.5px;color:var(--ink-3)}
+      .fact ul{margin:6px 0;padding-left:19px;color:var(--ink-2);font-size:14.5px}
+      .fact li{margin:3px 0}
+      .store-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px;margin-bottom:9px;box-shadow:var(--shadow)}
+      .store-row .nm{font-family:"Archivo",sans-serif;font-weight:800;font-size:16px}
+      .store-row .meta{font-size:12.5px;color:var(--ink-3)}
+      .store-row .dist{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-weight:700}
+      .hist-row{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;margin-bottom:9px;box-shadow:var(--shadow)}
+      .hist-row .when{font-size:12.5px;color:var(--ink-3)}
+      .hist-row .what{font-weight:600;font-size:14.5px}
+      .hist-row .amt{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-weight:700;color:var(--green-deep)}
+      .back-btn{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--green-deep);padding:10px 4px;min-height:44px;font-size:15px}
+
+      /* ---------- Views ---------- */
+      .view{display:none}
+      .view.active{display:block}
+
+      /* ---------- Bottom tab bar (phone) ---------- */
+      .tabbar{
+        position:fixed;left:0;right:0;bottom:0;z-index:50;
+        background:var(--surface);border-top:1px solid var(--line);
+        display:grid;grid-template-columns:1fr 1fr 84px 1fr 1fr;
+        padding:6px 8px calc(6px + env(safe-area-inset-bottom));
+        box-shadow:0 -6px 24px rgba(20,50,15,.10);
+      }
+      @media (min-width:920px){ .tabbar{display:none} }
+      .tab{
+        display:flex;flex-direction:column;align-items:center;gap:2px;justify-content:center;
+        min-height:56px;border-radius:12px;font-size:11.5px;font-weight:700;color:var(--ink-3);position:relative;
+      }
+      .tab svg{width:23px;height:23px}
+      .tab[aria-current="page"]{color:var(--green-deep)}
+      .tab .badge{
+        position:absolute;top:4px;right:calc(50% - 22px);background:var(--red);color:#fff;
+        font-size:10.5px;font-weight:800;border-radius:999px;padding:0 6px;line-height:17px;
+      }
+      .tab-scan{margin-top:-22px}
+      .tab-scan .disc{
+        width:60px;height:60px;border-radius:50%;background:var(--green);color:#fff;
+        display:grid;place-items:center;box-shadow:var(--shadow-lg);border:4px solid var(--surface);
+      }
+      .tab-scan .lbl{font-size:11.5px;font-weight:800;color:var(--green-deep);margin-top:2px}
+
+      /* ---------- Toast ---------- */
+      .toast{
+        position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(var(--bar-h) + 18px);
+        background:var(--ink);color:var(--bg);border-radius:999px;padding:12px 20px;font-weight:600;font-size:14.5px;
+        opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;z-index:60;max-width:92vw;text-align:center;
+        box-shadow:var(--shadow-lg);
+      }
+      .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+      @media (min-width:920px){ .toast{bottom:26px} }
+      @media (prefers-reduced-motion: reduce){ .toast{transition:none} }
+      /* ---------- Location / schedule / alerts / history ---------- */
+      .loc-bar{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--green);border-radius:12px;padding:8px 10px;margin-bottom:10px;box-shadow:var(--shadow)}
+      .loc-bar .pin{font-size:18px;flex:none}
+      .loc-bar .txt{flex:1;min-width:0;font-size:13.5px;line-height:1.3}
+      .loc-bar .txt b{font-size:14px}
+      .loc-bar .txt span{color:var(--ink-3);display:block;font-size:12px}
+      .loc-bar .btn-change{flex:none;background:var(--green);color:#fff;font-weight:800;font-size:13px;border-radius:999px;padding:9px 14px;min-height:40px}
+      .loc-panel{display:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:12px;margin-bottom:10px;box-shadow:var(--shadow)}
+      .loc-panel.open{display:block}
+      .loc-panel p{margin:0 0 8px;font-size:13.5px;color:var(--ink-2)}
+      .loc-form{display:flex;gap:8px;flex-wrap:wrap}
+      .loc-form input{flex:1;min-width:120px;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;font-size:16px;background:var(--surface);color:var(--ink)}
+      .loc-form select{border:1.5px solid var(--line);border-radius:10px;padding:10px;min-height:44px;background:var(--surface);color:var(--ink);font:inherit}
+      .loc-form .btn-set{background:var(--ink);color:var(--bg);font-weight:800;border-radius:10px;padding:0 18px;min-height:44px}
+      .sched-strip{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--ink-2);background:var(--surface-2);border-radius:10px;padding:8px 10px;margin-bottom:10px}
+      .sched-strip b{color:var(--ink)}
+      .sched-pill{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-weight:600;white-space:nowrap}
+      .sched-pill em{font-style:normal;color:var(--green-deep);font-weight:800}
+      .alert-strip{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+      .alert-card{display:flex;gap:10px;align-items:flex-start;background:#fff8e1;border:1.5px solid var(--amber);border-radius:12px;padding:10px 12px}
+      @media (prefers-color-scheme: dark){ .alert-card{background:var(--amber-soft)} }
+      .alert-card .ic{font-size:20px;flex:none;line-height:1}
+      .alert-card .t{font-weight:800;font-size:14px;line-height:1.25}
+      .alert-card .d{font-size:12.5px;color:var(--ink-2);line-height:1.35;margin-top:1px}
+      .alert-card .d b{color:var(--green-deep)}
+      .btn-watch{border:1.5px solid var(--line);border-radius:999px;padding:10px 14px;min-height:44px;font-weight:700;font-size:14px;background:var(--surface);color:var(--ink-2)}
+      .btn-watch.on{background:var(--amber);border-color:var(--amber);color:#3d2c00}
+      .hist-box{border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
+      .hist-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-3);margin-bottom:4px}
+      .hist-head b{color:var(--ink)}
+      .hist-verdict{font-size:13.5px;font-weight:700;margin-top:4px}
+      .hist-verdict.good{color:var(--green-deep)}
+      .hist-verdict.flat{color:var(--ink-2)}
+      .watch-line{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);margin-top:2px;flex-wrap:wrap}
+      .watch-dot{width:8px;height:8px;border-radius:50%;background:var(--line);flex:none}
+      .watch-dot.on{background:var(--amber);box-shadow:0 0 0 3px var(--amber-soft)}
+
+      /* ---------- Compact mobile (less scrolling) ---------- */
+      @media (max-width:919px){
+        body{font-size:15px}
+        .notice{padding:5px 0;font-size:12px}
+        .notice span{display:none}
+        .notice span.short{display:inline;color:var(--ink-2)}
+        main{padding:10px 0 calc(var(--bar-h) + 18px)}
+        .wrap{padding:0 12px}
+        .hero h1{font-size:24px;margin:2px 0 4px}
+        .hero p.lede{font-size:13.5px;margin-bottom:10px;line-height:1.35}
+        .searchbar{position:sticky;top:8px;z-index:30;padding:4px;border-radius:13px}
+        .searchbar input{font-size:16px;min-height:44px;padding:8px 6px}
+        .btn-scan{min-height:44px;padding:0 14px;font-size:15px}
+        .chips{flex-wrap:nowrap;overflow-x:auto;margin-top:8px;padding-bottom:2px;scrollbar-width:none}
+        .chips::-webkit-scrollbar{display:none}
+        .chip{flex:none;padding:7px 12px;min-height:36px;font-size:13px}
+        .fresh-note{font-size:12px;margin-top:8px;line-height:1.35}
+        .sec-head{margin:16px 0 8px;flex-wrap:wrap;gap:2px 10px}
+        .sec-head h2{font-size:18px}
+        .sec-head .right{margin-left:0}
+        .results{gap:8px}
+        .card{border-radius:14px}
+        .card-top{gap:10px;padding:10px 12px 6px}
+        .thumb{width:44px;height:44px;font-size:23px;border-radius:11px}
+        .card-name{font-size:16px}
+        .card-meta{font-size:12px}
+        .price-big{font-size:22px}
+        .price-store{font-size:12px}
+        .tagrow{padding:0 12px 6px 66px;margin-top:-2px;gap:4px}
+        .tag{font-size:10.5px;padding:3px 8px}
+        .gap-line{padding:0 12px 8px 66px;font-size:12.5px;margin-top:-2px}
+        .card-actions{padding:0 12px 10px 66px;gap:6px}
+        .btn-add,.btn-ghost,.btn-watch{min-height:40px;padding:8px 13px;font-size:13.5px}
+        .compare{padding:4px 12px 10px}
+        .compare table{font-size:13px}
+        .compare td,.compare th{padding:6px 4px}
+        .compare .fresh{display:none}
+        .compare th:last-child,.compare td:last-child{display:none}
+        .basket-strip{grid-template-columns:repeat(3,1fr);gap:6px}
+        .basket-card{padding:10px;border-radius:12px}
+        .basket-card .store{font-size:13px}
+        .basket-card .total{font-size:20px;margin:2px 0 0}
+        .basket-card .note{font-size:11px}
+        .basket-card .miss{display:none}
+        .deal-grid{gap:8px}
+        .deal-card{padding:10px 12px;border-radius:14px}
+        .list-row{padding:9px 10px;gap:8px;flex-wrap:wrap}
+        .list-row .bp{margin-left:0}
+        .tabbar{padding-top:4px}
+        .tab{min-height:50px}
+        .tab-scan .disc{width:52px;height:52px}
+      }
+      @media (max-width:480px){ .tagrow,.gap-line,.card-actions{padding-left:12px} }
+      .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+    </style>
+  </head>
+  <body>
+    <div class="notice" role="note">
+      <div class="wrap">
+        <b>Live prices.</b>
+        <span class="short" id="noticeShort">From this week's flyers · checked Nov 13.</span>
+        <span>Every price shows its store and when the flyer deal ends. Prices are checked weekly, when each store's new circular drops — never reported by other shoppers.</span>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- ======= Desktop rail ======= -->
+      <aside class="rail" aria-label="DealFinder sections">
+        <div class="rail-card">
+          <h3>DealFinder</h3>
+          <p class="sub">Find the best price for what your household needs — by item name or barcode.</p>
+          <nav id="railNav">
+            <button class="rail-nav-btn" data-go="search" aria-current="page"><span class="n">01</span>Search</button>
+            <button class="rail-nav-btn" data-go="deals"><span class="n">02</span>Deals this week</button>
+            <button class="rail-nav-btn" data-go="scan"><span class="n">03</span>Scan a barcode</button>
+            <button class="rail-nav-btn" data-go="list"><span class="n">04</span>My list<span class="cnt" id="railListCount" hidden>0</span></button>
+            <button class="rail-nav-btn" data-go="stores"><span class="n">05</span>Stores near me</button>
+            <button class="rail-nav-btn" data-go="saved"><span class="n">06</span>Saved &amp; history</button>
+            <button class="rail-nav-btn" data-go="why"><span class="n">07</span>Why DealFinder</button>
+          </nav>
+        </div>
+        <div class="rail-card">
+          <h3>This week's top deals</h3>
+          <p class="sub">From this week's flyers · real was-prices only</p>
+          <div id="railDeals"></div>
+          <button class="btn-ghost" data-go="deals" style="margin-top:12px">See all deals</button>
+        </div>
+        <div class="rail-card">
+          <h3>Stores near me</h3>
+          <p class="sub">Stores with prices this week</p>
+          <div id="railStores"></div>
+        </div>
+      </aside>
+
+      <main>
+        <!-- ======= SEARCH ======= -->
+        <section class="view active" id="view-search" aria-label="Search">
+          <!-- Location — prices are location-based, so ask first -->
+          <div class="loc-bar" role="region" aria-label="Your location">
+            <span class="pin" aria-hidden="true">📍</span>
+            <div class="txt"><b id="locLabel">Prices near 08520</b><span id="locSub">Deals change by ZIP — flyers, stores &amp; prices near you only.</span></div>
+            <button class="btn-change" id="btnLocToggle" aria-expanded="false">Change</button>
+          </div>
+          <div class="loc-panel" id="locPanel">
+            <p><b>Where do you shop?</b> Enter your ZIP to load stores and this week's flyers near you. Prices refresh for that ZIP when each new circular drops.</p>
+            <form class="loc-form" id="locForm">
+              <label class="sr" for="zipInput">ZIP code</label>
+              <input id="zipInput" inputmode="numeric" autocomplete="postal-code" placeholder="ZIP — e.g. 08520" maxlength="10" />
+              <button type="submit" class="btn-set">Use this ZIP</button>
+            </form>
+            <p style="margin-top:8px;font-size:12.5px">Your ZIP is saved in this browser only. Distances aren't available yet — stores are listed for your ZIP.</p>
+          </div>
+          <div class="sched-strip" aria-label="Flyer update schedule">
+            <span>📰 <b>Flyers refresh weekly</b> — prices re-checked when a new circular drops:</span>
+            <span id="schedPills"></span>
+            <span>Flyer weeks vary by store — dates come from each store's flyer.</span>
+          </div>
+          <div class="alert-strip" id="alertStrip" aria-label="Price-drop alerts"></div>
+          <div class="hero">
+            <h1>Where is it <span class="hl">cheapest</span> today?</h1>
+            <p class="lede">Type an item or scan the barcode — best price near you, per unit, vs the next store.</p>
+            <form class="searchbar" id="searchForm" role="search">
+              <label class="sr" for="q">Search for an item</label>
+              <input id="q" type="search" inputmode="search" autocomplete="off" placeholder="Try “milk”, “eggs”, “juice”…" />
+              <button type="button" class="btn-scan" data-go="scan" aria-label="Scan a barcode instead">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M3 12h18"/></svg>
+                Scan
+              </button>
+            </form>
+            <div class="chips" aria-label="Popular searches">
+              <button class="chip" data-chip="milk">Milk</button>
+              <button class="chip" data-chip="eggs">Eggs</button>
+              <button class="chip" data-chip="juice">Juice</button>
+              <button class="chip" data-chip="cheese">Cheese</button>
+              <button class="chip" data-chip="chicken">Chicken</button>
+              <button class="chip" data-chip="coffee">Coffee</button>
+              <button class="chip" data-chip="">Show everything</button>
+            </div>
+            <p class="fresh-note">Prices come from retailer and flyer data, <b>checked weekly when each new circular drops</b> — never reported by other shoppers. <b>Unit price</b> = price per ounce or per pound, so different sizes compare fairly.</p>
+          </div>
+
+          <div class="sec-head">
+            <h2 id="resultsTitle">Best prices near you</h2>
+            <span class="right" id="resultsCount"></span>
+          </div>
+          <div class="results" id="results"></div>
+
+          <div class="sec-head">
+            <h2>Your list, priced by store</h2>
+            <span class="hint">Same items, whole basket</span>
+          </div>
+          <div class="basket-strip" id="basketStrip"></div>
+          <p class="fresh-note" id="basketNote"></p>
+        </section>
+
+        <!-- ======= DEALS ======= -->
+        <section class="view" id="view-deals" aria-label="Deals this week">
+          <div class="sec-head" style="margin-top:6px">
+            <h2>Deals this week</h2>
+            <span class="hint">From the weekly flyers — the stores' deals papers</span>
+          </div>
+          <p class="fresh-note" style="margin:0 0 14px">Flyer deals end when the week ends — saved items go back to full price, so check the end date. Only items with a real was-price are shown here.</p>
+          <div class="deal-grid" id="dealGrid"></div>
+        </section>
+
+        <!-- ======= SCAN ======= -->
+        <section class="view" id="view-scan" aria-label="Scan a barcode">
+          <div class="scan-box">
+            <h2>Scan the barcode</h2>
+            <p>Point the camera at the number-and-lines label on a package — the UPC — and see what it costs at every store near you before you put it in the cart.</p>
+            <div class="scan-frame" aria-hidden="true"><span>AIM AT BARCODE</span></div>
+            <video id="scanVideo" playsinline muted hidden style="width:100%;max-width:340px;border-radius:16px;margin:14px auto 0;display:block"></video>
+            <button class="btn-bigscan" id="btnCameraScan">Scan with camera</button>
+            <p id="scanMsg" style="margin-top:10px"></p>
+          </div>
+          <form class="upc-form" id="upcForm">
+            <label class="sr" for="upcInput">Or type the barcode number (UPC)</label>
+            <input id="upcInput" inputmode="numeric" autocomplete="off" placeholder="Or type the UPC number…" />
+            <button type="submit">Look up</button>
+          </form>
+          <div class="plain-note"><b>UPC</b> — the barcode number printed on a package. Packaged goods have one; loose produce and deli items don't, so search those by name instead.</div>
+          <div id="scanResult" style="margin-top:16px"></div>
+        </section>
+
+        <!-- ======= LIST ======= -->
+        <section class="view" id="view-list" aria-label="My list">
+          <div class="sec-head" style="margin-top:6px">
+            <h2>My list &amp; watchlist</h2>
+            <span class="hint">Stored in this browser only</span>
+          </div>
+          <p class="fresh-note" style="margin:0 0 10px">Tap <b>🔔 Track</b> on any item and it is watched: when today's best price falls <b>below its 30-day average</b>, an alert appears here and on Search. History is still building — one price check so far — so alerts start after the next weekly check.</p>
+          <div class="alert-strip" id="listAlerts" aria-label="Your price-drop alerts"></div>
+          <div class="list-stack" id="listStack"></div>
+          <div id="listTotals"></div>
+        </section>
+
+        <!-- ======= STORES (via More / rail) ======= -->
+        <section class="view" id="view-stores" aria-label="Stores near me">
+          <button class="back-btn" data-go="more">← More</button>
+          <div class="sec-head" style="margin-top:2px"><h2>Stores near me</h2></div>
+          <p class="fresh-note" style="margin:0 0 14px">Stores with prices in this week's flyers for your ZIP. Distances aren't available yet — and ShopRite has no flyer data here yet, so it doesn't appear until a second source covers it.</p>
+          <div id="storeList"></div>
+        </section>
+
+        <!-- ======= SAVED / HISTORY ======= -->
+        <section class="view" id="view-saved" aria-label="Saved and history">
+          <button class="back-btn" data-go="more">← More</button>
+          <div class="sec-head" style="margin-top:2px"><h2>Saved &amp; history</h2></div>
+          <p class="fresh-note" style="margin:0 0 14px">What you searched and what it cost then — so “is today’s price actually a deal?” has an answer.</p>
+          <div id="histList"></div>
+          <div class="plain-note" style="margin-top:6px"><b>History tracks 30 days.</b> Track an item from Search or My list — when today's price drops below its 30-day average, an alert fires. Right now there is only <b>one price check so far</b> (Nov 13), so every tracked item reads “building history” until the next weekly check adds a second point.</div>
+          <div id="trackedHistory" style="margin-top:12px"></div>
+        </section>
+
+        <!-- ======= WHY (research) ======= -->
+        <section class="view" id="view-why" aria-label="Why DealFinder">
+          <button class="back-btn" data-go="more">← More</button>
+          <div class="sec-head" style="margin-top:2px"><h2>Why DealFinder</h2></div>
+          <p class="fresh-note" style="margin:0 0 14px">From the Phase 0 research, November 2026 — competitor facts from published reviews, with sources.</p>
+
+          <div class="fact">
+            <h3>The gap</h3>
+            <p>None of the three apps checked does the whole household job. Flipp browses flyers but never judges whether a price is a deal; ShopSavvy looks up one barcode at a time but never prices a whole list; Basket priced the whole list and died because its prices were crowdsourced. DealFinder's edge: the whole list, priced live from retailer data, with a per-unit verdict and a household list — no account, no personal information.</p>
+          </div>
+
+          <div class="fact">
+            <h3>Flipp — every flyer, no verdict</h3>
+            <p>Weekly flyers from 800+ retailers in one app, smart lists matched to deals, price matching, digital coupons. Free; 4.8★ from ~401,000–412,629 ratings; 10M+ installs (26M per AppBrain).</p>
+            <ul>
+              <li>No price-history diary — no way to tell whether today's price is actually a deal.</li>
+              <li>No price-drop alerts; flyers expire weekly, so saved items revert to full price.</li>
+              <li>Smaller, ethnic, and specialty stores may not participate; price matching depends on the retailer's own policy, not the app.</li>
+            </ul>
+            <p class="src">Sources: mobexer.com · usdollarpantry.com · mylinovar.com · appbrain.com</p>
+          </div>
+
+          <div class="fact">
+            <h3>Basket — priced the whole list, and it's gone</h3>
+            <p>Built a list and showed totals by store — one 15-item test: $62 at Walmart, $71 at Kroger, $58 at Aldi — across 100+ chains, with prices usually within a dollar or two of checkout. It is no longer on the US App Store (checked Oct 30, 2026).</p>
+            <p>Its prices were crowdsourced from shoppers — only as fresh as the last shopper who reported — and coverage thinned the moment people stopped reporting. <b>The lesson DealFinder is built on: never crowdsourced prices; prices come from retailer / flyer data checked at search time.</b></p>
+            <p class="src">Sources: groceriestracker.com · groceryroutes.com</p>
+          </div>
+
+          <div class="fact">
+            <h3>ShopSavvy — one barcode at a time</h3>
+            <p>Barcode scan + multi-retailer price comparison. Free with in-app purchases; 4.0–4.2★ from ~110,000–114,000 ratings; 10–17M installs. Fast in-store scan, price history, price-drop alerts, price-match guidance at checkout.</p>
+            <ul>
+              <li>No quality or value score — it gives the cheapest price, not whether the item is worth buying.</li>
+              <li>Weak on loose produce and anything without a barcode; no scan history; results skew online rather than local shelf prices.</li>
+              <li>Recent user reviews report black screens, ad overload, and scans returning nothing.</li>
+            </ul>
+            <p class="src">Sources: mobexer.com · withguava.io · appbrain.com · play.google.com</p>
+          </div>
+
+          <div class="fact">
+            <h3>Words, in plain language</h3>
+            <ul>
+              <li><b>UPC</b> — the barcode number on a package.</li>
+              <li><b>Unit price</b> — price per ounce / per pound, so different sizes can be compared fairly.</li>
+              <li><b>Price match</b> — a store selling it at a competitor's lower price.</li>
+              <li><b>Loyalty price</b> — the lower price for members of the store's free card.</li>
+              <li><b>Flyer</b> (circular) — the store's weekly deals paper.</li>
+              <li><b>Rebate / cashback</b> — money back after you buy, instead of a lower price at the register.</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- ======= MORE ======= -->
+        <section class="view" id="view-more" aria-label="More">
+          <div class="sec-head" style="margin-top:6px"><h2>More</h2></div>
+          <div class="index-group">
+            <h3>Occasionally</h3>
+            <button class="index-row" data-go="stores">Stores near me <span class="d">ShopRite · Aldi · Walmart…</span><span class="arr">›</span></button>
+            <button class="index-row" data-go="saved">Saved &amp; history <span class="d">Past searches &amp; prices</span><span class="arr">›</span></button>
+          </div>
+          <div class="index-group">
+            <h3>About</h3>
+            <button class="index-row" data-go="why">Why DealFinder <span class="d">Flipp · Basket · ShopSavvy</span><span class="arr">›</span></button>
+          </div>
+          <div class="fact">
+            <h3>How prices work here</h3>
+            <p>Prices come from retailer and flyer data, <b>checked at search time</b> — never crowdsourced from other shoppers. Every price shows its store and when it was checked. No account, no sign-up, no personal information: your list lives in this browser only.</p>
+            <p class="src">Design rules from the DealFinder Phase 0 Receipt, 2026-11-12.</p>
+          </div>
+          <div class="fact">
+            <h3>Live now — what this version does</h3>
+            <ul>
+              <li><b>Real flyer prices</b> for your ZIP, checked weekly when each store's new circular drops. Every price shows its store and when the deal ends.</li>
+              <li><b>30-day history:</b> one price point per item per check, kept 30 days; alert = today's best price below the 30-day average. Only one check exists so far, so history is still building.</li>
+              <li><b>ShopRite isn't here yet</b> — it has no flyer on the current feed for this ZIP. A second source for it is planned.</li>
+              <li><b>Alerts stay in-app</b> in this version — nothing is sent anywhere. Your list and tracked items live in this browser only.</li>
+            </ul>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ======= Phone tab bar ======= -->
+    <nav class="tabbar" aria-label="DealFinder sections">
+      <button class="tab" data-go="search" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
+        Search
+      </button>
+      <button class="tab" data-go="deals">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M17 6.5c-.8-1-2.6-1.5-5-1.5-2.9 0-5 1.3-5 3.4 0 4.9 10 2.4 10 7.2 0 2.1-2.1 3.4-5 3.4-2.4 0-4.2-.6-5-1.6"/></svg>
+        Deals
+      </button>
+      <button class="tab tab-scan" data-go="scan" aria-label="Scan a barcode">
+        <span class="disc">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 8v8M11 8v8M14.5 8v8M18 8v8"/></svg>
+        </span>
+        <span class="lbl">Scan</span>
+      </button>
+      <button class="tab" data-go="list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
+        List
+        <span class="badge" id="tabListBadge" hidden>0</span>
+      </button>
+      <button class="tab" data-go="more">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 12h.01M12 12h.01M20 12h.01"/></svg>
+        More
+      </button>
+    </nav>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
