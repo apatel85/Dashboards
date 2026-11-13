@@ -21,6 +21,80 @@ type SortKey = 'date' | 'ticker' | 'move' | 'conviction' | 'health';
 
 const CAP_ORDER = ['Mega', 'Large', 'Mid', 'Small', 'Micro'] as const;
 
+/** Client-side "today" in the user's market timezone (ET), YYYY-MM-DD. */
+function etToday(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+}
+
+function addDaysStr(iso: string, n: number): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+function pctTone(v: number | null | undefined): string {
+  return v == null ? 'muted' : v >= 0 ? 'up' : 'down';
+}
+
+/**
+ * The four post-earnings figures, compact: "1D +2.3% · 7D +5.1% · 30D — ·
+ * to date +8.4%". Null = the window hasn't elapsed yet (or no baseline).
+ */
+function PerfSummary({ e }: { e: EarningsEntry }) {
+  const parts: [string, number | null | undefined][] = [
+    ['1D', e.perf_1d_pct],
+    ['7D', e.perf_7d_pct],
+    ['30D', e.perf_30d_pct],
+    ['to date', e.perf_to_date_pct],
+  ];
+  return (
+    <span className="mb-perf-summary">
+      {parts.map(([label, v], i) => (
+        <span key={label}>
+          {i > 0 ? ' · ' : ''}
+          <span className="muted small">{label} </span>
+          <span className={`num small ${pctTone(v)}`}>{fmtPct(v, 1)}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** Full "After the report" block for the expanded detail of a reported row. */
+function AfterReportBlock({ e }: { e: EarningsEntry }) {
+  const row = (label: string, pct: number | null | undefined, date: string | null | undefined, note?: string) => (
+    <span>
+      {label}{' '}
+      <b className={`num ${pctTone(pct)}`}>{fmtPct(pct, 1)}</b>
+      <span className="muted small">
+        {' '}
+        {date ? fmtDayLabel(date) : '—'}
+        {note ? ` · ${note}` : ''}
+      </span>
+    </span>
+  );
+  return (
+    <div className="mb-after-report">
+      <span className="detail-label">After the report — reported {fmtDayLabel(e.reporting_date)}</span>
+      <div className="detail-facts">
+        <span>
+          Baseline (close {e.baseline_date ? fmtDayLabel(e.baseline_date) : '—'}){' '}
+          <b className="num">{fmtMoney(e.baseline_price)}</b>
+        </span>
+        {row('1 day after', e.perf_1d_pct, e.perf_1d_date)}
+        {row('7 days after', e.perf_7d_pct, e.perf_7d_date)}
+        {row('30 days after', e.perf_30d_pct, e.perf_30d_date)}
+        {row('To date', e.perf_to_date_pct, e.perf_as_of)}
+      </div>
+      <p className="muted small">
+        EPS actual {fmtNum(e.eps_actual)} vs est {fmtNum(e.eps_est)}
+        {e.surprise_pct != null ? ` (${fmtPct(e.surprise_pct, 1)} surprise)` : ''}. “—” means
+        that window hasn&rsquo;t elapsed yet.
+      </p>
+    </div>
+  );
+}
+
 function StreakCell({ streak }: { streak: EarningsQuarter[] }) {
   if (!streak || streak.length === 0) return <span className="muted">—</span>;
   return (
@@ -66,8 +140,18 @@ function EarningsRow({ e, maxMove }: { e: EarningsEntry; maxMove: number }) {
           <span className="subname">{e.name}</span>
         </td>
         <td data-th="Reports">
-          <Badge tone={timeTone}>{e.report_time}</Badge>
-          <span className="subname">{fmtDayLabel(e.reporting_date)}</span>
+          {e.status === 'reported' ? (
+            <>
+              <Badge tone="dim">Reported</Badge>
+              <span className="subname">{fmtDayLabel(e.reporting_date)}</span>
+              <PerfSummary e={e} />
+            </>
+          ) : (
+            <>
+              <Badge tone={timeTone}>{e.report_time}</Badge>
+              <span className="subname">{fmtDayLabel(e.reporting_date)}</span>
+            </>
+          )}
         </td>
         <td data-th="Price" className="num r">
           {lp.live ? <span className="livedot" title="Live ~15-min delayed quote" /> : null}
@@ -141,6 +225,7 @@ function EarningsRow({ e, maxMove }: { e: EarningsEntry; maxMove: number }) {
       {open && (
         <tr className="detail-row">
           <td colSpan={7}>
+            {e.status === 'reported' && <AfterReportBlock e={e} />}
             <div className="detail-grid">
               <div>
                 <span className="detail-label">Last 4 quarters (EPS result · surprise)</span>
@@ -197,19 +282,16 @@ function EarningsRow({ e, maxMove }: { e: EarningsEntry; maxMove: number }) {
 
 export default function EarningsTab() {
   const { data, loading, error } = useJsonData<EarningsEntry[]>('earnings.json');
-  const [cardOpen, setCardOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [dateFilter, setDateFilter] = useState('all');
   const [capFilter, setCapFilter] = useState('all');
   const [sort, setSort] = useState<SortKey>('date');
+  // Date buckets: Today + Tomorrow start expanded, everything else collapsed.
+  const today = etToday();
+  const tomorrow = addDaysStr(today, 1);
+  const [openBuckets, setOpenBuckets] = useState<Set<string>>(() => new Set([today, tomorrow]));
 
   useEffect(() => {
     if (data) setQuoteUniverse(data.map((e) => e.ticker));
-  }, [data]);
-
-  const dates = useMemo(() => {
-    if (!data) return [];
-    return [...new Set(data.map((e) => e.reporting_date))].sort();
   }, [data]);
 
   const caps = useMemo(() => {
@@ -222,7 +304,6 @@ export default function EarningsTab() {
     if (!data) return [];
     const q = query.trim().toLowerCase();
     const rows = data.filter((e) => {
-      if (dateFilter !== 'all' && e.reporting_date !== dateFilter) return false;
       if (capFilter !== 'all' && e.cap_tier !== capFilter) return false;
       if (q) {
         const hay = `${e.ticker} ${e.name} ${e.sector}`.toLowerCase();
@@ -250,7 +331,44 @@ export default function EarningsTab() {
       }
     });
     return rows;
-  }, [data, query, dateFilter, capFilter, sort]);
+  }, [data, query, capFilter, sort]);
+
+  /**
+   * Buckets by reporting date: upcoming dates ascending first (today,
+   * tomorrow, …), then reported dates descending (most recent first).
+   * A bucket's kind follows its rows — a date can mix reported + upcoming
+   * only on "today" itself.
+   */
+  const buckets = useMemo(() => {
+    const byDate = new Map<string, EarningsEntry[]>();
+    for (const e of filtered) {
+      const arr = byDate.get(e.reporting_date) ?? [];
+      arr.push(e);
+      byDate.set(e.reporting_date, arr);
+    }
+    const upcoming = [...byDate.keys()].filter((d) => d >= today).sort();
+    const reported = [...byDate.keys()].filter((d) => d < today).sort().reverse();
+    return [...upcoming, ...reported].map((date) => ({
+      date,
+      rows: byDate.get(date)!,
+      isReported: (byDate.get(date) ?? []).every((e) => e.status === 'reported'),
+    }));
+  }, [filtered, today]);
+
+  const toggleBucket = (date: string) =>
+    setOpenBuckets((cur) => {
+      const next = new Set(cur);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
+      return next;
+    });
+
+  const bucketTitle = (b: { date: string; isReported: boolean }) => {
+    if (b.date === today) return `Today · ${fmtDayLabel(b.date)}`;
+    if (b.date === tomorrow) return `Tomorrow · ${fmtDayLabel(b.date)}`;
+    if (b.isReported) return `Reported · ${fmtDayLabel(b.date)}`;
+    return fmtDayLabel(b.date);
+  };
 
   const maxMove = useMemo(
     () => filtered.reduce((m, e) => Math.max(m, e.implied_move_pct ?? 0), 0),
@@ -278,127 +396,119 @@ export default function EarningsTab() {
           Companies reporting earnings soon — prices often jump or drop hard around the
           announcement. <b>Conviction</b> = how strong the setup looks; <b>Health</b> =
           how solid the company&rsquo;s finances are. Tap a row for the full detail.
+          Reported dates show what the stock actually did after the announcement
+          (1 day, 7 days, 30 days, and to date). Tap a date to open its reports.
         </p>
       </header>
 
-      <div className="mb-card">
-        <div
-          className="mb-card-head"
-          onClick={() => setCardOpen((o) => !o)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(ev) => {
-            if (ev.key === 'Enter' || ev.key === ' ') {
-              ev.preventDefault();
-              setCardOpen((o) => !o);
-            }
-          }}
-          aria-expanded={cardOpen}
-        >
-          <span className="mb-card-num">01</span>
-          <span className="mb-card-title">All {data.length} reports</span>
-          <span className="mb-card-sub">rolling window · tap a row for streak, news &amp; detail</span>
-          <span className="mb-count-badge">{filtered.length} shown</span>
-          <span className="mb-chev" aria-hidden="true">{cardOpen ? '▾' : '▸'}</span>
-        </div>
-
-        {cardOpen && (
-          <div className="mb-card-body">
-            <div className="mb-toolbar" role="search">
-              <input
-                className="mb-search"
-                type="search"
-                value={query}
-                onChange={(ev) => setQuery(ev.target.value)}
-                placeholder="Search ticker, company or sector"
-                aria-label="Search by ticker, company or sector"
-              />
-              <label className="mb-filter">
-                <span className="mb-filter-label">Report date</span>
-                <select
-                  value={dateFilter}
-                  onChange={(ev) => setDateFilter(ev.target.value)}
-                  aria-label="Filter by report date"
-                >
-                  <option value="all">All dates</option>
-                  {dates.map((d) => (
-                    <option key={d} value={d}>
-                      {fmtDayLabel(d)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="mb-filter">
-                <span className="mb-filter-label">Company size</span>
-                <select
-                  value={capFilter}
-                  onChange={(ev) => setCapFilter(ev.target.value)}
-                  aria-label="Filter by company size"
-                >
-                  <option value="all">All sizes</option>
-                  {caps.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="mb-filter">
-                <span className="mb-filter-label">Sort by</span>
-                <select
-                  value={sort}
-                  onChange={(ev) => setSort(ev.target.value as SortKey)}
-                  aria-label="Sort rows"
-                >
-                  <option value="date">Report date</option>
-                  <option value="ticker">Ticker A–Z</option>
-                  <option value="move">Implied move</option>
-                  <option value="conviction">Conviction</option>
-                  <option value="health">Health</option>
-                </select>
-              </label>
-            </div>
-            <p className="mb-showing">
-              Showing {filtered.length} of {data.length} rows
-              {query || dateFilter !== 'all' || capFilter !== 'all'
-                ? ' — filters applied'
-                : ''}
-            </p>
-            <p className="mb-legend">
-              <b>H</b> = company health · <b>P</b> = chance the stock goes up ·{' '}
-              <b>C</b> = setup strength · <b>Impl. move</b> = how much the options
-              market expects the stock to move
-            </p>
-
-            {filtered.length === 0 ? (
-              <p className="mb-empty">No companies match these filters. Clear the search or pick a different date or size.</p>
-            ) : (
-              <div className="table-scroll mb-table-scroll">
-                <table className="dtable mb-earnings-table">
-                  <thead>
-                    <tr>
-                      <th>Ticker</th>
-                      <th>Reports</th>
-                      <th className="r">Price</th>
-                      <th className="r">Impl. move</th>
-                      <th className="r hide-sm">EPS</th>
-                      <th className="r hide-sm mb-hpc-head" title="Health / chance the stock goes up / setup strength">
-                        H / P / C
-                      </th>
-                      <th className="hide-sm">Signals</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((e) => (
-                      <EarningsRow key={e.ticker} e={e} maxMove={maxMove} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+      <div className="mb-toolbar" role="search">
+        <input
+          className="mb-search"
+          type="search"
+          value={query}
+          onChange={(ev) => setQuery(ev.target.value)}
+          placeholder="Search ticker, company or sector"
+          aria-label="Search by ticker, company or sector"
+        />
+        <label className="mb-filter">
+          <span className="mb-filter-label">Company size</span>
+          <select
+            value={capFilter}
+            onChange={(ev) => setCapFilter(ev.target.value)}
+            aria-label="Filter by company size"
+          >
+            <option value="all">All sizes</option>
+            {caps.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="mb-filter">
+          <span className="mb-filter-label">Sort by</span>
+          <select
+            value={sort}
+            onChange={(ev) => setSort(ev.target.value as SortKey)}
+            aria-label="Sort rows"
+          >
+            <option value="date">Report date</option>
+            <option value="ticker">Ticker A–Z</option>
+            <option value="move">Implied move</option>
+            <option value="conviction">Conviction</option>
+            <option value="health">Health</option>
+          </select>
+        </label>
       </div>
+      <p className="mb-showing">
+        Showing {filtered.length} of {data.length} rows
+        {query || capFilter !== 'all' ? ' — filters applied' : ''}
+      </p>
+      <p className="mb-legend">
+        <b>H</b> = company health · <b>P</b> = chance the stock goes up ·{' '}
+        <b>C</b> = setup strength · <b>Impl. move</b> = how much the options
+        market expects the stock to move
+      </p>
+
+      {filtered.length === 0 ? (
+        <p className="mb-empty">No companies match these filters. Clear the search or pick a different size.</p>
+      ) : (
+        buckets.map((b, i) => {
+          const open = openBuckets.has(b.date);
+          return (
+            <div className="mb-card" key={b.date}>
+              <div
+                className="mb-card-head"
+                onClick={() => toggleBucket(b.date)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(ev) => {
+                  if (ev.key === 'Enter' || ev.key === ' ') {
+                    ev.preventDefault();
+                    toggleBucket(b.date);
+                  }
+                }}
+                aria-expanded={open}
+              >
+                <span className="mb-card-num">{String(i + 1).padStart(2, '0')}</span>
+                <span className="mb-card-title">{bucketTitle(b)}</span>
+                <span className="mb-card-sub">
+                  {b.isReported ? 'reported · tap a row for what happened after' : 'tap a row for streak, news & detail'}
+                </span>
+                <span className="mb-count-badge">{b.rows.length}</span>
+                <span className="mb-chev" aria-hidden="true">{open ? '▾' : '▸'}</span>
+              </div>
+
+              {open && (
+                <div className="mb-card-body">
+                  <div className="table-scroll mb-table-scroll">
+                    <table className="dtable mb-earnings-table">
+                      <thead>
+                        <tr>
+                          <th>Ticker</th>
+                          <th>Reports</th>
+                          <th className="r">Price</th>
+                          <th className="r">Impl. move</th>
+                          <th className="r hide-sm">EPS</th>
+                          <th className="r hide-sm mb-hpc-head" title="Health / chance the stock goes up / setup strength">
+                            H / P / C
+                          </th>
+                          <th className="hide-sm">Signals</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {b.rows.map((e) => (
+                          <EarningsRow key={e.ticker} e={e} maxMove={maxMove} />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })
+      )}
     </section>
   );
 }
