@@ -1,0 +1,13 @@
+# DealFinder — Agent Log
+
+## 2026-11-12 — P2: backend + pipeline (v0.2.0)
+
+- **Request:** Ankit: "Start P2 — backend + pipeline" (live-app plan, 2026-11-12; probe verdict: partial yes — Flipp returns real sale prices for 4 of the big 5 for ZIP 08520, ShopRite missing).
+- **Changed:**
+  - `DealFinder/supabase/001-dealfinder-schema.sql` (new) — `dealfinder` schema: `stores`, `items`, `flyers`, `prices` (the 30-day history), `tracked_items`, `alerts`; indexes incl. prices on item+store+fetched_at and flyer_item_id; RLS on all tables with SELECT open to anon/authenticated and no write policies for anon; grants + commented verification queries. Idempotent.
+  - `DealFinder/pipeline/fetch-prices.mjs` (new) — Node, built-ins only. Direct Flipp calls (`/flyers`, `/items/search`, locale=en-us, ZIP param, same headers as flipp-cli); 12-item seed staple list; junk filter + dedup + name/size normalization (US units, compound-listing guard); Supabase PostgREST upserts from env keys only; 30-day average of daily best prices; alert rule exactly per plan (below average AND ≥2 snapshots, else "building history"); fails loudly on non-200/429/empty flyers, one 429 retry with backoff.
+  - `.github/workflows/dealfinder-refresh.yml` (new) — Fridays 12:00 UTC + workflow_dispatch (ZIP + dry-run inputs); Node 20; SUPABASE_URL from public project URL, SUPABASE_SERVICE_ROLE_KEY from repo secret.
+  - `DealFinder/README.md` (new) — what P2 is, pipeline, Ankit's two manual steps, verification queries, dry-run instructions.
+- **Version:** v0.2.0 (P2). P0/P1 (Receipt, mockup, probe) were unversioned.
+- **Verification:** `node --check` clean; pure-function unit checks pass (size parse incl. compound-listing guard, junk filter, dedup, 30-day average); dry-run for 08520: 96 flyers, 455 raw rows → 336 kept price rows (97 junk dropped, 22 dupes), 296 distinct items, 53 stores; milk/eggs samples match the probe exactly; workflow YAML parses; pushed files return HTTP 200 from raw GitHub URLs.
+- **Status:** P2 code delivered. Live run blocked on Ankit's two manual steps (run the DDL in the Supabase SQL editor + expose the `dealfinder` schema; add the `SUPABASE_SERVICE_ROLE_KEY` repo secret). After both, a manual workflow_dispatch run loads the first live prices — that is P2's done state. Live app frontend is P3 (not built).
