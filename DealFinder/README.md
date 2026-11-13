@@ -62,9 +62,10 @@ until then. The live app frontend is P3; this folder is backend only.
    schemas → add `dealfinder`** — without this, PostgREST returns 406.
 2. **Add the repo secret.** GitHub repo → Settings → Secrets and variables
    → Actions → New repository secret → name `SUPABASE_SERVICE_ROLE_KEY`,
-   value = the Supabase service-role key (from Supabase Dashboard →
-   Project Settings → API). Ankit holds the key; it is never in this repo,
-   in chat, or in any file.
+   value = the Supabase secret key (`sb_secret_...`, from Supabase
+   Dashboard → Settings → API Keys; the legacy `service_role` JWT also
+   works). Ankit holds the key; it is never in this repo, in chat, or in
+   any file.
 
 ## Verify
 
