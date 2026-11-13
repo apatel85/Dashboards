@@ -38,6 +38,11 @@ dependencies:
   voiceflow_core:
     path: ../packages/core
   sherpa_onnx: ^2.0.1
+  window_manager: ^0.7.0
+  tray_manager: ^0.9.0
+  intl: ^0.20.3
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
@@ -59,11 +64,13 @@ flutter:
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
+  generate: true
   uses-material-design: true
   assets:
     - assets/lang/
     - assets/profiles/
     - assets/packs/general_business/
+    - assets/tray_icon.ico
 
   # To add assets to your application, add an assets section, like this:
   # assets:

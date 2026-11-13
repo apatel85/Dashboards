@@ -1,0 +1,57 @@
+name: voiceflow-windows
+on:
+  push:
+    paths:
+      - "VoiceFlowAI/app/windows/**"
+      - "VoiceFlowAI/app/lib/**"
+      - "VoiceFlowAI/app/pubspec.yaml"
+      - "VoiceFlowAI/app/assets/**"
+      - "VoiceFlowAI/packages/core/**"
+      - ".github/workflows/voiceflow-windows.yml"
+  workflow_dispatch:
+concurrency:
+  group: voiceflow-windows-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: pwsh
+    working-directory: VoiceFlowAI/app
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: subosito/flutter-action@v2.18.0
+        with:
+          flutter-version: "3.50.0"
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Build Windows release
+        run: flutter build windows --release 2>&1 | Select-Object -Last 30
+      - name: Launch, confirm it stays up, take a real screenshot
+        run: |
+          $exe = "build/windows/x64/runner/Release/voiceflow_app.exe"
+          if (-not (Test-Path $exe)) { throw "exe not built" }
+          $p = Start-Process $exe -PassThru
+          Start-Sleep -Seconds 10
+          $p.Refresh()
+          if ($p.HasExited) { throw "app exited early with code $($p.ExitCode)" }
+          Write-Output "app_alive_after_10s=True pid=$($p.Id) ws_mb=$([math]::Round($p.WorkingSet64/1MB))"
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.SystemInformation]::VirtualScreen
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          $g = [System.Drawing.Graphics]::FromImage($bmp)
+          $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          $bmp.Save("screenshot-home.png")
+          Stop-Process -Id $p.Id -Force
+      - name: Package portable zip
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath voiceflow-windows-portable.zip
+      - uses: actions/upload-artifact@v4.6.0
+        if: always()
+        with:
+          name: voiceflow-windows
+          path: |
+            VoiceFlowAI/app/voiceflow-windows-portable.zip
+            VoiceFlowAI/app/screenshot-home.png
+          if-no-files-found: warn
