@@ -214,8 +214,14 @@ CREATE POLICY "DealFinder public read" ON dealfinder.alerts
 GRANT USAGE ON SCHEMA dealfinder TO anon, authenticated, service_role;
 GRANT SELECT ON ALL TABLES IN SCHEMA dealfinder TO anon, authenticated, service_role;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA dealfinder TO anon, authenticated, service_role;
+-- Pipeline writes (service_role only): the weekly pipeline upserts rows.
+-- SELECT alone is not enough — without these, PostgREST returns 42501
+-- "permission denied" on the first upsert.
+GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA dealfinder TO service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA dealfinder
   GRANT SELECT ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA dealfinder
+  GRANT INSERT, UPDATE, DELETE ON TABLES TO service_role;
 
 -- ============================================================================
 -- VERIFICATION QUERIES (run after applying; keep them commented in the file).
