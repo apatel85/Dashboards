@@ -35,10 +35,12 @@
  * Environment (required unless --dry-run):
  *   SUPABASE_URL               Public project URL, e.g.
  *                              https://iknfvddnevudpjtyxkbh.supabase.co
- *   SUPABASE_SERVICE_ROLE_KEY  Service-role key. NEVER hardcode it, never
- *                              log it, never put it in the repo. In GitHub
- *                              Actions it comes from the repo secret
- *                              SUPABASE_SERVICE_ROLE_KEY.
+ *   SUPABASE_SERVICE_ROLE_KEY  Service-role key: the project's secret key
+ *                              (sb_secret_...) from Settings → API Keys, or
+ *                              the legacy service_role JWT (eyJ...). NEVER
+ *                              hardcode it, never log it, never put it in
+ *                              the repo. In GitHub Actions it comes from
+ *                              the repo secret SUPABASE_SERVICE_ROLE_KEY.
  *
  * Exit codes: 0 ok; 1 upstream/data failure (fail loudly); 2 bad usage or
  * missing env. No other exit path writes partial data silently.
@@ -63,6 +65,11 @@ const PACE_BETWEEN_CALLS_MS = 800;
 const MAX_PER_QUERY = 25;
 const MIN_SNAPSHOTS_FOR_AVERAGE = 2;
 const HISTORY_DAYS = 30;
+
+/** PostgREST schema for all DealFinder tables. Custom schema — the
+ *  pipeline must send Accept/Content-Profile or PostgREST looks in
+ *  public and the tables are not found. */
+const SB_SCHEMA = "dealfinder";
 
 /**
  * Seed staple list (documented): the 12 household staples the pipeline
@@ -410,11 +417,19 @@ function sbClient() {
     process.exit(2);
   }
   const base = `${url.replace(/\/$/, "")}/rest/v1`;
+  // New-format secret keys (sb_secret_...) are not JWTs: sending one as
+  // `Authorization: Bearer` fails JWT verification, so Bearer goes out
+  // only for legacy JWT keys (eyJ...). The apikey header carries auth
+  // for both formats. Accept/Content-Profile select the custom schema.
   const headers = {
     apikey: key,
-    Authorization: `Bearer ${key}`,
     "Content-Type": "application/json",
+    "Accept-Profile": SB_SCHEMA,
+    "Content-Profile": SB_SCHEMA,
   };
+  if (key.startsWith("eyJ")) {
+    headers.Authorization = `Bearer ${key}`;
+  }
   async function get(table, params) {
     const qs = new URLSearchParams(params);
     const res = await fetch(`${base}/${table}?${qs}`, { headers });
