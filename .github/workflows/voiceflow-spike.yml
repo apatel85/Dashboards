@@ -71,6 +71,10 @@ jobs:
         working-directory: VoiceFlowAI/app
         run: |
           flutter pub get
+          # CI-only (not committed): make the APK debuggable so the test can use `run-as`
+          # to place the model in the app's private dir. Still an AOT release build.
+          sed -i 's|android:label="voiceflow_app"|android:label="voiceflow_app" android:debuggable="true"|' android/app/src/main/AndroidManifest.xml
+          grep -c 'android:debuggable="true"' android/app/src/main/AndroidManifest.xml
           flutter build apk --release --target-platform android-x64 2>&1 | tail -n 40
       - name: Fetch STT model for the emulator test (pinned SHA-256)
         shell: bash
