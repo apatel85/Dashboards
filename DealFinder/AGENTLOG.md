@@ -1,5 +1,13 @@
 # DealFinder — Agent Log
 
+## 2026-11-13 — P2 fix: grant pipeline writes to service_role (v0.2.3)
+
+- **Request:** Ankit pasted the failed run log: `Supabase upsert stores failed: 403 42501 permission denied for table stores` (run 43487146422).
+- **Cause:** the DDL granted only SELECT to `service_role`. RLS bypass does not help without the underlying table grant — PostgREST returns 42501 on the first upsert. (Same lesson as CricMax: new schemas need explicit grants.)
+- **Changed:** `DealFinder/supabase/001-dealfinder-schema.sql` — added `GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA dealfinder TO service_role` + matching `ALTER DEFAULT PRIVILEGES` for future tables. The Flipp side of the failed run was healthy (90 flyers, 264 kept rows across 12 searches; bananas 0 kept — no flyer price this week).
+- **Ankit's step:** run just the GRANT block in the SQL Editor, then re-run the workflow. File is idempotent — a full re-run also works.
+- **Verification:** fix pushed; live file to be re-verified by raw-URL read; workflow re-run + row counts still pending.
+
 ## 2026-11-13 — P2 fix: Supabase auth for new secret keys + profile headers (v0.2.2)
 
 - **Request:** Ankit: "not finding step 3.1" (the service-role key) + pipeline auth review while answering.
