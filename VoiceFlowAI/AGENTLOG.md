@@ -7,6 +7,13 @@
 - iOS out of scope. English first. Flutter pinned 3.50.0 (Dart 3.14).
 - Golden fixtures live in `packages/core/test_fixtures/formatting/<profile>/cases.json`.
 
+## 2026-11-13 — S1 PASS on Windows runner
+- **S1 Windows (windows-latest) — AUTOMATED-PASS** — https://github.com/apatel85/Dashboards/actions/runs/43468417249 (artifact `s1-windows-log`). Whisper base.en int8: load 506 ms; 6.6 s clip → 430 ms; 16.7 s clip → 1097 ms (≈0.07× realtime, well inside ≤3 s per 10 s). Text identical to Linux run. Reported RSS 38 MB is NOT trusted (Windows working-set under-reports model memory); real idle-memory number still NOT-VERIFIED.
+- **Finding (matters for M1b):** `dart run` crashed first (run 43467300802) because Windows' System32 `onnxruntime.dll` v1.17.1 shadows sherpa's newer one ("API version 28 not available"). Fix: the app MUST ship `onnxruntime.dll` + `sherpa-onnx-c-api.dll` beside the exe (exe dir is searched first); the Flutter Windows build does this. Don't test the STT engine via `dart run` on Windows.
+- **S1 Android emulator:** NOT-VERIFIED. **S2, S3:** not started.
+- Note: `etl_refresh.yml` (another app's workflow) fails on every push to this branch within 1 s; unrelated to VoiceFlowAI, left untouched (scope fence).
+- **Next action:** S2 (SendInput paste into a test window on the Windows runner, clipboard restored, 5 runs) in `app/spike/s2` + workflow job; then S3 (Kotlin IME + headless FlutterEngine on emulator).
+
 ## 2026-11-13 — S1 (Linux) + backup providers
 - **Backup providers:** `voiceflow-polish` v2 chains Gemini → Groq (`GROQ_API_KEY`) → OpenRouter (`OPENROUTER_API_KEY` + `OPENROUTER_MODEL`); providers without a secret are skipped; one 2.8 s budget. Only `GEMINI_API_KEY` is known to exist; I did not look for or reuse other keys. Add Groq/OpenRouter as Supabase function secrets to enable. Deploy: ACTIVE v2. Live call NOT-VERIFIED.
 - **S1 on Linux CPU — AUTOMATED-PASS (local command, `app/spike/s1`):** sherpa_onnx 2.0.1 + Whisper base.en int8. 6.6 s clip → 1065 ms decode; 16.7 s clip → 2528 ms; load 855 ms; RSS 356 MB with model loaded. Text matched references (only spelling variants, ~4% WER on clip 1). **Budget notes:** decode ≈ 0.15× realtime (OK vs ≤3 s per 10 s); memory with model loaded exceeds the 150 MB idle target → M4 idle unload is mandatory. Windows runner + Android emulator: NOT-VERIFIED (run `voiceflow-spike` workflow). Hotword biasing: NOT-VERIFIED.
