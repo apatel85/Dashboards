@@ -71,10 +71,10 @@ jobs:
         working-directory: VoiceFlowAI/app
         run: |
           flutter pub get
-          # CI-only (not committed): make the release build type debuggable so the test can
-          # use `run-as` to place the model in the app's private dir. Still an AOT build.
-          sed -i 's|signingConfig = signingConfigs.getByName("debug")|signingConfig = signingConfigs.getByName("debug")\n            isDebuggable = true|' android/app/build.gradle.kts
-          grep -c 'isDebuggable = true' android/app/build.gradle.kts
+          # CI-only (not committed): let the test app read a model pushed to /sdcard/Download.
+          # The shipped app keeps the model in its private dir and declares no such permission.
+          sed -i 's|<application|<uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>\n    <application|' android/app/src/main/AndroidManifest.xml
+          grep -c MANAGE_EXTERNAL_STORAGE android/app/src/main/AndroidManifest.xml
           flutter build apk --release --target-platform android-x64 2>&1 | tail -n 40
       - name: Fetch STT model for the emulator test (pinned SHA-256)
         shell: bash

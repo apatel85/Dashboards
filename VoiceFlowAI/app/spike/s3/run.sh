@@ -36,12 +36,13 @@ S3_OK=0
 echo "$UI" | grep -q 'text="We shipped 12 features."' && { echo "S3_PASS"; S3_OK=1; } || echo "S3_FAIL text"
 
 echo "==== S1-Android: Whisper base.en int8 inside the IME engine"
-MD=/data/data/$PKG/files/model
-adb shell "run-as $PKG sh -c 'mkdir -p files/model'" || echo "run-as mkdir failed"
+MD=/sdcard/Download/vf-model
+adb shell appops set $PKG MANAGE_EXTERNAL_STORAGE allow
+adb shell mkdir -p $MD
 for f in base.en-encoder.int8.onnx base.en-decoder.int8.onnx base.en-tokens.txt test_wavs/0.wav; do
-  adb shell "run-as $PKG sh -c 'cat > files/model/$(basename $f)'" < "sherpa-onnx-whisper-base.en/$f" || echo "push failed $f"
+  adb push "sherpa-onnx-whisper-base.en/$f" $MD/ >/dev/null || echo "push failed $f"
 done
-adb shell "run-as $PKG ls -l files/model" | head -8
+adb shell ls -l $MD | head -8
 adb logcat -c
 adb shell "am broadcast -a dev.voiceflow.S1A_TRANSCRIBE -p $PKG --es dir $MD --es wav $MD/0.wav" >/dev/null
 for i in $(seq 1 90); do
