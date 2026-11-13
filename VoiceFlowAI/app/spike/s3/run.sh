@@ -36,12 +36,13 @@ S3_OK=0
 echo "$UI" | grep -q 'text="We shipped 12 features."' && { echo "S3_PASS"; S3_OK=1; } || echo "S3_FAIL text"
 
 echo "==== S1-Android: Whisper base.en int8 inside the IME engine"
-MD=/sdcard/Android/data/$PKG/files/model
-adb shell mkdir -p $MD
+MD=/sdcard/Android/data/$PKG/files
+adb shell ls -d $MD || echo "files dir missing"
 for f in base.en-encoder.int8.onnx base.en-decoder.int8.onnx base.en-tokens.txt; do
   adb push "sherpa-onnx-whisper-base.en/$f" $MD/ >/dev/null || echo "push failed $f"
 done
 adb push sherpa-onnx-whisper-base.en/test_wavs/0.wav $MD/ >/dev/null
+adb shell ls -l $MD | head -8
 adb logcat -c
 adb shell "am broadcast -a dev.voiceflow.S1A_TRANSCRIBE -p $PKG --es dir $MD --es wav $MD/0.wav" >/dev/null
 for i in $(seq 1 90); do

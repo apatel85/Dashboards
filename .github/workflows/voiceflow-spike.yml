@@ -74,6 +74,7 @@ jobs:
           flutter build apk --release --target-platform android-x64 2>&1 | tail -n 40
       - name: Fetch STT model for the emulator test (pinned SHA-256)
         shell: bash
+        working-directory: ${{ github.workspace }}
         run: |
           curl -sL https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-base.en.tar.bz2 -o w.tar.bz2
           echo "475bc7052ce299c007f6d5d5407ba8601f819a2867f6eecee510ed17df581542  w.tar.bz2" | sha256sum -c -

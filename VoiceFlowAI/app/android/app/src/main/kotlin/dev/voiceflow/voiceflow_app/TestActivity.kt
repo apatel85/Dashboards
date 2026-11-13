@@ -10,6 +10,7 @@ import android.widget.EditText
 class TestActivity : Activity() {
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
+        getExternalFilesDir(null) // creates /sdcard/Android/data/<pkg>/files so adb can push the model there
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
         setContentView(EditText(this).apply {
             contentDescription = "s3_target"
