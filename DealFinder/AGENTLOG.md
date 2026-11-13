@@ -1,5 +1,12 @@
 # DealFinder — Agent Log
 
+## 2026-11-13 — P3: live app v1.0.0
+
+- **Request:** Ankit: "Yes, build the live app" (P3 go-ahead after P2 went green with 254 live prices).
+- **Changed:** new live frontend in `DealFinder/` — `index.html` (mockup design system ported: bright supermarket tokens, Archivo/Libre Franklin/IBM Plex Mono, 348px rail ≥920px, bottom tab bar ≤919px, compact mobile), `app.js` (live data layer), `config.js` (public anon key only — never the service-role key). Reads real prices via PostgREST (anon key + `Accept-Profile: dealfinder`); search by name, UPC lookup + camera scan (BarcodeDetector), Deals from real was-prices, My list with basket totals + split-the-list saving, Track with 30-day-average alerts (history building — one snapshot so far, no alert can fire yet), ZIP-driven with localStorage. Price rules: every price shows store + flyer end date; limit-style conditions never crowned best; ShopRite absent (no flyer data) and never faked.
+- **Verification:** local render gate PASS at 390/768/1280px (Playwright): zero console errors, no horizontal overflow, 237 items / 18 stores / checked Nov 13; milk search 26 real rows ($0.79 ALDI first); Deals 9 real was-price deals; expanded card shows compare table + "building history" (no invented history). Two fixes from the render check: section-head wrap at phone width, date-only history date off-by-one (UTC-midnight vs ET). Live URL check: pending (see follow-up below).
+- **Tracker:** App Repo Tracker entry added (Live Apps, top).
+
 ## 2026-11-13 — P2 fix: dedup upsert batches by conflict key (v0.2.4)
 
 - **Request:** Ankit pasted the re-run log: `Supabase upsert prices failed: 500 21000 ON CONFLICT DO UPDATE command cannot affect row a second time` (run after the grants fix).
