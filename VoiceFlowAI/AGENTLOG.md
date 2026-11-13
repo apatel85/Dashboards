@@ -7,6 +7,12 @@
 - iOS out of scope. English first. Flutter pinned 3.50.0 (Dart 3.14).
 - Golden fixtures live in `packages/core/test_fixtures/formatting/<profile>/cases.json`.
 
+## 2026-11-13 — S1 (Linux) + backup providers
+- **Backup providers:** `voiceflow-polish` v2 chains Gemini → Groq (`GROQ_API_KEY`) → OpenRouter (`OPENROUTER_API_KEY` + `OPENROUTER_MODEL`); providers without a secret are skipped; one 2.8 s budget. Only `GEMINI_API_KEY` is known to exist; I did not look for or reuse other keys. Add Groq/OpenRouter as Supabase function secrets to enable. Deploy: ACTIVE v2. Live call NOT-VERIFIED.
+- **S1 on Linux CPU — AUTOMATED-PASS (local command, `app/spike/s1`):** sherpa_onnx 2.0.1 + Whisper base.en int8. 6.6 s clip → 1065 ms decode; 16.7 s clip → 2528 ms; load 855 ms; RSS 356 MB with model loaded. Text matched references (only spelling variants, ~4% WER on clip 1). **Budget notes:** decode ≈ 0.15× realtime (OK vs ≤3 s per 10 s); memory with model loaded exceeds the 150 MB idle target → M4 idle unload is mandatory. Windows runner + Android emulator: NOT-VERIFIED (run `voiceflow-spike` workflow). Hotword biasing: NOT-VERIFIED.
+- **Also:** `flutter create` app/ (windows, android) with deps voiceflow_core + sherpa_onnx. No UI yet.
+- **Next action:** push, run `voiceflow-spike` on windows-latest, read the `s1-windows-log` artifact; then S2 (SendInput paste test) and S3 (Kotlin IME + headless FlutterEngine).
+
 ## 2026-11-13 — polish proxy deployed
 - **Change:** deployed Edge Function `voiceflow-polish` v1 (verify_jwt on) to Supabase project `Master_Apps_DB` (iknfvddnevudpjtyxkbh) via MCP. It reuses that project's existing `GEMINI_API_KEY` function secret (same one `gemini-proxy`/WagWise reads), so the GitHub-secret sync workflow is NOT needed unless the secret is missing. Default model changed to `gemini-3.8-flash` (the model WagWise's proxy already uses; override with `GEMINI_MODEL` secret).
 - **Verified:** deploy returned ACTIVE. Live call: NOT-VERIFIED — authoring sandbox blocks supabase.co egress. Expected: 503 `not configured` if the secret is absent, 200 `{text}` if present.

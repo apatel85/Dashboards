@@ -1,0 +1,31 @@
+# Spike S1/S2 runner (manual). Throwaway evidence for AGENTLOG.
+name: voiceflow-spike
+on:
+  workflow_dispatch:
+defaults:
+  run:
+    shell: bash
+    working-directory: VoiceFlowAI/app/spike/s1
+jobs:
+  s1-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: subosito/flutter-action@v2.18.0
+        with:
+          flutter-version: "3.50.0"
+          channel: stable
+      - name: Fetch model (pinned SHA-256)
+        run: |
+          curl -sL https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-base.en.tar.bz2 -o w.tar.bz2
+          echo "475bc7052ce299c007f6d5d5407ba8601f819a2867f6eecee510ed17df581542  w.tar.bz2" | sha256sum -c -
+          tar xjf w.tar.bz2
+      - run: dart pub get
+      - name: S1 transcribe + timing
+        run: |
+          M=sherpa-onnx-whisper-base.en
+          dart run s1.dart $M base.en-encoder.int8.onnx base.en-decoder.int8.onnx base.en-tokens.txt $M/test_wavs/0.wav $M/test_wavs/1.wav | tee s1-windows.log
+      - uses: actions/upload-artifact@v4.6.0
+        with:
+          name: s1-windows-log
+          path: VoiceFlowAI/app/spike/s1/s1-windows.log
