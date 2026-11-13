@@ -190,6 +190,26 @@ export function dedupRows(rows) {
   return { kept, dupes };
 }
 
+/**
+ * Drop rows that would collide on an upsert conflict target within the
+ * same batch. Postgres rejects the whole command (21000) when two proposed
+ * rows share the conflict key. Per-query dedup is not enough: the seed
+ * searches overlap — the same flyer item is found by both "juice" and
+ * "orange juice" — so the same price row can appear twice in one batch.
+ * Keeps the first occurrence.
+ */
+export function dedupeByKey(rows, keyFn) {
+  const seen = new Set();
+  const kept = [];
+  for (const r of rows) {
+    const k = keyFn(r);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    kept.push(r);
+  }
+  return kept;
+}
+
 // Size patterns, US-first (probe: dairy names carry no size at all, so most
 // rows will still return null — that is expected, not a bug). Normalizes to
 // kg, L, or per-unit counts. Multipack "12 x 355mL" multiplies out.
@@ -605,11 +625,11 @@ async function runZip(zip, sb, dryRun) {
       logInfo(`[dry-run] sample: ${n.name} — $${n.price} at ${n.merchant} (valid to ${n.validTo ?? "n/a"}, unit ${n.unitPrice ?? "n/a"})`);
     }
   } else {
-    const stores = await sb.upsert("stores", storeRows, "merchant,zip");
+    const stores = await sb.upsert("stores", dedupeByKey(storeRows, (s) => `${s.merchant}|${s.zip}`), "merchant,zip");
     storesUpserted = stores.length;
     for (const s of stores) storeIdByMerchant.set(`${s.merchant}|${zip}`, s.id);
 
-    const flyersUpserted = await sb.upsert("flyers", flyerRows, "flipp_flyer_id,zip");
+    const flyersUpserted = await sb.upsert("flyers", dedupeByKey(flyerRows, (f) => `${f.flipp_flyer_id}|${f.zip}`), "flipp_flyer_id,zip");
     logInfo(`flyers upserted: ${flyersUpserted.length}`);
 
     const itemRows = [];
@@ -630,7 +650,7 @@ async function runZip(zip, sb, dryRun) {
         updated_at: nowIso,
       });
     }
-    const items = await sb.upsert("items", itemRows, "norm_key");
+    const items = await sb.upsert("items", dedupeByKey(itemRows, (i) => i.norm_key), "norm_key");
     itemsUpserted = items.length;
     for (const it of items) itemIdByNormKey.set(it.norm_key, it.id);
 
@@ -657,9 +677,17 @@ async function runZip(zip, sb, dryRun) {
         source: "flipp",
       });
     }
+    const dedupedPriceRows = dedupeByKey(
+      priceRows,
+      (p) => `${p.item_id}|${p.store_id}|${p.flyer_item_id}|${p.valid_from}|${p.valid_to}`,
+    );
+    if (dedupedPriceRows.length !== priceRows.length) {
+      logInfo(`prices dedup: dropped ${priceRows.length - dedupedPriceRows.length} duplicate rows (same item+store+flyer+validity from overlapping searches)`);
+    }
+
     const prices = await sb.upsert(
       "prices",
-      priceRows,
+      dedupedPriceRows,
       "item_id,store_id,flyer_item_id,valid_from,valid_to",
     );
     pricesUpserted = prices.length;
