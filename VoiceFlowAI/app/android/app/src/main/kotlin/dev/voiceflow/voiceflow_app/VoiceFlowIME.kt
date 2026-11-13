@@ -28,6 +28,7 @@ class VoiceFlowIME : InputMethodService() {
     override fun onCreate() {
         super.onCreate()
         ImeEngine.get(this) // cold start begins here
+        warmup()
         val f = IntentFilter("dev.voiceflow.S3_FORMAT")
         if (Build.VERSION.SDK_INT >= 33) {
             registerReceiver(seam, f, Context.RECEIVER_EXPORTED)
@@ -42,7 +43,19 @@ class VoiceFlowIME : InputMethodService() {
             setOnClickListener { format("um this is a test", 0) }
         }
 
+    /** Pings Dart until it answers; logs the true cold start (engine create -> Dart ready). */
+    private fun warmup() {
+        ImeEngine.get(this).invokeMethod("ping", null, object : MethodChannel.Result {
+            override fun success(r: Any?) {
+                Log.i("S3", "dart_ready_ms=${SystemClock.elapsedRealtime() - ImeEngine.startedAtMs}")
+            }
+            override fun error(code: String, msg: String?, d: Any?) { Log.e("S3", "ping_error $code") }
+            override fun notImplemented() { main.postDelayed({ warmup() }, 25) }
+        })
+    }
+
     private fun format(text: String, attempt: Int) {
+        val callStart = SystemClock.elapsedRealtime()
         val ch = ImeEngine.get(this)
         ch.invokeMethod("format", mapOf("text" to text, "profile" to "business"),
             object : MethodChannel.Result {
@@ -50,10 +63,13 @@ class VoiceFlowIME : InputMethodService() {
                     val out = r as? String ?: ""
                     val ic = currentInputConnection
                     if (ic == null) { Log.e("S3", "no_input_connection"); return }
+                    Log.i("S3", "call_ms=${SystemClock.elapsedRealtime() - callStart}")
+                    Log.i("S3", "dart_out='$out'")
                     ic.commitText(out, 1)
-                    val readBack = ic.getTextBeforeCursor(500, 0)
-                    Log.i("S3", "first_call_ms=${SystemClock.elapsedRealtime() - ImeEngine.startedAtMs}")
-                    Log.i("S3", "committed='$readBack'")
+                    Log.i("S3", "committed='${ic.getTextBeforeCursor(500, 0)}'")
+                    main.postDelayed({
+                        Log.i("S3", "committed2='${currentInputConnection?.getTextBeforeCursor(500, 0)}'")
+                    }, 600)
                 }
                 override fun error(code: String, msg: String?, d: Any?) {
                     Log.e("S3", "error $code $msg")
