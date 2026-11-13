@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     return json({ error: "too large" }, 413);
   }
   const maxTokens = Math.min(Math.max(Number(body.maxTokens) || 512, 16), 1024);
-  const model = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.5-flash-lite";
+  const model = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash";
 
   const r = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
