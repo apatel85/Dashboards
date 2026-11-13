@@ -60,6 +60,59 @@ def _load_bugs():
 
 BUGS, BACKLOG = _load_bugs()
 
+LANEK_RESULTS = {}
+_lrp = os.path.join(HERE, "data", "lanek-results.json")
+if os.path.exists(_lrp):
+    LANEK_RESULTS = json.load(open(_lrp))
+
+VERDICT_COLOR = {"PASS": "#15803d", "FAIL": "#b91c1c", "BLOCKED": "#6b7280", "NOT_TESTED": "#b45309"}
+VERDICT_LABEL = {"PASS": "PASS", "FAIL": "FAIL", "BLOCKED": "BLOCKED", "NOT_TESTED": "NOT TESTED"}
+
+def lanek_results_html():
+    """Per-step Lane K test results: every ticket, every step, verdict + observed text + screenshots."""
+    if not LANEK_RESULTS or not LANEK_RESULTS.get("tickets"):
+        return ""
+    tickets = LANEK_RESULTS["tickets"]
+    counts = {"PASS": 0, "FAIL": 0, "BLOCKED": 0, "NOT_TESTED": 0}
+    for t in tickets:
+        for s in t.get("steps", []):
+            counts[s["verdict"]] = counts.get(s["verdict"], 0) + 1
+    n_tested = sum(1 for t in tickets if t.get("steps"))
+    total_steps = sum(counts.values())
+    out = [f"""<div class="resbox"><div class="reshead"><b>📋 Test results — every step</b><span class="ressum">{len(tickets)} tickets · {n_tested} tested · {total_steps} steps: """
+           f"""<span style="color:#15803d">{counts['PASS']} pass</span> · <span style="color:#b91c1c">{counts['FAIL']} fail</span> · """
+           f"""<span style="color:#6b7280">{counts['BLOCKED']} blocked</span> · <span style="color:#b45309">{counts['NOT_TESTED']} not tested</span></span></div>"""
+           f"""<p class="resenv">{esc(LANEK_RESULTS.get('environment', ''))} · {esc(LANEK_RESULTS.get('plan', ''))}</p>"""]
+    for t in tickets:
+        steps = t.get("steps", [])
+        if steps:
+            sc = {}
+            for s in steps:
+                sc[s["verdict"]] = sc.get(s["verdict"], 0) + 1
+            summ = " · ".join(f"{sc[v]} {VERDICT_LABEL[v].lower()}" for v in ("PASS", "FAIL", "BLOCKED", "NOT_TESTED") if sc.get(v))
+            rows = ""
+            for s in steps:
+                thumbs = ""
+                for sh in s.get("shots", []):
+                    p = os.path.join(HERE, sh)
+                    if os.path.exists(p):
+                        thumbs += f'<img src="{U(p)}" class="rsthumb" alt="screenshot" loading="lazy" onclick="openLB(this.src)">'
+                if not s.get("shots") and s["verdict"] != "NOT_TESTED":
+                    thumbs = '<div class="rsnoshot">No screenshot captured for this step.</div>'
+                rows += (f'<div class="rstep"><div class="rshead"><span class="rsn">Step {s["n"]}</span>'
+                         f'<span class="vbadge" style="background:{VERDICT_COLOR[s["verdict"]]}">{VERDICT_LABEL[s["verdict"]]}</span></div>'
+                         f'<div class="rswhat">{esc(s["what"])}</div>'
+                         f'<div class="rsobs">{esc(s["observed"])}</div>{thumbs}</div>')
+            body = rows
+        else:
+            summ = t.get("status", "").replace("_", " ")
+            body = f'<p class="rsnote">{esc(t.get("note", ""))}</p>'
+        note = f'<p class="rsnote">{esc(t["note"])}</p>' if t.get("note") and steps else ""
+        out.append(f"""<details class="rticket"><summary><span class="rtid">{esc(t['id'])}</span> {esc(t['title'])} """
+                   f"""<span class="rtarea">{esc(t.get('area', ''))}</span><span class="rtcounts">{summ}</span></summary>{note}{body}</details>""")
+    out.append("</div>")
+    return "".join(out)
+
 def _slug(s):
     return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-") or "other"
 
@@ -187,7 +240,7 @@ SEGMENTS = [
     ("mobile", "📱 Mobile testing",
      "Guardian + coach Android app findings from the emulator pass — each with repro steps and screenshots."),
     ("lanek", "🛣️ Lane K",
-     "Lane K pricing-model QA on dev (Nov 11, 2026 plan) — 21 tickets ready for product QA, 7 waiting on engineering. Findings filed here reference their QXR ticket number."),
+     "Lane K pricing-model QA on dev (Nov 11, 2026 plan) — every step of all 28 tickets with its verdict below, then the issues filed from them."),
 ]
 
 def esc(s):
@@ -423,6 +476,7 @@ for src, title, desc in SEGMENTS:
       <div class="seghead"><h2>{title}</h2>
         <span class="segcount">{n} issue{'s' if n != 1 else ''} · {n_open} open</span></div>
       <p class="segdesc">{desc}</p>
+      {lanek_results_html() if src == 'lanek' else ''}
       {''.join(ordered) if ordered else f'<p class="segempty">{empty_msg}</p>'}
     </section>"""
 
@@ -492,6 +546,24 @@ header p{color:#c3d2e5;font-size:14px}
 .segcount{font-size:13px;color:#6b7280;background:#fff;border-radius:999px;padding:3px 12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .segdesc{font-size:13px;color:#6b7280;margin-bottom:14px}
 .segempty{background:#fff;border-radius:12px;padding:22px;text-align:center;color:#9ca3af;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.resbox{background:#fff;border-radius:12px;padding:18px 18px 8px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:18px}
+.reshead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:15px}
+.ressum{font-size:13px;color:#6b7280}
+.resenv{font-size:12px;color:#6b7280;margin:6px 0 12px}
+.rticket{border-top:1px solid #e5e7eb;padding:10px 0}
+.rticket summary{cursor:pointer;font-size:14px;line-height:1.5}
+.rtid{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700}
+.rtarea{color:#6b7280;font-size:12px;margin-left:6px}
+.rtcounts{color:#6b7280;font-size:12px;margin-left:6px}
+.rsnote{font-size:13px;color:#6b7280;margin:6px 0 2px}
+.rstep{border-left:3px solid #e5e7eb;margin:10px 0 10px 4px;padding:2px 0 2px 12px}
+.rshead{display:flex;gap:8px;align-items:center}
+.rsn{font-weight:700;font-size:13px}
+.vbadge{color:#fff;font-size:11px;font-weight:700;border-radius:4px;padding:1px 7px}
+.rswhat{font-size:14px;font-weight:600;margin-top:2px}
+.rsobs{font-size:13px;color:#374151;margin-top:2px}
+.rsthumb{width:100%;max-width:520px;border-radius:8px;border:1px solid #e5e7eb;margin-top:8px;cursor:zoom-in}
+.rsnoshot{font-size:12px;color:#9ca3af;margin-top:6px}
 .pill{color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
 .count{font-size:14px;color:#6b7280}
 .card{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:12px;overflow:hidden}
