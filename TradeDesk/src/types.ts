@@ -180,6 +180,10 @@ export interface EarningsEntry {
   report_time: 'BMO' | 'AMC' | 'UNKNOWN';
   eps_est: number | null;
   eps_actual: number | null;
+  /** Surprise % vs estimate (reported rows only; from the Nasdaq calendar). */
+  surprise_pct?: number | null;
+  /** 'upcoming' = reports in the future; 'reported' = already reported. */
+  status?: 'upcoming' | 'reported';
   rev_est_b: number | null; // billions USD
   rev_actual_b: number | null; // billions USD
   current_price: number | null;
@@ -194,6 +198,20 @@ export interface EarningsEntry {
   insider_signal: Signal;
   political_signal: Signal;
   news: NewsItem[];
+  /** Post-earnings performance (reported rows only). Baseline = close on
+   * the report date (or the last close before it); 1d/7d/30d = closes 1/7/30
+   * trading days after the report; to-date = latest close. Null where the
+   * window hasn't elapsed yet. perf_*_date = the bar date measured to. */
+  baseline_price?: number | null;
+  baseline_date?: string | null;
+  perf_1d_pct?: number | null;
+  perf_1d_date?: string | null;
+  perf_7d_pct?: number | null;
+  perf_7d_date?: string | null;
+  perf_30d_pct?: number | null;
+  perf_30d_date?: string | null;
+  perf_to_date_pct?: number | null;
+  perf_as_of?: string | null;
 }
 
 /* ── congress.json ────────────────────────────────────────────────── */
@@ -224,6 +242,24 @@ export interface CongressTrade {
   doc_url: string | null; // official filing PDF
   /** True when 2+ members bought the same ticker in a ~7d window. */
   cluster: boolean;
+  /** Trade performance (pipeline/build-trade-performance.mjs, recent
+   * window only — null outside it). price_at_trade = close on/before
+   * tx_date; price_now = quotes snapshot or latest close; perf_pct =
+   * raw price change since the trade, 1dp. */
+  price_at_trade?: number | null;
+  price_now?: number | null;
+  perf_pct?: number | null;
+  /** YYYY-MM-DD that price_now is from. */
+  perf_as_of?: string | null;
+}
+
+/** Window meta written by build-trade-performance.mjs (trade-performance.json). */
+export interface TradePerformanceMeta {
+  generated_at: string; // ISO timestamp of the pipeline run
+  window_days: number;
+  congress: { from: string; to: string; rows: number; tickers: number; priced: number };
+  executive: { from: string; to: string; rows: number; tickers: number; priced: number; note?: string };
+  as_of: string; // YYYY-MM-DD
 }
 
 /** Committee assignments per member (congress-committees.json, 119th Congress). */
