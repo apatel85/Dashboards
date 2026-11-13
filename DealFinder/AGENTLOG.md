@@ -1,5 +1,14 @@
 # DealFinder — Agent Log
 
+## 2026-11-13 — P2 fix: dedup upsert batches by conflict key (v0.2.4)
+
+- **Request:** Ankit pasted the re-run log: `Supabase upsert prices failed: 500 21000 ON CONFLICT DO UPDATE command cannot affect row a second time` (run after the grants fix).
+- **Progress confirmed:** the grants fix worked — stores + 90 flyers wrote before the failure. The run is not atomic, so partial data persists and the re-run merges idempotently.
+- **Cause:** the prices batch contained two rows with the same conflict key (item_id, store_id, flyer_item_id, valid_from, valid_to). Dedup ran per search only, but the seed searches overlap — the same flyer item is found by both "juice" and "orange juice" — so the same price row appeared twice in one batch and Postgres rejected the whole command.
+- **Changed:** `DealFinder/pipeline/fetch-prices.mjs` — new exported `dedupeByKey(rows, keyFn)` helper, applied to all four upsert batches keyed on each batch's conflict target; prices logs how many duplicates were dropped. Lesson: dry-run cannot catch this (it skips writes) — the first live write is the real test for upsert conflicts.
+- **Ankit's step:** just re-run the workflow — no SQL needed this time. Expected: green run, ~264 prices.
+- **Verification:** fix pushed + node --check clean; live file re-verified via API; workflow re-run + row counts still pending.
+
 ## 2026-11-13 — P2 fix: grant pipeline writes to service_role (v0.2.3)
 
 - **Request:** Ankit pasted the failed run log: `Supabase upsert stores failed: 403 42501 permission denied for table stores` (run 43487146422).
