@@ -17,14 +17,14 @@ adb shell dumpsys input_method | grep -E "mCurMethodId|mCurClient|mInputShown|mC
 echo "current_ime=$(adb shell settings get secure default_input_method | tr -d '\r')"
 adb shell am broadcast -a dev.voiceflow.S3_FORMAT -p $PKG --es text "um we shipped twelve features" >/dev/null
 for i in $(seq 1 20); do
-  adb logcat -d -s S3:I | grep -q "committed=" && break
+  adb logcat -d S3:I '*:S' | grep -q "committed=" && break
   sleep 1
 done
-echo "---- S3 log"; adb logcat -d -s S3:I S3:E | tr -d '\r'
+echo "---- S3 log"; adb logcat -d S3:I '*:S' | tr -d '\r'
 echo "---- diagnostics (crashes / flutter / our package)"
 adb logcat -d | tr -d '\r' | grep -E "AndroidRuntime|FATAL|flutter|FlutterEngine|VoiceFlowIME|ImeEngine|dev.voiceflow|InputMethodManager" | tail -40
 echo "---- idle 30 s, then memory"
 sleep 30
 adb shell dumpsys meminfo $PKG | grep -E "TOTAL PSS|TOTAL:|Native Heap|Java Heap" | head -4
-LOG=$(adb logcat -d -s S3:I | tr -d '\r')
+LOG=$(adb logcat -d S3:I '*:S' | tr -d '\r')
 echo "$LOG" | grep -q "committed='We shipped 12 features.'" && echo "S3_PASS" || { echo "S3_FAIL text"; exit 1; }
