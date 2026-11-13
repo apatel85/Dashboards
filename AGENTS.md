@@ -21,3 +21,4 @@ It is **PUBLIC** — never put secrets, API keys, or personal data in any file h
 | PLDashboard/ | P&L Dashboard v9 |
 | KineticMusic/ | KINETIC // Studio music app |
 | VoiceInsight/ | meeting summarizer |
+| VoiceFlowAI/ | voice dictation app (Windows, Android) |

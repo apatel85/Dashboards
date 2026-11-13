@@ -1,0 +1,24 @@
+name: voiceflow-ci
+on:
+  push:
+    paths: ["VoiceFlowAI/**", ".github/workflows/voiceflow-*.yml"]
+  pull_request:
+    paths: ["VoiceFlowAI/**", ".github/workflows/voiceflow-*.yml"]
+concurrency:
+  group: voiceflow-ci-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    working-directory: VoiceFlowAI
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: subosito/flutter-action@v2.18.0
+        with:
+          flutter-version: "3.50.0"
+          channel: stable
+          cache: true
+      - name: Check (format, analyze, tests, license audit)
+        run: bash tool/check.sh

@@ -1,0 +1,43 @@
+{
+  "id": "general_business",
+  "name": "General Business",
+  "version": "1.0.0",
+  "vocabulary": [
+    "KPI",
+    "OKR",
+    "ROI",
+    "stakeholder",
+    "roadmap",
+    "onboarding"
+  ],
+  "abbreviations": {
+    "eod": "end of day",
+    "asap": "as soon as possible"
+  },
+  "promptFragment": "General business communication. Keep names, figures and dates exactly.",
+  "templates": [
+    {
+      "id": "meeting_notes",
+      "name": "Meeting notes",
+      "trigger": [
+        "meeting notes"
+      ],
+      "skeleton": "Attendees:\n\nAgenda:\n\nDecisions:\n\nAction items:\n"
+    }
+  ],
+  "detectors": {
+    "apps": [
+      "outlook",
+      "slack"
+    ],
+    "windowTitleKeywords": [
+      "inbox"
+    ],
+    "contentKeywords": [
+      "meeting"
+    ]
+  },
+  "safety": {
+    "cloudAllowed": true
+  }
+}
