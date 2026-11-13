@@ -1,5 +1,11 @@
 # DealFinder — Agent Log
 
+## 2026-11-13 — P2 fix: Supabase auth for new secret keys + profile headers (v0.2.2)
+
+- **Request:** Ankit: "not finding step 3.1" (the service-role key) + pipeline auth review while answering.
+- **Changed:** `DealFinder/pipeline/fetch-prices.mjs` — two bugs that would have failed the first live run: (1) the client sent `Authorization: Bearer <key>` unconditionally, which fails JWT verification for new-format secret keys (`sb_secret_...`, not JWTs) — Bearer now goes out only for legacy JWT keys (`eyJ...`); the `apikey` header carries auth for both formats. (2) No `Accept-Profile`/`Content-Profile` headers — PostgREST looks in `public` without them, so the `dealfinder` tables would not be found; both now set to `dealfinder`. Env doc updated to name the secret key (`sb_secret_...`) from Settings → API Keys. `DealFinder/README.md` — repo-secret step now names the secret key and its location.
+- **Verification:** fix pushed; live file re-verified by raw-URL read. No live run yet — still blocked on Ankit's manual steps (DDL + secret + workflow run).
+
 ## 2026-11-13 — P2 fix: alerts_one_per_day index 42P17 (v0.2.1)
 
 - **Request:** Ankit: SQL error `42P17: functions in index expression must be marked IMMUTABLE` running the migration in the Supabase SQL Editor.
