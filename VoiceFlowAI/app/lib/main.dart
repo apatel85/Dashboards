@@ -1,5 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 
+// Keeps the keyboard's headless entrypoint (imeMain) in the compiled program;
+// without this import, release builds omit the library and the IME engine
+// fails with "library 'package:voiceflow_app/ime_main.dart' not found".
+// ignore: unused_import
+import 'ime_main.dart';
+
 void main() {
   runApp(const MyApp());
 }
