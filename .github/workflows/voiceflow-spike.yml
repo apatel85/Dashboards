@@ -37,3 +37,18 @@ jobs:
         with:
           name: s1-windows-log
           path: VoiceFlowAI/app/spike/s1/s1-windows.log
+  s2-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: VoiceFlowAI/app/spike/s2
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: S2 SendInput paste + clipboard restore (5 runs)
+        run: ./s2.ps1 *>&1 | Tee-Object -FilePath s2-windows.log
+      - uses: actions/upload-artifact@v4.6.0
+        if: always()
+        with:
+          name: s2-windows-log
+          path: VoiceFlowAI/app/spike/s2/s2-windows.log
