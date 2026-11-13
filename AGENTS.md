@@ -18,6 +18,7 @@ It is **PUBLIC** — never put secrets, API keys, or personal data in any file h
 | WagWise/ | dog-care PWA |
 | QuixeraDev/ | QA Capture dashboard + extension |
 | QuixeraDemo/ | Quixera UX demo replica (live app is read-only, never touch) |
+| QuixeraLibrarySimple/ | Quixera library creation mockup — simplified flow (design only, sample data) |
 | PLDashboard/ | P&L Dashboard v9 |
 | KineticMusic/ | KINETIC // Studio music app |
 | VoiceInsight/ | meeting summarizer |

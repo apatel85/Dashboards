@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quixera Library Mockup</title>
+<meta name="description" content="Clickable mockup: a simpler way to create a Quixera library. Sample data only.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== Tokens. Colours are taken from the attached Program_Creation_V3 design (green rail #1D6B45, Figtree). ===== */
+:root{
+  --bg:#F6F7F7; --panel:#FFFFFF; --surface2:#F9FAFA; --ink:#111827; --muted:#4B5563; --faint:#646C79;
+  --line:#E5E7EB; --control:#7A8391;                 /* line = decorative divider; control = input/button border, 3:1 */
+  --brand:#1D6B45; --brand-hover:#175A39; --brand-soft:#E7F4EC; --brand-text:#16663E; --on-brand:#FFFFFF;
+  --rail:#1D6B45; --rail-ink:#FFFFFF; --rail-active:rgba(255,255,255,.16); --rail-line:rgba(255,255,255,.18);
+  --info-bg:#EEF3FA; --info-ink:#1E3A5F; --warn-bg:#FDF1DC; --warn-ink:#8A4B06;
+  --danger:#B42318; --danger-bg:#FDECEA; --focus:#0E7490; --scrim:rgba(17,24,39,.45);
+  --lv-white:#FFFFFF; --lv-silver:#AEB6C1; --lv-gold:#D9A520; --lv-purple:#7C3AED;
+  --shadow:0 8px 28px rgba(17,24,39,.18);
+  /* 4/8 spacing grid, 1.25 type scale, 3 radii, one motion token */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+  --t-xs:.8rem; --t-base:1rem; --t-lg:1.25rem; --t-xl:1.5625rem; --t-2xl:1.953rem;
+  --r1:8px; --r2:12px; --pill:999px; --dur:200ms;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1411; --panel:#151D19; --surface2:#1A241F; --ink:#E7EEEA; --muted:#B4C0B9; --faint:#9AA89F;
+    --line:#26332C; --control:#7F8E85;
+    --brand:#23804F; --brand-hover:#2C9460; --brand-soft:#173325; --brand-text:#7BD7A4;
+    --rail:#12402A; --info-bg:#1B2738; --info-ink:#B9D0F0; --warn-bg:#3A2A10; --warn-ink:#F3C98B;
+    --danger:#FF9C92; --danger-bg:#3B1A17; --focus:#4CC3DE; --scrim:rgba(0,0,0,.6);
+    --lv-white:#E7EEEA; --shadow:0 8px 28px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1411; --panel:#151D19; --surface2:#1A241F; --ink:#E7EEEA; --muted:#B4C0B9; --faint:#9AA89F;
+  --line:#26332C; --control:#7F8E85;
+  --brand:#23804F; --brand-hover:#2C9460; --brand-soft:#173325; --brand-text:#7BD7A4;
+  --rail:#12402A; --info-bg:#1B2738; --info-ink:#B9D0F0; --warn-bg:#3A2A10; --warn-ink:#F3C98B;
+  --danger:#FF9C92; --danger-bg:#3B1A17; --focus:#4CC3DE; --scrim:rgba(0,0,0,.6);
+  --lv-white:#E7EEEA; --shadow:0 8px 28px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 var(--t-base)/1.5 'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,p,ul{margin:0}
+ul{padding:0;list-style:none}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.ic{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.ic.sm{width:16px;height:16px}
+
+/* ===== App shell: phone <768 bottom tabs; tablet 768-1023 narrow labelled rail; desktop >=1024 full rail ===== */
+.app{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh;min-height:100dvh}
+.rail{background:var(--rail);color:var(--rail-ink);position:sticky;top:0;height:100vh;height:100dvh;overflow-y:auto;display:flex;flex-direction:column;padding:var(--s4) var(--s3)}
+.brandrow{display:flex;align-items:center;gap:var(--s2);font-size:var(--t-lg);font-weight:600;padding:var(--s1) var(--s2) var(--s4)}
+.logo{width:32px;height:32px}
+.acct{display:flex;align-items:center;gap:var(--s3);padding:var(--s3);border:1px solid var(--rail-line);border-radius:var(--r2);margin-bottom:var(--s4)}
+.avatar{width:36px;height:36px;border-radius:50%;background:#fff;color:var(--brand);display:grid;place-items:center;font-weight:700;font-size:var(--t-xs);flex:none}
+.acct b{display:block;font-weight:600;line-height:1.2}
+.chip-admin{font-size:var(--t-xs);border:1px solid var(--rail-line);border-radius:var(--pill);padding:0 var(--s2);display:inline-block}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:var(--s3);min-height:44px;padding:0 var(--s3);border-radius:var(--r1);cursor:pointer;font-weight:500;width:100%}
+.nav button:hover{background:rgba(255,255,255,.08)}
+.nav button:focus-visible{outline:3px solid #fff;outline-offset:-3px}
+.nav button[aria-current="page"]{background:var(--rail-active)}
+.nav .sub{padding-left:var(--s7);font-weight:400}
+.nav .grow{flex:1}
+.railfoot{margin-top:auto;padding-top:var(--s4);border-top:1px solid var(--rail-line);display:flex;flex-direction:column;gap:2px}
+.synced{font-size:var(--t-xs);opacity:.85;padding:var(--s2) var(--s3)}
+.tabbar{display:none}
+.main{min-width:0;display:flex;flex-direction:column}
+.mockstrip{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) var(--s4);padding:0 var(--s5);background:var(--info-bg);color:var(--info-ink);font-size:var(--t-xs)}
+.mockstrip .lnk{margin-left:auto;display:flex;gap:var(--s4)}
+.linkbtn{all:unset;box-sizing:border-box;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-weight:600;min-height:44px;display:inline-flex;align-items:center}
+.linkbtn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.view{padding:var(--s5);flex:1;min-width:0}
+.task .view{padding-bottom:var(--s7)}
+
+@media (max-width:1023px){
+  .app{grid-template-columns:88px minmax(0,1fr)}
+  .acct>div,.nav .sub,.nav .lbl-long,.synced,.brandrow span{display:none}
+  .acct{justify-content:center;padding:var(--s2);border:0}
+  .nav button{flex-direction:column;justify-content:center;gap:2px;padding:var(--s2) 0;font-size:var(--t-xs);text-align:center;min-height:56px}
+  .nav .grow{display:none}
+  .brandrow{justify-content:center;padding-inline:0}
+  .rail{padding-inline:var(--s2)}
+}
+@media (max-width:767px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .rail{display:none}
+  .view{padding:var(--s4)}
+  .mockstrip{padding:0 var(--s4)}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--rail);color:#fff;padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;font-size:var(--t-xs);cursor:pointer;font-weight:500}
+  .tabbar button[aria-current="page"]{background:var(--rail-active)}
+  .tabbar button:focus-visible{outline:3px solid #fff;outline-offset:-3px}
+  .app:not(.task) .main{padding-bottom:72px}
+  .task .tabbar{display:none}
+}
+
+/* ===== Controls ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:44px;padding:0 var(--s4);border-radius:var(--r1);border:1px solid var(--control);background:var(--panel);font-weight:600;cursor:pointer;transition:background var(--dur),border-color var(--dur)}
+.btn:hover{background:var(--surface2)}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.btn.pri:hover{background:var(--brand-hover)}
+.btn.pri[aria-disabled="true"]{background:var(--surface2);border-color:var(--control);color:var(--muted);cursor:not-allowed}
+.btn.danger{color:var(--danger);border-color:var(--danger)}
+.btn.block{width:100%}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--brand-text)}
+.btn.quiet:hover{background:var(--brand-soft)}
+.icbtn{all:unset;box-sizing:border-box;display:inline-grid;place-items:center;width:44px;height:44px;border-radius:var(--r1);cursor:pointer;color:var(--muted);flex:none}
+.icbtn:hover{background:var(--surface2);color:var(--ink)}
+.icbtn:focus-visible{outline:3px solid var(--focus);outline-offset:-3px}
+.badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:var(--pill);background:var(--warn-bg);color:var(--warn-ink);font-size:var(--t-xs);font-weight:700}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:var(--pill);font-size:var(--t-xs);font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--brand-soft);color:var(--brand-text)}
+.pill.draft{background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.pill.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.field{display:flex;flex-direction:column;gap:var(--s1)}
+.field>label,.lbl{font-weight:600}
+.opt{font-weight:400;color:var(--muted)}
+.hint{color:var(--muted);font-size:var(--t-xs)}
+.inp{min-height:44px;width:100%;padding:var(--s2) var(--s3);border:1px solid var(--control);border-radius:var(--r1);background:var(--panel)}
+textarea.inp{min-height:88px;resize:vertical}
+.inp[aria-invalid="true"]{border-color:var(--danger);border-width:2px}
+.err{color:var(--danger);font-size:var(--t-xs);font-weight:600;display:flex;gap:var(--s1);align-items:center}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2)}
+.info{display:flex;gap:var(--s3);align-items:flex-start;background:var(--info-bg);color:var(--info-ink);padding:var(--s3) var(--s4);border-radius:var(--r2)}
+.info .ic{margin-top:2px}
+
+/* ===== Library landing ===== */
+.pagehead{display:flex;flex-wrap:wrap;gap:var(--s3) var(--s4);align-items:flex-start;justify-content:space-between;margin-bottom:var(--s4)}
+.pagehead h1{font-size:var(--t-2xl);line-height:1.2;font-weight:700}
+.pagehead .sub{color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.libs{margin-top:var(--s4);display:flex;flex-direction:column}
+.lib{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto;align-items:center;gap:var(--s4);padding:var(--s4);border-top:1px solid var(--line)}
+.lib:first-child{border-top:0}
+.lib .nm{all:unset;cursor:pointer;font-weight:700;font-size:var(--t-lg);line-height:1.25;display:block}
+.lib .nm:hover{text-decoration:underline;text-underline-offset:3px}
+.lib .nm:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+.lib .who{display:flex;gap:var(--s3);align-items:center;min-width:0}
+.sport{width:40px;height:40px;border-radius:var(--r1);background:var(--brand-soft);color:var(--brand-text);display:grid;place-items:center;font-weight:700;flex:none}
+.lib .stat{display:flex;flex-direction:column;gap:var(--s1);align-items:flex-start}
+.meta{color:var(--muted);font-size:var(--t-xs)}
+.empty{padding:var(--s7) var(--s5);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--s3)}
+.empty h2{font-size:var(--t-xl)}
+.empty p{color:var(--muted);max-width:52ch}
+.empty ol{text-align:left;color:var(--muted);margin:0;padding-left:var(--s5)}
+.skel{height:76px;border-top:1px solid var(--line);background:linear-gradient(90deg,var(--surface2),var(--line),var(--surface2));background-size:200% 100%;animation:sk 1.2s linear infinite}
+.skel:first-child{border-top:0}
+@keyframes sk{to{background-position:-200% 0}}
+@media (max-width:1023px){
+  .lib{grid-template-columns:minmax(0,1fr) auto auto}
+  .lib .used{display:none}
+  .lib .open{display:none}
+}
+@media (max-width:767px){
+  .pagehead h1{font-size:var(--t-xl)}
+  .actions{width:100%}
+  .actions .btn.pri{width:100%;order:-1}
+  .actions .btn:not(.pri){flex:1}
+  .lib{grid-template-columns:minmax(0,1fr) auto;gap:var(--s2) var(--s3)}
+  .lib .stat{grid-column:1/-1;flex-direction:row;align-items:center;flex-wrap:wrap}
+  .lib .open{display:inline-flex;grid-column:1/-1}
+  .lib .used{display:block}
+}
+
+/* ===== Task screens (create / editor / done) ===== */
+.taskhead{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s5)}
+.taskhead .ttl{min-width:0;flex:1}
+.taskhead h1{font-size:var(--t-xl);line-height:1.2;font-weight:700;overflow-wrap:anywhere}
+.saved{display:inline-flex;gap:var(--s1);align-items:center;color:var(--muted);font-size:var(--t-xs)}
+.wrap{max-width:760px;margin-inline:auto}
+.wrap.wide{max-width:1120px}
+.q{margin-top:var(--s5)}
+.q>h2{font-size:var(--t-lg);margin-bottom:var(--s3)}
+.choices{display:grid;gap:var(--s3)}
+.choices.sports{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.choice{position:relative;display:flex;gap:var(--s3);align-items:flex-start;padding:var(--s4);border:1px solid var(--control);border-radius:var(--r2);background:var(--panel);cursor:pointer;min-height:44px}
+.choice input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0}
+.choice:has(input:checked){border:2px solid var(--brand);padding:calc(var(--s4) - 1px);background:var(--brand-soft)}
+.choice:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
+.choice:has(input:disabled){opacity:.6;cursor:not-allowed;background:var(--surface2);border-color:var(--line)}
+.choice .t{font-weight:700;display:block}
+.choice .d{color:var(--muted);font-size:var(--t-xs);display:block}
+.choice .rec{margin-left:var(--s2)}
+.choice .radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--control);flex:none;margin-top:2px;display:grid;place-items:center}
+.choice:has(input:checked) .radio{border-color:var(--brand)}
+.choice:has(input:checked) .radio::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--brand)}
+.startopts .choice{align-items:flex-start}
+.sub-q{margin-top:var(--s3);padding-left:var(--s2)}
+.createbar{margin-top:var(--s6);display:flex;gap:var(--s3);flex-wrap:wrap;align-items:center}
+.createbar .meta{flex:1;min-width:200px}
+
+/* Editor */
+.editor{display:grid;gap:var(--s5);align-items:start}
+@media (min-width:1024px){.editor{grid-template-columns:minmax(0,1fr) 320px}.sumcard{position:sticky;top:var(--s5)}}
+.help{padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3);margin-bottom:var(--s4)}
+.help .row{display:flex;justify-content:space-between;gap:var(--s3);align-items:flex-start}
+.help h2{font-size:var(--t-lg)}
+.chain{display:flex;flex-wrap:wrap;gap:var(--s2);align-items:center}
+.chain .c{border:1px solid var(--line);border-radius:var(--pill);padding:var(--s1) var(--s3);background:var(--surface2)}
+.chain .c b{display:block;font-size:var(--t-xs);color:var(--muted);font-weight:600;line-height:1.2}
+.outline{display:flex;flex-direction:column;gap:var(--s3)}
+.area{overflow:hidden}
+.area-h{display:flex;align-items:center;padding-right:var(--s2);background:var(--surface2)}
+.tog{all:unset;box-sizing:border-box;flex:1;min-width:0;display:flex;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);min-height:56px;cursor:pointer}
+.tog:focus-visible{outline:3px solid var(--focus);outline-offset:-3px}
+.tog .chev{transition:transform var(--dur)}
+.tog[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.tog .nm{font-weight:700;font-size:var(--t-lg);line-height:1.25;overflow-wrap:anywhere}
+.tog .meta{margin-left:auto;text-align:right;padding-left:var(--s2)}
+.area-b{padding:var(--s2) var(--s4) var(--s4)}
+.fam{margin-top:var(--s3)}
+.fam-h{display:flex;align-items:center;gap:var(--s2);justify-content:space-between;border-bottom:1px solid var(--line)}
+.fam-h h3{font-size:var(--t-base);font-weight:700;color:var(--brand-text);padding:var(--s2) 0;overflow-wrap:anywhere}
+.fam-h .meta{margin-left:auto}
+.skills{display:flex;flex-direction:column}
+.skill{display:flex;align-items:center;border-bottom:1px solid var(--line)}
+.skill-btn{all:unset;box-sizing:border-box;flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:var(--s1) var(--s3);align-items:center;padding:var(--s2) var(--s2);min-height:48px;cursor:pointer;border-radius:var(--r1)}
+.skill-btn:hover{background:var(--surface2)}
+.skill-btn:focus-visible{outline:3px solid var(--focus);outline-offset:-3px}
+.skill-btn .sn{font-weight:500;overflow-wrap:anywhere;flex:1 1 200px}
+.tagchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--control);border-radius:var(--pill);padding:0 10px;font-size:var(--t-xs);background:var(--panel)}
+.lvdot{width:10px;height:10px;border-radius:50%;border:1px solid var(--control);display:inline-block;flex:none}
+.noskill{color:var(--muted);padding:var(--s2);font-size:var(--t-xs)}
+.addrow{display:flex;gap:var(--s2);margin-top:var(--s3)}
+.addrow .inp{flex:1;border-style:dashed}
+.addrow .inp:focus{border-style:solid}
+.addrow .btn{flex:none}
+.areaadd{padding:var(--s4)}
+.firstrun{padding:var(--s5);display:flex;flex-direction:column;gap:var(--s3)}
+.firstrun h2{font-size:var(--t-lg)}
+.newtag{font-size:var(--t-xs);font-weight:700;color:var(--brand-text)}
+.sumcard{padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3)}
+.sumcard h2{font-size:var(--t-lg)}
+.sumcard dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:var(--s1) var(--s3)}
+.sumcard dt{color:var(--muted)}
+.sumcard dd{margin:0;font-weight:700;text-align:right}
+.ready{display:flex;gap:var(--s2);align-items:flex-start;font-weight:600}
+.ready.ok{color:var(--brand-text)}
+.ready.no{color:var(--warn-ink);background:var(--warn-bg);padding:var(--s2) var(--s3);border-radius:var(--r1)}
+.stickybar{display:none}
+@media (max-width:1023px){
+  .sumcard{display:none}
+  .stickybar{display:flex;position:fixed;left:88px;right:0;bottom:0;z-index:15;gap:var(--s3);align-items:center;padding:var(--s3) var(--s5);padding-bottom:calc(var(--s3) + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line)}
+  .stickybar .txt{flex:1;min-width:0;font-size:var(--t-xs);color:var(--muted)}
+  .stickybar .txt b{display:block;color:var(--ink);font-size:var(--t-base)}
+  .task .view{padding-bottom:112px}
+}
+@media (max-width:767px){
+  .stickybar{left:0;padding:var(--s3) var(--s4);padding-bottom:calc(var(--s3) + env(safe-area-inset-bottom))}
+  .taskhead h1{font-size:var(--t-lg)}
+  .tog .meta{display:none}
+}
+
+/* ===== Overlays ===== */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);z-index:41;background:var(--panel);box-shadow:var(--shadow);display:flex;flex-direction:column;animation:slide var(--dur) ease-out}
+@keyframes slide{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+.dr-h{display:flex;align-items:flex-start;gap:var(--s3);padding:var(--s4);border-bottom:1px solid var(--line)}
+.dr-h h2{font-size:var(--t-lg);line-height:1.25;flex:1;min-width:0}
+.dr-b{flex:1;overflow-y:auto;padding:var(--s4);display:flex;flex-direction:column;gap:var(--s5)}
+.dr-f{padding:var(--s3) var(--s4);padding-bottom:calc(var(--s3) + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;gap:var(--s3);justify-content:space-between;align-items:center}
+.dr-f .btn.pri{flex:1}
+.modal{position:fixed;z-index:41;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 32px));max-height:calc(100dvh - 32px);overflow:auto;background:var(--panel);border-radius:var(--r2);box-shadow:var(--shadow);animation:pop var(--dur) ease-out}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-48%)}to{opacity:1;transform:translate(-50%,-50%)}}
+.md-h{padding:var(--s5) var(--s5) var(--s2);display:flex;gap:var(--s3);align-items:flex-start}
+.md-h h2{font-size:var(--t-xl);line-height:1.2;flex:1}
+.md-b{padding:var(--s2) var(--s5) var(--s4);display:flex;flex-direction:column;gap:var(--s3)}
+.md-f{padding:var(--s3) var(--s5) var(--s5);display:flex;gap:var(--s3);justify-content:flex-end;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.tchip{min-height:44px;min-width:44px;padding:0 var(--s4);border-radius:var(--pill);border:1px solid var(--control);background:var(--panel);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:var(--s2)}
+.tchip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.tchip:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.sec{border:1px solid var(--line);border-radius:var(--r2);padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3)}
+.sec h3{font-size:var(--t-base);display:flex;gap:var(--s2);align-items:center}
+.sec h3 .badge{background:var(--surface2);color:var(--muted);margin-left:auto}
+.item{display:flex;align-items:center;gap:var(--s2);border:1px solid var(--line);border-radius:var(--r1);padding:var(--s2) var(--s2) var(--s2) var(--s3)}
+.item .tx{flex:1;min-width:0}
+.item .tx b{display:block;font-weight:600;overflow-wrap:anywhere}
+.miniform{border:1px solid var(--control);border-radius:var(--r1);padding:var(--s3);display:flex;flex-direction:column;gap:var(--s3);background:var(--surface2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+.menu{position:fixed;z-index:60;min-width:220px;max-width:calc(100vw - 16px);background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);box-shadow:var(--shadow);padding:var(--s1)}
+.menu button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;width:100%;min-height:44px;padding:var(--s2) var(--s3);border-radius:var(--r1);cursor:pointer;font-weight:500}
+.menu button:hover,.menu button:focus-visible{background:var(--surface2)}
+.menu button:focus-visible{outline:3px solid var(--focus);outline-offset:-3px}
+.menu button.danger{color:var(--danger)}
+.menu button[aria-disabled="true"]{color:var(--muted);cursor:not-allowed}
+.menu small{font-size:var(--t-xs);color:var(--muted);font-weight:400}
+#toasts{position:fixed;z-index:80;left:50%;transform:translateX(-50%);bottom:var(--s4);display:flex;flex-direction:column;gap:var(--s2);align-items:center;width:min(520px,calc(100% - 32px));pointer-events:none}
+@media (max-width:1023px){.task #toasts{bottom:96px}}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:var(--s3);background:#1F2937;color:#fff;padding:var(--s2) var(--s2) var(--s2) var(--s4);border-radius:var(--r2);box-shadow:var(--shadow);width:100%;min-height:48px}
+.toast span{flex:1}
+.toast button{all:unset;cursor:pointer;font-weight:700;color:#7BD7A4;padding:0 var(--s3);min-height:44px;display:inline-flex;align-items:center;border-radius:var(--r1)}
+.toast button:focus-visible{outline:3px solid #fff;outline-offset:-3px}
+.done{max-width:640px;margin:var(--s6) auto 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--s4)}
+.done .big{width:72px;height:72px;border-radius:50%;background:var(--brand-soft);color:var(--brand-text);display:grid;place-items:center}
+.done .big .ic{width:36px;height:36px;stroke-width:2.25}
+.done h1{font-size:var(--t-2xl);line-height:1.2}
+.done p{color:var(--muted)}
+.doneacts{display:flex;flex-direction:column;gap:var(--s3);width:min(420px,100%)}
+.stats{display:flex;gap:var(--s5);flex-wrap:wrap;justify-content:center}
+.stats div{display:flex;flex-direction:column}
+.stats b{font-size:var(--t-xl)}
+.chglist{margin:0;padding-left:var(--s5);display:flex;flex-direction:column;gap:var(--s2)}
+.chk{display:flex;gap:var(--s2);align-items:flex-start}
+.chk.warn{background:var(--warn-bg);color:var(--warn-ink);padding:var(--s2) var(--s3);border-radius:var(--r1)}
+.cmp{width:100%;border-collapse:collapse;font-size:var(--t-xs)}
+.cmp th,.cmp td{text-align:left;padding:var(--s2);border-bottom:1px solid var(--line);vertical-align:top}
+@media (max-width:480px){.two{grid-template-columns:1fr}.drawer{width:100%}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 010 6.4M18.5 14.8c1.7.7 2.7 2.3 3 5.2"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3l8.5 4.5v9L12 21l-8.5-4.5v-9L12 3zM3.5 7.5L12 12l8.5-4.5M12 12v9"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9.5h17M9 14h6"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0112 0v6l1.5 2h-15L6 17zM10 21h4"/></symbol>
+<symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3 10h18"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M8 15l4-4 3 3 5-6"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></symbol>
+<symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2.2M12 17v.01"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="i-chevd" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="18.5" r="1.2"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.01"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19L12 3.5zM12 10v4.5M12 17.2v.01"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2 2 0 012.8 0l.2.2a2 2 0 010 2.8L8 19l-4 1z"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+<symbol id="i-run" viewBox="0 0 24 24"><circle cx="14" cy="4.5" r="2"/><path d="M8 21l3-6 3 2 2-6-3-2-4 2-2 4M16 11l3 2"/></symbol>
+<symbol id="i-clip" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9 4.5h6v3H9zM9 12h6M9 16h4"/></symbol>
+<symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3.5 13l2.5-8h12l2.5 8v6h-17v-6zM3.5 13H9l1 2.5h4l1-2.5h5.5"/></symbol>
+</defs>
+</svg>
+
+<div id="app" class="app">
+  <nav class="rail" id="rail" aria-label="Main"></nav>
+  <div class="main">
+    <div class="mockstrip" id="strip"></div>
+    <main class="view" id="view" tabindex="-1"></main>
+  </div>
+  <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
+</div>
+<div id="overlay"></div>
+<div id="toasts" role="status" aria-live="polite"></div>
+<noscript>This mockup needs JavaScript.</noscript>
+
+<script>
+"use strict";
+/* ============================================================================
+   Quixera Library, simplified creation. Clickable mockup, sample data only.
+   View map (N1): Library list (daily/weekly) -> Create (once per sport) -> Editor (weekly) -> Published.
+   ========================================================================== */
+const AGES=['U9','U10','U12','U14','U18','Adult'];
+const LEVELS=['White','Silver','Gold','Purple'];
+const LV_VAR={White:'--lv-white',Silver:'--lv-silver',Gold:'--lv-gold',Purple:'--lv-purple'};
+const SPORTS=['Cricket','Football','Tennis','Swimming'];
+const COACHES=['Priya Nair','Tom Alvarez','Jess Okafor','Sam Whitfield'];   /* [sample names] */
+const rid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=(s,r=document)=>r.querySelector(s);
+const ic=(n,c='')=>`<svg class="ic ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const plural=(n,w,p)=>`${n} ${n===1?w:(p||w+'s')}`;
+
+/* ---------- sample data ---------- */
+const sk=(name,o={})=>({id:rid(),name,ages:[],levels:[],drills:[],homework:[],...o});
+const dr=(name,mins,how)=>({id:rid(),name,mins,how});
+const hw=(what,freq,mins)=>({id:rid(),what,freq,mins});
+const tree=spec=>spec.map(([a,fams])=>({id:rid(),name:a,families:fams.map(([f,s])=>({id:rid(),name:f,skills:s.map(x=>typeof x==='string'?sk(x):sk(x[0],x[1]))}))}));
+function cricketTree(){return tree([
+ ['Batting',[
+  ['Defense',[
+   ['Grip, stance, guard & both defenses',{ages:['U9','U10'],levels:['White'],drills:[dr('Shadow defense in front of a mirror',10,'Pairs. One feeds underarm, the batter plays the defensive shot.')],homework:[hw('Practise your stance and guard 20 times','3 times a week',10)]}],
+   ['Forward defense',{ages:['U9'],levels:['White','Silver'],drills:[dr('Gate drill',10,'Place two cones as a gate just in front of the batter. Defend straight through it.')],homework:[hw('Forward defense against a wall, 5 minutes','2 times a week',5)]}],
+   ['Back-foot defense',{ages:['U10'],levels:['Silver'],drills:[dr('Back-foot box',10,'Feed short of a length. Batter steps back and across and defends.')],homework:[hw('Shadow back-foot defense, 20 each side','2 times a week',8)]}],
+   ['Defense at pace',{ages:['U9'],levels:['Gold','Purple'],drills:[dr('Tennis-ball bouncers',12,'Throwdowns at pace. Focus on head still, soft hands.'),dr('Reaction feeds',10,'Coach feeds from 12m, batter calls front or back foot.')],homework:[hw('Reaction ball catches, 5 minutes','Daily',5),hw('Watch a clip of a top-order batter and describe the footwork','Once a week',10)]}]
+  ]],
+  ['Scoring Shots',['Drives','Pull & hook','Cut',['Sweep & reverse sweep introduction',{levels:['Gold']}]]],
+  ['Running & Innings Building',['Running between wickets','Calling & backing up','Building an innings']]
+ ]],
+ ['Bowling',[['Pace Bowling',['Grip & seam position','Run-up & rhythm','Action & follow-through','Line & length']],['Spin Bowling',['Grip & release','Flight & drift','Variations']]]],
+ ['Fielding',[['Ground Fielding',['Short barrier','Long barrier','Pick up & throw']],['Catching',['High catches','Slip catching','Boundary catching']]]],
+ ['Wicket-keeping',[['Keeping Basics',['Stance & movement','Taking the ball','Stumping']]]],
+ ['Fitness',[['Athletic Basics',['Warm-up & mobility','Speed & agility','Strength basics']]]],
+ ['Game IQ',[['Match Awareness',['Reading the game','Field settings','Team communication']]]],
+ ['Character',[['Team Values',['Respect & sportsmanship','Handling pressure']]]]
+]);}
+function tennisTree(){return tree([
+ ['Groundstrokes',[['Forehand',['Grip & stance','Swing path']],['Backhand',['One-hand or two-hand grip','Swing path']]]],
+ ['Serve',[['Serve Basics',['Toss','Contact point']]]],
+ ['Volleys',[['Net Play',['Ready position','Punch volley']]]],
+ ['Movement',[['Footwork',['Split step','Recovery steps']]]]
+]);}
+const TEMPLATES={
+ Football:()=>tree([
+  ['Passing & Receiving',[['Passing',['Short passing','Long passing','Passing under pressure']],['First Touch',['Receiving on the ground','Receiving in the air','Turning with the first touch']]]],
+  ['Dribbling',[['Ball Control',['Close control','Changing direction']],['1v1 Attacking',['Beating a defender','Shielding the ball']]]],
+  ['Shooting',[['Finishing',['Shooting inside the box','Shooting with both feet','Volleys']]]],
+  ['Defending',[['Positioning',['Body shape','Pressing as a team']],['Tackling',['Block tackle','Jockeying']]]],
+  ['Game Understanding',[['Team Shape',['Width and depth','Moving as a unit']]]]
+ ]),
+ Swimming:()=>tree([
+  ['Freestyle',[['Technique',['Body position','Breathing','Arm stroke','Kick']]]],
+  ['Backstroke',[['Technique',['Body position on the back','Arm stroke and rotation']]]],
+  ['Water Safety',[['Survival Skills',['Floating','Treading water','Getting out of the pool']]]]
+ ])
+};
+function seed(){return {libs:[
+ {id:rid(),sport:'Cricket',name:'Cricket Library',status:'Published',version:4,tree:cricketTree(),draft:null,
+  programs:['U9 Batting Foundations','U10 Cricket Skills','U12 Batting Foundations','U14 Pace Bowling','U18 Academy Squad'],editor:'Priya Nair',suggesters:['Tom Alvarez']},
+ {id:rid(),sport:'Tennis',name:'Tennis Library',status:'Draft',version:0,tree:tennisTree(),draft:null,programs:[],editor:'',suggesters:[]}
+],hideHelp:false};}
+
+/* ---------- state ---------- */
+const KEY='quixera-library-mock-v1';
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}
+if(!S||!Array.isArray(S.libs))S=seed();
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const U={view:'library',loading:true,libId:null,open:new Set(),drafts:{},focusKey:null,overlay:null,form:null,newIds:new Set(),create:null,menuBtn:null,returnFocus:null};
+const lib=id=>S.libs.find(l=>l.id===id);
+const cur=()=>lib(U.libId);
+const working=l=>l.status==='Published'?(l.draft||(l.draft=clone(l.tree))):l.tree;
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+/* ---------- derived ---------- */
+function counts(t){const c={areas:t.length,families:0,skills:0,drills:0,homework:0,noDrill:0};
+ t.forEach(a=>a.families.forEach(f=>{c.families++;f.skills.forEach(s=>{c.skills++;c.drills+=s.drills.length;c.homework+=s.homework.length;if(!s.drills.length)c.noDrill++})}));return c}
+function flat(t){const m=new Map();t.forEach(a=>{m.set(a.id,{s:a.name});a.families.forEach(f=>{m.set(f.id,{s:f.name});f.skills.forEach(s=>m.set(s.id,{s:JSON.stringify([s.name,s.ages,s.levels,s.drills.map(d=>[d.name,d.mins,d.how]),s.homework.map(h=>[h.what,h.freq,h.mins])])}))})});return m}
+function diff(base,now){const b=flat(base),c=flat(now);let add=0,rem=0,edit=0;c.forEach((v,k)=>{if(!b.has(k))add++;else if(b.get(k).s!==v.s)edit++});b.forEach((v,k)=>{if(!c.has(k))rem++});return{add,rem,edit,total:add+rem+edit}}
+const pending=l=>l.status==='Published'&&l.draft?diff(l.tree,l.draft):{total:0,add:0,rem:0,edit:0};
+function findSkill(t,id){for(const a of t)for(const f of a.families){const s=f.skills.find(x=>x.id===id);if(s)return{a,f,s}}return null}
+function findFam(t,id){for(const a of t){const f=a.families.find(x=>x.id===id);if(f)return{a,f}}return null}
+function tagSummary(s){const out=[];if(s.ages.length)out.push(s.ages.join(', '));if(s.levels.length)out.push(s.levels.join(', '));return out}
+function warnings(l){const t=working(l),c=counts(t),w=[];
+ if(c.noDrill)w.push(`${plural(c.noDrill,'sub-skill')} ${c.noDrill===1?'has':'have'} no drill yet. You can add drills later.`);
+ const tagged=AGES.map(a=>({a,n:0}));let any=false;t.forEach(x=>x.families.forEach(f=>f.skills.forEach(s=>{if(s.ages.length)any=true;s.ages.forEach(a=>tagged.find(g=>g.a===a).n++)})));
+ if(any){const miss=tagged.filter(g=>!g.n).map(g=>g.a);if(miss.length)w.push(`No sub-skills are tagged for ${miss.join(', ')}. Programs for those age groups only get sub-skills with no tags.`)}
+ const emptyF=[];t.forEach(a=>a.families.forEach(f=>{if(!f.skills.length)emptyF.push(f.name)}));
+ if(emptyF.length)w.push(`${emptyF.length===1?'The skill family':'These skill families'} ${emptyF.slice(0,3).map(esc).join(', ')}${emptyF.length>3?' and more':''} ${emptyF.length===1?'has':'have'} no sub-skills yet.`);
+ return w}
+
+/* ---------- shell ---------- */
+const NAV=[['home','Dashboard'],['users','People'],['cal','Schedule'],['box','Academy'],['book','Bookings'],['bell','Inbox'],['card','Finance'],['chart','Insights']];
+const ACADEMY_SUB=['Programs','Library','Waitlist','Inquiries','Leads','Memberships','Memberships & Packages','Events','Facilities'];
+function renderShell(){
+ $('#rail').innerHTML=`
+  <div class="brandrow">${logo()}<span>Quixera</span></div>
+  <div class="acct"><span class="avatar">SC</span><div><b>Sarah Chen</b><span class="chip-admin">Admin</span></div></div>
+  <div class="nav">
+   ${NAV.map(([i,l])=>{
+     if(l==='Academy')return `<button data-act="goLibrary" ${'aria-current="page"'}>${ic(i)}<span>${l}</span><span class="grow"></span></button>`+ACADEMY_SUB.map(s=>`<button class="sub" data-act="${s==='Library'?'goLibrary':'stub'}" data-what="${esc(s)}" ${s==='Library'?'aria-current="page"':''}>${s}</button>`).join('');
+     return `<button data-act="stub" data-what="${l}">${ic(i)}<span>${l}</span></button>`}).join('')}
+  </div>
+  <div class="railfoot nav">
+   <button data-act="stub" data-what="Settings">${ic('gear')}<span>Settings</span></button>
+   <button data-act="stub" data-what="Help &amp; Legal">${ic('help')}<span><span class="lbl-long">Help &amp; Legal</span><span class="sr">Help and legal</span></span></button>
+   <div class="synced">Synced · just now</div>
+  </div>`;
+ $('#tabbar').innerHTML=[['home','Home','stub'],['cal','Schedule','stub'],['box','Academy','goLibrary'],['bell','Inbox','stub'],['more','More','more']]
+  .map(([i,l,a])=>`<button data-act="${a}" data-what="${l}" ${l==='Academy'?'aria-current="page"':''}>${ic(i==='more'?'more':i)}<span>${l}</span></button>`).join('');
+ $('#strip').innerHTML=`<span><b>Mockup</b> with sample data. Nothing is saved to a server.</span><span class="lnk"><button class="linkbtn" data-act="notes">What got simpler</button><button class="linkbtn" data-act="reset">Reset demo</button></span>`;
+}
+const logo=()=>`<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M26 9.5A12 12 0 1 0 26 22.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/></svg>`;
+
+/* ---------- views ---------- */
+function setView(v,opts={}){U.view=v;Object.assign(U,opts);U.nameErr=false;const task=v!=='library';$('#app').classList.toggle('task',task);document.body.classList.toggle('task',task);closeOverlay(true);render();window.scrollTo(0,0);if(!$('#view').contains(document.activeElement))$('#view').focus({preventScroll:true})}
+function render(){const v=$('#view');
+ v.innerHTML=({library:viewLibrary,create:viewCreate,editor:viewEditor,done:viewDone})[U.view]();
+ if(U.focusKey){const el=v.querySelector(`[data-key="${CSS.escape(U.focusKey)}"]`);if(el){el.focus({preventScroll:false});if(el.select&&U.focusSelect)el.select()}U.focusKey=null;U.focusSelect=false}
+}
+
+/* Library list */
+function viewLibrary(){
+ const head=`<div class="pagehead"><div><h1>Library</h1><p class="sub">Define the skills you coach in each sport</p></div>
+  <div class="actions"><button class="btn" data-act="stub" data-what="Suggestions">${ic('inbox')}Suggestions <span class="badge">3</span></button><button class="btn" data-act="stub" data-what="Library settings">${ic('gear')}Library settings</button><button class="btn pri" data-act="create">${ic('plus')}Create library</button></div></div>`;
+ const intro=`<div class="info">${ic('info')}<p>A library is the coaching syllabus for one sport. Every program in that sport plans its sessions from the library’s sub-skills, drills and homework.</p></div>`;
+ if(U.loading)return head+intro+`<div class="card libs" aria-busy="true" aria-label="Loading libraries"><div class="skel"></div><div class="skel"></div></div>`;
+ if(!S.libs.length)return head+`<div class="card libs"><div class="empty">${ic('book')}<h2>No libraries yet</h2><p>Create your first library in about a minute. You choose a sport, start from a ready-made syllabus, and change whatever you like.</p><ol><li>Pick a sport</li><li>Edit the skills</li><li>Publish</li></ol><button class="btn pri" data-act="create">${ic('plus')}Create your first library</button></div></div>`;
+ const rows=S.libs.map(l=>{const t=l.status==='Published'?l.tree:l.tree,c=counts(t),p=pending(l);
+  const used=l.programs.length?plural(l.programs.length,'program'):'Not used yet';
+  const pill=l.status==='Published'?`<span class="pill ok">${ic('check','sm')}Published · v${l.version}</span>`:`<span class="pill draft"><span class="dot"></span>Draft</span>`;
+  return `<li class="lib"><div class="who"><span class="sport" aria-hidden="true">${esc(l.sport[0])}</span><div style="min-width:0"><button class="nm" data-act="open" data-id="${l.id}">${esc(l.name)}</button><div class="meta">${plural(c.areas,'skill area')} · ${plural(c.families,'skill family','skill families')} · ${plural(c.skills,'sub-skill')}</div></div></div>
+   <div class="used meta" style="color:var(--muted)">${used}</div>
+   <div class="stat">${pill}${p.total?`<span class="pill warn">${plural(p.total,'unpublished change')}</span>`:''}</div>
+   <button class="btn open" data-act="open" data-id="${l.id}">${l.status==='Published'?'Edit':'Continue setup'}<span class="sr"> ${esc(l.name)}</span></button>
+   <button class="icbtn" data-act="menu" data-kind="lib" data-id="${l.id}" aria-haspopup="menu" aria-expanded="false" aria-label="More actions for ${esc(l.name)}">${ic('dots')}</button></li>`}).join('');
+ return head+intro+`<ul class="card libs">${rows}</ul>`;
+}
+
+/* Create: ONE screen, every choice preselected */
+function createState(){if(!U.create){const free=SPORTS.filter(s=>!S.libs.some(l=>l.sport===s));U.create={sport:free[0]||null,start:free[0]&&TEMPLATES[free[0]]?'template':'blank',copyFrom:S.libs[0]?.id||'',name:'',nameTouched:false}}return U.create}
+function viewCreate(){const c=createState();
+ const free=s=>!S.libs.some(l=>l.sport===s);
+ const hasT=c.sport&&TEMPLATES[c.sport];
+ if(c.start==='template'&&!hasT)c.start='blank';
+ if(!c.nameTouched)c.name=c.sport?`${c.sport} Library`:'';
+ const sportCards=SPORTS.map(s=>`<label class="choice"><input type="radio" name="sport" value="${s}" ${c.sport===s?'checked':''} ${free(s)?'':'disabled'}><span class="radio"></span><span><span class="t">${s}</span>${free(s)?'':'<span class="d">Already has a library</span>'}</span></label>`).join('');
+ const startCard=(v,t,d,rec,dis)=>`<label class="choice"><input type="radio" name="start" value="${v}" ${c.start===v?'checked':''} ${dis?'disabled':''}><span class="radio"></span><span><span class="t">${t}${rec?'<span class="pill ok rec">Recommended</span>':''}</span><span class="d">${d}</span></span></label>`;
+ const tc=hasT?counts(TEMPLATES[c.sport]()):null;
+ const err=c.nameErr?`<span class="err" id="nameerr">${ic('alert','sm')}${c.nameErr}</span>`:'';
+ const btnLabel=c.sport?`Create ${esc(c.name.trim()||c.sport+' Library')}`:'Create library';
+ return `<div class="wrap"><div class="taskhead"><button class="icbtn" data-act="exitCreate" aria-label="Close and go back to Library" style="border:1px solid var(--control)">${ic('x')}</button><div class="ttl"><h1>Create a library</h1></div></div>
+  <p class="meta" style="font-size:var(--t-base)">A library is the coaching syllabus for one sport. You can change everything later.</p>
+  <div class="q" role="radiogroup" aria-labelledby="q1"><h2 id="q1">1. Which sport?</h2><div class="choices sports">${sportCards}</div>${SPORTS.every(s=>!free(s))?'<p class="hint" style="margin-top:8px">Every sport you offer already has a library. Add a sport in Academy settings to create another.</p>':''}</div>
+  <div class="q" role="radiogroup" aria-labelledby="q2"><h2 id="q2">2. How do you want to start?</h2><div class="choices startopts">
+   ${startCard('template',hasT?`Ready-made ${c.sport} syllabus`:'Ready-made syllabus',hasT?`${plural(tc.areas,'skill area')}, ${plural(tc.families,'skill family','skill families')} and ${plural(tc.skills,'sub-skill')} to change as you like. <i>[Sample content]</i>`:'Not available for this sport yet.',hasT,!hasT)}
+   ${startCard('copy','Copy one of my libraries','Start from a library you already have, then change what’s different.',false,!S.libs.length)}
+   ${c.start==='copy'?`<div class="sub-q field"><label for="copyfrom">Copy which library?</label><select id="copyfrom" class="inp" data-f="copyFrom">${S.libs.map(l=>`<option value="${l.id}" ${c.copyFrom===l.id?'selected':''}>${esc(l.name)}</option>`).join('')}</select></div>`:''}
+   ${startCard('blank','Start empty','You add the skill areas yourself. We guide you as you go.',false,false)}
+  </div></div>
+  <div class="q field"><label for="libname">3. Library name</label><input id="libname" class="inp" data-f="name" value="${esc(c.name)}" autocomplete="off" ${c.nameErr?'aria-invalid="true" aria-describedby="nameerr"':''}><span class="hint">Coaches see this name when they plan sessions.</span>${err}</div>
+  <div class="createbar"><button class="btn pri" data-act="doCreate" ${c.sport?'':'aria-disabled="true"'}>${btnLabel}</button><button class="btn" data-act="exitCreate">Cancel</button><span class="meta">Takes you straight to your skills. Your work is saved as you go.</span></div></div>`;
+}
+
+/* Editor */
+const addRow=(key,label,ph,btn)=>`<form class="addrow" data-form="add" data-key-name="${key}"><label class="sr" for="in-${key}">${esc(label)}</label><input id="in-${key}" class="inp" data-key="${key}" data-draft="${key}" placeholder="${esc(ph)}" autocomplete="off" value="${esc(U.drafts[key]||'')}"><button class="btn" type="submit">${ic('plus','sm')}${btn}</button></form>`;
+function chips(s){const t=tagSummary(s);if(!t.length)return '';return (s.ages.length?`<span class="tagchip">${s.ages.map(esc).join(', ')}</span>`:'')+(s.levels.length?`<span class="tagchip">${s.levels.map(x=>`<span class="lvdot" style="background:var(${LV_VAR[x]})"></span>`).slice(0,4).join('')}${s.levels.map(esc).join(', ')}</span>`:'')}
+function skillRow(s,f){const n=[];if(s.drills.length)n.push(plural(s.drills.length,'drill'));if(s.homework.length)n.push(plural(s.homework.length,'homework item'));
+ return `<li class="skill"><button class="skill-btn" data-act="openSkill" data-id="${s.id}"><span class="sn">${esc(s.name)}${U.newIds.has(s.id)?' <span class="newtag">New</span>':''}</span>${chips(s)}<span class="meta">${n.join(' · ')}</span></button><button class="icbtn" data-act="menu" data-kind="skill" data-id="${s.id}" aria-haspopup="menu" aria-expanded="false" aria-label="More actions for ${esc(s.name)}">${ic('dots')}</button></li>`}
+function famHTML(a,f){return `<div class="fam"><div class="fam-h"><h3>${esc(f.name)}${U.newIds.has(f.id)?' <span class="newtag">New</span>':''}</h3><span class="meta">${plural(f.skills.length,'sub-skill')}</span><button class="icbtn" data-act="menu" data-kind="fam" data-id="${f.id}" aria-haspopup="menu" aria-expanded="false" aria-label="More actions for skill family ${esc(f.name)}">${ic('dots')}</button></div>
+  ${f.skills.length?`<ul class="skills">${f.skills.map(s=>skillRow(s,f)).join('')}</ul>`:`<p class="noskill">No sub-skills yet. Type the first one below.</p>`}
+  ${addRow('skl:'+f.id,'Add a sub-skill to '+f.name,'Add a sub-skill, e.g. Forward defense','Add')}</div>`}
+function areaHTML(a){const o=U.open.has(a.id),c=counts([a]);
+ return `<section class="card area"><div class="area-h"><button class="tog" data-act="toggle" data-id="${a.id}" aria-expanded="${o}" aria-controls="p-${a.id}"><span class="chev">${ic('chev')}</span><span class="nm">${esc(a.name)}${U.newIds.has(a.id)?' <span class="newtag">New</span>':''}</span><span class="meta">${plural(a.families.length,'skill family','skill families')} · ${plural(c.skills,'sub-skill')}</span></button>
+  <button class="icbtn" data-act="menu" data-kind="area" data-id="${a.id}" aria-haspopup="menu" aria-expanded="false" aria-label="More actions for skill area ${esc(a.name)}">${ic('dots')}</button></div>
+  <div class="area-b" id="p-${a.id}" ${o?'':'hidden'}>${a.families.length?a.families.map(f=>famHTML(a,f)).join(''):`<p class="noskill">A skill area holds skill families. Add the first one, e.g. “Defense” inside Batting.</p>`}
+  ${addRow('fam:'+a.id,'Add a skill family to '+a.name,'Add a skill family, e.g. Defense','Add')}</div></section>`}
+function readiness(l){const c=counts(working(l));const ok=c.skills>0;return{ok,c,msg:ok?'Ready to publish':(c.areas?'Add at least one sub-skill to publish.':'Add a skill area and one sub-skill to publish.')}}
+function viewEditor(){const l=cur();if(!l)return viewLibrary();const t=working(l),r=readiness(l),p=pending(l),pub=l.status==='Published';
+ const help=S.hideHelp?'':`<div class="card help"><div class="row"><h2>How a library is organised</h2><button class="icbtn" data-act="hideHelp" aria-label="Hide this explanation">${ic('x')}</button></div>
+  <div class="chain" aria-label="Example: Batting, then Defense, then Forward defense"><span class="c"><b>Skill area</b>Batting</span>${ic('chev','sm')}<span class="c"><b>Skill family</b>Defense</span>${ic('chev','sm')}<span class="c"><b>Sub-skill</b>Forward defense</span></div>
+  <p class="meta" style="font-size:var(--t-base)">Type a name and press Enter to add it. Drills, homework and age groups are optional. Open a sub-skill any time to add them.</p></div>`;
+ const body=t.length?`<div class="outline">${t.map(areaHTML).join('')}</div><div class="card areaadd"><label class="lbl" for="in-area">Add another skill area</label>${addRow('area','Add a skill area','Add a skill area, e.g. Bowling','Add')}</div>`
+  :`<div class="card firstrun"><h2>Start with your first skill area</h2><p class="meta" style="font-size:var(--t-base)">A skill area is a big topic you coach, like Batting or Passing. You add skill families and sub-skills inside it next.</p>${addRow('area','Add a skill area','Add a skill area, e.g. Batting','Add skill area')}</div>`;
+ const saveTxt=`<span class="saved">${ic('check','sm')}Saved as a draft</span>`;
+ const sum=`<dl><dt>Skill areas</dt><dd>${r.c.areas}</dd><dt>Skill families</dt><dd>${r.c.families}</dd><dt>Sub-skills</dt><dd>${r.c.skills}</dd><dt>Drills</dt><dd>${r.c.drills}</dd><dt>Homework</dt><dd>${r.c.homework}</dd></dl>`;
+ const pubBtn=(cls)=>`<button class="btn pri ${cls}" data-act="publish" ${r.ok?'':'aria-disabled="true" aria-describedby="why"'}>${pub?'Review and publish':'Publish library'}</button>`;
+ return `<div class="wrap wide"><div class="taskhead"><button class="icbtn" data-act="exitEditor" aria-label="Close editor and go back to Library" style="border:1px solid var(--control)">${ic('x')}</button>
+  <div class="ttl"><h1>${esc(l.name)}</h1><div class="meta">${pub?`Editing a copy of v${l.version}. Programs keep using v${l.version} until you publish.`:'Draft, not published yet'} · ${saveTxt}</div></div>
+  <button class="icbtn" data-act="menu" data-kind="editor" data-id="${l.id}" aria-haspopup="menu" aria-expanded="false" aria-label="Library options" style="border:1px solid var(--control)">${ic('dots')}</button></div>
+  <div class="editor"><div>${help}${body}</div>
+  <aside class="card sumcard" aria-label="Library summary"><h2>Your library</h2>${sum}${p.total?`<p class="meta">${plural(p.total,'change')} since v${l.version}</p>`:''}
+   <div class="ready ${r.ok?'ok':'no'}" id="why">${ic(r.ok?'check':'info')}<span>${r.msg}</span></div>${pubBtn('block')}</aside></div></div>
+ <div class="stickybar"><div class="txt"><b>${plural(r.c.skills,'sub-skill')}</b><span id="why2">${r.msg}</span></div>${pubBtn('')}</div>`;
+}
+function viewDone(){const l=cur(),c=counts(l.tree),pu=U.justPublished||{};
+ return `<div class="done"><div class="big">${ic('check')}</div><h1>${esc(l.name)} is live</h1>
+  <p>${pu.asked?`Version ${l.version} is published. ${plural(pu.asked,'program')} ${pu.asked===1?'was':'were'} asked to update. Nothing changes in a program until its coach accepts.`:`Version ${l.version} is published. Programs in ${esc(l.sport)} can now plan sessions from it.`}</p>
+  <div class="stats"><div><b>${c.areas}</b><span class="meta">skill areas</span></div><div><b>${c.skills}</b><span class="meta">sub-skills</span></div><div><b>${c.drills}</b><span class="meta">drills</span></div><div><b>${c.homework}</b><span class="meta">homework</span></div></div>
+  <div class="doneacts"><button class="btn pri" data-act="stub" data-what="Add to a program">Add it to a program</button><button class="btn" data-act="access" data-id="${l.id}">Choose who can edit it</button><button class="btn quiet" data-act="goLibrary">Back to Library</button></div></div>`}
+
+/* ---------- overlays: drawer, dialogs, menus, toasts ---------- */
+function closeOverlay(silent){$('#overlay').innerHTML='';U.overlay=null;U.form=null;closeMenu();if(!silent&&U.returnFocus&&document.contains(U.returnFocus)){U.returnFocus.focus()}if(!silent)U.returnFocus=null}
+function openOverlay(html,opts={}){const ae=document.activeElement;U.returnFocus=(ae&&ae!==document.body)?ae:U.lastTrigger;const o=$('#overlay');o.innerHTML=html;U.overlay=opts.type||'dialog';
+ const first=o.querySelector('[data-autofocus]')||o.querySelector('input,select,textarea,button');if(first)first.focus()}
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'){if(U.menuEl){closeMenu(true);e.preventDefault();return}if(U.overlay){e.preventDefault();U.overlay==='skill'?closeSkill():closeOverlay()}}
+ if(e.key==='Tab'&&U.overlay){const box=$('#overlay .drawer, #overlay .modal');if(!box)return;const f=[...box.querySelectorAll('button:not([disabled]),input,select,textarea,[tabindex="0"]')].filter(x=>x.offsetParent!==null);if(!f.length)return;const a=f[0],z=f[f.length-1];
+  if(!box.contains(document.activeElement)){a.focus();e.preventDefault()}else if(e.shiftKey&&document.activeElement===a){z.focus();e.preventDefault()}else if(!e.shiftKey&&document.activeElement===z){a.focus();e.preventDefault()}}
+ if(U.menuEl&&(e.key==='ArrowDown'||e.key==='ArrowUp')){const b=[...U.menuEl.querySelectorAll('button')];const i=b.indexOf(document.activeElement);b[(i+(e.key==='ArrowDown'?1:-1)+b.length)%b.length].focus();e.preventDefault()}
+});
+function dialog({title,body,actions,wide}){return `<div class="scrim" data-act="scrim"></div><div class="modal" role="dialog" aria-modal="true" aria-labelledby="dlg-t"><div class="md-h"><h2 id="dlg-t">${title}</h2><button class="icbtn" data-act="closeDlg" aria-label="Close">${ic('x')}</button></div><div class="md-b">${body}</div><div class="md-f">${actions}</div></div>`}
+function toast(msg,undo){const box=$('#toasts');const el=document.createElement('div');el.className='toast';el.innerHTML=`<span>${msg}</span>${undo?'<button type="button">Undo</button>':''}`;box.appendChild(el);
+ const kill=()=>el.remove();if(undo)el.querySelector('button').onclick=()=>{undo();kill()};setTimeout(kill,undo?9000:4500)}
+const stub=w=>toast(`${w} isn’t part of this mockup. It stays as in the current design.`);
+
+/* menus */
+function closeMenu(refocus){if(U.menuEl){U.menuEl.remove();U.menuEl=null;if(U.menuBtn){U.menuBtn.setAttribute('aria-expanded','false');if(refocus)U.menuBtn.focus()}U.menuBtn=null}}
+function openMenu(btn,items){closeMenu();const m=document.createElement('div');m.className='menu';m.setAttribute('role','menu');
+ m.innerHTML=items.map((it,i)=>`<button role="menuitem" data-i="${i}" ${it.disabled?'aria-disabled="true"':''} class="${it.danger?'danger':''}">${it.label}${it.note?`<small>${it.note}</small>`:''}</button>`).join('');
+ document.body.appendChild(m);const r=btn.getBoundingClientRect();const w=m.offsetWidth,h=m.offsetHeight;
+ m.style.left=Math.max(8,Math.min(r.right-w,innerWidth-w-8))+'px';m.style.top=(r.bottom+h+8>innerHeight?Math.max(8,r.top-h-4):r.bottom+4)+'px';
+ m.onclick=e=>{const b=e.target.closest('button');if(!b)return;const it=items[+b.dataset.i];if(it.disabled)return;U.lastTrigger=U.menuBtn;closeMenu();it.run()};
+ U.menuEl=m;U.menuBtn=btn;btn.setAttribute('aria-expanded','true');m.querySelector('button').focus()}
+
+function menuItems(kind,id){
+ if(kind==='lib'){const l=lib(id);return [
+  {label:l.status==='Published'?'Edit':'Continue setup',run:()=>openLib(id)},
+  {label:'Who can edit',run:()=>openAccess(id)},
+  {label:'Use as a template',note:'Start a new library from this one',run:()=>{U.create=null;createState();const c=U.create;if(c.sport){c.start='copy';c.copyFrom=id}setView('create')}},
+  l.programs.length?{label:'Archive',note:`Used by ${plural(l.programs.length,'program')}. Remove it from them first.`,disabled:true}:{label:'Archive',danger:true,run:()=>{const i=S.libs.indexOf(l);S.libs.splice(i,1);persist();render();toast(`${esc(l.name)} archived.`,()=>{S.libs.splice(i,0,l);persist();render()})}}]}
+ if(kind==='editor'){const l=cur(),p=pending(l);return [
+  {label:'Rename library',run:()=>promptDialog('Rename library','Library name',l.name,'Save',v=>{l.name=v;persist();render()})},
+  ...(l.status==='Published'?[{label:'Discard changes',danger:true,disabled:!p.total,note:p.total?`${plural(p.total,'change')} will be lost. v${l.version} stays as it is.`:'No changes yet',run:()=>confirmDialog(`Discard ${plural(p.total,'change')}?`,`The changes you made to ${esc(l.name)} are lost. Programs keep using v${l.version}.`,'Discard changes',()=>{l.draft=null;U.newIds.clear();persist();render();toast('Changes discarded.')})}]
+  :[{label:'Delete this draft',danger:true,run:()=>confirmDialog(`Delete ${esc(l.name)}?`,'This draft is deleted and can’t be brought back. No program uses it.','Delete draft',()=>{S.libs=S.libs.filter(x=>x!==l);persist();setView('library');toast('Draft deleted.')})}])]}
+ const l=cur(),t=working(l);
+ if(kind==='area'){const a=t.find(x=>x.id===id);return [
+  {label:'Rename',run:()=>promptDialog('Rename skill area','Skill area name',a.name,'Save',v=>{a.name=v;touch()})},
+  {label:'Remove skill area',danger:true,note:`Its ${plural(a.families.length,'skill family','skill families')} go with it`,run:()=>{const i=t.indexOf(a);t.splice(i,1);touch();toast(`${esc(a.name)} removed.`,()=>{t.splice(i,0,a);touch()})}}]}
+ if(kind==='fam'){const {a,f}=findFam(t,id);return [
+  {label:'Rename',run:()=>promptDialog('Rename skill family','Skill family name',f.name,'Save',v=>{f.name=v;touch()})},
+  {label:'Remove skill family',danger:true,note:`Its ${plural(f.skills.length,'sub-skill')} go with it`,run:()=>{const i=a.families.indexOf(f);a.families.splice(i,1);touch();toast(`${esc(f.name)} removed.`,()=>{a.families.splice(i,0,f);touch()})}}]}
+ if(kind==='skill'){const {f,s}=findSkill(t,id);return [
+  {label:'Open details',run:()=>openSkill(id)},
+  {label:'Remove sub-skill',danger:true,note:l.status==='Published'&&l.programs.length?`Programs use this library. They see the change only after you publish.`:'',run:()=>{const i=f.skills.indexOf(s);f.skills.splice(i,1);touch();toast(`${esc(s.name)} removed.`,()=>{f.skills.splice(i,0,s);touch()})}}]}
+ return []}
+
+function promptDialog(title,label,value,cta,ok){openOverlay(dialog({title,body:`<form id="pf" class="field"><label for="pv">${label}</label><input id="pv" class="inp" value="${esc(value)}" data-autofocus autocomplete="off"><span class="err" id="pe" hidden>${ic('alert','sm')}Type a name to continue.</span></form>`,actions:`<button class="btn" data-act="closeDlg">Cancel</button><button class="btn pri" data-act="promptOk">${cta}</button>`}));
+ U.prompt={ok};const f=$('#pf');f.onsubmit=e=>{e.preventDefault();promptOkRun()};$('#pv').select()}
+function promptOkRun(){const v=$('#pv').value.trim();if(!v){$('#pe').hidden=false;$('#pv').setAttribute('aria-invalid','true');$('#pv').focus();return}const ok=U.prompt.ok;closeOverlay();ok(v)}
+function confirmDialog(title,text,cta,run){openOverlay(dialog({title,body:`<p>${text}</p>`,actions:`<button class="btn" data-act="closeDlg" data-autofocus>Cancel</button><button class="btn danger" data-act="confirmOk">${cta}</button>`}));U.confirm=run}
+
+/* touch = any change in the editor */
+function touch(){const l=cur();if(l.status==='Published'&&l.draft&&!diff(l.tree,l.draft).total){/* back to identical */}persist();if(U.overlay==='skill')refreshSkill();render()}
+
+/* ---------- sub-skill drawer (all optional except the name) ---------- */
+function openSkill(id){U.skillId=id;U.form=null;U.targetOpen=null;openOverlay(skillHTML(),{type:'skill'})}
+function refreshSkill(){const d=$('#overlay .drawer');if(!d)return;const st=d.querySelector('.dr-b').scrollTop;const ae=document.activeElement;let sel=null;
+ if(ae&&d.contains(ae)){sel=ae.id?'#'+ae.id:(ae.dataset.act?`[data-act="${ae.dataset.act}"]`+(ae.dataset.kind?`[data-kind="${ae.dataset.kind}"]`:'')+(ae.dataset.v?`[data-v="${ae.dataset.v}"]`:'')+(ae.dataset.id?`[data-id="${ae.dataset.id}"]`:''):null)}
+ $('#overlay').innerHTML=skillHTML();const nd=$('#overlay .drawer');nd.querySelector('.dr-b').scrollTop=st;
+ const t=(sel&&nd.querySelector(sel))||nd.querySelector('[data-autofocus]')||nd.querySelector('.dr-h .icbtn');t&&t.focus()}
+function skillHTML(){const l=cur(),t=working(l),x=findSkill(t,U.skillId);if(!x){return ''}const {a,f,s}=x;
+ const targeted=s.ages.length||s.levels.length||U.targetOpen===s.id;
+ const f1=U.form;
+ const drillItems=s.drills.map(d=>f1&&f1.kind==='drill'&&f1.id===d.id?miniForm('drill'):`<li class="item"><div class="tx"><b>${esc(d.name)}</b><span class="meta">${d.mins} min${d.how?' · '+esc(d.how.length>70?d.how.slice(0,70)+'…':d.how):''}</span></div><button class="icbtn" data-act="editItem" data-kind="drill" data-id="${d.id}" aria-label="Edit drill ${esc(d.name)}">${ic('pencil')}</button><button class="icbtn" data-act="delItem" data-kind="drill" data-id="${d.id}" aria-label="Remove drill ${esc(d.name)}">${ic('trash')}</button></li>`).join('');
+ const hwItems=s.homework.map(h=>f1&&f1.kind==='hw'&&f1.id===h.id?miniForm('hw'):`<li class="item"><div class="tx"><b>${esc(h.what)}</b><span class="meta">${esc(h.freq)} · ${h.mins} min</span></div><button class="icbtn" data-act="editItem" data-kind="hw" data-id="${h.id}" aria-label="Edit homework ${esc(h.what)}">${ic('pencil')}</button><button class="icbtn" data-act="delItem" data-kind="hw" data-id="${h.id}" aria-label="Remove homework ${esc(h.what)}">${ic('trash')}</button></li>`).join('');
+ const err=U.nameErr?`<span class="err" id="sn-e">${ic('alert','sm')}Give this sub-skill a name.</span>`:'';
+ return `<div class="scrim" data-act="closeSkill"></div><div class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-t">
+  <div class="dr-h"><button class="icbtn" data-act="closeSkill" aria-label="Back to the skill list" style="border:1px solid var(--control)">${ic('back')}</button><div style="flex:1;min-width:0"><h2 id="dr-t">Sub-skill details</h2><p class="meta">In ${esc(a.name)} › ${esc(f.name)}</p></div></div>
+  <div class="dr-b">
+   <div class="field"><label for="sname">Sub-skill name <span aria-hidden="true">*</span><span class="sr">(required)</span></label><input id="sname" class="inp" data-f="skname" value="${esc(s.name)}" ${U.nameErr?'aria-invalid="true" aria-describedby="sn-e"':''} autocomplete="off">${err}</div>
+   <fieldset class="field" style="border:0;padding:0;margin:0"><legend class="lbl" style="padding:0">Who is it for?</legend>
+    <div class="chips" role="radiogroup" aria-label="Who is it for?"><button class="tchip" role="radio" aria-checked="${!targeted}" aria-pressed="${!targeted}" data-act="forAll">Everyone</button><button class="tchip" role="radio" aria-checked="${!!targeted}" aria-pressed="${!!targeted}" data-act="forSome">Only certain groups</button></div>
+    ${targeted?`<div class="field" style="margin-top:8px"><span class="lbl">Age groups <span class="opt">(pick any)</span></span><div class="chips">${AGES.map(g=>`<button class="tchip" aria-pressed="${s.ages.includes(g)}" data-act="tagAge" data-v="${g}">${g}</button>`).join('')}</div></div>
+    <div class="field" style="margin-top:8px"><span class="lbl">Skill levels <span class="opt">(pick any)</span></span><div class="chips">${LEVELS.map(g=>`<button class="tchip" aria-pressed="${s.levels.includes(g)}" data-act="tagLv" data-v="${g}"><span class="lvdot" style="background:var(${LV_VAR[g]})"></span>${g}</button>`).join('')}</div></div>
+    <p class="hint">Using the usual age groups and levels. Change them in Library settings.</p>`:`<p class="hint">Shown to every age group and skill level. Choose “Only certain groups” to narrow it.</p>`}
+   </fieldset>
+   <section class="sec" aria-labelledby="h-dr"><h3 id="h-dr">${ic('run')}Drills <span class="opt">(optional)</span><span class="badge">${s.drills.length}</span></h3><p class="hint">What coaches run in a session to practise this sub-skill.</p>
+    ${s.drills.length?`<ul style="display:flex;flex-direction:column;gap:8px">${drillItems}</ul>`:''}
+    ${f1&&f1.kind==='drill'&&f1.id===null?miniForm('drill'):`<div><button class="btn" data-act="addItem" data-kind="drill">${ic('plus','sm')}Add a drill</button></div>`}</section>
+   <section class="sec" aria-labelledby="h-hw"><h3 id="h-hw">${ic('clip')}Homework <span class="opt">(optional)</span><span class="badge">${s.homework.length}</span></h3><p class="hint">Practice athletes do at home after a session.</p>
+    ${s.homework.length?`<ul style="display:flex;flex-direction:column;gap:8px">${hwItems}</ul>`:''}
+    ${f1&&f1.kind==='hw'&&f1.id===null?miniForm('hw'):`<div><button class="btn" data-act="addItem" data-kind="hw">${ic('plus','sm')}Add homework</button></div>`}</section>
+  </div>
+  <div class="dr-f"><button class="btn danger" data-act="removeSkillBtn" aria-label="Remove this sub-skill">${ic('trash','sm')}Remove</button><button class="btn pri" data-act="closeSkill">Done</button></div></div>`}
+function miniForm(kind){const f=U.form,drill=kind==='drill';
+ return `<form class="miniform" data-form="item" aria-label="${drill?'Drill':'Homework'} details">
+  <div class="field"><label for="m1">${drill?'Drill name':'What should athletes do?'} <span aria-hidden="true">*</span><span class="sr">(required)</span></label>${drill?`<input id="m1" class="inp" data-f="m1" value="${esc(f.v1)}" autocomplete="off" ${f.err?'aria-invalid="true" aria-describedby="m1e"':''} data-autofocus>`:`<textarea id="m1" class="inp" data-f="m1" ${f.err?'aria-invalid="true" aria-describedby="m1e"':''} data-autofocus>${esc(f.v1)}</textarea>`}${f.err?`<span class="err" id="m1e">${ic('alert','sm')}${drill?'Give the drill a name.':'Say what athletes should do.'}</span>`:''}</div>
+  <div class="two"><div class="field"><label for="m2">Minutes</label><input id="m2" class="inp" type="number" min="1" max="180" inputmode="numeric" data-f="m2" value="${esc(f.v2)}"></div>
+  ${drill?'':`<div class="field"><label for="m4">How often</label><select id="m4" class="inp" data-f="m4">${['Once a week','2 times a week','3 times a week','Daily'].map(o=>`<option ${f.v4===o?'selected':''}>${o}</option>`).join('')}</select></div>`}</div>
+  ${drill?`<div class="field"><label for="m3">How to run it <span class="opt">(optional)</span></label><textarea id="m3" class="inp" data-f="m3">${esc(f.v3)}</textarea></div>`:''}
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" type="submit">Save ${drill?'drill':'homework'}</button><button class="btn" type="button" data-act="cancelItem">Cancel</button></div></form>`}
+function closeSkill(){const l=cur(),x=findSkill(working(l),U.skillId);if(x&&!x.s.name.trim()){U.nameErr=true;refreshSkill();$('#sname')?.focus();return}U.nameErr=false;U.form=null;const sid=U.skillId;closeOverlay(true);render();document.querySelector(`[data-act="openSkill"][data-id="${sid}"]`)?.focus()}
+
+/* access dialog (lean) */
+function openAccess(id){const l=lib(id);U.accessId=id;
+ openOverlay(dialog({title:`Who can edit ${esc(l.name)}?`,body:`<div class="field"><label for="ed">Editor <span class="opt">(can change and publish)</span></label><select id="ed" class="inp"><option value="">No editor yet. Admins only.</option>${COACHES.map(c=>`<option ${l.editor===c?'selected':''}>${c}</option>`).join('')}</select></div>
+  <fieldset style="border:0;padding:0;margin:0"><legend class="lbl" style="padding:0 0 8px">Coaches who can view and suggest changes</legend><div class="chips">${COACHES.map(c=>`<button class="tchip" aria-pressed="${l.suggesters.includes(c)}" data-act="togSug" data-v="${c}">${c}</button>`).join('')}</div></fieldset>
+  <p class="hint">Coaches are told in their inbox. <i>[Sample names]</i></p>`,actions:`<button class="btn" data-act="closeDlg">Cancel</button><button class="btn pri" data-act="saveAccess">Save</button>`}));U.sug=new Set(l.suggesters)}
+
+/* publish check */
+function openPublish(){const l=cur(),r=readiness(l);
+ if(!r.ok){toast(r.msg);const k=counts(working(l)).areas?document.querySelector('[data-key^="skl:"]'):document.querySelector('[data-key="area"]');(k||$('[data-key]'))?.focus();return}
+ const w=warnings(l),p=pending(l),pub=l.status==='Published',c=r.c;
+ const changes=pub?`<p><b>${plural(p.total,'change')}</b> since v${l.version}: ${[p.add&&`${p.add} added`,p.edit&&`${p.edit} edited`,p.rem&&`${p.rem} removed`].filter(Boolean).join(', ')||'none'}.</p>`:'';
+ const progs=pub&&l.programs.length?`<div class="info">${ic('info')}<p><b>${plural(l.programs.length,'program')}</b> use this library (${l.programs.slice(0,2).map(esc).join(', ')}${l.programs.length>2?` and ${l.programs.length-2} more`:''}). They are asked to update to v${l.version+1}. Nothing changes for them until they accept.</p></div>`:'';
+ const wl=w.length?`<div><p class="lbl" style="margin-bottom:8px">Worth a look, but you can still publish</p><div style="display:flex;flex-direction:column;gap:8px">${w.map(x=>`<div class="chk warn">${ic('alert')}<span>${x}</span></div>`).join('')}</div></div>`:`<div class="chk" style="color:var(--brand-text)">${ic('check')}<span>Nothing to fix. Everything looks complete.</span></div>`;
+ openOverlay(dialog({title:pub?`Publish v${l.version+1} of ${esc(l.name)}?`:`Publish ${esc(l.name)}?`,
+  body:`<p>${plural(c.areas,'skill area')}, ${plural(c.families,'skill family','skill families')}, ${plural(c.skills,'sub-skill')}, ${plural(c.drills,'drill')}, ${plural(c.homework,'homework item')}.</p>${changes}${progs}${wl}`,
+  actions:`<button class="btn" data-act="closeDlg">Keep editing</button><button class="btn pri" data-act="publishNow" data-autofocus>${pub?`Publish v${l.version+1}`:'Publish library'}</button>`}));}
+function publishNow(){const l=cur();const asked=l.status==='Published'?l.programs.length:0;
+ if(l.status==='Published'){l.tree=l.draft||l.tree;l.draft=null}
+ l.status='Published';l.version=(l.version||0)+1;U.newIds.clear();persist();U.justPublished={asked};closeOverlay(true);setView('done')}
+
+/* ---------- flows ---------- */
+function openLib(id){const l=lib(id);U.libId=id;U.open=new Set();const t=working(l);if(t[0])U.open.add(t[0].id);U.newIds.clear();U.drafts={};setView('editor')}
+function doCreate(){const c=createState();const nm=c.name.trim();
+ if(!c.sport)return;if(!nm){c.nameErr='Give the library a name.';render();$('#libname').focus();return}
+ let t=[];if(c.start==='template')t=TEMPLATES[c.sport]();else if(c.start==='copy'){const src=lib(c.copyFrom);t=src?cloneFresh(src.tree):[]}
+ const l={id:rid(),sport:c.sport,name:nm,status:'Draft',version:0,tree:t,draft:null,programs:[],editor:'',suggesters:[]};S.libs.push(l);persist();U.create=null;U.libId=l.id;U.open=new Set(t[0]?[t[0].id]:[]);U.drafts={};
+ setView('editor',{focusKey:t.length?null:'area'});
+ toast(`${esc(nm)} created. It saves as you go.`)}
+function cloneFresh(t){const c=clone(t);c.forEach(a=>{a.id=rid();a.families.forEach(f=>{f.id=rid();f.skills.forEach(s=>{s.id=rid();s.drills.forEach(d=>d.id=rid());s.homework.forEach(h=>h.id=rid())})})});return c}
+function addNamed(key,val){const l=cur(),t=working(l);val=val.trim();if(!val)return false;const [kind,pid]=key.split(':');
+ if(kind==='area'){const a={id:rid(),name:val,families:[]};t.push(a);U.open.add(a.id);U.newIds.add(a.id);U.focusKey='fam:'+a.id}
+ else if(kind==='fam'){const a=t.find(x=>x.id===pid);const f={id:rid(),name:val,skills:[]};a.families.push(f);U.open.add(a.id);U.newIds.add(f.id);U.focusKey='skl:'+f.id}
+ else{const {f}=findFam(t,pid);const s=sk(val);f.skills.push(s);U.newIds.add(s.id);U.focusKey='skl:'+pid}
+ delete U.drafts[key];persist();render();return true}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+ const m=U.menuEl;if(m&&!m.contains(e.target)&&!e.target.closest('[data-act="menu"]'))closeMenu();
+ const el=e.target.closest('[data-act]');if(!el)return;const a=el.dataset.act,id=el.dataset.id;
+ switch(a){
+  case 'stub':stub(el.dataset.what||'This');break;
+  case 'goLibrary':setView('library');break;
+  case 'more':openMore();break;
+  case 'create':U.create=null;createState();setView('create');break;
+  case 'exitCreate':U.create=null;setView('library');break;
+  case 'doCreate':doCreate();break;
+  case 'open':openLib(id);break;
+  case 'exitEditor':{const l=cur();if(l&&l.status==='Published'&&l.draft&&!pending(l).total)l.draft=null;persist();setView('library');if(l&&(l.status==='Draft'||pending(l).total))toast('Saved. You can pick up where you left off.')}break;
+  case 'menu':openMenu(el,menuItems(el.dataset.kind,id));break;
+  case 'toggle':if(U.open.has(id))U.open.delete(id);else U.open.add(id);render();document.querySelector(`[data-act="toggle"][data-id="${id}"]`)?.focus();break;
+  case 'hideHelp':S.hideHelp=true;persist();render();break;
+  case 'openSkill':openSkill(id);break;
+  case 'closeSkill':closeSkill();break;
+  case 'scrim':closeOverlay();break;
+  case 'closeDlg':closeOverlay();break;
+  case 'publish':if(el.getAttribute('aria-disabled')==='true'){openPublish();break}openPublish();break;
+  case 'publishNow':publishNow();break;
+  case 'confirmOk':{const f=U.confirm;closeOverlay(true);f&&f();break}
+  case 'promptOk':promptOkRun();break;
+  case 'forAll':{const s=findSkill(working(cur()),U.skillId).s;s.ages=[];s.levels=[];U.targetOpen=null;touch();break}
+  case 'forSome':U.targetOpen=U.skillId;refreshSkill();break;
+  case 'tagAge':case 'tagLv':{const s=findSkill(working(cur()),U.skillId).s,k=a==='tagAge'?'ages':'levels',v=el.dataset.v;s[k]=s[k].includes(v)?s[k].filter(x=>x!==v):[...s[k],v];U.targetOpen=U.skillId;touch();document.querySelector(`#overlay [data-act="${a}"][data-v="${v}"]`)?.focus();break}
+  case 'addItem':U.form={kind:el.dataset.kind,id:null,v1:'',v2:el.dataset.kind==='drill'?'10':'10',v3:'',v4:'2 times a week'};refreshSkill();$('#m1')?.focus();break;
+  case 'editItem':{const s=findSkill(working(cur()),U.skillId).s;const it=(el.dataset.kind==='drill'?s.drills:s.homework).find(x=>x.id===id);U.form=el.dataset.kind==='drill'?{kind:'drill',id,v1:it.name,v2:String(it.mins),v3:it.how||''}:{kind:'hw',id,v1:it.what,v2:String(it.mins),v4:it.freq};refreshSkill();$('#m1')?.focus();break}
+  case 'cancelItem':U.form=null;refreshSkill();break;
+  case 'delItem':{const s=findSkill(working(cur()),U.skillId).s;const list=el.dataset.kind==='drill'?s.drills:s.homework;const i=list.findIndex(x=>x.id===id);const [it]=list.splice(i,1);touch();toast(`${el.dataset.kind==='drill'?'Drill':'Homework'} removed.`,()=>{list.splice(i,0,it);touch()});break}
+  case 'removeSkillBtn':{const l=cur(),t=working(l),{f,s}=findSkill(t,U.skillId);const i=f.skills.indexOf(s);f.skills.splice(i,1);closeOverlay(true);U.nameErr=false;persist();render();toast(`${esc(s.name||'Sub-skill')} removed.`,()=>{f.skills.splice(i,0,s);persist();render()});break}
+  case 'togSug':{const v=el.dataset.v;U.sug.has(v)?U.sug.delete(v):U.sug.add(v);el.setAttribute('aria-pressed',U.sug.has(v));break}
+  case 'saveAccess':{const l=lib(U.accessId);l.editor=$('#ed').value;l.suggesters=[...U.sug];persist();closeOverlay();const who=[l.editor,...l.suggesters].filter(Boolean);toast(who.length?`Saved. ${who.map(esc).join(', ')} ${who.length===1?'was':'were'} told in their inbox.`:'Saved. Only admins can edit.');break}
+  case 'access':U.libId=el.dataset.id;openAccess(el.dataset.id);break;
+  case 'notes':openNotes();break;
+  case 'reset':confirmDialog('Reset the demo?','Your changes in this mockup are removed and the sample libraries come back.','Reset demo',()=>{S=seed();persist();U.create=null;U.loading=true;setView('library');boot()});break;
+ }
+});
+document.addEventListener('change',e=>{const el=e.target;
+ if(el.name==='sport'){const c=createState();c.sport=el.value;c.start=TEMPLATES[el.value]?(c.start==='copy'?'copy':'template'):(c.start==='template'?'blank':c.start);render();document.querySelector('input[name="sport"]:checked')?.focus()}
+ else if(el.name==='start'){createState().start=el.value;render();document.querySelector('input[name="start"]:checked')?.focus()}
+ else if(el.dataset.f==='copyFrom'){createState().copyFrom=el.value}
+});
+document.addEventListener('input',e=>{const el=e.target,f=el.dataset.f;
+ if(el.dataset.draft)U.drafts[el.dataset.draft]=el.value;
+ if(f==='name'){const c=createState();c.name=el.value;c.nameTouched=true;c.nameErr=null;const b=$('[data-act="doCreate"]');if(b)b.textContent='Create '+(c.name.trim()||(c.sport||'')+' Library')}
+ if(f==='skname'){const s=findSkill(working(cur()),U.skillId).s;s.name=el.value;if(el.value.trim()){U.nameErr=false;el.removeAttribute('aria-invalid');$('#sn-e')?.remove()}persist()}
+ if(U.form&&['m1','m2','m3','m4'].includes(f)){const k={m1:'v1',m2:'v2',m3:'v3',m4:'v4'}[f];U.form[k]=el.value}
+});
+document.addEventListener('focusout',e=>{if(e.target.dataset?.f==='skname'&&U.overlay==='skill'&&!e.target.value.trim()){U.nameErr=true;const er=$('#sn-e');if(!er){e.target.setAttribute('aria-invalid','true');e.target.insertAdjacentHTML('afterend',`<span class="err" id="sn-e">${ic('alert','sm')}Give this sub-skill a name.</span>`)}}});
+document.addEventListener('submit',e=>{const f=e.target;if(!f.dataset.form)return;e.preventDefault();
+ if(f.dataset.form==='add'){const key=f.dataset.keyName;const v=f.querySelector('input').value;if(!v.trim()){toast('Type a name first, then press Enter.');f.querySelector('input').focus();return}addNamed(key,v)}
+ if(f.dataset.form==='item'){const fm=U.form;const s=findSkill(working(cur()),U.skillId).s;if(!fm.v1.trim()){fm.err=true;refreshSkill();$('#m1').focus();return}
+  const mins=Math.max(1,Math.min(180,parseInt(fm.v2,10)||10));
+  if(fm.kind==='drill'){if(fm.id){const d=s.drills.find(x=>x.id===fm.id);Object.assign(d,{name:fm.v1.trim(),mins,how:fm.v3.trim()})}else s.drills.push(dr(fm.v1.trim(),mins,fm.v3.trim()))}
+  else{if(fm.id){const h=s.homework.find(x=>x.id===fm.id);Object.assign(h,{what:fm.v1.trim(),mins,freq:fm.v4})}else s.homework.push(hw(fm.v1.trim(),fm.v4,mins))}
+  U.form=null;touch();const nb=document.querySelector(`#overlay [data-act="addItem"][data-kind="${fm.kind}"]`);nb?.focus()}
+});
+
+/* phone "More": a grouped index, not a drawer of leftovers (N6) */
+function openMore(){const g=(t,items)=>`<div><p class="lbl" style="margin-bottom:4px">${t}</p>${items.map(i=>`<button class="btn quiet block" style="justify-content:flex-start" data-act="${i==='Library'?'goLibrary':'stub'}" data-what="${esc(i)}">${i}</button>`).join('')}</div>`;
+ openOverlay(dialog({title:'More',body:g('Academy',ACADEMY_SUB)+g('Run the business',['People','Bookings','Finance','Insights'])+g('Account',['Settings','Help & Legal']),actions:''}))}
+
+/* what changed */
+function openNotes(){openOverlay(dialog({title:'What got simpler',body:`
+ <p>The current design builds a library through a start pop-up, <b>four wizard steps</b> and a side drawer, with a lot of settings in between. This mockup keeps the same colours and words but removes the detours.</p>
+ <table class="cmp"><thead><tr><th></th><th>Before</th><th>Now</th></tr></thead><tbody>
+ <tr><th>Screens to publish</th><td>Pop-up, 4 steps, drawer</td><td>1 setup page, 1 editor, 1 check</td></tr>
+ <tr><th>Clicks, ready-made start</th><td>about 12 (counted from the attached screens)</td><td>4, no typing</td></tr>
+ <tr><th>Where you can get stuck</th><td>Age groups and levels must be set first</td><td>Usual groups are used. Nothing blocks you.</td></tr>
+ <tr><th>Saving</th><td>Save draft, Next, Back</td><td>Saves as you go. Close any time.</td></tr></tbody></table>
+ <ul class="chglist"><li><b>Every choice is preselected</b> so you can just press Create (Paradox of Choice).</li><li><b>Type and press Enter</b> to add a skill area, family or sub-skill. No drawer for the basics (Hick’s Law).</li><li><b>Optional things stay out of the way.</b> Drills, homework and age groups open only when you want them (Tesler’s Law).</li><li><b>Publish is always in view</b> and says in plain words what is missing (visibility of status).</li><li><b>Nothing is lost.</b> Removing something gives an Undo, not a pop-up (user control).</li></ul>
+ <p class="hint">Not built in this mockup: Suggestions, Library settings, dragging to reorder, drill videos and images, assessments. Template content is sample content.</p>`,actions:`<button class="btn pri" data-act="closeDlg">Got it</button>`}))}
+
+/* boot */
+function boot(){renderShell();render();U.loading=true;setTimeout(()=>{U.loading=false;if(U.view==='library')render()},450)}
+boot();
+</script>
+</body>
+</html>
