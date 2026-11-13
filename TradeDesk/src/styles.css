@@ -997,6 +997,16 @@ code {
   white-space: nowrap;
 }
 
+/* Right-aligned numeric cells: the caption under a figure hugs the right
+ * edge, like the figure above it. Without this, the 220px max-width block
+ * starts at the cell's left edge and the caption's right edge lands up to
+ * ~30px left of the number (caught by the render harness on the Earnings
+ * Price column, v2026-11-12f). */
+.dtable td.r .subname,
+.dtable td.num .subname {
+  margin-left: auto;
+}
+
 .setup {
   color: var(--text-dim);
   font-size: 12px;
