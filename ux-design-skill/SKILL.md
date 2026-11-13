@@ -1,372 +1,270 @@
+---
+name: ux_design
+description: Global UX and design standard for reviews, redesigns, clickable mockups and design decisions across all products. Use when the user asks for a UX review, redesign, mockup, layout, navigation, design tokens, accessibility check, or any design decision, and before building any app or website screen.
+---
+
 # UX Design
 
-Use this skill whenever the user asks for a UX review, a redesign, a mockup, or a design decision. It is the global design standard for all design work in this chat, adopted from the user's Lead UX and Product Designer brief on 2026-11-11 with product-specific profiles at the end and rules borrowed from the best public design skills. It applies to every product, not just Quixera.
+Use this skill whenever the user asks for a UX review, a redesign, a mockup, or a design decision. It is the global design standard for all design work, adopted from the user's Lead UX and Product Designer brief on 2026-11-11. It applies to every product.
 
-## App-create gate
+Load the reference files when the work needs them:
 
-- Whenever the user asks to create an app or website, in any chat, check first whether a Phase 0 Research Receipt exists for it — in App Sprints (Dashboards/AppSprints/sprints/<name>/research-receipt.md) or in the conversation.
-- If no Receipt exists, do not start designing. Tell the user plainly that Phase 0 is missing and suggest running the research sprint first (intake app at https://apatel85.github.io/Dashboards/AppSprints/ or paste a brief in the App Sprints side chat).
-- Never silently skip Phase 0 for a new app. A redesign of an existing app with live data still gets a Phase 0 pass before the revamp build.
+- `references/navigation.md` — the N1–N12 navigation decision. Standing decision: apply as written, do not re-debate per product.
+- `references/mock-b.md` — the Mock B baseline: portable structure, plus the TradeDesk instance values.
+- `references/product-profiles.md` — personas, brand tokens, and content rules per product.
 
-## Ground the design in the brief
+Precedence: the user's explicit instructions, then the product's existing system and conventions, then the defaults in this file.
 
-- Extract the subject, the audience, the mood, and the constraints from the brief before you design anything.
+## 1. App-create gate
 
-- Write the inferred direction as one line before you start, and state three settings up front: how varied the sections are, how much motion there is, and how dense the page is.
+- When the user asks to create an app or website, check first for a Phase 0 Research Receipt for it (App Sprints: `AppSprints/sprints/<name>/research-receipt.md`, or in the conversation).
+- If none exists, do not start designing. Tell the user Phase 0 is missing and suggest the research sprint (intake app at `https://apatel85.github.io/Dashboards/AppSprints/`, or a brief in the App Sprints side chat).
+- **Waiver:** the user may explicitly waive Phase 0 for a prototype or a small change. Record the waiver in the work's first message and continue.
+- A redesign of an existing app with live data still gets a Phase 0 pass before the revamp build, unless waived.
 
-- Commit to one design system that fits the direction, such as editorial, Swiss grid, brutalist, soft rounded, dark technical, or magazine collage, and execute that one well instead of mixing systems.
+## 2. Ground the design in the brief
 
-- **Suggest popular styles for the app type before committing.** Name two or three popular styles that fit this kind of app or website, one line each on why it fits and one trade-off each, then recommend one and let the user pick (or say "you pick"). Starting points, not a fixed menu: a daily briefing or finance app → editorial ledger (Mock B); a pet-care or household app → soft rounded, warm, large touch targets; a coaching app → bold, high-contrast, phone-first; a content or marketing site → magazine collage or Swiss grid. Never present a single style as the only option when the brief leaves style open, and never default to the same style for every app.
+- Extract the subject, audience, mood, and constraints from the brief before designing.
+- Write the inferred direction as one line. State three settings up front: how varied the sections are, how much motion there is, and how dense the page is.
+- Commit to one design system that fits the direction (editorial, Swiss grid, brutalist, soft rounded, dark technical, magazine collage) and execute it well. Do not mix systems.
+- **Suggest styles before committing.** Name two or three popular styles that fit this app type, one line each on why it fits and one trade-off each. Recommend one and let the user pick, or accept "you pick". Starting points: a daily briefing or finance app leans editorial ledger; a pet-care or household app leans soft rounded with large touch targets; a coaching app leans bold, high-contrast, phone-first; a content or marketing site leans magazine collage or Swiss grid. Never present one style as the only option when the brief leaves style open.
+- A choice the brief pins down is never replaced by a generic default.
 
-- Follow this precedence order: the user's explicit instructions first, then the project's existing system and conventions, then the defaults in this skill.
+## 3. Plan before building
 
-- Never let a generic default win over a choice the brief pins down, and never spend a free choice on a look you would produce for any brief.
+- Two passes: draft a short plan (color tokens, typefaces, layout concept, principles, navigation map), then review it against the brief before writing code.
+- Navigation comes first: write the destination map (N1) before any layout.
+- If any part of the plan reads like the output you would produce for any similar prompt, revise it and say what changed and why.
+- Spend boldness in one place. Keep everything around it quiet and cut decoration that does not serve the brief.
+- After building, list the two or three laws that drove the key decisions, naming each decision and its law.
 
-## Plan before building
+## 4. Named laws (apply as design rules)
 
-- Work in two passes: draft a short plan with color tokens, typefaces, layout concept, and principles, then review that plan against the brief before you write any code.
+- **Hick's Law:** at most five primary actions on one screen. Split complex setup into a wizard, tabs, or accordion. Keep *desktop* navigation rails to about seven items; phone navigation follows N4.
+- **Fitts's Law:** primary actions sit in predictable zones (bottom third on a phone). Keep destructive actions large and far from their frequent non-destructive neighbors.
+- **Miller's Law:** group related fields and links into chunks of three to five. Never show more than seven ungrouped items.
+- **Jakob's Law:** match conventions users know (logo top left, search top right, familiar icons) unless the brief gives a stated reason to diverge.
+- **Peak-End Rule:** put disproportionate craft into error states, empty states, and the final success moment.
+- **Doherty Threshold:** acknowledge every action within 100ms (see feedback rule below).
+- **Von Restorff Effect:** one high-contrast accent per screen for the primary action. If everything is emphasized, nothing is.
+- **Paradox of Choice:** at most three parallel options, one clearly marked and preselected.
+- **Postel's Law:** accept forgiving input. Strip spaces and dashes from phone and card numbers, trim whitespace, never show a raw error.
+- **Tesler's Law:** absorb complexity with defaults and derived values. Never make the user configure raw technical identifiers.
+- **Cognitive load budget:** every screen has exactly one job. Cut anything that does not serve it.
 
-- If any part of the plan reads like the generic output you would produce for a similar prompt, revise that part and say what you changed and why.
+### Feedback timing (one rule)
 
-- Spend your boldness in one place, keep everything around it quiet and disciplined, and cut any decoration that does not serve the brief.
+- Acknowledge every action within **100ms** (visible press state, spinner, or optimistic update).
+- If the result takes longer than **400ms**, show progress: a skeleton or a labelled spinner.
+- Never leave the screen frozen with no signal.
 
-- After building, list the two or three laws that drove your key decisions, naming the decision and the law behind it.
+## 5. Nielsen heuristics as build rules
 
-- Critique your own work as you build, and inspect the built artifact rendered on a real screen before you call it done.
+1. **Visibility of system status:** acknowledge per the feedback timing rule above.
+2. **Match between system and the real world:** use the user's own vocabulary, never database field names or internal jargon.
+3. **User control and freedom:** every multi-step or destructive flow has a visible way out: cancel, back, or undo.
+4. **Consistency and standards:** same concept, same component, same wording, same location. Never invent a second pattern for something that already has one. Follow platform conventions.
+5. **Error prevention:** constrain bad input before submission with input types, masks, and disabled invalid options.
+6. **Recognition rather than recall:** show available options; never make the user remember a code or value from earlier screens.
+7. **Flexibility and efficiency of use:** offer shortcuts for frequent users (saved filters, keyboard shortcuts, recent items) without hiding the basic path.
+8. **Aesthetic and minimalist design:** remove first and add reluctantly. Every element must earn its place.
+9. **Help users recognize, diagnose, and recover from errors:** say what happened, why, and the specific next action, in plain language, never a bare error code.
+10. **Help and documentation:** put short, contextual help beside the thing it explains. Searchable long-form help is optional and never a substitute for clear labels.
 
-## Named laws
-
-- Keep at most five primary actions on one screen and split complex setup into a wizard, tabs, or accordion (Hick's Law).
-
-- Keep primary navigation within about seven items and use progressive disclosure instead of showing every option up front (Hick's Law).
-
-- Place primary actions in predictable zones, such as the bottom third on a phone, and keep destructive actions large and far from their frequent non-destructive neighbors (Fitts's Law).
-
-- Group related fields and links into chunks of three to five with clear visual separation, and never show more than seven ungrouped items (Miller's Law).
-
-- Match the conventions users already know from other products, such as logo top left, search top right, and familiar icons, unless the brief gives a stated reason to diverge (Jakob's Law).
-
-- Put disproportionate craft into error states, empty states, and the final success moment, because people judge an experience by its peak and its ending (Peak-End Rule).
-
-- Show feedback within 400 milliseconds of any action, using optimistic updates, spinners, or skeletons, and never leave the screen frozen with no signal (Doherty Threshold).
-
-- Make the primary action visually distinct with a single high-contrast accent, and if everything is emphasized nothing is (Von Restorff Effect).
-
-- Present at most three primary options in parallel, such as pricing tiers, with one clearly marked and preselected default (Paradox of Choice).
-
-- Accept forgiving input, strip spaces and dashes from phone and card numbers, trim whitespace, and never show a raw error to the user (Postel's Law).
-
-- Absorb complexity yourself with sensible defaults and derived values, and never force the user to configure raw technical identifiers (Tesler's Law).
-
-- Give every screen exactly one job and cut anything that does not serve it (cognitive load budgeting).
-
-## Nielsen heuristics as build rules
-
-- Give every action visible feedback within about 100 milliseconds, even if the real result takes longer, because silence reads as broken (visibility of system status).
-
-- Use the user's own vocabulary in labels, never database field names or internal jargon (match between system and the real world).
-
-- Give every multi-step or destructive flow a visible way out, such as cancel, back, or undo (user control and freedom).
-
-- Constrain bad input before submission with input types, masks, and disabled invalid options instead of only validating after (error prevention).
-
-- Show the available options instead of making the user remember a code or value from three screens back (recognition rather than recall).
-
-- Remove first and add reluctantly, since every element on screen must earn its place (aesthetic and minimalist design).
-
-- Write error messages that state what happened, why, and the specific next action, in plain language and never as a bare error code (help users recognize, diagnose, and recover from errors).
-
-## Understand the user first
+## 6. Understand the user first
 
 - Name the user goals, the context they work in, and the friction points before proposing any visual change.
-
-- Name the personas for the product in order of daily use, and design for the most frequent user first. For the persona order of each product, see the product profiles.
-
-- On phone-first products, screens are mobile first and one-thumb: big tap targets, primary actions in the bottom third, and the daily job before theory.
-
-- Treat the non-technical user as a first-class persona. Never assume they know product jargon. Pair every product term with a plain explanation on first use.
-
-- Apply Nielsen Norman Group heuristics to every proposal and name the heuristic when a choice rests on one.
-
-## Design tokens and system
-
-- Use a 4px and 8px spacing grid and a real type scale with one fixed ratio, such as 1.25, 1.333, or 1.5, and never introduce arbitrary dimensions.
-
-- Use one or two typefaces plus one monospace for data, chosen for the product's character, and keep body copy near 45 to 75 characters per line.
-
-- Use semantic color roles. Take brand tokens from the product profile and never invent a brand color.
-
-- Keep semantic color and brand color as two separate systems that never collide, so a success green next to a brand green never reads as a bug.
-
-- Keep motion durations as tokens too, with typical transitions at 150 to 300 milliseconds and larger spatial moves up to 500 milliseconds.
-
-- Reuse one component for one concept everywhere. Same concept, same component. Never invent a second pattern for something that already has one.
-
-- Never touch a live app. Design work lives in a demo replica only.
-
-## Mock B baseline (the default design system)
-
-Mock B (TradeDesk revamp, Nov 12, 2026) is the standing baseline for how designs are built. The style may change per brief — the newspaper/editorial-ledger look is one style, not the system — but the structure below stays unless the brief gives a stated reason to depart from it.
-
-- **Type: three roles, never one family.** Display serif (Newsreader 600/700 in Mock B; an equivalent serif may be swapped in): H1 34px/700, detail H2 28px/700, mood verdict 23px/600, summary 21px/600. Body sans (Libre Franklin 400–800; an equivalent clean sans may be swapped in): body 15px/1.5, section H2 19px/800, tabs 14px/700, body copy 13.5px. Data mono (IBM Plex Mono 500–700, tabular-nums): tickers 19px/700, scores 21px/700, ranks and labels 11–12px. The "multiple options" are the three-role system itself — swap a family for an equivalent, never collapse to a single family, never Inter alone, and no in-product font picker.
-- **Spacing: fixed px, reflowed by breakpoint, never scaled.** Radii 6/10/14px; motion 200ms ease; shell max-width 1140px, padding 24px 20px 40px — these do not change across widths. H1 34px, body 15px, shell padding, and section-head margins do not scale either. What changes with the device is the layout, at breakpoints 430/560/640/720/760/919/920px: score and Chart pill hidden at 640px and below, tabs 3-per-row at 560px and below, earnings grid collapses at 760px and below, stats stack at 430px and below. Tap targets: 44px minimum everywhere (48px for tabs and primary buttons; the 32px chart-pill is the one exception).
-- **Layout map (from the Receipt's screen map, breakpoint-derived — verify by rendering at 360, 768, and 1024px before treating as confirmed).** Below 920px: single column. Phone (360px): one column, 3-per-row tabs, score and Chart pill hidden, sticky bottom bar visible. Tablet (768px): still single column, bottom bar visible, full 6-column earnings grid, ledger as a real table. Desktop (1024px and up): two-column grid, 348px sticky rail (top 20px) + fluid main column, gap 28px, no bottom bar; key-value grid 4 columns, fundamentals grid 3 columns.
-- **Sticky chrome: rail on desktop, bottom call on phone, never a sticky top bar.** The rail is sticky only at 920px and above; below that the same content stacks in normal flow. The sticky bottom call exists only at 919px and below: fixed, 10px inset plus safe-area, body padding-bottom 84px to clear it, dark desk background, amber button.
-- **Components (bubbles and rows).** Every pill is radius 999px: pill, chip, chart-pill, count-pill, status-pill, role-pill, mood-pill, jump-link. Numbered index rows: mono 01/02… index number, title plus subtitle, count pill, chevron that rotates 180° when open. Idea rows: rank badge, mono ticker and price, risk box on the down background, 58px score block (number plus bar plus SCORE label). Every card starts collapsed; opening animates a 200ms rise and flips aria-expanded; prefers-reduced-motion disables animation.
-- **Color: full light and dark token sets, switch by prefers-color-scheme only.** Light: bg #edf0f3, panel #ffffff, panel-2 #f2f5f8, panel-3 #e9edf2, ink #0f1620, muted #44546a, faint #5b6c82, line #ccd4de, line-soft #dde3ea, up #0b7a4a / up-bg #e2f3ea, down #bc3524 / down-bg #fbe9e5, info #1c5cb4 / info-bg #e4edfa, signal #f2a71b, signal-ink #211300, signal-soft #fdf0d3, desk #10161f, desk-ink #eef3f9, desk-muted #b3c0d1, desk-line #2c3949, focus #1c5cb4. Dark: bg #080b0f, panel #10161f, panel-2 #151e2a, panel-3 #0b1119, ink #e9eef5, muted #a7b4c6, faint #8798ad, line #2a3646, line-soft #1e2938, up #3ed08d, down #ff7d68, info #7db1ff, desk #131c28, focus #7db1ff (signal, desk-ink, desk-muted, desk-line not redefined in dark). The dark desk block is used for both the mood card and the sticky bottom bar in both themes. Dark tokens are from source only — no dark-mode screenshot was verified.
-- **How it was built:** one style block, single self-contained file, tokens as CSS variables, layout from the Receipt's screen map, verified by rendering at 390px and 1440px with zero horizontal overflow. The CSS is the spec — there is no separate design document.
-
-## Information architecture
-
-- Detail every screen from macro structure down to micro components: containers, layout hierarchy, inputs, calls to action, status badges.
-
-- Prefer the pattern the user already knows: group, expand, drill in. A landing that expands into a detail page beats a flat table.
-
-- Keep create, edit, and publish in the same shared shells the rest of the product uses. Never give one object a different create or edit pattern.
-
-- Keep configuration-time and runtime on separate surfaces. Coaches suggest from a session, they never edit the library from one.
-
-- Let real content set the rhythm and resist a symmetric three-column card grid when the content does not have three equal things to say.
-
-## Navigation (choosing how people move)
-
-Decided by the navigation debate (Nov 12, 2026) — a synthesis of the five leaders' published frameworks, not recorded quotes.
-
-Twelve rules, written to be carried into the skill file as-is. Navigation is decided before layout and style — a style applied to an unmapped app produces a beautiful corridor.
-
-- **N1 — Map before screens.** Before any layout work, write the destination map: every destination, named, grouped, with its expected frequency (daily / weekly / occasional). No map, no mockup.
-- **N2 — Destinations switch; content scrolls.** Moving between destinations is a view switch — instant, fixed position, current destination visibly marked. Scrolling is only for one continuous read inside a destination. Never ship multiple destinations as one long scroll with collapsed sections.
-- **N3 — One tap to any primary.** From anywhere in the app, every primary destination is exactly one tap away, from a persistent navigation surface that never scrolls out of view.
-- **N4 — Phone: bottom tab bar, 3–5 slots.** Primary phone navigation is a persistent bottom tab bar (thumb zone). Three to five slots total — and a center core action, if present, counts as one of the five.
-- **N5 — Primaries are earned by frequency.** Bar slots go to the destinations used most often, counted from the job — not by feature importance or stakeholder seniority. If six destinations claim daily use, fix the map (merge or split jobs), don't widen the bar.
-- **N6 — More is an index, not a drawer of leftovers.** Overflow goes in a grouped, labeled More index whose groups users can predict. Everything in More is reachable in ≤2 taps from anywhere. A daily-used destination found living in More is a defect: promote it, demote the least-used primary.
-- **N7 — No primary hides behind a hamburger.** Drawers and hamburger menus hold account, settings, and app-level material only. Any destination used weekly gets a visible door.
-- **N8 — Top tabs are for peer views of one thing.** Top tabs (2–5) switch views of the same object — Days/Weeks/Months, Quotes/Chart/News. They never carry primary jobs and never compete with the main navigation.
-- **N9 — Tablet and desktop: the rail is the same map, drawn bigger.** Tablet gets a narrow labeled rail; desktop a full left rail, icon + label, all destinations visible — More dissolves because everything fits. Same names, same order, same grouping at every size.
-- **N10 — Name tabs by the job, in the user's words.** Labels are the words users would say out loud asking for the destination. Icon + label together on primaries; never icon-only, never internal jargon or brand names. Test: a first-time user predicts at least 4 of 5 bar destinations before tapping.
-- **N11 — At most one core action in the bar.** Only an app whose dominant verb is performed many times a day (logging, scanning, timing) may place it as a distinct center action. It must look like an action, complete or open-and-return, and leave the user where they were. Reading apps get none.
-- **N12 — State and stability are part of navigation.** Each destination keeps its own scroll and state; re-tapping the current destination returns it to the top. Bar order and labels are stable across sessions and versions — changes are deliberate redesigns, never silent updates. Verify with the 10-second test: a user can name where they are, and reach any primary in one tap, on phone, tablet, and desktop.
-
-### What the current draft section gets wrong or misses
-
-The skill already gained a Navigation section when the long-scroll flaw was caught. The panel's verdict on that draft: directionally right, four defects, five gaps.
-
-- "Max five primaries + More" doesn't say whether a core action counts. Teams will ship five destinations plus a center Log button and call it compliant — six claims on a five-slot bar. Fix: N4 — the action counts as a slot.
-- "One tap to any primary" is unenforceable without a frequency definition. Everything looks primary to its owner. Fix: N5 — primaries are assigned by counted frequency, and six daily claims means the map is wrong, not the bar.
-- "Tapping a tab switches the view instead of scrolling" overreaches. Read flatly, it bans the Daily Brief's own scroll — a ranked morning list should scroll. Fix: N2 — the rule is between destinations, never inside one continuous read.
-- More is specified as a container but not as an index. "Everything else in More" invites an ungrouped junk list. Fix: N6 — grouped, predictable, ≤2 taps, with the promote/demote audit when a daily job is found inside.
-- Missing: the tablet pattern. The draft jumps from phone bar to desktop rail, leaving the middle size to improvisation. Added: N9's narrow labeled rail.
-- Missing: state rules. Nothing on per-destination scroll memory or re-tap-to-top — the details that make switching feel like rooms instead of trapdoors. Added: N12.
-- Missing: stability. Nothing stops a later version from reordering the bar and destroying users' spatial memory. Added: N12.
-- Missing: a naming test. "Name tabs by the job" is advice without a check. Added: N10's 4-of-5 prediction test.
-- Missing: a verification step. The draft lists patterns but no done-test. Added: N12's 10-second test at 390 / 768 / 1280px — the same widths the skill already requires for responsive checks.
-
-## Responsive layouts
-
-- Every design must work on phone, tablet, and desktop — and the layout itself must change with the screen, not just shrink. A design that looks right on one width and merely stretches to the others is unfinished.
-
-- Define the breakpoints up front, in the plan, and design each one: phone below 768px, tablet 768–1023px, desktop 1024px and up. Name what changes at each step — what stacks, what sits side by side, what moves, what hides behind progressive disclosure.
-
-- Change the structure per width, not just the scale: single-column stack on a phone; two-column or split views on a tablet; full multi-column, sidebar, or side-rail layouts on desktop. Tables become cards below the width where their columns stop fitting. Bottom navigation on a phone becomes side navigation on desktop. Sticky bars and floating actions reposition for the width they are on.
-
-- Keep the content identical across widths. A smaller screen shows less at once through collapsing and progressive disclosure — never by deleting information the wider layout shows.
-
-- Tap targets stay at least 44 by 44 pixels at every width, and text stays readable without pinching or zooming.
-
-- Verify by doing, not by reasoning: check the layout at 320px, 390px, 768px, 1024px, and 1280px, with no horizontal scrolling on the page body at any of them. A layout that only fits the width it was drawn at fails the check.
-
-## Anti-slop
-
-- Never ship a centered hero with everything stacked in the middle, three or four equal-width feature cards in a row, or identical section padding and rhythm throughout.
-
-- Never use a violet to pink to blue gradient, indigo as a default primary, or glassmorphism over a blurry blob without a brand reason.
-
-- Never use Inter alone with no variation, gradient-clipped headlines, or an uppercase tracking-widest eyebrow on every section.
-
-- Never use emoji as icons. Use real SVG icons or custom marks.
-
-- Never use a warm cream background with a serif display and a terracotta accent, a near-black background with one acid accent, or the SaaS card kit of identical rounded cards with the same soft shadow, unless the brief asks for that exact look.
-
-- Never use template chrome that appears whatever the subject, such as a tracked-out all-caps label above every heading, meta strings joined with middle dots, labels built as one word plus a spaced dash plus a fragment, or an arrow appended to every link.
-
-- Never write copy that says the future of something, or strings empty adjectives such as powerful, seamless, and scalable.
-
-### Pre-flight check
-
-- Did I center the hero when the brief never asked for a centered hero.
-
-- Are there three equal cards that should be broken, merged, or staggered.
-
-- Is there a gradient with no brand reason behind it.
-
-- Is Inter the only typeface with nothing to break it up.
-
-- Did I use emoji as icons anywhere.
-
-- Is every section the same height and padding.
-
-- Are there all-caps eyebrows on every section.
-
-- Does the copy say redefined, seamless, or powerful.
-
-- Is there a fade-in-up on things that do not need it.
-
-- Does the layout change with the screen, or is it one layout stretched across widths.
-
-- Did I drift from the Mock B baseline — three-role type, pill system, collapsed-by-default cards, sticky rail on desktop, sticky bottom call on phone — without a brief reason.
-
-- Did I offer style options for the app type, or default to one look without asking.
-
-- Is every section reachable by tab in one or two taps, or must the user scroll to find it.
-
-- Fix every yes above, then ship.
-
-## Motion
-
-- Use motion to communicate a state change or a spatial relationship, never as decoration.
-
-- Keep to one orchestrated moment per page, such as one page-load sequence or one reveal, instead of scattered effects on every section.
-
-- Never put a fade-and-slide-up entrance on every section or a hover scale on every card.
-
-- Make motion answer the user's action, such as opening, expanding, or confirming, so it shows what changed.
-
-- Respect prefers-reduced-motion and keep desktop-only flourishes off phone-first screens.
-
-## Accessibility
-
-- Give every interactive element a minimum tap target of 44 by 44 pixels.
-
-- Meet WCAG 2.2 AA contrast. State the ratio for text on its background and never claim AAA without computing it.
-
+- Name personas in order of daily use and design for the most frequent first.
+- On phone-first products: mobile first, one-thumb, primary actions in the bottom third, the daily job before theory.
+- The non-technical user is a first-class persona. Pair every product term with a plain explanation on first use.
+
+## 7. Design tokens and system
+
+- Use a 4px and 8px spacing grid and a real type scale with one fixed ratio (1.25, 1.333, or 1.5). Never introduce arbitrary dimensions.
+- Use one or two typefaces plus one monospace for data. Keep body copy at 45 to 75 characters per line.
+- Use semantic color roles. Take brand tokens from the product profile; never invent a brand color.
+- Keep semantic color (success, error, info) and brand color as separate systems so they never collide.
+- **Control borders:** the `line` token used for dividers is decorative (about 1.5:1). Inputs, checkboxes, and buttons need a control border that meets **3:1** against its surface. Define a separate token for it.
+- **Status pills:** text on a status tint must meet 4.5:1 in both themes. The light tints fail on dark surfaces. Use the dark tint values from the token source, and check them.
+- Motion durations are tokens too: transitions 150–300ms, larger spatial moves up to 500ms.
+- Never hardcode a color, spacing, or size that duplicates an existing token.
+- The token source of truth for the Mock B system is `TradeDesk/src/mockb-tokens.css` in this repository.
+- Never edit a live app. Design work lives in a demo replica. Check the product profile for which apps are read-only.
+
+### Color scheme
+
+- Switch light and dark only by `prefers-color-scheme`, unless the product profile or the user asks for a manual toggle.
+- A manual toggle, when requested, must store the choice, default to the system setting, and be keyboard operable.
+- Dark mode is never called verified until it has been rendered and checked.
+
+## 8. Information architecture
+
+- Detail every screen from macro structure down to micro components: containers, hierarchy, inputs, calls to action, status badges.
+- Prefer group, expand, drill in. A landing that expands into detail beats a flat table.
+- Keep create, edit, and publish in the same shared shell. Never give one object a different create or edit pattern.
+- Keep configuration-time and runtime on separate surfaces.
+- Let real content set the rhythm. Do not force a symmetric three-column card grid onto content that does not have three equal things to say.
+
+## 9. Navigation
+
+Follow `references/navigation.md` (N1–N12). Summary of the key checks:
+
+- The destination map comes before any screen (N1).
+- Destinations switch views; content scrolls within one destination (N2).
+- Phone: bottom tab bar with 3–5 slots, a center action counting as one (N4, N11).
+- Tablet and desktop: the same map as a labeled rail (N9).
+
+## 10. Responsive layouts
+
+Canonical breakpoints for every product, unless the product profile states otherwise:
+
+- **Phone:** below 768px. Single column, bottom navigation.
+- **Tablet:** 768–1023px. Two-column or split views where content fits; narrow labeled rail (N9).
+- **Desktop:** 1024px and up. Full multi-column layout, full labeled rail.
+
+Rules:
+
+- Change the structure at each breakpoint, not just the scale. A layout that only stretches across widths is unfinished.
+- Tables become cards below the width where their columns stop fitting.
+- Keep the content identical across widths. Smaller screens collapse and disclose progressively; they never delete information.
+- Sticky bars and floating actions reposition for their width. Never use a sticky top bar for primary actions.
+- **Verify at 320, 390, 768, 1024, and 1280px** (and 1440px where a desktop max-width applies). No horizontal scrolling on the page body at any width. Verify by rendering, not by reading the CSS.
+- Products with their own shipped breakpoints (for example Mock B's TradeDesk split) follow the product profile. Do not mix two breakpoint sets in one product.
+
+## 11. Interaction and content states
+
+- Every interactive element works by keyboard alone, with a visible focus state. Focus is never hidden behind a sticky bar (WCAG 2.2 "focus not obscured").
+- Design empty, loading, and error states for everything that can load, be empty, or fail.
+- Error copy says what happened, that nothing was lost, and what to try next.
+- **Forms:** show the label above the input, validate on blur or submit (not on each keystroke), show the error beside the field and announce it, use the right input type and autocomplete, and keep the entered data after an error.
+- **Destructive actions:** prefer undo when it is safe to reverse. Use a confirmation only when undo is impossible, and name the object and the consequence in the confirmation.
+- **Stale and offline data:** show when data was last updated, and mark cached or outdated data plainly. Never show old numbers as current.
+- **Text resilience:** test long names, very large numbers, and translated strings. Truncate with a way to see the full value, never by clipping silently.
+- **Touch and hover:** every hover-only control has a tap or keyboard equivalent. Gestures such as swipe have a visible button alternative.
+- **Data visualization:** chart type matches the question. Never use color as the only signal. Give every chart a text summary or a data table alternative.
+
+## 12. Accessibility
+
+- Tap targets: **44 by 44px** minimum for controls. WCAG 2.2 AA requires only 24px, so a smaller target is allowed only as a documented exception with spacing around it and no single-route function (the Mock B chart pill is one such exception).
+- WCAG 2.2 AA contrast: state the ratio for text on its background. Never claim AAA without computing it. Boundaries that carry meaning need 3:1 (see control borders).
 - Never use color as the only signal. Pair it with an icon, a label, or a shape.
+- Specify the keyboard path for each screen: focus order, shortcuts, visible focus rings, Escape to go back.
+- Every icon-only control has an `aria-label`. Every image has alt text.
+- Every input has a programmatically associated label. Mark required fields in visible text.
+- Never flash more than three times per second.
+- Respect `prefers-reduced-motion`.
+- Verify by doing: a keyboard-only pass, 200% and 400% browser zoom, and the 320px check.
 
-- Specify the keyboard path for every screen: focus order, shortcuts, visible focus rings, and Escape to go back.
+## 13. Motion
 
-- Give every icon-only control an aria-label and every image an alt text.
+- Use motion to show a state change or a spatial relationship, never as decoration.
+- One orchestrated moment per page (one page-load sequence or one reveal), not scattered effects.
+- No fade-and-slide-up entrances on every section. No hover scale on every card.
+- Motion answers the user's action: opening, expanding, confirming.
+- Desktop-only flourishes stay off phone-first screens.
 
-- Design every empty, loading, and error state. Error copy says what happened, that nothing was lost, and what to try next.
+## 14. Performance
 
-- Give every input a real programmatically associated label, announce errors instead of conveying them by color alone, and mark required fields in visible text.
+- Core Web Vitals budget: LCP at or under 2.5s, INP at or under 200ms, CLS at or under 0.1.
+- Reserve space for images and embeds with explicit dimensions or an aspect ratio. Never inject content above existing content after the first render.
+- Do not hide the largest above-the-fold element behind a fetch that must resolve before anything paints.
+- Ship less: split code by route, lazy-load below-the-fold content, serve images at the size the layout needs, and question any dependency a few lines of code could replace.
 
-- Never let anything flash more than three times per second.
-
-- Verify by doing, not by reasoning: run a keyboard-only pass, test at 200 percent and 400 percent browser zoom, and check the layout holds at 320 pixels wide without horizontal scrolling on the page body.
-
-## Performance
-
-- Hold Core Web Vitals as the budget: largest contentful paint at or under 2.5 seconds, interaction to next paint at or under 200 milliseconds, and cumulative layout shift at or under 0.1.
-
-- Reserve space for images and embeds with explicit dimensions or an aspect ratio before they load, and never inject content above existing content after the first render.
-
-- Prioritize the largest above-the-fold element and do not hide it behind a fetch that must resolve before anything paints.
-
-- Ship less: split code by route, lazy-load below-the-fold content, serve images at the size the layout needs, and question any dependency that a few lines of code could replace.
-
-## Plain language
+## 15. Plain language
 
 - Write copy the least technical reader can follow. Split expert words from everyday words where a product has both audiences.
+- A new term gets its plain meaning beside it the first time it appears.
+- Buttons say what happens next, not "Submit" or "Continue" alone.
+- Name things by what users understand, and keep the same name for the same action through the whole flow.
+- Never write "redefined", "seamless", "powerful", "the future of", or "scalable".
 
-- Never ship a bare jargon label. A new term gets its plain meaning beside it the first time it appears.
+## 16. Anti-slop
 
-- Keep microcopy short and specific. A button says what happens next, not "Submit" or "Continue" alone.
+Avoid these defaults unless the brief asks for them:
 
-- Write from the end user's perspective and name things by what users understand, keeping the same name for the same action through the whole flow.
+- Centered hero with everything stacked in the middle.
+- Three or four equal-width feature cards in a row.
+- Identical section padding and rhythm throughout.
+- Violet-to-pink-to-blue gradients, indigo as a default primary, glassmorphism without a brand reason.
+- Inter alone with no variation; gradient-clipped headlines.
+- Tracked-out all-caps eyebrows on every section; meta strings joined with middle dots; an arrow appended to every link.
+- Emoji as icons. Use real SVG icons or custom marks.
+- Warm cream with serif and terracotta; near-black with one acid accent; identical rounded cards with the same soft shadow.
 
-## Deliverables
+## 17. Deliverables
 
-- Structure design output in four sections: problem statement and user context, interaction flow and wireframe hierarchy, component specs with copy and microcopy, accessibility and edge cases with empty, error, and loading states.
+Structure the design output in four sections:
 
-- When the deliverable is a clickable mockup, build it as an interactive page the user can click through, with sample data that proves the product's real cases.
+1. Problem statement and user context.
+2. Interaction flow and wireframe hierarchy, including the navigation map.
+3. Component specs with copy and microcopy.
+4. Accessibility, edge cases, and empty, error, and loading states.
 
+Other rules:
+
+- A clickable mockup is an interactive page with sample data that proves the product's real cases (for Quixera: the multi-sport case).
 - Bracket every unconfirmed fact as a placeholder. Never present a guess as a decided value.
+- Before delivery, check every demo claim against a source. Do not let an unconfirmed claim reach the user.
+- Run a scored self-review: rank findings from blocking to polish, fix every blocking item, and list what remains open.
 
-- For demo copy, run the demo claim audit skill before delivery so no unconfirmed claim reaches the user.
+### Review mode (UX reviews)
 
-- Run a scored self-review before delivery: rank findings from blocking to polish, fix every blocking item, and list what remains open.
+When the user asks for a UX review of an existing product, report findings in this format:
 
-### Definition of done
+- **Severity:** Blocking (users cannot complete a core job or fail an accessibility requirement), Major (users succeed with real friction), Minor (polish or consistency).
+- **Each finding:** the screen and state, the rule or heuristic it breaks, the evidence (the rendered view, the measured value, or the steps), and one concrete fix.
+- Order by severity. Then list what remains open and what was not checked.
 
-- Every interactive element works by keyboard alone with a visible focus state.
+## 18. When the user pushes back
 
-- Every text pairing meets contrast, and every meaningful boundary meets 3 to 1.
+- "Make it pop", "more modern", or "cooler" does not mean gradients or motion. Ask one specific question, such as which site they like, or whether the feel should be calm or loud.
+- Or change one concrete lever: the type scale, the color, the density, or the asymmetry.
+- Show the change and name what changed. Vague feedback becomes one visual decision, never more effects.
 
-- The layout holds at 320 pixels wide and at 400 percent zoom without horizontal scrolling on the page body.
+## 19. Pre-flight and definition of done
 
-- The layout adapts at phone, tablet, and desktop widths — structure changes at each breakpoint, checked at 390, 768, and 1280 pixels — and the same content is reachable at every width.
+Run this checklist before delivery. Fix every "no" before shipping.
 
-- Loading, empty, and error states exist for everything that can load, be empty, or fail.
+**Brief and plan**
+- Phase 0 receipt exists, or is explicitly waived.
+- Direction, three settings, and style options are stated.
+- Navigation map exists (N1) and follows N1–N12.
+- Each choice can be defended out loud with a reason.
 
-- Removing any single element on screen would make the result worse.
+**Visual**
+- The hero is not centered without a brief reason.
+- No three equal cards that should be broken, merged, or staggered.
+- No gradient without a brand reason. Inter is not the only typeface.
+- No emoji as icons. No all-caps eyebrow on every section.
+- Sections do not all share the same height and padding.
+- No hardcoded value duplicates an existing token.
 
-- No hardcoded color, spacing, or size duplicates a token that already exists.
+**Responsive**
+- Structure changes at each breakpoint, not just the scale.
+- No horizontal scroll at 320, 390, 768, 1024, or 1280px.
+- The same content is reachable at every width.
 
-- Every visual choice can be defended out loud with a reason.
+**Accessibility**
+- Every control works by keyboard with a visible focus state, and is not hidden behind a sticky bar.
+- Text contrast is stated and met. Control borders meet 3:1.
+- Targets are 44px, or a documented exception.
+- Color is never the only signal. Icon-only controls have labels.
+- Reduced motion is respected.
 
-- You have actually looked at the rendered page yourself, not just read the source back.
+**States and copy**
+- Loading, empty, and error states exist for everything that loads, can be empty, or can fail.
+- Feedback follows the 100ms and 400ms rule.
+- Copy is plain, names the next action, and avoids banned words.
+- Removing any single element would make the result worse.
 
-- Verify on the user's device before calling a design done. Never declare a layout fixed until the user confirms it on their phone or tablet.
+**Verified by doing**
+- The rendered page was looked at on a real screen, not only read back from source.
+- Layout checked at the five widths above, at 200% and 400% zoom.
+- Dark mode is marked unverified unless rendered.
+- The user has confirmed the layout on their device before it is called done.
 
-## When the user pushes back
+## 20. Sources and portability
 
-- If the user says make it pop, more modern, or cooler, do not reach for gradients and motion.
-
-- Ask one specific question, such as which site they like or whether it should feel calm or loud, or change one concrete lever such as the type scale, the color, the density, or the asymmetry.
-
-- Show the change and name what you changed. Vague feedback becomes one concrete visual decision, never more effects.
-
-## Product profiles
-
-### Quixera
-
-- Personas in order are the pitch-side coach on a phone, the non-technical admin, and the parent.
-
-- Coach screens are mobile first and one-thumb with primary actions in the bottom third and drills before theory.
-
-- Brand primary is #0D7C66 with DM Sans. Never use the old #1D6B45.
-
-- Plain language is tied to the product glossary, coach content uses coaching points, and family content uses one "I can" sentence.
-
-- Sample data proves the multi-sport case, not cricket only.
-
-- Design work lives in a demo replica only and never touches the live app.
-
-### KRCA
-
-- Brand is KKR purple #1c0837 and gold #e6c22d.
-
-- The audience is US South Asian diaspora parents and expats.
-
-- Visuals are photoreal fictional youth players in US settings.
-
-- Never use photos of real identifiable children in public posts.
-
-- The call to action is a free trial class.
-
-### TradeDesk
-
-- Research and education only, never financial advice.
-
-- The reader has no finance background, so every term gets a plain-English definition and the verdict comes first.
-
-- Baseline is the Mock B system in this skill; the editorial-ledger style may vary per brief, but the three-role type, pill system, collapsed-by-default cards, and breakpoint-gated layout stay.
-
-### WagWise
-
-- Household dog-care app.
-
-- Guidance is compact action items with countdown-style windows from actual and historical data.
-
-- Trends come from entered data only.
-
-## Sources
-
-- Rules here are adapted from Anthropic frontend-design, Taste Skill design-taste-frontend, 20-ui-ux-laws, overseek944 frontend-ui-ux-skill, Impeccable, and UI Verify, with the user's own Nov 11 brief and Quixera additions taking precedence over all of them.
-
-- Source repos: github.com/anthropics/skills, github.com/Leonxlnx/taste-skill, github.com/davepartner/20-ui-ux-laws, github.com/overseek944/frontend-ui-ux-skill, github.com/pbakaus/impeccable, and uiverify.ai.
-
-## Available connectors
-
-- Use `muse.connector_search` to find other connectors and `muse.skill_search` to find related skills.
-
-- If nothing here fits, look on the web for a maintained API or MCP server and set it up with [Custom Connectors and MCPs](/opt/muse/skills/custom-connector-setup/SKILL.md), or build a custom connector.
+- Adapted from Anthropic frontend-design, Taste Skill design-taste-frontend, 20-ui-ux-laws, overseek944 frontend-ui-ux-skill, Impeccable, and UI Verify. The user's brief and product profiles take precedence over all of them.
+- Source repos: github.com/anthropics/skills, github.com/Leonxlnx/taste-skill, github.com/davepartner/20-ui-ux-laws, github.com/overseek944/frontend-ui-ux-skill, github.com/pbakaus/impeccable, uiverify.ai.
+- This skill has no dependency on any particular connector. If a connector or a demo-claim check is needed, use whichever one the environment provides, and say so when it is missing.

@@ -4,10 +4,16 @@ The global design standard for all products built with Muse — UX reviews, rede
 
 ## Contents
 
-- `SKILL.md` — the skill: Nielsen Norman Group heuristics, WCAG 2.2 AA, design tokens, named usability laws, anti-slop direction, a pre-flight check, and a definition-of-done gate. Includes the Mock B baseline (three-role type system, pill system, breakpoint-gated layout), a Navigation section (the N1–N12 decision from the Nov 12 navigation debate), and a style-suggestion rule (popular styles per app type, the user picks).
+- `SKILL.md` — the core skill: app-create gate, planning, usability laws, Nielsen heuristics, tokens, responsive rules, states, accessibility, review format, pre-flight, and definition of done.
+- `references/navigation.md` — the N1–N12 navigation decision (standing; apply as written).
+- `references/mock-b.md` — the Mock B baseline: portable structure, plus the TradeDesk instance values.
+- `references/product-profiles.md` — personas, brand tokens, and content rules per product.
 - `skill.yaml` — skill metadata (`include_in_prompt: true`, so the skill is listed in every conversation).
+- `AGENTLOG.md` — the change log.
 
 ## Version
+
+**v1.2.0** — split into core plus references; contradictions resolved (one breakpoint set, one feedback rule, one checklist); gaps filled (full Nielsen set, forms, destructive actions, stale data, review format, control-border contrast, dark status tints); portable with no connector dependency. 2026-11-13.
 
 **v1.1.0** — Navigation section replaced with the N1–N12 decision from the Nov 12 navigation debate, 2026-11-12.
 
