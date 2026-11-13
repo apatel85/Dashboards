@@ -1,5 +1,11 @@
 # DealFinder — Agent Log
 
+## 2026-11-13 — P2 fix: alerts_one_per_day index 42P17 (v0.2.1)
+
+- **Request:** Ankit: SQL error `42P17: functions in index expression must be marked IMMUTABLE` running the migration in the Supabase SQL Editor.
+- **Changed:** `DealFinder/supabase/001-dealfinder-schema.sql` — the `alerts_one_per_day` unique index used `(created_at::date)`; casting `timestamptz` to date depends on the session timezone (STABLE, not IMMUTABLE), so Postgres refuses it in an index. Fixed to `((created_at AT TIME ZONE 'UTC')::date)` — pinning UTC makes the expression immutable.
+- **Verification:** fix confirmed against PostgreSQL docs (AT TIME ZONE 'UTC' returns timestamp; timestamp-to-date cast is immutable); fixed file verified live on GitHub (raw URL returns 200, new index lines present). Ankit to re-run the fixed file in the SQL Editor (idempotent, safe to re-run).
+
 ## 2026-11-12 — P2: backend + pipeline (v0.2.0)
 
 - **Request:** Ankit: "Start P2 — backend + pipeline" (live-app plan, 2026-11-12; probe verdict: partial yes — Flipp returns real sale prices for 4 of the big 5 for ZIP 08520, ShopRite missing).
