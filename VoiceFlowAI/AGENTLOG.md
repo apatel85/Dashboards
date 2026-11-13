@@ -7,6 +7,9 @@
 - iOS out of scope. English first. Flutter pinned 3.50.0 (Dart 3.14).
 - Golden fixtures live in `packages/core/test_fixtures/formatting/<profile>/cases.json`.
 
+## 2026-11-13 — S3 in progress
+- Run 43481153722: release APK builds; emulator enabled+selected the IME; `VoiceFlowIME` service process started; Flutter engine started but failed `Dart_LookupLibrary: library 'package:voiceflow_app/ime_main.dart' not found` (library not in AOT program). Fix: `main.dart` imports `ime_main.dart`. Result of rerun: see next entry.
+
 ## 2026-11-13 — S2 PASS (Windows runner)
 - **S2 — AUTOMATED-PASS** — https://github.com/apatel85/Dashboards/actions/runs/43471202540 (job `s2-windows`, artifact `s2-windows-log`). Harness `app/spike/s2/s2.ps1` (PowerShell 5.1 + C# P/Invoke): 5 consecutive runs of snapshot clipboard → write text with `ExcludeClipboardContentFromMonitorProcessing` / `CanIncludeInClipboardHistory=0` / `CanUploadToCloudClipboard=0` → `SendInput` Ctrl+V (4 events) → text appears in a WinForms TextBox → restore after 300 ms → original clipboard text equal. `KEYEVENTF_UNICODE` fallback typed `café 😀` correctly. `S2_FAILURES=0`.
 - **Limits (do not overclaim):** target is a WinForms TextBox, not Word/Slack/VS Code (that is manual W3). Clipboard snapshot in the spike is text-only; M1b must snapshot all non-delayed formats. Whether Windows actually keeps the text out of Win+V history is NOT-VERIFIED (only that the exclusion formats were set). Elevated-window and password-field handling untested.
