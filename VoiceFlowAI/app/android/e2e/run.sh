@@ -30,9 +30,11 @@ SHA=$(grep -o '"sha256": *"[0-9a-f]*"' "$ROOT/VoiceFlowAI/app/assets/models.json
 ID=$(grep -o '"id": *"[^"]*"' "$ROOT/VoiceFlowAI/app/assets/models.json" | head -1 | sed 's/.*: *"//;s/"//')
 adb shell "am broadcast -a dev.voiceflow.E2E_INSTALL_MODEL -p $PKG --es src $MD --es id $ID --es sha $SHA" >/dev/null
 
+# The keyboard is its own window; a plain dump only sees the active (app) window.
+dump() { adb shell uiautomator dump --windows /sdcard/ui.xml >/dev/null 2>&1 || adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; }
 # bounds centre of a view by content-desc, from uiautomator
 center() {
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  dump
   adb shell cat /sdcard/ui.xml | python3 -c "
 import re,sys
 x=sys.stdin.read()
@@ -41,7 +43,7 @@ print(str((int(m[2])+int(m[4]))//2)+' '+str((int(m[3])+int(m[5]))//2)) if m else
 }
 # exit 0 if the current screen dump matches this regex
 has() {
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  dump
   adb shell cat /sdcard/ui.xml | PAT="$1" python3 -c "
 import os,re,sys
 sys.exit(0 if re.search(os.environ['PAT'],sys.stdin.read()) else 1)"
@@ -49,7 +51,7 @@ sys.exit(0 if re.search(os.environ['PAT'],sys.stdin.read()) else 1)"
 chip_desc() { adb shell cat /sdcard/ui.xml | grep -o 'content-desc="Style: [^"]*"' | head -1; }
 tap() { local c; c=$(center "$1"); [ -n "$c" ] && adb shell input tap $c; sleep 1; }
 field_text() {
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  dump
   adb shell cat /sdcard/ui.xml | python3 -c "
 import re,sys
 x=sys.stdin.read()

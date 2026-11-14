@@ -17,7 +17,7 @@ class TestActivity : Activity() {
         fun field(desc: String, type: Int) = EditText(this).apply {
             contentDescription = desc
             inputType = type
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 220)
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (84 * resources.displayMetrics.density).toInt())
         }
         col.addView(field("t_text", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE))
         col.addView(field("t_email", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS))
