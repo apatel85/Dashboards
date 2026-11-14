@@ -60,10 +60,12 @@ echo "== real model download inside the app (network, SHA-256 check, unpack)"
 adb shell am start -n $PKG/.MainActivity >/dev/null; sleep 8
 tap "Download"
 DL=0
-for i in $(seq 1 120); do
-  if has 'Speech model installed'; then DL=1; break; fi
+# Once installed, the page marks the step done ("done&#10;Download the speech model") and stops
+# showing its status text, so "done" is the signal, not the status sentence.
+for i in $(seq 1 100); do
+  if has 'done.{1,8}Download the speech model'; then DL=1; break; fi
   if has 'did not finish|failed its safety check'; then break; fi
-  sleep 5
+  sleep 4
 done
 if [ $DL -eq 1 ]; then ok "real in-app model download works (network + SHA-256 + unpack)"; else bad "real model download"; shownodes; adb logcat -d '*:E' | grep -iE "socket|permission|UnknownHost|dev.voiceflow" | tail -8; fi
 adb shell am start -n $PKG/.TestActivity >/dev/null; sleep 4

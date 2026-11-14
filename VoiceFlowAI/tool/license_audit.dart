@@ -35,8 +35,11 @@ void main() {
     final dir = Directory.fromUri(
         root.isAbsolute ? root : Directory('.dart_tool').uri.resolveUri(root));
     // Flutter SDK packages carry no LICENSE of their own: the SDK's top-level BSD license covers them.
+    // SDK layout: <root>/packages/<pkg> with <root>/bin/flutter next to it (any install path),
+    // or the SDK's own cache of pinned packages.
     final inSdk = dir.path.contains('/bin/cache/pkg/') ||
-        RegExp(r'/flutter[^/]*/packages/').hasMatch(dir.path);
+        File('${dir.parent.parent.path}/bin/flutter').existsSync() ||
+        File('${Directory.fromUri(dir.uri).parent.parent.path}/bin/flutter.bat').existsSync();
     if (inSdk) {
       if (!sdkLicenseOk) {
         var d = dir;
