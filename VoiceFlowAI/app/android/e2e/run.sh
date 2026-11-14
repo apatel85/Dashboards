@@ -13,6 +13,7 @@ bad() { echo "FAIL  $1"; FAIL=$((FAIL+1)); }
 adb install -r "$APK" >/dev/null || { echo "FAIL install"; exit 1; }
 adb logcat -c
 adb shell appops set $PKG MANAGE_EXTERNAL_STORAGE allow
+adb shell pm grant $PKG android.permission.RECORD_AUDIO
 adb shell ime enable $PKG/.VoiceFlowIME >/dev/null
 adb shell ime set $PKG/.VoiceFlowIME >/dev/null
 adb shell am start -n $PKG/.TestActivity >/dev/null
@@ -35,9 +36,18 @@ center() {
   adb shell cat /sdcard/ui.xml | python3 -c "
 import re,sys
 x=sys.stdin.read()
-m=re.search(r'content-desc=\"$1\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"',x)
-print((int(m[1])+int(m[3]))//2,(int(m[2])+int(m[4]))//2) if m else print('')"
+m=re.search(r'content-desc=\"($1)\"[^>]*bounds=\"\[(\d+),(\d+)\]\[(\d+),(\d+)\]\"',x)
+print(str((int(m[2])+int(m[4]))//2)+' '+str((int(m[3])+int(m[5]))//2)) if m else print('')"
 }
+# exit 0 if the current screen dump matches this regex
+has() {
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  adb shell cat /sdcard/ui.xml | PAT="$1" python3 -c "
+import os,re,sys
+sys.exit(0 if re.search(os.environ['PAT'],sys.stdin.read()) else 1)"
+}
+chip_desc() { adb shell cat /sdcard/ui.xml | grep -o 'content-desc="Style: [^"]*"' | head -1; }
+tap() { local c; c=$(center "$1"); [ -n "$c" ] && adb shell input tap $c; sleep 1; }
 field_text() {
   adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
   adb shell cat /sdcard/ui.xml | python3 -c "
@@ -74,8 +84,31 @@ focus t_password; dictate 3
 adb logcat -d E2E:I '*:S' | grep RESULT | tail -1 | grep -q "status=passwordField" && ok "password refused" || bad "password status"
 [ -z "$(field_text t_password | tr -d '•')" ] && ok "password field untouched" || bad "password field got text"
 
+
+echo "== keyboard UI (real views, driven through uiautomator)"
+focus t_password; focus t_text; sleep 3
+has 'content-desc="Dictate"' && ok "keyboard shows the mic" || bad "mic not visible"
+tap ","; [ "$(field_text t_text | tail -c 2)" = "," ] && ok "punctuation key types" || bad "punctuation key"
+tap "Delete"; [ "$(field_text t_text | tail -c 2)" != "," ] && ok "backspace deletes" || bad "backspace"
+has 'Style: '; P1=$(chip_desc)
+tap "Style: .*"
+has 'Style: '; P2=$(chip_desc)
+echo "chip: $P1 -> $P2"
+[ -n "$P1" ] && [ "$P1" != "$P2" ] && ok "profile chip cycles" || bad "profile chip"
+tap "Dictate"; sleep 1
+has 'text="Listening' && ok "tap mic -> listening" || bad "listening state"
+tap "Stop dictation"
+DONE=0
+for i in $(seq 1 30); do
+  if has "text=\"(Inserted|Didn.t catch that)"; then DONE=1; break; fi
+  sleep 2
+done
+[ $DONE -eq 1 ] && ok "tap again -> processed to a result (silent emulator mic)" || bad "processing never finished"
+focus t_password; sleep 2
+has 'text="Dictation is off in password fields"' && ok "password field: mic locked with notice" || bad "password notice"
+
 echo "== diagnostics"
 adb logcat -d | tr -d '\r' | grep -E "AndroidRuntime|FATAL|E2E|VoiceFlow" | tail -30
 adb shell dumpsys meminfo $PKG | grep -E "TOTAL PSS" | head -1
 echo "RESULT pass=$PASS fail=$FAIL"
-[ $FAIL -eq 0 ] && [ $PASS -ge 5 ]
+[ $FAIL -eq 0 ] && [ $PASS -ge 12 ]
