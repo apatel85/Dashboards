@@ -1,0 +1,107 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:voiceflow_app/ime/ime_backend.dart';
+import 'package:voiceflow_app/state/assets_loader.dart';
+import 'package:voiceflow_app/state/settings_store.dart';
+import 'package:voiceflow_core/voiceflow_core.dart';
+
+import 'dictation_service_test.dart' show FakeStt, tone;
+
+const spec = ModelSpec(
+  id: 'm',
+  lang: 'en',
+  url: 'http://x',
+  sha256: 'abc',
+  sizeMb: 1,
+  license: 'MIT',
+  files: ['a.bin'],
+);
+
+void main() {
+  late Directory tmp;
+  late FakeStt stt;
+  late ImeBackend b;
+  late SettingsStore store;
+  int loads = 0, unloads = 0;
+
+  Future<void> install() async {
+    final m = ModelManager(spec, Directory('${tmp.path}/models'));
+    m.dir.createSync(recursive: true);
+    File(m.path('a.bin')).writeAsStringSync('x');
+    File('${m.dir.path}/.verified').writeAsStringSync('abc');
+  }
+
+  setUp(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    tmp = await Directory.systemTemp.createTemp('imeb');
+    stt = FakeStt('hello world');
+    loads = unloads = 0;
+    store = SettingsStore(Directory('${tmp.path}/s'));
+    b = ImeBackend(
+      assets: (await AppAssets.load()),
+      store: store,
+      models: ModelManager(spec, Directory('${tmp.path}/models')),
+      stt: stt,
+      ensureLoaded: () async => loads++,
+      unloadEngine: () async => unloads++,
+    );
+  });
+  tearDown(() => tmp.deleteSync(recursive: true));
+
+  test('ping and unknown method', () async {
+    expect(await b.handle(const MethodCall('ping')), 'pong');
+    expect(
+      () => b.handle(const MethodCall('nope')),
+      throwsA(isA<MissingPluginException>()),
+    );
+  });
+
+  test('status reports model, profile list, cloud', () async {
+    var s = await b.status();
+    expect(s['modelReady'], false);
+    expect((s['profiles'] as List).length, 4);
+    await install();
+    s = await b.status();
+    expect(s['modelReady'], true);
+    expect(s['cloud'], false);
+  });
+
+  test('dictate: model missing, password, ok, field kinds', () async {
+    expect((await b.dictate({'pcm': tone()}))['status'], 'modelMissing');
+    expect(
+      (await b.dictate({'pcm': tone(), 'fieldKind': 'password'}))['status'],
+      'passwordField',
+    );
+    expect(stt.calls, 0);
+    await install();
+    final r = await b.dictate({'pcm': tone(), 'profileId': 'casual'});
+    expect(r['status'], 'ok');
+    expect(r['text'], isNotEmpty);
+    expect(loads, 1);
+    stt.text = 'john at example dot com';
+    final e = await b.dictate({'pcm': tone(), 'fieldKind': 'email'});
+    expect(e['text'], 'john@example.com');
+  });
+
+  test('setProfile remembers per app and is used next time', () async {
+    await install();
+    await b.setProfile('ai_prompting', 'com.example.chat');
+    stt.text = 'write a poem';
+    final r = await b.dictate({
+      'pcm': tone(),
+      'packageName': 'com.example.chat',
+    });
+    expect((r['profile'] as Map)['id'], 'ai_prompting');
+    final other = await b.dictate({'pcm': tone(), 'packageName': 'com.other'});
+    expect((other['profile'] as Map)['id'], 'business');
+    await b.setProfile('casual', null);
+    expect(((await b.status())['profile'] as Map)['id'], 'casual');
+  });
+
+  test('unload calls through', () async {
+    await b.handle(const MethodCall('unload'));
+    expect(unloads, 1);
+  });
+}

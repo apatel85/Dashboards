@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'adapters/polish_chain.dart';
 import 'history_store.dart';
+import 'field_kind.dart';
 import 'lang.dart';
 import 'models.dart';
 import 'pack.dart';
@@ -17,10 +18,14 @@ class DictationOptions {
   final List<DomainPack> packs;
   final List<String> dictionary;
   final Map<String, String> corrections;
+
+  /// What we are typing into. Email / URL / number fields get literal text.
+  final FieldKind fieldKind;
   const DictationOptions(this.profile,
       {this.packs = const [],
       this.dictionary = const [],
-      this.corrections = const {}});
+      this.corrections = const {},
+      this.fieldKind = FieldKind.text});
 }
 
 /// Capture is done by the caller; `run` takes the recorded PCM (spec §5.2).
@@ -36,6 +41,7 @@ class DictationPipeline {
   late final RuleFormatter _fmt = RuleFormatter(lang);
   late final VoiceCommandParser _cmd = VoiceCommandParser(lang);
   late final PostProcessor _post = PostProcessor(lang);
+  late final FieldFormatter _field = FieldFormatter(lang);
   final PolishValidator _validator = PolishValidator();
 
   DictationPipeline(this.lang, this.stt, this.sink,
@@ -44,6 +50,9 @@ class DictationPipeline {
 
   Future<DictationResult> run(Uint8List pcm, DictationOptions o) async {
     String raw = '';
+    if (o.fieldKind == FieldKind.password) {
+      return const DictationResult(DictationStatus.passwordField);
+    }
     try {
       final speech = vad.trim(pcm);
       if (speech.isEmpty) {
@@ -60,6 +69,15 @@ class DictationPipeline {
           r.speechSeconds > 0 ? r.speechSeconds : vad.seconds(speech);
       if (speechSecs < 2 && lang.phantoms.contains(raw.toLowerCase().trim())) {
         return DictationResult(DictationStatus.noSpeech, rawTranscript: raw);
+      }
+
+      if (o.fieldKind != FieldKind.text) {
+        // email / url / number: literal value, no voice commands, no polish, no pack edits
+        final value = _field.format(raw, o.fieldKind);
+        if (value.isEmpty) {
+          return DictationResult(DictationStatus.noSpeech, rawTranscript: raw);
+        }
+        return await _insert(raw, value, false, o);
       }
 
       final segs = _cmd.parse(raw);

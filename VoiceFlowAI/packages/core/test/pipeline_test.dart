@@ -13,6 +13,7 @@ DictationOptions opts(
     DictationOptions(loadProfile(profile), packs: packs);
 
 void main() {
+  fieldKindTests();
   test('silence -> noSpeech, nothing inserted', () async {
     final sink = FakeSink();
     final r = await mk(FakeStt('x'), sink).run(Uint8List(32000), opts());
@@ -171,5 +172,54 @@ void main() {
     final r = await p.run(speechPcm(), opts());
     expect(r.status, DictationStatus.ok);
     expect(calls, isEmpty);
+  });
+}
+
+void fieldKindTests() {
+  group('field kinds', () {
+    test('email field: literal address, STT text never polished or capitalised',
+        () async {
+      final sink = FakeSink();
+      final polish = FakePolish((t) => 'SHOULD NOT BE USED');
+      final p = DictationPipeline(
+          loadLang(), FakeStt('John at Example dot com.'), sink,
+          polish: PolishChain([polish]));
+      final r = await p.run(
+          speechPcm(),
+          DictationOptions(loadProfile('business'),
+              fieldKind: FieldKind.email));
+      expect(r.status, DictationStatus.ok);
+      expect(sink.inserted.single, 'john@example.com');
+      expect(polish.calls, 0);
+    });
+    test('voice commands are NOT interpreted inside an email/url field',
+        () async {
+      final sink = FakeSink();
+      final p = DictationPipeline(loadLang(), FakeStt('new line'), sink);
+      await p.run(speechPcm(),
+          DictationOptions(loadProfile('business'), fieldKind: FieldKind.url));
+      expect(sink.inserted.single, 'newline');
+    });
+    test(
+        'password field: nothing recorded-to-text, nothing inserted, STT not even called',
+        () async {
+      final sink = FakeSink();
+      final stt = FakeStt('hunter2');
+      final r = await DictationPipeline(loadLang(), stt, sink).run(
+          speechPcm(),
+          DictationOptions(loadProfile('business'),
+              fieldKind: FieldKind.password));
+      expect(r.status, DictationStatus.passwordField);
+      expect(sink.inserted, isEmpty);
+    });
+    test('number field', () async {
+      final sink = FakeSink();
+      await DictationPipeline(loadLang(), FakeStt('four hundred twelve'), sink)
+          .run(
+              speechPcm(),
+              DictationOptions(loadProfile('business'),
+                  fieldKind: FieldKind.number));
+      expect(sink.inserted.single, '412');
+    });
   });
 }
