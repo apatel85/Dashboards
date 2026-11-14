@@ -40,10 +40,25 @@ async function main() {
   const { total, hits } = await eftsForm4Search(start, today, { maxHits: MAX_FILINGS });
   console.log(`[insiders] ${total} total hits; processing ${hits.length} most-recent filings`);
 
+  // Dedupe discovery hits: EFTS can return the same filing twice under
+  // different search-result ids (same accession + XML file). Fetching it
+  // twice yields byte-identical transaction rows downstream.
+  const seenFilings = new Set();
+  const uniqueHits = [];
+  let dupHits = 0;
+  for (const h of hits) {
+    const k = `${h.adsh}|${h.xmlFile}`;
+    if (seenFilings.has(k)) { dupHits++; continue; }
+    seenFilings.add(k);
+    uniqueHits.push(h);
+  }
+  if (dupHits > 0) console.log(`[insiders] skipped ${dupHits} duplicate discovery hits (same accession + XML)`);
+  const workList = uniqueHits;
+
   const out = [];
   let ok = 0, failed = 0, noTx = 0;
-  for (let i = 0; i < hits.length; i++) {
-    const h = hits[i];
+  for (let i = 0; i < workList.length; i++) {
+    const h = workList[i];
     if (!h.adsh || !h.xmlFile) { failed++; continue; }
     const cikNoZeros = String(h.ciks?.[0] ?? '').replace(/^0+/, '') || '0';
     try {
@@ -74,12 +89,28 @@ async function main() {
       console.error(`[insiders] fetch failed for ${h.adsh}/${h.xmlFile}: ${e.message}`);
       failed++;
     }
-    if ((i + 1) % 50 === 0) console.log(`[insiders] progress ${i + 1}/${hits.length} (ok=${ok} failed=${failed} noTx=${noTx})`);
+    if ((i + 1) % 50 === 0) console.log(`[insiders] progress ${i + 1}/${workList.length} (ok=${ok} failed=${failed} noTx=${noTx})`);
   }
 
   console.log(`[insiders] done: ${ok} filings parsed, ${failed} failed, ${noTx} with no non-derivative transactions → ${out.length} transaction rows`);
-  out.sort((a, b) => String(b.filed_date || '').localeCompare(String(a.filed_date || '')));
-  writeJsonAtomic(path.join(OUT_DIR, 'insiders.json'), out);
+
+  // Dedupe rows on the natural key. Accession alone is NOT enough — one
+  // filing holds several transactions — so the key is the full
+  // transaction identity. A duplicate is the same filing ingested twice
+  // (overlapping SEC feed windows) or the same transaction listed twice
+  // in one document; either way it must never render twice.
+  const seenRows = new Set();
+  const deduped = [];
+  let dupRows = 0;
+  for (const r of out) {
+    const k = [r.accession, r.ticker, r.owner_name, r.transaction_date, r.shares, r.price, r.transaction_code].join('|');
+    if (seenRows.has(k)) { dupRows++; continue; }
+    seenRows.add(k);
+    deduped.push(r);
+  }
+  if (dupRows > 0) console.log(`[insiders] removed ${dupRows} duplicate transaction rows (natural key)`);
+  deduped.sort((a, b) => String(b.filed_date || '').localeCompare(String(a.filed_date || '')));
+  writeJsonAtomic(path.join(OUT_DIR, 'insiders.json'), deduped);
 }
 
 main().catch((e) => {
