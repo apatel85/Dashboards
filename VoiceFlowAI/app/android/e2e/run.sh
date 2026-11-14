@@ -96,27 +96,34 @@ for n in re.findall(r'<node [^>]*>',sys.stdin.read()):
   g=lambda k:(re.search(k+'=\"([^\"]*)\"',n) or [0,''])[1]
   print(g('package'),g('class').split('.')[-1],repr(g('text')),repr(g('content-desc')),g('bounds'))" | head -40
   adb shell dumpsys input_method | grep -E "mCurMethodId|mInputShown|mShowRequested|isInputViewShown|mImeWindowVis" | head; }
-tap ","; [ "$(field_text t_text | tail -c 2)" = "," ] && ok "punctuation key types" || bad "punctuation key"
-tap "Delete"; [ "$(field_text t_text | tail -c 2)" != "," ] && ok "backspace deletes" || bad "backspace"
+BEFORE=$(field_text t_text)
+tap ","; AFTER=$(field_text t_text); echo "typed: '${AFTER: -3}'"
+[ "$AFTER" = "$BEFORE," ] && ok "punctuation key types" || bad "punctuation key"
+tap "Delete"; [ "$(field_text t_text)" = "$BEFORE" ] && ok "backspace deletes" || bad "backspace"
 has 'Style: '; P1=$(chip_desc)
-tap "Style: .*"
+tap "Style: [^\"]*"
 has 'Style: '; P2=$(chip_desc)
 echo "chip: $P1 -> $P2"
 [ -n "$P1" ] && [ "$P1" != "$P2" ] && ok "profile chip cycles" || bad "profile chip"
-tap "Dictate"; sleep 1
-has 'text="Listening' && ok "tap mic -> listening" || bad "listening state"
+tap "Dictate"; sleep 2
+shownodes() { adb shell cat /sdcard/ui.xml | python3 -c '
+import re,sys
+for n in re.findall(r"<node [^>]*>",sys.stdin.read()):
+  g=lambda k:(re.search(k+"=.([^\"]*).",n) or [0,""])[1]
+  if g("package")=="dev.voiceflow.voiceflow_app" and (g("text") or g("content-desc")) and "EditText" not in g("class"): print("  node",repr(g("text")),repr(g("content-desc")))'; }
+has 'text="Listening' && ok "tap mic -> listening" || { bad "listening state"; shownodes; adb logcat -d VoiceFlow:I E2E:I AndroidRuntime:E '*:S' | tail -15; }
 tap "Stop dictation"
 DONE=0
 for i in $(seq 1 30); do
   if has "text=\"(Inserted|Didn.t catch that)"; then DONE=1; break; fi
   sleep 2
 done
-[ $DONE -eq 1 ] && ok "tap again -> processed to a result (silent emulator mic)" || bad "processing never finished"
+[ $DONE -eq 1 ] && ok "tap again -> processed to a result (silent emulator mic)" || { bad "processing never finished"; shownodes; }
 focus t_password; sleep 2
 has 'text="Dictation is off in password fields"' && ok "password field: mic locked with notice" || bad "password notice"
 
 echo "== diagnostics"
-adb logcat -d | tr -d '\r' | grep -vE "Calling main entry|START com.android|boot image|lock profiling|Shutting down VM" | grep -E "FATAL|AndroidRuntime|E2E|VoiceFlow|dev.voiceflow|InputMethod|Exception" | tail -60
+adb logcat -d | tr -d '\r' | grep -E "VoiceFlow|E2E|dev.voiceflow|FATAL EXCEPTION" | tail -40
 adb shell dumpsys meminfo $PKG | grep -E "TOTAL PSS" | head -1
 echo "RESULT pass=$PASS fail=$FAIL"
 [ $FAIL -eq 0 ] && [ $PASS -ge 12 ]
