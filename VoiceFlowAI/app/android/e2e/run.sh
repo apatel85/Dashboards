@@ -87,7 +87,13 @@ adb logcat -d E2E:I '*:S' | grep RESULT | tail -1 | grep -q "status=passwordFiel
 
 echo "== keyboard UI (real views, driven through uiautomator)"
 focus t_password; focus t_text; sleep 3
-has 'content-desc="Dictate"' && ok "keyboard shows the mic" || bad "mic not visible"
+has 'content-desc="Dictate"' && ok "keyboard shows the mic" || { bad "mic not visible"
+  echo "---- UI nodes now:"; adb shell cat /sdcard/ui.xml | python3 -c "
+import re,sys
+for n in re.findall(r'<node [^>]*>',sys.stdin.read()): 
+  g=lambda k:(re.search(k+'=\"([^\"]*)\"',n) or [0,''])[1]
+  print(g('package'),g('class').split('.')[-1],repr(g('text')),repr(g('content-desc')),g('bounds'))" | head -40
+  adb shell dumpsys input_method | grep -E "mCurMethodId|mInputShown|mShowRequested|isInputViewShown|mImeWindowVis" | head; }
 tap ","; [ "$(field_text t_text | tail -c 2)" = "," ] && ok "punctuation key types" || bad "punctuation key"
 tap "Delete"; [ "$(field_text t_text | tail -c 2)" != "," ] && ok "backspace deletes" || bad "backspace"
 has 'Style: '; P1=$(chip_desc)
@@ -108,7 +114,7 @@ focus t_password; sleep 2
 has 'text="Dictation is off in password fields"' && ok "password field: mic locked with notice" || bad "password notice"
 
 echo "== diagnostics"
-adb logcat -d | tr -d '\r' | grep -E "AndroidRuntime|FATAL|E2E|VoiceFlow" | tail -30
+adb logcat -d | tr -d '\r' | grep -vE "Calling main entry|START com.android|boot image|lock profiling|Shutting down VM" | grep -E "FATAL|AndroidRuntime|E2E|VoiceFlow|dev.voiceflow|InputMethod|Exception" | tail -60
 adb shell dumpsys meminfo $PKG | grep -E "TOTAL PSS" | head -1
 echo "RESULT pass=$PASS fail=$FAIL"
 [ $FAIL -eq 0 ] && [ $PASS -ge 12 ]
