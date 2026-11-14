@@ -53,3 +53,17 @@ Known gaps (do not report as bugs): no hold-to-talk mode; the style chip only cy
 | **A9** | Android: open the app's **Packs** tab (bottom bar) and switch a pack on and off. Then use a matching app (for example one with a package like `com.slack` for General Business) and look at the keyboard's second chip. | Switching works and is remembered. The chip shows "+ Pack name" for a matching app; tapping turns the pack on and it disappears, holding dismisses it. | ☐ | which app? |
 
 Known gaps (do not report as bugs): window-title matching is not wired yet; Dictionary is still a placeholder (on phones its bottom-bar slot shows Packs); sample packs are illustrative only.
+
+---
+
+# Settings, cloud polish and battery (added with M4) - Windows and Android
+
+| # | Do this | Expect | Pass? | Notes |
+|---|---|---|---|---|
+| **W13** | Open **Settings**. Check that *Use cloud polish* is **off**. Turn it on. | A dialog explains that your *text* (never audio) is sent to an AI service and asks you to agree. *Cancel* leaves it off. *I agree* turns it on. | ☐ | |
+| **W14** | With cloud polish on, press **Test polish**. Then dictate "um so we should probably ship the new build on friday" into Notepad. | The test says "Works: …" with a sentence. The dictation arrives tidied. Turn polish off and repeat: dictation still works (formatted on the device, slightly less polished). Try with no internet: dictation still arrives. | ☐ | how long did it take? |
+| **W15** | Settings → *Copy settings to clipboard*, paste somewhere to read it. Change something (style, add a Packs entry), then *Restore from a file* using a file you saved from that text. | The pasted text has no keys and no dictated text. Restoring brings your earlier choices back. A damaged file is refused with a plain reason and changes nothing. | ☐ | |
+| **A10** | Android, about 30 minutes: use the keyboard normally (dictate 10-15 times), then leave the phone idle for 10 minutes. Check *Settings → Battery* for VoiceFlow. | VoiceFlow is not among the top battery users; the phone is not warm while idle. After 5 idle minutes the keyboard's memory drops (the speech model unloads). | ☐ | battery % used |
+| **A11** | Android: install over an older VoiceFlow build is not required; on a fresh install, finish the setup checklist and let the **model download run with the screen on, over Wi-Fi**. | Progress shows, completes, and the Try-it box appears. (This is the step that needs the network permission; the automated emulator test also covers it.) | ☐ | |
+
+Known gaps (do not report as bugs): no history page, no Dictionary page, hotkey not editable in Settings.
