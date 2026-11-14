@@ -31,13 +31,36 @@ class AppController extends ChangeNotifier {
   double level = 0; // 0..1 live input level while listening
   final Stopwatch listeningFor = Stopwatch();
   final List<RecentDictation> recent = [];
-  Timer? _timer;
+  Timer? _timer, _flashTimer;
   Profile _profile;
+
+  /// Transient one-line message the pill shows while idle (e.g. the new profile name).
+  String? flashText;
 
   Profile get profile => _profile;
   set profile(Profile p) {
     _profile = p;
     notifyListeners();
+  }
+
+  /// Ctrl+Alt+P: next profile; the pill shows its name for 1.5 s (spec §9.3).
+  void cycleProfile() {
+    final i = assets.profiles.indexWhere((p) => p.id == _profile.id);
+    profile = assets.profiles[(i + 1) % assets.profiles.length];
+    flash('Profile: ${_profile.name}');
+  }
+
+  void flash(
+    String text, {
+    Duration duration = const Duration(milliseconds: 1500),
+  }) {
+    flashText = text;
+    notifyListeners();
+    _flashTimer?.cancel();
+    _flashTimer = Timer(duration, () {
+      flashText = null;
+      notifyListeners();
+    });
   }
 
   /// Runs text through the real on-device rule formatter (used by "Try it" and
@@ -113,6 +136,7 @@ class AppController extends ChangeNotifier {
   @override
   void dispose() {
     _timer?.cancel();
+    _flashTimer?.cancel();
     super.dispose();
   }
 }

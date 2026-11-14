@@ -49,7 +49,6 @@ class DictationService {
   Timer? _cap, _idle;
   Future<void>? _loading;
   bool _starting = false;
-  bool _engineLoaded = false;
   Object? _loadError;
   Completer<void> _streamDone = Completer<void>();
 
@@ -97,11 +96,9 @@ class DictationService {
     }
   }
 
-  Future<void> _ensureEngine() async {
-    if (_engineLoaded) return;
-    await loadEngine();
-    _engineLoaded = true;
-  }
+  // loadEngine must be idempotent: two services share one engine and either may
+  // have unloaded it since we last looked.
+  Future<void> _ensureEngine() => loadEngine();
 
   void _micFailed() {
     _cap?.cancel();
@@ -150,7 +147,11 @@ class DictationService {
         case DictationStatus.discarded:
           controller.showNotice(NoticeKind.noSpeech);
         case DictationStatus.insertFailed:
-          controller.showNotice(NoticeKind.insertFailed);
+          controller.showNotice(
+            r.error == 'elevatedTarget'
+                ? NoticeKind.adminWindow
+                : NoticeKind.insertFailed,
+          );
         case DictationStatus.passwordField:
           controller.showNotice(NoticeKind.passwordField);
         case DictationStatus.commandUndo:
@@ -169,7 +170,6 @@ class DictationService {
     if (unloadEngine == null) return;
     _idle = Timer(idleUnload, () async {
       if (isListening) return;
-      _engineLoaded = false;
       await unloadEngine!();
     });
   }

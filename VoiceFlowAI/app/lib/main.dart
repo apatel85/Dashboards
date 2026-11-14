@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,6 +10,13 @@ import 'package:voiceflow_core/voiceflow_core.dart';
 import 'app.dart';
 import 'audio/mic.dart';
 import 'engines/sherpa_stt.dart';
+import 'platform/windows/hotkey_gestures.dart';
+import 'platform/windows/hotkey_manager.dart';
+import 'platform/windows/insertion.dart';
+import 'platform/windows/keyboard_hook.dart';
+import 'platform/windows/pill_window.dart';
+import 'platform/windows/windows_os.dart';
+import 'state/dictation_state.dart';
 import 'platform/desktop_shell.dart';
 import 'state/app_controller.dart';
 import 'state/assets_loader.dart';
@@ -38,10 +46,34 @@ Future<void> main() async {
 
   final engine = SherpaSttEngine();
   final mic = MicAudioSource(deviceId: settings.micDeviceId);
-  final service = DictationService(
+  final cfg = SttModelConfig(
+    spec.id,
+    models.dir.path,
+    files: const {
+      'encoder': 'base.en-encoder.int8.onnx',
+      'decoder': 'base.en-decoder.int8.onnx',
+      'tokens': 'base.en-tokens.txt',
+    },
+  );
+  // Shared by every dictation path, so both must be safe to call at any time.
+  Future<void> loadEngine() async {
+    if (!engine.loaded) await engine.load(cfg);
+  }
+
+  Future<void> unloadEngine() async {
+    final s = controller.state;
+    if (s == DictationUiState.listening ||
+        s == DictationUiState.processing ||
+        s == DictationUiState.polishing) {
+      return; // someone is using it
+    }
+    await engine.unload();
+  }
+
+  DictationService makeService(TextSink sink) => DictationService(
     controller: controller,
     audio: mic,
-    pipeline: DictationPipeline(assets.lang, engine, ClipboardSink()),
+    pipeline: DictationPipeline(assets.lang, engine, sink),
     options: () => DictationOptions(
       controller.profile,
       packs: assets.packs,
@@ -49,19 +81,29 @@ Future<void> main() async {
       corrections: settings.corrections,
     ),
     modelReady: () => models.installed,
-    loadEngine: () => engine.load(
-      SttModelConfig(
-        spec.id,
-        models.dir.path,
-        files: const {
-          'encoder': 'base.en-encoder.int8.onnx',
-          'decoder': 'base.en-decoder.int8.onnx',
-          'tokens': 'base.en-tokens.txt',
-        },
-      ),
-    ),
-    unloadEngine: engine.unload,
+    loadEngine: loadEngine,
+    unloadEngine: unloadEngine,
   );
+
+  // In-app Record button: copy-mode (always works, no focus tricks).
+  final service = makeService(ClipboardSink());
+
+  if (Platform.isWindows) {
+    // Global hotkey dictation: types into whatever app has focus.
+    final sink = WindowsTextSink(WindowsOs());
+    final hotkeyService = makeService(sink);
+    final manager = HotkeyManager(
+      gestures: HotkeyGestures(
+        onStart: () => unawaited(hotkeyService.start()),
+        onStop: () => unawaited(hotkeyService.stop()),
+        onCancel: () => unawaited(hotkeyService.cancel()),
+      ),
+      onUndo: () => unawaited(sink.undoLast()),
+      onCycleProfile: controller.cycleProfile,
+    );
+    KeyboardHook(manager).install();
+    PillWindow(controller).create();
+  }
 
   OnboardingController? onboarding;
   final finished = ValueNotifier<bool>(settings.onboardingDone);

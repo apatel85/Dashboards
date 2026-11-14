@@ -72,7 +72,7 @@ class _StatusPillState extends State<StatusPill>
     switch (c.state) {
       case DictationUiState.idle:
         lead = const Icon(Icons.mic_none, size: 20);
-        text = t.stateIdle;
+        text = c.flashText ?? t.stateIdle;
       case DictationUiState.listening:
         bg = cs.primaryContainer;
         fg = cs.onPrimaryContainer;
