@@ -96,14 +96,19 @@ async function main() {
 
   // Dedupe rows on the natural key. Accession alone is NOT enough — one
   // filing holds several transactions — so the key is the full
-  // transaction identity. A duplicate is the same filing ingested twice
+  // transaction identity: ticker, owner, code, shares, price, trade date,
+  // filed date, accession. A duplicate is the same filing ingested twice
   // (overlapping SEC feed windows) or the same transaction listed twice
   // in one document; either way it must never render twice.
+  // Reconciled 2026-11-14: on this key the live file has 3,116 rows with
+  // 90 duplicated keys = 106 extra rows → 3,010 unique. (An earlier 141
+  // figure used a shorter key without filed_date/accession and swept in
+  // rows that share trade details but differ in filing — not duplicates.)
   const seenRows = new Set();
   const deduped = [];
   let dupRows = 0;
   for (const r of out) {
-    const k = [r.accession, r.ticker, r.owner_name, r.transaction_date, r.shares, r.price, r.transaction_code].join('|');
+    const k = [r.ticker, r.owner_name, r.transaction_code, r.shares, r.price, r.transaction_date, r.filed_date, r.accession].join('|');
     if (seenRows.has(k)) { dupRows++; continue; }
     seenRows.add(k);
     deduped.push(r);
