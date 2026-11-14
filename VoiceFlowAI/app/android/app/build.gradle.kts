@@ -29,6 +29,13 @@ android {
         versionName = flutter.versionName
     }
 
+    flavorDimensions += "dist"
+    productFlavors {
+        // prod = what ships. e2e = emulator-test build with a test seam; never published.
+        create("prod") { dimension = "dist" }
+        create("e2e") { dimension = "dist" }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

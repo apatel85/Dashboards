@@ -1,108 +1,105 @@
 package dev.voiceflow.voiceflow_app
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.inputmethodservice.InputMethodService
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.text.InputType
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import io.flutter.plugin.common.MethodChannel
 
-/** Spike S3: keyboard that formats text by calling Dart in a headless engine. */
+/**
+ * VoiceFlow keyboard. Kotlin owns UI, microphone and the InputConnection; the shared Dart
+ * brain (speech model, formatting, per-app profile memory) runs in a headless FlutterEngine.
+ */
 class VoiceFlowIME : InputMethodService() {
     private val main = Handler(Looper.getMainLooper())
-
-    // Test seam (spike only): adb broadcasts text; we format it via Dart and commit it.
-    private val seam = object : BroadcastReceiver() {
-        override fun onReceive(c: Context, i: Intent) {
-            if (i.action == "dev.voiceflow.S1A_TRANSCRIBE") {
-                transcribe(i.getStringExtra("dir") ?: "", i.getStringExtra("wav") ?: "")
-            } else {
-                format(i.getStringExtra("text") ?: "", 0)
-            }
-        }
-    }
+    private var hooks: ImeHooks? = null
+    private var editor: EditorInfo? = null
 
     override fun onCreate() {
         super.onCreate()
         ImeEngine.get(this) // cold start begins here
-        warmup()
-        val f = IntentFilter("dev.voiceflow.S3_FORMAT")
-        f.addAction("dev.voiceflow.S1A_TRANSCRIBE")
-        if (Build.VERSION.SDK_INT >= 33) {
-            registerReceiver(seam, f, Context.RECEIVER_EXPORTED)
-        } else {
-            registerReceiver(seam, f)
-        }
+        ping()
+        hooks = ImeHooksFactory.create(this)
     }
 
     override fun onCreateInputView(): View =
-        Button(this).apply {
-            text = "VoiceFlow (S3 spike)"
-            setOnClickListener { format("um this is a test", 0) }
-        }
+        Button(this).apply { text = "VoiceFlow" }
 
-    /** Spike S1-Android: Dart runs sherpa-onnx on a WAV file; we log the numbers. */
-    private fun transcribe(dir: String, wav: String) {
-        ImeEngine.get(this).invokeMethod("transcribe",
-            mapOf("dir" to dir, "wav" to wav,
-                "encoder" to "base.en-encoder.int8.onnx",
-                "decoder" to "base.en-decoder.int8.onnx",
-                "tokens" to "base.en-tokens.txt"),
-            object : MethodChannel.Result {
-                override fun success(r: Any?) { Log.i("S3", "S1A_RESULT $r") }
-                override fun error(code: String, msg: String?, d: Any?) { Log.e("S3", "S1A_ERROR $code $msg") }
-                override fun notImplemented() { Log.e("S3", "S1A_NOT_IMPLEMENTED") }
-            })
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
+        editor = info
     }
 
-    /** Pings Dart until it answers; logs the true cold start (engine create -> Dart ready). */
-    private fun warmup() {
-        ImeEngine.get(this).invokeMethod("ping", null, object : MethodChannel.Result {
-            override fun success(r: Any?) {
-                Log.i("S3", "dart_ready_ms=${SystemClock.elapsedRealtime() - ImeEngine.startedAtMs}")
+    /** Maps the focused field's type to how dictated text must be formatted. */
+    fun fieldKind(info: EditorInfo? = editor): String {
+        val t = info?.inputType ?: return "text"
+        val cls = t and InputType.TYPE_MASK_CLASS
+        val v = t and InputType.TYPE_MASK_VARIATION
+        return when {
+            cls == InputType.TYPE_CLASS_TEXT && (
+                v == InputType.TYPE_TEXT_VARIATION_PASSWORD ||
+                v == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
+                v == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD) -> "password"
+            cls == InputType.TYPE_CLASS_NUMBER &&
+                (t and InputType.TYPE_MASK_VARIATION) == InputType.TYPE_NUMBER_VARIATION_PASSWORD -> "password"
+            cls == InputType.TYPE_CLASS_TEXT && (
+                v == InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS ||
+                v == InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS) -> "email"
+            cls == InputType.TYPE_CLASS_TEXT && v == InputType.TYPE_TEXT_VARIATION_URI -> "url"
+            cls == InputType.TYPE_CLASS_NUMBER || cls == InputType.TYPE_CLASS_PHONE -> "number"
+            else -> "text"
+        }
+    }
+
+    /**
+     * 16 kHz mono 16-bit PCM -> Dart pipeline -> committed into the focused field.
+     * [kind] overrides the field-derived kind (tests only). [done] gets the Dart result map.
+     */
+    fun dictate(pcm: ByteArray, kind: String? = null, done: (Map<String, Any?>) -> Unit) {
+        val k = kind ?: fieldKind()
+        call("dictate", mapOf("pcm" to pcm, "packageName" to editor?.packageName, "fieldKind" to k)) { r ->
+            @Suppress("UNCHECKED_CAST")
+            val m = (r as? Map<String, Any?>) ?: mapOf("status" to "error")
+            if (m["status"] == "ok") commit(m["text"] as? String ?: "", k)
+            done(m)
+        }
+    }
+
+    private fun commit(text: String, kind: String) {
+        val ic = currentInputConnection ?: return
+        if (text.isEmpty()) return
+        // Prose gets a separating space after existing text; email/url/number fields never do.
+        val before = ic.getTextBeforeCursor(1, 0)?.toString().orEmpty()
+        val lead = if (kind == "text" && before.isNotEmpty() && !before.last().isWhitespace()) " " else ""
+        ic.commitText(lead + text, 1)
+    }
+
+    /** Calls Dart; retries while its handler is not registered yet (cold engine). */
+    private fun call(method: String, args: Any?, attempt: Int = 0, cb: (Any?) -> Unit) {
+        ImeEngine.get(this).invokeMethod(method, args, object : MethodChannel.Result {
+            override fun success(r: Any?) = cb(r)
+            override fun error(code: String, msg: String?, d: Any?) {
+                Log.e("VoiceFlow", "$method failed: $code $msg")
+                cb(null)
             }
-            override fun error(code: String, msg: String?, d: Any?) { Log.e("S3", "ping_error $code") }
-            override fun notImplemented() { main.postDelayed({ warmup() }, 25) }
+            override fun notImplemented() {
+                if (attempt < 200) main.postDelayed({ call(method, args, attempt + 1, cb) }, 50)
+                else cb(null)
+            }
         })
     }
 
-    private fun format(text: String, attempt: Int) {
-        val callStart = SystemClock.elapsedRealtime()
-        val ch = ImeEngine.get(this)
-        ch.invokeMethod("format", mapOf("text" to text, "profile" to "business"),
-            object : MethodChannel.Result {
-                override fun success(r: Any?) {
-                    val out = r as? String ?: ""
-                    val ic = currentInputConnection
-                    if (ic == null) { Log.e("S3", "no_input_connection"); return }
-                    Log.i("S3", "call_ms=${SystemClock.elapsedRealtime() - callStart}")
-                    Log.i("S3", "dart_out='$out'")
-                    ic.commitText(out, 1)
-                    Log.i("S3", "committed='${ic.getTextBeforeCursor(500, 0)}'")
-                    main.postDelayed({
-                        Log.i("S3", "committed2='${currentInputConnection?.getTextBeforeCursor(500, 0)}'")
-                    }, 600)
-                }
-                override fun error(code: String, msg: String?, d: Any?) {
-                    Log.e("S3", "error $code $msg")
-                }
-                override fun notImplemented() {
-                    // Dart handler not registered yet: retry for up to ~6 s.
-                    if (attempt < 120) main.postDelayed({ format(text, attempt + 1) }, 50)
-                    else Log.e("S3", "dart_never_ready")
-                }
-            })
+    private fun ping() = call("ping", null) {
+        Log.i("VoiceFlow", "dart_ready_ms=${SystemClock.elapsedRealtime() - ImeEngine.startedAtMs}")
     }
 
     override fun onDestroy() {
-        unregisterReceiver(seam)
+        hooks?.onDestroy()
         ImeEngine.destroy()
         super.onDestroy()
     }
