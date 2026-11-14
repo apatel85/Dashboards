@@ -1,0 +1,105 @@
+{
+  "id": "healthcare_clinic",
+  "name": "Healthcare (Clinic Notes)",
+  "version": "1.0.0",
+  "description": "Illustrative sample pack for clinic notes. Not a medical product: it makes no claim of clinical accuracy. Check everything you dictate.",
+  "vocabulary": [
+    "hypertension",
+    "hyperlipidemia",
+    "metformin",
+    "lisinopril",
+    "atorvastatin",
+    "amlodipine",
+    "levothyroxine",
+    "ibuprofen",
+    "acetaminophen",
+    "A1C",
+    "tachycardia",
+    "bradycardia",
+    "dyspnea",
+    "edema",
+    "auscultation"
+  ],
+  "abbreviations": {
+    "bp": "BP",
+    "hr": "HR",
+    "bid": "BID",
+    "tid": "TID",
+    "prn": "PRN"
+  },
+  "promptFragment": "Clinical dictation. Preserve drug names, doses, units and numbers exactly. Do not add or infer clinical facts.",
+  "templates": [
+    {
+      "id": "soap",
+      "name": "SOAP note",
+      "trigger": [
+        "soap note"
+      ],
+      "skeleton": "Subjective:\n\nObjective:\n\nAssessment:\n\nPlan:\n"
+    },
+    {
+      "id": "vitals",
+      "name": "Vitals line",
+      "trigger": [
+        "vitals template"
+      ],
+      "skeleton": "BP:    HR:    Temp:    SpO2:    Weight:\n"
+    }
+  ],
+  "detectors": {
+    "apps": [
+      "epic",
+      "athenahealth",
+      "cerner",
+      "eclinicalworks",
+      "practicefusion"
+    ],
+    "windowTitleKeywords": [
+      "patient",
+      "chart",
+      "encounter",
+      "clinic"
+    ],
+    "contentKeywords": [
+      "blood pressure",
+      "mg",
+      "prescribed",
+      "dose",
+      "symptoms",
+      "diagnosis"
+    ]
+  },
+  "numbers": {
+    "shorthandHundreds": true
+  },
+  "rules": [
+    {
+      "pattern": "\\ba one c\\b",
+      "replace": "A1C"
+    },
+    {
+      "pattern": "\\b(BP|blood pressure)( of| is)? (\\d{2,3}) over (\\d{2,3})\\b",
+      "replace": "$1$2 $3/$4"
+    },
+    {
+      "pattern": "\\b(\\d+(?:\\.\\d+)?) milligrams?\\b",
+      "replace": "$1 mg"
+    },
+    {
+      "pattern": "\\b(\\d+(?:\\.\\d+)?) micrograms?\\b",
+      "replace": "$1 mcg"
+    },
+    {
+      "pattern": "\\b(\\d+(?:\\.\\d+)?) milliliters?\\b",
+      "replace": "$1 mL"
+    },
+    {
+      "pattern": "\\b(\\d+) beats per minute\\b",
+      "replace": "$1 bpm"
+    }
+  ],
+  "safety": {
+    "preferRuleFormatterForNumbers": true,
+    "cloudAllowed": false
+  }
+}

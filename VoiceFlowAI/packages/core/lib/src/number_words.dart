@@ -16,7 +16,10 @@ class NumberWords {
   }
 
   /// Returns tokens with number runs replaced by digit tokens.
-  List<String> convert(List<String> toks) {
+  ///
+  /// With [shorthandHundreds], a single digit word followed by a tens word is read the way
+  /// clinicians say it: "one forty" = 140, "one twenty five" = 125 (not 41 / 46).
+  List<String> convert(List<String> toks, {bool shorthandHundreds = false}) {
     final out = <String>[];
     var i = 0;
     while (i < toks.length) {
@@ -52,7 +55,25 @@ class NumberWords {
         j++;
       }
       if (cur.isNotEmpty) runs.add(cur);
-      final vals = runs.map(_value).toList();
+      final vals =
+          runs.map((r) => _value(r, shorthand: shorthandHundreds)).toList();
+      // "two point five" -> 2.5 (digits only after "point"; a bare "point" stays a word).
+      if (j + 1 < toks.length && toks[j].toLowerCase() == 'point') {
+        var k = j + 1;
+        final ds = <String>[];
+        while (k < toks.length && (units[toks[k].toLowerCase()] ?? 99) < 10) {
+          ds.add('${units[toks[k].toLowerCase()]}');
+          k++;
+        }
+        if (ds.isNotEmpty) {
+          for (var r = 0; r < vals.length - 1; r++) {
+            out.add(_fmt(vals[r]));
+          }
+          out.add('${_fmt(vals.last)}.${ds.join()}');
+          i = k;
+          continue;
+        }
+      }
       final nextTok = j < toks.length ? toks[j].toLowerCase() : '';
       if (runs.length == 1 &&
           runs[0].length == 1 &&
@@ -85,7 +106,16 @@ class NumberWords {
           .toString()
           .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
 
-  int _value(List<String> run) {
+  int _value(List<String> run, {bool shorthand = false}) {
+    if (shorthand && run.length >= 2) {
+      final first = units[run[0].toLowerCase()] ?? 0;
+      if (first >= 1 &&
+          first <= 9 &&
+          tens.containsKey(run[1].toLowerCase()) &&
+          run.skip(1).every((w) => !scales.containsKey(w.toLowerCase()))) {
+        return first * 100 + _value(run.sublist(1));
+      }
+    }
     var total = 0, cur = 0;
     for (final t in run) {
       final w = t.toLowerCase();

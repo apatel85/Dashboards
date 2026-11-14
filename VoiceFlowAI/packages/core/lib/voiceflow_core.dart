@@ -2,6 +2,8 @@ export 'src/models.dart';
 export 'src/lang.dart';
 export 'src/profile.dart';
 export 'src/pack.dart';
+export 'src/pack_registry.dart';
+export 'src/pack_detector.dart';
 export 'src/rule_formatter.dart';
 export 'src/voice_commands.dart';
 export 'src/polish_prompt.dart';

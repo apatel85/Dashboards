@@ -8,11 +8,21 @@
     "ROI",
     "stakeholder",
     "roadmap",
-    "onboarding"
+    "onboarding",
+    "SLA",
+    "ARR",
+    "MRR",
+    "pipeline",
+    "deliverable",
+    "quarterly"
   ],
   "abbreviations": {
     "eod": "end of day",
-    "asap": "as soon as possible"
+    "asap": "as soon as possible",
+    "fyi": "FYI",
+    "eta": "ETA",
+    "faq": "FAQ",
+    "yoy": "YoY"
   },
   "promptFragment": "General business communication. Keep names, figures and dates exactly.",
   "templates": [
@@ -23,21 +33,59 @@
         "meeting notes"
       ],
       "skeleton": "Attendees:\n\nAgenda:\n\nDecisions:\n\nAction items:\n"
+    },
+    {
+      "id": "status_update",
+      "name": "Status update",
+      "trigger": [
+        "status update"
+      ],
+      "skeleton": "Done:\n\nNext:\n\nBlockers:\n"
     }
   ],
   "detectors": {
     "apps": [
       "outlook",
-      "slack"
+      "slack",
+      "teams",
+      "gmail",
+      "zoom"
     ],
     "windowTitleKeywords": [
-      "inbox"
+      "inbox",
+      "meeting",
+      "agenda",
+      "proposal"
     ],
     "contentKeywords": [
-      "meeting"
+      "meeting",
+      "quarter",
+      "budget",
+      "deadline",
+      "client",
+      "invoice"
     ]
   },
   "safety": {
     "cloudAllowed": true
-  }
+  },
+  "description": "Illustrative sample pack for everyday business writing.",
+  "rules": [
+    {
+      "pattern": "\\bq one\\b",
+      "replace": "Q1"
+    },
+    {
+      "pattern": "\\bq two\\b",
+      "replace": "Q2"
+    },
+    {
+      "pattern": "\\bq three\\b",
+      "replace": "Q3"
+    },
+    {
+      "pattern": "\\bq four\\b",
+      "replace": "Q4"
+    }
+  ]
 }

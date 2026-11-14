@@ -20,6 +20,11 @@ class PostProcessor {
             (_) => e.value);
       }
     }
+    for (final p in packs) {
+      for (final r in p.rules) {
+        s = r.apply(s);
+      }
+    }
     for (final e in corrections.entries) {
       s = s.replaceAllMapped(
           RegExp('\\b${RegExp.escape(e.key)}\\b', caseSensitive: false),
@@ -39,6 +44,13 @@ class PostProcessor {
       for (final t in terms) {
         if (t.contains(' ')) continue;
         if (t == w) return w;
+        // Already spelled right, only capitalised at the start of a sentence: keep it.
+        if (t.length > 1 &&
+            t[0] == t[0].toLowerCase() &&
+            w[0] != w[0].toLowerCase() &&
+            w.substring(1) == t.substring(1)) {
+          return w;
+        }
         final d = _edit(lw, t.toLowerCase());
         final limit = w.length >= 7 ? 2 : (w.length >= 5 ? 1 : 0);
         if (d <= limit && d < bestD) {

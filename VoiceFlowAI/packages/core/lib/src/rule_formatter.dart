@@ -23,7 +23,7 @@ class RuleFormatter {
   };
   static const _noDedupe = {'had', 'that', 'is'};
 
-  String format(String input, Profile p) {
+  String format(String input, Profile p, {bool shorthandHundreds = false}) {
     var t = _tokenize(input);
     t = _spokenPunct(t);
     t = _fillers(t, p.fullFillers);
@@ -37,7 +37,9 @@ class RuleFormatter {
       t = r.$1;
       listed = r.$2;
     }
-    if (p.numbersAsDigits) t = _nums.convert(t);
+    if (p.numbersAsDigits) {
+      t = _nums.convert(t, shorthandHundreds: shorthandHundreds);
+    }
     t = _tidyPunct(t);
     t = _capitalize(t);
     return _join(t, listed);
@@ -289,8 +291,11 @@ class RuleFormatter {
       prev = w;
     }
     var s = sb.toString().replaceAll(RegExp(r'[ \t]+\n'), '\n').trim();
-    s = s.replaceAllMapped(
-        RegExp(r'^(\d+\.)(\S)', multiLine: true), (m) => '${m[1]} ${m[2]}');
+    // List numbering only: a decimal at the start of a line ("2.5 mg") must stay intact.
+    if (listed) {
+      s = s.replaceAllMapped(
+          RegExp(r'^(\d+\.)(\S)', multiLine: true), (m) => '${m[1]} ${m[2]}');
+    }
     if (s.isEmpty) return s;
     if (listed) return s;
     if (!_terminal.contains(s[s.length - 1]) &&

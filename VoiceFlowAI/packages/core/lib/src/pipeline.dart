@@ -143,9 +143,14 @@ class DictationPipeline {
 
   Future<(String, bool)> _text(String text, DictationOptions o, bool allowCloud,
       List<String> glossary) async {
-    final ruled = _fmt.format(text, o.profile);
+    final ruled = _fmt.format(text, o.profile,
+        shorthandHundreds: o.packs.any((p) => p.shorthandHundreds));
     final chain = polish;
+    // A pack that wants exact numbers keeps the rule output whenever there is a digit in it.
+    final keepNumbers = o.packs.any((p) => p.preferRuleFormatterForNumbers) &&
+        RegExp(r'\d').hasMatch(ruled);
     if (ruled.isEmpty ||
+        keepNumbers ||
         !o.profile.useLlm ||
         chain == null ||
         !chain.hasEngines ||
