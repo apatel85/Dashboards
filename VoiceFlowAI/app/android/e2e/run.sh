@@ -100,8 +100,10 @@ BEFORE=$(field_text t_text)
 COMMA=$(center ","); echo "comma centre: '$COMMA'"
 adb shell cat /sdcard/ui.xml | grep -o 'content-desc="[^"]*"[^>]*bounds="[^"]*"' | grep -E 'desc="(,|\.|Delete|Dictate|Space)"' | sed 's/class=[^ ]* //;s/package=[^ ]* //' | cut -c1-200
 tap ","; sleep 2; AFTER=$(field_text t_text); echo "typed: '${AFTER: -3}'"
-[ "$AFTER" = "$BEFORE," ] || { echo "after-comma logcat:"; adb logcat -d VoiceFlow:I E2E:I AndroidRuntime:E '*:S' | tail -8; }
-[ "$AFTER" = "$BEFORE," ] && ok "punctuation key types" || bad "punctuation key"
+
+# Focusing by tapping puts the caret mid-text, so compare content, not the tail.
+nc() { printf '%s' "$1" | tr -cd ',' | wc -c; }
+{ [ ${#AFTER} -eq $((${#BEFORE}+1)) ] && [ "$(nc "$AFTER")" -eq $(($(nc "$BEFORE")+1)) ]; } && ok "punctuation key types" || bad "punctuation key"
 tap "Delete"; sleep 2; [ "$(field_text t_text)" = "$BEFORE" ] && ok "backspace deletes" || bad "backspace"
 has 'Style: '; P1=$(chip_desc)
 tap "Style: [^\"]*"
