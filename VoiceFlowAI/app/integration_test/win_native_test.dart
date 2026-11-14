@@ -22,9 +22,10 @@ import 'package:voiceflow_core/voiceflow_core.dart';
 Future<void> pause(int ms) => Future<void>.delayed(Duration(milliseconds: ms));
 
 /// A real top-level Win32 EDIT control window.
-int makeEdit({bool password = false, String title = 'vf-target'}) {
+int makeEdit({bool password = false}) {
   final cls = 'EDIT'.toNativeUtf16();
-  final name = title.toNativeUtf16();
+  final name = ''
+      .toNativeUtf16(); // for an EDIT control the title IS its initial text
   try {
     // WS_OVERLAPPEDWINDOW | WS_VISIBLE | ES_MULTILINE | ES_AUTOVSCROLL (| ES_PASSWORD)
     final style = 0x00CF0000 | 0x10000000 | 0x4 | 0x40 | (password ? 0x20 : 0);
@@ -186,7 +187,7 @@ void main() {
   ) async {
     final os = WindowsOs();
     final sink = WindowsTextSink(os);
-    final pw = makeEdit(password: true, title: 'vf-password');
+    final pw = makeEdit(password: true);
     addTearDown(() => w.destroyWindow(pw));
     expect(await bringToFront(pw), isTrue);
     expect(os.focusedIsPassword(), isTrue);
