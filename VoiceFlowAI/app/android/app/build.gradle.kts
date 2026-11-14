@@ -29,6 +29,12 @@ android {
         versionName = flutter.versionName
     }
 
+    // Lint's release-build check crashes inside Android's own tooling (NoSuchMethodError in its
+    // Javadoc parser) and nothing here depends on it. Our checks are the tests and the APK audit.
+    lint {
+        checkReleaseBuilds = false
+    }
+
     flavorDimensions += "dist"
     productFlavors {
         // prod = what ships. e2e = emulator-test build with a test seam; never published.

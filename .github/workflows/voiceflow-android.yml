@@ -3,6 +3,9 @@ on:
   push:
     paths: ["VoiceFlowAI/app/android/**", "VoiceFlowAI/app/lib/**", "VoiceFlowAI/app/assets/**", "VoiceFlowAI/app/pubspec.yaml", "VoiceFlowAI/packages/core/**", ".github/workflows/voiceflow-android.yml"]
   workflow_dispatch:
+defaults:
+  run:
+    shell: bash # bash with pipefail: a failing build must not hide behind `| tail`
 jobs:
   ime-e2e:
     runs-on: ubuntu-latest
