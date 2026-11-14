@@ -58,7 +58,7 @@ jobs:
         working-directory: VoiceFlowAI/app
         run: |
           flutter pub get
-          flutter build windows --release 2>&1 | Select-Object -Last 15
+          flutter build windows --release --dart-define=APP_VERSION=${{ steps.v.outputs.version }} 2>&1 | Select-Object -Last 15
       - name: Bundle the Visual C++ runtime next to the exe (app-local, so nothing else to install)
         run: |
           $rel = "VoiceFlowAI/app/build/windows/x64/runner/Release"
@@ -159,7 +159,8 @@ jobs:
           VER=$(tr -d '[:space:]' < ../VERSION)
           flutter pub get
           flutter build apk --release --flavor prod --target-platform android-arm64 \
-            --build-name "$VER" --build-number "${{ github.run_number }}" 2>&1 | tail -n 15
+            --build-name "$VER" --build-number "${{ github.run_number }}" \
+            --dart-define=APP_VERSION="$VER" 2>&1 | tail -n 15
           mkdir -p ../dist
           cp build/app/outputs/flutter-apk/app-prod-release.apk "../dist/VoiceFlow-$VER-arm64.apk"
           ls -l ../dist

@@ -1,0 +1,36 @@
+name: voiceflow-polish-check
+# Calls the DEPLOYED polish function with the exact URL and public key the app ships, so
+# "cloud polish works" is a measured fact, not an assumption. Needs no secret: both values are
+# public and live in app/lib/state/polish_config.dart. Fails with a plain reason if not.
+on:
+  push:
+    paths:
+      - "VoiceFlowAI/app/lib/state/polish_config.dart"
+      - "VoiceFlowAI/supabase/functions/**"
+      - "VoiceFlowAI/packages/core/tool/polish_live_check.dart"
+      - ".github/workflows/voiceflow-polish-check.yml"
+  workflow_dispatch:
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: subosito/flutter-action@v2.18.0
+        with:
+          flutter-version: "3.50.0"
+          channel: stable
+          cache: true
+      - name: Call the deployed function
+        working-directory: VoiceFlowAI/packages/core
+        run: |
+          CFG=../../app/lib/state/polish_config.dart
+          URL=$(grep -o "https://[a-z0-9.]*supabase.co/functions/v1/[a-z-]*" $CFG | head -1)
+          KEY=$(grep -o "eyJ[A-Za-z0-9._-]*" $CFG | head -1)
+          echo "function: $URL"
+          dart pub get
+          dart run tool/polish_live_check.dart "$URL" "$KEY" | tee live.log
+          grep -q POLISH_LIVE_OK live.log

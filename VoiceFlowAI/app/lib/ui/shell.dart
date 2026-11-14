@@ -4,6 +4,9 @@ import '../l10n/app_localizations.dart';
 import '../state/app_controller.dart';
 import '../state/dictation_service.dart';
 import '../state/pack_store.dart';
+import '../state/polish_holder.dart';
+import '../state/settings_controller.dart';
+import 'settings_page.dart';
 import 'home_page.dart';
 import 'packs_page.dart';
 import 'style_page.dart';
@@ -16,11 +19,17 @@ class AppShell extends StatefulWidget {
     this.service,
     this.packStore,
     this.pickPackFile,
+    this.settingsController,
+    this.polish,
+    this.pickSettingsFile,
   });
   final AppController controller;
   final DictationService? service;
   final PackStore? packStore;
   final PackFilePicker? pickPackFile;
+  final SettingsController? settingsController;
+  final PolishHolder? polish;
+  final SettingsFilePicker? pickSettingsFile;
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -47,7 +56,13 @@ class _AppShellState extends State<AppShell> {
       ),
       StylePage(controller: widget.controller),
       for (var i = 2; i < items.length; i++)
-        if (i == 3 && widget.packStore != null)
+        if (i == 5 && widget.settingsController != null)
+          SettingsPage(
+            controller: widget.settingsController!,
+            polish: widget.polish,
+            pick: widget.pickSettingsFile ?? pickSettingsFile,
+          )
+        else if (i == 3 && widget.packStore != null)
           PacksPage(
             store: widget.packStore!,
             pick: widget.pickPackFile ?? pickPackFile,

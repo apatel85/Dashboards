@@ -8,6 +8,8 @@ import 'state/app_controller.dart';
 import 'state/android_setup.dart';
 import 'state/dictation_service.dart';
 import 'state/pack_store.dart';
+import 'state/polish_holder.dart';
+import 'state/settings_controller.dart';
 import 'state/onboarding_controller.dart';
 import 'theme.dart';
 import 'ui/android_setup_page.dart';
@@ -22,6 +24,8 @@ class VoiceFlowApp extends StatelessWidget {
     this.onboarding,
     this.androidSetup,
     this.packStore,
+    this.settingsController,
+    this.polish,
     this.onboardingFinished,
   });
   final AppController controller;
@@ -33,6 +37,8 @@ class VoiceFlowApp extends StatelessWidget {
   /// Android's equivalent first-run checklist (keyboard enable/select, mic, model).
   final AndroidSetupController? androidSetup;
   final PackStore? packStore;
+  final SettingsController? settingsController;
+  final PolishHolder? polish;
   final ValueListenable<bool>? onboardingFinished;
 
   @override
@@ -56,6 +62,8 @@ class VoiceFlowApp extends StatelessWidget {
             controller: controller,
             service: service,
             packStore: packStore,
+            settingsController: settingsController,
+            polish: polish,
           );
         }
         return androidSetup != null

@@ -35,6 +35,11 @@ class DictationPipeline {
   final SttEngine stt;
   final TextSink sink;
   final PolishChain? polish;
+
+  /// Lets the app switch polish on and off while running (settings change). Wins over [polish].
+  final PolishChain? Function()? polishProvider;
+  PolishChain? get _chain =>
+      polishProvider != null ? polishProvider!() : polish;
   final HistoryStore? history;
   final RecoverSlot recover = RecoverSlot();
   final EnergyVad vad;
@@ -45,7 +50,7 @@ class DictationPipeline {
   final PolishValidator _validator = PolishValidator();
 
   DictationPipeline(this.lang, this.stt, this.sink,
-      {this.polish, this.history, EnergyVad? vad})
+      {this.polish, this.polishProvider, this.history, EnergyVad? vad})
       : vad = vad ?? const EnergyVad();
 
   Future<DictationResult> run(Uint8List pcm, DictationOptions o) async {
@@ -145,7 +150,7 @@ class DictationPipeline {
       List<String> glossary) async {
     final ruled = _fmt.format(text, o.profile,
         shorthandHundreds: o.packs.any((p) => p.shorthandHundreds));
-    final chain = polish;
+    final chain = _chain;
     // A pack that wants exact numbers keeps the rule output whenever there is a digit in it.
     final keepNumbers = o.packs.any((p) => p.preferRuleFormatterForNumbers) &&
         RegExp(r'\d').hasMatch(ruled);

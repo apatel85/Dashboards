@@ -381,4 +381,99 @@ class AppLocalizationsEn extends AppLocalizations {
   String packSuggestWhy(String why) {
     return 'Suggested because of: $why';
   }
+
+  @override
+  String get setTitle => 'Settings';
+
+  @override
+  String get setCloudTitle => 'Cloud polish';
+
+  @override
+  String get setCloudBody =>
+      'Optional. After the on-device formatting, VoiceFlow can ask an AI service to tidy your text a little more. Only text is sent, never audio. Off by default.';
+
+  @override
+  String get setCloudSwitch => 'Use cloud polish';
+
+  @override
+  String get setConsentTitle => 'Send text for polishing?';
+
+  @override
+  String get setConsentBody =>
+      'When this is on, the text you dictate (never your voice) is sent to a function run for this app, which passes it to an AI service (Google Gemini\'s free tier, with backups) and returns a tidier version. The service sees your words. It is not used while a pack that keeps data on this device is on. You can turn it off at any time.';
+
+  @override
+  String get setConsentAgree => 'I agree, turn on';
+
+  @override
+  String get setCancel => 'Cancel';
+
+  @override
+  String get setPresetProxy => 'VoiceFlow service (hosted)';
+
+  @override
+  String get setPresetOllama => 'A server on this computer (Ollama)';
+
+  @override
+  String get setOllamaUrl => 'Server address';
+
+  @override
+  String get setOllamaModel => 'Model name';
+
+  @override
+  String get setTest => 'Test polish';
+
+  @override
+  String get setTesting => 'Testing…';
+
+  @override
+  String setTodayCount(int n) {
+    return 'Requests today: $n';
+  }
+
+  @override
+  String get setPrivacyTitle => 'Privacy';
+
+  @override
+  String get setPrivacyBody =>
+      'Audio stays on this device and is never saved. No accounts, analytics or crash reports. Dictated text is not kept: there is no history yet. Settings and imported packs are stored in your user data folder.';
+
+  @override
+  String get setGeneralTitle => 'General';
+
+  @override
+  String get setSounds => 'Sounds';
+
+  @override
+  String get setBackupTitle => 'Back up and restore';
+
+  @override
+  String get setBackupBody =>
+      'Settings, dictionary and pack choices as a small file. It never contains keys or dictated text, and it cannot turn cloud polish on: you do that here, on each device.';
+
+  @override
+  String get setExport => 'Copy settings to clipboard';
+
+  @override
+  String get setExported => 'Copied.';
+
+  @override
+  String get setImport => 'Restore from a file';
+
+  @override
+  String get setImported => 'Settings restored.';
+
+  @override
+  String get setImportRefused => 'This file could not be used';
+
+  @override
+  String get setAboutTitle => 'About';
+
+  @override
+  String setVersion(String v) {
+    return 'Version $v';
+  }
+
+  @override
+  String get setLicenses => 'Open-source licenses';
 }

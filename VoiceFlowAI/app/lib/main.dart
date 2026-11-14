@@ -26,6 +26,8 @@ import 'state/assets_loader.dart';
 import 'state/dictation_service.dart';
 import 'state/onboarding_controller.dart';
 import 'state/pack_store.dart';
+import 'state/polish_holder.dart';
+import 'state/settings_controller.dart';
 import 'state/settings_store.dart';
 
 // Keeps the keyboard's headless entrypoint (imeMain) in the compiled program;
@@ -56,6 +58,12 @@ Future<void> main(List<String> args) async {
       SingleInstance.acquire(r'Local\VoiceFlowAI-SingleInstance') == null) {
     exit(0); // another VoiceFlow is already running in this session
   }
+  final polish = PolishHolder(settings);
+  final settingsController = SettingsController(
+    settings,
+    () => store.save(settings),
+    onImported: () => packStore.syncFromSettings(),
+  );
   final controller = AppController(assets);
   if (Platform.isWindows) {
     controller.foregroundApp = foregroundAppId;
@@ -97,7 +105,12 @@ Future<void> main(List<String> args) async {
   DictationService makeService(TextSink sink) => DictationService(
     controller: controller,
     audio: mic,
-    pipeline: DictationPipeline(assets.lang, engine, sink),
+    pipeline: DictationPipeline(
+      assets.lang,
+      engine,
+      sink,
+      polishProvider: () => polish.chain,
+    ),
     options: () => DictationOptions(
       controller.profile,
       packs: packStore.active, // the packs you turned on, in priority order
@@ -175,6 +188,8 @@ Future<void> main(List<String> args) async {
       onboarding: onboarding,
       androidSetup: androidSetup,
       packStore: packStore,
+      settingsController: settingsController,
+      polish: polish,
       onboardingFinished: finished,
     ),
   );

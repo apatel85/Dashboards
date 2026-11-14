@@ -37,5 +37,6 @@ jobs:
         working-directory: VoiceFlowAI/app
         run: |
           flutter pub get
+          dart run ../tool/license_audit.dart
           flutter analyze
           flutter test

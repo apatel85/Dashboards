@@ -747,6 +747,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Suggested because of: {why}'**
   String packSuggestWhy(String why);
+
+  /// No description provided for @setTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get setTitle;
+
+  /// No description provided for @setCloudTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud polish'**
+  String get setCloudTitle;
+
+  /// No description provided for @setCloudBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. After the on-device formatting, VoiceFlow can ask an AI service to tidy your text a little more. Only text is sent, never audio. Off by default.'**
+  String get setCloudBody;
+
+  /// No description provided for @setCloudSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Use cloud polish'**
+  String get setCloudSwitch;
+
+  /// No description provided for @setConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send text for polishing?'**
+  String get setConsentTitle;
+
+  /// No description provided for @setConsentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When this is on, the text you dictate (never your voice) is sent to a function run for this app, which passes it to an AI service (Google Gemini\'s free tier, with backups) and returns a tidier version. The service sees your words. It is not used while a pack that keeps data on this device is on. You can turn it off at any time.'**
+  String get setConsentBody;
+
+  /// No description provided for @setConsentAgree.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree, turn on'**
+  String get setConsentAgree;
+
+  /// No description provided for @setCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get setCancel;
+
+  /// No description provided for @setPresetProxy.
+  ///
+  /// In en, this message translates to:
+  /// **'VoiceFlow service (hosted)'**
+  String get setPresetProxy;
+
+  /// No description provided for @setPresetOllama.
+  ///
+  /// In en, this message translates to:
+  /// **'A server on this computer (Ollama)'**
+  String get setPresetOllama;
+
+  /// No description provided for @setOllamaUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Server address'**
+  String get setOllamaUrl;
+
+  /// No description provided for @setOllamaModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model name'**
+  String get setOllamaModel;
+
+  /// No description provided for @setTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test polish'**
+  String get setTest;
+
+  /// No description provided for @setTesting.
+  ///
+  /// In en, this message translates to:
+  /// **'Testing…'**
+  String get setTesting;
+
+  /// No description provided for @setTodayCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Requests today: {n}'**
+  String setTodayCount(int n);
+
+  /// No description provided for @setPrivacyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get setPrivacyTitle;
+
+  /// No description provided for @setPrivacyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio stays on this device and is never saved. No accounts, analytics or crash reports. Dictated text is not kept: there is no history yet. Settings and imported packs are stored in your user data folder.'**
+  String get setPrivacyBody;
+
+  /// No description provided for @setGeneralTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get setGeneralTitle;
+
+  /// No description provided for @setSounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Sounds'**
+  String get setSounds;
+
+  /// No description provided for @setBackupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up and restore'**
+  String get setBackupTitle;
+
+  /// No description provided for @setBackupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings, dictionary and pack choices as a small file. It never contains keys or dictated text, and it cannot turn cloud polish on: you do that here, on each device.'**
+  String get setBackupBody;
+
+  /// No description provided for @setExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy settings to clipboard'**
+  String get setExport;
+
+  /// No description provided for @setExported.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied.'**
+  String get setExported;
+
+  /// No description provided for @setImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from a file'**
+  String get setImport;
+
+  /// No description provided for @setImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings restored.'**
+  String get setImported;
+
+  /// No description provided for @setImportRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'This file could not be used'**
+  String get setImportRefused;
+
+  /// No description provided for @setAboutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get setAboutTitle;
+
+  /// No description provided for @setVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {v}'**
+  String setVersion(String v);
+
+  /// No description provided for @setLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open-source licenses'**
+  String get setLicenses;
 }
 
 class _AppLocalizationsDelegate

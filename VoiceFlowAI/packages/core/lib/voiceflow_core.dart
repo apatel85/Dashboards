@@ -13,6 +13,8 @@ export 'src/pipeline.dart';
 export 'src/vad.dart';
 export 'src/history_store.dart';
 export 'src/settings.dart';
+export 'src/settings_import.dart';
+export 'src/polish_setup.dart';
 export 'src/adapters/polish_chain.dart';
 export 'src/adapters/gemini_adapter.dart';
 export 'src/adapters/openai_adapter.dart';

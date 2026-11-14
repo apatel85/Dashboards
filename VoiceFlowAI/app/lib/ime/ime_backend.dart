@@ -8,6 +8,7 @@ import 'package:voiceflow_core/voiceflow_core.dart';
 import '../engines/sherpa_stt.dart';
 import '../state/assets_loader.dart';
 import '../state/pack_store.dart';
+import '../state/polish_holder.dart';
 import '../state/per_app_profiles.dart';
 import '../state/settings_store.dart';
 
@@ -35,7 +36,8 @@ class ImeBackend {
     required this.ensureLoaded,
     required this.unloadEngine,
     this.packsDir,
-  });
+    PolishHolder? polish,
+  }) : _polish = polish ?? PolishHolder(Settings());
 
   final AppAssets assets;
   final SettingsStore store;
@@ -46,6 +48,7 @@ class ImeBackend {
 
   /// Where imported packs live (shared with the main app).
   final Directory? packsDir;
+  final PolishHolder _polish;
   final Set<String> _dismissed =
       {}; // suggestions waved away until the engine restarts
 
@@ -159,16 +162,23 @@ class ImeBackend {
       final packs = (await _packStore(s)).active;
       await ensureLoaded();
       final sink = _CaptureSink();
-      final r = await DictationPipeline(assets.lang, stt, sink).run(
-        pcm,
-        DictationOptions(
-          profile,
-          packs: packs,
-          dictionary: s.dictionary,
-          corrections: s.corrections,
-          fieldKind: kind,
-        ),
-      );
+      _polish.settings = s; // keeps the chain (429 back-off, counters) while settings are unchanged
+      final r =
+          await DictationPipeline(
+            assets.lang,
+            stt,
+            sink,
+            polishProvider: () => _polish.chain,
+          ).run(
+            pcm,
+            DictationOptions(
+              profile,
+              packs: packs,
+              dictionary: s.dictionary,
+              corrections: s.corrections,
+              fieldKind: kind,
+            ),
+          );
       return {
         'status': r.status.name,
         'text': r.finalText,
