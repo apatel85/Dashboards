@@ -1,4 +1,4 @@
-/* DealFinder live app v1.0.0 — real flyer prices from Supabase (dealfinder schema).
+/* DealFinder live app v1.1.0 — real flyer prices from Supabase (dealfinder schema).
    Reads only, with the public anon key. No account, no tracking: the list and
    tracked items live in this browser (localStorage). Prices are weekly flyer
    prices — an item appears only when it is on sale in a flyer. */
@@ -102,19 +102,55 @@
   function rowCondition(row) {
     return meaningfulCondition(row.loyalty_condition) || meaningfulCondition(row.sale_story);
   }
-  /* Cheapest row that is not a limit deal; if every row is a limit deal,
-     crown the cheapest anyway and flag it. */
+  /* Crown: cheapest per-unit when an item's rows share a comparable unit
+     basis (same per-egg / per-lb / per-oz) — the 12ct-vs-24ct case: the
+     cheaper per-egg row wins even when its shelf price is higher. Falls
+     back to cheapest shelf price when rows aren't unit-comparable (no
+     size data, or only one row carries a unit value). Limit deals are
+     never crowned unless every row is one. */
   function crowned(item) {
     var rows = item.rows;
-    for (var i = 0; i < rows.length; i++) if (!isLimitRow(rows[i])) return { row: rows[i], limited: false };
-    return rows.length ? { row: rows[0], limited: true } : null;
+    if (!rows.length) return null;
+    var usable = rows.filter(function (r) { return !isLimitRow(r); });
+    var pool = usable.length ? usable : rows;
+    var limited = !usable.length;
+    var groups = {};
+    pool.forEach(function (r) {
+      var u = unitInfo(r, item);
+      if (!u) return;
+      (groups[u.basis] = groups[u.basis] || []).push({ row: r, value: u.value, label: u.label, basis: u.basis });
+    });
+    var bestGroup = null;
+    Object.keys(groups).forEach(function (b) {
+      if (groups[b].length >= 2 && (!bestGroup || groups[b].length > bestGroup.length)) bestGroup = groups[b];
+    });
+    if (bestGroup) {
+      bestGroup.sort(function (a, b) { return a.value - b.value || a.row.price - b.row.price; });
+      var second = bestGroup[1] || null;
+      return { row: bestGroup[0].row, limited: limited, unitCrown: true,
+        basis: bestGroup[0].basis, label: bestGroup[0].label, value: bestGroup[0].value,
+        second: second ? { row: second.row, value: second.value } : null };
+    }
+    return { row: pool[0], limited: limited, unitCrown: false, basis: null, label: null, value: null, second: null };
   }
   function nextBest(item, crown) {
+    if (crown.unitCrown) {
+      var cands = item.rows.filter(function (r) { return r !== crown.row && !isLimitRow(r); })
+        .map(function (r) { var u = unitInfo(r, item); return (u && u.basis === crown.basis) ? { row: r, value: u.value } : null; })
+        .filter(Boolean).sort(function (a, b) { return a.value - b.value; });
+      return cands.length ? cands[0].row : null;
+    }
     for (var i = 0; i < item.rows.length; i++) {
       var r = item.rows[i];
       if (r !== crown.row && !isLimitRow(r)) return r;
     }
     return null;
+  }
+  function itemValue(item) {
+    var c = crowned(item);
+    if (!c) return { basis: null, value: null, price: Infinity };
+    if (c.unitCrown) return { basis: c.basis, value: c.value, price: c.row.price };
+    return { basis: null, value: null, price: c.row.price };
   }
   function priceAt(item, store) {
     var best = null;
@@ -138,9 +174,32 @@
     if (n.indexOf("juice") !== -1) return "🧃";
     return { dairy: "🥛", beverages: "🧃", bakery: "🍞", produce: "🍌", meat: "🍗" }[item.category] || "🛒";
   }
-  function unitLabel(row) {
-    if (row.unit_price == null || !row.unit) return null;
-    return money(row.unit_price) + " per " + row.unit;
+  /* ---------- per-unit math ----------
+     unit_price is stored per row.unit (kg, L, or unit/count). The display
+     basis comes from the item's size text when present ("9 oz" -> per oz,
+     "3 lb" -> per lb, "10 ct" -> each / per egg), so the number is derived
+     from stored data, never invented. Rows with no size and no unit price
+     simply have no per-unit value. */
+  var LB_PER_KG = 2.20462, OZ_PER_KG = 35.27396, FLOZ_PER_L = 33.814;
+  function isEggItem(item) { return item && /\beggs?\b/i.test(item.name || ""); }
+  function unitInfo(row, item) {
+    if (row.unit_price == null || !(row.unit_price > 0)) return null;
+    var size = (item && item.size_text) || "";
+    if (row.unit === "unit" || /(\d+)\s*(ct|count|pack|pk)\b/i.test(size)) {
+      return isEggItem(item)
+        ? { basis: "egg", value: row.unit_price, label: "per egg" }
+        : { basis: "each", value: row.unit_price, label: "each" };
+    }
+    if (/fl\s*oz/i.test(size)) return { basis: "floz", value: row.unit_price / FLOZ_PER_L, label: "per fl oz" };
+    if (/oz/i.test(size)) return { basis: "oz", value: row.unit_price / OZ_PER_KG, label: "per oz" };
+    if (/gal/i.test(size)) return { basis: "gal", value: row.unit_price * 3.78541, label: "per gal" };
+    if (row.unit === "kg") return { basis: "lb", value: row.unit_price / LB_PER_KG, label: "per lb" };
+    if (row.unit === "L") return { basis: "floz", value: row.unit_price / FLOZ_PER_L, label: "per fl oz" };
+    return null;
+  }
+  function unitLabel(row, item) {
+    var u = unitInfo(row, item);
+    return u ? money(u.value) + " " + u.label : null;
   }
 
   /* ---------- load ---------- */
@@ -152,7 +211,7 @@
     state.historyCache = {};
     renderLoading();
     var today = new Date().toISOString().slice(0, 10);
-    var pricesQ = "prices?select=price,regular_price,unit_price,unit,sale_story,loyalty_condition,valid_from,valid_to,fetched_at,flyer_item_id,item_id,store_id,items(id,name,brand,size_text,size_unit,category,upc),stores(id,merchant)"
+    var pricesQ = "prices?select=price,regular_price,unit_price,unit,sale_story,loyalty_condition,clipping_image_url,valid_from,valid_to,fetched_at,flyer_item_id,item_id,store_id,items(id,name,brand,size_text,size_unit,category,upc),stores(id,merchant)"
       + "&zip=eq." + encodeURIComponent(zip) + "&order=price.asc&limit=1000";
     var flyersQ = "flyers?select=merchant,name,valid_from,valid_to&zip=eq." + encodeURIComponent(zip)
       + "&valid_to=gte." + today + "&order=valid_from.asc&limit=1000";
@@ -170,7 +229,7 @@
         }
         item.rows.push({
           price: p.price, regular_price: p.regular_price, unit_price: p.unit_price, unit: p.unit,
-          sale_story: p.sale_story, loyalty_condition: p.loyalty_condition,
+          sale_story: p.sale_story, loyalty_condition: p.loyalty_condition, clip: p.clipping_image_url,
           valid_from: p.valid_from, valid_to: p.valid_to, fetched_at: p.fetched_at,
           flyer_item_id: p.flyer_item_id, merchant: st.merchant
         });
@@ -261,17 +320,26 @@
     var crown = crowned(item);
     if (!crown) return "";
     var best = crown.row, second = nextBest(item, crown);
-    var save = second ? second.price - best.price : 0;
     var inList = !!list[item.id];
     var isW = !!tracked[item.id];
     var dealPct = discountPct(best);
     var cond = rowCondition(best);
-    var tags = '<span class="tag tag-best">Best price</span>';
+    var bestUnit = unitInfo(best, item);
+    var unitTag = crown.unitCrown ? "Best " + (crown.basis === "each" ? "per item" : crown.label) : "Best price";
+    var tags = '<span class="tag tag-best">' + esc(unitTag) + '</span>';
     if (crown.limited) tags += '<span class="tag tag-save">Limit deal — see terms below</span>';
     else if (cond && hasCardCondition(best)) tags += '<span class="tag tag-loyal">' + esc(cond) + '</span>';
     if (dealPct > 0) tags += '<span class="tag tag-save">' + dealPct.toFixed(0) + '% off this week</span>';
-    if (save > 0) tags += '<span class="tag tag-save">Save ' + money(save) + ' vs ' + esc(second.merchant) + '</span>';
-    var unit = unitLabel(best);
+    var saveLine = "";
+    if (crown.unitCrown && crown.second && crown.second.value - crown.value > 0.005) {
+      var udiff = crown.second.value - crown.value;
+      tags += '<span class="tag tag-save">Save ' + money(udiff) + ' ' + esc(crown.label) + ' vs next best</span>';
+      saveLine = '<p class="gap-line">Next best: <b>' + money(crown.second.value) + ' ' + esc(crown.label) + '</b> — you save <b>' + money(udiff) + ' ' + esc(crown.label) + '</b>.</p>';
+    } else if (!crown.unitCrown && second && second.price - best.price > 0) {
+      var save = second.price - best.price;
+      tags += '<span class="tag tag-save">Save ' + money(save) + ' vs next best</span>';
+      saveLine = '<p class="gap-line">Next cheapest: <b>' + money(second.price) + '</b> — you save <b>' + money(save) + '</b>.</p>';
+    }
     var rows = item.rows.map(function (row, i) {
       var c = rowCondition(row);
       var lim = isLimitRow(row);
@@ -280,30 +348,35 @@
         + (c ? '<br><span class="fresh">' + esc(c) + '</span>' : '') + '</td>'
         + '<td class="r"><span class="p">' + money(row.price) + '</span>'
         + (row.regular_price != null && row.regular_price > row.price ? '<br><span class="u">was ' + money(row.regular_price) + '</span>' : '') + '</td>'
-        + '<td class="r"><span class="u">' + (unitLabel(row) || '—') + '</span></td>'
+        + '<td class="r"><span class="u">' + (unitLabel(row, item) || '—') + '</span></td>'
         + '<td class="r fresh">ends ' + fmtDate(row.valid_to) + '</td></tr>';
     }).join("");
-    var meta = (item.size_text ? esc(item.size_text) : "Size not listed")
-      + (item.brand ? " · " + esc(item.brand) : "")
-      + (item.upc ? " · UPC " + esc(item.upc) : " · no barcode — by name");
+    var clipRow = best.clip ? best : null;
+    if (!clipRow) item.rows.forEach(function (r) { if (!clipRow && r.clip) clipRow = r; });
+    var clip = clipRow ? '<figure class="clip"><a href="' + esc(clipRow.clip) + '" target="_blank" rel="noopener"><img src="' + esc(clipRow.clip) + '" alt="Flyer clipping for ' + esc(item.name) + '" loading="lazy" onerror="this.closest(\'.clip\').style.display=\'none\'"></a><figcaption>See it in the flyer — ' + esc(clipRow.merchant) + ' · ends ' + fmtDate(clipRow.valid_to) + '</figcaption></figure>' : "";
+    var metaParts = [];
+    if (item.size_text) metaParts.push(esc(item.size_text));
+    if (item.brand) metaParts.push(esc(item.brand));
+    metaParts.push(item.upc ? "UPC " + esc(item.upc) : "no barcode — by name");
+    var meta = metaParts.join(" · ");
     return '<article class="card best" data-card="' + item.id + '">'
       + '<button class="card-top" data-expand="' + item.id + '" aria-expanded="false" aria-label="Compare prices for ' + esc(item.name) + '">'
       + '<span class="thumb" aria-hidden="true">' + emojiFor(item) + '</span>'
       + '<span class="card-main"><span class="card-name">' + esc(item.name) + '</span>'
       + '<span class="card-meta" style="display:block">' + meta + '</span></span>'
       + '<span class="price-block"><span class="price-big">' + money(best.price) + '</span>'
-      + '<span class="price-store" style="display:block">at ' + esc(best.merchant) + '</span>'
-      + (unit ? '<span class="price-unit">' + esc(unit) + '</span>' : '') + '</span>'
+      + (bestUnit ? '<span class="price-per">' + money(bestUnit.value) + ' ' + esc(bestUnit.label) + '</span>' : '') + '</span>'
       + '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>'
       + '</button>'
       + '<div class="tagrow">' + tags + '</div>'
-      + (second ? '<p class="gap-line">Next cheapest: <b>' + money(second.price) + ' at ' + esc(second.merchant) + '</b> — you save <b>' + money(save) + '</b> at ' + esc(best.merchant) + '.</p>' : '')
+      + saveLine
       + '<div class="card-actions">'
       + '<button class="btn-add' + (inList ? ' added' : '') + '" data-add="' + item.id + '">' + (inList ? '✓ On your list' : '+ Add to list') + '</button>'
       + '<button class="btn-watch' + (isW ? ' on' : '') + '" data-watch="' + item.id + '" aria-pressed="' + (isW ? 'true' : 'false') + '">' + (isW ? '🔔 Tracking' : '🔔 Track price') + '</button>'
       + '<button class="btn-ghost" data-expand="' + item.id + '">Compare</button>'
       + '</div>'
       + '<div class="compare"><table><thead><tr><th>Store</th><th class="r">Price</th><th class="r">Per unit</th><th class="r">Freshness</th></tr></thead><tbody>' + rows + '</tbody></table>'
+      + clip
       + '<p class="fresh-note" style="margin-top:8px">Checked ' + fmtDateLong(state.checkedAt) + ' · prices are this week\'s flyer prices.</p>'
       + '<div data-hist="' + item.id + '">' + historyHTML(item, null) + '</div>'
       + '</div></article>';
@@ -328,8 +401,7 @@
       el.innerHTML = '<div class="empty"><b>No prices for ZIP ' + esc(state.zip) + ' yet</b>The weekly check covers 08520 (East Windsor, NJ) so far. Try 08520, or check back after Friday\'s refresh.</div>';
       return;
     }
-    $("resultsCount").textContent = state.items.length + " item" + (state.items.length === 1 ? "" : "s")
-      + (state.checkedAt ? " · checked " + fmtDate(state.checkedAt) : "");
+    $("resultsCount").textContent = state.items.length + " item" + (state.items.length === 1 ? "" : "s");
     if (!items.length) {
       el.innerHTML = '<div class="empty"><b>No match in this week\'s flyers</b>Try “milk”, “eggs”, “juice”, “cheese” — or scan the barcode. An item only appears when it is on sale in a flyer, so everyday prices that aren\'t on sale this week won\'t show up.</div>';
       return;
@@ -402,7 +474,7 @@
     } else {
       grid.innerHTML = deals.map(function (d) {
         var item = d.item, inList = !!list[item.id];
-        var unit = unitLabel(d.row);
+        var unit = unitLabel(d.row, item);
         return '<div class="deal-card"><span class="thumb" aria-hidden="true">' + emojiFor(item) + '</span>'
           + '<div style="min-width:0"><span class="deal-off">' + d.pct.toFixed(0) + '% off</span>'
           + '<div class="deal-name">' + esc(item.name) + (item.size_text ? ' · ' + esc(item.size_text) : '') + '</div>'
@@ -433,7 +505,7 @@
     }
     stack.innerHTML = entries.map(function (e) {
       var crown = crowned(e.item), isW = !!tracked[e.item.id];
-      var unit = unitLabel(crown.row);
+      var unit = unitLabel(crown.row, e.item);
       return '<div class="list-row"><span class="thumb" aria-hidden="true">' + emojiFor(e.item) + '</span>'
         + '<div style="min-width:0"><div class="nm">' + esc(e.item.name) + '</div><div class="bs">Best: ' + esc(crown.row.merchant) + (unit ? ' · ' + esc(unit) : '') + '</div>'
         + '<div class="watch-line"><span class="watch-dot' + (isW ? ' on' : '') + '"></span>'
@@ -525,16 +597,56 @@
     window.scrollTo(0, 0);
   }
 
-  /* ---------- search ---------- */
+  /* ---------- search: scored relevance ----------
+     Query and names are normalized (lowercase, punctuation stripped) and
+     words are singularized (eggs->egg, apples->apple) so "egg" matches
+     "Eggs" and "whole milk" finds names containing both words. Scoring:
+     full phrase as whole words (+100) > phrase as substring (+60) >
+     every term present (+50) > each term present (+10) > term inside a
+     longer word (+3). Ties break by best unit value when the items share
+     a unit basis, else by cheapest shelf price, then by name. Deterministic
+     and explainable; no external data. */
+  function singularize(w) {
+    if (w.length > 3 && /ies$/.test(w)) return w.slice(0, -3) + "y";
+    if (w.length > 3 && /(ches|shes|xes|zes|sses)$/.test(w)) return w.slice(0, -2);
+    if (w.length > 3 && /s$/.test(w) && !/ss$/.test(w) && !/us$/.test(w)) return w.slice(0, -1);
+    return w;
+  }
+  function normWords(s) {
+    return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/).filter(Boolean);
+  }
+  function searchScore(item, qWords, qPhrase) {
+    var hay = normWords(item.name + " " + (item.brand || "") + " " + item.category + " " + (item.upc || ""));
+    var haySing = hay.map(singularize);
+    var hayJoined = " " + haySing.join(" ") + " ";
+    var score = 0;
+    if (qPhrase && hayJoined.indexOf(" " + qPhrase + " ") !== -1) score += 100;
+    else if (qPhrase && (item.name + " " + (item.brand || "")).toLowerCase().indexOf(qPhrase) !== -1) score += 60;
+    var matched = 0;
+    qWords.forEach(function (t) {
+      if (haySing.indexOf(t) !== -1) matched++;
+      else if (hayJoined.indexOf(t) !== -1) score += 3;
+    });
+    if (matched === qWords.length) score += 50;
+    score += matched * 10;
+    return score;
+  }
   function doSearch(q) {
     q = (q || "").trim().toLowerCase();
     if (!q) { renderResults(state.items, "Best prices near you"); return; }
-    var terms = q.split(/\s+/);
-    var hits = state.items.filter(function (item) {
-      var hay = (item.name + " " + (item.brand || "") + " " + item.category + " " + (item.upc || "")).toLowerCase();
-      return terms.every(function (t) { return hay.indexOf(t) !== -1; });
+    var qWords = normWords(q).map(singularize);
+    var qPhrase = qWords.join(" ");
+    var scored = state.items.map(function (item) {
+      return { item: item, score: searchScore(item, qWords, qPhrase) };
+    }).filter(function (s) { return s.score > 0; });
+    scored.sort(function (a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      var va = itemValue(a.item), vb = itemValue(b.item);
+      if (va.basis && va.basis === vb.basis && va.value != null && vb.value != null && va.value !== vb.value) return va.value - vb.value;
+      if (va.price !== vb.price) return va.price - vb.price;
+      return a.item.name.localeCompare(b.item.name);
     });
-    renderResults(hits, 'Results for “' + q + '”');
+    renderResults(scored.map(function (s) { return s.item; }), 'Results for “' + q + '”');
   }
 
   /* ---------- scan (UPC lookup + camera) ---------- */
@@ -694,8 +806,12 @@
     renderList();
     renderSchedule();
     renderAlerts();
-    if (state.checkedAt) {
-      $("noticeShort").textContent = "From this week's flyers · " + state.items.length + " items · " + state.merchants.length + " stores · checked " + fmtDate(state.checkedAt) + ".";
+    $("noticeShort").textContent = "From this week's flyers.";
+    var mc = $("moreChecked");
+    if (mc) {
+      mc.textContent = state.checkedAt
+        ? "Prices checked " + fmtDateLong(state.checkedAt) + " · " + state.items.length + " items · " + state.merchants.length + " stores · ZIP " + state.zip + "."
+        : "Prices load for your ZIP when the weekly check runs.";
     }
   }
 
@@ -706,5 +822,5 @@
   $("locLabel").textContent = "Prices near " + state.zip;
   $("zipInput").value = state.zip;
   loadZip(state.zip);
-  window.__dealfinder = { version: "1.0.0", state: state };
+  window.__dealfinder = { version: "1.1.0", state: state };
 })();
