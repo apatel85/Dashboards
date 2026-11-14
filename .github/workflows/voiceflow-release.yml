@@ -173,6 +173,7 @@ jobs:
           grep -E "^sdkVersion|^targetSdkVersion|^uses-permission|native-code" badging.txt
           if grep -q MANAGE_EXTERNAL_STORAGE badging.txt; then echo "APK has the storage permission"; exit 1; fi
           grep -q "android.permission.RECORD_AUDIO" badging.txt
+          grep -q "name='android.permission.INTERNET'" badging.txt || { echo "APK lacks INTERNET: the model download would fail on a phone"; exit 1; }
           grep -q "native-code: 'arm64-v8a'" badging.txt
           if unzip -p "$APK" classes.dex | strings | grep -q E2E_DICTATE_WAV; then echo "APK contains the test seam"; exit 1; fi
           rm badging.txt

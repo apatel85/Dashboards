@@ -19,17 +19,6 @@ adb shell ime set $PKG/.VoiceFlowIME >/dev/null
 adb shell am start -n $PKG/.TestActivity >/dev/null
 sleep 4
 
-# --- model: pushed by CI, installed by the e2e seam (real download path is covered on Windows CI)
-MD=/sdcard/Download/vf-model
-adb shell mkdir -p $MD
-for f in base.en-encoder.int8.onnx base.en-decoder.int8.onnx base.en-tokens.txt; do
-  adb push "$ROOT/sherpa-onnx-whisper-base.en/$f" $MD/ >/dev/null || echo "push failed $f"
-done
-adb push "$ROOT/VoiceFlowAI/test_fixtures/audio/scarlet_0.wav" /sdcard/Download/scarlet_0.wav >/dev/null
-SHA=$(grep -o '"sha256": *"[0-9a-f]*"' "$ROOT/VoiceFlowAI/app/assets/models.json" | head -1 | grep -o '[0-9a-f]\{64\}')
-ID=$(grep -o '"id": *"[^"]*"' "$ROOT/VoiceFlowAI/app/assets/models.json" | head -1 | sed 's/.*: *"//;s/"//')
-adb shell "am broadcast -a dev.voiceflow.E2E_INSTALL_MODEL -p $PKG --es src $MD --es id $ID --es sha $SHA" >/dev/null
-
 # The keyboard is its own window; a plain dump only sees the active (app) window.
 dump() { adb shell uiautomator dump --windows /sdcard/ui.xml >/dev/null 2>&1 || adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; }
 # bounds centre of a view by content-desc, from uiautomator
@@ -60,6 +49,36 @@ t=re.search(r' text=\"([^\"]*)\"',m[0]) if m else None
 print(t[1] if t else '')"
 }
 focus() { local c; c=$(center "$1"); [ -n "$c" ] && adb shell input tap $c; sleep 2; }
+shownodes() { adb shell cat /sdcard/ui.xml | python3 -c '
+import re,sys
+for n in re.findall(r"<node [^>]*>",sys.stdin.read()):
+  g=lambda k:(re.search(k+"=.([^\"]*).",n) or [0,""])[1]
+  if g("package")=="dev.voiceflow.voiceflow_app" and (g("text") or g("content-desc")) and "EditText" not in g("class"): print("  node",repr(g("text")),repr(g("content-desc")))'; }
+
+# --- model, the REAL way first: the app's own Download button over the network (needs INTERNET).
+echo "== real model download inside the app (network, SHA-256 check, unpack)"
+adb shell am start -n $PKG/.MainActivity >/dev/null; sleep 8
+tap "Download"
+DL=0
+for i in $(seq 1 120); do
+  if has 'Speech model installed'; then DL=1; break; fi
+  if has 'did not finish|failed its safety check'; then break; fi
+  sleep 5
+done
+if [ $DL -eq 1 ]; then ok "real in-app model download works (network + SHA-256 + unpack)"; else bad "real model download"; shownodes; adb logcat -d '*:E' | grep -iE "socket|permission|UnknownHost|dev.voiceflow" | tail -8; fi
+adb shell am start -n $PKG/.TestActivity >/dev/null; sleep 4
+
+# --- model: pushed by CI, installed by the e2e seam (real download path is covered on Windows CI)
+MD=/sdcard/Download/vf-model
+adb shell mkdir -p $MD
+for f in base.en-encoder.int8.onnx base.en-decoder.int8.onnx base.en-tokens.txt; do
+  adb push "$ROOT/sherpa-onnx-whisper-base.en/$f" $MD/ >/dev/null || echo "push failed $f"
+done
+adb push "$ROOT/VoiceFlowAI/test_fixtures/audio/scarlet_0.wav" /sdcard/Download/scarlet_0.wav >/dev/null
+SHA=$(grep -o '"sha256": *"[0-9a-f]*"' "$ROOT/VoiceFlowAI/app/assets/models.json" | head -1 | grep -o '[0-9a-f]\{64\}')
+ID=$(grep -o '"id": *"[^"]*"' "$ROOT/VoiceFlowAI/app/assets/models.json" | head -1 | sed 's/.*: *"//;s/"//')
+[ $DL -eq 1 ] || adb shell "am broadcast -a dev.voiceflow.E2E_INSTALL_MODEL -p $PKG --es src $MD --es id $ID --es sha $SHA" >/dev/null
+
 dictate() { # $1 = number of RESULT lines expected so far
   adb shell "am broadcast -a dev.voiceflow.E2E_DICTATE_WAV -p $PKG --es wav /sdcard/Download/scarlet_0.wav" >/dev/null
   for i in $(seq 1 90); do
@@ -69,7 +88,7 @@ dictate() { # $1 = number of RESULT lines expected so far
   sleep 1
 }
 
-adb logcat -d E2E:I '*:S' | grep -q MODEL_INSTALLED && ok "model installed" || bad "model install"
+if [ $DL -eq 1 ]; then ok "model present from the real download"; else adb logcat -d E2E:I '*:S' | grep -q MODEL_INSTALLED && ok "model installed (test seam fallback)" || bad "model install"; fi
 
 echo "== text field: real Whisper in the IME commits formatted text"
 focus t_text; dictate 1
@@ -111,11 +130,6 @@ has 'Style: '; P2=$(chip_desc)
 echo "chip: $P1 -> $P2"
 [ -n "$P1" ] && [ "$P1" != "$P2" ] && ok "profile chip cycles" || bad "profile chip"
 tap "Dictate"; sleep 2
-shownodes() { adb shell cat /sdcard/ui.xml | python3 -c '
-import re,sys
-for n in re.findall(r"<node [^>]*>",sys.stdin.read()):
-  g=lambda k:(re.search(k+"=.([^\"]*).",n) or [0,""])[1]
-  if g("package")=="dev.voiceflow.voiceflow_app" and (g("text") or g("content-desc")) and "EditText" not in g("class"): print("  node",repr(g("text")),repr(g("content-desc")))'; }
 has 'text="Listening' && ok "tap mic -> listening" || { bad "listening state"; shownodes; adb logcat -d VoiceFlow:I E2E:I AndroidRuntime:E '*:S' | tail -15; }
 tap "Stop dictation"
 DONE=0
@@ -150,4 +164,4 @@ echo "== diagnostics"
 adb logcat -d | tr -d '\r' | grep -E "VoiceFlow|E2E|dev.voiceflow|FATAL EXCEPTION" | tail -40
 adb shell dumpsys meminfo $PKG | grep -E "TOTAL PSS" | head -1
 echo "RESULT pass=$PASS fail=$FAIL"
-[ $FAIL -eq 0 ] && [ $PASS -ge 18 ]
+[ $FAIL -eq 0 ] && [ $PASS -ge 19 ]

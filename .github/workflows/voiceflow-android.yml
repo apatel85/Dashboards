@@ -33,6 +33,8 @@ jobs:
           APK=build/app/outputs/flutter-apk/app-prod-release.apk
           AAPT=$(ls $ANDROID_HOME/build-tools/*/aapt2 | sort -V | tail -1)
           $AAPT dump badging "$APK" > /tmp/badging.txt
+          grep "^uses-permission" /tmp/badging.txt
+          grep -q "name='android.permission.INTERNET'" /tmp/badging.txt || { echo "prod APK lacks INTERNET: the model download would fail on a phone"; exit 1; }
           grep -q "package: name='dev.voiceflow.voiceflow_app'" /tmp/badging.txt  # proves aapt2 really read it
           if grep -q MANAGE_EXTERNAL_STORAGE /tmp/badging.txt; then echo "prod APK has the storage permission"; exit 1; fi
           if unzip -p "$APK" classes.dex | strings | grep -q "E2E_DICTATE_WAV"; then echo "prod APK contains the test seam"; exit 1; fi
