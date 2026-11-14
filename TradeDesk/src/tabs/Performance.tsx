@@ -9,11 +9,12 @@ import {
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { Fundamentals } from '../components/Fundamentals';
-import { fmtMoney, fmtPct, fmtDate, fmtInt } from '../lib/format';
+import { fmtMoney, fmtPct, fmtDate } from '../lib/format';
 import { VizBlock, HBar, SegBar, HistBars, EmptyViz } from '../components/Infographics';
 import type {
   PerformanceFile,
   PerformanceItem,
+  PredictionOutcome,
   PredictionPerformanceFile,
   PredictionRow,
 } from '../types';
@@ -57,15 +58,25 @@ function predSaid(row: PredictionRow): string {
   return `${row.direction} $${row.strike ?? '—'} @ ${row.premium != null ? fmtMoney(row.premium) : '—'} · breakeven ${row.breakeven != null ? fmtMoney(row.breakeven) : '—'}`;
 }
 
+/** Money status for a breakout row: the final grade once the 10-day close
+ * exists, otherwise the so-far R. Trigger and money are separate scores —
+ * a row can hit the trigger and still lose money. */
+function moneySuffix(o: PredictionOutcome | null | undefined): string {
+  if (!o) return '';
+  if (o.r_10d != null) return ` · ${o.r_10d > 0 ? 'Won' : 'Lost'} ${fmtR(o.r_10d)} at 10 days`;
+  if (o.r_now != null) return ` · R now ${fmtR(o.r_now)}`;
+  return '';
+}
+
 function predHappened(row: PredictionRow): string {
   const o = row.outcome;
   if (row.type === 'breakout') {
     if (!o || o.status === 'open') {
       return `Running${o?.last_close != null ? ` · now ${fmtMoney(o.last_close)}` : ''}${o?.r_now != null ? ` · ${o.r_now >= 0 ? '+' : ''}${o.r_now.toFixed(1)}R so far` : ''}`;
     }
-    if (o.status === 'trigger-hit') return `Hit trigger day ${o.trigger_day}${o.ret_10d != null ? ` · ${fmtPctFrac(o.ret_10d)} at 10 days` : ''}`;
-    if (o.status === 'stop-hit') return `Hit stop day ${o.stop_day}`;
-    return `Never triggered${o.ret_10d != null ? ` · ${fmtPctFrac(o.ret_10d)} at 10 days` : ''}`;
+    if (o.status === 'trigger-hit') return `Hit trigger day ${o.trigger_day}${o.ret_10d != null ? ` · ${fmtPctFrac(o.ret_10d)} at 10 days` : ''}${moneySuffix(o)}`;
+    if (o.status === 'stop-hit') return `Hit stop day ${o.stop_day}${moneySuffix(o)}`;
+    return `Never triggered${o.ret_10d != null ? ` · ${fmtPctFrac(o.ret_10d)} at 10 days` : ''}${moneySuffix(o)}`;
   }
   if (!o || o.status === 'open') return `Expires ${row.expiry ? fmtDate(row.expiry) : '—'} — not settled yet`;
   if (o.ungradable) return `Couldn't grade — scan ran after the close`;
@@ -301,6 +312,9 @@ function PredictionSection() {
       bo.filter((r) => r.stop != null && r.price).map((r) => ((r.price as number) - (r.stop as number)) / (r.price as number) * 100),
     );
     const r10n = bo.filter((r) => r.outcome?.r_10d != null).length;
+    const boMoneyWon = bo.filter((r) => r.outcome?.r_10d != null && (r.outcome.r_10d as number) > 0).length;
+    const boMoneyLost = r10n - boMoneyWon;
+    const boWaiting = bo.length - r10n;
     const r10buckets = {
       negBig: bo.filter((r) => r.outcome?.r_10d != null && (r.outcome.r_10d as number) < -1).length,
       neg: bo.filter((r) => r.outcome?.r_10d != null && (r.outcome.r_10d as number) >= -1 && (r.outcome.r_10d as number) < 0).length,
@@ -323,6 +337,7 @@ function PredictionSection() {
       boFin: boFin.length, boOpen, boTrig, boStop, boNeither, boDay1,
       loOpen, loGraded, loUngrad, loAble: loAble.length, loWon, loLost,
       multBuckets, avgMult, trigDist, stopDist, r10n, r10buckets,
+      boMoneyWon, boMoneyLost, boWaiting,
       oldest, daysAgo, first10d: oldest ? addWeekdays(oldest, 10) : null,
       finMfe, finRnow,
     };
@@ -340,14 +355,15 @@ function PredictionSection() {
             Every breakout candidate and 0DTE option play the app suggests gets recorded the morning
             it appears, then graded against what the stock actually did. <b>Breakout</b> = the stock
             was near its 52-week high and we said it would break higher. <b>Option</b> = a 0DTE/1DTE
-            lottery ticket — a small, cheap bet on a big same-day move. A breakout is marked{' '}
-            <b>Hit trigger</b> when the price clears the trigger before the stop within 10 trading
-            days — that is a trigger hit, not a profit. The trigger sits a median{' '}
+            lottery ticket — a small, cheap bet on a big same-day move. Breakouts get{' '}
+            <b>two scores</b>: <b>Trigger</b> — did the price touch the trigger level before the
+            stop within 10 trading days; <b>Money</b> — did it close above the entry after 10 days,
+            measured in <b>R</b>, what the trade made or lost as a multiple of what was risked.
+            They can disagree: the trigger sits a median{' '}
             {viz.trigDist != null ? `${viz.trigDist.toFixed(1)}%` : '—'} above the suggestion price
             while the stop sits a median {viz.stopDist != null ? `${viz.stopDist.toFixed(1)}%` : '—'}{' '}
-            below it, so an ordinary up-day can trip the trigger. Whether the idea made money is
-            measured in <b>R</b> below — not in the trigger rate. An option <b>wins</b> when the
-            ticket would be worth more than it cost.
+            below it, so an ordinary up-day can trip the trigger without the trade making money.
+            An option <b>wins</b> when the ticket would be worth more than it cost.
           </p>
 
           <div className="muted small" style={{ margin: '10px 0 4px' }}><b>Breakouts</b></div>
@@ -356,6 +372,8 @@ function PredictionSection() {
             <Stat label="Finished" value={String(b.graded)} />
             <Stat label="Hit trigger" value={fmtRate(b.trigger_rate)} accent={b.trigger_rate != null && b.trigger_rate >= 50 ? 'up' : undefined} />
             <Stat label="Stop hit" value={fmtRate(b.stop_rate)} accent={b.stop_rate != null && b.stop_rate > 0 ? 'down' : undefined} />
+            <Stat label="Money won" value={`${viz.boMoneyWon} of ${viz.r10n}`} accent={viz.r10n > 0 ? (viz.boMoneyWon / viz.r10n >= 0.5 ? 'up' : 'down') : undefined} />
+            <Stat label="Still waiting" value={String(viz.boWaiting)} />
             <Stat label="Avg R (10d)" value={fmtR(b.avg_r_10d)} accent={b.avg_r_10d != null && b.avg_r_10d > 0 ? 'up' : b.avg_r_10d != null ? 'down' : undefined} />
           </div>
 
@@ -381,7 +399,13 @@ function PredictionSection() {
                 . With the trigger a median{' '}
                 {viz.trigDist != null ? `${viz.trigDist.toFixed(1)}%` : '—'} away and the stop a median{' '}
                 {viz.stopDist != null ? `${viz.stopDist.toFixed(1)}%` : '—'} away, &ldquo;hit trigger&rdquo; is
-                the easy half of the trade. The money question is the R chart below.
+                the easy half of the trade. On money: {viz.r10n} of {b.tracked} breakouts have a
+                10-day close — {viz.boMoneyWon} won, {viz.boMoneyLost} lost — and {viz.boWaiting}{' '}
+                are still waiting
+                {viz.r10n === 0
+                  ? `; the first money grades arrive after ${viz.first10d ? fmtDate(viz.first10d) : 'the window closes'}`
+                  : ''}
+                .
               </>
             }
           >
@@ -400,6 +424,29 @@ function PredictionSection() {
                 { label: 'Neither', count: viz.boNeither, tone: 'dim' },
               ]}
             />
+            <p className="mb-funnel-level">Money — {b.tracked} tracked</p>
+            <SegBar
+              segments={[
+                { label: 'Money-graded', count: viz.r10n, tone: 'blue' },
+                { label: 'Still waiting', count: viz.boWaiting, tone: 'dim' },
+              ]}
+            />
+            {viz.r10n > 0 ? (
+              <>
+                <p className="mb-funnel-level">Of the {viz.r10n} money-graded</p>
+                <SegBar
+                  segments={[
+                    { label: 'Won money', count: viz.boMoneyWon, tone: 'up' },
+                    { label: 'Lost money', count: viz.boMoneyLost, tone: 'down' },
+                  ]}
+                />
+              </>
+            ) : (
+              <p className="muted small">
+                No 10-day closes yet — the first money grades arrive after{' '}
+                {viz.first10d ? fmtDate(viz.first10d) : 'the window closes'}.
+              </p>
+            )}
             <p className="mb-funnel-level">Options — {l.tracked} tracked</p>
             <SegBar
               segments={[
@@ -445,8 +492,9 @@ function PredictionSection() {
                   ]}
                 />
                 <p className="mb-viz-read">
-                  R = what the trade made or lost as a multiple of what was risked. +1R means it made
-                  back its risk; −1R means the stop was hit.
+                  {viz.boMoneyWon} of {viz.r10n} money-graded breakouts won (closed above the entry)
+                  and {viz.boMoneyLost} lost. R = what the trade made or lost as a multiple of what
+                  was risked. +1R means it made back its risk; −1R means the stop was hit.
                 </p>
               </>
             )}
