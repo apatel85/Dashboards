@@ -5,9 +5,11 @@ import 'package:material_ui/material_ui.dart';
 
 import 'l10n/app_localizations.dart';
 import 'state/app_controller.dart';
+import 'state/android_setup.dart';
 import 'state/dictation_service.dart';
 import 'state/onboarding_controller.dart';
 import 'theme.dart';
+import 'ui/android_setup_page.dart';
 import 'ui/onboarding_page.dart';
 import 'ui/shell.dart';
 
@@ -17,6 +19,7 @@ class VoiceFlowApp extends StatelessWidget {
     required this.controller,
     this.service,
     this.onboarding,
+    this.androidSetup,
     this.onboardingFinished,
   });
   final AppController controller;
@@ -24,6 +27,9 @@ class VoiceFlowApp extends StatelessWidget {
 
   /// Non-null on first run. The app shows it until [onboardingFinished] becomes true.
   final OnboardingController? onboarding;
+
+  /// Android's equivalent first-run checklist (keyboard enable/select, mic, model).
+  final AndroidSetupController? androidSetup;
   final ValueListenable<bool>? onboardingFinished;
 
   @override
@@ -41,13 +47,18 @@ class VoiceFlowApp extends StatelessWidget {
     supportedLocales: AppLocalizations.supportedLocales,
     home: ValueListenableBuilder<bool>(
       valueListenable: onboardingFinished ?? ValueNotifier(true),
-      builder: (context, finished, _) => (onboarding == null || finished)
-          ? AppShell(controller: controller, service: service)
-          : OnboardingPage(
-              controller: onboarding!,
-              app: controller,
-              service: service,
-            ),
+      builder: (context, finished, _) {
+        if (finished || (onboarding == null && androidSetup == null)) {
+          return AppShell(controller: controller, service: service);
+        }
+        return androidSetup != null
+            ? AndroidSetupPage(controller: androidSetup!)
+            : OnboardingPage(
+                controller: onboarding!,
+                app: controller,
+                service: service,
+              );
+      },
     ),
   );
 }

@@ -127,8 +127,15 @@ done
 focus t_password; sleep 2
 has 'text="Dictation is off in password fields"' && ok "password field: mic locked with notice" || bad "password notice"
 
+echo "== app setup checklist (real platform channel: enabled / selected / mic / model)"
+adb shell am start -n $PKG/.MainActivity >/dev/null; sleep 8
+has 'Set up VoiceFlow keyboard' && ok "setup page shows on first run" || { bad "setup page"; shownodes; }
+# keyboard enabled + selected + mic granted + model installed above => every step is ticked
+# and the Try-it box with the Done button is offered
+has 'Dictate here|You.re set|Done' && ok "all four steps detected as done through the OS" || { bad "steps not detected"; shownodes; }
+
 echo "== diagnostics"
 adb logcat -d | tr -d '\r' | grep -E "VoiceFlow|E2E|dev.voiceflow|FATAL EXCEPTION" | tail -40
 adb shell dumpsys meminfo $PKG | grep -E "TOTAL PSS" | head -1
 echo "RESULT pass=$PASS fail=$FAIL"
-[ $FAIL -eq 0 ] && [ $PASS -ge 12 ]
+[ $FAIL -eq 0 ] && [ $PASS -ge 14 ]

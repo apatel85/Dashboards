@@ -531,6 +531,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You\'re set'**
   String get onbDone;
+
+  /// No description provided for @setupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up VoiceFlow keyboard'**
+  String get setupTitle;
+
+  /// No description provided for @setupIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Four quick steps. Your voice stays on this phone.'**
+  String get setupIntro;
+
+  /// No description provided for @setupEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on the VoiceFlow keyboard'**
+  String get setupEnable;
+
+  /// No description provided for @setupEnableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Open keyboard settings and switch VoiceFlow on.'**
+  String get setupEnableBody;
+
+  /// No description provided for @setupEnableButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Open keyboard settings'**
+  String get setupEnableButton;
+
+  /// No description provided for @setupSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose VoiceFlow as your keyboard'**
+  String get setupSelect;
+
+  /// No description provided for @setupSelectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick VoiceFlow in the list. You can switch back any time with the globe key.'**
+  String get setupSelectBody;
+
+  /// No description provided for @setupSelectButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose keyboard'**
+  String get setupSelectButton;
+
+  /// No description provided for @setupMic.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow the microphone'**
+  String get setupMic;
+
+  /// No description provided for @setupMicBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed to hear you. Audio is processed on this phone and never saved.'**
+  String get setupMicBody;
+
+  /// No description provided for @setupMicButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow microphone'**
+  String get setupMicButton;
+
+  /// No description provided for @setupMicDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access is off. Turn it on in the system settings for VoiceFlow.'**
+  String get setupMicDenied;
+
+  /// No description provided for @setupModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the speech model'**
+  String get setupModel;
+
+  /// No description provided for @setupTry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try it'**
+  String get setupTry;
+
+  /// No description provided for @setupTryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the box, then tap the microphone on the VoiceFlow keyboard and speak.'**
+  String get setupTryBody;
+
+  /// No description provided for @setupTryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictate here'**
+  String get setupTryHint;
+
+  /// No description provided for @setupDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get setupDone;
 }
 
 class _AppLocalizationsDelegate

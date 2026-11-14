@@ -34,6 +34,25 @@ class _AppShellState extends State<AppShell> {
       StylePage(controller: widget.controller),
       for (var i = 2; i < items.length; i++) _Later(title: items[i].$2),
     ];
+    final narrow = MediaQuery.sizeOf(context).width < 600;
+    if (narrow) {
+      // Phones: bottom bar with the five everyday pages (Packs lives under Settings later).
+      const shown = [0, 1, 2, 4, 5];
+      return Scaffold(
+        body: SafeArea(child: pages[_index]),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: shown.contains(_index) ? shown.indexOf(_index) : 0,
+          onDestinationSelected: (i) => setState(() => _index = shown[i]),
+          destinations: [
+            for (final i in shown)
+              NavigationDestination(
+                icon: Icon(items[i].$1),
+                label: items[i].$2,
+              ),
+          ],
+        ),
+      );
+    }
     return Scaffold(
       body: Row(
         children: [

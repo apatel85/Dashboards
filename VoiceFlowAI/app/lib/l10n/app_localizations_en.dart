@@ -257,4 +257,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onbDone => 'You\'re set';
+
+  @override
+  String get setupTitle => 'Set up VoiceFlow keyboard';
+
+  @override
+  String get setupIntro => 'Four quick steps. Your voice stays on this phone.';
+
+  @override
+  String get setupEnable => 'Turn on the VoiceFlow keyboard';
+
+  @override
+  String get setupEnableBody =>
+      'Open keyboard settings and switch VoiceFlow on.';
+
+  @override
+  String get setupEnableButton => 'Open keyboard settings';
+
+  @override
+  String get setupSelect => 'Choose VoiceFlow as your keyboard';
+
+  @override
+  String get setupSelectBody =>
+      'Pick VoiceFlow in the list. You can switch back any time with the globe key.';
+
+  @override
+  String get setupSelectButton => 'Choose keyboard';
+
+  @override
+  String get setupMic => 'Allow the microphone';
+
+  @override
+  String get setupMicBody =>
+      'Needed to hear you. Audio is processed on this phone and never saved.';
+
+  @override
+  String get setupMicButton => 'Allow microphone';
+
+  @override
+  String get setupMicDenied =>
+      'Microphone access is off. Turn it on in the system settings for VoiceFlow.';
+
+  @override
+  String get setupModel => 'Download the speech model';
+
+  @override
+  String get setupTry => 'Try it';
+
+  @override
+  String get setupTryBody =>
+      'Tap the box, then tap the microphone on the VoiceFlow keyboard and speak.';
+
+  @override
+  String get setupTryHint => 'Dictate here';
+
+  @override
+  String get setupDone => 'Done';
 }

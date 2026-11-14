@@ -18,6 +18,7 @@ import 'platform/windows/pill_window.dart';
 import 'platform/windows/windows_os.dart';
 import 'state/dictation_state.dart';
 import 'platform/desktop_shell.dart';
+import 'state/android_setup.dart';
 import 'state/app_controller.dart';
 import 'state/per_app_profiles.dart';
 import 'platform/windows/system_integration.dart';
@@ -122,8 +123,24 @@ Future<void> main(List<String> args) async {
   }
 
   OnboardingController? onboarding;
-  final finished = ValueNotifier<bool>(settings.onboardingDone);
-  if (!settings.onboardingDone) {
+  AndroidSetupController? androidSetup;
+  // On Android the keyboard is the product: show the checklist until it is set up.
+  final needsSetup = Platform.isAndroid
+      ? !settings.onboardingDone || !models.installed
+      : !settings.onboardingDone;
+  final finished = ValueNotifier<bool>(!needsSetup);
+  if (Platform.isAndroid && needsSetup) {
+    androidSetup = AndroidSetupController(
+      platform: ChannelSetupPlatform(),
+      mic: RecordMicProbe(),
+      installer: ManagerInstaller(models),
+      onFinished: () async {
+        settings.onboardingDone = true;
+        await store.save(settings);
+        finished.value = true;
+      },
+    );
+  } else if (needsSetup) {
     onboarding = OnboardingController(
       mic: RecordMicProbe(),
       installer: ManagerInstaller(models),
@@ -149,6 +166,7 @@ Future<void> main(List<String> args) async {
       controller: controller,
       service: service,
       onboarding: onboarding,
+      androidSetup: androidSetup,
       onboardingFinished: finished,
     ),
   );
