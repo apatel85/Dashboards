@@ -57,8 +57,9 @@ class _AppShellState extends State<AppShell> {
     ];
     final narrow = MediaQuery.sizeOf(context).width < 600;
     if (narrow) {
-      // Phones: bottom bar with the five everyday pages (Packs lives under Settings later).
-      const shown = [0, 1, 2, 4, 5];
+      // Phones: bottom bar with five pages. Dictionary is still a placeholder, so Packs takes
+      // its place until the Dictionary page exists.
+      const shown = [0, 1, 3, 4, 5];
       return Scaffold(
         body: SafeArea(child: pages[_index]),
         bottomNavigationBar: NavigationBar(

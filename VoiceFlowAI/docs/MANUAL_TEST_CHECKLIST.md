@@ -40,3 +40,16 @@ Download `VoiceFlow-x.y.z-arm64.apk` from the latest `voiceflow-v…` release. I
 Also tell me: was it fast enough, did the keyboard ever vanish or lag, did your battery or phone get hot, did anything look cramped or confusing? TalkBack users: are the buttons announced sensibly?
 
 Known gaps (do not report as bugs): no hold-to-talk mode; the style chip only cycles (no list); English only; no Settings page yet; utterances longer than ~28 s are cut off.
+
+---
+
+# Packs (added with M3) - Windows and Android
+
+| # | Do this | Expect | Pass? | Notes |
+|---|---|---|---|---|
+| **W10** | Open **Packs**. Switch on *Healthcare (Clinic Notes)* and use the arrows to put it above *General Business*. Dictate into Notepad: "bp one forty over ninety, heart rate seventy two beats per minute". | Text reads "BP 140/90, heart rate 72 bpm." The healthcare card says "Stays on this device". Switch it off: the same sentence no longer says 140/90. | ☐ | |
+| **W11** | Switch both packs off. Focus Outlook or Slack (if you have them) and look at **Home**. | A card offers "Turn on the General Business pack?" and nothing changes until you press *Turn on*. *Dismiss* hides it until you restart. | ☐ | |
+| **W12** | Import a pack: save a `.json` pack file (a copy of one in the repo's `app/assets/packs/` with a new `id` works) and use *Import a pack file*. Then import a broken one (delete a closing brace). | The good one appears and survives a restart. The broken one shows a plain-language reason and does not crash anything. | ☐ | |
+| **A9** | Android: open the app's **Packs** tab (bottom bar) and switch a pack on and off. Then use a matching app (for example one with a package like `com.slack` for General Business) and look at the keyboard's second chip. | Switching works and is remembered. The chip shows "+ Pack name" for a matching app; tapping turns the pack on and it disappears, holding dismisses it. | ☐ | which app? |
+
+Known gaps (do not report as bugs): window-title matching is not wired yet; Dictionary is still a placeholder (on phones its bottom-bar slot shows Packs); sample packs are illustrative only.

@@ -118,6 +118,11 @@ void main() {
     expect(find.byType(NavigationRail), findsNothing);
     // five everyday pages, reachable and switchable
     expect(find.byType(NavigationDestination), findsNWidgets(5));
+    expect(
+      find.text('Packs'),
+      findsWidgets,
+      reason: 'phones can reach the Packs page',
+    );
     await t.tap(find.byType(NavigationDestination).at(1));
     await t.pump();
 
