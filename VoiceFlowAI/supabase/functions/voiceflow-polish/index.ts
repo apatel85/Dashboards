@@ -1,7 +1,8 @@
 // VoiceFlow AI — polish proxy (Supabase Edge Function, Deno).
 //
 // Keys live ONLY as function secrets, never in the app or repo:
-//   GEMINI_API_KEY      primary (optional GEMINI_MODEL, default gemini-3.8-flash)
+//   GEMINI_API_KEY      primary (optional GEMINI_MODEL; otherwise a default, and if Google says that
+//                       model does not exist the function lists models and picks the newest flash-lite/flash)
 //   GROQ_API_KEY        backup 1 (optional GROQ_MODEL, default openai/gpt-oss-20b)
 //   OPENROUTER_API_KEY  backup 2 (requires OPENROUTER_MODEL, e.g. a ":free" id)
 // A provider with no secret is skipped. On 429 / error / timeout the next
@@ -31,13 +32,43 @@ const json = (o: unknown, status = 200) =>
     headers: { "content-type": "application/json" },
   });
 
-type Call = (system: string, text: string, maxTokens: number, ms: number) => Promise<string | null>;
+type Result = { text: string | null; status?: number | "timeout" | "error" };
+type Call = (system: string, text: string, maxTokens: number, ms: number) => Promise<Result>;
+
+const GEMINI = "https://generativelanguage.googleapis.com/v1beta";
+const DEFAULT_GEMINI = "gemini-2.5-flash-lite";
+let discovered: string | null = null; // kept while this instance stays warm
+
+/** Newest text model that supports generateContent: flash-lite first, then flash; stable before preview. */
+async function discoverGemini(key: string, ms: number): Promise<string | null> {
+  const r = await fetch(`${GEMINI}/models?pageSize=200`, {
+    headers: { "x-goog-api-key": key },
+    signal: AbortSignal.timeout(ms),
+  });
+  if (!r.ok) return null;
+  const j = await r.json();
+  // deno-lint-ignore no-explicit-any
+  const all: string[] = (j?.models ?? []).filter((m: any) =>
+    (m?.supportedGenerationMethods ?? []).includes("generateContent")
+  // deno-lint-ignore no-explicit-any
+  ).map((m: any) => String(m.name).replace(/^models\//, ""));
+  const skip = /image|tts|audio|live|embed|vision|robotics|computer|thinking|exp/;
+  const tier = (n: string) => n.includes("flash-lite") ? 2 : n.includes("flash") ? 1 : 0;
+  const ver = (n: string) => parseFloat(n.match(/(\d+(?:\.\d+)?)/)?.[1] ?? "0");
+  const pool = all.filter((n) => tier(n) > 0 && !skip.test(n));
+  pool.sort((a, b) =>
+    tier(b) - tier(a) ||
+    Number(/preview/.test(a)) - Number(/preview/.test(b)) ||
+    ver(b) - ver(a)
+  );
+  return pool[0] ?? null;
+}
 
 const gemini = (key: string): Call => async (system, text, maxTokens, ms) => {
-  const model = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash";
-  const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-    {
+  const started = Date.now();
+  const forced = Deno.env.get("GEMINI_MODEL");
+  const once = async (model: string, left: number): Promise<Result> => {
+    const r = await fetch(`${GEMINI}/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify({
@@ -45,13 +76,27 @@ const gemini = (key: string): Call => async (system, text, maxTokens, ms) => {
         contents: [{ role: "user", parts: [{ text }] }],
         generationConfig: { temperature: 0, maxOutputTokens: maxTokens },
       }),
-      signal: AbortSignal.timeout(ms),
-    },
-  );
-  if (!r.ok) return null;
-  const j = await r.json();
-  const out = j?.candidates?.[0]?.content?.parts?.[0]?.text;
-  return typeof out === "string" ? out : null;
+      signal: AbortSignal.timeout(left),
+    });
+    if (!r.ok) return { text: null, status: r.status };
+    const j = await r.json();
+    const out = j?.candidates?.[0]?.content?.parts?.[0]?.text;
+    return { text: typeof out === "string" ? out : null, status: r.status };
+  };
+  let res = await once(forced ?? discovered ?? DEFAULT_GEMINI, ms);
+  // 404/400 from Google = that model id is not available: find one that is, once.
+  if (!res.text && !forced && (res.status === 404 || res.status === 400)) {
+    const left = ms - (Date.now() - started);
+    if (left > 600) {
+      const found = await discoverGemini(key, Math.min(left, 1500)).catch(() => null);
+      if (found && found !== (discovered ?? DEFAULT_GEMINI)) {
+        discovered = found;
+        const left2 = ms - (Date.now() - started);
+        if (left2 > 300) res = await once(found, left2);
+      }
+    }
+  }
+  return res;
 };
 
 const openaiCompat =
@@ -67,9 +112,9 @@ const openaiCompat =
       }),
       signal: AbortSignal.timeout(ms),
     });
-    if (!r.ok) return null;
+    if (!r.ok) return { text: null, status: r.status };
     const out = (await r.json())?.choices?.[0]?.message?.content;
-    return typeof out === "string" ? out : null;
+    return { text: typeof out === "string" ? out : null, status: r.status };
   };
 
 function providers(): [string, Call][] {
@@ -111,15 +156,19 @@ Deno.serve(async (req) => {
   const maxTokens = Math.min(Math.max(Number(body.maxTokens) || 512, 16), 1024);
 
   const start = Date.now();
+  const detail: { provider: string; status: number | string }[] = [];
   for (const [name, call] of chain) {
     const left = BUDGET_MS - (Date.now() - start);
     if (left < 300) break;
     try {
-      const out = await call(system, text, maxTokens, left);
-      if (out && out.trim()) return json({ text: out.trim(), provider: name });
-    } catch {
+      const res = await call(system, text, maxTokens, left);
+      if (res.text && res.text.trim()) return json({ text: res.text.trim(), provider: name });
+      detail.push({ provider: name, status: res.status ?? "empty" });
+    } catch (e) {
       // timeout / network: fall through to the next provider
+      detail.push({ provider: name, status: (e as Error)?.name === "TimeoutError" ? "timeout" : "error" });
     }
   }
-  return json({ error: "all providers failed" }, 502);
+  // Status codes only: never a key, never the user's text.
+  return json({ error: "all providers failed", detail }, 502);
 });

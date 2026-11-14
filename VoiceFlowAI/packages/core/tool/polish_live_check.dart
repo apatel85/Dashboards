@@ -37,6 +37,20 @@ Future<void> main(List<String> a) async {
                         ? 'no answer within 12 s'
                         : 'unexpected answer ($m)';
     stdout.writeln('POLISH_LIVE_FAIL $why');
+    // The function's own explanation: provider names and status codes only, never keys or text.
+    try {
+      final r = await client
+          .post(Uri.parse(a[0]),
+              headers: {
+                'content-type': 'application/json',
+                'apikey': a[1],
+                'authorization': 'Bearer ${a[1]}',
+              },
+              body: '{"system":"Repeat the text.","text":"hello"}')
+          .timeout(const Duration(seconds: 12));
+      stdout.writeln(
+          'POLISH_LIVE_DETAIL http ${r.statusCode} ${r.body.length > 300 ? r.body.substring(0, 300) : r.body}');
+    } catch (_) {}
     exit(1);
   } catch (e) {
     stdout.writeln('POLISH_LIVE_FAIL could not connect (${e.runtimeType})');
