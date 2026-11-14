@@ -6,21 +6,34 @@
 https://apatel85.github.io/Dashboards/DealFinder/ — search, scan, deals, list,
 tracked items, 30-day history, all reading live prices from the `dealfinder`
 schema. No account; list + tracked items live in the browser only.
+**P3.1 Nov 13, 2026 (v1.1.0):** scored search (phrase > all terms > any term,
+plural-insensitive), best deal crowned by unit price where rows share a basis
+(per-egg/per-lb/per-oz), flyer clipping in the expanded card, card top without
+store/validity (store + end date only in the compare table / Stores tab).
 
 ## Live app (P3)
 
 - `index.html` + `app.js` + `config.js` — static frontend (same bright
   supermarket style as the mockup, compact mobile first). Reads prices via
   PostgREST with the public anon key + `Accept-Profile: dealfinder`.
-- Search by item name (client-side over the ZIP's prices); scan by UPC
-  (text entry + camera via BarcodeDetector where supported); Deals = items
-  with a real was-price; My list priced by store (cheapest basket +
-  split-the-list saving); Track = watch an item, alert when today's best
-  falls below its 30-day average (history still building — one snapshot so
-  far, so no alert can fire yet; never invented).
-- Price rules: every price shows store + flyer end date; a price with a
-  limit-style condition (e.g. "when you buy 5 or more") is never crowned
-  the best price; loyalty/card conditions are shown on the row.
+- Search by item name (scored relevance over the ZIP's prices — phrase,
+  then all terms, then any term, plurals folded; ties by best unit value,
+  then shelf price); scan by UPC (text entry + camera via BarcodeDetector
+  where supported); Deals = items with a real was-price; My list priced by
+  store (cheapest basket + split-the-list saving); Track = watch an item,
+  alert when today's best falls below its 30-day average (history still
+  building — one snapshot so far, so no alert can fire yet; never invented).
+- Price rules: every price shows store + flyer end date (in the expanded
+  compare table / Stores tab — the card top shows name, pack size, per-unit
+  price and the best-deal tag only). Best deal is by unit price when rows
+  share a comparable basis (per-egg/per-lb/per-oz), else by shelf price;
+  per-unit is shown wherever the data has a size, derived from the stored
+  kg/L/count basis — never invented (224 of 237 items carry no size in
+  their names). A price with a limit-style condition (e.g. "when you buy 5
+  or more") is never crowned the best price; loyalty/card conditions are
+  shown on the row. Expanded cards show the flyer clipping ("See it in the
+  flyer"); no retailer product link exists in the feed data, so none is
+  shown.
 - ShopRite has no flyer data yet (no Flipp flyer for 08520) — it simply
   doesn't appear until a second source covers it.
 
