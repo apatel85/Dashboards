@@ -375,3 +375,79 @@ final int Function(int, int, int) attachThreadInput = _user32
     >('AttachThreadInput');
 final int Function() getCurrentThreadId = _kernel32
     .lookupFunction<Uint32 Function(), int Function()>('GetCurrentThreadId');
+
+// ---- registry (HKCU\...\Run for start-at-login) and named mutex (single instance)
+const kHkeyCurrentUser = 0x80000001;
+const kRegSz = 1, kRrfRtRegSz = 2;
+final int Function(
+  int,
+  Pointer<Utf16>,
+  Pointer<Utf16>,
+  int,
+  Pointer<Uint8>,
+  int,
+)
+regSetKeyValue = _advapi32
+    .lookupFunction<
+      Int32 Function(
+        IntPtr,
+        Pointer<Utf16>,
+        Pointer<Utf16>,
+        Uint32,
+        Pointer<Uint8>,
+        Uint32,
+      ),
+      int Function(
+        int,
+        Pointer<Utf16>,
+        Pointer<Utf16>,
+        int,
+        Pointer<Uint8>,
+        int,
+      )
+    >('RegSetKeyValueW');
+final int Function(int, Pointer<Utf16>, Pointer<Utf16>) regDeleteKeyValue =
+    _advapi32.lookupFunction<
+      Int32 Function(IntPtr, Pointer<Utf16>, Pointer<Utf16>),
+      int Function(int, Pointer<Utf16>, Pointer<Utf16>)
+    >('RegDeleteKeyValueW');
+final int Function(
+  int,
+  Pointer<Utf16>,
+  Pointer<Utf16>,
+  int,
+  Pointer<Uint32>,
+  Pointer<Uint8>,
+  Pointer<Uint32>,
+)
+regGetValue = _advapi32
+    .lookupFunction<
+      Int32 Function(
+        IntPtr,
+        Pointer<Utf16>,
+        Pointer<Utf16>,
+        Uint32,
+        Pointer<Uint32>,
+        Pointer<Uint8>,
+        Pointer<Uint32>,
+      ),
+      int Function(
+        int,
+        Pointer<Utf16>,
+        Pointer<Utf16>,
+        int,
+        Pointer<Uint32>,
+        Pointer<Uint8>,
+        Pointer<Uint32>,
+      )
+    >('RegGetValueW');
+final int Function(int, int, Pointer<Utf16>) openMutex = _kernel32
+    .lookupFunction<
+      IntPtr Function(Uint32, Int32, Pointer<Utf16>),
+      int Function(int, int, Pointer<Utf16>)
+    >('OpenMutexW');
+final int Function(Pointer, int, Pointer<Utf16>) createMutex = _kernel32
+    .lookupFunction<
+      IntPtr Function(Pointer, Int32, Pointer<Utf16>),
+      int Function(Pointer, int, Pointer<Utf16>)
+    >('CreateMutexW');

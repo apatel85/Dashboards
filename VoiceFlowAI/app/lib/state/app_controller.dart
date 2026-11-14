@@ -5,6 +5,7 @@ import 'package:voiceflow_core/voiceflow_core.dart';
 
 import 'assets_loader.dart';
 import 'dictation_state.dart';
+import 'per_app_profiles.dart';
 
 class RecentDictation {
   final String text;
@@ -37,9 +38,28 @@ class AppController extends ChangeNotifier {
   /// Transient one-line message the pill shows while idle (e.g. the new profile name).
   String? flashText;
 
+  /// Optional per-app memory: set both to enable (Windows wires them up).
+  String? Function()? foregroundApp;
+  PerAppProfiles? perApp;
+
   Profile get profile => _profile;
   set profile(Profile p) {
     _profile = p;
+    perApp?.remember(
+      foregroundApp?.call(),
+      p.id,
+    ); // user chose it while that app was focused
+    notifyListeners();
+  }
+
+  /// At dictation start: if you chose a profile for the focused app before, use it.
+  /// (Applied without re-remembering; the pill shows the profile name while listening.)
+  void resolveForForeground() {
+    final id = perApp?.profileFor(foregroundApp?.call());
+    if (id == null || id == _profile.id) return;
+    final match = assets.profiles.where((p) => p.id == id);
+    if (match.isEmpty) return;
+    _profile = match.first;
     notifyListeners();
   }
 

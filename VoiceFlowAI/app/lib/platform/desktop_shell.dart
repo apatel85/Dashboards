@@ -10,6 +10,7 @@ import 'package:window_manager/legacy.dart';
 
 import '../l10n/app_localizations.dart';
 import '../state/app_controller.dart';
+import 'windows/system_integration.dart';
 
 /// Windows window + tray behaviour (spec §9.3): closing the window hides it to
 /// the tray; the tray menu offers profile switching, copy-last and quit.
@@ -18,6 +19,7 @@ class DesktopShell with TrayListener, WindowListener {
   DesktopShell._(this.c) : t = lookupAppLocalizations(const Locale('en'));
   final AppController c;
   final AppLocalizations t;
+  final Autostart _autostart = Autostart();
 
   static Future<void> init(AppController c) async {
     if (!Platform.isWindows) return;
@@ -71,6 +73,11 @@ class DesktopShell with TrayListener, WindowListener {
             disabled: c.recent.isEmpty,
           ),
           MenuItem.separator(),
+          MenuItem.checkbox(
+            key: 'autostart',
+            label: 'Start with Windows',
+            checked: _autostart.enabled,
+          ),
           MenuItem(key: 'open', label: t.appName),
           MenuItem(key: 'quit', label: 'Quit'),
         ],
@@ -102,6 +109,9 @@ class DesktopShell with TrayListener, WindowListener {
     } else if (k == 'quit') {
       await trayManager.destroy();
       await windowManager.destroy();
+    } else if (k == 'autostart') {
+      _autostart.set(!_autostart.enabled);
+      await _refreshMenu();
     } else if (k == 'copy' && c.recent.isNotEmpty) {
       await Clipboard.setData(ClipboardData(text: c.recent.first.text));
     } else if (k.startsWith('profile:')) {

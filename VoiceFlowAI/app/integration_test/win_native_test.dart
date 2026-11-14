@@ -12,6 +12,7 @@ import 'package:voiceflow_app/platform/windows/hotkey_manager.dart';
 import 'package:voiceflow_app/platform/windows/insertion.dart';
 import 'package:voiceflow_app/platform/windows/keyboard_hook.dart';
 import 'package:voiceflow_app/platform/windows/pill_window.dart';
+import 'package:voiceflow_app/platform/windows/system_integration.dart';
 import 'package:voiceflow_app/platform/windows/win32.dart' as w;
 import 'package:voiceflow_app/platform/windows/windows_os.dart';
 import 'package:voiceflow_app/state/app_controller.dart';
@@ -362,6 +363,41 @@ void main() {
       expect(w.getForegroundWindow(), fgBefore);
       // ignore: avoid_print
       print('PILL_STATES_SHOWN ${shots.join(',')} gap=$gap');
+    },
+  );
+
+  testWidgets('start at login: registry round trip, quoted path, removable', (
+    t,
+  ) async {
+    final a = Autostart(
+      valueName: 'VoiceFlowCiTest',
+      exePath: r'C:\Program Files\Voice Flow\voiceflow_app.exe',
+    );
+    addTearDown(() => a.set(false));
+    expect(a.enabled, isFalse);
+    expect(a.set(true), isTrue);
+    expect(a.enabled, isTrue);
+    expect(
+      a.value,
+      r'"C:\Program Files\Voice Flow\voiceflow_app.exe" --background',
+    );
+    expect(a.set(false), isTrue);
+    expect(a.enabled, isFalse);
+    expect(a.set(false), isTrue, reason: 'removing an absent entry is fine');
+  });
+
+  testWidgets(
+    'single instance: second acquire is refused until the first releases',
+    (t) async {
+      final name =
+          'Local\\VoiceFlowCiTest-${DateTime.now().microsecondsSinceEpoch}';
+      final first = SingleInstance.acquire(name);
+      expect(first, isNotNull);
+      expect(SingleInstance.acquire(name), isNull);
+      first!.release();
+      final again = SingleInstance.acquire(name);
+      expect(again, isNotNull);
+      again!.release();
     },
   );
 }

@@ -19,6 +19,8 @@ import 'platform/windows/windows_os.dart';
 import 'state/dictation_state.dart';
 import 'platform/desktop_shell.dart';
 import 'state/app_controller.dart';
+import 'state/per_app_profiles.dart';
+import 'platform/windows/system_integration.dart';
 import 'state/assets_loader.dart';
 import 'state/dictation_service.dart';
 import 'state/onboarding_controller.dart';
@@ -42,7 +44,21 @@ Future<void> main() async {
     ) as List).first,
   );
   final models = ModelManager(spec, Directory('${support.path}/models'));
+  if (Platform.isWindows &&
+      SingleInstance.acquire(r'Local\VoiceFlowAI-SingleInstance') == null) {
+    exit(0); // another VoiceFlow is already running in this session
+  }
   final controller = AppController(assets);
+  if (Platform.isWindows) {
+    controller.foregroundApp = foregroundAppId;
+    controller.perApp = PerAppProfiles(
+      settings.perAppProfiles,
+      onChanged: (m) {
+        settings.perAppProfiles = m;
+        unawaited(store.save(settings));
+      },
+    );
+  }
 
   final engine = SherpaSttEngine();
   final mic = MicAudioSource(deviceId: settings.micDeviceId);
