@@ -169,6 +169,10 @@
       .price-big{font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:26px;line-height:1;color:var(--ink)}
       .price-store{font-size:13px;font-weight:700;color:var(--green-deep);margin-top:3px}
       .price-unit{font-size:12px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace}
+      .price-per{display:block;font-size:13px;font-weight:700;color:var(--green-deep);font-family:"IBM Plex Mono",monospace;margin-top:3px}
+      .clip{margin:12px 0 0}
+      .clip img{display:block;max-width:100%;max-height:260px;border:1px solid var(--line);border-radius:12px}
+      .clip figcaption{font-size:12px;color:var(--ink-3);margin-top:6px}
       .tagrow{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 12px 88px;margin-top:-4px}
       @media (max-width:480px){ .tagrow{padding-left:16px} }
       .tag{
@@ -454,7 +458,7 @@
     <div class="notice" role="note">
       <div class="wrap">
         <b>Live prices.</b>
-        <span class="short" id="noticeShort">From this week's flyers · checked Nov 13.</span>
+        <span class="short" id="noticeShort">From this week's flyers.</span>
         <span>Every price shows its store and when the flyer deal ends. Prices are checked weekly, when each store's new circular drops — never reported by other shoppers.</span>
       </div>
     </div>
@@ -686,6 +690,7 @@
               <li><b>ShopRite isn't here yet</b> — it has no flyer on the current feed for this ZIP. A second source for it is planned.</li>
               <li><b>Alerts stay in-app</b> in this version — nothing is sent anywhere. Your list and tracked items live in this browser only.</li>
             </ul>
+            <p class="src" id="moreChecked"></p>
           </div>
         </section>
       </main>
