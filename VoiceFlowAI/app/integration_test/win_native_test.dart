@@ -157,8 +157,13 @@ void main() {
       }
 
       // Undo removes exactly what we inserted (and nothing else), once.
-      w.setWindowText(edit, ('before ').toNativeUtf16());
+      // Start clean, then TYPE a prefix so the caret ends up after it (SetWindowText
+      // resets the caret to the start and the paste would correctly land in front).
+      w.setWindowText(edit, ''.toNativeUtf16());
       await bringToFront(edit);
+      expect(os.sendUnicode('before '), 'before '.length * 2);
+      await pause(200);
+      expect(textOf(edit), 'before ');
       expect(await sink.insert('abc'), InsertResult.ok);
       await pause(200);
       expect(textOf(edit), endsWith('abc'));
