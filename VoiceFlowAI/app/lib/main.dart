@@ -25,6 +25,7 @@ import 'platform/windows/system_integration.dart';
 import 'state/assets_loader.dart';
 import 'state/dictation_service.dart';
 import 'state/onboarding_controller.dart';
+import 'state/pack_store.dart';
 import 'state/settings_store.dart';
 
 // Keeps the keyboard's headless entrypoint (imeMain) in the compiled program;
@@ -39,6 +40,12 @@ Future<void> main(List<String> args) async {
   final store = SettingsStore(support);
   final settings = await store.load();
   final assets = await AppAssets.load();
+  final packStore = await PackStore.load(
+    assets,
+    settings,
+    () => store.save(settings),
+    userDir: Directory('${support.path}/packs'),
+  );
   final spec = ModelSpec.fromJson(
     (jsonDecode(
       await rootBundle.loadString('assets/models.json'),
@@ -93,7 +100,7 @@ Future<void> main(List<String> args) async {
     pipeline: DictationPipeline(assets.lang, engine, sink),
     options: () => DictationOptions(
       controller.profile,
-      packs: assets.packs,
+      packs: packStore.active, // the packs you turned on, in priority order
       dictionary: settings.dictionary,
       corrections: settings.corrections,
     ),
@@ -167,6 +174,7 @@ Future<void> main(List<String> args) async {
       service: service,
       onboarding: onboarding,
       androidSetup: androidSetup,
+      packStore: packStore,
       onboardingFinished: finished,
     ),
   );

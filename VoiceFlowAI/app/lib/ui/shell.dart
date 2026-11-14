@@ -3,14 +3,24 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/app_localizations.dart';
 import '../state/app_controller.dart';
 import '../state/dictation_service.dart';
+import '../state/pack_store.dart';
 import 'home_page.dart';
+import 'packs_page.dart';
 import 'style_page.dart';
 
 /// Left-navigation shell (spec §9.3 main window).
 class AppShell extends StatefulWidget {
-  const AppShell({super.key, required this.controller, this.service});
+  const AppShell({
+    super.key,
+    required this.controller,
+    this.service,
+    this.packStore,
+    this.pickPackFile,
+  });
   final AppController controller;
   final DictationService? service;
+  final PackStore? packStore;
+  final PackFilePicker? pickPackFile;
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -30,9 +40,20 @@ class _AppShellState extends State<AppShell> {
       (Icons.settings_outlined, t.navSettings),
     ];
     final pages = <Widget>[
-      HomePage(controller: widget.controller, service: widget.service),
+      HomePage(
+        controller: widget.controller,
+        service: widget.service,
+        packStore: widget.packStore,
+      ),
       StylePage(controller: widget.controller),
-      for (var i = 2; i < items.length; i++) _Later(title: items[i].$2),
+      for (var i = 2; i < items.length; i++)
+        if (i == 3 && widget.packStore != null)
+          PacksPage(
+            store: widget.packStore!,
+            pick: widget.pickPackFile ?? pickPackFile,
+          )
+        else
+          _Later(title: items[i].$2),
     ];
     final narrow = MediaQuery.sizeOf(context).width < 600;
     if (narrow) {

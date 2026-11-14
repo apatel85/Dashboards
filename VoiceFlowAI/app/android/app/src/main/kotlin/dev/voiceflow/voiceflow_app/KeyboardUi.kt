@@ -24,6 +24,8 @@ interface KbHandlers {
     fun onCancel()
     fun onUndo()
     fun onProfile()
+    fun onPackSuggestion()
+    fun onPackDismiss()
     fun onText(s: String)
     fun onSpace()
     fun onBackspace()
@@ -77,6 +79,18 @@ class KeyboardUi(private val ctx: Context, private val h: KbHandlers) {
         isClickable = true
         setOnClickListener { h.onProfile() }
         setOnLongClickListener { h.onProfile(); true }
+    }
+    /** "+ Pack name": a suggestion. Tap turns the pack on; long-press waves it away. */
+    val packChip = label("", 13f, accent).apply {
+        background = round(keyBg, 16)
+        setPadding(dp(10), dp(6), dp(10), dp(6))
+        minHeight = dp(48)
+        visibility = View.GONE
+        isClickable = true
+        setOnClickListener { h.onPackSuggestion() }
+        setOnLongClickListener { h.onPackDismiss(); true }
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            .apply { setMargins(dp(6), 0, 0, 0) }
     }
     private val cloud = label("☁", 15f, dim).apply {
         contentDescription = ctx.getString(R.string.vf_cd_cloud)
@@ -138,7 +152,7 @@ class KeyboardUi(private val ctx: Context, private val h: KbHandlers) {
         setBackgroundColor(bg)
         setPadding(dp(6), dp(4), dp(6), dp(4))
         layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(220))
-        addView(row(48, chip, cloud, status))
+        addView(row(48, chip, packChip, cloud, status))
         addView(row(84, View(ctx).apply { layoutParams = LinearLayout.LayoutParams(0, 1, 1f) }, cancel, mic, undo,
             View(ctx).apply { layoutParams = LinearLayout.LayoutParams(0, 1, 1f) }))
         addView(row(40, *listOf(",", ".", "?", "!", "'", "@").map { c ->
@@ -154,6 +168,17 @@ class KeyboardUi(private val ctx: Context, private val h: KbHandlers) {
     fun setProfile(name: String) {
         chip.text = name
         chip.contentDescription = ctx.getString(R.string.vf_cd_profile, name)
+    }
+
+    /** Shows or hides the pack suggestion chip. */
+    fun setPackSuggestion(name: String?) {
+        if (name == null) {
+            packChip.visibility = View.GONE
+            return
+        }
+        packChip.text = "+ $name"
+        packChip.contentDescription = ctx.getString(R.string.vf_cd_pack, name)
+        packChip.visibility = View.VISIBLE
     }
 
     fun setCloud(on: Boolean) { cloud.visibility = if (on) View.VISIBLE else View.GONE }

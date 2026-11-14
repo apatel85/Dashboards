@@ -7,6 +7,7 @@ import 'package:voiceflow_core/voiceflow_core.dart';
 
 import '../engines/sherpa_stt.dart';
 import '../state/assets_loader.dart';
+import '../state/pack_store.dart';
 import '../state/per_app_profiles.dart';
 import '../state/settings_store.dart';
 
@@ -33,6 +34,7 @@ class ImeBackend {
     required this.stt,
     required this.ensureLoaded,
     required this.unloadEngine,
+    this.packsDir,
   });
 
   final AppAssets assets;
@@ -41,6 +43,11 @@ class ImeBackend {
   final SttEngine stt;
   final Future<void> Function() ensureLoaded;
   final Future<void> Function() unloadEngine;
+
+  /// Where imported packs live (shared with the main app).
+  final Directory? packsDir;
+  final Set<String> _dismissed =
+      {}; // suggestions waved away until the engine restarts
 
   static Future<ImeBackend> create() async {
     final support = await getApplicationSupportDirectory();
@@ -69,6 +76,7 @@ class ImeBackend {
         if (!engine.loaded) await engine.load(cfg);
       },
       unloadEngine: engine.unload,
+      packsDir: Directory('${support.path}/packs'),
     );
   }
 
@@ -79,6 +87,36 @@ class ImeBackend {
 
   /// Settings are shared with the main app, which may have changed them: always re-read.
   Future<Settings> _settings() => store.load();
+
+  /// Packs as the main app left them. Re-read on every call: tiny files, and the app may have
+  /// imported or switched packs since the keyboard last looked.
+  Future<PackStore> _packStore(Settings s) =>
+      PackStore.load(assets, s, () => store.save(s), userDir: packsDir);
+
+  /// Packs worth offering for the app being typed into (never switched on here).
+  Future<List<Map<String, Object?>>> suggestions(String? packageName) async {
+    final s = await _settings();
+    final ps = await _packStore(s);
+    final found = ps.detector.suggest(
+      ps.registry.all,
+      DetectContext(appId: packageName),
+      exclude: {...ps.registry.activeIds, ..._dismissed},
+    );
+    return [
+      for (final x in found)
+        {'id': x.pack.id, 'name': x.pack.name, 'why': x.reasons.join(', ')},
+    ];
+  }
+
+  /// The person tapped the suggestion chip: turn the pack on (last priority) and save.
+  Future<List<String>> activatePack(String id) async {
+    final s = await _settings();
+    final ps = await _packStore(s);
+    await ps.setActive(id, true);
+    return ps.registry.activeIds;
+  }
+
+  void dismissPack(String id) => _dismissed.add(id);
 
   Future<Map<String, Object?>> status() async {
     final s = await _settings();
@@ -118,13 +156,14 @@ class ImeBackend {
             s.defaultProfileId,
       );
 
+      final packs = (await _packStore(s)).active;
       await ensureLoaded();
       final sink = _CaptureSink();
       final r = await DictationPipeline(assets.lang, stt, sink).run(
         pcm,
         DictationOptions(
           profile,
-          packs: assets.packs,
+          packs: packs,
           dictionary: s.dictionary,
           corrections: s.corrections,
           fieldKind: kind,
@@ -169,6 +208,13 @@ class ImeBackend {
         return dictate(a);
       case 'setProfile':
         return setProfile(a['id'] as String, a['packageName'] as String?);
+      case 'suggestions':
+        return suggestions(a['packageName'] as String?);
+      case 'activatePack':
+        return activatePack(a['id'] as String);
+      case 'dismissPack':
+        dismissPack(a['id'] as String);
+        return null;
       case 'unload':
         await unloadEngine();
         return null;

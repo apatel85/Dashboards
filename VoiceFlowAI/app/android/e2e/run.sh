@@ -127,6 +127,18 @@ done
 focus t_password; sleep 2
 has 'text="Dictation is off in password fields"' && ok "password field: mic locked with notice" || bad "password notice"
 
+echo "== pack suggestion chip (user pack dropped in the pack folder; detector matches this app)"
+adb push "$ROOT/VoiceFlowAI/app/android/e2e/e2e_pack.json" /sdcard/Download/e2e_pack.json >/dev/null
+adb shell "am broadcast -a dev.voiceflow.E2E_INSTALL_PACK -p $PKG --es src /sdcard/Download/e2e_pack.json --es name e2e_pack.json" >/dev/null
+sleep 2
+focus t_password; focus t_text; sleep 4
+has 'content-desc="Suggested pack: E2E Test Pack' && ok "pack suggestion chip appears" || { bad "pack chip"; shownodes; adb logcat -d VoiceFlow:I E2E:I '*:S' | tail -8; }
+tap "Suggested pack: [^\"]*"; sleep 3
+if has 'content-desc="Suggested pack: E2E Test Pack'; then bad "chip still there after tap"; else ok "chip gone after turning the pack on"; fi
+adb logcat -d VoiceFlow:I '*:S' | grep -q "pack_on id=e2e_test" && ok "pack turned on (saved as active)" || bad "pack not activated"
+focus t_password; focus t_text; sleep 4
+if has 'content-desc="Suggested pack: E2E Test Pack'; then bad "suggested again though it is on"; else ok "not suggested again once on"; fi
+
 echo "== app setup checklist (real platform channel: enabled / selected / mic / model)"
 adb shell am start -n $PKG/.MainActivity >/dev/null; sleep 8
 has 'Set up VoiceFlow keyboard' && ok "setup page shows on first run" || { bad "setup page"; shownodes; }
@@ -138,4 +150,4 @@ echo "== diagnostics"
 adb logcat -d | tr -d '\r' | grep -E "VoiceFlow|E2E|dev.voiceflow|FATAL EXCEPTION" | tail -40
 adb shell dumpsys meminfo $PKG | grep -E "TOTAL PSS" | head -1
 echo "RESULT pass=$PASS fail=$FAIL"
-[ $FAIL -eq 0 ] && [ $PASS -ge 14 ]
+[ $FAIL -eq 0 ] && [ $PASS -ge 18 ]

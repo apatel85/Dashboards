@@ -633,6 +633,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Done'**
   String get setupDone;
+
+  /// No description provided for @packsIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Packs teach VoiceFlow the words, abbreviations and note templates of your work. They only change what you dictate while they are on.'**
+  String get packsIntro;
+
+  /// No description provided for @packsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'On (top one wins a conflict)'**
+  String get packsActive;
+
+  /// No description provided for @packsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get packsAvailable;
+
+  /// No description provided for @packsNoneActive.
+  ///
+  /// In en, this message translates to:
+  /// **'No pack is on.'**
+  String get packsNoneActive;
+
+  /// No description provided for @packsImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a pack file'**
+  String get packsImport;
+
+  /// No description provided for @packsImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Pack added: {name}'**
+  String packsImported(String name);
+
+  /// No description provided for @packsRefusedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This pack could not be used'**
+  String get packsRefusedTitle;
+
+  /// No description provided for @packsRefusedFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File: {file}'**
+  String packsRefusedFile(String file);
+
+  /// No description provided for @packsOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get packsOk;
+
+  /// No description provided for @packsLocalOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Stays on this device'**
+  String get packsLocalOnly;
+
+  /// No description provided for @packsMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Higher priority'**
+  String get packsMoveUp;
+
+  /// No description provided for @packsMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower priority'**
+  String get packsMoveDown;
+
+  /// No description provided for @packsRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get packsRemove;
+
+  /// No description provided for @packsDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'{words} words · version {version}'**
+  String packsDetails(int words, String version);
+
+  /// No description provided for @packsProblems.
+  ///
+  /// In en, this message translates to:
+  /// **'Packs that could not be loaded'**
+  String get packsProblems;
+
+  /// No description provided for @packsDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get packsDismiss;
+
+  /// No description provided for @packSuggest.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on the {name} pack?'**
+  String packSuggest(String name);
+
+  /// No description provided for @packSuggestOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get packSuggestOn;
+
+  /// No description provided for @packSuggestWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested because of: {why}'**
+  String packSuggestWhy(String why);
 }
 
 class _AppLocalizationsDelegate

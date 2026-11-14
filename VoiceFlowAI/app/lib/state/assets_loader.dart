@@ -8,7 +8,15 @@ class AppAssets {
   final LangData lang;
   final List<Profile> profiles;
   final List<DomainPack> packs;
-  const AppAssets(this.lang, this.profiles, this.packs);
+
+  /// Raw JSON of each bundled pack, so a [PackRegistry] can load them like any other pack.
+  final List<String> packSources;
+  const AppAssets(
+    this.lang,
+    this.profiles,
+    this.packs, [
+    this.packSources = const [],
+  ]);
 
   static const profileIds = [
     'casual',
@@ -16,7 +24,7 @@ class AppAssets {
     'professional',
     'ai_prompting',
   ];
-  static const packIds = ['general_business'];
+  static const packIds = ['general_business', 'healthcare_clinic'];
 
   static Future<AppAssets> load([AssetBundle? bundle]) async {
     final b = bundle ?? rootBundle;
@@ -30,12 +38,11 @@ class AppAssets {
               as Map<String, dynamic>,
         ),
     ];
-    final packs = [
+    final sources = [
       for (final id in packIds)
-        DomainPack.fromJsonString(
-          await b.loadString('assets/packs/$id/pack.json'),
-        ),
+        await b.loadString('assets/packs/$id/pack.json'),
     ];
-    return AppAssets(lang, profiles, packs);
+    final packs = [for (final s in sources) DomainPack.fromJsonString(s)];
+    return AppAssets(lang, profiles, packs, sources);
   }
 }

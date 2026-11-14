@@ -313,4 +313,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setupDone => 'Done';
+
+  @override
+  String get packsIntro =>
+      'Packs teach VoiceFlow the words, abbreviations and note templates of your work. They only change what you dictate while they are on.';
+
+  @override
+  String get packsActive => 'On (top one wins a conflict)';
+
+  @override
+  String get packsAvailable => 'Available';
+
+  @override
+  String get packsNoneActive => 'No pack is on.';
+
+  @override
+  String get packsImport => 'Import a pack file';
+
+  @override
+  String packsImported(String name) {
+    return 'Pack added: $name';
+  }
+
+  @override
+  String get packsRefusedTitle => 'This pack could not be used';
+
+  @override
+  String packsRefusedFile(String file) {
+    return 'File: $file';
+  }
+
+  @override
+  String get packsOk => 'OK';
+
+  @override
+  String get packsLocalOnly => 'Stays on this device';
+
+  @override
+  String get packsMoveUp => 'Higher priority';
+
+  @override
+  String get packsMoveDown => 'Lower priority';
+
+  @override
+  String get packsRemove => 'Remove';
+
+  @override
+  String packsDetails(int words, String version) {
+    return '$words words · version $version';
+  }
+
+  @override
+  String get packsProblems => 'Packs that could not be loaded';
+
+  @override
+  String get packsDismiss => 'Dismiss';
+
+  @override
+  String packSuggest(String name) {
+    return 'Turn on the $name pack?';
+  }
+
+  @override
+  String get packSuggestOn => 'Turn on';
+
+  @override
+  String packSuggestWhy(String why) {
+    return 'Suggested because of: $why';
+  }
 }

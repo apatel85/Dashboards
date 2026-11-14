@@ -10,6 +10,7 @@ Dart packages (core is audited by `tool/license_audit.dart`; app packages listed
 | sherpa_onnx 2.0.1 (+ per-platform native packages) | app | Apache-2.0 |
 | record 7.x (+ record_windows / record_android) | app | BSD-3-Clause |
 | path_provider | app | BSD-3-Clause |
+| file_selector 1.x (+ file_selector_windows / _android) | app (import a pack file) | BSD-3-Clause |
 
 Models / data: Whisper base.en weights (MIT, OpenAI) via the k2-fsa sherpa-onnx release archive; test audio provenance in `test_fixtures/audio/LICENSES.md` (NOT-VERIFIED).
 Native libraries bundled by sherpa_onnx (onnxruntime, sherpa-onnx C API): MIT / Apache-2.0 per upstream; confirm exact notices before a release.

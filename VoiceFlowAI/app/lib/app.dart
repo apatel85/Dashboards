@@ -7,6 +7,7 @@ import 'l10n/app_localizations.dart';
 import 'state/app_controller.dart';
 import 'state/android_setup.dart';
 import 'state/dictation_service.dart';
+import 'state/pack_store.dart';
 import 'state/onboarding_controller.dart';
 import 'theme.dart';
 import 'ui/android_setup_page.dart';
@@ -20,6 +21,7 @@ class VoiceFlowApp extends StatelessWidget {
     this.service,
     this.onboarding,
     this.androidSetup,
+    this.packStore,
     this.onboardingFinished,
   });
   final AppController controller;
@@ -30,6 +32,7 @@ class VoiceFlowApp extends StatelessWidget {
 
   /// Android's equivalent first-run checklist (keyboard enable/select, mic, model).
   final AndroidSetupController? androidSetup;
+  final PackStore? packStore;
   final ValueListenable<bool>? onboardingFinished;
 
   @override
@@ -49,7 +52,11 @@ class VoiceFlowApp extends StatelessWidget {
       valueListenable: onboardingFinished ?? ValueNotifier(true),
       builder: (context, finished, _) {
         if (finished || (onboarding == null && androidSetup == null)) {
-          return AppShell(controller: controller, service: service);
+          return AppShell(
+            controller: controller,
+            service: service,
+            packStore: packStore,
+          );
         }
         return androidSetup != null
             ? AndroidSetupPage(controller: androidSetup!)

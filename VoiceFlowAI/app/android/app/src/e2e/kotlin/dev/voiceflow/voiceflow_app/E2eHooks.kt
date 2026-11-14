@@ -21,6 +21,8 @@ class E2eHooks(private val ime: VoiceFlowIME) : ImeHooks {
                 "dev.voiceflow.E2E_INSTALL_MODEL" -> installModel(
                     i.getStringExtra("src") ?: "", i.getStringExtra("id") ?: "",
                     i.getStringExtra("sha") ?: "")
+                "dev.voiceflow.E2E_INSTALL_PACK" -> installPack(
+                    i.getStringExtra("src") ?: "", i.getStringExtra("name") ?: "")
                 "dev.voiceflow.E2E_DICTATE_WAV" -> dictateWav(
                     i.getStringExtra("wav") ?: "", i.getStringExtra("kind"))
             }
@@ -31,6 +33,7 @@ class E2eHooks(private val ime: VoiceFlowIME) : ImeHooks {
         val f = IntentFilter().apply {
             addAction("dev.voiceflow.E2E_INSTALL_MODEL")
             addAction("dev.voiceflow.E2E_DICTATE_WAV")
+            addAction("dev.voiceflow.E2E_INSTALL_PACK")
         }
         if (Build.VERSION.SDK_INT >= 33) {
             ime.registerReceiver(receiver, f, Context.RECEIVER_EXPORTED)
@@ -47,6 +50,17 @@ class E2eHooks(private val ime: VoiceFlowIME) : ImeHooks {
             Log.i(tag, "MODEL_INSTALLED ${dst.list()?.sorted()}")
         } catch (e: Exception) {
             Log.e(tag, "MODEL_ERROR $e")
+        }
+    }
+
+    /** Drops a pack file into the user pack folder, exactly where an import would put it. */
+    private fun installPack(src: String, name: String) {
+        try {
+            val dir = File(ime.filesDir, "packs").apply { mkdirs() }
+            File(src).copyTo(File(dir, name), true)
+            Log.i(tag, "PACK_INSTALLED $name")
+        } catch (e: Exception) {
+            Log.e(tag, "PACK_ERROR $e")
         }
     }
 

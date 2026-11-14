@@ -31,6 +31,7 @@ class VoiceFlowIME : InputMethodService(), KbHandlers {
 
     private var profiles: List<Pair<String, String>> = emptyList() // id to name
     private var profileId = ""
+    private var suggestedPack: Pair<String, String>? = null // id to name
     private var modelReady = false
     private var setupDone = false
 
@@ -76,6 +77,7 @@ class VoiceFlowIME : InputMethodService(), KbHandlers {
         }
         refreshUndo()
         loadStatus()
+        loadSuggestion()
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {
@@ -119,6 +121,36 @@ class VoiceFlowIME : InputMethodService(), KbHandlers {
         // A per-app choice (if any) is applied by Dart at dictate time; show the global one here.
         ui?.setProfile(cur?.get("name") as? String ?: "")
         ui?.setCloud(m["cloud"] == true)
+    }
+
+    // ---- pack suggestion (shown, never applied by itself)
+    private fun loadSuggestion() {
+        suggestedPack = null
+        ui?.setPackSuggestion(null)
+        call("suggestions", mapOf("packageName" to editor?.packageName)) { r ->
+            val first = (r as? List<*>)?.firstOrNull() as? Map<*, *> ?: return@call
+            val id = first["id"] as? String ?: return@call
+            val name = first["name"] as? String ?: return@call
+            suggestedPack = id to name
+            ui?.setPackSuggestion(name)
+        }
+    }
+
+    override fun onPackSuggestion() {
+        val (id, name) = suggestedPack ?: return
+        call("activatePack", mapOf("id" to id)) { r ->
+            Log.i("VoiceFlow", "pack_on id=$id active=$r")
+            suggestedPack = null
+            ui?.setPackSuggestion(null)
+            ui?.setStatus(getString(R.string.vf_pack_on, name))
+        }
+    }
+
+    override fun onPackDismiss() {
+        val (id, _) = suggestedPack ?: return
+        call("dismissPack", mapOf("id" to id)) {}
+        suggestedPack = null
+        ui?.setPackSuggestion(null)
     }
 
     override fun onProfile() {
