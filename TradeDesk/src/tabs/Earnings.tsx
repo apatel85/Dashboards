@@ -14,6 +14,7 @@ import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
 import PremarketLine from '../components/PremarketLine';
 import { Fundamentals } from '../components/Fundamentals';
+import { VizBlock, HBar, HistBars } from '../components/Infographics';
 import { fmtMoney, fmtNum, fmtPct, fmtDayLabel, fmtTimeET, prettify } from '../lib/format';
 import type { EarningsEntry, EarningsQuarter } from '../types';
 
@@ -289,6 +290,8 @@ export default function EarningsTab() {
   const today = etToday();
   const tomorrow = addDaysStr(today, 1);
   const [openBuckets, setOpenBuckets] = useState<Set<string>>(() => new Set([today, tomorrow]));
+  /** "What actually happened" card: collapsed by default. */
+  const [earnVizOpen, setEarnVizOpen] = useState(false);
 
   useEffect(() => {
     if (data) setQuoteUniverse(data.map((e) => e.ticker));
@@ -375,6 +378,44 @@ export default function EarningsTab() {
     [filtered],
   );
 
+  /** What actually happened after earnings (reported rows only): surprise
+   * distribution + 1d/7d move distributions. Computed from the full feed,
+   * not the filtered view, so the picture stays stable while searching. */
+  const earnViz = useMemo(() => {
+    const rows = data ?? [];
+    const rep = rows.filter((e) => e.status === 'reported');
+    const withSurp = rep.filter((e) => e.surprise_pct != null);
+    const med = (xs: number[]) => {
+      if (!xs.length) return null;
+      const s = [...xs].sort((a, b) => a - b);
+      return s[Math.floor(s.length / 2)];
+    };
+    const dist = (get: (e: EarningsEntry) => number | null | undefined) => {
+      const vals = rep.map(get).filter((v): v is number => v != null);
+      return {
+        n: vals.length,
+        med: med(vals),
+        ups: vals.filter((v) => v > 0).length,
+        buckets: {
+          bigDown: vals.filter((v) => v < -5).length,
+          down: vals.filter((v) => v >= -5 && v < 0).length,
+          up: vals.filter((v) => v >= 0 && v < 5).length,
+          bigUp: vals.filter((v) => v >= 5).length,
+        },
+      };
+    };
+    return {
+      reported: rep.length,
+      beats: withSurp.filter((e) => (e.surprise_pct as number) > 0).length,
+      misses: withSurp.filter((e) => (e.surprise_pct as number) < 0).length,
+      surpMed: med(withSurp.map((e) => e.surprise_pct as number)),
+      surpN: withSurp.length,
+      d1: dist((e) => e.perf_1d_pct),
+      d7: dist((e) => e.perf_7d_pct),
+      d30: dist((e) => e.perf_30d_pct),
+    };
+  }, [data]);
+
   if (loading) return <LoadingPanel what="earnings calendar" />;
   if (error || !data)
     return <ErrorPanel file="public/data/earnings.json" error={error ?? 'empty file'} />;
@@ -449,6 +490,92 @@ export default function EarningsTab() {
         <b>C</b> = setup strength · <b>Impl. move</b> = how much the options
         market expects the stock to move
       </p>
+
+      {/* What actually happened: surprise + post-earnings moves, reported
+          rows only. Collapsed by default. */}
+      <div className="mb-card">
+        <button
+          type="button"
+          className="mb-card-head"
+          onClick={() => setEarnVizOpen((o) => !o)}
+          aria-expanded={earnVizOpen}
+        >
+          <span className="mb-card-num">00</span>
+          <span className="mb-card-title">What actually happened</span>
+          <span className="mb-card-sub">Reported rows: surprise and the move after</span>
+          <span className="mb-count-badge">{earnViz.reported}</span>
+          <span className="mb-chev" aria-hidden="true">{earnVizOpen ? '▾' : '▸'}</span>
+        </button>
+        {earnVizOpen && (
+          <div className="mb-card-body">
+            <VizBlock
+              title="Beat or miss — earnings surprise"
+              read={
+                <>
+                  {earnViz.beats} of {earnViz.surpN} reported rows beat the estimate and{' '}
+                  {earnViz.misses} missed — median surprise{' '}
+                  {earnViz.surpMed != null ? fmtPct(earnViz.surpMed) : '—'}. Beating the estimate
+                  is the norm, not the exception.
+                </>
+              }
+            >
+              <HBar label="Beat (above estimate)" value={String(earnViz.beats)} pct={earnViz.surpN ? (earnViz.beats / earnViz.surpN) * 100 : 0} tone="up" />
+              <HBar label="Missed (below estimate)" value={String(earnViz.misses)} pct={earnViz.surpN ? (earnViz.misses / earnViz.surpN) * 100 : 0} tone="down" />
+            </VizBlock>
+
+            <VizBlock
+              title="The move after the report"
+              read={
+                <>
+                  Day after: {earnViz.d1.ups} of {earnViz.d1.n} up, median{' '}
+                  {earnViz.d1.med != null ? fmtPct(earnViz.d1.med) : '—'}. A week out:{' '}
+                  {earnViz.d7.ups} of {earnViz.d7.n} up, median{' '}
+                  {earnViz.d7.med != null ? fmtPct(earnViz.d7.med) : '—'}. The day-after move is
+                  mostly noise — {earnViz.d1.n - earnViz.d1.ups} of {earnViz.d1.n} were flat or
+                  down the day after reporting.
+                </>
+              }
+              note={
+                earnViz.d30.n < 10
+                  ? `30-day moves: only ${earnViz.d30.n} reported rows are old enough — too few to read anything into, so no chart for them.`
+                  : undefined
+              }
+            >
+              <p className="mb-funnel-level">Day after the report — {earnViz.d1.n} rows</p>
+              <HistBars
+                buckets={[
+                  { label: 'Down over 5%', count: earnViz.d1.buckets.bigDown, tone: 'down' },
+                  { label: 'Down 0–5%', count: earnViz.d1.buckets.down, tone: 'down' },
+                  { label: 'Up 0–5%', count: earnViz.d1.buckets.up, tone: 'up' },
+                  { label: 'Up over 5%', count: earnViz.d1.buckets.bigUp, tone: 'up' },
+                ]}
+              />
+              <p className="mb-funnel-level">7 days after — {earnViz.d7.n} rows</p>
+              <HistBars
+                buckets={[
+                  { label: 'Down over 5%', count: earnViz.d7.buckets.bigDown, tone: 'down' },
+                  { label: 'Down 0–5%', count: earnViz.d7.buckets.down, tone: 'down' },
+                  { label: 'Up 0–5%', count: earnViz.d7.buckets.up, tone: 'up' },
+                  { label: 'Up over 5%', count: earnViz.d7.buckets.bigUp, tone: 'up' },
+                ]}
+              />
+              {earnViz.d30.n >= 10 && (
+                <>
+                  <p className="mb-funnel-level">30 days after — {earnViz.d30.n} rows</p>
+                  <HistBars
+                    buckets={[
+                      { label: 'Down over 5%', count: earnViz.d30.buckets.bigDown, tone: 'down' },
+                      { label: 'Down 0–5%', count: earnViz.d30.buckets.down, tone: 'down' },
+                      { label: 'Up 0–5%', count: earnViz.d30.buckets.up, tone: 'up' },
+                      { label: 'Up over 5%', count: earnViz.d30.buckets.bigUp, tone: 'up' },
+                    ]}
+                  />
+                </>
+              )}
+            </VizBlock>
+          </div>
+        )}
+      </div>
 
       {filtered.length === 0 ? (
         <p className="mb-empty">No companies match these filters. Clear the search or pick a different size.</p>

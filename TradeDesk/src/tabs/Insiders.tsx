@@ -2,6 +2,7 @@ import '../mockb-insiders.css';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { TvLink, LoadingPanel } from '../components/ui';
 import { Fundamentals } from '../components/Fundamentals';
+import { VizBlock, HBar } from '../components/Infographics';
 import { useJsonData } from '../lib/useJsonData';
 import { fmtDateY, fmtInt, fmtMoney, fmtCompactMoney } from '../lib/format';
 
@@ -152,7 +153,17 @@ export default function InsidersTab() {
     const otherCodes = [...byCode.entries()]
       .filter(([c]) => c !== 'P' && c !== 'S')
       .sort((a, b) => b[1] - a[1]);
-    return { purchases, sales, other, otherCodes, total: rows.length };
+    // Dollars (shares × price) by group, priced rows only — the count mix
+    // and the dollar mix tell different stories: sells dominate the money
+    // even when buys are a visible share of filings.
+    const dollars = (pred: (r: InsiderRow) => boolean) =>
+      rows.filter(pred).reduce((s, r) => s + (totalValue(r) ?? 0), 0);
+    const buyDollars = dollars((r) => r.transaction_code === 'P');
+    const sellDollars = dollars((r) => r.transaction_code === 'S');
+    const otherDollars = dollars((r) => r.transaction_code !== 'P' && r.transaction_code !== 'S');
+    const pricedDollars = buyDollars + sellDollars + otherDollars;
+    const unpriced = rows.filter((r) => totalValue(r) == null).length;
+    return { purchases, sales, other, otherCodes, total: rows.length, buyDollars, sellDollars, otherDollars, pricedDollars, unpriced };
   }, [rows]);
 
   const filtered = useMemo(() => {
@@ -322,6 +333,24 @@ export default function InsidersTab() {
                 </ul>
               </div>
             )}
+            <VizBlock
+              title="Where the money went"
+              read={
+                <>
+                  Sales dominate the dollars: {fmtCompactMoney(mix.sellDollars)} of{' '}
+                  {fmtCompactMoney(mix.pricedDollars)} priced —{' '}
+                  {mix.pricedDollars > 0 ? Math.round((mix.sellDollars / mix.pricedDollars) * 100) : 0}
+                  %. Buys are only {fmtCompactMoney(mix.buyDollars)}. Insiders sell far more than
+                  they buy, mostly for tax, diversification and compensation — a sale is not a
+                  sell signal on its own.
+                </>
+              }
+              note={`Shares × price per share, priced rows only. ${fmtInt(mix.unpriced)} rows have no price (gifts and similar) and carry no dollars here.`}
+            >
+              <HBar label="Buys (P)" sub={`${fmtInt(mix.purchases)} filings`} value={fmtCompactMoney(mix.buyDollars)} pct={mix.pricedDollars > 0 ? (mix.buyDollars / Math.max(mix.buyDollars, mix.sellDollars, mix.otherDollars)) * 100 : 0} tone="up" />
+              <HBar label="Sells (S)" sub={`${fmtInt(mix.sales)} filings`} value={fmtCompactMoney(mix.sellDollars)} pct={mix.pricedDollars > 0 ? (mix.sellDollars / Math.max(mix.buyDollars, mix.sellDollars, mix.otherDollars)) * 100 : 0} tone="down" />
+              <HBar label="Other codes" sub={`${fmtInt(mix.other)} filings`} value={fmtCompactMoney(mix.otherDollars)} pct={mix.pricedDollars > 0 ? (mix.otherDollars / Math.max(mix.buyDollars, mix.sellDollars, mix.otherDollars)) * 100 : 0} tone="dim" />
+            </VizBlock>
           </div>
         )}
       </section>

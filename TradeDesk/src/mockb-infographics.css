@@ -1,0 +1,324 @@
+/* Shared infographic primitives — Mock B tokens only.
+ * CSS bars, no dependencies. Numbers in IBM Plex Mono, labels in
+ * Libre Franklin, titles in Newsreader. Tokens flip automatically in
+ * dark mode (prefers-color-scheme), so charts stay legible there too. */
+
+.mb-viz {
+  border-top: 1px solid var(--mb-border-soft);
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.mb-viz:first-child {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.mb-viz-title {
+  font-family: var(--mb-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--mb-text);
+  margin: 0 0 8px;
+}
+
+.mb-viz-read {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--mb-text);
+  margin: 10px 0 0;
+}
+
+.mb-viz-note {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--mb-dim);
+  margin: 6px 0 0;
+}
+
+.mb-viz-empty {
+  border: 1px dashed var(--mb-border);
+  border-radius: var(--mb-radius-sm);
+  background: var(--mb-raised);
+  padding: 12px 14px;
+}
+
+.mb-viz-empty-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--mb-text);
+  margin-bottom: 4px;
+}
+
+.mb-viz-empty p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--mb-dim);
+  margin: 0;
+}
+
+.mb-viz-empty p + p {
+  margin-top: 6px;
+}
+
+/* ── horizontal bars ─────────────────────────────────────────────── */
+
+.mb-hbar-row {
+  display: grid;
+  grid-template-columns: minmax(96px, 170px) 1fr 64px;
+  gap: 10px;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.mb-hbar-label {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--mb-text);
+}
+
+.mb-hbar-sub {
+  display: block;
+  font-size: 11.5px;
+  color: var(--mb-dim);
+}
+
+.mb-hbar-track {
+  height: 12px;
+  background: var(--mb-panel-3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mb-hbar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  min-width: 2px;
+}
+
+.mb-hbar-up { background: var(--mb-green); }
+.mb-hbar-down { background: var(--mb-red); }
+.mb-hbar-amber { background: var(--mb-amber); }
+.mb-hbar-blue { background: var(--mb-blue); }
+.mb-hbar-dim { background: var(--mb-faint); }
+
+.mb-hbar-value {
+  font-family: var(--mb-font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--mb-text);
+  white-space: nowrap;
+}
+
+/* ── segmented (funnel) bars ─────────────────────────────────────── */
+
+.mb-segbar-wrap {
+  margin: 8px 0 4px;
+}
+
+.mb-segbar {
+  display: flex;
+  height: 26px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--mb-panel-3);
+}
+
+.mb-seg {
+  height: 100%;
+  min-width: 2px;
+}
+
+.mb-seg-up { background: var(--mb-green); }
+.mb-seg-down { background: var(--mb-red); }
+.mb-seg-amber { background: var(--mb-amber); }
+.mb-seg-blue { background: var(--mb-blue); }
+.mb-seg-dim { background: var(--mb-faint); }
+
+.mb-seg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--mb-dim);
+}
+
+.mb-seg-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.mb-seg-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.mb-funnel-level {
+  margin: 10px 0 2px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mb-dim);
+}
+
+/* ── vertical histogram ──────────────────────────────────────────── */
+
+.mb-hist {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 124px;
+  padding-top: 4px;
+}
+
+.mb-hist-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mb-hist-count {
+  font-family: var(--mb-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mb-text);
+}
+
+.mb-hist-bar {
+  width: 100%;
+  max-width: 56px;
+  border-radius: 4px 4px 0 0;
+  min-height: 2px;
+}
+
+.mb-hist-up { background: var(--mb-green); }
+.mb-hist-down { background: var(--mb-red); }
+.mb-hist-amber { background: var(--mb-amber); }
+.mb-hist-blue { background: var(--mb-blue); }
+.mb-hist-dim { background: var(--mb-faint); }
+
+.mb-hist-label {
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--mb-dim);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ── trigger-distance strip (Scanner) ────────────────────────────── */
+
+.mb-strip-head {
+  display: grid;
+  grid-template-columns: 52px 1fr 92px;
+  gap: 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mb-dim);
+  margin-bottom: 4px;
+}
+
+.mb-strip-head span:nth-child(2) {
+  text-align: center;
+}
+
+.mb-strip-head span:nth-child(3) {
+  text-align: right;
+}
+
+.mb-strip-row {
+  display: grid;
+  grid-template-columns: 52px 1fr 92px;
+  gap: 10px;
+  align-items: center;
+  padding: 3px 0;
+}
+
+.mb-strip-ticker {
+  font-family: var(--mb-font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--mb-text);
+}
+
+.mb-strip-track {
+  display: flex;
+  align-items: center;
+  height: 14px;
+}
+
+.mb-strip-half {
+  flex: 1;
+  height: 100%;
+  display: flex;
+}
+
+.mb-strip-left {
+  justify-content: flex-end;
+}
+
+.mb-strip-right {
+  justify-content: flex-start;
+}
+
+.mb-strip-mid {
+  width: 2px;
+  height: 14px;
+  background: var(--mb-text);
+  flex-shrink: 0;
+}
+
+.mb-strip-fill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+}
+
+.mb-strip-down { background: var(--mb-red); }
+.mb-strip-up { background: var(--mb-green); }
+
+.mb-strip-vals {
+  font-family: var(--mb-font-mono);
+  font-size: 11.5px;
+  color: var(--mb-text);
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .mb-hbar-row {
+    grid-template-columns: minmax(84px, 130px) 1fr 56px;
+    gap: 8px;
+  }
+
+  .mb-strip-head,
+  .mb-strip-row {
+    grid-template-columns: 44px 1fr 84px;
+    gap: 8px;
+  }
+
+  /* 6-bucket histograms: labels wrap to two lines instead of colliding. */
+  .mb-hist {
+    height: 132px;
+  }
+
+  .mb-hist-label {
+    font-size: 10px;
+    white-space: normal;
+  }
+}

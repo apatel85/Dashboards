@@ -9,7 +9,8 @@ import {
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { Fundamentals } from '../components/Fundamentals';
-import { fmtMoney, fmtPct, fmtDate } from '../lib/format';
+import { fmtMoney, fmtPct, fmtDate, fmtInt } from '../lib/format';
+import { VizBlock, HBar, SegBar, HistBars, EmptyViz } from '../components/Infographics';
 import type {
   PerformanceFile,
   PerformanceItem,
@@ -35,7 +36,7 @@ function predResult(row: PredictionRow): { label: string; tone: 'green' | 'red' 
   const o = row.outcome;
   if (row.type === 'breakout') {
     if (!o || o.status === 'open') return { label: 'Still running', tone: 'dim', key: 'running' };
-    if (o.status === 'trigger-hit') return { label: 'Won — hit trigger', tone: 'green', key: 'won' };
+    if (o.status === 'trigger-hit') return { label: 'Hit trigger', tone: 'green', key: 'won' };
     if (o.status === 'stop-hit') return { label: 'Lost — hit stop', tone: 'red', key: 'lost' };
     return { label: 'Flat — never triggered', tone: 'dim', key: 'other' };
   }
@@ -89,6 +90,27 @@ function fmtR(v: number | null | undefined): string {
  */
 function fmtPctFrac(v: number | null | undefined): string {
   return v == null ? '—' : fmtPct(v * 100);
+}
+
+/** Median of a list, or null when empty. */
+function median(nums: number[]): number | null {
+  if (!nums.length) return null;
+  const s = [...nums].sort((a, b) => a - b);
+  return s[Math.floor(s.length / 2)];
+}
+
+/** Add N weekdays (Mon–Fri) to a YYYY-MM-DD date — used to say when the
+ * first 10-trading-day grades land. Holidays can shift it by a day, so the
+ * UI always says "around" the result. */
+function addWeekdays(dateStr: string, n: number): string {
+  const d = new Date(`${dateStr}T12:00:00Z`);
+  let added = 0;
+  while (added < n) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const day = d.getUTCDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return d.toISOString().slice(0, 10);
 }
 
 function PredRow({ row }: { row: PredictionRow }) {
@@ -240,6 +262,72 @@ function PredictionSection() {
   const b = data.summary.breakout;
   const l = data.summary.lotto;
 
+  /* ── infographic inputs, computed from the same rows ───────────── */
+  const viz = useMemo(() => {
+    const all = data.rows ?? [];
+    const bo = all.filter((r) => r.type === 'breakout');
+    const lo = all.filter((r) => r.type === 'lotto');
+    const isFin = (r: PredictionRow) => r.outcome != null && r.outcome.status !== 'open';
+    const boFin = bo.filter(isFin);
+    const boOpen = bo.length - boFin.length;
+    const boTrig = boFin.filter((r) => r.outcome?.status === 'trigger-hit').length;
+    const boStop = boFin.filter((r) => r.outcome?.status === 'stop-hit').length;
+    const boNeither = Math.max(0, boFin.length - boTrig - boStop);
+    const boDay1 = boFin.filter((r) => r.outcome?.status === 'trigger-hit' && r.outcome?.trigger_day === 1).length;
+    const loOpen = lo.filter((r) => !r.outcome || r.outcome.status === 'open').length;
+    const loGraded = lo.filter((r) => r.outcome?.status === 'graded').length;
+    const loUngrad = lo.filter((r) => r.outcome?.ungradable != null).length;
+    const loAble = lo.filter((r) => r.outcome?.status === 'graded' && r.outcome?.ungradable == null);
+    const loWon = loAble.filter((r) => r.outcome?.win === true).length;
+    const loLost = loAble.filter((r) => r.outcome?.win === false).length;
+    const mults = loAble.map((r) => r.outcome?.modeled_multiple ?? null);
+    const multBuckets = {
+      zero: mults.filter((v) => v === 0).length,
+      low: mults.filter((v) => v != null && v > 0 && v <= 1).length,
+      mid: mults.filter((v) => v != null && v > 1 && v <= 2).length,
+      high: mults.filter((v) => v != null && v > 2).length,
+      none: mults.filter((v) => v == null).length,
+    };
+    const avgMult =
+      l.avg_modeled_multiple ??
+      (() => {
+        const vals = mults.filter((v): v is number => v != null);
+        return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+      })();
+    const trigDist = median(
+      bo.filter((r) => r.trigger != null && r.price).map((r) => ((r.trigger as number) - (r.price as number)) / (r.price as number) * 100),
+    );
+    const stopDist = median(
+      bo.filter((r) => r.stop != null && r.price).map((r) => ((r.price as number) - (r.stop as number)) / (r.price as number) * 100),
+    );
+    const r10n = bo.filter((r) => r.outcome?.r_10d != null).length;
+    const r10buckets = {
+      negBig: bo.filter((r) => r.outcome?.r_10d != null && (r.outcome.r_10d as number) < -1).length,
+      neg: bo.filter((r) => r.outcome?.r_10d != null && (r.outcome.r_10d as number) >= -1 && (r.outcome.r_10d as number) < 0).length,
+      pos: bo.filter((r) => r.outcome?.r_10d != null && (r.outcome.r_10d as number) >= 0 && (r.outcome.r_10d as number) < 1).length,
+      posBig: bo.filter((r) => r.outcome?.r_10d != null && (r.outcome.r_10d as number) >= 1 && (r.outcome.r_10d as number) < 2).length,
+      posHuge: bo.filter((r) => r.outcome?.r_10d != null && (r.outcome.r_10d as number) >= 2).length,
+    };
+    const oldest = bo.reduce((m, r) => (r.date < m ? r.date : m), bo[0]?.date ?? '');
+    const daysAgo =
+      oldest && data.as_of
+        ? Math.max(0, Math.round((Date.parse(data.as_of) - Date.parse(`${oldest}T12:00:00Z`)) / 86400000))
+        : null;
+    const finMfe = median(
+      boFin.map((r) => r.outcome?.mfe).filter((v): v is number => v != null),
+    );
+    const finRnow = median(
+      boFin.map((r) => r.outcome?.r_now).filter((v): v is number => v != null),
+    );
+    return {
+      boFin: boFin.length, boOpen, boTrig, boStop, boNeither, boDay1,
+      loOpen, loGraded, loUngrad, loAble: loAble.length, loWon, loLost,
+      multBuckets, avgMult, trigDist, stopDist, r10n, r10buckets,
+      oldest, daysAgo, first10d: oldest ? addWeekdays(oldest, 10) : null,
+      finMfe, finRnow,
+    };
+  }, [data, l.avg_modeled_multiple]);
+
   return (
     <section className="mb-card">
       {head}
@@ -252,9 +340,14 @@ function PredictionSection() {
             Every breakout candidate and 0DTE option play the app suggests gets recorded the morning
             it appears, then graded against what the stock actually did. <b>Breakout</b> = the stock
             was near its 52-week high and we said it would break higher. <b>Option</b> = a 0DTE/1DTE
-            lottery ticket — a small, cheap bet on a big same-day move. A breakout <b>wins</b> when the
-            price hits the trigger before the stop within 10 trading days. An option <b>wins</b> when
-            the ticket would be worth more than it cost.
+            lottery ticket — a small, cheap bet on a big same-day move. A breakout is marked{' '}
+            <b>Hit trigger</b> when the price clears the trigger before the stop within 10 trading
+            days — that is a trigger hit, not a profit. The trigger sits a median{' '}
+            {viz.trigDist != null ? `${viz.trigDist.toFixed(1)}%` : '—'} above the suggestion price
+            while the stop sits a median {viz.stopDist != null ? `${viz.stopDist.toFixed(1)}%` : '—'}{' '}
+            below it, so an ordinary up-day can trip the trigger. Whether the idea made money is
+            measured in <b>R</b> below — not in the trigger rate. An option <b>wins</b> when the
+            ticket would be worth more than it cost.
           </p>
 
           <div className="muted small" style={{ margin: '10px 0 4px' }}><b>Breakouts</b></div>
@@ -262,7 +355,7 @@ function PredictionSection() {
             <Stat label="Tracked" value={String(b.tracked)} />
             <Stat label="Finished" value={String(b.graded)} />
             <Stat label="Hit trigger" value={fmtRate(b.trigger_rate)} accent={b.trigger_rate != null && b.trigger_rate >= 50 ? 'up' : undefined} />
-            <Stat label="Win rate" value={fmtRate(b.win_rate)} accent={b.win_rate != null && b.win_rate >= 50 ? 'up' : b.win_rate != null ? 'down' : undefined} />
+            <Stat label="Stop hit" value={fmtRate(b.stop_rate)} accent={b.stop_rate != null && b.stop_rate > 0 ? 'down' : undefined} />
             <Stat label="Avg R (10d)" value={fmtR(b.avg_r_10d)} accent={b.avg_r_10d != null && b.avg_r_10d > 0 ? 'up' : b.avg_r_10d != null ? 'down' : undefined} />
           </div>
 
@@ -275,6 +368,109 @@ function PredictionSection() {
             <Stat label="Avg ticket" value={l.avg_modeled_multiple != null ? `${l.avg_modeled_multiple.toFixed(1)}×` : '—'} accent={l.avg_modeled_multiple != null && l.avg_modeled_multiple > 1 ? 'up' : l.avg_modeled_multiple != null ? 'down' : undefined} />
           </div>
 
+          {/* ── infographics: what the numbers mean ── */}
+          <VizBlock
+            title="How the calls ended up"
+            read={
+              <>
+                {viz.boTrig} of {viz.boFin} finished breakouts hit the trigger and {viz.boStop} hit the
+                stop
+                {viz.boTrig > 0
+                  ? ` — ${viz.boDay1 === viz.boTrig ? 'every one of them' : `${viz.boDay1} of them`} on day 1`
+                  : ''}
+                . With the trigger a median{' '}
+                {viz.trigDist != null ? `${viz.trigDist.toFixed(1)}%` : '—'} away and the stop a median{' '}
+                {viz.stopDist != null ? `${viz.stopDist.toFixed(1)}%` : '—'} away, &ldquo;hit trigger&rdquo; is
+                the easy half of the trade. The money question is the R chart below.
+              </>
+            }
+          >
+            <p className="mb-funnel-level">Breakouts — {b.tracked} tracked</p>
+            <SegBar
+              segments={[
+                { label: 'Finished', count: viz.boFin, tone: 'blue' },
+                { label: 'Still open', count: viz.boOpen, tone: 'dim' },
+              ]}
+            />
+            <p className="mb-funnel-level">Of the {viz.boFin} finished</p>
+            <SegBar
+              segments={[
+                { label: 'Hit trigger', count: viz.boTrig, tone: 'up' },
+                { label: 'Hit stop', count: viz.boStop, tone: 'down' },
+                { label: 'Neither', count: viz.boNeither, tone: 'dim' },
+              ]}
+            />
+            <p className="mb-funnel-level">Options — {l.tracked} tracked</p>
+            <SegBar
+              segments={[
+                { label: 'Graded', count: viz.loGraded, tone: 'blue' },
+                { label: 'Still open', count: viz.loOpen, tone: 'dim' },
+              ]}
+            />
+            <p className="mb-funnel-level">Of the {viz.loGraded} graded</p>
+            <SegBar
+              segments={[
+                { label: 'Won', count: viz.loWon, tone: 'up' },
+                { label: 'Lost', count: viz.loLost, tone: 'down' },
+                { label: "Couldn't grade", count: viz.loUngrad, tone: 'dim' },
+              ]}
+            />
+          </VizBlock>
+
+          <VizBlock title="What the breakouts actually made — R at 10 days">
+            {viz.r10n === 0 ? (
+              <EmptyViz title="No 10-day closes yet">
+                <p>
+                  The oldest suggestion here is from {viz.oldest ? fmtDate(viz.oldest) : '—'}
+                  {viz.daysAgo != null ? ` — ${viz.daysAgo} days ago` : ''} — so no breakout has had
+                  10 trading days to play out. The first 10-day grades arrive after{' '}
+                  {viz.first10d ? fmtDate(viz.first10d) : 'the window closes'}.
+                </p>
+                <p>
+                  What we do know so far: the {viz.boFin} finished breakouts ran up a median{' '}
+                  {viz.finMfe != null ? fmtPctFrac(viz.finMfe) : '—'} at their best point in the window,
+                  and sit at a median {fmtR(viz.finRnow)} right now. Both are &ldquo;so far&rdquo;
+                  numbers, not final grades.
+                </p>
+              </EmptyViz>
+            ) : (
+              <>
+                <HistBars
+                  buckets={[
+                    { label: 'Under −1R', count: viz.r10buckets.negBig, tone: 'down' },
+                    { label: '−1 to 0R', count: viz.r10buckets.neg, tone: 'down' },
+                    { label: '0 to +1R', count: viz.r10buckets.pos, tone: 'up' },
+                    { label: '+1 to +2R', count: viz.r10buckets.posBig, tone: 'up' },
+                    { label: 'Over +2R', count: viz.r10buckets.posHuge, tone: 'up' },
+                  ]}
+                />
+                <p className="mb-viz-read">
+                  R = what the trade made or lost as a multiple of what was risked. +1R means it made
+                  back its risk; −1R means the stop was hit.
+                </p>
+              </>
+            )}
+          </VizBlock>
+
+          <VizBlock
+            title="What the lottery tickets were worth"
+            read={
+              <>
+                {viz.multBuckets.zero} of {viz.loAble} tickets ended worthless, and {viz.loWon} won.
+                The average ticket came back at{' '}
+                {viz.avgMult != null ? `${viz.avgMult.toFixed(1)}×` : '—'} what it cost — about{' '}
+                {viz.avgMult != null ? `${Math.round((1 - viz.avgMult) * 100)}¢ lost per $1` : '—'}.
+              </>
+            }
+            note="Modeled, not real money: the ticket's worth is estimated from the stock's actual close on expiry day. No real trades were placed."
+          >
+            <HBar label="Worth nothing (0×)" value={String(viz.multBuckets.zero)} pct={(viz.multBuckets.zero / Math.max(1, viz.loAble)) * 100} tone="down" />
+            <HBar label="Got some back (0–1×)" value={String(viz.multBuckets.low)} pct={(viz.multBuckets.low / Math.max(1, viz.loAble)) * 100} tone="amber" />
+            <HBar label="Won a little (1–2×)" value={String(viz.multBuckets.mid)} pct={(viz.multBuckets.mid / Math.max(1, viz.loAble)) * 100} tone="up" />
+            <HBar label="Won big (over 2×)" value={String(viz.multBuckets.high)} pct={(viz.multBuckets.high / Math.max(1, viz.loAble)) * 100} tone="up" />
+            <HBar label="Couldn't value" value={String(viz.multBuckets.none)} pct={(viz.multBuckets.none / Math.max(1, viz.loAble)) * 100} tone="dim" />
+          </VizBlock>
+
           <div className="chips" style={{ marginTop: 12 }}>
             {(['all', 'breakout', 'lotto'] as PredTypeFilter[]).map((t) => (
               <button key={t} className={`chip-btn${typeFilter === t ? ' on' : ''}`} onClick={() => setTypeFilter(t)}>
@@ -284,7 +480,7 @@ function PredictionSection() {
             <span style={{ width: 12 }} />
             {(['all', 'won', 'lost', 'running', 'other'] as PredResultFilter[]).map((t) => (
               <button key={t} className={`chip-btn${resultFilter === t ? ' on' : ''}`} onClick={() => setResultFilter(t)}>
-                {t === 'all' ? 'Any result' : t === 'won' ? 'Won' : t === 'lost' ? 'Lost' : t === 'running' ? 'Still running' : 'Other'}
+                {t === 'all' ? 'Any result' : t === 'won' ? 'Won / hit trigger' : t === 'lost' ? 'Lost / hit stop' : t === 'running' ? 'Still running' : 'Other'}
               </button>
             ))}
           </div>
@@ -538,6 +734,34 @@ function ResearchSection() {
     return { n: scored.length, avg, winRate: (pos / scored.length) * 100, best, worst };
   }, [data]);
 
+  /* ── calibration: did the p_up guesses hold up? ───────────────────
+   * Two buckets — guessed under 50% vs 50% or more — predicted share up
+   * (mean p_up) against the actual share up so far. n is tiny (9 ideas)
+   * and the 30-day window hasn't closed for any of them, so this is an
+   * early read, not a verdict — the note says so. */
+  const calib = useMemo(() => {
+    const items = data?.items ?? [];
+    const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null);
+    const bucket = (pred: (p: number) => boolean) => {
+      const xs = items.filter((i) => i.p_up != null && pred(i.p_up as number));
+      const ups = xs.filter((i) => (i.pct_change ?? 0) > 0).length;
+      return {
+        n: xs.length,
+        pred: mean(xs.map((i) => i.p_up as number)),
+        actual: xs.length ? (ups / xs.length) * 100 : null,
+        ups,
+      };
+    };
+    const lo = bucket((p) => p < 50);
+    const hi = bucket((p) => p >= 50);
+    return {
+      lo,
+      hi,
+      flipLo: lo.n > 0 ? Math.round(100 / lo.n) : null,
+      flipHi: hi.n > 0 ? Math.round(100 / hi.n) : null,
+    };
+  }, [data]);
+
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -627,6 +851,55 @@ function ResearchSection() {
               <Stat label="Worst" value={`${stats.worst.ticker} ${fmtPct(stats.worst.pct_change as number)}`} accent="down" />
             </div>
           ) : null}
+
+          <VizBlock
+            title="Did the guesses hold up?"
+            read={
+              <>
+                {calib.lo.n > 0 && calib.hi.n > 0
+                  ? `Ideas guessed under 50% went up ${calib.lo.ups} of ${calib.lo.n} times; ideas guessed 50% or more went up ${calib.hi.ups} of ${calib.hi.n}. The guesses are roughly pointing the right way — but with only ${calib.lo.n + calib.hi.n} ideas, one stock flipping moves the under-50% share by ${calib.flipLo} points and the 50%-or-more share by ${calib.flipHi} points.`
+                  : 'Not enough ideas yet to check the guesses against what happened.'}
+              </>
+            }
+            note="Early read: the 30-day window hasn't closed for any idea yet — the oldest is only a couple of days old. Don't grade the research on this."
+          >
+            {calib.lo.n > 0 && (
+              <>
+                <HBar
+                  label="Guessed under 50% — predicted up"
+                  sub={`${calib.lo.n} ideas`}
+                  value={calib.lo.pred != null ? `${Math.round(calib.lo.pred)}%` : '—'}
+                  pct={calib.lo.pred ?? 0}
+                  tone="blue"
+                />
+                <HBar
+                  label="Guessed under 50% — actually up"
+                  sub={`${calib.lo.ups} of ${calib.lo.n} up`}
+                  value={calib.lo.actual != null ? `${Math.round(calib.lo.actual)}%` : '—'}
+                  pct={calib.lo.actual ?? 0}
+                  tone={calib.lo.actual != null && calib.lo.pred != null && calib.lo.actual >= calib.lo.pred ? 'up' : 'amber'}
+                />
+              </>
+            )}
+            {calib.hi.n > 0 && (
+              <>
+                <HBar
+                  label="Guessed 50% or more — predicted up"
+                  sub={`${calib.hi.n} ideas`}
+                  value={calib.hi.pred != null ? `${Math.round(calib.hi.pred)}%` : '—'}
+                  pct={calib.hi.pred ?? 0}
+                  tone="blue"
+                />
+                <HBar
+                  label="Guessed 50% or more — actually up"
+                  sub={`${calib.hi.ups} of ${calib.hi.n} up`}
+                  value={calib.hi.actual != null ? `${Math.round(calib.hi.actual)}%` : '—'}
+                  pct={calib.hi.actual ?? 0}
+                  tone={calib.hi.actual != null && calib.hi.pred != null && calib.hi.actual >= calib.hi.pred ? 'up' : 'amber'}
+                />
+              </>
+            )}
+          </VizBlock>
 
           <div className="table-scroll">
             <table className="dtable slim">

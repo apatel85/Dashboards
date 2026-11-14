@@ -16,6 +16,7 @@ import PremarketLine from '../components/PremarketLine';
 import { FuturesGamma, GexAlerts, TickerGamma, useWatchlist } from '../components/Gamma';
 import { Playbook } from '../components/Playbook';
 import { Fundamentals } from '../components/Fundamentals';
+import { VizBlock, HBar, TriggerStrip } from '../components/Infographics';
 import { fmtDate, fmtMoney, fmtTimeET, prettify, prettifyOptions } from '../lib/format';
 import { useForceOpenCard, useForceOpenState, type ForceOpen } from '../lib/useForceOpen';
 import type {
@@ -217,6 +218,38 @@ function BreakoutSection({ brief }: { brief: DailyBrief }) {
       (c.sector ?? '').toLowerCase().includes(q)
     );
   });
+
+  /** At-a-glance viz: score spread + trigger/stop distances, computed from
+   * the full candidate list (not the search-filtered rows). */
+  const viz = useMemo(() => {
+    const cs = brief.breakout_candidates;
+    const withScore = cs.filter((c) => c.score != null);
+    const buckets = {
+      low: withScore.filter((c) => (c.score as number) < 70).length,
+      mid: withScore.filter((c) => (c.score as number) >= 70 && (c.score as number) < 80).length,
+      high: withScore.filter((c) => (c.score as number) >= 80 && (c.score as number) < 90).length,
+      top: withScore.filter((c) => (c.score as number) >= 90).length,
+    };
+    const strip = cs
+      .filter((c) => c.price && c.trigger_price && c.stop_price)
+      .map((c) => ({
+        ticker: c.ticker,
+        trigPct: (((c.trigger_price as number) - (c.price as number)) / (c.price as number)) * 100,
+        stopPct: (((c.price as number) - (c.stop_price as number)) / (c.price as number)) * 100,
+      }));
+    const med = (xs: number[]) => {
+      if (!xs.length) return null;
+      const s = [...xs].sort((a, b) => a - b);
+      return s[Math.floor(s.length / 2)];
+    };
+    return {
+      buckets,
+      strip,
+      trigMed: med(strip.map((s) => s.trigPct)),
+      stopMed: med(strip.map((s) => s.stopPct)),
+      n: cs.length,
+    };
+  }, [brief]);
   return (
     <div className="mb-scanner-section">
       <input
@@ -227,6 +260,28 @@ function BreakoutSection({ brief }: { brief: DailyBrief }) {
         onChange={(e) => setQuery(e.target.value)}
         aria-label="Search breakout candidates"
       />
+      <VizBlock
+        title="Today's candidates at a glance"
+        read={
+          <>
+            Most candidates score 70–79 — the list is bunched, not spread. The trigger sits a
+            median {viz.trigMed != null ? `${viz.trigMed.toFixed(1)}%` : '—'} above the price and
+            the stop {viz.stopMed != null ? `${viz.stopMed.toFixed(1)}%` : '—'} below: a small
+            up-move trips the trigger, a big down-move trips the stop. Read the trigger as
+            &ldquo;nearby&rdquo;, not &ldquo;likely to profit&rdquo; — the Performance tab shows
+            why.
+          </>
+        }
+        note="Score = 0–100 confluence of the setup. The strip is on one shared scale: green right = trigger above price, red left = stop below price."
+      >
+        <p className="mb-funnel-level">Score spread — {viz.n} candidates</p>
+        <HBar label="Under 70" value={String(viz.buckets.low)} pct={viz.n ? (viz.buckets.low / viz.n) * 100 : 0} tone="dim" />
+        <HBar label="70–79" value={String(viz.buckets.mid)} pct={viz.n ? (viz.buckets.mid / viz.n) * 100 : 0} tone="blue" />
+        <HBar label="80–89" value={String(viz.buckets.high)} pct={viz.n ? (viz.buckets.high / viz.n) * 100 : 0} tone="blue" />
+        <HBar label="90 and up" value={String(viz.buckets.top)} pct={viz.n ? (viz.buckets.top / viz.n) * 100 : 0} tone="up" />
+        <p className="mb-funnel-level">How far the trigger and stop sit</p>
+        <TriggerStrip rows={viz.strip} />
+      </VizBlock>
       {rows.length === 0 ? (
         <p className="muted">No breakout candidate matches “{query.trim()}”.</p>
       ) : (

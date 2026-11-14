@@ -9,6 +9,7 @@ import {
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { Fundamentals } from '../components/Fundamentals';
+import { VizBlock, HistBars } from '../components/Infographics';
 import { fmtDateY, fmtInt, fmtCompactMoney, fmtMoney, fmtPct } from '../lib/format';
 import { takeCongressDeepLink } from '../lib/congressDeepLink';
 import type { CongressTrade, MemberCommittees, TradePerformanceMeta } from '../types';
@@ -404,6 +405,8 @@ export default function CongressGovTab() {
   const [highlightKey, setHighlightKey] = useState<string | null>(null);
   /** Newest filings card (Mock B card 01): collapsed by default. */
   const [newestOpen, setNewestOpen] = useState(false);
+  /** "What happened after" card (Mock B card 02): collapsed by default. */
+  const [perfVizOpen, setPerfVizOpen] = useState(false);
 
   const committeesByMember = useMemo(() => {
     const m = new Map<string, { name: string; role?: string | null }[]>();
@@ -556,6 +559,41 @@ export default function CongressGovTab() {
     }
     return { buys, sells, buyAmt, sellAmt, house, senate, clusters, total: (data ?? []).length };
   }, [data]);
+
+  /** Since-trade performance distribution (perf_pct on priced trades only):
+   * how the stocks moved after the trade was filed. The flow tiles above
+   * already cover buys-vs-sells counts and dollars, so this card shows only
+   * the outcome — the part the tiles don't answer. */
+  const perfViz = useMemo(() => {
+    const priced = (data ?? []).filter((t) => t.perf_pct != null);
+    const pct = (t: CongressTrade) => t.perf_pct as number;
+    const medOf = (rows: CongressTrade[]) => {
+      const s = rows.map(pct).sort((a, b) => a - b);
+      return s.length ? s[Math.floor(s.length / 2)] : null;
+    };
+    const meta = branch === 'executive' ? perfMeta?.executive : perfMeta?.congress;
+    return {
+      n: priced.length,
+      buckets: {
+        bigDown: priced.filter((t) => pct(t) < -20).length,
+        down: priced.filter((t) => pct(t) >= -20 && pct(t) < -10).length,
+        smallDown: priced.filter((t) => pct(t) >= -10 && pct(t) < 0).length,
+        smallUp: priced.filter((t) => pct(t) >= 0 && pct(t) < 10).length,
+        up: priced.filter((t) => pct(t) >= 10 && pct(t) < 20).length,
+        bigUp: priced.filter((t) => pct(t) >= 20).length,
+      },
+      ups: priced.filter((t) => pct(t) > 0).length,
+      downs: priced.filter((t) => pct(t) < 0).length,
+      flat: priced.filter((t) => pct(t) === 0).length,
+      med: medOf(priced),
+      buyMed: medOf(priced.filter((t) => t.trade_type === 'buy')),
+      sellMed: medOf(priced.filter((t) => t.trade_type === 'sell')),
+      buyN: priced.filter((t) => t.trade_type === 'buy').length,
+      sellN: priced.filter((t) => t.trade_type === 'sell').length,
+      from: meta?.from,
+      to: meta?.to,
+    };
+  }, [data, perfMeta, branch]);
 
   const freshness = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -868,6 +906,60 @@ export default function CongressGovTab() {
           Green bar = share of buys. Tap a tile to filter the trades below; tap again to clear.
           Amounts are range midpoints, so treat the dollars as estimates.
         </p>
+      </div>
+
+      {/* 02 What happened to the stocks after: since-trade performance of the
+          priced trades. Collapsed by default. */}
+      <div className="mb-card">
+        <button
+          type="button"
+          className="mb-card-head"
+          onClick={() => setPerfVizOpen((o) => !o)}
+          aria-expanded={perfVizOpen}
+        >
+          <span className="mb-card-num">02</span>
+          <span className="mb-card-title">What happened to the stocks after</span>
+          <span className="mb-card-sub">Since-trade move of the priced trades</span>
+          <span className="mb-count-badge">{perfViz.n.toLocaleString('en-US')}</span>
+          <span className="mb-chev" aria-hidden="true">{perfVizOpen ? '▾' : '▸'}</span>
+        </button>
+        {perfVizOpen && (
+          <div className="mb-card-body">
+            <VizBlock
+              title="How the stocks moved after the trade"
+              read={
+                <>
+                  Of the {perfViz.n.toLocaleString('en-US')} priced trades,{' '}
+                  {perfViz.ups.toLocaleString('en-US')} went up,{' '}
+                  {perfViz.downs.toLocaleString('en-US')} went down
+                  {perfViz.flat > 0 ? ` and ${perfViz.flat} were flat` : ''} — a median move of{' '}
+                  {perfViz.med != null ? fmtPct(perfViz.med) : '—'}. Stocks rose after sales too
+                  (median {perfViz.sellMed != null ? fmtPct(perfViz.sellMed) : '—'} on{' '}
+                  {perfViz.sellN.toLocaleString('en-US')} sells, vs{' '}
+                  {perfViz.buyMed != null ? fmtPct(perfViz.buyMed) : '—'} on{' '}
+                  {perfViz.buyN.toLocaleString('en-US')} buys), so this is not &ldquo;sells are
+                  bearish&rdquo; — most stocks rise most of the time.
+                </>
+              }
+              note={
+                perfViz.from && perfViz.to
+                  ? `Priced trades only — trades from ${fmtDateY(perfViz.from)} to ${fmtDateY(perfViz.to)} with a ticker. A stock can rise after a sale for a dozen reasons; this does not say the member timed it.`
+                  : 'Priced trades only — trades with a ticker and a price. A stock can rise after a sale for a dozen reasons; this does not say the member timed it.'
+              }
+            >
+              <HistBars
+                buckets={[
+                  { label: 'Down 20%+', count: perfViz.buckets.bigDown, tone: 'down' },
+                  { label: 'Down 10–20%', count: perfViz.buckets.down, tone: 'down' },
+                  { label: 'Down 0–10%', count: perfViz.buckets.smallDown, tone: 'down' },
+                  { label: 'Up 0–10%', count: perfViz.buckets.smallUp, tone: 'up' },
+                  { label: 'Up 10–20%', count: perfViz.buckets.up, tone: 'up' },
+                  { label: 'Up 20%+', count: perfViz.buckets.bigUp, tone: 'up' },
+                ]}
+              />
+            </VizBlock>
+          </div>
+        )}
       </div>
 
       <div className="panel filterbar">

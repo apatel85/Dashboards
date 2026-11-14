@@ -20,6 +20,7 @@ import { SCHWAB_AUTH_START_URL, useSchwabLive } from './lib/useSchwabLive';
 import type { TabDef, TabId } from './types';
 import './mockb-tokens.css';
 import './mockb-shell.css';
+import './mockb-infographics.css';
 
 /**
  * Mock B command-center tab order — numbered 01–12, exactly as the mockup.
@@ -49,7 +50,7 @@ const ADMIN_TAB: TabDef = { id: 'admin', label: 'Admin', dataFile: 'tradedesk_in
 const ALL_TAB_IDS = [...TAB_IDS, 'admin'] as TabId[];
 
 /** Build version — bump on every push so we can confirm what's live. */
-export const BUILD_VERSION = '2026-11-14a';
+export const BUILD_VERSION = '2026-11-14b';
 
 /** "14:32:05" in ET for the Schwab pill's updated time. */
 function fmtClockET(ms: number): string {
