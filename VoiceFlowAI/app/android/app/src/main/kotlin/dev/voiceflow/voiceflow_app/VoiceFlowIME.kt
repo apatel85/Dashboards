@@ -236,10 +236,14 @@ class VoiceFlowIME : InputMethodService(), KbHandlers {
     }
 
     // ---- plain keys
-    override fun onText(s: String) { currentInputConnection?.commitText(s, 1); refreshUndo() }
+    override fun onText(s: String) {
+        Log.i("VoiceFlow", "key '$s' ic=${currentInputConnection != null}")
+        currentInputConnection?.commitText(s, 1); refreshUndo()
+    }
     override fun onSpace() = onText(" ")
     override fun onBackspace() {
         val ic = currentInputConnection ?: return
+        Log.i("VoiceFlow", "key backspace")
         if (ic.getSelectedText(0).isNullOrEmpty()) ic.deleteSurroundingText(1, 0)
         else ic.commitText("", 1)
         refreshUndo()
