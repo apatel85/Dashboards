@@ -3,7 +3,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { TvLink, LoadingPanel } from '../components/ui';
 import { Fundamentals } from '../components/Fundamentals';
 import { useJsonData } from '../lib/useJsonData';
-import { fmtDateY, fmtInt, fmtMoney } from '../lib/format';
+import { fmtDateY, fmtInt, fmtMoney, fmtCompactMoney } from '../lib/format';
 
 /**
  * Insiders tab (Mock B card 05) — company insiders' own trades, from the
@@ -27,7 +27,36 @@ interface InsiderRow {
 const PAGE_SIZE = 50;
 
 type CodeFilter = 'all' | 'P' | 'S' | 'other';
-type SortKey = 'filed' | 'txn' | 'shares' | 'ticker';
+type SortKey = 'filed' | 'txn' | 'shares' | 'ticker' | 'total-desc' | 'total-asc';
+
+/** Total value of one transaction: shares × price per share. Null when the
+ * price is missing (e.g. code J gifts) — those sort last in both directions. */
+function totalValue(r: InsiderRow): number | null {
+  return r.shares != null && r.price != null ? r.shares * r.price : null;
+}
+
+/** Natural key for one transaction. Accession alone is NOT enough — one
+ * filing holds several transactions — so the key is the full transaction
+ * identity: ticker, owner, code, shares, price, trade date, filed date,
+ * accession (same key the pipeline dedupes on). Reconciled 2026-11-14:
+ * 3,116 rows, 90 duplicated keys, 106 extra rows → 3,010 unique. */
+function naturalKey(r: InsiderRow): string {
+  return [r.ticker, r.owner_name, r.transaction_code, r.shares, r.price, r.transaction_date, r.filed_date, r.accession].join('|');
+}
+
+/** Drop exact-duplicate rows (same filing ingested twice upstream). Safety
+ * net for already-published data; the pipeline now dedupes at the source. */
+function dedupeRows(rows: InsiderRow[]): InsiderRow[] {
+  const seen = new Set<string>();
+  const out: InsiderRow[] = [];
+  for (const r of rows) {
+    const k = naturalKey(r);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(r);
+  }
+  return out;
+}
 
 /** Plain-English meaning of each SEC Form 4 transaction code. */
 const CODE_LABEL: Record<string, string> = {
@@ -70,12 +99,31 @@ function sortRows(rows: InsiderRow[], sort: SortKey): InsiderRow[] {
       return copy.sort((a, b) => (b.shares ?? 0) - (a.shares ?? 0));
     case 'ticker':
       return copy.sort((a, b) => (a.ticker ?? '').localeCompare(b.ticker ?? ''));
+    case 'total-desc':
+      return copy.sort((a, b) => {
+        const av = totalValue(a), bv = totalValue(b);
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        return bv - av;
+      });
+    case 'total-asc':
+      return copy.sort((a, b) => {
+        const av = totalValue(a), bv = totalValue(b);
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        return av - bv;
+      });
   }
 }
 
 export default function InsidersTab() {
   const { data, loading, error } = useJsonData<InsiderRow[]>('insiders.json');
-  const rows: InsiderRow[] = Array.isArray(data) ? data : [];
+  const rawRows: InsiderRow[] = Array.isArray(data) ? data : [];
+  // UI-level dedupe (safety net): the pipeline now dedupes at the source,
+  // but already-published files may still carry duplicate rows.
+  const rows = useMemo(() => dedupeRows(rawRows), [rawRows]);
 
   const [mixOpen, setMixOpen] = useState(false);
   const [tableOpen, setTableOpen] = useState(false);
@@ -332,6 +380,8 @@ export default function InsidersTab() {
                 >
                   <option value="filed">Filed date (newest first)</option>
                   <option value="txn">Trade date (newest first)</option>
+                  <option value="total-desc">Total value (highest first)</option>
+                  <option value="total-asc">Total value (lowest first)</option>
                   <option value="shares">Shares (most first)</option>
                   <option value="ticker">Ticker (A–Z)</option>
                 </select>
@@ -433,7 +483,12 @@ export default function InsidersTab() {
                                       </div>
                                       <div>
                                         <span className="ins-detail-label">Total value</span>
-                                        <span className="ins-detail-value num">{fmtMoney(value)}</span>
+                                        <span className="ins-detail-value num">
+                                          {value != null ? fmtCompactMoney(value, 2) : '—'}
+                                          {value != null ? (
+                                            <span className="muted small"> · {fmtMoney(value)}</span>
+                                          ) : null}
+                                        </span>
                                       </div>
                                       <div>
                                         <span className="ins-detail-label">Trade date</span>

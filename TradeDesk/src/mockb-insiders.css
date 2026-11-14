@@ -477,4 +477,22 @@
   .ins-sort {
     margin-left: 0;
   }
+
+  /* Detail panel: the expanded row lives inside the 640px-wide table,
+   * so on a 390px phone its right half sat off-screen (ROLE "10% Ow",
+   * "PRICE PE", "FILED DATE Nov 5, 2…" all cut at the viewport edge).
+   * Stack the fields and cap the whole panel at the viewport width, so
+   * every label and value is readable without horizontal scrolling. */
+  .ins-detail {
+    max-width: calc(100vw - 32px);
+  }
+
+  .ins-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ins-detail .valuation-row {
+    flex-wrap: wrap;
+    gap: 2px 12px;
+  }
 }

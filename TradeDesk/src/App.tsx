@@ -49,7 +49,7 @@ const ADMIN_TAB: TabDef = { id: 'admin', label: 'Admin', dataFile: 'tradedesk_in
 const ALL_TAB_IDS = [...TAB_IDS, 'admin'] as TabId[];
 
 /** Build version — bump on every push so we can confirm what's live. */
-export const BUILD_VERSION = '2026-11-12f';
+export const BUILD_VERSION = '2026-11-14a';
 
 /** "14:32:05" in ET for the Schwab pill's updated time. */
 function fmtClockET(ms: number): string {
