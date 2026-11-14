@@ -51,7 +51,14 @@ class PostProcessor {
             w.substring(1) == t.substring(1)) {
           return w;
         }
-        final d = _edit(lw, t.toLowerCase());
+        final lt = t.toLowerCase();
+        // "quarter" vs "quarterly": one is the other plus an ending. Both are real words, so
+        // this is a different word, not a mishearing. Leave it alone.
+        if ((lt.startsWith(lw) || lw.startsWith(lt)) &&
+            (lt.length - lw.length).abs() >= 2) {
+          continue;
+        }
+        final d = _edit(lw, lt);
         final limit = w.length >= 7 ? 2 : (w.length >= 5 ? 1 : 0);
         if (d <= limit && d < bestD) {
           best = t;

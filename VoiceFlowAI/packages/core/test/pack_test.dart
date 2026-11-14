@@ -18,6 +18,7 @@ Map<String, dynamic> _minimal([Map<String, dynamic>? extra]) =>
 List<String> _errs(Object? j) => PackValidator.validate(j);
 
 void main() {
+  vocabularyDoesNotRewriteRealWords();
   // ---- pack goldens (>= 10 per pack)
   for (final id in ['healthcare_clinic', 'general_business']) {
     final pack = loadPack(id);
@@ -412,6 +413,25 @@ void main() {
               loadLang(), FakeStt('bp one forty over ninety'), sink)
           .run(speechPcm(), DictationOptions(loadProfile('business')));
       expect(sink.inserted.single, isNot(contains('140')));
+    });
+  });
+}
+
+void vocabularyDoesNotRewriteRealWords() {
+  group('vocabulary correction leaves real words alone', () {
+    final lang = loadLang();
+    String fix(String s, List<String> vocab) =>
+        PostProcessor(lang).process(s, dictionary: vocab);
+    test('"quarter" is not turned into the term "quarterly"', () {
+      expect(fix('the quarter ends', ['quarterly']), 'the quarter ends');
+      expect(fix('quarterly report', ['quarter']), 'quarterly report');
+    });
+    test('a one-letter slip is still corrected', () {
+      expect(fix('start metformine today', ['metformin']),
+          'start metformin today');
+    });
+    test('an exact term keeps the dictionary spelling', () {
+      expect(fix('use kubernetes here', ['Kubernetes']), 'use Kubernetes here');
     });
   });
 }
