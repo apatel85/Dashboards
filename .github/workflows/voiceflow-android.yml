@@ -27,10 +27,12 @@ jobs:
         working-directory: VoiceFlowAI/app
         run: |
           flutter build apk --release --flavor prod --target-platform android-x64 2>&1 | tail -n 5
-          sudo apt-get install -y -qq aapt >/dev/null 2>&1 || true
           APK=build/app/outputs/flutter-apk/app-prod-release.apk
-          ! unzip -p "$APK" classes.dex | strings | grep -q "E2E_DICTATE_WAV"
-          ! (aapt dump badging "$APK" 2>/dev/null | grep -q MANAGE_EXTERNAL_STORAGE)
+          AAPT=$(ls $ANDROID_HOME/build-tools/*/aapt2 | sort -V | tail -1)
+          $AAPT dump badging "$APK" > /tmp/badging.txt
+          grep -q "package: name='dev.voiceflow.voiceflow_app'" /tmp/badging.txt  # proves aapt2 really read it
+          if grep -q MANAGE_EXTERNAL_STORAGE /tmp/badging.txt; then echo "prod APK has the storage permission"; exit 1; fi
+          if unzip -p "$APK" classes.dex | strings | grep -q "E2E_DICTATE_WAV"; then echo "prod APK contains the test seam"; exit 1; fi
           echo "prod APK clean"
       - name: Fetch STT model for the emulator test (pinned SHA-256)
         run: |

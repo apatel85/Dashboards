@@ -2,7 +2,7 @@
 
 Hold a key, speak, and clean text appears in the app you are typing in. Personal, free ($0), private by default.
 
-**Status:** Windows app works end to end in automated tests (see `AGENTLOG.md` for exactly what is and is not verified). Android keyboard is a proven prototype only; not released.
+**Status:** Windows app works end to end in automated tests (see `AGENTLOG.md` for exactly what is and is not verified). The Android keyboard (sideload APK) works end to end on an emulator with a pre-recorded voice; it has not been tried with a real voice on a real phone yet.
 
 ## Install (Windows)
 1. Open the download page (`index.html`, or the GitHub Releases entry named `voiceflow-v…`) and download **VoiceFlow-Setup-x.y.z.exe** (or the portable zip).

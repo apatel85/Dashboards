@@ -63,7 +63,7 @@
   <h2>Privacy</h2>
   <p>No accounts, no analytics. Audio never leaves your computer. Optional &ldquo;Cloud polish&rdquo; (off by default) sends only text, through a private proxy, and no API key is ever stored in the app.</p>
 
-  <p class="muted">Android: not released yet. <a href="https://github.com/apatel85/Dashboards/tree/main/VoiceFlowAI">Source and notes</a>.</p>
+  <p class="muted">Android keyboard: download the <code>.apk</code> from the release (pre-release, 64-bit ARM, Android 8+). It is not on Google Play, so allow “Install unknown apps” first; Play Protect may warn because the build is not signed with a store key. <a href="https://github.com/apatel85/Dashboards/tree/main/VoiceFlowAI">Source and notes</a>.</p>
 </main>
 <script>
 (async () => {
@@ -84,7 +84,8 @@
     const find = (re) => rel.assets.find((a) => re.test(a.name));
     add(find(/Setup.*\.exe$/i), 'Installer (.exe)');
     add(find(/portable.*\.zip$/i), 'Portable (.zip)', 'secondary');
-    if (!$('buttons').children.length) $('status').textContent += ' - but it has no Windows files attached.';
+    add(find(/\.apk$/i), 'Android keyboard (.apk)', 'secondary');
+    if (!$('buttons').children.length) $('status').textContent += ' - but it has no files attached.';
     const d = new Date(rel.published_at);
     $('meta').textContent = 'Published ' + d.toLocaleDateString() + '. ';
     const notes = document.createElement('a'); notes.href = rel.html_url; notes.textContent = 'Release notes and checksums';

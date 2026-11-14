@@ -36,11 +36,24 @@ android {
         create("e2e") { dimension = "dist" }
     }
 
+    // Optional release key from the environment (CI secrets). Without it: debug key, fine to sideload.
+    val ksPath: String? = System.getenv("VF_KEYSTORE_PATH")
+    if (ksPath != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(ksPath)
+                storePassword = System.getenv("VF_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("VF_KEY_ALIAS")
+                keyPassword = System.getenv("VF_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (ksPath != null) "release" else "debug")
         }
     }
 }

@@ -1,12 +1,14 @@
 name: voiceflow-release
-# Builds the Windows installer + portable zip, proves the installer works (silent install,
-# launch, uninstall) on a real runner, and - only when VoiceFlowAI/VERSION changed in the push -
-# publishes a GitHub PRE-release `voiceflow-v<VERSION>`.
+# Builds the Windows installer + portable zip and the Android APK, proves the installer works
+# (silent install, launch, uninstall) and the APK is clean (right package, no test seam, no
+# storage permission), and - only when VoiceFlowAI/VERSION changed in the push - publishes ONE
+# GitHub PRE-release `voiceflow-v<VERSION>` with both.
 on:
   push:
     paths:
       - "VoiceFlowAI/VERSION"
       - "VoiceFlowAI/installer/**"
+      - "VoiceFlowAI/app/android/**"
       - ".github/workflows/voiceflow-release.yml"
   workflow_dispatch:
     inputs:
@@ -26,6 +28,9 @@ jobs:
   windows:
     runs-on: windows-latest
     timeout-minutes: 40
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      publish: ${{ steps.v.outputs.publish }}
     steps:
       - uses: actions/checkout@v4.2.2
         with:
@@ -106,48 +111,124 @@ jobs:
           Start-Sleep -Seconds 3
           if (Test-Path (Join-Path $dir 'voiceflow_app.exe')) { throw "exe still present after uninstall" }
           Write-Output "uninstall_ok"
-      - name: Checksums
-        run: |
-          Set-Location VoiceFlowAI/dist
-          Get-ChildItem *.exe, *.zip | ForEach-Object {
-            "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
-          } | Set-Content SHA256SUMS.txt -Encoding ascii
-          Get-Content SHA256SUMS.txt
       - uses: actions/upload-artifact@v4.6.0
         with:
           name: voiceflow-windows-dist
           path: VoiceFlowAI/dist/*
-      - name: Publish pre-release
-        if: steps.v.outputs.publish == 'true'
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-java@v4.7.0
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2.18.0
+        with:
+          flutter-version: "3.50.0"
+          channel: stable
+          cache: true
+      - name: Signing key (optional)
+        env:
+          KS_B64: ${{ secrets.VOICEFLOW_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.VOICEFLOW_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.VOICEFLOW_KEY_ALIAS }}
+          KS_KEYPASS: ${{ secrets.VOICEFLOW_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ] && [ -n "$KS_PASS" ] && [ -n "$KS_ALIAS" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/vf.jks"
+            {
+              echo "VF_KEYSTORE_PATH=$RUNNER_TEMP/vf.jks"
+              echo "VF_KEYSTORE_PASSWORD=$KS_PASS"
+              echo "VF_KEY_ALIAS=$KS_ALIAS"
+              echo "VF_KEY_PASSWORD=${KS_KEYPASS:-$KS_PASS}"
+            } >> "$GITHUB_ENV"
+            echo "SIGNED=release-key" >> "$GITHUB_ENV"
+          else
+            echo "SIGNED=debug-key" >> "$GITHUB_ENV"
+            echo "No signing secrets: the APK will be debug-signed (fine to sideload; a later real key means uninstall + reinstall)."
+          fi
+      - name: Build the APK (prod flavor, arm64)
+        working-directory: VoiceFlowAI/app
+        run: |
+          VER=$(tr -d '[:space:]' < ../VERSION)
+          flutter pub get
+          flutter build apk --release --flavor prod --target-platform android-arm64 \
+            --build-name "$VER" --build-number "${{ github.run_number }}" 2>&1 | tail -n 15
+          mkdir -p ../dist
+          cp build/app/outputs/flutter-apk/app-prod-release.apk "../dist/VoiceFlow-$VER-arm64.apk"
+          ls -l ../dist
+      - name: Check the APK
+        working-directory: VoiceFlowAI/dist
+        run: |
+          AAPT=$(ls $ANDROID_HOME/build-tools/*/aapt2 | sort -V | tail -1)
+          APK=$(ls VoiceFlow-*-arm64.apk)
+          $AAPT dump badging "$APK" > badging.txt
+          grep -q "package: name='dev.voiceflow.voiceflow_app'" badging.txt   # proves aapt2 really read it
+          grep -E "^sdkVersion|^targetSdkVersion|^uses-permission|native-code" badging.txt
+          if grep -q MANAGE_EXTERNAL_STORAGE badging.txt; then echo "APK has the storage permission"; exit 1; fi
+          grep -q "android.permission.RECORD_AUDIO" badging.txt
+          grep -q "native-code: 'arm64-v8a'" badging.txt
+          if unzip -p "$APK" classes.dex | strings | grep -q E2E_DICTATE_WAV; then echo "APK contains the test seam"; exit 1; fi
+          rm badging.txt
+          echo "apk_clean signed_with=$SIGNED"
+      - uses: actions/upload-artifact@v4.6.0
+        with:
+          name: voiceflow-android-dist
+          path: VoiceFlowAI/dist/*
+
+  publish:
+    needs: [windows, android]
+    if: needs.windows.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/download-artifact@v4.1.8
+        with:
+          path: dist-in
+          merge-multiple: true
+      - name: Checksums, notes, pre-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VER: ${{ needs.windows.outputs.version }}
         run: |
-          $ver = '${{ steps.v.outputs.version }}'
-          $tag = "voiceflow-v$ver"
-          $sums = Get-Content VoiceFlowAI/dist/SHA256SUMS.txt -Raw
-          $notes = @"
-          **VoiceFlow $ver (Windows)** - pre-release.
+          cd dist-in
+          sha256sum *.exe *.zip *.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          cd ..
+          TAG="voiceflow-v$VER"
+          cat > release-notes.md <<EOF
+          **VoiceFlow $VER** - pre-release.
 
-          * **Installer:** ``VoiceFlow-Setup-$ver.exe`` (per-user, no admin needed)
-          * **Portable:** ``VoiceFlow-portable-$ver.zip`` (unzip anywhere and run ``voiceflow_app.exe``)
-          * Windows only for now. The Android keyboard is not released yet.
+          **Windows**
+          * Installer: \`VoiceFlow-Setup-$VER.exe\` (per-user, no admin needed)
+          * Portable: \`VoiceFlow-portable-$VER.zip\` (unzip anywhere and run \`voiceflow_app.exe\`)
+          * Windows will warn you (SmartScreen: "More info" -> "Run anyway") because the app is **not code-signed**. Some antivirus tools may also flag the global keyboard hook and synthesised keystrokes it uses to type into other apps.
 
-          **Windows will warn you** (SmartScreen: "More info" -> "Run anyway") because the app is **not code-signed** - certificates cost money and this project is free. Some antivirus tools may also flag it because it uses a global keyboard hook and synthesised keystrokes to type into other apps. Verify your download with the checksums below; the source is in this repository.
+          **Android keyboard**
+          * \`VoiceFlow-$VER-arm64.apk\` for 64-bit ARM phones (Android 8+). Sideload it: allow "Install unknown apps" for your browser or file manager, open the APK, then follow the setup checklist inside the app (turn the keyboard on, choose it, allow the microphone, download the speech model once).
+          * Debug-signed (no release key yet): Play Protect may warn. If a properly signed build replaces it later you will need to uninstall and reinstall once.
+          * Only automated emulator tests have run so far; real-phone checks are still pending.
 
-          First run: pick your microphone and download the speech model once (about 160 MB). After that, everything works offline. Cloud polish is off by default.
+          Verify downloads with the SHA-256 sums below; the source is in this repository. Everything works offline after the one-time model download (about 160 MB). Cloud polish is off by default.
 
           SHA-256:
-          ``````
-          $sums
-          ``````
-          "@
-          $notes = ($notes -split "`n" | ForEach-Object { $_.TrimStart() }) -join "`n"
-          Set-Content release-notes.md $notes -Encoding utf8
-          gh release view $tag 2>$null
-          if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag VoiceFlowAI/dist/* --clobber
-            gh release edit $tag --notes-file release-notes.md --prerelease
-          } else {
-            gh release create $tag VoiceFlowAI/dist/* --prerelease --title "VoiceFlow $ver" --notes-file release-notes.md --target '${{ github.sha }}'
-          }
-          gh release view $tag --json url,isPrerelease,assets --jq '{url, isPrerelease, assets: [.assets[].name]}'
+          \`\`\`
+          $(cat dist-in/SHA256SUMS.txt)
+          \`\`\`
+          EOF
+          sed -i 's/^          //' release-notes.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist-in/* --clobber
+            gh release edit "$TAG" --notes-file release-notes.md --prerelease
+          else
+            gh release create "$TAG" dist-in/* --prerelease --title "VoiceFlow $VER" --notes-file release-notes.md --target "${{ github.sha }}"
+          fi
+          gh release view "$TAG" --json url,isPrerelease,assets --jq '{url, isPrerelease, assets: [.assets[].name]}'

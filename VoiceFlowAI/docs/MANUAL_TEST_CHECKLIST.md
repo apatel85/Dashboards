@@ -18,3 +18,25 @@ Download from the latest `voiceflow-v…` release. Tick each box and write what 
 Also tell me: Did anything look ugly, cramped, or confusing? Was the pill readable on your screen? Was dictation fast enough? (Target: text within ~3 s of releasing the key for a 10 s sentence.)
 
 Known gaps (do not report as bugs): browser password fields are not detected; English only; no Settings page yet.
+
+---
+
+# Manual checklist - Android keyboard (owner only, about 20 minutes)
+
+Needs a real phone (Android 8+, 64-bit ARM, almost every phone since 2017). The emulator in CI has a silent microphone, so **nothing below has been proven with a real voice yet**.
+Download `VoiceFlow-x.y.z-arm64.apk` from the latest `voiceflow-v…` release. It is debug-signed, so Play Protect may warn: that is expected.
+
+| # | Do this | Expect | Pass? | Notes |
+|---|---|---|---|---|
+| **A1** | Open the APK from your browser or Files app. Allow "Install unknown apps" if asked, then install and open **VoiceFlow**. | Installs. The first screen is a checklist "Set up VoiceFlow keyboard", with only the first step open. | ☐ | |
+| **A2** | Tap **Open keyboard settings**, switch **VoiceFlow** on, go back. Then tap **Choose keyboard** and pick VoiceFlow. | Each step gets a tick when you return to the app. Android shows its usual "other keyboard" warning when you enable it: that is the system, not us. | ☐ | |
+| **A3** | Tap **Allow microphone**, allow it. Then **Download** the speech model (about 160 MB). Try Pause then Download. | Tick appears. Progress shows; pausing keeps what was downloaded. After install the "Try it" box and **Done** button appear. | ☐ | |
+| **A4** | Tap the Try-it box. Tap the microphone on the keyboard, say "um hi john comma can we meet thursday period", tap the microphone again. | Mic turns red and pulses with your voice, shows "Listening…", then "Working…", then "Hi John, can we meet Thursday." appears and the status says "Inserted · tap ↶ to undo". Within about 3 s. | ☐ | how long did it take? |
+| **A5** | Tap **↶**. Dictate again, then tap **✕** while it says "Working…". | ↶ removes exactly the dictated text. ✕ discards the result: nothing is typed. | ☐ | |
+| **A6** | In your messages app, a browser address bar, an email "To" field, a phone-number box. Dictate into each. | Address bar: a web address with no spaces. Email field: an address like `john@example.com`. Phone box: digits only. Normal text boxes: prose. | ☐ | which apps? |
+| **A7** | Open any password field (a sign-in page). | The mic shows a lock and says "Dictation is off in password fields". Tapping it does nothing. | ☐ | |
+| **A8** | Tap the style chip (top left) a few times, dictate; switch to another app and back. Hold **⌫**. Tap **🌐**. | The style name changes and is remembered per app. ⌫ repeats while held. 🌐 switches to your other keyboard. Keys feel responsive (haptic tick), text is readable in light and dark mode. | ☐ | |
+
+Also tell me: was it fast enough, did the keyboard ever vanish or lag, did your battery or phone get hot, did anything look cramped or confusing? TalkBack users: are the buttons announced sensibly?
+
+Known gaps (do not report as bugs): no hold-to-talk mode; the style chip only cycles (no list); English only; no Settings page yet; utterances longer than ~28 s are cut off.
