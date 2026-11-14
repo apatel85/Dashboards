@@ -1,0 +1,153 @@
+name: voiceflow-release
+# Builds the Windows installer + portable zip, proves the installer works (silent install,
+# launch, uninstall) on a real runner, and - only when VoiceFlowAI/VERSION changed in the push -
+# publishes a GitHub PRE-release `voiceflow-v<VERSION>`.
+on:
+  push:
+    paths:
+      - "VoiceFlowAI/VERSION"
+      - "VoiceFlowAI/installer/**"
+      - ".github/workflows/voiceflow-release.yml"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish a pre-release from this run"
+        type: boolean
+        default: false
+concurrency:
+  group: voiceflow-release-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: write
+defaults:
+  run:
+    shell: pwsh
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Read version and decide whether to publish
+        id: v
+        run: |
+          $ver = (Get-Content VoiceFlowAI/VERSION -Raw).Trim()
+          if ($ver -notmatch '^\d+\.\d+\.\d+$') { throw "VERSION '$ver' is not x.y.z" }
+          $publish = $false
+          if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') { $publish = '${{ inputs.publish }}' -eq 'true' }
+          elseif ('${{ github.event.before }}' -notmatch '^0+$') {
+            $changed = git diff --name-only '${{ github.event.before }}' '${{ github.sha }}' -- VoiceFlowAI/VERSION
+            $publish = [bool]$changed
+          }
+          "version=$ver" >> $env:GITHUB_OUTPUT
+          "publish=$($publish.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          Write-Output "version=$ver publish=$publish"
+      - uses: subosito/flutter-action@v2.18.0
+        with:
+          flutter-version: "3.50.0"
+          channel: stable
+          cache: true
+      - name: Build Windows release
+        working-directory: VoiceFlowAI/app
+        run: |
+          flutter pub get
+          flutter build windows --release 2>&1 | Select-Object -Last 15
+      - name: Bundle the Visual C++ runtime next to the exe (app-local, so nothing else to install)
+        run: |
+          $rel = "VoiceFlowAI/app/build/windows/x64/runner/Release"
+          foreach ($d in 'msvcp140.dll','vcruntime140.dll','vcruntime140_1.dll') {
+            $src = Join-Path $env:WINDIR "System32/$d"
+            if (-not (Test-Path $src)) { throw "$d not found on the runner" }
+            Copy-Item $src $rel -Force
+          }
+          Copy-Item VoiceFlowAI/installer/README-portable.txt $rel -Force
+          Get-ChildItem $rel -Filter *.dll | Select-Object Name, Length | Format-Table | Out-String | Write-Output
+      - name: Portable zip
+        run: |
+          New-Item -ItemType Directory -Force VoiceFlowAI/dist | Out-Null
+          Compress-Archive -Path "VoiceFlowAI/app/build/windows/x64/runner/Release/*" `
+            -DestinationPath "VoiceFlowAI/dist/VoiceFlow-portable-${{ steps.v.outputs.version }}.zip"
+      - name: Build the installer (Inno Setup)
+        run: |
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) {
+            foreach ($p in "C:\Program Files (x86)\Inno Setup 6\ISCC.exe", "C:\Program Files\Inno Setup 6\ISCC.exe") {
+              if (Test-Path $p) { $iscc = $p; break }
+            }
+          }
+          if (-not $iscc) { choco install innosetup -y --no-progress | Out-Null; $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" }
+          Write-Output "ISCC: $iscc"
+          & $iscc "/DAppVersion=${{ steps.v.outputs.version }}" VoiceFlowAI/installer/installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
+          Get-ChildItem VoiceFlowAI/dist | Select-Object Name, Length | Format-Table | Out-String | Write-Output
+      - name: TEST the installer - silent install, launch, still alive, uninstall, gone
+        run: |
+          $setup = (Resolve-Path "VoiceFlowAI/dist/VoiceFlow-Setup-${{ steps.v.outputs.version }}.exe").Path
+          $dir = Join-Path $env:RUNNER_TEMP "VoiceFlowInstalled"
+          $log = Join-Path $env:RUNNER_TEMP "setup.log"
+          $p = Start-Process $setup -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/CURRENTUSER","/DIR=`"$dir`"","/LOG=`"$log`"" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content $log -Tail 40; throw "installer exit code $($p.ExitCode)" }
+          foreach ($f in 'voiceflow_app.exe','flutter_windows.dll','msvcp140.dll','vcruntime140.dll','vcruntime140_1.dll','data\app.so','unins000.exe') {
+            if (-not (Test-Path (Join-Path $dir $f))) { throw "missing after install: $f" }
+          }
+          Write-Output "install_ok files=$((Get-ChildItem $dir -Recurse -File).Count)"
+          $exe = Start-Process (Join-Path $dir 'voiceflow_app.exe') -PassThru
+          Start-Sleep -Seconds 10
+          $exe.Refresh()
+          if ($exe.HasExited) { throw "installed app exited early with code $($exe.ExitCode)" }
+          Write-Output "installed_app_alive_after_10s=True ws_mb=$([math]::Round($exe.WorkingSet64/1MB))"
+          Write-Output ("appdata_dirs: " + ((Get-ChildItem $env:APPDATA -Directory | Select-Object -ExpandProperty Name) -join ', '))
+          Stop-Process -Id $exe.Id -Force
+          Start-Sleep -Seconds 2
+          $u = Start-Process (Join-Path $dir 'unins000.exe') -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait -PassThru
+          if ($u.ExitCode -ne 0) { throw "uninstaller exit code $($u.ExitCode)" }
+          Start-Sleep -Seconds 3
+          if (Test-Path (Join-Path $dir 'voiceflow_app.exe')) { throw "exe still present after uninstall" }
+          Write-Output "uninstall_ok"
+      - name: Checksums
+        run: |
+          Set-Location VoiceFlowAI/dist
+          Get-ChildItem *.exe, *.zip | ForEach-Object {
+            "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
+          } | Set-Content SHA256SUMS.txt -Encoding ascii
+          Get-Content SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4.6.0
+        with:
+          name: voiceflow-windows-dist
+          path: VoiceFlowAI/dist/*
+      - name: Publish pre-release
+        if: steps.v.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ver = '${{ steps.v.outputs.version }}'
+          $tag = "voiceflow-v$ver"
+          $sums = Get-Content VoiceFlowAI/dist/SHA256SUMS.txt -Raw
+          $notes = @"
+          **VoiceFlow $ver (Windows)** - pre-release.
+
+          * **Installer:** ``VoiceFlow-Setup-$ver.exe`` (per-user, no admin needed)
+          * **Portable:** ``VoiceFlow-portable-$ver.zip`` (unzip anywhere and run ``voiceflow_app.exe``)
+          * Windows only for now. The Android keyboard is not released yet.
+
+          **Windows will warn you** (SmartScreen: "More info" -> "Run anyway") because the app is **not code-signed** - certificates cost money and this project is free. Some antivirus tools may also flag it because it uses a global keyboard hook and synthesised keystrokes to type into other apps. Verify your download with the checksums below; the source is in this repository.
+
+          First run: pick your microphone and download the speech model once (about 160 MB). After that, everything works offline. Cloud polish is off by default.
+
+          SHA-256:
+          ``````
+          $sums
+          ``````
+          "@
+          $notes = ($notes -split "`n" | ForEach-Object { $_.TrimStart() }) -join "`n"
+          Set-Content release-notes.md $notes -Encoding utf8
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag VoiceFlowAI/dist/* --clobber
+            gh release edit $tag --notes-file release-notes.md --prerelease
+          } else {
+            gh release create $tag VoiceFlowAI/dist/* --prerelease --title "VoiceFlow $ver" --notes-file release-notes.md --target '${{ github.sha }}'
+          }
+          gh release view $tag --json url,isPrerelease,assets --jq '{url, isPrerelease, assets: [.assets[].name]}'

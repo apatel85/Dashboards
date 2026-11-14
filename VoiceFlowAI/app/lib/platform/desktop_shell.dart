@@ -21,7 +21,7 @@ class DesktopShell with TrayListener, WindowListener {
   final AppLocalizations t;
   final Autostart _autostart = Autostart();
 
-  static Future<void> init(AppController c) async {
+  static Future<void> init(AppController c, {bool startHidden = false}) async {
     if (!Platform.isWindows) return;
     final s = DesktopShell._(c);
     await windowManager.ensureInitialized();
@@ -33,7 +33,11 @@ class DesktopShell with TrayListener, WindowListener {
       ),
       () async {
         await windowManager.setPreventClose(true);
-        await windowManager.show();
+        if (startHidden) {
+          await windowManager.hide();
+        } else {
+          await windowManager.show();
+        }
       },
     );
     windowManager.addListener(s);

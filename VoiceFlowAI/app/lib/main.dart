@@ -32,7 +32,7 @@ import 'state/settings_store.dart';
 // ignore: unused_import
 import 'ime_main.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   final support = await getApplicationSupportDirectory();
   final store = SettingsStore(support);
@@ -139,7 +139,11 @@ Future<void> main() async {
     );
   }
 
-  await DesktopShell.init(controller); // no-op off Windows
+  // `--background` is what start-at-login passes: start hidden in the tray.
+  await DesktopShell.init(
+    controller,
+    startHidden: args.contains('--background'),
+  ); // no-op off Windows
   runApp(
     VoiceFlowApp(
       controller: controller,

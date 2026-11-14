@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VoiceFlow - download</title>
+<meta name="description" content="VoiceFlow: hold a key, speak, and clean text appears in any app. Free, private, on-device.">
+<style>
+  :root { --bg:#fff; --fg:#14151a; --muted:#5b6070; --card:#f5f6fa; --line:#dfe2ec; --accent:#4f46e5; --accent-fg:#fff; --warn-bg:#fff3cd; --warn-fg:#5c4400; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1117; --fg:#eceef6; --muted:#a3a8bb; --card:#1a1d27; --line:#2b2f3d; --accent:#8b85ff; --accent-fg:#0f1117; --warn-bg:#3a3012; --warn-fg:#ffe9a8; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.55 "Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 2rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 28px 0 8px; }
+  p { margin: 8px 0; }
+  .lead { color: var(--muted); font-size: 1.1rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-top:20px; }
+  .btn { display:inline-block; background:var(--accent); color:var(--accent-fg); text-decoration:none; font-weight:600; padding:12px 18px; border-radius:12px; margin:6px 8px 6px 0; min-height:48px; }
+  .btn.secondary { background:transparent; color:var(--fg); border:1px solid var(--line); }
+  .btn:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .warn { background:var(--warn-bg); color:var(--warn-fg); border-radius:12px; padding:12px 16px; margin-top:16px; }
+  code, kbd { font-family: Consolas, monospace; background: var(--card); border:1px solid var(--line); border-radius:6px; padding:1px 6px; }
+  table { border-collapse: collapse; width: 100%; } td { padding: 6px 8px 6px 0; vertical-align: top; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); font-size: .92rem; }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>VoiceFlow</h1>
+  <p class="lead">Hold a key, speak, and clean text appears in the app you are typing in. Your audio stays on your computer.</p>
+
+  <section class="card" aria-live="polite">
+    <h2 style="margin-top:0">Download for Windows</h2>
+    <p id="status">Looking up the latest version&hellip;</p>
+    <p id="buttons"></p>
+    <p class="muted" id="meta"></p>
+    <noscript><p>JavaScript is off. Get the files from the <a href="https://github.com/apatel85/Dashboards/releases">releases page</a> (look for <code>voiceflow-v&hellip;</code>).</p></noscript>
+  </section>
+
+  <div class="warn" role="note">
+    <strong>Windows will warn you.</strong> The app is not code-signed (certificates cost money and this project is free), so SmartScreen says &ldquo;Windows protected your PC&rdquo;. Choose <strong>More info</strong> then <strong>Run anyway</strong>. Some antivirus tools may flag it too, because it uses a global keyboard hook and synthesised keystrokes to type into other apps. The source is public, and each download has a SHA-256 checksum in the release notes.
+  </div>
+
+  <h2>First run</h2>
+  <ol>
+    <li>Pick your microphone; a level bar shows it can hear you.</li>
+    <li>Download the speech model once (about 160&nbsp;MB). After that everything works offline.</li>
+    <li>Click into any app, hold <kbd>F9</kbd>, speak, release.</li>
+  </ol>
+
+  <h2>Keys</h2>
+  <table>
+    <tr><td><kbd>F9</kbd> hold</td><td>talk; release to insert</td></tr>
+    <tr><td><kbd>F9</kbd> double-tap</td><td>hands-free; tap again to stop</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>cancel</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd></td><td>undo the last insertion</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd></td><td>next style (Casual, Business, Professional, AI Prompting)</td></tr>
+  </table>
+
+  <h2>Privacy</h2>
+  <p>No accounts, no analytics. Audio never leaves your computer. Optional &ldquo;Cloud polish&rdquo; (off by default) sends only text, through a private proxy, and no API key is ever stored in the app.</p>
+
+  <p class="muted">Android: not released yet. <a href="https://github.com/apatel85/Dashboards/tree/main/VoiceFlowAI">Source and notes</a>.</p>
+</main>
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  try {
+    const r = await fetch('https://api.github.com/repos/apatel85/Dashboards/releases?per_page=30', { headers: { Accept: 'application/vnd.github+json' } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const rel = (await r.json()).find((x) => x.tag_name && x.tag_name.startsWith('voiceflow-v') && !x.draft);
+    if (!rel) { $('status').textContent = 'No release has been published yet.'; return; }
+    const ver = rel.tag_name.replace('voiceflow-v', '');
+    $('status').textContent = 'Latest: version ' + ver + (rel.prerelease ? ' (pre-release)' : '');
+    const add = (asset, label, cls) => {
+      if (!asset) return;
+      const a = document.createElement('a');
+      a.className = 'btn ' + (cls || ''); a.href = asset.browser_download_url; a.textContent = label;
+      $('buttons').appendChild(a);
+    };
+    const find = (re) => rel.assets.find((a) => re.test(a.name));
+    add(find(/Setup.*\.exe$/i), 'Installer (.exe)');
+    add(find(/portable.*\.zip$/i), 'Portable (.zip)', 'secondary');
+    if (!$('buttons').children.length) $('status').textContent += ' - but it has no Windows files attached.';
+    const d = new Date(rel.published_at);
+    $('meta').textContent = 'Published ' + d.toLocaleDateString() + '. ';
+    const notes = document.createElement('a'); notes.href = rel.html_url; notes.textContent = 'Release notes and checksums';
+    $('meta').appendChild(notes);
+  } catch (e) {
+    $('status').textContent = 'Could not look up the latest version (' + e.message + '). Use the releases page instead.';
+    const a = document.createElement('a'); a.className = 'btn'; a.href = 'https://github.com/apatel85/Dashboards/releases'; a.textContent = 'Releases page';
+    $('buttons').appendChild(a);
+  }
+})();
+</script>
+</body>
+</html>
