@@ -197,6 +197,7 @@ jobs:
       - name: Checksums, notes, pre-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           VER: ${{ needs.windows.outputs.version }}
         run: |
           cd dist-in
