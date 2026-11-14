@@ -1,5 +1,19 @@
 # DealFinder — Agent Log
 
+## 2026-11-13 — P3.1: scored search, per-unit best deal, flyer clipping (v1.1.0)
+
+- **Request:** Ankit (on his phone): "Search terms are not working properly" + every product must show count, pound weight where applicable, and per-pound pricing, with the best deal judged on that (12ct vs 24ct eggs: cheaper per-egg wins); add a direct link to show the product if one exists; hide the availability/flyer-validity line from the top or move it to another tab.
+- **Changed:** `DealFinder/app.js` + `index.html` —
+  - Search is now scored relevance (full phrase > all terms > any term, plural-insensitive: "egg" matches "Eggs", "whole milk" ranks the two whole-milk items first), ties break by best unit value on a shared basis, then shelf price. (Was: AND-substring, so "whole milk" returned nothing and "egg" missed "Eggs".)
+  - Per-unit on every card where computable: pack size from the item ("10 ct", "3 lb") + per-unit price derived from stored data — per-egg/per-count for packs, per-lb for weights (converted from the stored kg basis), per-oz where the pack was sold in ounces. Never invented: 224 of 237 items carry no size in their names, so those cards show no size line.
+  - Best deal is now crowned by unit price when an item's rows share a comparable basis (same per-egg/per-lb/per-oz), with a "Best per egg/lb/oz" tag and a like-for-like "Save $X per egg" line; falls back to shelf price otherwise. Limit deals still never win.
+  - Expanded card now shows the flyer clipping ("See it in the flyer", from `clipping_image_url` — all 254 price rows carry one). No retailer product link exists in the Flipp data (`details_url` is empty), so none was invented.
+  - Card top no longer shows the store or flyer validity: it leads with name, pack size, per-unit price, best-deal tag. Store + "ends {date}" stay only in the expanded compare table and the Stores tab; the page-level "checked" line moved to the More tab ("Prices checked …"). List rows and basket totals still name stores (they are store-pricing views by design).
+  - No pipeline change: no live item name contains "dozen" (checked all 237 names), and every name carrying a size token is already parsed — the parser has nothing to gain this week. Full count/lb coverage needs clipping-image OCR (follow-up, not built).
+- **Verification:** `node --check` clean; crown logic unit-tested in Node (11/11: 12ct-vs-24ct per-egg crown, per-lb crown, single-unit-row fallback, limit exclusion, per-oz/per-lb display math). Local render gate PASS at 390/768/1280px, and live URL gate PASS at 390/768/1280px (Playwright, published URL): zero console errors, no overflow; search tests — milk 26, eggs 13, egg 13 (same set), whole milk first two are the two whole-milk items, chicken breast 7; Galbani card shows "$12.50 per lb" + "3 lb"; clipping image loads in the expanded card (352px natural width); history "building history"; More tab shows the checked line. Screenshots in `~/workspace/dealfinder-p31/verify/shots/`.
+- **Egg acceptance test — honest outcome:** no two comparable egg sizes exist this week. All 13 egg items have exactly one price row each and none carries a size or unit price, so no per-egg crown can fire; every egg card reads "Best price" (shelf). The per-egg crowning code is live and unit-tested — it will fire the week the data has two comparable egg packs.
+- **Tracker:** DealFinder entry updated in place (v1.1.0).
+
 ## 2026-11-13 — P3: live app v1.0.0
 
 - **Request:** Ankit: "Yes, build the live app" (P3 go-ahead after P2 went green with 254 live prices).
