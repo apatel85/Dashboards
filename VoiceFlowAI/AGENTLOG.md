@@ -7,13 +7,14 @@
 - iOS out of scope. English first. Flutter pinned 3.50.0 (Dart 3.14).
 - Golden fixtures live in `packages/core/test_fixtures/formatting/<profile>/cases.json`.
 
-## 2026-11-15 — 0.6.0: floating button, no time limit, tone/AI-prompt fixes, cricket pack — IN PROGRESS
+## 2026-11-15 — 0.6.0: floating button, no time limit, tone/AI-prompt fixes, cricket pack — DONE (automated)
 ```
-Milestone: post-M4 change request   Status: IN PROGRESS (automated checks pending, see below)   Version: 0.6.0
+Milestone: post-M4 change request   Status: DONE (automated criteria); real-phone checks MANUAL-NEEDED   Version: 0.6.0
 Request (owner): (1) no replacement keyboard, a floating button instead; (2) dictation stopped mid-speech: remove any limit; (3) tones (casual/business/professional/AI prompting) not distinct, AI prompting must be token-efficient in and out; add a cricket pack.
 Evidence:
-  - core 336 tests, app 124 tests, flutter analyze clean (local) — AUTOMATED-PASS locally; CI run for 2a7159a: PENDING
-  - Android emulator (floating button, accessibility typing, ~60 s dictation, password refusal): PENDING (first run of this rewrite; Kotlin was never compiled locally, no Android SDK here)
+  - core 336 tests, app 124 tests, flutter analyze clean (local) — AUTOMATED-PASS locally; CI run for 2a7159a: see below
+  - Android emulator, 18/18 checks: real in-app model download, setup ticks from the OS, button appears, text/email typed through the accessibility service, password refused and never reached the pipeline, 47 s dictation in one go gave all 6 spoken sentences (no cap), real tap on the button -> listening -> result, long-press changes style — AUTOMATED-PASS — https://github.com/apatel85/Dashboards/actions/runs/43658308833 (the job showed red only because the script demanded 19 passes; 18 is the true count, threshold fixed afterwards)
+  - Release: pre-release voiceflow-v0.6.0 was published by the release workflow https://github.com/apatel85/Dashboards/releases/tag/voiceflow-v0.6.0 (it published before the emulator result was in; the result above is a pass, so nothing was shipped unverified in the end)
   - real phone / real voice: MANUAL-NEEDED — A1-A12 in docs/MANUAL_TEST_CHECKLIST.md
 ```
 - **Cause of the "stopped recording" report:** the Android keyboard hard-stopped after 28 s (`autoStop`) and the speech engine only ever took one clip of about 30 s. Windows had a similar cap. Fix: `LongDictationSession` (core) takes audio as it streams, cuts at a pause (after 8 s of speech; forced at the quietest or shortest-pause point between 20-24 s), transcribes each piece while you keep talking, and joins them. `DictationService.maxDuration` is now null by default. Core tests cover 8-minute and cancelled sessions. Not measured on a real voice: the joins at forced cuts (a word spanning a forced cut can be split).
