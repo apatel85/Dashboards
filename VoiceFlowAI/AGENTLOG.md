@@ -7,6 +7,10 @@
 - iOS out of scope. English first. Flutter pinned 3.50.0 (Dart 3.14).
 - Golden fixtures live in `packages/core/test_fixtures/formatting/<profile>/cases.json`.
 
+## 2026-11-15 — 0.6.1: spoken self-corrections, shorter AI prompts, restricted-settings help — DONE (automated)
+- Owner tried 0.6.0 on a real phone (screenshots): (1) Accessibility was greyed out with "App was denied access" = Android restricted settings for sideloaded apps; the setup step now explains it and has an "Open app info" button (workaround: App info -> ⋮ -> Allow restricted settings). (2) "Meeting at 9 AM on Monday. Actually, it is not on 9 AM on Monday, it is on Tuesday at 9 AM." was kept verbatim in every tone. New `SelfCorrection` (core, runs before any tone): negation corrections, short time/day/date corrections, "X, I mean Y", and whole-sentence restatements; a genuine "Actually, ..." with no clear target is left alone. (3) AI Prompting barely shortened a spoken monologue: added rules that drop meta chatter ("let's try this again", "so let's test it"), turn "we are going to X" into "X", "what we want to achieve is to X" into "Goal: X", and "for both" into "for". On the owner's text: 119 -> 83 words (-30%). Tests use the owner's exact text.
+- **Limits, stated plainly:** these are pattern rules, not understanding. A correction that does not name what it replaces ("Monday... actually, we should move it") is left as spoken. AI Prompting without cloud polish only removes filler/chatter; a real rewrite into a structured prompt needs polish turned on (Settings), and that quality has not been measured. Evidence: core + app tests pass locally; CI for this commit and real-phone retest: see run results / owner.
+
 ## 2026-11-15 — 0.6.0: floating button, no time limit, tone/AI-prompt fixes, cricket pack — DONE (automated)
 ```
 Milestone: post-M4 change request   Status: DONE (automated criteria); real-phone checks MANUAL-NEEDED   Version: 0.6.0

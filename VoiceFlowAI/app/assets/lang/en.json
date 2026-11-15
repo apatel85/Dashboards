@@ -524,7 +524,8 @@
       "maybe": "",
       "perhaps": "",
       "i would like": "",
-      "um so": ""
+      "um so": "",
+      "for both": "for"
     },
     "promptStartPhrases": {
       "can you": "",
@@ -546,6 +547,30 @@
       "so": ""
     },
     "promptRules": [
+      {
+        "pattern": "(^|[.?!]\\s+)(?:let us|let's|lets)\\s+(?:try|test|see)(?:\\s+(?:this|it|that))?(?:\\s+(?:out|again|now))*\\s*[.?!]\\s*",
+        "replace": "$1"
+      },
+      {
+        "pattern": "(^|[.?!]\\s+)(?:(?:ok|okay|alright|all right|anyway|so|right|now)[,.]?\\s+)+",
+        "replace": "$1"
+      },
+      {
+        "pattern": "(^|[.?!]\\s+)(?:testing|test|one two three|can you hear me)[.?!]\\s*",
+        "replace": "$1"
+      },
+      {
+        "pattern": "(^|[.?!]\\s+)what (?:i|we) (?:want|need|would like) to (?:achieve|do|get|accomplish)(?: here)? is(?: to)?\\s+",
+        "replace": "$1Goal: "
+      },
+      {
+        "pattern": "(^|[.?!]\\s+)(?:i|we) (?:am|are|'m|'re) going to\\s+",
+        "replace": "$1"
+      },
+      {
+        "pattern": "(^|[.?!]\\s+)(?:i|we) (?:want|need|would like|plan|have) to\\s+",
+        "replace": "$1"
+      },
       {
         "pattern": "(?:(?:and|but|also|then|plus)\\s+)?(?:(?:keep (?:it|the answer|the response|your answer|your response|this)|make it|limit (?:it|the answer|the response) to|in)\\s+)?(?:no more than|at most|up to|a maximum of|maximum of|max of|not more than|not exceeding)\\s+(\\d+)\\s+(words|sentences|lines|paragraphs|items|examples|characters|bullets|bullet points|points|steps|names|ideas|options|rows|columns|sections|tips|reasons)(?=\\s*(?:$|[.,;!?]))",
         "replace": "max $1 $2",

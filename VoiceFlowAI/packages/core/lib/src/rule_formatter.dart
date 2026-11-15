@@ -1,6 +1,7 @@
 import 'lang.dart';
 import 'number_words.dart';
 import 'profile.dart';
+import 'self_correction.dart';
 
 /// Deterministic formatter (spec §5.3). Must be good without any LLM.
 class RuleFormatter {
@@ -24,6 +25,7 @@ class RuleFormatter {
   static const _noDedupe = {'had', 'that', 'is'};
 
   String format(String input, Profile p, {bool shorthandHundreds = false}) {
+    input = SelfCorrection.apply(input); // "Monday... actually Tuesday" keeps only Tuesday
     final out = _format(input, p, shorthandHundreds, p.register);
     // "thanks" alone, or a prompt that was only pleasantries: keep the plain text, not nothing.
     if (out.trim().isEmpty && p.register != 'business') {

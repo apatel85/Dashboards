@@ -27,3 +27,4 @@ export 'src/wav.dart';
 export 'src/wer.dart';
 export 'src/audio_level.dart';
 export 'src/field_kind.dart';
+export 'src/self_correction.dart';
