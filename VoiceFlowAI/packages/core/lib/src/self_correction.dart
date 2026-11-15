@@ -283,7 +283,9 @@ class SelfCorrection {
         final a = _content(_noTerm(out[k]));
         if (a.isEmpty || b.isEmpty) continue;
         final common = a.intersection(b).length;
-        if (common / (a.length < b.length ? a.length : b.length) >= 0.5) {
+        // a restated sentence shares real content, not just one word ("ten")
+        if ((common >= 2 || (common >= 1 && a.length <= 3 && b.length <= 3)) &&
+            common / (a.length < b.length ? a.length : b.length) >= 0.5) {
           out[k] = _cap(rt) + _term(out[k]);
           return true;
         }

@@ -103,7 +103,22 @@ class NumberWords {
       } else if (runs.length == 2 && vals.every((v) => v >= 10 && v < 100)) {
         // "nineteen ninety nine" -> 1999 (a year); "total should be forty two fifty" -> 4,250
         final joined = '${vals[0]}${vals[1].toString().padLeft(2, '0')}';
-        out.add(_amountContext(toks, i) ? _comma(int.parse(joined)) : joined);
+        if (_amountContext(toks, i)) {
+          out.add(_comma(int.parse(joined)));
+        } else if (vals[0] >= 18 && vals[0] <= 21) {
+          out.add(
+              joined); // a year: "nineteen ninety nine", "twenty twenty four"
+        } else if (vals[0] >= 10 &&
+            vals[0] <= 12 &&
+            vals[1] >= 10 &&
+            vals[1] <= 59) {
+          out.add(
+              '${vals[0]}:${vals[1].toString().padLeft(2, '0')}'); // "ten thirty"
+        } else {
+          out.addAll([
+            for (final v in vals) _fmt(v)
+          ]); // never glue two unrelated numbers
+        }
       } else if (runs.length == 1 &&
           runs[0].length > 1 &&
           runs[0].every((w) =>

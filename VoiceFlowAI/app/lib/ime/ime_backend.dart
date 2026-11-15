@@ -187,6 +187,7 @@ class ImeBackend {
         dictionary: s.dictionary,
         corrections: s.corrections,
         maskCloud: s.maskCloud,
+        spokenForms: s.spokenForms,
         profileById: (id) =>
             assets.profiles.where((p) => p.id == id).firstOrNull,
         fieldKind: kind,

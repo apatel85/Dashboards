@@ -10,6 +10,10 @@ class Settings {
   /// Professional is one mode with tone levels (spec section 8). `neutral` is the default;
   /// `formal` expands contractions and uses the formal wording.
   String professionalTone = 'neutral';
+
+  /// Casual: write "gonna" as "going to", "wanna" as "want to" (on by default; some people
+  /// prefer to keep them in texts).
+  bool spokenForms = true;
   Map<String, String> perAppProfiles = {};
   String hotkey = 'F9';
   String language = 'en';
@@ -45,6 +49,7 @@ class Settings {
         'version': version,
         'defaultProfileId': defaultProfileId,
         'professionalTone': professionalTone,
+        'spokenForms': spokenForms,
         'perAppProfiles': perAppProfiles,
         'hotkey': hotkey,
         'language': language,
@@ -94,6 +99,7 @@ class Settings {
     final j = migrate(raw);
     final s = Settings();
     s.defaultProfileId = j['defaultProfileId'] as String? ?? s.defaultProfileId;
+    s.spokenForms = j['spokenForms'] as bool? ?? true;
     s.professionalTone =
         j['professionalTone'] == 'formal' ? 'formal' : 'neutral';
     s.perAppProfiles =

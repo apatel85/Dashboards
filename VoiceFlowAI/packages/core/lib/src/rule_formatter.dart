@@ -75,7 +75,7 @@ class RuleFormatter {
         _validator = validator ?? RuleValidator(lang);
 
   static final _tokRe = RegExp(
-      r"\d{1,2}:\d{2}|\d+(?:st|nd|rd|th)\b|\d+(?:\.\d+)?|[A-Za-z]+(?:['’][A-Za-z]+)*|[.,?!;:]|\n|[^\sA-Za-z0-9.,?!;:]");
+      r"\d{1,2}:\d{2}|[A-Za-z]{1,3}\d+[A-Za-z\d]*\b|\d+(?:st|nd|rd|th)\b|\d+(?:\.\d+)?|[A-Za-z]+(?:['’][A-Za-z]+)*|[.,?!;:]|\n|[^\sA-Za-z0-9.,?!;:]");
   static const _terminal = {'.', '?', '!'};
   static const _punct = {'.', '?', '!', ',', ';', ':'};
   static const _whWords = {
@@ -94,6 +94,7 @@ class RuleFormatter {
   /// Why the last [format] call fell back to minimal formatting (null when it did not). For logs
   /// and tests; the person never sees an error.
   String? lastFallbackReason;
+  bool _spokenForms = false;
 
   /// The cleaned transcript: always-safe filler removed, heard-as look-alikes fixed and
   /// self-corrections resolved, nothing else (no tone, no layout). This is what cloud polish gets
@@ -111,9 +112,12 @@ class RuleFormatter {
     return _cap1(s);
   }
 
+  /// [spokenForms]: null follows the profile; true/false overrides "gonna" -> "going to" (Casual).
   String format(String input, Profile p,
       {bool shorthandHundreds = false,
-      PromptStyle promptStyle = const PromptStyle()}) {
+      PromptStyle promptStyle = const PromptStyle(),
+      bool? spokenForms}) {
+    _spokenForms = spokenForms ?? p.expandSpokenForms;
     lastFallbackReason = null;
     lastRoute = null;
     _routeInput = '';
@@ -231,7 +235,7 @@ class RuleFormatter {
         t); // before segmenting: "its going" -> "it's going" is a subject + verb
     if (register != 'minimal') t = _segmenter.apply(t, register: register);
     t = _register(t, register);
-    if (p.expandSpokenForms && register == 'casual') {
+    if (_spokenForms && register == 'casual') {
       t = _swap(t, _reg('spokenForms'));
     }
     t = t.map(_contraction).toList();

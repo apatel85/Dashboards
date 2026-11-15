@@ -35,6 +35,9 @@ class DictationOptions {
   /// Cloud polish: send placeholders instead of names, numbers, dates and contact details.
   final bool maskCloud;
 
+  /// Casual: expand "gonna" -> "going to" (the Settings switch).
+  final bool spokenForms;
+
   /// Looks a profile up by id, so a spoken mode command ("professional mode ...") can switch the
   /// profile for this one dictation. Without it, mode commands are left in the text.
   final Profile? Function(String id)? profileById;
@@ -46,6 +49,7 @@ class DictationOptions {
       promptStyle: promptStyle,
       surrounding: surrounding,
       maskCloud: maskCloud,
+      spokenForms: spokenForms,
       profileById: profileById);
 
   const DictationOptions(this.profile,
@@ -56,6 +60,7 @@ class DictationOptions {
       this.promptStyle = const PromptStyle(),
       this.surrounding = const TextContext(),
       this.maskCloud = false,
+      this.spokenForms = true,
       this.profileById});
 }
 
@@ -227,7 +232,8 @@ class DictationPipeline {
         o.packs);
     final ruled = _fmt.format(text, o.profile,
         shorthandHundreds: o.packs.any((p) => p.shorthandHundreds),
-        promptStyle: o.promptStyle);
+        promptStyle: o.promptStyle,
+        spokenForms: o.spokenForms);
     final chain = _chain;
     // A pack that wants exact numbers keeps the rule output whenever there is a digit in it.
     final keepNumbers = o.packs.any((p) => p.preferRuleFormatterForNumbers) &&

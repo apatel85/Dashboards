@@ -373,6 +373,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Optional. After the on-device formatting, VoiceFlow can ask an AI service to tidy your text a little more. Only text is sent, never audio. Off by default.';
 
   @override
+  String get styleSpokenForms => 'Write \"gonna\" as \"going to\" in Casual';
+
+  @override
+  String get styleSpokenFormsNote =>
+      'Turn this off to keep \"gonna\", \"wanna\" and \"gotta\" exactly as you say them.';
+
+  @override
   String get styleToneLevel => 'Tone level';
 
   @override

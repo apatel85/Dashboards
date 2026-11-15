@@ -730,6 +730,18 @@ abstract class AppLocalizations {
   /// **'Optional. After the on-device formatting, VoiceFlow can ask an AI service to tidy your text a little more. Only text is sent, never audio. Off by default.'**
   String get setCloudBody;
 
+  /// No description provided for @styleSpokenForms.
+  ///
+  /// In en, this message translates to:
+  /// **'Write \"gonna\" as \"going to\" in Casual'**
+  String get styleSpokenForms;
+
+  /// No description provided for @styleSpokenFormsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn this off to keep \"gonna\", \"wanna\" and \"gotta\" exactly as you say them.'**
+  String get styleSpokenFormsNote;
+
   /// No description provided for @styleToneLevel.
   ///
   /// In en, this message translates to:

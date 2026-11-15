@@ -37,6 +37,11 @@ class SettingsController extends ChangeNotifier {
     await _commit();
   }
 
+  Future<void> setSpokenForms(bool on) async {
+    settings.spokenForms = on;
+    await _commit();
+  }
+
   Future<void> setMaskCloud(bool on) async {
     settings.maskCloud = on;
     await _commit();

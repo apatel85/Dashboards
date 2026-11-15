@@ -180,6 +180,18 @@ class _StylePageState extends State<StylePage> {
                             ),
                             if (p.id == 'business' && widget.settings != null)
                               _toneLevel(t),
+                            if (p.id == 'casual' && widget.settings != null)
+                              SwitchListTile(
+                                key: const Key('style-spoken-forms'),
+                                contentPadding: EdgeInsets.zero,
+                                title: Text(t.styleSpokenForms),
+                                subtitle: Text(t.styleSpokenFormsNote),
+                                value: widget.settings!.settings.spokenForms,
+                                onChanged: (v) async {
+                                  await widget.settings!.setSpokenForms(v);
+                                  if (mounted) setState(() {});
+                                },
+                              ),
                           ],
                         ),
                       ),

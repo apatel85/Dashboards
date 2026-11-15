@@ -134,6 +134,29 @@ void main() {
     },
   );
 
+  testWidgets('Style page: the spoken-forms switch is saved', (t) async {
+    size(t, const Size(500, 3000));
+    final ctl = await makeController(t);
+    final s = Settings();
+    final sc = SettingsController(s, () async {});
+    addTearDown(sc.dispose);
+    await t.pumpWidget(
+      host(
+        StylePage(
+          controller: ctl,
+          settings: sc,
+          listApps: () async => const [],
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(s.spokenForms, isTrue);
+    await t.tap(find.byKey(const Key('style-spoken-forms')));
+    await t.pumpAndSettle();
+    expect(s.spokenForms, isFalse);
+    expect(Settings.fromJson(s.toJson()).spokenForms, isFalse);
+  });
+
   testWidgets('Style page: Apps list shows built-ins and saves a change', (
     t,
   ) async {

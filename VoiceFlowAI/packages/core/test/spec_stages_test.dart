@@ -15,6 +15,7 @@ void main() {
   _stage11();
   _stage12();
   _stage13();
+  _punctuatedSafetyNet();
   final f = RuleFormatter(loadLang());
   String fmt(String s, [String p = 'business']) => f.format(s, loadProfile(p));
 
@@ -541,10 +542,13 @@ void _stage8() {
       expect(biz('can you send me the report thanks'),
           'Could you send me the report? Thank you.');
     });
-    test('"I think we should" becomes a recommendation with correct grammar',
-        () {
+    test('"I think" stays a hedge: the speaker\'s firmness is kept', () {
       expect(biz('i think we should wait until friday'),
-          'I recommend we wait until Friday.');
+          'I think we should wait until Friday.');
+    });
+    test('"let me know" is a fine closing and is kept', () {
+      expect(biz('let me know if you have any questions'),
+          'Let me know if you have any questions.');
     });
     test('words that carry meaning in other senses are left alone', () {
       expect(biz('this kind of problem is new'), contains('kind of problem'));
@@ -764,6 +768,83 @@ void _stage13() {
     });
     test('email apps use Professional (tone from the setting)', () {
       expect(AppDefaults.profileFor('com.google.android.gm'), 'business');
+    });
+  });
+}
+
+/// What the speech recogniser really returns is punctuated and capitalised. These sentences are
+/// already right, so Casual must hand them back exactly as they came, and the business tones
+/// must not cut them into pieces. (The first spec tests used unpunctuated typed text only, which
+/// hid the damage the sentence breaker did to text like this.)
+void _punctuatedSafetyNet() {
+  final f = RuleFormatter(loadLang());
+  const already = [
+    "So I talked to John about the Supabase migration and he said it should be done by Friday, but I'm not sure that's realistic.",
+    'We need to review the budget, the timeline, and the staffing plan before the board meeting.',
+    'The API is returning a 500 error when I hit the export endpoint, and it was working fine last week.',
+    "I'd like to schedule a call for next week to go over the contract, the pricing, and the termination clause.",
+    "I was thinking about going to the gym, but it's raining, so maybe I'll just stay home and watch a movie.",
+    'We should probably talk about the Android app and the Windows app separately, since the features are different.',
+    "I don't think that's a good idea because the deadline is too tight and we don't have enough people.",
+    "Hi Sarah, thanks for the update. I looked at the report and it looks good, but I have a few questions about the Q3 numbers.",
+    'The new checkout is live. We\'re still working on the mobile menu, which should be done by Friday.',
+    "Hey Raj, I wanted to check in on the shipment. It was supposed to arrive on the third and I still haven't heard anything.",
+    'If you want, we can meet tomorrow, or we can talk on the phone.',
+    'I want to build an app that converts speech into text and then formats it for different tones.',
+  ];
+  group('punctuated speech (what the recogniser returns) is left alone', () {
+    for (final s in already) {
+      test('casual: $s', () {
+        expect(f.format(s, loadProfile('casual')), s);
+      });
+    }
+    test('business tones never cut a punctuated sentence in two', () {
+      for (final s in already) {
+        for (final id in ['business', 'professional']) {
+          final out = f.format(s, loadProfile(id));
+          final inCount = RegExp(r'[.?!](\s|$)').allMatches(s).length;
+          final outCount = RegExp(r'[.?!](\s|$)').allMatches(out).length;
+          expect(outCount, inCount, reason: '$id: $s -> $out');
+        }
+      }
+    });
+    test('an alphanumeric name stays one word: Q3, T20, GPT4, S3', () {
+      expect(
+          f.format('the Q3 numbers and the T20 final', loadProfile('casual')),
+          'The Q3 numbers and the T20 final.');
+      expect(f.format('we use GPT4 and S3', loadProfile('business')),
+          'We use GPT4 and S3.');
+    });
+    test('"ten thirty" is a time, not 1030; years stay years', () {
+      expect(f.format('make it ten thirty', loadProfile('casual')),
+          'Make it 10:30.');
+      expect(
+          f.format('in twenty twenty four', loadProfile('casual')), 'In 2024.');
+    });
+    test(
+        'a correction without a replaceable value never deletes the sentence before it',
+        () {
+      final o = f.format(
+          "Let's meet at the coffee place on Main Street at ten. Actually, make it ten thirty.",
+          loadProfile('casual'));
+      expect(o, contains('coffee place on Main Street'));
+    });
+    test('a request to be sent TO the speaker is not a send action', () {
+      final ai = f.format(
+          'Can you send me the sales numbers for October? I need them for the bank meeting on Tuesday.',
+          loadProfile('ai_prompting'));
+      expect(ai, isNot(contains('approval')));
+      final statement = f.format(
+          "Okay, I'll send it over by end of day. Let me know if you have any questions.",
+          loadProfile('ai_prompting'));
+      expect(statement, isNot(contains('approval')));
+    });
+    test('the spoken-forms switch', () {
+      const said = "We're gonna start at seven.";
+      expect(
+          f.format(said, loadProfile('casual')), "We're going to start at 7.");
+      expect(f.format(said, loadProfile('casual'), spokenForms: false),
+          "We're gonna start at 7.");
     });
   });
 }

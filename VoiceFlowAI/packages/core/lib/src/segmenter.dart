@@ -124,12 +124,15 @@ class Segmenter {
     var clauseStart = 0;
     var clauseWords = 0;
     var subordinate = false;
+    var runWords =
+        0; // words since ANY punctuation: breaks only happen in unpunctuated runs
     var sinceComma =
         -1; // words since the last comma in this clause (-1: no comma yet)
     var closerOnly = false; // the clause so far is nothing but sign-off phrases
 
     void reset() {
       clauseStart = out.length;
+      runWords = 0;
       clauseWords = 0;
       subordinate = false;
       sinceComma = -1;
@@ -175,6 +178,7 @@ class Segmenter {
       if (_punct.contains(w) || !_isWord(w)) {
         out.add(w);
         if (w == ',') sinceComma = 0;
+        runWords = 0; // the recogniser already punctuated here: trust it
         i++;
         continue;
       }
@@ -262,19 +266,19 @@ class Segmenter {
         final after = i + tail.length;
         final atEnd = after >= t.length || _terminal.contains(t[after]);
         if (atEnd &&
-            clauseWords >= 3 &&
+            runWords >= 3 &&
             out.isNotEmpty &&
             !_punct.contains(out.last)) {
           out.add(',');
         }
         out.addAll(t.sublist(i, i + tail.length));
         clauseWords += tail.length;
+        runWords += tail.length;
         i += tail.length;
         continue;
       }
 
       final pw = prevWord();
-      final prevIsComma = out.isNotEmpty && out.last == ',';
       final canBreak = pw.isNotEmpty ? !_continuers.contains(pw) : false;
 
       // closers: break before, copy the phrase, break after when a new sentence follows
@@ -282,7 +286,7 @@ class Segmenter {
       if (closer != null) {
         final stay = closerOnly; // "thanks a lot, talk soon" is one sign-off
         if (stay && out.isNotEmpty && !_punct.contains(out.last)) out.add(',');
-        if (clauseWords >= 3 && canBreak && !stay) breakHere();
+        if (runWords >= 3 && canBreak && !stay) breakHere();
         final onlyClosers = clauseWords == 0 || stay;
         out.addAll(t.sublist(i, i + closer.length));
         final after = i + closer.length;
@@ -294,6 +298,7 @@ class Segmenter {
           reset();
         } else {
           clauseWords += closer.length;
+          runWords += closer.length;
           closerOnly = onlyClosers;
           if (sinceComma >= 0) sinceComma += closer.length;
         }
@@ -302,7 +307,7 @@ class Segmenter {
 
       // A very long clause with no break: a conjunction that opens a new clause ("... and I don't
       // see ...", "... because the size is ...") starts a new sentence.
-      if (clauseWords >= _longClause &&
+      if (runWords >= _longClause &&
           _longBreakers.contains(lw) &&
           i + 1 < t.length &&
           (_subjectVerb(t, i + 1) ||
@@ -317,9 +322,9 @@ class Segmenter {
 
       // a discourse marker starting a new point, or a new subject and verb
       final marker = _phraseAt(t, i, _markers);
-      if (marker != null && clauseWords >= 3 && canBreak) {
+      if (marker != null && runWords >= 3 && canBreak) {
         breakHere();
-      } else if (clauseWords >= (prevIsComma ? 6 : 4) &&
+      } else if (runWords >= 4 &&
           canBreak &&
           // "heads up everyone, starting Monday we're closing": the subject belongs with the
           // short lead-in after a comma, not with a sentence of its own
@@ -337,6 +342,7 @@ class Segmenter {
       if (clauseWords == 0 && _subordinators.contains(lw)) subordinate = true;
       out.add(w);
       clauseWords++;
+      runWords++;
       closerOnly = false;
       if (sinceComma >= 0) sinceComma++;
       i++;

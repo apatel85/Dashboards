@@ -954,7 +954,6 @@
       "mess up": "make an error",
       "screw up": "make an error",
       "let you know": "inform you",
-      "let me know": "inform me",
       "stuff": "items",
       "a lot of": "many",
       "lots of": "many",
@@ -974,7 +973,6 @@
       "i feel like": "in my view",
       "just checking in": "i am following up on",
       "hope that makes sense": "please let me know if you have questions",
-      "i think we should": "i recommend we",
       "freaking out about": "concerned about",
       "can you": "could you",
       "can we": "could we",
@@ -1511,7 +1509,19 @@
       "seems",
       "seemed",
       "many",
-      "much"
+      "much",
+      "sure",
+      "certain",
+      "afraid",
+      "glad",
+      "happy",
+      "aware",
+      "worried",
+      "convinced",
+      "positive",
+      "curious",
+      "confident",
+      "hopeful"
     ],
     "subordinators": [
       "if",
@@ -1689,7 +1699,7 @@
       },
       {
         "route": "DO",
-        "pattern": "\\b(?:send|schedule|book|order|post|cancel|delete|pay|publish|forward|submit|transfer|reply to|update the)\\b(?! (?:me|us) (?:a |an |the )?(?:list|summary|explanation|example|idea|ideas))"
+        "pattern": "^\\W*(?:(?:please|can you|could you|would you|i want you to|i need you to|go ahead and)\\s+)*(?:send|schedule|book|order|post|cancel|delete|pay|publish|forward|submit|transfer|reply to)\\b(?!\\s+(?:me|us)\\b)"
       },
       {
         "route": "BUILD",
