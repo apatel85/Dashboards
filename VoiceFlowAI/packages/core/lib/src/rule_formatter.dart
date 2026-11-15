@@ -41,6 +41,22 @@ class RuleFormatter {
   /// and tests; the person never sees an error.
   String? lastFallbackReason;
 
+  /// The cleaned transcript: always-safe filler removed, heard-as look-alikes fixed and
+  /// self-corrections resolved, nothing else (no tone, no layout). This is what cloud polish gets
+  /// alongside the offline draft.
+  String clean(String input) {
+    var s = SelfCorrection.apply(ContextFixes.apply(input));
+    final fill = lang.fillersPure.map(RegExp.escape).join('|');
+    if (fill.isNotEmpty) {
+      s = s.replaceAll(
+          RegExp('(?<![A-Za-z])(?:$fill)(?![A-Za-z]),?\\s*',
+              caseSensitive: false),
+          '');
+    }
+    s = s.replaceAll(RegExp(r'[ \t]{2,}'), ' ').trim();
+    return _cap1(s);
+  }
+
   String format(String input, Profile p,
       {bool shorthandHundreds = false,
       PromptStyle promptStyle = const PromptStyle()}) {

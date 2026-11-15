@@ -170,6 +170,28 @@ void main() {
       expect(s.cloudActive, isTrue);
     });
 
+    testWidgets(
+      'the free-tier privacy note is shown, and masking is a switch',
+      (t) async {
+        final (_, s, _, _) = await mount(t);
+        expect(find.byKey(const Key('set-cloud-privacy')), findsOneWidget);
+        expect(
+          find.textContaining('free Gemini tier'),
+          findsOneWidget,
+          reason: 'the plain-words privacy note (spec section 2)',
+        );
+        expect(find.byKey(const Key('set-mask')), findsNothing);
+        await t.tap(find.byKey(const Key('set-cloud')));
+        await t.pumpAndSettle();
+        await t.tap(find.byKey(const Key('consent-agree')));
+        await t.pumpAndSettle();
+        expect(s.maskCloud, isFalse, reason: 'off until chosen');
+        await t.tap(find.byKey(const Key('set-mask')));
+        await t.pumpAndSettle();
+        expect(s.maskCloud, isTrue);
+      },
+    );
+
     testWidgets('a server on this computer needs no consent dialog', (t) async {
       final s = Settings()..cloudPreset = 'ollama';
       await mount(t, settings: s);

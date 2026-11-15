@@ -3,6 +3,7 @@ import 'adapters/polish_chain.dart';
 import 'history_store.dart';
 import 'field_kind.dart';
 import 'lang.dart';
+import 'masker.dart';
 import 'models.dart';
 import 'pack.dart';
 import 'polish_prompt.dart';
@@ -30,13 +31,17 @@ class DictationOptions {
 
   /// Text around the cursor, so a dictation fits into its sentence (see [ContinuationFlow]).
   final TextContext surrounding;
+
+  /// Cloud polish: send placeholders instead of names, numbers, dates and contact details.
+  final bool maskCloud;
   const DictationOptions(this.profile,
       {this.packs = const [],
       this.dictionary = const [],
       this.corrections = const {},
       this.fieldKind = FieldKind.text,
       this.promptStyle = const PromptStyle(),
-      this.surrounding = const TextContext()});
+      this.surrounding = const TextContext(),
+      this.maskCloud = false});
 }
 
 /// Capture is done by the caller; `run` takes the recorded PCM (spec §5.2).
@@ -58,7 +63,7 @@ class DictationPipeline {
   late final VoiceCommandParser _cmd = VoiceCommandParser(lang);
   late final PostProcessor _post = PostProcessor(lang);
   late final FieldFormatter _field = FieldFormatter(lang);
-  final PolishValidator _validator = PolishValidator();
+  late final PolishValidator _validator = PolishValidator(lang: lang);
 
   DictationPipeline(this.lang, this.stt, this.sink,
       {this.polish, this.polishProvider, this.history, EnergyVad? vad})
@@ -196,14 +201,41 @@ class DictationPipeline {
         ruled.split(' ').length < 3) {
       return (ruled, false);
     }
+    // The model gets the cleaned transcript as well as the offline draft, so it can recover from
+    // a rule mistake, and (optionally) placeholders instead of the specifics.
+    final transcript = _fmt.clean(text);
+    final values = <String, String>{};
+    final masker = Masker(lang);
+    // The draft is masked first; its values are then looked for in the transcript too.
+    final sentDraft =
+        o.maskCloud ? masker.mask(ruled, into: values).text : ruled;
+    final sentTranscript = o.maskCloud
+        ? masker.maskKnown(masker.mask(transcript, into: values).text, values)
+        : transcript;
     final out = await chain.complete(
         buildPolishPrompt(o.profile,
-            packs: o.packs, glossary: glossary, promptStyle: o.promptStyle),
-        ruled,
+            packs: o.packs,
+            glossary: glossary,
+            promptStyle: o.promptStyle,
+            banned: List<String>.from(
+                lang.register['bannedWords'] as List? ?? const [])),
+        buildPolishContent(o.profile, sentTranscript, sentDraft),
         allowCloud: allowCloud);
     if (out == null) return (ruled, false);
-    return _validator.validate(ruled, out, glossary: glossary) == null
-        ? (out.trim(), true)
+    // Checks run on what was sent (placeholders and all); only an accepted reply is restored.
+    final reason = _validator.validate(sentDraft, out,
+        glossary: o.maskCloud ? const [] : glossary,
+        profileId: o.profile.id,
+        transcript: sentTranscript);
+    if (reason != null) return (ruled, false);
+    final restored = masker.unmask(out.trim(), values);
+    // A restored reply must still pass the fact checks against the real text.
+    return _validator.validate(ruled, restored,
+                glossary: glossary,
+                profileId: o.profile.id,
+                transcript: transcript) ==
+            null
+        ? (restored, true)
         : (ruled, false);
   }
 

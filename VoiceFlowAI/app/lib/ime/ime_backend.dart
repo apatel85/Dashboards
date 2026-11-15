@@ -180,6 +180,7 @@ class ImeBackend {
         packs: packs,
         dictionary: s.dictionary,
         corrections: s.corrections,
+        maskCloud: s.maskCloud,
         fieldKind: kind,
         surrounding: TextContext(
           before: _clip(args['before']),

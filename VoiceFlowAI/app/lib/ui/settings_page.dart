@@ -207,7 +207,23 @@ class _SettingsPageState extends State<SettingsPage> {
                 value: s.cloudPolish,
                 onChanged: _toggleCloud,
               ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  t.setCloudPrivacyNote,
+                  key: const Key('set-cloud-privacy'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
               if (s.cloudPolish) ...[
+                SwitchListTile(
+                  key: const Key('set-mask'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(t.setMaskSwitch),
+                  subtitle: Text(t.setMaskNote),
+                  value: s.maskCloud,
+                  onChanged: c.setMaskCloud,
+                ),
                 Wrap(
                   spacing: 12,
                   crossAxisAlignment: WrapCrossAlignment.center,

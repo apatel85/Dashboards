@@ -5,7 +5,7 @@ class Settings {
   Settings();
   static const currentVersion = 2;
   int version = currentVersion;
-  String defaultProfileId = 'business';
+  String defaultProfileId = 'casual';
   Map<String, String> perAppProfiles = {};
   String hotkey = 'F9';
   String language = 'en';
@@ -17,6 +17,10 @@ class Settings {
   /// Cloud polish: off by default; requires explicit consent.
   bool cloudPolish = false;
   bool cloudConsent = false;
+
+  /// Replace names, numbers, amounts, dates, e-mail addresses and phone numbers with placeholders
+  /// before text goes to the cloud, and put them back on the device (spec section 13).
+  bool maskCloud = false;
   String cloudPreset = 'proxy'; // proxy | ollama | custom
   String ollamaUrl = 'http://localhost:11434/v1';
   String ollamaModel = '';
@@ -45,6 +49,7 @@ class Settings {
         'saveRecordings': saveRecordings,
         'cloudPolish': cloudPolish,
         'cloudConsent': cloudConsent,
+        'maskCloud': maskCloud,
         'cloudPreset': cloudPreset,
         'ollamaUrl': ollamaUrl,
         'ollamaModel': ollamaModel,
@@ -66,7 +71,7 @@ class Settings {
     var v = (m['version'] as int?) ?? 0;
     if (v < 1) {
       // v0 stored a single `profile` key.
-      m['defaultProfileId'] = m.remove('profile') ?? 'business';
+      m['defaultProfileId'] = m.remove('profile') ?? 'casual';
       v = 1;
     }
     if (v < 2) {
@@ -94,6 +99,7 @@ class Settings {
     s.saveRecordings = j['saveRecordings'] as bool? ?? false;
     s.cloudPolish = j['cloudPolish'] as bool? ?? false;
     s.cloudConsent = j['cloudConsent'] as bool? ?? false;
+    s.maskCloud = j['maskCloud'] as bool? ?? false;
     s.cloudPreset = j['cloudPreset'] as String? ?? 'proxy';
     s.ollamaUrl = j['ollamaUrl'] as String? ?? s.ollamaUrl;
     s.ollamaModel = j['ollamaModel'] as String? ?? '';

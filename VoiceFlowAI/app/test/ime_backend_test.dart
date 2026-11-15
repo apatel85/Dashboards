@@ -221,9 +221,10 @@ void main() {
     });
     expect((r['profile'] as Map)['id'], 'ai_prompting');
     final other = await b.dictate({'pcm': tone(), 'packageName': 'com.other'});
-    expect((other['profile'] as Map)['id'], 'business');
-    await b.setProfile('casual', null);
-    expect(((await b.status())['profile'] as Map)['id'], 'casual');
+    // another app falls back to the global default, which is Casual for a new install
+    expect((other['profile'] as Map)['id'], 'casual');
+    await b.setProfile('professional', null);
+    expect(((await b.status())['profile'] as Map)['id'], 'professional');
   });
 
   test('unload calls through', () async {

@@ -117,6 +117,7 @@ Future<void> main(List<String> args) async {
       packs: packStore.active, // the packs you turned on, in priority order
       dictionary: settings.dictionary,
       corrections: settings.corrections,
+      maskCloud: settings.maskCloud,
       promptStyle: PromptStyle.resolve(
         promptFormat: settings.promptFormat,
         aiLength: settings.aiLength,

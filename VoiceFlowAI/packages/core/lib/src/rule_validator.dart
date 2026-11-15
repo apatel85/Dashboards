@@ -42,7 +42,7 @@ class RuleValidator {
     return found;
   }
 
-  int _negCount(String s, {bool countLimits = false}) {
+  static int negationCount(String s, {bool countLimits = false}) {
     var n = 0;
     for (final w in RegExp(r"[A-Za-z]+(?:['’][A-Za-z]+)*")
         .allMatches(s.toLowerCase())
@@ -72,7 +72,7 @@ class RuleValidator {
     }
 
     // 3: negations survive
-    if (_negCount(output, countLimits: true) < _negCount(cleaned)) {
+    if (negationCount(output, countLimits: true) < negationCount(cleaned)) {
       return 'lost a negation';
     }
 

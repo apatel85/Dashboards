@@ -12,7 +12,7 @@ starts passing fails the test until it is promoted, so the list only moves forwa
 
 | | Before any change | Now |
 |---|---|---|
-| Spec examples passing exactly | 1 of 20 (C7) | 7 of 20 (C1, C3, C4, C6, C7, C8 casual, A1) |
+| Spec examples passing exactly | 1 of 20 (C7) | 8 of 20 (C1, C3, C4, C6, C7, C8 casual, A1, A2) |
 
 The baseline also exposed a **fact-changing bug**: "forty-two fifty not forty-five twenty" came out
 as "92 not 65" (the number reader added the groups together). Fixed first.
@@ -34,25 +34,26 @@ as "92 not 65" (the number reader added the groups together). Fixed first.
 |---|---|---|
 | 1 | Sentence breaks for unpunctuated speech (rule layer) | DONE, AUTOMATED (`spec_stages_test.dart`). Model layer (sherpa punctuation model) NOT DONE: needs a device to measure |
 | 2 | Apostrophe repair | DONE, AUTOMATED (most were already in the contractions table; added "its" and "id" with guards) |
-| 3 | User corrections and dictionary before formatting | NOT DONE |
-| 4 | Pack patterns before number formatting (cricket "4/22") | NOT DONE |
-| 5 | Validator for rule output, fallback in the selected profile | NOT DONE |
-| 6 | Extend `PolishValidator` (per-profile overlap floors, negations, banned words) | NOT DONE |
-| 7 | Cloud polish: send cleaned transcript too, mode-specific prompts, masking | NOT DONE |
+| 3 | User corrections and dictionary before formatting | DONE, AUTOMATED (`PostProcessor.fixHeard` runs before the formatter; abbreviations and pack rules stay at the end via `finish`) |
+| 4 | Pack patterns before number formatting (cricket "4/22") | DONE, AUTOMATED: pack rules may set `"stage": "words"` and use `{num}`; the cricket pack uses it ("four for twenty two" -> 4/22, not with a unit or currency after) |
+| 5 | Validator for rule output, fallback in the selected profile | DONE, AUTOMATED (`RuleValidator`: lost/invented numbers, negations, filler, shouting, tags; fallback is minimal formatting in the selected profile; the empty-result fallback now uses the selected profile, not business). Limit: a number read wrongly the same way on both sides is not caught |
+| 6 | Extend `PolishValidator` | DONE, AUTOMATED (negations, invented numbers, apology/promise, banned words, placeholders; overlap floor 85% same-order for Casual, 40% Business/Professional, none for AI prompting) |
+| 7 | Cloud polish | PARTLY DONE, AUTOMATED: cleaned transcript sent with the draft; mode-specific system instructions (sections 4A and 13); masking option with restore (Settings switch, off by default); free-tier privacy note next to the switch; Casual not polished by default. NOT DONE: the Edge Function's "newest flash model" fallback and model logging (needs a deploy of the live function, which I did not touch), the Polish button / auto-polish trigger rule |
 | 8 | Move in-code lists to JSON | PARTLY: all new lists are JSON; the older lists in `self_correction.dart`, `context_fixes.dart`, `clock_time.dart`, `app_defaults.dart` are still in code |
 
 ## Other spec items touched
 - Casual numbers are now digits ("seven" -> 7, "twenty bucks" -> $20), as in section 4A. This changed
   four casual/business goldens and one pack golden on purpose (diffs reviewed).
+- Default mode for a new install is now Casual (existing installs keep what they saved).
 - Casual spoken forms ("gonna" -> "going to") are on by default (a profile rule `spokenForms`; the
   Settings switch is NOT DONE).
 - Restart self-correction ("at the, no wait, at the coffee place") added.
 - Bare opening greeting ("hey ...") is dropped in Business, Professional and Prompt when nobody is
   named; a named greeting keeps the name and now gets its comma.
 
-## Still failing from the baseline (13)
+## Still failing from the baseline (12)
 C2 (sound-alikes by context), C5 (grammar: "i seen", "didn't had"), C8 professional, R1, R3, R7,
-R8, R9, R10 (both tones), R11 (sentence rewrite), R12, A2 (cricket 4/22). Most need the
+R8, R9, R10 (both tones), R11 (sentence rewrite), R12. Most need the
 Professional word map / emotion map / restructuring (spec sections 8-10) or the model layer.
 
 ## Decisions waiting for the owner

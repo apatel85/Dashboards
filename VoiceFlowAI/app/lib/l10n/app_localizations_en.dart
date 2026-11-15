@@ -376,6 +376,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get setCloudSwitch => 'Use cloud polish';
 
   @override
+  String get setCloudPrivacyNote =>
+      'Privacy: on Google\'s free Gemini tier, the terms allow submitted text and replies to be used to improve Google\'s products, and people may read them. Paid tiers do not carry that term. VoiceFlow always makes an offline result first and only replaces it with a polished one that passes its checks.';
+
+  @override
+  String get setMaskSwitch => 'Hide names and numbers from the cloud';
+
+  @override
+  String get setMaskNote =>
+      'Names, numbers, amounts, dates, e-mail addresses and phone numbers are swapped for placeholders before sending, and put back on this device after the reply.';
+
+  @override
   String get setConsentTitle => 'Send text for polishing?';
 
   @override

@@ -736,6 +736,24 @@ abstract class AppLocalizations {
   /// **'Use cloud polish'**
   String get setCloudSwitch;
 
+  /// No description provided for @setCloudPrivacyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy: on Google\'s free Gemini tier, the terms allow submitted text and replies to be used to improve Google\'s products, and people may read them. Paid tiers do not carry that term. VoiceFlow always makes an offline result first and only replaces it with a polished one that passes its checks.'**
+  String get setCloudPrivacyNote;
+
+  /// No description provided for @setMaskSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide names and numbers from the cloud'**
+  String get setMaskSwitch;
+
+  /// No description provided for @setMaskNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Names, numbers, amounts, dates, e-mail addresses and phone numbers are swapped for placeholders before sending, and put back on this device after the reply.'**
+  String get setMaskNote;
+
   /// No description provided for @setConsentTitle.
   ///
   /// In en, this message translates to:

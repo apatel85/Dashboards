@@ -32,6 +32,11 @@ class SettingsController extends ChangeNotifier {
     await _commit();
   }
 
+  Future<void> setMaskCloud(bool on) async {
+    settings.maskCloud = on;
+    await _commit();
+  }
+
   Future<void> setPreset(String preset) async {
     settings.cloudPreset = preset;
     // switching to a different kind of server is a new decision: ask again

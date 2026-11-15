@@ -7,6 +7,8 @@ import 'helpers.dart';
 void main() {
   _stage34();
   _stage5();
+  _stage6();
+  _stage7();
   final f = RuleFormatter(loadLang());
   String fmt(String s, [String p = 'business']) => f.format(s, loadProfile(p));
 
@@ -300,6 +302,213 @@ void _stage5() {
           expect(f.lastFallbackReason, isNull, reason: '$id: ${c['in']}');
         }
       }
+    });
+  });
+}
+
+void _stage6() {
+  final v = PolishValidator(lang: loadLang());
+  String? check(String input, String out,
+          {String profile = 'business', String? transcript}) =>
+      v.validate(input, out, profileId: profile, transcript: transcript);
+
+  group('polish validator (spec change 6)', () {
+    test('a reply that changes a number is rejected, either way', () {
+      expect(check('the total is 4,250', 'The total is 4,520.'), 'digits');
+      expect(
+          check('send the report friday', 'Send the report by Friday, 5 pm.'),
+          'invented number');
+    });
+    test('a lost negation is rejected', () {
+      expect(
+          check("we can't offer a discount at that volume",
+              'We offer a discount at that volume.'),
+          'negation');
+    });
+    test('an apology or promise the speaker did not make is rejected', () {
+      expect(
+          check('the shipment is late', 'We apologize, the shipment is late.'),
+          'apology');
+      expect(check('send the report today', 'We guarantee the report today.'),
+          'promise');
+      // ...but one the speaker made stays allowed
+      expect(
+          check('sorry the shipment is late', 'Sorry, the shipment is late.'),
+          isNull);
+    });
+    test('banned official phrases are rejected unless the speaker used them',
+        () {
+      expect(check('use the new tool', 'Please utilize the new tool.'),
+          'banned word');
+      expect(check('we need to touch base', 'We need to touch base.'), isNull);
+      // casual and prompts are not held to the professional word list
+      expect(
+          check('use the new tool', 'Please utilize the new tool.',
+              profile: 'casual', transcript: 'use the new tool'),
+          isNot('banned word'));
+    });
+    test('masking placeholders must come back exactly', () {
+      expect(check('send [[N1]] to [[N2]]', 'Send [[N1]] to [[N2]].'), isNull);
+      expect(
+          check('send [[N1]] to [[N2]]', 'Send [[N1]] to Bob.'), 'placeholder');
+      expect(check('send it', 'Send [[N9]].'), 'placeholder');
+    });
+    test('the word-overlap floor depends on the profile', () {
+      const input =
+          'hey are you still coming tonight we are going to start around seven';
+      const reworded =
+          'Are you still coming this evening? We begin at about seven.';
+      expect(check(input, reworded, profile: 'casual'),
+          'drift'); // not 85% the same words
+      expect(check(input, reworded, profile: 'business'), isNull);
+      expect(check(input, reworded, profile: 'ai_prompting'), isNull);
+    });
+    test('casual passes a light correction', () {
+      expect(
+          check('i seen the email yesterday but i didnt had time to reply',
+              'I saw the email yesterday but I didnt have time to reply.',
+              profile: 'casual'),
+          isNull);
+    });
+    test('the original checks still hold', () {
+      expect(check('hi', ''), 'empty');
+      expect(check('hi there', 'Sure! Hi there.'), 'preface');
+      expect(check('hi', 'x' * 300), 'too long');
+    });
+  });
+}
+
+void _stage7() {
+  final lang = loadLang();
+
+  group('masking (spec section 13)', () {
+    final m = Masker(lang);
+    test(
+        'names, numbers, amounts, dates and contact details become placeholders',
+        () {
+      final r = m.mask(
+          'Send 4,250 dollars to Priya by Friday, email priya@example.com or call 555 123 4567 at 3:30 pm.');
+      expect(r.text, isNot(contains('Priya')));
+      expect(r.text, isNot(contains('4,250')));
+      expect(r.text, isNot(contains('Friday')));
+      expect(r.text, isNot(contains('example.com')));
+      expect(r.text, isNot(contains('555')));
+      expect(r.text, matches(RegExp(r'\[\[N\d+\]\]')));
+      expect(m.unmask(r.text, r.values),
+          'Send 4,250 dollars to Priya by Friday, email priya@example.com or call 555 123 4567 at 3:30 pm.');
+    });
+    test(
+        'the same value gets the same placeholder in the transcript and the draft',
+        () {
+      final values = <String, String>{};
+      final a = m.mask('Send it to Priya on Friday.', into: values).text;
+      final b = m.mask('Send it to Priya on Friday.', into: values).text;
+      expect(a, b);
+      expect(values.length, 2);
+    });
+    test('plain words are left alone', () {
+      expect(m.mask('we need to review the report').text,
+          'we need to review the report');
+    });
+  });
+
+  group('cloud polish in the pipeline', () {
+    DictationPipeline mk(String said, FakePolish e, [FakeSink? sink]) =>
+        DictationPipeline(loadLang(), FakeStt(said), sink ?? FakeSink(),
+            polish: PolishChain([e]));
+    DictationOptions opts({String profile = 'business', bool mask = false}) =>
+        DictationOptions(loadProfile(profile), maskCloud: mask);
+
+    test('the model gets the cleaned transcript and the offline draft',
+        () async {
+      String? seen;
+      final e = FakePolish((t) {
+        seen = t;
+        return 'The shipment is late.';
+      });
+      await mk('um the shipment is late', e).run(speechPcm(), opts());
+      expect(seen, contains('<transcript>The shipment is late'));
+      expect(seen, contains('<draft>'));
+      expect(seen, contains('Mode: professional.'));
+      expect(seen!.trimRight(), endsWith('Improve the draft using the rules.'));
+    });
+    test(
+        'with masking on, the model never sees the specifics and they are restored',
+        () async {
+      String? seen;
+      final e = FakePolish((t) {
+        seen = t;
+        // echo the draft back, as a polite model would
+        return RegExp(r'<draft>(.*?)</draft>', dotAll: true)
+            .firstMatch(t)!
+            .group(1)!;
+      });
+      final r = await mk('send the report to priya by friday', e)
+          .run(speechPcm(), opts(mask: true));
+      expect(seen, isNot(contains('Priya')));
+      expect(seen, isNot(contains('priya')));
+      expect(seen, isNot(contains('Friday')));
+      expect(r.polishUsed, isTrue);
+      expect(r.finalText, contains('Priya'));
+      expect(r.finalText, contains('Friday'));
+    });
+    test('a reply that changes a masked placeholder is rejected', () async {
+      final e = FakePolish((t) => 'Send the report to Bob by [[N9]].');
+      final r = await mk('send the report to priya by friday', e)
+          .run(speechPcm(), opts(mask: true));
+      expect(r.polishUsed, isFalse);
+      expect(r.finalText, contains('Priya'));
+    });
+    test(
+        'a reply that changes a number is rejected and the offline text is shown',
+        () async {
+      final e = FakePolish((t) => 'The total is 4,520.');
+      final r = await mk('the total is forty two fifty dollars', e)
+          .run(speechPcm(), opts());
+      expect(r.polishUsed, isFalse);
+      expect(r.finalText, contains('4,250'));
+    });
+    test('Casual is not polished by default', () async {
+      final e = FakePolish((t) => 'Hey there my friend how are you.');
+      final r = await mk('hey there how are you', e)
+          .run(speechPcm(), opts(profile: 'casual'));
+      expect(e.calls, 0);
+      expect(r.polishUsed, isFalse);
+    });
+    test('timeout and rate limit show the offline result without an error',
+        () async {
+      for (final err in [
+        const PolishException('timeout'),
+        const PolishException('rl', rateLimited: true)
+      ]) {
+        final r = await mk(
+                'the shipment is late today', FakePolish((t) => t, error: err))
+            .run(speechPcm(), opts());
+        expect(r.status, DictationStatus.ok);
+        expect(r.polishUsed, isFalse);
+        expect(r.finalText, 'The shipment is late today.');
+      }
+    });
+  });
+
+  group('polish instructions are specific to the mode', () {
+    String sys(String id) => buildPolishPrompt(loadProfile(id));
+    test('casual asks for a minimal correction only', () {
+      expect(sys('casual'), contains('Correct this dictated message'));
+      expect(sys('casual'), contains('Do not make it more formal'));
+    });
+    test('professional lists the banned words and forbids additions', () {
+      final p = buildPolishPrompt(loadProfile('professional'),
+          banned: ['utilize', 'circle back']);
+      expect(p, contains('Do not use: utilize, circle back'));
+      expect(p, contains('Add no apology, promise, deadline'));
+      expect(p, contains('purpose and the ask first'));
+    });
+    test('prompt mode keeps the chosen layout and the CLARIFY rule', () {
+      final p = buildPolishPrompt(loadProfile('ai_prompting'),
+          promptStyle: const PromptStyle(format: 'xml'));
+      expect(p, contains('CLARIFY:'));
+      expect(p, contains('lowercase tag'));
     });
   });
 }
