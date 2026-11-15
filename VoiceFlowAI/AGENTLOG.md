@@ -7,6 +7,21 @@
 - iOS out of scope. English first. Flutter pinned 3.50.0 (Dart 3.14).
 - Golden fixtures live in `packages/core/test_fixtures/formatting/<profile>/cases.json`.
 
+## 2026-11-15 — 0.6.0: floating button, no time limit, tone/AI-prompt fixes, cricket pack — IN PROGRESS
+```
+Milestone: post-M4 change request   Status: IN PROGRESS (automated checks pending, see below)   Version: 0.6.0
+Request (owner): (1) no replacement keyboard, a floating button instead; (2) dictation stopped mid-speech: remove any limit; (3) tones (casual/business/professional/AI prompting) not distinct, AI prompting must be token-efficient in and out; add a cricket pack.
+Evidence:
+  - core 336 tests, app 124 tests, flutter analyze clean (local) — AUTOMATED-PASS locally; CI run for 2a7159a: PENDING
+  - Android emulator (floating button, accessibility typing, ~60 s dictation, password refusal): PENDING (first run of this rewrite; Kotlin was never compiled locally, no Android SDK here)
+  - real phone / real voice: MANUAL-NEEDED — A1-A12 in docs/MANUAL_TEST_CHECKLIST.md
+```
+- **Cause of the "stopped recording" report:** the Android keyboard hard-stopped after 28 s (`autoStop`) and the speech engine only ever took one clip of about 30 s. Windows had a similar cap. Fix: `LongDictationSession` (core) takes audio as it streams, cuts at a pause (after 8 s of speech; forced at the quietest or shortest-pause point between 20-24 s), transcribes each piece while you keep talking, and joins them. `DictationService.maxDuration` is now null by default. Core tests cover 8-minute and cancelled sessions. Not measured on a real voice: the joins at forced cuts (a word spanning a forced cut can be split).
+- **Android is now a floating button, not a keyboard:** `FloatingService` (microphone foreground service + overlay button), `VoiceFlowAccessibilityService` (types into the focused field with ACTION_SET_TEXT, refuses password fields, "scratch that" restores the previous text, clipboard if no field is focused), `BubbleView`, audio streamed to Dart through `streamStart/streamChunk/streamEnd/streamCancel`. `VoiceFlowIME`, `KeyboardUi` and the keyboard setup steps are gone. The E2E seam is now a broadcast receiver that exists only in the `e2e` flavor. **Dropped on purpose:** the keyboard's pack suggestion chip and undo button (packs are switched in the app; undo is the "scratch that" command). **Not done:** restoring the button after reboot; hold-to-talk.
+- **Tone:** the four profiles now differ by a `register` (casual keeps slang; business expands it and says Hi; professional also drops filler/intensifiers, uses "thank you", no "!"; prompt is directive). Golden cases added for each. Known flaw left visible: "its" is not turned into "it's".
+- **AI prompting, token-lean:** see `docs/AI_PROMPTING_RESEARCH.md` (sources and what was and was not adopted). Spoken constraints become compact output specs ("Max 3 sentences.", "Under 100 words.", "No explanation. Code only."). Savings were estimated by word count only, not measured on a tokenizer or a bill.
+- **Cricket pack:** `assets/packs/cricket` (vocabulary, LBW/DRS/IPL/ODI casing, "one fifty for three" -> "150/3", "73 not out" -> "73*", Duckworth–Lewis–Stern, templates, app detectors). 13 goldens. Illustrative, not an authority. Bowling figures such as "four for twenty two" are NOT handled yet.
+
 ## 2026-11-14 — M4: hardening, cloud polish wired in — DONE (automated)
 ```
 Milestone: M4   Status: DONE (automated criteria)   Version: 0.5.0
