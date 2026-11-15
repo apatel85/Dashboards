@@ -35,7 +35,7 @@ Download `VoiceFlow-x.y.z-arm64.apk` from the latest `voiceflow-v…` release. I
 | **A5** | Say "scratch that" as its own dictation. Dictate again, then long-press the button while it is red (listening). | "Scratch that" removes exactly the last dictated text. Long-press while listening cancels: nothing is typed. | ☐ | |
 | **A6** | In your messages app, a browser address bar, an email "To" field, a phone-number box. Dictate into each. | Address bar: a web address with no spaces. Email field: an address like `john@example.com`. Phone box: digits only. Normal text boxes: prose. | ☐ | which apps? |
 | **A7** | Open any password field (a sign-in page). | Tap the password box, then the button: a note says "Dictation is off in password fields" and it does not record. | ☐ | |
-| **A8** | Long-press the idle button a few times, dictate; switch to another app and back. Drag the button to the other side of the screen and to the bottom. | A note shows the new style name each time; it is remembered per app. The button stays where you drop it and does not take focus away from the text box. | ☐ | |
+| **A8** | Press and hold the idle button: a list of styles opens next to it (current one ticked). Pick one, dictate; switch to another app and back (its own style is ticked there). Drag the button to the other side of the screen and to the bottom. | A note shows the chosen style name; it is remembered per app and the list ticks it next time. The button stays where you drop it and does not take focus away from the text box. | ☐ | |
 | **A13** | Open any app and look at the home screen, then tap into a text box, then leave the box (go Home). | No floating button on the home screen. It appears when you tap a text box (or the keyboard opens) and goes away shortly after you leave. It never appears in a password box. | ☐ | which apps did not show it? |
 | **A16** | Dictate: "We are meeting on Monday. At nine am with the client. Actually, it's not Monday, it's Tuesday at ten am." in Business and Professional. | Only "Tuesday" and "10 am" remain; no sentence starts with "So"; a new point starts a new paragraph. | ☐ | what did it hear? |
 | **A17** | Style tab -> *Add another app*: tap the box. | A searchable list of your apps appears; pick one, choose a style, tap Add; the app appears in the list above with its name. Dictate in it: that style is used. | ☐ | |
@@ -45,7 +45,7 @@ Download `VoiceFlow-x.y.z-arm64.apk` from the latest `voiceflow-v…` release. I
 
 Also tell me: was it fast enough, did the button ever vanish or lag, which apps would not accept text (it falls back to the clipboard), did your battery or phone get hot, did anything look cramped or confusing? TalkBack users: are the buttons announced sensibly?
 
-Known gaps (do not report as bugs): no hold-to-talk mode; long-press only cycles the style (no list); English only; the button is not restored after a reboot.
+Known gaps (do not report as bugs): no hold-to-talk mode; English only; the button is not restored after a reboot.
 
 ---
 

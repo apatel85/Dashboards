@@ -68,6 +68,31 @@ void main() {
     expect(s['cloud'], false);
   });
 
+  test(
+    'status(packageName) reports the style that applies in that app',
+    () async {
+      await b.setProfile('professional', 'com.example.mail');
+      expect(
+        ((await b.status('com.example.mail'))['profile'] as Map)['id'],
+        'professional',
+      );
+      // another app, and no app, fall back to the default style
+      expect(
+        ((await b.status('com.example.other'))['profile'] as Map)['id'],
+        isNot('professional'),
+      );
+      expect(
+        ((await b.status())['profile'] as Map)['id'],
+        isNot('professional'),
+      );
+      // the Kotlin chooser asks over the channel with a packageName argument
+      final viaChannel = await b.handle(
+        const MethodCall('status', {'packageName': 'com.example.mail'}),
+      ) as Map;
+      expect((viaChannel['profile'] as Map)['id'], 'professional');
+    },
+  );
+
   test('dictate: model missing, password, ok, field kinds', () async {
     expect((await b.dictate({'pcm': tone()}))['status'], 'modelMissing');
     expect(

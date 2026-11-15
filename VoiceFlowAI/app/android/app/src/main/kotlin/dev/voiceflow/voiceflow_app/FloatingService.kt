@@ -10,7 +10,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -19,7 +21,10 @@ import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.View
 import android.view.WindowManager
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import kotlin.math.abs
 
@@ -46,17 +51,31 @@ class FloatingService : Service() {
     private var profiles: List<Pair<String, String>> = emptyList()
     private var profileId = ""
 
-    private val recorder = MicRecorder { chunk, lvl ->
-        main.post {
-            if (state == BubbleState.LISTENING) {
-                bubble?.setLevel(lvl)
-                DartBridge.call(this, "streamChunk", mapOf("pcm" to chunk))
+    private val recorder = MicRecorder(
+        onChunk = { chunk, lvl ->
+            main.post {
+                if (state == BubbleState.LISTENING) {
+                    bubble?.setLevel(lvl)
+                    DartBridge.call(this, "streamChunk", mapOf("pcm" to chunk))
+                }
             }
-        }
-    }
+        },
+        onLost = {
+            // The microphone was taken (a call, another app). Keep what was said so far.
+            main.post {
+                if (state == BubbleState.LISTENING) {
+                    Log.w("VoiceFlow", "microphone lost while listening")
+                    say(R.string.vf_mic_lost)
+                    stopAndDictate()
+                }
+            }
+        },
+    )
     private val idleUnload = Runnable { // free ~480 MB: drop the whole engine after 5 idle minutes
-        if (state == BubbleState.IDLE) ImeEngine.destroy()
+        if (state == BubbleState.IDLE) ImeEngine.shutdown()
     }
+    private var picker: View? = null
+    private val hidePicker = Runnable { closePicker() }
 
     override fun onBind(i: Intent?): IBinder? = null
 
@@ -182,11 +201,15 @@ class FloatingService : Service() {
         }
     }
 
-    // ---- gestures: tap = start/stop, long-press = cancel while listening, else cycle the style
+    // ---- gestures: tap = start/stop (or abort a stuck "working"), press and hold = choose the
+    // style (cancel while listening)
     private fun onTap() {
+        closePicker()
         when (state) {
             BubbleState.IDLE -> startListening()
             BubbleState.LISTENING -> stopAndDictate()
+            // Escape hatch: if "working" ever drags on, a tap abandons it and restarts the engine.
+            BubbleState.PROCESSING -> { cancelAll(); ImeEngine.destroy(); say(R.string.vf_cancelled) }
             else -> {}
         }
     }
@@ -194,25 +217,97 @@ class FloatingService : Service() {
     private fun onLongPress() {
         when (state) {
             BubbleState.LISTENING -> { cancelAll(); say(R.string.vf_cancelled) }
-            BubbleState.IDLE -> cycleProfile()
+            BubbleState.IDLE -> if (picker != null) closePicker() else showStylePicker()
             else -> {}
         }
     }
 
-    private fun cycleProfile() {
-        if (profiles.isEmpty()) { refreshStatus(); return }
-        val i = profiles.indexOfFirst { it.first == profileId }
-        val next = profiles[(i + 1) % profiles.size]
-        profileId = next.first
-        val a11y = VoiceFlowAccessibilityService.instance
-        val pkgName = a11y?.focusedField()?.pkg
-        DartBridge.call(this, "setProfile", mapOf("id" to next.first, "packageName" to pkgName))
-        Toast.makeText(this, getString(R.string.vf_style, next.second), Toast.LENGTH_SHORT).show()
-        Log.i("VoiceFlow", "STYLE ${next.first} pkg=$pkgName")
+    // ---- the style chooser (press and hold the button)
+    private fun showStylePicker() {
+        val pkgName = VoiceFlowAccessibilityService.instance?.focusedField()?.pkg
+        // Ask for the style that applies in the app being typed into, so the tick is right.
+        DartBridge.call(this, "status", mapOf("packageName" to pkgName), 10_000) { r ->
+            (r as? Map<*, *>)?.let { applyStatus(it) }
+            if (profiles.isEmpty()) { say(R.string.vf_error); return@call }
+            if (state == BubbleState.IDLE && attached) buildPicker(pkgName)
+        }
     }
 
-    private fun refreshStatus() = DartBridge.call(this, "status", null) { r ->
-        val m = r as? Map<*, *> ?: return@call
+    private fun buildPicker(pkgName: String?) {
+        closePicker()
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(6), dp(6), dp(6), dp(6))
+            background = GradientDrawable().apply { setColor(Color.parseColor("#1F2937")); cornerRadius = dp(16).toFloat() }
+            elevation = dp(8).toFloat()
+        }
+        card.addView(TextView(this).apply {
+            text = getString(if (pkgName == null) R.string.vf_style_all else R.string.vf_style_this_app)
+            setTextColor(Color.parseColor("#9CA3AF")); textSize = 12f
+            setPadding(dp(12), dp(8), dp(12), dp(4))
+        })
+        val rows = ArrayList<Pair<String, TextView>>()
+        for ((id, name) in profiles) {
+            val row = TextView(this).apply {
+                text = (if (id == profileId) "✓  " else "    ") + name
+                setTextColor(Color.WHITE); textSize = 16f
+                minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(12), 0, dp(20), 0)
+                if (id == profileId) background = GradientDrawable().apply {
+                    setColor(Color.parseColor("#2563EB")); cornerRadius = dp(10).toFloat()
+                }
+                setOnClickListener { chooseStyle(id, name, pkgName) }
+            }
+            card.addView(row); rows.add(id to row)
+        }
+        card.setOnTouchListener { _, e -> if (e.actionMasked == MotionEvent.ACTION_OUTSIDE) closePicker(); false }
+        card.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        val b = lp ?: return
+        val dm = resources.displayMetrics
+        val onRight = b.x + dp(28) > dm.widthPixels / 2
+        val x = if (onRight) b.x - card.measuredWidth - dp(8) else b.x + dp(56) + dp(8)
+        val y = (b.y + dp(28) - card.measuredHeight / 2).coerceIn(dp(24), maxOf(dp(24), dm.heightPixels - card.measuredHeight - dp(48)))
+        val p = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            // Never takes focus, so the text box you are typing in keeps it.
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            PixelFormat.TRANSLUCENT,
+        ).apply { gravity = Gravity.TOP or Gravity.START; this.x = x.coerceAtLeast(0); this.y = y }
+        try {
+            wm.addView(card, p)
+            picker = card
+            main.removeCallbacks(hide)
+            main.postDelayed(hidePicker, 8000)
+            Log.i("VoiceFlow", "STYLE_PICKER shown pkg=$pkgName current=$profileId")
+            card.post {
+                rows.forEach { (id, v) ->
+                    val loc = IntArray(2); v.getLocationOnScreen(loc)
+                    Log.i("VoiceFlow", "PICKER_ITEM $id ${loc[0] + v.width / 2} ${loc[1] + v.height / 2}")
+                }
+            }
+        } catch (e: Exception) { Log.e("VoiceFlow", "style picker failed: $e") }
+    }
+
+    private fun closePicker() {
+        main.removeCallbacks(hidePicker)
+        val v = picker ?: return
+        picker = null
+        try { wm.removeView(v) } catch (_: Exception) {}
+        if (!inputActive && state == BubbleState.IDLE) main.postDelayed(hide, 700)
+    }
+
+    private fun chooseStyle(id: String, name: String, pkgName: String?) {
+        profileId = id
+        // Remembered for this app (or as the default when no app is known); used from the next dictation.
+        DartBridge.call(this, "setProfile", mapOf("id" to id, "packageName" to pkgName))
+        Toast.makeText(this, getString(R.string.vf_style, name), Toast.LENGTH_SHORT).show()
+        Log.i("VoiceFlow", "STYLE $id pkg=$pkgName")
+        closePicker()
+    }
+
+    private fun applyStatus(m: Map<*, *>) {
         modelReady = m["modelReady"] == true
         profiles = (m["profiles"] as? List<*>)?.mapNotNull {
             val p = it as? Map<*, *>
@@ -221,6 +316,12 @@ class FloatingService : Service() {
         } ?: emptyList()
         profileId = (m["profile"] as? Map<*, *>)?.get("id") as? String ?: ""
     }
+
+    private fun refreshStatus(then: (() -> Unit)? = null) =
+        DartBridge.call(this, "status", null, 15_000) { r ->
+            (r as? Map<*, *>)?.let { applyStatus(it) }
+            then?.invoke()
+        }
 
     // ---- dictation
     private fun say(res: Int) {
@@ -236,9 +337,21 @@ class FloatingService : Service() {
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             say(R.string.vf_mic_permission); openApp(); return false
         }
-        if (!modelReady) { refreshStatus(); say(R.string.vf_setup); openApp(); return false }
+        if (!modelReady) {
+            // Maybe just stale (the engine restarted): ask again before sending the person to Settings.
+            refreshStatus {
+                if (modelReady) { if (state == BubbleState.IDLE) startListening() }
+                else { say(R.string.vf_setup); openApp() }
+            }
+            return false
+        }
         val a11y = VoiceFlowAccessibilityService.instance
-        if (a11y == null) { say(R.string.vf_need_access); openApp(); return false }
+        if (a11y == null) {
+            // Android switched the typing service off (or it is still reconnecting).
+            say(R.string.vf_need_access)
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return false
+        }
         val f = a11y.focusedField()
         if (f == null) { say(R.string.vf_no_field); return false }
         if (f.password) { say(R.string.vf_password); return false }
@@ -281,8 +394,16 @@ class FloatingService : Service() {
         Log.i("VoiceFlow", "STATE processing")
         val mine = ++token
         val k = kind
-        DartBridge.call(this, "streamEnd", null) { r ->
+        // 90 s ceiling: transcription happens while you talk, so the end is normally quick. If Dart
+        // never answers, do not stay "working" for good.
+        DartBridge.call(this, "streamEnd", null, 90_000) { r ->
             if (mine != token) return@call // cancelled meanwhile
+            if (r == null) { // engine wedged or gone: start over with a fresh one next time
+                Log.w("VoiceFlow", "streamEnd gave no answer; restarting the engine")
+                ImeEngine.destroy()
+                modelReady = true
+                refreshStatus()
+            }
             @Suppress("UNCHECKED_CAST")
             val m = (r as? Map<String, Any?>) ?: mapOf("status" to "error")
             val status = m["status"] as? String ?: "error"
@@ -332,9 +453,10 @@ class FloatingService : Service() {
         instance = null
         main.removeCallbacksAndMessages(null)
         if (state == BubbleState.LISTENING) recorder.stop()
+        closePicker()
         detach()
         bubble = null
-        ImeEngine.destroy()
+        ImeEngine.shutdown()
         super.onDestroy()
     }
 

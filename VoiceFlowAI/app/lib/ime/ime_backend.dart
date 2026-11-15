@@ -121,9 +121,18 @@ class ImeBackend {
 
   void dismissPack(String id) => _dismissed.add(id);
 
-  Future<Map<String, Object?>> status() async {
+  /// [packageName]: report the style that applies in that app (its own choice, else the default).
+  Future<Map<String, Object?>> status([String? packageName]) async {
     final s = await _settings();
-    final p = _profile(s.defaultProfileId);
+    final perApp = PerAppProfiles(
+      s.perAppProfiles,
+      onChanged: (_) {},
+      ignore: const {},
+    );
+    final p = _profile(
+      (packageName == null ? null : perApp.profileFor(packageName)) ??
+          s.defaultProfileId,
+    );
     return {
       'modelReady': models.installed,
       'onboardingDone': s.onboardingDone,
@@ -318,7 +327,7 @@ class ImeBackend {
       case 'ping':
         return 'pong';
       case 'status':
-        return status();
+        return status(a['packageName'] as String?);
       case 'dictate':
         return dictate(a);
       case 'streamStart':

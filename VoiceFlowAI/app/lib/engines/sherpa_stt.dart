@@ -48,7 +48,17 @@ class SherpaSttEngine implements SttEngine {
       TransferableTypedData.fromList([pcm16k]),
       reply.sendPort,
     ]);
-    final r = await reply.first;
+    // Never wait forever: a dead or wedged decoder must not leave a dictation "processing"
+    // for good. Generous: base.en decodes far faster than real time.
+    final limit = Duration(seconds: 30 + pcm16k.length ~/ 2 ~/ 16000);
+    Object? r;
+    try {
+      r = await reply.first.timeout(limit);
+    } on TimeoutException {
+      reply.close();
+      await unload(); // next dictation reloads a fresh decoder
+      throw StateError('transcription timed out');
+    }
     reply.close();
     if (r is! List || r[0] != 'ok') {
       throw StateError('transcription failed: $r');
@@ -61,10 +71,22 @@ class SherpaSttEngine implements SttEngine {
   }
 
   Future<void> unload() async {
-    _send?.send('close');
+    final send = _send;
+    final iso = _isolate;
     _send = null;
-    _isolate?.kill(priority: Isolate.beforeNextEvent);
     _isolate = null;
+    if (send != null) {
+      // Ask the decoder to free the native model and wait for it to say so. Killing the
+      // isolate straight away skipped recognizer.free(), leaking the model's memory on
+      // every unload/reload cycle.
+      final ack = ReceivePort();
+      send.send(['close', ack.sendPort]);
+      try {
+        await ack.first.timeout(const Duration(seconds: 3));
+      } catch (_) {}
+      ack.close();
+    }
+    iso?.kill(priority: Isolate.immediate);
   }
 }
 
@@ -100,8 +122,11 @@ void _entry(_Init init) {
   }
   init.reply.send(port.sendPort);
   port.listen((m) {
-    if (m == 'close') {
-      recognizer.free();
+    if (m is List && m.isNotEmpty && m[0] == 'close') {
+      try {
+        recognizer.free();
+      } catch (_) {}
+      (m[1] as SendPort).send('closed');
       port.close();
       return;
     }

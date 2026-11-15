@@ -186,13 +186,18 @@ done
 [ $DONE -eq 1 ] && ok "tap again -> processed to a result" || bad "processing never finished"
 adb logcat -d E2E:I '*:S' | grep RESULT | tail -1
 
-echo "== long-press on the idle button cycles the style"
+echo "== press and hold on the idle button opens the style chooser; picking one changes the style"
 adb logcat -c
 adb shell input swipe $1 $2 $1 $2 900; sleep 3
-adb logcat -d VoiceFlow:I '*:S' | grep -q "STYLE " && ok "long-press changes the style" || bad "style did not change"
+adb logcat -d VoiceFlow:I '*:S' | grep -q "STYLE_PICKER shown" && ok "press and hold opens the style chooser" || bad "style chooser did not open"
+CUR=$(adb logcat -d VoiceFlow:I '*:S' | grep -o 'current=[a-z_]*' | tail -1 | cut -d= -f2)
+ITEM=$(adb logcat -d VoiceFlow:I '*:S' | grep 'PICKER_ITEM' | grep -v "PICKER_ITEM $CUR " | head -1 | awk '{print $(NF-1), $NF}')
+echo "current=$CUR tapping item at $ITEM"
+adb shell input tap $ITEM; sleep 2
+adb logcat -d VoiceFlow:I '*:S' | grep -q "STYLE " && ok "choosing a style in the chooser changes it" || bad "style did not change"
 
 echo "== diagnostics"
 adb logcat -d | tr -d '\r' | grep -E "VoiceFlow|E2E|dev.voiceflow|FATAL EXCEPTION" | tail -40
 adb shell dumpsys meminfo $PKG | grep -E "TOTAL PSS" | head -1
 echo "RESULT pass=$PASS fail=$FAIL"
-[ $FAIL -eq 0 ] && [ $PASS -ge 22 ]
+[ $FAIL -eq 0 ] && [ $PASS -ge 23 ]

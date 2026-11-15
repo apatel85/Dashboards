@@ -10,7 +10,11 @@ import kotlin.math.abs
  * 16 kHz mono 16-bit capture, streamed in ~100 ms chunks to [onChunk] (called on the capture
  * thread). Nothing is buffered here, so there is no length limit; audio never touches disk.
  */
-class MicRecorder(private val onChunk: (ByteArray, Float) -> Unit) {
+class MicRecorder(
+    private val onChunk: (ByteArray, Float) -> Unit,
+    /** Called (on the capture thread) if the microphone stops delivering audio on its own. */
+    private val onLost: () -> Unit = {},
+) {
     private var rec: AudioRecord? = null
     private var thread: Thread? = null
     @Volatile private var running = false
@@ -31,7 +35,7 @@ class MicRecorder(private val onChunk: (ByteArray, Float) -> Unit) {
             val b = ByteArray(3200)
             while (running) {
                 val n = r.read(b, 0, b.size)
-                if (n < 0) break
+                if (n < 0) { if (running) onLost(); break } // mic taken by a call / another app
                 if (n > 0) {
                     var peak = 0
                     var i = 0
