@@ -16,15 +16,15 @@ void main() {
       expect(
           fmt(_mail, 'business'),
           'Hi John,\n\n'
-          'I wanted to touch base about the project. We are kind of behind on a few things, and I think we need to determine the budget.\n\n'
-          'Also, the vendor is a significant problem right now, but I can assist with the setup. Anyway, can you schedule a call next week?\n\n'
-          'Thanks a lot, talk soon.');
+          'I wanted to follow up about the project. We are kind of behind on a few things, and I think we need to determine the budget.\n\n'
+          'Also, the vendor is a significant problem right now, but I can assist with the setup. Anyway, could you schedule a call next week?\n\n'
+          'Thank you very much, talk soon.');
     });
     test('professional is more formal and uses formal connectors', () {
       expect(
           fmt(_mail, 'professional'),
           'Hello John,\n\n'
-          'I wanted to touch base about the project. We are kind of behind on a few things, and I believe we need to determine the budget.\n\n'
+          'I wanted to follow up about the project. We are kind of behind on a few things, and I believe we need to determine the budget.\n\n'
           'Additionally, the vendor is a significant problem currently, but I can assist with the setup. In any case, could you schedule a call next week?\n\n'
           'Thank you very much, speak soon.');
     });

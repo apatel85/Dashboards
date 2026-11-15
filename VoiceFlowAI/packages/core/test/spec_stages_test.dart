@@ -9,6 +9,7 @@ void main() {
   _stage5();
   _stage6();
   _stage7();
+  _stage8();
   final f = RuleFormatter(loadLang());
   String fmt(String s, [String p = 'business']) => f.format(s, loadProfile(p));
 
@@ -80,7 +81,7 @@ void main() {
       expect(
           fmt('hey can you send me the sales numbers for October I need them for the bank meeting Tuesday thanks',
               'business'),
-          startsWith('Can you send me the sales numbers for October?'));
+          startsWith('Could you send me the sales numbers for October?'));
       expect(
           fmt('hey can you send me the sales numbers for October I need them for the bank meeting Tuesday thanks',
               'casual'),
@@ -509,6 +510,45 @@ void _stage7() {
           promptStyle: const PromptStyle(format: 'xml'));
       expect(p, contains('CLARIFY:'));
       expect(p, contains('lowercase tag'));
+    });
+  });
+}
+
+void _stage8() {
+  final f = RuleFormatter(loadLang());
+  String biz(String s) => f.format(s, loadProfile('business'));
+
+  group('professional word map (spec section 9)', () {
+    test('plain professional words replace casual ones', () {
+      expect(biz('we need to find out who is approving that'),
+          contains('confirm who is approving that'));
+      expect(biz('send me the numbers asap'),
+          'Send me the figures as soon as possible.');
+      expect(biz('the paperwork is pricey'), 'The documentation is expensive.');
+    });
+    test('banned official phrases become plain words', () {
+      expect(biz('we should utilize the new tool in order to save time'),
+          contains('use the new tool to save time'));
+      expect(biz('please circle back going forward'),
+          contains('follow up in future'));
+    });
+    test('requests become polite requests; thanks becomes thank you', () {
+      expect(biz('can you send me the report thanks'),
+          'Could you send me the report? Thank you.');
+    });
+    test('"I think we should" becomes a recommendation with correct grammar',
+        () {
+      expect(biz('i think we should wait until friday'),
+          'I recommend we wait until Friday.');
+    });
+    test('words that carry meaning in other senses are left alone', () {
+      expect(biz('this kind of problem is new'), contains('kind of problem'));
+      expect(biz('the check is in the mail'), 'The check is in the mail.');
+    });
+    test('casual keeps the speaker\'s words', () {
+      expect(
+          f.format('can you send me the numbers thanks', loadProfile('casual')),
+          contains('Can you send me the numbers'));
     });
   });
 }

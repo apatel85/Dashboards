@@ -185,10 +185,12 @@ void main() {
         await t.pumpAndSettle();
         await t.tap(find.byKey(const Key('consent-agree')));
         await t.pumpAndSettle();
-        expect(s.maskCloud, isFalse, reason: 'off until chosen');
-        await t.tap(find.byKey(const Key('set-mask')));
+        expect(s.maskCloud, isTrue, reason: 'on by default');
+        await t.tap(
+          find.byKey(const Key('set-mask')),
+        ); // the person turns masking off
         await t.pumpAndSettle();
-        expect(s.maskCloud, isTrue);
+        expect(s.maskCloud, isFalse);
       },
     );
 
@@ -302,11 +304,19 @@ void main() {
       final s = await store.load();
       s
         ..cloudPolish = true
-        ..cloudConsent = true;
+        ..cloudConsent = true
+        ..maskCloud =
+            false; // this fake server answers with plain text, not placeholders
       await store.save(s);
       r = await b.dictate({'pcm': tone(), 'profileId': 'professional'});
       expect(calls, 1);
       expect(r['polish'], isTrue);
+      // with masking on (the default) a reply that dropped the placeholders is not accepted
+      s.maskCloud = true;
+      await store.save(s);
+      r = await b.dictate({'pcm': tone(), 'profileId': 'professional'});
+      expect(calls, 2);
+      expect(r['polish'], isFalse);
     },
   );
 }

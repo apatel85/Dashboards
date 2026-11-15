@@ -20,7 +20,7 @@ class Settings {
 
   /// Replace names, numbers, amounts, dates, e-mail addresses and phone numbers with placeholders
   /// before text goes to the cloud, and put them back on the device (spec section 13).
-  bool maskCloud = false;
+  bool maskCloud = true;
   String cloudPreset = 'proxy'; // proxy | ollama | custom
   String ollamaUrl = 'http://localhost:11434/v1';
   String ollamaModel = '';
@@ -99,7 +99,7 @@ class Settings {
     s.saveRecordings = j['saveRecordings'] as bool? ?? false;
     s.cloudPolish = j['cloudPolish'] as bool? ?? false;
     s.cloudConsent = j['cloudConsent'] as bool? ?? false;
-    s.maskCloud = j['maskCloud'] as bool? ?? false;
+    s.maskCloud = j['maskCloud'] as bool? ?? true;
     s.cloudPreset = j['cloudPreset'] as String? ?? 'proxy';
     s.ollamaUrl = j['ollamaUrl'] as String? ?? s.ollamaUrl;
     s.ollamaModel = j['ollamaModel'] as String? ?? '';

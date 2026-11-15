@@ -249,12 +249,16 @@ class RuleFormatter {
     switch (register) {
       case 'business':
         t = _swap(t, _reg('slang'));
+        t = _swap(t, _reg('specWordMap'));
         t = _swap(t, _reg('businessWords'));
+        t = _swap(t, _reg('bannedReplace'));
         return _swap(t, _reg('businessStart'), startOnly: true);
       case 'professional':
         t = _swap(t, _reg('slang'));
         t = _swap(t, _reg('professionalStart'), startOnly: true);
+        t = _swap(t, _reg('specWordMap'));
         t = _swap(t, _reg('businessWords'));
+        t = _swap(t, _reg('bannedReplace'));
         t = _swap(t, _reg('professionalWords'));
         final drop = List<String>.from(
                 lang.register['professionalDrop'] as List? ?? const [])

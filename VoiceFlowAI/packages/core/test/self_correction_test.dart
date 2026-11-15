@@ -31,12 +31,12 @@ void main() {
 
   group('a real "actually" is not a correction', () {
     test('new information is kept', () {
-      expect(fmt('The report is ready. Actually, I think we should wait.'),
-          'The report is ready. Actually, I think we should wait.');
+      expect(fmt('The report is ready. Actually, I recommend we wait.'),
+          'The report is ready. Actually, I recommend we wait.');
     });
     test('no earlier sentence to correct', () {
-      expect(fmt('Actually, I think we should wait.'),
-          'Actually, I think we should wait.');
+      expect(fmt('Actually, I recommend we wait.'),
+          'Actually, I recommend we wait.');
     });
     test('unrelated correction target leaves the text alone', () {
       expect(fmt('We ship on Friday. Actually, the logo needs work.'),

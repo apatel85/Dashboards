@@ -7,6 +7,12 @@
 - iOS out of scope. English first. Flutter pinned 3.50.0 (Dart 3.14).
 - Golden fixtures live in `packages/core/test_fixtures/formatting/<profile>/cases.json`.
 
+## 2026-11-15 — spec: owner decisions, masking on by default, Professional word map — IN PROGRESS (not released)
+- Owner answered: (1) prompt layouts stay as researched (per target AI), spec routes to be mapped into that vocabulary; (2) masking is fine, user can turn it off -> `Settings.maskCloud` now defaults to ON (the switch in Settings turns it off); (3) optional downloads: "do all if it makes sense" -> NOT started: each needs a pinned file hash and a measured gain on a real device, neither possible from this environment (see status doc).
+- **Added:** spec section 9 word map as data (`register.specWordMap`, `register.bannedReplace` in `lang/en.json`): find out->confirm, stuff->items, the numbers->the figures, can you->could you, thanks->thank you, "i think we should"->"i recommend we", utilize/leverage/touch base/in order to etc. -> plain words. Business and Professional share it; Casual is untouched. Left out on purpose: FYI (the pack keeps it), "kind of"/"sort of" (a noun phrase), "can't" -> "are unable to" (the spec's own A1 golden keeps "cannot").
+- **Goldens changed on purpose:** business "Thanks..."->"Thank you...", "Can we"->"Could we", "I want to"->"I would like to", touch base->follow up; two self-correction tests now expect "I recommend we wait".
+- **Evidence:** core 515 / app 133 tests, analyze clean (local). Spec baseline still 8 of 20: the remaining examples need sentence-level rewriting (emotion to impact, blame to fact, reordering) or the model layer.
+
 ## 2026-11-15 — spec stages 1-2 (segmentation, apostrophes, number fix) — IN PROGRESS (not released)
 - Working through "Dictation App Conversion Spec (Final)" in its section-15 order; full map and status in `docs/CONVERSION_SPEC_STATUS.md`. Baseline of 20 spec examples: 1 passing before, 7 now.
 - **Found:** "forty-two fifty not forty-five twenty" became "92 not 65" (groups were added). Fixed; money context gives "4,250", years unchanged.
