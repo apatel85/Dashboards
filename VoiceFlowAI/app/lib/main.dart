@@ -118,6 +118,7 @@ Future<void> main(List<String> args) async {
       dictionary: settings.dictionary,
       corrections: settings.corrections,
       maskCloud: settings.maskCloud,
+      profileById: (id) => assets.profiles.where((p) => p.id == id).firstOrNull,
       promptStyle: PromptStyle.resolve(
         promptFormat: settings.promptFormat,
         aiLength: settings.aiLength,

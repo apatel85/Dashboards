@@ -1662,5 +1662,49 @@
     ],
     "approval": "Get approval first [default].",
     "requestStart": "^(?:draft|write|send|schedule|book|check|find|tell|look up|remind|create|make|build|fix|explain|summari[sz]e|translate|what|how|when|where|why|who|which|can you|could you|would you|please|do you|is there|are there)\\b"
-  }
+  },
+  "emotionMap": [
+    {
+      "pattern": "\\b(?:it'?s|it is) (?:really |so |just )?killing us\\b",
+      "replace": "this is affecting our operations"
+    },
+    {
+      "pattern": "\\bi'?m (?:so |really )?sick of (?:this|it)\\b",
+      "replace": "this is a recurring issue"
+    },
+    {
+      "pattern": "\\b(?:and )?honestly,? (?:it'?s|it is|that'?s) (?:just )?ridiculous\\b",
+      "replace": ""
+    },
+    {
+      "pattern": "\\bi'?m freaking out (?:about|over)\\b",
+      "replace": "I am concerned about"
+    },
+    {
+      "pattern": "\\b(?:you guys|you|they) dropped the ball on (?:the )?([a-z]+)\\b",
+      "replace": "the $1 was missed"
+    },
+    {
+      "pattern": "\\b(?:you guys|you|they) messed up (?:the )?([a-z]+)\\b",
+      "replace": "there was an error with the $1"
+    }
+  ],
+  "modeCommands": [
+    {
+      "profile": "casual",
+      "pattern": "^\\s*(?:casual mode|keep it casual|make (?:it|this) casual)\\b[\\s,.:;-]*"
+    },
+    {
+      "profile": "professional",
+      "pattern": "^\\s*(?:formal mode|keep it formal|make (?:it|this) formal)\\b[\\s,.:;-]*"
+    },
+    {
+      "profile": "business",
+      "pattern": "^\\s*(?:professional mode|business mode|keep it professional|make (?:it|this) professional|keep it friendly|make (?:it|this) friendly)\\b[\\s,.:;-]*"
+    },
+    {
+      "profile": "ai_prompting",
+      "pattern": "^\\s*(?:prompt mode|ai prompt mode|turn this into a prompt|turn it into a prompt|make (?:it|this) a prompt)\\b[\\s,.:;-]*"
+    }
+  ]
 }

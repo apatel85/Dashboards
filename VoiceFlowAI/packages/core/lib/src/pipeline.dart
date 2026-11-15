@@ -34,6 +34,20 @@ class DictationOptions {
 
   /// Cloud polish: send placeholders instead of names, numbers, dates and contact details.
   final bool maskCloud;
+
+  /// Looks a profile up by id, so a spoken mode command ("professional mode ...") can switch the
+  /// profile for this one dictation. Without it, mode commands are left in the text.
+  final Profile? Function(String id)? profileById;
+  DictationOptions withProfile(Profile p) => DictationOptions(p,
+      packs: packs,
+      dictionary: dictionary,
+      corrections: corrections,
+      fieldKind: fieldKind,
+      promptStyle: promptStyle,
+      surrounding: surrounding,
+      maskCloud: maskCloud,
+      profileById: profileById);
+
   const DictationOptions(this.profile,
       {this.packs = const [],
       this.dictionary = const [],
@@ -41,7 +55,8 @@ class DictationOptions {
       this.fieldKind = FieldKind.text,
       this.promptStyle = const PromptStyle(),
       this.surrounding = const TextContext(),
-      this.maskCloud = false});
+      this.maskCloud = false,
+      this.profileById});
 }
 
 /// Capture is done by the caller; `run` takes the recorded PCM (spec §5.2).
@@ -63,6 +78,13 @@ class DictationPipeline {
   late final VoiceCommandParser _cmd = VoiceCommandParser(lang);
   late final PostProcessor _post = PostProcessor(lang);
   late final FieldFormatter _field = FieldFormatter(lang);
+  late final List<(String, RegExp)> _modeCommands = [
+    for (final c in (lang.raw['modeCommands'] as List? ?? const []))
+      (
+        c['profile'] as String,
+        RegExp(c['pattern'] as String, caseSensitive: false)
+      )
+  ];
   late final PolishValidator _validator = PolishValidator(lang: lang);
 
   DictationPipeline(this.lang, this.stt, this.sink,
@@ -115,6 +137,23 @@ class DictationPipeline {
         return await _insert(raw, value, false, o);
       }
 
+      // A spoken mode at the start ("professional mode", "turn this into a prompt") switches the
+      // style for this one dictation and is removed from the text (spec section 3).
+      final lookup = o.profileById;
+      if (lookup != null) {
+        for (final c in _modeCommands) {
+          final m = c.$2.firstMatch(raw);
+          if (m == null) continue;
+          final p = lookup(c.$1);
+          if (p == null) break;
+          o = o.withProfile(p);
+          raw = raw.substring(m.end).trim();
+          break;
+        }
+        if (raw.isEmpty) {
+          return const DictationResult(DictationStatus.noSpeech);
+        }
+      }
       final segs = _cmd.parse(raw);
       if (segs.isEmpty) {
         return DictationResult(DictationStatus.noSpeech, rawTranscript: raw);

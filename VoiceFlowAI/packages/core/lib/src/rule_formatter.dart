@@ -13,6 +13,32 @@ import 'self_correction.dart';
 class RuleFormatter {
   final LangData lang;
   final NumberWords _nums;
+  late final List<(RegExp, String)> _emotionRules = [
+    for (final r in (lang.raw['emotionMap'] as List? ?? const []))
+      (
+        RegExp(r['pattern'] as String, caseSensitive: false),
+        r['replace'] as String
+      )
+  ];
+
+  /// Venting becomes its business meaning (spec section 8): "it's really killing us" -> "this is
+  /// affecting our operations"; blame becomes fact: "you guys messed up the order" -> "there was
+  /// an error with the order". Business and Professional only; Casual keeps emotion and emphasis.
+  String _emotion(String s, String register) {
+    if (register != 'business' && register != 'professional') return s;
+    for (final (re, rep) in _emotionRules) {
+      s = s.replaceAllMapped(
+          re,
+          (m) => rep.replaceAllMapped(RegExp(r'\$(\d)'), (g) {
+                final i = int.parse(g.group(1)!);
+                return i <= m.groupCount ? (m.group(i) ?? '') : '';
+              }));
+    }
+    return s
+        .replaceAll(RegExp(r' {2,}'), ' ')
+        .replaceAll(RegExp(r'\s+([,.])'), r'$1');
+  }
+
   late final List<(RegExp, String)> _grammarRules = [
     for (final r in (lang.raw['grammarFixes'] as List? ?? const []))
       (
@@ -96,6 +122,7 @@ class RuleFormatter {
     input = SelfCorrection.apply(input); // keeps only the corrected version
     final cleaned = input;
     _routeInput = cleaned;
+    input = _emotion(input, p.register);
     input = _dropBareGreeting(input, p.register);
     input = _dropLeadingSo(input, p.register);
     input = ClockTime.apply(input, now: _clock());

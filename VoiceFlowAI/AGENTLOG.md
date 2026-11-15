@@ -7,6 +7,10 @@
 - iOS out of scope. English first. Flutter pinned 3.50.0 (Dart 3.14).
 - Golden fixtures live in `packages/core/test_fixtures/formatting/<profile>/cases.json`.
 
+## 2026-11-15 — 0.8.0: conversion spec stages (segmentation, checks, masking, router, mode commands) — IN PROGRESS (CI pending)
+- Release of everything in the spec entries below plus: emotion-to-impact and blame-to-fact for Business/Professional (`emotionMap`), spoken mode commands at the start of a dictation ("casual mode", "professional mode", "make this formal", "prompt mode"; one dictation only; removed from the text). Version bumped so the release workflow publishes; the emulator job checks the Kotlin and the 23 floating-button checks again.
+- **Evidence so far:** core 537 / app 133 tests, analyze and format clean (local). Spec baseline 10 of 20. No real-phone run. Not proven: any of the new text rules on real speech (the spec says to tune lists against real dictations - that needs the owner's recordings).
+
 ## 2026-11-15 — spec: grammar/sound-alikes, Prompt router, split, DO approval — IN PROGRESS (not released)
 - **Added:** `grammarFixes` (data): "i seen"->"I saw", "didn't had", "could of", there/their/they're and your/you're when the next word decides it (with guards for "over there going"); `PromptRouter` (keyword routes in `lang/en.json` `promptRoutes`, spec decision order; a question about a deliverable stays ASK); DO requests that send/delete/pay/publish get "Get approval first [default]." unless the speaker asked for a draft/look first or said go ahead; two unrelated requests joined by "also / oh also / and also" become "Prompt 1: ... / Prompt 2: ..." (second part must itself be a request, so "also it will save tokens" stays one prompt); the route is passed to cloud polish as `Type:`.
 - **Found and fixed while sampling real phrasings:** "do you know what..." lost "you know" (filler rule and a prompt phrase), "how many we have" was split, "and oh also" left a stray "oh".

@@ -181,6 +181,8 @@ class ImeBackend {
         dictionary: s.dictionary,
         corrections: s.corrections,
         maskCloud: s.maskCloud,
+        profileById: (id) =>
+            assets.profiles.where((p) => p.id == id).firstOrNull,
         fieldKind: kind,
         surrounding: TextContext(
           before: _clip(args['before']),

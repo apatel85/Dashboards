@@ -12,6 +12,8 @@ void main() {
   _stage8();
   _stage9();
   _stage10();
+  _stage11();
+  _stage12();
   final f = RuleFormatter(loadLang());
   String fmt(String s, [String p = 'business']) => f.format(s, loadProfile(p));
 
@@ -654,6 +656,86 @@ void _stage10() {
     test('the question keeps its words', () {
       expect(ai('do you know what the sales tax is in new jersey'),
           contains('Do you know what the sales tax'));
+    });
+  });
+}
+
+void _stage11() {
+  final f = RuleFormatter(loadLang());
+  String biz(String s, [String p = 'business']) => f.format(s, loadProfile(p));
+  group('emotion becomes impact, blame becomes fact (spec section 8)', () {
+    test('venting is converted in Business and Professional', () {
+      expect(biz("it's really killing us because orders are backing up"),
+          'This is affecting our operations because orders are backing up.');
+      expect(biz("i'm so sick of this"), 'This is a recurring issue.');
+      expect(biz("i'm freaking out about the deadline", 'professional'),
+          'I am concerned about the deadline.');
+    });
+    test('an empty rant is deleted, the request stays', () {
+      expect(biz('honestly it is ridiculous i want a refund for this order'),
+          'I want a refund for this order.');
+    });
+    test('blame is stated as what happened', () {
+      expect(biz('you guys messed up the order'),
+          'There was an error with the order.');
+      expect(biz('they dropped the ball on the deadline'),
+          'The deadline was missed.');
+    });
+    test('Casual keeps emotion and emphasis as spoken', () {
+      expect(
+          biz("it's really killing us", 'casual'), "It's really killing us.");
+    });
+  });
+}
+
+void _stage12() {
+  Future<DictationResult> run(String said, String profile,
+      {bool resolver = true}) {
+    final sink = FakeSink();
+    final p = DictationPipeline(loadLang(), FakeStt(said), sink);
+    return p.run(
+        speechPcm(),
+        DictationOptions(loadProfile(profile),
+            profileById: resolver ? (id) => loadProfile(id) : null));
+  }
+
+  group('spoken mode commands (spec section 3)', () {
+    test('"prompt mode" switches this dictation to a prompt and is removed',
+        () async {
+      final r = await run(
+          'prompt mode compare klaviyo and mailchimp for my store', 'casual');
+      expect(r.finalText, startsWith('Compare'));
+      expect(r.finalText, isNot(contains('prompt mode')));
+    });
+    test('"casual mode" keeps the words even from a Professional default',
+        () async {
+      final r = await run(
+          'casual mode hey can you send me the numbers thanks', 'professional');
+      expect(r.finalText, 'Hey, can you send me the numbers? Thanks!');
+    });
+    test('"make this formal" and "professional mode" pick the two tone levels',
+        () async {
+      final formal = await run(
+          'make this formal we cant make the meeting thursday', 'casual');
+      expect(formal.finalText, contains('cannot'));
+      final neutral = await run(
+          'professional mode we cant make the meeting thursday', 'casual');
+      expect(neutral.finalText, contains("can't"));
+    });
+    test('it applies to one dictation only', () async {
+      await run('prompt mode explain kubernetes pods', 'casual');
+      final next = await run('hey are you free tonight', 'casual');
+      expect(next.finalText, startsWith('Hey'));
+    });
+    test('the words stay when the app gave no way to look a profile up',
+        () async {
+      final r = await run('prompt mode explain kubernetes pods', 'casual',
+          resolver: false);
+      expect(r.finalText, startsWith('Prompt mode'));
+    });
+    test('only at the start: a later mention is ordinary text', () async {
+      final r = await run('we talked about prompt mode yesterday', 'casual');
+      expect(r.finalText, 'We talked about prompt mode yesterday.');
     });
   });
 }
