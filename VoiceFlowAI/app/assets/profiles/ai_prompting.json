@@ -2,12 +2,22 @@
   "id": "ai_prompting",
   "name": "AI Prompting",
   "useLlm": true,
-  "styleInstructions": "Rewrite as a structured prompt with these sections, omitting any not implied by the speaker: Role, Task, Context, Constraints, Output format. Invent nothing.",
+  "styleInstructions": "Rewrite the dictation as the SHORTEST prompt that keeps every instruction, fact, name, number, constraint and requested output format. Imperative voice (\"Summarize...\", not \"Can you please summarize...\"). Delete pleasantries, hedges, filler, repetition and talk about the prompt itself. Keep code, identifiers, file names and quoted text exactly. If the speaker asked for an output format or length, state it once, compactly (e.g. \"Output: 5 bullets, max 15 words each\"). Never add requirements or content the speaker did not say. Prefer positive phrasing (\"Use plain words\") over negative when meaning is unchanged. Use short labels (Context:, Task:, Output:) only when the dictation has two or more distinct parts; otherwise one imperative sentence. The result must not be longer than the input.",
   "rules": {
     "contractions": "keep",
     "numbers": "digits",
     "lists": true,
-    "fillers": "full"
+    "fillers": "full",
+    "register": "prompt"
   },
-  "fewShot": []
+  "fewShot": [
+    {
+      "in": "hi can you please help me write a short email to my landlord about the broken heater i would like it to be polite but firm and not more than three sentences thanks",
+      "out": "Write email to landlord about broken heater. Polite but firm. Max 3 sentences."
+    },
+    {
+      "in": "i have a python function that parses dates and it keeps failing on the first of the month can you look at it and explain why but just the cause no code",
+      "out": "Python date-parsing function fails on the 1st of the month. Explain the cause only. No code."
+    }
+  ]
 }

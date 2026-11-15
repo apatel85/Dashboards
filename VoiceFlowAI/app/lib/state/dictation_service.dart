@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:voiceflow_core/voiceflow_core.dart';
@@ -32,7 +31,7 @@ class DictationService {
     required this.loadEngine,
     this.unloadEngine,
     this.idleUnload = const Duration(minutes: 5),
-    this.maxDuration = const Duration(minutes: 5),
+    this.maxDuration,
   });
 
   final AppController controller;
@@ -42,9 +41,13 @@ class DictationService {
   final bool Function() modelReady;
   final Future<void> Function() loadEngine;
   final Future<void> Function()? unloadEngine;
-  final Duration idleUnload, maxDuration;
+  final Duration idleUnload;
 
-  final BytesBuilder _pcm = BytesBuilder(copy: false);
+  /// null = no limit (the default). Dictation is cut at pauses and transcribed while you talk,
+  /// so any length works.
+  final Duration? maxDuration;
+
+  LongDictationSession? _session;
   StreamSubscription<Uint8List>? _sub;
   Timer? _cap, _idle;
   Future<void>? _loading;
@@ -69,7 +72,8 @@ class DictationService {
     _starting = true;
     _idle?.cancel();
     controller.startListening(); // visible immediately (spec §9.1 rule 3)
-    _pcm.clear();
+    _session?.cancel();
+    _session = pipeline.startSession(hints: _hints());
     _loadError = null;
     _streamDone = Completer<void>();
     try {
@@ -80,7 +84,7 @@ class DictationService {
       });
       _sub = audio.start().listen(
         (chunk) {
-          _pcm.add(chunk);
+          _session?.add(chunk);
           controller.updateLevel(pcmLevel(chunk));
         },
         onError: (_) => _micFailed(),
@@ -88,12 +92,17 @@ class DictationService {
           if (!_streamDone.isCompleted) _streamDone.complete();
         },
       );
-      _cap = Timer(maxDuration, () => stop());
+      if (maxDuration != null) _cap = Timer(maxDuration!, () => stop());
     } catch (_) {
       _micFailed();
     } finally {
       _starting = false;
     }
+  }
+
+  List<String> _hints() {
+    final o = options();
+    return {...o.dictionary, for (final p in o.packs) ...p.vocabulary}.toList();
   }
 
   // loadEngine must be idempotent: two services share one engine and either may
@@ -113,7 +122,8 @@ class DictationService {
     await _sub?.cancel();
     _sub = null;
     await audio.stop();
-    _pcm.clear();
+    _session?.cancel();
+    _session = null;
     controller.cancel();
     _armIdle();
   }
@@ -130,7 +140,8 @@ class DictationService {
     );
     await _sub?.cancel();
     _sub = null;
-    final pcm = _pcm.takeBytes();
+    final session = _session;
+    _session = null;
     controller.startProcessing();
     try {
       await _loading;
@@ -139,7 +150,7 @@ class DictationService {
         _armIdle();
         return;
       }
-      final r = await pipeline.run(pcm, options());
+      final r = await pipeline.runSession(session!, options());
       switch (r.status) {
         case DictationStatus.ok:
           controller.markInserted(r.finalText ?? '');

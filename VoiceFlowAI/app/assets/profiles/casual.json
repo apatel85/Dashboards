@@ -2,17 +2,18 @@
   "id": "casual",
   "name": "Casual",
   "useLlm": true,
-  "styleInstructions": "Keep the speaker's own voice and wording. Light punctuation. Remove only pure fillers and false starts. Do not make it more formal.",
+  "styleInstructions": "Relaxed, like a message to a friend or close colleague. Keep the speaker's own words, slang (gonna, wanna, yeah), contractions and exclamation marks. Light punctuation. Remove only pure fillers and false starts. Do NOT make it more formal.",
   "rules": {
     "contractions": "keep",
     "numbers": "words",
     "lists": true,
-    "fillers": "light"
+    "fillers": "light",
+    "register": "casual"
   },
   "fewShot": [
     {
-      "in": "So I was thinking we could grab lunch tomorrow.",
-      "out": "So I was thinking we could grab lunch tomorrow."
+      "in": "hey are you free tonight im gonna grab pizza",
+      "out": "Hey, are you free tonight? I'm gonna grab pizza."
     }
   ]
 }

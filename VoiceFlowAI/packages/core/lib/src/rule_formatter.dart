@@ -24,10 +24,21 @@ class RuleFormatter {
   static const _noDedupe = {'had', 'that', 'is'};
 
   String format(String input, Profile p, {bool shorthandHundreds = false}) {
+    final out = _format(input, p, shorthandHundreds, p.register);
+    // "thanks" alone, or a prompt that was only pleasantries: keep the plain text, not nothing.
+    if (out.trim().isEmpty && p.register != 'business') {
+      return _format(input, p, shorthandHundreds, 'business');
+    }
+    return out;
+  }
+
+  String _format(
+      String input, Profile p, bool shorthandHundreds, String register) {
     var t = _tokenize(input);
     t = _spokenPunct(t);
     t = _fillers(t, p.fullFillers);
     t = _repeats(t);
+    t = _register(t, register);
     t = t.map(_contraction).toList();
     if (p.expandContractions) t = t.map(_expand).toList();
     t = t.map(_fixI).toList();
@@ -42,7 +53,161 @@ class RuleFormatter {
     }
     t = _tidyPunct(t);
     t = _capitalize(t);
-    return _join(t, listed);
+    final s = _join(t, listed);
+    return register == 'prompt' ? _promptRules(s) : s;
+  }
+
+  // ---- register (tone): what makes Casual, Business, Professional and AI Prompting differ
+  static const _sentenceEnd = {'.', '?', '!', '\n'};
+
+  Map<String, String> _reg(String k) => Map<String, String>.from(
+      (lang.register[k] as Map?) ?? const <String, String>{});
+
+  List<String> _register(List<String> t, String register) {
+    if (lang.register.isEmpty || register == 'casual') return t;
+    switch (register) {
+      case 'business':
+        t = _swap(t, _reg('slang'));
+        return _swap(t, _reg('businessStart'), startOnly: true);
+      case 'professional':
+        t = _swap(t, _reg('slang'));
+        t = _swap(t, _reg('professionalStart'), startOnly: true);
+        t = _swap(t, _reg('professionalWords'));
+        final drop = List<String>.from(
+                lang.register['professionalDrop'] as List? ?? const [])
+            .toSet();
+        t = [
+          for (final w in t)
+            if (!drop.contains(w.toLowerCase())) w
+        ];
+        return [for (final w in t) w == '!' ? '.' : w];
+      case 'prompt':
+        t = _swap(t, _reg('promptPhrases'));
+        t = _swap(t, _reg('promptStartPhrases'), startOnly: true);
+        return _dropRequestModals(t);
+    }
+    return t;
+  }
+
+  /// "can you look at it" -> "look at it": a request modal before an instruction verb is only
+  /// politeness. ("what can you do" is a question and is left alone: "do" is not in the list.)
+  List<String> _dropRequestModals(List<String> t) {
+    final verbs =
+        List<String>.from(lang.register['promptVerbs'] as List? ?? const [])
+            .toSet();
+    const modals = {'can', 'could', 'would', 'will'};
+    final out = <String>[];
+    for (var i = 0; i < t.length; i++) {
+      if (i + 2 < t.length &&
+          modals.contains(t[i].toLowerCase()) &&
+          t[i + 1].toLowerCase() == 'you' &&
+          verbs.contains(t[i + 2].toLowerCase())) {
+        i += 1; // skip "can" and "you"
+        continue;
+      }
+      out.add(t[i]);
+    }
+    return out;
+  }
+
+  /// Longest-match phrase replacement over lower-cased tokens; "" deletes the phrase.
+  List<String> _swap(List<String> t, Map<String, String> map,
+      {bool startOnly = false}) {
+    if (map.isEmpty) return t;
+    final keys = map.keys.map((k) => (k.split(' '), map[k]!)).toList()
+      ..sort((a, b) => b.$1.length.compareTo(a.$1.length));
+    final out = <String>[];
+    var i = 0;
+    while (i < t.length) {
+      var hit = false;
+      final atStart =
+          i == 0 || _sentenceEnd.contains(t[i - 1]) || (out.isEmpty);
+      if (!startOnly || atStart) {
+        for (final (words, rep) in keys) {
+          if (i + words.length > t.length) continue;
+          var ok = true;
+          for (var k = 0; k < words.length; k++) {
+            if (t[i + k].toLowerCase() != words[k]) {
+              ok = false;
+              break;
+            }
+          }
+          if (!ok) continue;
+          if (rep.isNotEmpty) out.addAll(rep.split(' '));
+          i += words.length;
+          hit = true;
+          break;
+        }
+      }
+      if (!hit) out.add(t[i++]);
+    }
+    return out;
+  }
+
+  /// Output-format and length phrases become compact (tokens cost money, and output costs more
+  /// than input). Then the text is tidied: spacing, doubled punctuation, sentence capitals.
+  String _promptRules(String s) {
+    // "three sentences" -> "3 sentences" (only before a counted noun: "one of them" stays)
+    final nouns =
+        List<String>.from(lang.register['countNouns'] as List? ?? const []);
+    if (nouns.isNotEmpty) {
+      const digits = {
+        'one': '1',
+        'two': '2',
+        'three': '3',
+        'four': '4',
+        'five': '5',
+        'six': '6',
+        'seven': '7',
+        'eight': '8',
+        'nine': '9'
+      };
+      s = s.replaceAllMapped(
+          RegExp(
+              '\\b(one|two|three|four|five|six|seven|eight|nine)(?= (?:${nouns.join('|')})\\b)',
+              caseSensitive: false),
+          (m) => digits[m.group(1)!.toLowerCase()]!);
+    }
+    final rules = (lang.register['promptRules'] as List?) ?? const [];
+    for (final r in rules) {
+      final re = RegExp(r['pattern'] as String, caseSensitive: false);
+      final rep = r['replace'] as String;
+      final directive = r['directive'] == true;
+      s = s.replaceAllMapped(re, (m) {
+        final text = rep.replaceAllMapped(RegExp(r'\$(\d)'), (g) {
+          final i = int.parse(g.group(1)!);
+          return i <= m.groupCount ? (m.group(i) ?? '') : '';
+        });
+        // A directive stands as its own short sentence ("No explanation.").
+        return directive ? '. $text. ' : text;
+      });
+    }
+    s = s
+        .replaceAll(RegExp(r'[ \t]{2,}'), ' ')
+        .replaceAllMapped(RegExp(r'\s+([.,?!;:])'), (m) => m.group(1)!)
+        .replaceAllMapped(RegExp(r'([.?!])(\s*[.?!])+'), (m) => m.group(1)!)
+        .replaceAllMapped(
+            RegExp(r'([.?!])\s+(?:and|but|then|also)\s+', caseSensitive: false),
+            (m) => '${m.group(1)} ')
+        .replaceAll(RegExp(r'^[\s.,;:]+'), '')
+        .replaceAll(RegExp(r',\s*\.'), '.')
+        .trim();
+    // capital at sentence starts, but not after abbreviations like "e.g." / "i.e." / "etc."
+    final b = StringBuffer();
+    var cap = true;
+    final words = s.split(RegExp(r'(?<=\s)'));
+    for (final w in words) {
+      var x = w;
+      if (cap && x.isNotEmpty) {
+        final m = RegExp(r'^[a-z]').firstMatch(x);
+        if (m != null) x = x[0].toUpperCase() + x.substring(1);
+      }
+      b.write(x);
+      final tw = w.trim().toLowerCase();
+      cap = RegExp(r'[.?!]$').hasMatch(tw) &&
+          !RegExp(r'^(e\.g\.|i\.e\.|etc\.|vs\.)$').hasMatch(tw);
+    }
+    return b.toString().trim();
   }
 
   List<String> _tokenize(String s) => _tokRe
@@ -249,6 +414,8 @@ class RuleFormatter {
           (lang.properNouns.contains(lw) || lang.names.contains(lw))) {
         x = _cap(w);
       }
+      final tech = (lang.register['techTerms'] as Map?)?[lw];
+      if (w == lw && tech != null) x = tech as String;
       if (start && RegExp(r'^[a-z]').hasMatch(x)) x = _cap(x);
       if (RegExp(r'[A-Za-z0-9]').hasMatch(x)) start = false;
       out.add(x);

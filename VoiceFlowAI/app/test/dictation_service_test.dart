@@ -82,7 +82,7 @@ class Rig {
 
   static Future<Rig> make({
     Duration idle = const Duration(minutes: 5),
-    Duration max = const Duration(minutes: 5),
+    Duration? max,
   }) async {
     final r = Rig();
     final assets = await AppAssets.load(_Bundle());
@@ -262,6 +262,44 @@ void main() {
     await r.svc.stop();
     expect(r.c.notice, NoticeKind.insertFailed);
   });
+  test('there is no recording limit: 8 minutes keep listening, and every minute is transcribed', () async {
+    final r = await Rig.make();
+    addTearDown(r.dispose);
+    await r.svc.start();
+    // 8 minutes of speech with a 1 s pause every 15 s, delivered as fast as possible
+    for (var k = 0; k < 32; k++) {
+      r.audio.emit(tone(seconds: 14));
+      r.audio.emit(Uint8List(32000)); // 1 s of silence
+    }
+    await settle(50);
+    expect(r.c.state, DictationUiState.listening, reason: 'no auto-stop');
+    await r.svc.stop();
+    expect(r.c.state, DictationUiState.inserted);
+    expect(
+      r.stt.calls >= 20,
+      isTrue,
+      reason: 'engine called ${r.stt.calls} times (pieces of <= ~24 s)',
+    );
+    expect(r.sink.inserted.single.split(' ').length > 100, isTrue);
+  });
+
+  test(
+    'a cancelled long dictation inserts nothing and the next one starts clean',
+    () async {
+      final r = await Rig.make();
+      addTearDown(r.dispose);
+      await r.svc.start();
+      r.audio.emit(tone(seconds: 40));
+      await settle();
+      await r.svc.cancel();
+      expect(r.sink.inserted, isEmpty);
+      await r.svc.start();
+      r.audio.emit(tone());
+      await settle();
+      await r.svc.stop();
+      expect(r.sink.inserted.single, 'We shipped 12 features.');
+    },
+  );
 }
 
 class _Bundle extends CachingAssetBundle {

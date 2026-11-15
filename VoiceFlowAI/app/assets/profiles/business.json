@@ -2,17 +2,18 @@
   "id": "business",
   "name": "Business",
   "useLlm": true,
-  "styleInstructions": "Clear, concise and polite. Full sentences, short paragraphs. Do not invent greetings or sign-offs.",
+  "styleInstructions": "Clear, polite, plain workplace English. Contractions are fine. Replace slang (gonna, wanna, yeah) with standard words. Short sentences, one idea each. Greeting 'Hi', not 'Hey'. Do not invent greetings, sign-offs or facts.",
   "rules": {
     "contractions": "keep",
     "numbers": "digits",
     "lists": true,
-    "fillers": "light"
+    "fillers": "light",
+    "register": "business"
   },
   "fewShot": [
     {
-      "in": "Hi John, thanks for the update. Can we meet Thursday?",
-      "out": "Hi John, thanks for the update. Can we meet Thursday?"
+      "in": "hey john im gonna send the report eod yeah",
+      "out": "Hi John, I'm going to send the report EOD. Yes."
     }
   ]
 }

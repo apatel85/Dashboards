@@ -26,6 +26,10 @@ class LangData {
     for (final e in (raw['commands'] as Map).entries)
       e.key as String: List<String>.from(e.value as List)
   };
+
+  /// Tone vocabularies per profile register (casual / business / professional / prompt).
+  late final Map<String, dynamic> register =
+      Map<String, dynamic>.from((raw['register'] as Map?) ?? const {});
   late final String needsPolishHint =
       (raw['hints'] as Map)['aiPromptingNeedsPolish'] as String;
 }

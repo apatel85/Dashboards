@@ -12,6 +12,9 @@ class Profile {
   final bool numbersAsDigits;
   final bool lists;
   final bool fullFillers;
+
+  /// Tone: casual | business | professional | prompt (token-lean text for AI tools).
+  final String register;
   final List<FewShot> fewShot;
   const Profile({
     required this.id,
@@ -22,6 +25,7 @@ class Profile {
     this.numbersAsDigits = true,
     this.lists = true,
     this.fullFillers = false,
+    this.register = 'business',
     this.fewShot = const [],
   });
 
@@ -36,6 +40,7 @@ class Profile {
       numbersAsDigits: r['numbers'] != 'words',
       lists: (r['lists'] as bool?) ?? true,
       fullFillers: r['fillers'] == 'full',
+      register: (r['register'] as String?) ?? 'business',
       fewShot: [
         for (final f in (j['fewShot'] as List? ?? const []))
           FewShot(f['in'] as String, f['out'] as String)

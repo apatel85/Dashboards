@@ -11,6 +11,7 @@ import 'post_processor.dart';
 import 'profile.dart';
 import 'rule_formatter.dart';
 import 'vad.dart';
+import 'long_dictation.dart';
 import 'voice_commands.dart';
 
 class DictationOptions {
@@ -53,25 +54,40 @@ class DictationPipeline {
       {this.polish, this.polishProvider, this.history, EnergyVad? vad})
       : vad = vad ?? const EnergyVad();
 
-  Future<DictationResult> run(Uint8List pcm, DictationOptions o) async {
-    String raw = '';
-    if (o.fieldKind == FieldKind.password) {
-      return const DictationResult(DictationStatus.passwordField);
-    }
-    try {
-      final speech = vad.trim(pcm);
-      if (speech.isEmpty) {
-        return const DictationResult(DictationStatus.noSpeech);
-      }
-      final hints = {
+  /// A dictation of any length: feed it audio while the person talks, then [runSession].
+  LongDictationSession startSession({List<String> hints = const []}) =>
+      LongDictationSession(stt,
+          vad: vad,
+          hints: hints,
+          commonWords:
+              lang.list('commonWords').map((e) => e.toLowerCase()).toSet());
+
+  Future<DictationResult> run(Uint8List pcm, DictationOptions o) {
+    final s = startSession(hints: _hints(o))..add(pcm);
+    return runSession(s, o);
+  }
+
+  List<String> _hints(DictationOptions o) => {
         ...o.dictionary,
         for (final p in o.packs) ...p.vocabulary,
       }.toList();
-      final r = await stt.transcribe(speech, vocabularyHints: hints);
+
+  Future<DictationResult> runSession(
+      LongDictationSession session, DictationOptions o) async {
+    String raw = '';
+    if (o.fieldKind == FieldKind.password) {
+      session.cancel();
+      return const DictationResult(DictationStatus.passwordField);
+    }
+    try {
+      session.hints = _hints(o);
+      final r = await session.finish();
       raw = r.text.trim();
+      if (r.speechSeconds <= 0 && raw.isEmpty) {
+        return const DictationResult(DictationStatus.noSpeech);
+      }
       if (raw.isEmpty) return const DictationResult(DictationStatus.noSpeech);
-      final speechSecs =
-          r.speechSeconds > 0 ? r.speechSeconds : vad.seconds(speech);
+      final speechSecs = r.speechSeconds;
       if (speechSecs < 2 && lang.phantoms.contains(raw.toLowerCase().trim())) {
         return DictationResult(DictationStatus.noSpeech, rawTranscript: raw);
       }

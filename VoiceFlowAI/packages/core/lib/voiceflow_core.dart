@@ -11,6 +11,7 @@ export 'src/polish_validator.dart';
 export 'src/post_processor.dart';
 export 'src/pipeline.dart';
 export 'src/vad.dart';
+export 'src/long_dictation.dart';
 export 'src/history_store.dart';
 export 'src/settings.dart';
 export 'src/settings_import.dart';
