@@ -580,7 +580,11 @@
       "it seems like": "",
       "it seems that": "",
       "i guess": "",
-      "i feel like": ""
+      "i feel like": "",
+      "just so you know": "",
+      "so you know": "",
+      "just so you're aware": "",
+      "for your information": ""
     },
     "promptStartPhrases": {
       "can you": "",
@@ -599,9 +603,22 @@
       "hey": "",
       "help me": "",
       "so like": "",
-      "so": ""
+      "so": "",
+      "so yeah": "",
+      "yeah so": "",
+      "yeah": "",
+      "yep": "",
+      "yup": ""
     },
     "promptRules": [
+      {
+        "pattern": "(^|[.?!]\\s+)what (?:i|we)(?:'m|'re| am| are) (?:trying|going|looking|hoping) to (?:do|achieve|build|make|get)(?: here)? is(?: trying| going| looking)?(?: to)?\\s+",
+        "replace": "$1Goal: "
+      },
+      {
+        "pattern": "(^|[.?!]\\s+)(?:(?:ok|okay|alright|all right|anyway|so|right|now)[,.]?\\s+)+",
+        "replace": "$1"
+      },
       {
         "pattern": "(^|[.?!]\\s+)(?:the |our |my |your )?(?:main |key |overall |primary )?goal (?:is|here is)(?: to)?\\s+",
         "replace": "$1Goal: "
@@ -612,10 +629,6 @@
       },
       {
         "pattern": "(^|[.?!]\\s+)(?:let us|let's|lets)\\s+(?:try|test|see)(?:\\s+(?:this|it|that))?(?:\\s+(?:out|again|now))*\\s*[.?!]\\s*",
-        "replace": "$1"
-      },
-      {
-        "pattern": "(^|[.?!]\\s+)(?:(?:ok|okay|alright|all right|anyway|so|right|now)[,.]?\\s+)+",
         "replace": "$1"
       },
       {

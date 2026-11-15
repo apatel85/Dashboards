@@ -1,5 +1,6 @@
 import 'app_defaults.dart';
 import 'clock_time.dart';
+import 'context_fixes.dart';
 import 'lang.dart';
 import 'number_words.dart';
 import 'profile.dart';
@@ -15,7 +16,7 @@ class RuleFormatter {
         _clock = clock ?? DateTime.now;
 
   static final _tokRe = RegExp(
-      r"\d{1,2}:\d{2}|\d+(?:\.\d+)?|[A-Za-z]+(?:['’][A-Za-z]+)*|[.,?!;:]|\n|[^\sA-Za-z0-9.,?!;:]");
+      r"\d{1,2}:\d{2}|\d+(?:st|nd|rd|th)\b|\d+(?:\.\d+)?|[A-Za-z]+(?:['’][A-Za-z]+)*|[.,?!;:]|\n|[^\sA-Za-z0-9.,?!;:]");
   static const _terminal = {'.', '?', '!'};
   static const _punct = {'.', '?', '!', ',', ';', ':'};
   static const _whWords = {
@@ -32,6 +33,7 @@ class RuleFormatter {
   String format(String input, Profile p,
       {bool shorthandHundreds = false,
       PromptStyle promptStyle = const PromptStyle()}) {
+    input = ContextFixes.apply(input); // "tax messages" -> "text messages"
     input = SelfCorrection.apply(input); // keeps only the corrected version
     input = _dropBareGreeting(input, p.register);
     input = _dropLeadingSo(input, p.register);
@@ -45,7 +47,7 @@ class RuleFormatter {
   }
 
   static final _leadingSo = RegExp(
-      r'(^|[.?!]\s+|\n\s*)so,?\s+(?!(?:far|many|much|long|good|great|bad|big|little|called|that|as)\b)([A-Za-z])',
+      r'(^|[.?!]\s+|\n\s*)(?:(?:alright|all right|okay|ok|right|well|anyway)[,.]?\s+)?so,?\s+(?:(?:yeah|yep|yup),?\s+)?(?!(?:far|many|much|long|good|great|bad|big|little|called|that|as)\b)([A-Za-z])',
       caseSensitive: false);
 
   /// "So this is what we are going to do." -> "This is what we are going to do." The filler "So" at
@@ -74,6 +76,49 @@ class RuleFormatter {
   }
 
   String _format(String input, Profile p, bool shorthandHundreds,
+          String register, PromptStyle promptStyle) =>
+      _fixArticles(
+          _format0(input, p, shorthandHundreds, register, promptStyle));
+
+  static final _article =
+      RegExp(r'\b(an?)(\s+)([A-Za-z][A-Za-z]*)', caseSensitive: false);
+
+  /// "a excellent" -> "an excellent", "an dictation" -> "a dictation" (by sound: an hour, a user).
+  String _fixArticles(String s) => s.replaceAllMapped(_article, (m) {
+        final art = m.group(1)!;
+        final should = _vowelSound(m.group(3)!) ? 'an' : 'a';
+        if (art.toLowerCase() == should) return m[0]!;
+        final fixed = art[0] == art[0].toUpperCase()
+            ? (should == 'an' ? 'An' : 'A')
+            : should;
+        return '$fixed${m.group(2)}${m.group(3)}';
+      });
+
+  static bool _vowelSound(String w) {
+    if (w.length >= 2 && w == w.toUpperCase()) {
+      // spoken as letters: an SQL, an MBA, a UI, a CSS
+      return 'AEFHILMNORSX'.contains(w[0]);
+    }
+    final l = w.toLowerCase();
+    for (final p in const ['hour', 'honest', 'honor', 'honour', 'heir']) {
+      if (l.startsWith(p)) return true;
+    }
+    for (final p in const [
+      'uni',
+      'use',
+      'usu',
+      'uti',
+      'eu',
+      'one',
+      'once',
+      'ubi'
+    ]) {
+      if (l.startsWith(p)) return false;
+    }
+    return 'aeiou'.contains(l[0]);
+  }
+
+  String _format0(String input, Profile p, bool shorthandHundreds,
       String register, PromptStyle promptStyle) {
     var t = _tokenize(input);
     t = _spokenPunct(t);
@@ -90,7 +135,24 @@ class RuleFormatter {
       listed = r.$2;
     }
     if (p.numbersAsDigits) {
+      // "a few hundred", "several thousand" are loose amounts, not the numbers 100 / 1000
+      const loose = {'few', 'several', 'couple', 'many', 'some', 'of'};
+      const big = {
+        'hundred',
+        'hundreds',
+        'thousand',
+        'thousands',
+        'million',
+        'billion'
+      };
+      for (var i = 1; i < t.length; i++) {
+        if (big.contains(t[i].toLowerCase()) &&
+            loose.contains(t[i - 1].toLowerCase())) {
+          t[i] = '\u0001${t[i]}';
+        }
+      }
       t = _nums.convert(t, shorthandHundreds: shorthandHundreds);
+      t = [for (final w in t) w.replaceAll('\u0001', '')];
     }
     t = _tidyPunct(t);
     t = _capitalize(t);
@@ -610,6 +672,12 @@ class RuleFormatter {
       }
       var hit = false;
       for (final m in multi) {
+        // "just so you know" is a phrase, not a filler "you know"
+        if (m.join(' ') == 'you know' &&
+            out.isNotEmpty &&
+            out.last.toLowerCase() == 'so') {
+          continue;
+        }
         if (i + m.length <= t.length &&
             [for (var k = 0; k < m.length; k++) t[i + k].toLowerCase()]
                     .join(' ') ==
