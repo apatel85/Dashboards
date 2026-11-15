@@ -5,15 +5,24 @@ import '../l10n/app_localizations.dart';
 import 'package:voiceflow_core/voiceflow_core.dart';
 
 import '../state/app_controller.dart';
+import '../state/installed_apps.dart';
 import '../state/settings_controller.dart';
 
 /// Profile cards with a before/after example produced by the real formatter.
 class StylePage extends StatefulWidget {
-  const StylePage({super.key, required this.controller, this.settings});
+  const StylePage({
+    super.key,
+    required this.controller,
+    this.settings,
+    this.listApps = listInstalledApps,
+  });
   final AppController controller;
 
   /// Where the per-app styles are saved. Null = no Apps list.
   final SettingsController? settings;
+
+  /// Where the app picker gets its list (installed apps on Android, open programs on Windows).
+  final AppLister listApps;
 
   @override
   State<StylePage> createState() => _StylePageState();
@@ -22,6 +31,8 @@ class StylePage extends StatefulWidget {
 class _StylePageState extends State<StylePage> {
   final _newApp = TextEditingController();
   String _newProfile = 'professional';
+  final Map<String, String> _names =
+      {}; // id -> friendly name, learned from the picker
 
   @override
   void dispose() {
@@ -29,7 +40,34 @@ class _StylePageState extends State<StylePage> {
     super.dispose();
   }
 
+  String _newId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // learn friendly names for apps you already set, so rows read "Notes" and not a package id
+    widget.listApps().then((v) {
+      if (!mounted) return;
+      setState(() {
+        for (final a in v) {
+          _names[a.id] = a.name;
+        }
+      });
+    }, onError: (_) {});
+  }
+
   AppController get controller => widget.controller;
+
+  Future<void> _pickApp() async {
+    final picked = await showDialog<PickableApp>(
+      context: context,
+      builder: (_) => _AppPickerDialog(load: widget.listApps),
+    );
+    if (picked == null) return;
+    _names[picked.id] = picked.name;
+    _newId = picked.id;
+    setState(() => _newApp.text = picked.name);
+  }
 
   static const samples = {
     'casual': 'um so i was thinking we could uh grab lunch tomorrow',
@@ -177,7 +215,8 @@ class _StylePageState extends State<StylePage> {
             const SizedBox(height: 8),
             for (final k in AppDefaults.known)
               row(k.id, k.name, k.group, mine[k.id] ?? k.profileId),
-            for (final id in extra) row(id, id, '', mine[id]),
+            for (final id in extra)
+              row(id, _names[id] ?? id, _names[id] == null ? '' : id, mine[id]),
             const Divider(),
             Text(
               t.styleAppAddTitle,
@@ -187,7 +226,12 @@ class _StylePageState extends State<StylePage> {
             TextField(
               key: const Key('app-add-id'),
               controller: _newApp,
-              decoration: InputDecoration(hintText: t.styleAppAddHint),
+              readOnly: true,
+              onTap: _pickApp,
+              decoration: InputDecoration(
+                hintText: t.styleAppAddHint,
+                suffixIcon: const Icon(Icons.arrow_drop_down),
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -202,15 +246,117 @@ class _StylePageState extends State<StylePage> {
                 FilledButton(
                   key: const Key('app-add-button'),
                   onPressed: () async {
-                    final id = _newApp.text.trim();
+                    final id = _newId.trim();
                     if (id.isEmpty) return;
                     await sc.setAppProfile(id, _newProfile);
                     _newApp.clear();
+                    _newId = '';
                   },
                   child: Text(t.styleAppAddButton),
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Search box plus the list of apps; typing something that is not in the list offers it as an id.
+class _AppPickerDialog extends StatefulWidget {
+  const _AppPickerDialog({required this.load});
+  final AppLister load;
+  @override
+  State<_AppPickerDialog> createState() => _AppPickerDialogState();
+}
+
+class _AppPickerDialogState extends State<_AppPickerDialog> {
+  final _q = TextEditingController();
+  List<PickableApp>? _apps;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.load().then(
+      (v) {
+        if (mounted) setState(() => _apps = v);
+      },
+      onError: (_) {
+        if (mounted) setState(() => _apps = const []);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _q.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final q = _q.text.trim().toLowerCase();
+    final all = _apps ?? const <PickableApp>[];
+    final shown = [
+      for (final a in all)
+        if (q.isEmpty || a.name.toLowerCase().contains(q) || a.id.contains(q))
+          a,
+    ];
+    final exact = all.any((a) => a.id == q);
+    return AlertDialog(
+      title: Text(t.stylePickTitle),
+      content: SizedBox(
+        width: 420,
+        height: 420,
+        child: Column(
+          children: [
+            TextField(
+              key: const Key('app-pick-search'),
+              controller: _q,
+              autofocus: true,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: t.stylePickSearch,
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 8),
+            if (_apps == null)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(t.stylePickLoading),
+              )
+            else
+              Expanded(
+                child: ListView(
+                  children: [
+                    if (q.isNotEmpty && !exact)
+                      ListTile(
+                        key: const Key('app-pick-custom'),
+                        leading: const Icon(Icons.edit_outlined),
+                        title: Text(t.stylePickUse(_q.text.trim())),
+                        onTap: () => Navigator.pop(
+                          context,
+                          PickableApp(q, _q.text.trim()),
+                        ),
+                      ),
+                    if (all.isEmpty && q.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Text(t.stylePickEmpty),
+                      ),
+                    for (final a in shown)
+                      ListTile(
+                        key: Key('app-pick-${a.id}'),
+                        title: Text(a.name),
+                        subtitle: Text(a.id),
+                        onTap: () => Navigator.pop(context, a),
+                      ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

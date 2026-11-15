@@ -599,6 +599,10 @@
     },
     "promptRules": [
       {
+        "pattern": "(^|[.?!]\\s+)(?:the |our |my |your )?(?:main |key |overall |primary )?goal (?:is|here is)(?: to)?\\s+",
+        "replace": "$1Goal: "
+      },
+      {
         "pattern": "^\\s*(?:hi|hello|hey)\\s+(?:claude|chatgpt|gpt|gemini|copilot|assistant|ai|bot|there)\\b[,.!]?\\s*",
         "replace": ""
       },

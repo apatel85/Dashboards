@@ -70,26 +70,74 @@ class SelfCorrection {
   ];
 
   static String apply(String input) {
-    final sentences = input
-        .trim()
-        .split(RegExp(r'(?<=[.!?])\s+'))
-        .where((s) => s.isNotEmpty)
-        .toList();
-    if (sentences.isEmpty) return input;
+    final text = input.trim();
+    if (text.isEmpty) return input;
+    // Sentences with the whitespace that followed each one, so paragraph breaks survive.
+    final sents = <String>[];
+    final seps = <String>[];
+    var from = 0;
+    for (final m in RegExp(r'(?<=[.!?])(\s+)').allMatches(text)) {
+      sents.add(text.substring(from, m.start));
+      seps.add(m.group(1)!);
+      from = m.end;
+    }
+    sents.add(text.substring(from));
+    seps.add('');
     final out = <String>[];
-    for (final s in sentences) {
+    final outSeps = <String>[];
+    for (var i = 0; i < sents.length; i++) {
+      final s = sents[i];
       final m = _lead.firstMatch(s);
       if (m != null && out.isNotEmpty) {
         final rest = s.substring(m.end).trim();
-        final fixed = rest.isEmpty ? null : _repair(out.last, rest);
-        if (fixed != null) {
-          out[out.length - 1] = fixed;
-          continue;
+        if (rest.isNotEmpty) {
+          final fixed = _repair(out.last, rest);
+          if (fixed != null) {
+            out[out.length - 1] = fixed;
+            continue; // the correction sentence itself is dropped
+          }
+          if (_changeBack(out, rest)) continue;
         }
       }
       out.add(_inlineFix(s));
+      outSeps.add(seps[i]);
     }
-    return out.join(' ');
+    final b = StringBuffer();
+    for (var k = 0; k < out.length; k++) {
+      b.write(out[k]);
+      if (k < out.length - 1) b.write(outSeps[k]);
+    }
+    return b.toString();
+  }
+
+  static final _changeWords = RegExp(
+      r"\b(?:not|instead|rather|make it|changed?|moved?|push(?:ed)?|reschedul\w*|should be|now)\b",
+      caseSensitive: false);
+
+  /// "Actually, it's not at one Mondays on Tuesday at 10 am": a short correction that names a new
+  /// day/time/date and says it changed. The day/time in the last few sentences is replaced and the
+  /// correction itself is dropped. Even when the speech engine garbled the old value it points at.
+  static bool _changeBack(List<String> out, String rest) {
+    final r = rest.replaceAll(RegExp(r'[.!?]+$'), '').trim();
+    if (r.split(RegExp(r'\s+')).length > 16 || !_changeWords.hasMatch(r)) {
+      return false;
+    }
+    var changed = false;
+    for (final c in _classes) {
+      final rm = c.firstMatch(r);
+      if (rm == null) continue;
+      for (var k = out.length - 1; k >= 0 && k >= out.length - 4; k--) {
+        final pms = c.allMatches(out[k]).toList();
+        if (pms.isEmpty) continue;
+        final pm = pms.last;
+        out[k] = out[k].substring(0, pm.start) +
+            rm.group(0)! +
+            out[k].substring(pm.end);
+        changed = true;
+        break;
+      }
+    }
+    return changed;
   }
 
   // ---- "X, I mean Y" inside one sentence

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:voiceflow_app/state/installed_apps.dart';
 import 'package:voiceflow_app/state/per_app_profiles.dart';
 import 'package:voiceflow_app/state/settings_controller.dart';
 import 'package:voiceflow_app/ui/style_page.dart';
@@ -96,7 +97,18 @@ void main() {
     final s = Settings();
     final sc = SettingsController(s, () async {});
     addTearDown(sc.dispose);
-    await t.pumpWidget(host(StylePage(controller: ctl, settings: sc)));
+    await t.pumpWidget(
+      host(
+        StylePage(
+          controller: ctl,
+          settings: sc,
+          listApps: () async => const [
+            PickableApp('com.example.notes', 'Notes'),
+            PickableApp('com.example.calendar', 'Calendar'),
+          ],
+        ),
+      ),
+    );
     await t.pump();
     expect(
       find.byKey(const Key('app-row-com.google.android.gm')),
@@ -113,12 +125,43 @@ void main() {
     await t.pumpAndSettle();
     expect(s.perAppProfiles['com.google.android.gm'], 'casual');
 
-    // add an app by hand
+    // pick an installed app from the list, give it a style, add it
     await t.ensureVisible(find.byKey(const Key('app-add-id')));
-    await t.enterText(find.byKey(const Key('app-add-id')), 'com.example.notes');
+    await t.tap(find.byKey(const Key('app-add-id')));
+    await t.pumpAndSettle();
+    expect(find.text('Notes'), findsOneWidget);
+    expect(find.text('Calendar'), findsOneWidget);
+    await t.enterText(find.byKey(const Key('app-pick-search')), 'note');
+    await t.pumpAndSettle();
+    expect(find.text('Calendar'), findsNothing);
+    await t.tap(find.byKey(const Key('app-pick-com.example.notes')));
+    await t.pumpAndSettle();
+    expect(
+      (t.widget(
+        find.byKey(const Key('app-add-id')),
+      ) as TextField).controller!.text,
+      'Notes',
+    );
     await t.tap(find.byKey(const Key('app-add-button')));
     await t.pumpAndSettle();
     expect(s.perAppProfiles['com.example.notes'], 'professional');
+    // the new row shows the friendly name
     expect(find.byKey(const Key('app-row-com.example.notes')), findsOneWidget);
+    expect(find.text('Notes'), findsOneWidget);
+
+    // an app that is not in the list can be typed as an id
+    await t.ensureVisible(find.byKey(const Key('app-add-id')));
+    await t.tap(find.byKey(const Key('app-add-id')));
+    await t.pumpAndSettle();
+    await t.enterText(
+      find.byKey(const Key('app-pick-search')),
+      'org.custom.thing',
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('app-pick-custom')));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('app-add-button')));
+    await t.pumpAndSettle();
+    expect(s.perAppProfiles.containsKey('org.custom.thing'), isTrue);
   });
 }

@@ -1039,7 +1039,7 @@ abstract class AppLocalizations {
   /// No description provided for @styleAppAddHint.
   ///
   /// In en, this message translates to:
-  /// **'App id (Android package like com.example.app, or a program like notes.exe)'**
+  /// **'Tap to choose an app'**
   String get styleAppAddHint;
 
   /// No description provided for @styleAppAddButton.
@@ -1047,6 +1047,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add'**
   String get styleAppAddButton;
+
+  /// No description provided for @stylePickTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an app'**
+  String get stylePickTitle;
+
+  /// No description provided for @stylePickSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search apps'**
+  String get stylePickSearch;
+
+  /// No description provided for @stylePickLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for apps…'**
+  String get stylePickLoading;
+
+  /// No description provided for @stylePickEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No app list is available here. Type the app id above to use it.'**
+  String get stylePickEmpty;
+
+  /// No description provided for @stylePickUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use \"{id}\" as the app id'**
+  String stylePickUse(String id);
 }
 
 class _AppLocalizationsDelegate

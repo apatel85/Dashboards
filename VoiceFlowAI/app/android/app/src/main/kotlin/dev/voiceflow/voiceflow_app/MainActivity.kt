@@ -40,6 +40,15 @@ class MainActivity : FlutterActivity() {
                         startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                         result.success(null)
                     }
+                    "listApps" -> {
+                        val pm = packageManager
+                        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+                        val apps = pm.queryIntentActivities(intent, 0)
+                            .map { mapOf("id" to it.activityInfo.packageName, "name" to it.loadLabel(pm).toString()) }
+                            .distinctBy { it["id"] }
+                            .sortedBy { (it["name"] as String).lowercase() }
+                        result.success(apps)
+                    }
                     "openAppInfo" -> {
                         startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                             Uri.parse("package:$packageName")))

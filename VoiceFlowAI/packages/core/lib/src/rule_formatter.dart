@@ -34,6 +34,7 @@ class RuleFormatter {
       PromptStyle promptStyle = const PromptStyle()}) {
     input = SelfCorrection.apply(input); // keeps only the corrected version
     input = _dropBareGreeting(input, p.register);
+    input = _dropLeadingSo(input, p.register);
     input = ClockTime.apply(input, now: _clock());
     final out = _format(input, p, shorthandHundreds, p.register, promptStyle);
     // "thanks" alone, or a prompt that was only pleasantries: keep the plain text, not nothing.
@@ -41,6 +42,19 @@ class RuleFormatter {
       return _format(input, p, shorthandHundreds, 'business', promptStyle);
     }
     return out;
+  }
+
+  static final _leadingSo = RegExp(
+      r'(^|[.?!]\s+|\n\s*)so,?\s+(?!(?:far|many|much|long|good|great|bad|big|little|called|that|as)\b)([A-Za-z])',
+      caseSensitive: false);
+
+  /// "So this is what we are going to do." -> "This is what we are going to do." The filler "So" at
+  /// the start of a sentence is speech rhythm, not content, so Business and Professional drop it.
+  /// ("So far", "So many", "So that" are real words and stay.)
+  String _dropLeadingSo(String input, String register) {
+    if (register != 'business' && register != 'professional') return input;
+    return input.replaceAllMapped(
+        _leadingSo, (m) => '${m.group(1)}${m.group(2)!.toUpperCase()}');
   }
 
   static final _bareGreeting = RegExp(
@@ -82,7 +96,11 @@ class RuleFormatter {
     t = _capitalize(t);
     final s = _join(t, listed);
     if (register == 'prompt') {
-      return _structurePrompt(_promptRules(s), promptStyle);
+      // a prompt is one flow of text: pasted line breaks must not stop it being structured
+      return _structurePrompt(
+          _promptRules(s.replaceAll(
+              RegExp(r'[ \t]*\n+(?![ \t]*(?:\d+\.|-)\s)[ \t]*'), ' ')),
+          promptStyle);
     }
     if (register == 'business' || register == 'professional') {
       return _paragraphs(s);
@@ -271,34 +289,55 @@ class RuleFormatter {
 
   // ---- business / professional: paragraphs so a longer dictation reads as sections
   static final _transition = RegExp(
-      r'^(?:Additionally|However|Furthermore|Moreover|Next|Finally|Separately|Regarding|In addition|Meanwhile|Otherwise|As for|On another note|In any case|Also|Another)\b');
+      r'^(?:Additionally|However|Furthermore|Moreover|Next|Finally|Lastly|First|Second|Third|Separately|Regarding|In addition|Meanwhile|Otherwise|As for|On another note|In any case|Also|Another|And|But|Goal|The goal|Our goal|One of the|The key|The main)\b');
   static final _closing = RegExp(
       r'^(?:Thank you|Thanks|Best regards|Kind regards|Regards|Sincerely|Looking forward|Talk soon|Speak soon|Please let me know|Let me know)\b');
 
-  /// Four or more sentences become short paragraphs: greeting on its own line, a new paragraph
-  /// at a transition ("However", "Additionally"...) or after about three sentences, closing last.
-  /// Text the speaker already broke into lines (bullets, "new line") is left alone.
+  /// Four or more sentences become short paragraphs: a named greeting on its own line, a new
+  /// paragraph at a transition ("However", "Goal is...") or after about four sentences, the closing
+  /// last. Paragraph breaks the speaker made ("new paragraph") are kept and each part is tidied on
+  /// its own; single line breaks (bullets, "new line") leave the text alone.
   String _paragraphs(String s) {
-    if (s.contains('\n')) return s;
-    final sents = _sentences(s);
-    if (sents.length < 4) return s;
+    final text = s.trim();
+    if (RegExp(r'[^\n]\n(?!\n)|(?<!\n)\n[^\n]').hasMatch(text)) return s;
+    final blocks = text.split(RegExp(r'\n{2,}'));
+    if (blocks.length == 1) return _groupBlock(text, edges: true);
+    return [
+      for (var i = 0; i < blocks.length; i++)
+        _groupBlock(blocks[i],
+            edges: false, first: i == 0, last: i == blocks.length - 1)
+    ].join('\n\n');
+  }
+
+  String _groupBlock(String text,
+      {required bool edges, bool first = true, bool last = true}) {
+    final sents = _sentences(text);
+    // 4+ sentences, or 3 when the third opens a new point ("Goal is...", "And one of...")
+    if (sents.length < 3 ||
+        (sents.length == 3 && !_transition.hasMatch(sents[2]))) {
+      return text;
+    }
     var greeting = '';
-    final g = RegExp(
-            r"^((?:Hi|Hello|Dear|Hey)\s+[A-Z][\w.'-]*(?:\s+[A-Z][\w.'-]*)?,)\s+(.+)$")
-        .firstMatch(sents.first);
-    if (g != null) {
-      greeting = g.group(1)!;
-      sents[0] = _cap1(g.group(2)!);
+    if (edges || first) {
+      final g = RegExp(
+              r"^((?:Hi|Hello|Dear|Hey)\s+[A-Z][\w.'-]*(?:\s+[A-Z][\w.'-]*)?,)\s+(.+)$")
+          .firstMatch(sents.first);
+      if (g != null) {
+        greeting = g.group(1)!;
+        sents[0] = _cap1(g.group(2)!);
+      }
     }
     final closing = <String>[];
-    while (sents.length > 2 && _closing.hasMatch(sents.last)) {
-      closing.insert(0, sents.removeLast());
+    if (edges || last) {
+      while (sents.length > 2 && _closing.hasMatch(sents.last)) {
+        closing.insert(0, sents.removeLast());
+      }
     }
-    final paras = <String>[];
+    final paras = <List<String>>[];
     var cur = <String>[];
     var words = 0;
     void flush() {
-      if (cur.isNotEmpty) paras.add(cur.join(' '));
+      if (cur.isNotEmpty) paras.add(cur);
       cur = [];
       words = 0;
     }
@@ -306,17 +345,24 @@ class RuleFormatter {
     for (final x in sents) {
       if (cur.isNotEmpty &&
           ((_transition.hasMatch(x) && cur.length >= 2) ||
-              cur.length >= 3 ||
-              words >= 60)) {
+              cur.length >= 4 ||
+              words >= 70)) {
         flush();
       }
       cur.add(x);
       words += _wc(x);
     }
     flush();
+    // never leave a lone sentence at the end if it can join the paragraph before it
+    if (paras.length >= 2 &&
+        paras.last.length == 1 &&
+        !_transition.hasMatch(paras.last.first) &&
+        paras[paras.length - 2].length < 4) {
+      paras[paras.length - 2].addAll(paras.removeLast());
+    }
     return [
       if (greeting.isNotEmpty) greeting,
-      ...paras,
+      ...paras.map((p) => p.join(' ')),
       if (closing.isNotEmpty) closing.join(' '),
     ].join('\n\n');
   }

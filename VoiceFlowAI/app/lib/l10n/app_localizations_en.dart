@@ -541,9 +541,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get styleAppAddTitle => 'Add another app';
 
   @override
-  String get styleAppAddHint =>
-      'App id (Android package like com.example.app, or a program like notes.exe)';
+  String get styleAppAddHint => 'Tap to choose an app';
 
   @override
   String get styleAppAddButton => 'Add';
+
+  @override
+  String get stylePickTitle => 'Choose an app';
+
+  @override
+  String get stylePickSearch => 'Search apps';
+
+  @override
+  String get stylePickLoading => 'Looking for apps…';
+
+  @override
+  String get stylePickEmpty =>
+      'No app list is available here. Type the app id above to use it.';
+
+  @override
+  String stylePickUse(String id) {
+    return 'Use \"$id\" as the app id';
+  }
 }
