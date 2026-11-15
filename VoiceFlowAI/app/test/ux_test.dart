@@ -193,7 +193,7 @@ void main() {
     await t.tap(find.text('Style').first);
     await t.pumpAndSettle();
     expect(
-      find.text('Hi John, thanks for the update. Can we meet Thursday?'),
+      find.text('Hi John, thank you for the update. Could we meet Thursday?'),
       findsOneWidget,
     );
     expect(
