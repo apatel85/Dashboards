@@ -19,9 +19,9 @@ needs Ankit's yes) · he trades ES/NQ futures options and SPX options, 0DTE/1DTE
 4. Report back exactly as §10 describes — including when the answer is "it failed".
 5. This repo is public: API keys go in environment variables / GitHub secrets, never in a file.
 
-**One interpretation to confirm.** The request said "0, 10, 1 day trading option". This plan reads that
-as **0DTE and 1DTE options**, with single-stock options allowed out to about 10 days to expiry. If that
-is wrong, only §6 changes.
+**Ankit's answers (2026-11-15) are recorded in §11 and override anything older in this file.** In short:
+options are 0DTE and 1DTE only; long and short are both in scope; account is $10,000 with a 3% loss / 15%
+gain rule; data comes from his Schwab API and Yahoo, plus one free intraday source.
 
 ---
 
@@ -169,7 +169,8 @@ the same signal at three speeds (swing core, intraday trigger, short-dated optio
 
 ## 4. The strategy — elements to consider
 
-Everything is long-only by default. Short side is out of scope for v1 (Decision D3 in §11).
+Long and short are both in scope (Decision D3). Each short rule is the mirror of its long rule and is
+listed in §6.6. Long and short results are always reported separately.
 
 ### 4.1 Element 1 — Market regime gate (applies to every module)
 
@@ -177,7 +178,7 @@ Everything is long-only by default. Short side is out of scope for v1 (Decision 
 |---|---|---|
 | Green | SPY > 50-day SMA **and** 21-day EMA > 50-day SMA **and** share of universe above its 50-day SMA ≥ 50% | Full size |
 | Yellow | Neither Green nor Red | Half size, A-grade setups only |
-| Red | SPY < 200-day SMA **or** breadth < 30% | No new swing longs. Day and index modules still run and are reported separately |
+| Red | SPY < 200-day SMA **or** breadth < 30% | No new swing longs; swing shorts allowed at full size. Day and index modules still run and are reported separately |
 
 Also recorded daily as context, not as gates: VIX level, VIX1D, QQQ vs its 50-day, the gamma-flip state
 from the existing `build-gex.mjs`.
@@ -223,11 +224,24 @@ All must be **point-in-time**: a number may be used only from the date it was fi
 
 ### 4.5 Element 5 — Risk and position management (applies to every module)
 
-- Risk per trade: 0.5% of equity (Green), 0.25% (Yellow). Position size = risk ÷ stop distance.
+- Account: $10,000 (Decision D4). Ankit's rule: **3% loss, 15% gain** — a 5-to-1 payoff, which breaks
+  even at a 16.7% win rate. Two readings are both run and reported side by side until he picks one:
+  - **Reading 1 (account risk):** each trade risks 3% of the account ($300) and targets 5R ($1,500).
+    Position size = $300 ÷ stop distance. This works for stocks and options alike.
+  - **Reading 2 (price move):** stock stop 3% below entry, target 15% above. Not usable for options,
+    where a 3% move in premium is noise; options fall back to Reading 1.
+- The 15% / 5R target replaces "sell half at +2R" as the primary exit. The original staged exit stays in
+  the variant list for comparison, because a fixed 5R target will be reached on a minority of trades.
+- Every result is also shown at 1% risk per trade. At 3%, ten losses in a row is a 26% drawdown, and
+  ten-loss streaks are normal for a strategy that wins 30–40% of the time.
+- Small-account constraints to verify in Phase 0 and model in the engine: the pattern-day-trader rule
+  for margin accounts under $25,000 (check its current status — changes were proposed in 2025; futures
+  options on ES/NQ are outside it), whole-share and whole-contract sizing, and the fact that $300 of risk
+  buys one SPX spread at most. Module B is cut from the paper's 20 names a day to the top 3 by score.
 - Reject any stock trade whose stop is further than 1.0 × ATR(14) or 8% from entry.
 - Max single position 20% of equity; max total open risk 5% of equity; max 2 positions per industry group.
 - Day modules: stop trading for the day at −2R; max 3 index option trades per day.
-- Options: the premium paid is the risk. Never more than 0.5% of equity per trade.
+- Options: the premium paid is the risk — at most $300 per trade (3% of the account).
 - Progressive exposure: after 3 consecutive losses, halve size until 2 winners in a row.
 
 ---
@@ -247,7 +261,7 @@ produce higher expectancy (§8.5, monotonicity)?
 | **Relative strength** | 15 | RS < 70 | RS 70–89 | RS ≥ 90 and RS line at new high |
 | **Volume / attention** | 15 | RVOL < 1.5 | RVOL 1.5–3 | RVOL ≥ 3 or opening-bar RVOL ≥ 5 |
 | **Group strength** | 5 | Group below median | Top half | Top 20% |
-| **Options & positioning** | 5 | Nothing unusual / wide spreads | Call volume ≥ 3× its 20-day average | That, plus volume > open interest in ≤ 10 DTE calls, plus insider cluster |
+| **Options & positioning** | 5 | Nothing unusual / wide spreads | Call volume ≥ 3× its 20-day average | That, plus volume > open interest in 0–1 DTE options in the trade's direction, plus insider cluster |
 
 **Grades:** A+ ≥ 85 · A 75–84 · B 60–74 · C < 60. Trade A+/A in Green and Yellow, B in Green only, C never.
 
@@ -284,9 +298,9 @@ name is not a trade until a trigger in §6 fires.
 every parameter against the paper PDF in Phase 0; the values below are from memory of it.
 - Universe each morning: price > $5, 14-day average volume ≥ 1M shares, ATR(14) > $0.50, opening
   5-minute RVOL ≥ 1; take the top 20 by opening RVOL.
-- Direction: first 5-minute bar up → long only via buy stop at its high (short side recorded but not
-  traded in v1).
-- Stop: 10% of ATR(14) from entry. Exit: stop or the close. Risk 0.5% per trade.
+- Direction: first 5-minute bar up → long via buy stop at its high; first bar down → short via sell stop
+  at its low.
+- Stop: 10% of ATR(14) from entry. Exit: stop, the 5R target, or the close. Risk per §4.5.
 - TradeDesk variant to test against the paper's rules: restrict to names with trade score ≥ 75.
 
 ### 6.3 Module C — Index 0DTE / 1DTE (SPX, ES, NQ)
@@ -313,12 +327,28 @@ Expression — tested three ways and reported side by side:
 - **H2 · 0DTE defined-risk premium sale (high win rate, index):** iron condor, short strikes at ~10 delta,
   wings 25–50 points wide, opened 10:00 ET, closed at 50% of credit, 2× credit loss, or 15:45 ET.
 
-### 6.5 Module D — Single-stock options overlay (0–10 DTE)
+### 6.5 Module D — Single-stock options overlay (0DTE and 1DTE only — Decision D1)
 
-Not a separate signal. When an A1 or A2 trade scores A+ and the stock passes the options liquidity rule:
-buy a call debit spread, long ~55 delta, short ~25 delta, nearest expiry with ≥ 5 sessions left
-(variant: nearest expiry of any length, including 0–1 DTE on the trigger day). Premium = the risk.
-Note for A1: the entry is after the report, so the earnings volatility premium has already come out.
+Not a separate signal. When a Module B day-trade trigger or an A1 gap-day trigger scores A+ **and** the
+stock has an option expiring that day or the next session **and** it passes the options liquidity rule:
+buy a single option at ~50 delta (call for long, put for short), premium ≤ $300, exit at the 5R target,
+at a 50% loss of premium, or 15 minutes before the close (0DTE) / at the next open (1DTE).
+Most single stocks only have a 0/1DTE option on Thursdays and Fridays; Phase 0 lists which names have
+more frequent expiries. No single-stock option is held longer than one session. Swing trades (Module A)
+are therefore held in shares, not options.
+
+### 6.6 Short side (Decision D3)
+
+- **A1-S · Negative episodic pivot:** gap down ≥ 8% on a miss or guidance cut, RVOL ≥ 2; sell short below
+  the 5-minute opening range low; stop at the gap-day high; same exits mirrored.
+- **A2-S · Breakdown:** close < 50 < 150 < 200-day SMA, RS ≤ 20, a 10–40 session bear flag that tightens
+  under a falling 10/20-day EMA; sell short below the flag low; stop at the breakdown-day high.
+- **A3-S · Parabolic short (Kullamägi's third setup):** up ≥ 50% in 5 sessions (large caps) or ≥ 100%
+  (small caps), 3+ consecutive up days; short the first break of the opening range low; stop at the
+  day's high; cover at the 10- and 20-day averages.
+- **B and C** already trade both directions.
+- Short-specific costs and limits in the engine: borrow fee (flat 3% a year placeholder; hard-to-borrow
+  names excluded when short interest ÷ float > 20%), no shorting under $10, uptick-rule days excluded.
 
 ---
 
@@ -330,12 +360,14 @@ Note for A1: the entry is after the report, so the earnings volatility premium h
 |---|---|---|---|
 | Daily OHLCV, adjusted, US stocks | 2019-01 → present | Yahoo chart endpoint (already used), Stooq as cross-check | Delisted names missing → survivorship bias |
 | Historical index membership | 2019 → present | Wikipedia S&P 500 / Nasdaq-100 change tables; iShares Russell holdings (already used) | Small caps outside indexes not covered |
-| 1- and 5-minute bars, stocks and SPY/QQQ | ≥ 2 years (2024-11 → 2026-11 minimum) | Alpaca free historical bars; Massive (formerly Polygon) free tier, 2 years, 5 calls/min | Rate limits; needs a free API key in an env var |
+| 1- and 5-minute bars, stocks and SPY/QQQ | ≥ 2 years (2024-11 → 2026-11 minimum) | **Alpaca free historical bars** (recommended addition — free key, minute history back years). Schwab and Yahoo are not enough here: Schwab's price-history endpoint returns only a limited recent window of minute bars and Yahoo gives about 30 days of 1-minute and 60 days of 5-minute data (confirm both limits in Phase 2) | Rate limits; needs a free API key in an env var |
+| $SPX / futures intraday | same | Schwab price history for the recent window; SPY and QQQ from Alpaca as the 2-year proxy | ES/NQ history is proxied, not real futures bars |
 | Earnings dates, time of day, actual vs estimate | 2019 → present | Nasdaq API; SEC 8-K timestamps as cross-check | Before/after-market flag must be right or the gap day is wrong |
 | Fundamentals, point-in-time | 2018 → present | SEC EDGAR companyfacts (`filed` date) | Tag inconsistencies between companies |
 | VIX, VIX1D, put/call | 2019 → present (VIX1D from 2023) | Cboe free downloads | — |
 | Insider filings, short interest | 2019 → present | SEC EDGAR, FINRA | Short interest is twice a month |
-| Option prices, intraday, SPX + single names | ≥ 2 years | **No reliable free source** | See 7.3 |
+| Option prices, intraday, SPX + single names | ≥ 2 years | **No free source of history.** Schwab's option-chain endpoint gives live chains only | See 7.3 |
+| Option chains going forward | from now | **Schwab option chains**, snapshotted every 5 minutes during the session for SPX, SPY, QQQ and the day's Module B names | Starts empty; becomes the real-price test set over time |
 
 ### 7.2 Minimum test window
 
@@ -352,7 +384,11 @@ Free historical intraday option quotes of usable quality do not exist. Two tiers
   an implied volatility taken from VIX1D (index) or 30-day realised volatility × a fixed markup (stocks),
   then charge a spread cost (§8.3). TradeDesk's lotto grading already works this way. Results are labelled
   **"modelled"** everywhere and are good enough to reject a bad idea, not to approve a good one.
-- **Tier 2 (paid, needs Ankit's approval — it breaks the free-only rule):** one or two months of a
+- **Tier 1b (free, real prices, forward only):** start the Schwab chain snapshots in Phase 2. After 60
+  trading days there are enough real quotes to check the Tier 1 model: compare modelled and real fills on
+  the same signals and report the gap. This is how an options module can move from "Watch" to "Adopt"
+  without paid data.
+- **Tier 2 (paid, not approved — listed for completeness):** one or two months of a
   historical options data subscription (ThetaData was listed at roughly $40–$80 a month in 2026
   comparisons; check the vendor's own pricing page) to download two years of SPX and single-name quotes
   once, then cancel. Only worth doing for expressions that pass on Tier 1.
@@ -440,7 +476,7 @@ A module is **adopted** only if, out-of-sample and after costs, all of these hol
 | Trades out-of-sample | ≥ 100 (≥ 60 for index options modules) |
 | Expectancy | ≥ +0.20 R, and the lower end of the 90% interval > 0 |
 | Profit factor | ≥ 1.3 |
-| Max drawdown at 0.5% risk per trade | ≤ 20% |
+| Max drawdown at 1% risk per trade (also reported at 3%) | ≤ 20% |
 | Rolling 6-month windows profitable | ≥ 60% |
 | Random-entry benchmark | Beats the 95th percentile |
 | Parameter stability | Profit factor stays ≥ 1.1 across ±20% |
@@ -487,7 +523,7 @@ data. Do not substitute a weaker test and present it as the real one.
 
 1. **Verdict line per module:** Adopt / Watch / Reject, with the gate that decided it.
 2. **Headline table** (out-of-sample, after costs): trades · win rate · payoff · break-even win rate ·
-   expectancy R · profit factor · max drawdown · CAGR at 0.5% risk · 90% interval on expectancy.
+   expectancy R · profit factor · max drawdown · CAGR and dollar P&L on $10,000 at 3% and at 1% risk · 90% interval on expectancy.
 3. **Same table in-sample**, side by side, with the number of variants tried.
 4. **By year and by regime state.**
 5. **By score grade** — whether the rating system ranks trades correctly.
@@ -519,11 +555,22 @@ data. Do not substitute a weaker test and present it as the real one.
 
 | # | Decision | Default used |
 |---|---|---|
-| D1 | Is "0, 10, 1 day" = 0DTE/1DTE options, single stocks out to ~10 DTE? | Yes |
-| D2 | Pay for one or two months of historical options data (Tier 2) if a module passes on modelled prices? | No — free only, options results capped at "Watch" |
-| D3 | Include short trades? | No — long only in v1 |
-| D4 | Account size and risk per trade for the report's dollar figures | $100,000 notional, 0.5% risk |
-| D5 | Free API keys (Alpaca and/or Massive) for intraday history, stored as GitHub secrets | Needed for Phases 6–7; swing phases proceed without them |
+Answered by Ankit on 2026-11-15:
+
+| # | Decision | Answer |
+|---|---|---|
+| D1 | Option expiries | 0DTE and 1DTE only. Nothing out to 10 days |
+| D2 | Data for testing | His Schwab API and Yahoo. No paid options data |
+| D3 | Direction | Long and short |
+| D4 | Account and risk | $10,000; 3% loss, 15% gain |
+| D5 | API keys | Schwab free tier available; open to adding others suggested here → Alpaca free tier for intraday history |
+
+Still open:
+
+| # | Question | Until answered |
+|---|---|---|
+| D6 | Does "3% loss / 15% gain" mean 3% of the **account** risked per trade ($300, target $1,500), or a 3% / 15% move in the **trade's price**? | Both readings are run (§4.5) |
+| D7 | Keys: Schwab app key, secret and refresh token, plus an Alpaca free key, stored as GitHub secrets (never in a file). Schwab refresh tokens expire after about 7 days, so the forward snapshot job needs a weekly re-login by Ankit | Swing phases run on Yahoo alone; intraday and options phases wait |
 
 ---
 
