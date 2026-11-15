@@ -429,13 +429,22 @@
     "businessStart": {
       "hey": "Hi",
       "hiya": "Hi",
-      "yo": "Hi"
+      "yo": "Hi",
+      "also": "also",
+      "but": "but"
     },
     "professionalStart": {
       "hey": "Hello",
       "hi": "Hello",
       "hiya": "Hello",
-      "yo": "Hello"
+      "yo": "Hello",
+      "also": "additionally ,",
+      "but": "however ,",
+      "plus": "in addition ,",
+      "anyway": "in any case ,",
+      "okay": "understood",
+      "ok": "understood",
+      "sorry": "apologies"
     },
     "professionalWords": {
       "thanks a lot": "thank you very much",
@@ -443,7 +452,40 @@
       "thanks": "thank you",
       "thx": "thank you",
       "kids": "children",
-      "awesome": "excellent"
+      "awesome": "excellent",
+      "i think": "i believe",
+      "i want to": "i would like to",
+      "i want": "i would like",
+      "we want to": "we would like to",
+      "can you": "could you",
+      "can we": "could we",
+      "need help with": "need assistance with",
+      "help with": "assist with",
+      "help me": "assist me",
+      "help you": "assist you",
+      "sorry for": "apologies for",
+      "sorry about": "apologies for",
+      "no worries": "not a problem",
+      "sounds good": "that sounds acceptable",
+      "talk soon": "speak soon",
+      "guys": "everyone",
+      "folks": "colleagues",
+      "boss": "manager",
+      "very good": "excellent",
+      "really good": "excellent",
+      "very important": "essential",
+      "really important": "essential",
+      "email about": "email regarding",
+      "call about": "call regarding",
+      "question about": "question regarding",
+      "message about": "message regarding",
+      "meeting about": "meeting regarding",
+      "update about": "update regarding",
+      "right now": "currently",
+      "at the moment": "currently",
+      "lots of": "many",
+      "by the way": "incidentally",
+      "a couple of": "a few"
     },
     "professionalDrop": [
       "really",
@@ -452,8 +494,7 @@
       "literally",
       "honestly",
       "totally",
-      "seriously",
-      "like"
+      "seriously"
     ],
     "promptPhrases": {
       "i want you to act as": "act as",
@@ -525,7 +566,17 @@
       "perhaps": "",
       "i would like": "",
       "um so": "",
-      "for both": "for"
+      "for both": "for",
+      "what i need is": "",
+      "for me": "",
+      "essentially": "",
+      "you know": "",
+      "the thing is": "",
+      "i think": "",
+      "sort of": "",
+      "kind of": "",
+      "as well": "",
+      "going to need to": "must"
     },
     "promptStartPhrases": {
       "can you": "",
@@ -547,6 +598,10 @@
       "so": ""
     },
     "promptRules": [
+      {
+        "pattern": "^\\s*(?:hi|hello|hey)\\s+(?:claude|chatgpt|gpt|gemini|copilot|assistant|ai|bot|there)\\b[,.!]?\\s*",
+        "replace": ""
+      },
       {
         "pattern": "(^|[.?!]\\s+)(?:let us|let's|lets)\\s+(?:try|test|see)(?:\\s+(?:this|it|that))?(?:\\s+(?:out|again|now))*\\s*[.?!]\\s*",
         "replace": "$1"
@@ -572,12 +627,12 @@
         "replace": "$1"
       },
       {
-        "pattern": "(?:(?:and|but|also|then|plus)\\s+)?(?:(?:keep (?:it|the answer|the response|your answer|your response|this)|make it|limit (?:it|the answer|the response) to|in)\\s+)?(?:no more than|at most|up to|a maximum of|maximum of|max of|not more than|not exceeding)\\s+(\\d+)\\s+(words|sentences|lines|paragraphs|items|examples|characters|bullets|bullet points|points|steps|names|ideas|options|rows|columns|sections|tips|reasons)(?=\\s*(?:$|[.,;!?]))",
+        "pattern": "(?:(?:and|but|also|then|plus)\\s+)?(?:(?:keep (?:it|the answer|the response|your answer|your response|this)|make it|limit (?:it|the answer|the response) to|in)\\s+)?(?:no more than|at most|up to|a maximum of|maximum of|max of|not more than|not exceeding)\\s+(\\d+)\\s+(words|sentences|lines|paragraphs|items|examples|characters|bullets|bullet points|points|steps|names|ideas|options|rows|columns|sections|tips|reasons)(?=\\s*(?:$|[.,;!?])|\\s+(?:and|but|then|also)\\b)",
         "replace": "max $1 $2",
         "directive": true
       },
       {
-        "pattern": "(?:(?:and|but|also|then|plus)\\s+)?(?:(?:keep (?:it|the answer|the response|your answer|your response|this)|make it|limit (?:it|the answer|the response) to|in)\\s+)?(?:under|less than|fewer than|below)\\s+(\\d+)\\s+(words|sentences|lines|paragraphs|items|examples|characters|bullets|bullet points|points|steps|names|ideas|options|rows|columns|sections|tips|reasons)(?=\\s*(?:$|[.,;!?]))",
+        "pattern": "(?:(?:and|but|also|then|plus)\\s+)?(?:(?:keep (?:it|the answer|the response|your answer|your response|this)|make it|limit (?:it|the answer|the response) to|in)\\s+)?(?:under|less than|fewer than|below)\\s+(\\d+)\\s+(words|sentences|lines|paragraphs|items|examples|characters|bullets|bullet points|points|steps|names|ideas|options|rows|columns|sections|tips|reasons)(?=\\s*(?:$|[.,;!?])|\\s+(?:and|but|then|also)\\b)",
         "replace": "under $1 $2",
         "directive": true
       },
@@ -613,8 +668,16 @@
         "directive": true
       },
       {
-        "pattern": "(?:(?:and|but|also|then|plus)\\s+)?\\b(?:respond|reply|answer|return|output) (?:only )?(?:in|with|as) (json|markdown|yaml|csv|a table|plain text)\\b",
+        "pattern": "\\b(?:(?:give me|show me|send me)\\s+)?(?:the\\s+)?(?:respond|reply|answer|return|output|result|response)\\s+(?:only\\s+)?(?:in|with|as)\\s+(?:a\\s+|an\\s+)?(json|markdown|yaml|csv|plain text|table)\\b",
         "replace": "output $1"
+      },
+      {
+        "pattern": ",?\\s*(?:ok|okay|right|yeah)\\s*\\?\\s*$",
+        "replace": "."
+      },
+      {
+        "pattern": "\\b(?:i|we) (?:will|would) like (?:it|this|that) to\\b",
+        "replace": "make it"
       }
     ],
     "promptVerbs": [
@@ -741,6 +804,43 @@
       "ssh": "SSH",
       "dns": "DNS",
       "oauth": "OAuth"
+    },
+    "businessWords": {
+      "a bunch of": "several",
+      "a ton of": "a great deal of",
+      "a couple of": "a few",
+      "pretty good": "quite good",
+      "pretty much": "essentially",
+      "figure out": "determine",
+      "look into": "investigate",
+      "check out": "review",
+      "go over": "review",
+      "talk about": "discuss",
+      "get back to": "follow up with",
+      "heads up": "advance notice",
+      "ask for": "request",
+      "help out": "assist",
+      "circle back": "follow up",
+      "loop in": "include",
+      "reach out to": "contact",
+      "right away": "immediately",
+      "in charge of": "responsible for",
+      "deal with": "address",
+      "come up with": "develop",
+      "get rid of": "remove",
+      "set up a call": "schedule a call",
+      "set up a meeting": "schedule a meeting",
+      "set up a time": "schedule a time",
+      "hop on a call": "join a call",
+      "jump on a call": "join a call",
+      "a big": "a significant",
+      "huge": "substantial",
+      "tough": "challenging",
+      "buy": "purchase",
+      "sounds good": "that works",
+      "no problem": "certainly",
+      "a problem": "an issue",
+      "the problem": "the issue"
     }
   }
 }

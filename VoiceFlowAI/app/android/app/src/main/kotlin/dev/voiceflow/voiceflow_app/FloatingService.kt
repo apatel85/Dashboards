@@ -35,6 +35,9 @@ class FloatingService : Service() {
     private lateinit var wm: WindowManager
     private var bubble: BubbleView? = null
     private var lp: WindowManager.LayoutParams? = null
+    private var attached = false
+    private var inputActive = false
+    private val hide = Runnable { if (!inputActive && state == BubbleState.IDLE) detach() }
     private var state = BubbleState.IDLE
     private var token = 0 // bumped on cancel so a late result is dropped, never typed
     private var kind = "text"
@@ -69,8 +72,10 @@ class FloatingService : Service() {
         if (intent?.action == ACTION_STOP) { stopSelf(); return START_NOT_STICKY }
         startForegroundCompat()
         if (!Settings.canDrawOverlays(this)) { stopSelf(); return START_NOT_STICKY }
-        if (bubble == null) addBubble()
+        if (bubble == null) createBubble()
         running = true
+        // Show only if a text box is in use right now; the accessibility service keeps it updated.
+        VoiceFlowAccessibilityService.instance?.evaluate()
         return START_STICKY
     }
 
@@ -96,7 +101,7 @@ class FloatingService : Service() {
     // ---- the button
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
-    private fun addBubble() {
+    private fun createBubble() {
         val size = dp(56)
         val p = WindowManager.LayoutParams(
             size, size,
@@ -139,15 +144,41 @@ class FloatingService : Service() {
             }
             true
         }
+        bubble = v; lp = p
+    }
+
+    /** The button exists on screen only while the person is typing (see [setInputActive]). */
+    private fun attach() {
+        val v = bubble ?: return
+        val p = lp ?: return
+        if (attached) return
         try {
             wm.addView(v, p)
-            bubble = v; lp = p
+            attached = true
+            Log.i("VoiceFlow", "BUBBLE visible")
             v.post {
                 val loc = IntArray(2); v.getLocationOnScreen(loc)
                 Log.i("VoiceFlow", "BUBBLE_AT ${loc[0] + v.width / 2} ${loc[1] + v.height / 2}")
             }
         } catch (e: Exception) {
             Log.e("VoiceFlow", "bubble failed: $e"); stopSelf()
+        }
+    }
+
+    private fun detach() {
+        val v = bubble ?: return
+        if (!attached) return
+        try { wm.removeView(v) } catch (_: Exception) {}
+        attached = false
+        Log.i("VoiceFlow", "BUBBLE hidden")
+    }
+
+    /** Called by the accessibility service: true while a text box is focused or the keyboard is up. */
+    fun setInputActive(active: Boolean) {
+        main.post {
+            inputActive = active
+            main.removeCallbacks(hide)
+            if (active) attach() else main.postDelayed(hide, 700) // short delay: no flicker between fields
         }
     }
 
@@ -279,6 +310,7 @@ class FloatingService : Service() {
             bubble?.state = state
             say(shown)
             main.postDelayed(idleUnload, 5 * 60_000L)
+            if (!inputActive) main.postDelayed(hide, 700)
         }
     }
 
@@ -290,6 +322,7 @@ class FloatingService : Service() {
         }
         state = BubbleState.IDLE
         bubble?.state = state
+        if (!inputActive) main.postDelayed(hide, 700)
     }
 
     override fun onDestroy() {
@@ -297,7 +330,7 @@ class FloatingService : Service() {
         instance = null
         main.removeCallbacksAndMessages(null)
         if (state == BubbleState.LISTENING) recorder.stop()
-        bubble?.let { try { wm.removeView(it) } catch (_: Exception) {} }
+        detach()
         bubble = null
         ImeEngine.destroy()
         super.onDestroy()

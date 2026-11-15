@@ -9,6 +9,7 @@ import android.text.InputType
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 
 /** What kind of field has focus. [password] fields are never dictated into. */
 data class FieldInfo(val pkg: String?, val kind: String, val password: Boolean)
@@ -37,8 +38,29 @@ fun fieldKindOf(t: Int): String {
  * the last insertion back out. It does not read, log or store screen content. Events are ignored.
  */
 class VoiceFlowAccessibilityService : AccessibilityService() {
-    override fun onServiceConnected() { instance = this; Log.i("VoiceFlow", "a11y connected") }
-    override fun onAccessibilityEvent(e: AccessibilityEvent?) {}
+    override fun onServiceConnected() { instance = this; Log.i("VoiceFlow", "a11y connected"); evaluate() }
+    override fun onAccessibilityEvent(e: AccessibilityEvent?) {
+        when (e?.eventType) {
+            AccessibilityEvent.TYPE_VIEW_FOCUSED,
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED -> evaluate()
+        }
+    }
+
+    /**
+     * Is the person typing? True while a text box has input focus or the keyboard is up, never in
+     * a password field. Only flags are looked at (editable / password / keyboard window): no text
+     * from the screen is read, kept or sent anywhere. The floating button follows this.
+     */
+    fun evaluate() {
+        val n = try { focused() } catch (_: Exception) { null }
+        val password = n != null && (n.isPassword || fieldKindOf(n.inputType) == "password")
+        val editable = n != null && n.isEditable
+        val ime = try {
+            windows.any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
+        } catch (_: Exception) { false }
+        FloatingService.instance?.setInputActive(!password && (editable || ime))
+    }
     override fun onInterrupt() {}
     override fun onUnbind(i: android.content.Intent?): Boolean { instance = null; return super.onUnbind(i) }
     override fun onDestroy() { instance = null; super.onDestroy() }

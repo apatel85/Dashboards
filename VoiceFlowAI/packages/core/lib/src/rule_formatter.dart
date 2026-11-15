@@ -25,14 +25,30 @@ class RuleFormatter {
   static const _noDedupe = {'had', 'that', 'is'};
 
   String format(String input, Profile p, {bool shorthandHundreds = false}) {
-    input = SelfCorrection.apply(
-        input); // "Monday... actually Tuesday" keeps only Tuesday
+    input = SelfCorrection.apply(input); // keeps only the corrected version
+    input = _dropBareGreeting(input, p.register);
     final out = _format(input, p, shorthandHundreds, p.register);
     // "thanks" alone, or a prompt that was only pleasantries: keep the plain text, not nothing.
     if (out.trim().isEmpty && p.register != 'business') {
       return _format(input, p, shorthandHundreds, 'business');
     }
     return out;
+  }
+
+  static final _bareGreeting = RegExp(
+      r'^\s*(?:hi|hey|hello|hiya|yo|good (?:morning|afternoon|evening))(?:\s+(?:there|claude|chatgpt|gpt|gemini|copilot|assistant|ai|bot))?\s*[,.!]\s+',
+      caseSensitive: false);
+
+  /// An opening "Hi," / "Hello," with nobody named is usually just how the speaker starts talking,
+  /// not part of the message, so Business, Professional and AI Prompting do not keep it. A greeting
+  /// that names someone ("Hi John,") stays. Casual keeps what was said. Short messages stay as said.
+  String _dropBareGreeting(String input, String register) {
+    if (register == 'casual') return input;
+    final m = _bareGreeting.firstMatch(input);
+    if (m == null) return input;
+    final rest = input.substring(m.end);
+    if (register != 'prompt' && _wc(rest) < 6) return input;
+    return _cap1(rest.trimLeft());
   }
 
   String _format(
@@ -57,7 +73,11 @@ class RuleFormatter {
     t = _tidyPunct(t);
     t = _capitalize(t);
     final s = _join(t, listed);
-    return register == 'prompt' ? _promptRules(s) : s;
+    if (register == 'prompt') return _structurePrompt(_promptRules(s));
+    if (register == 'business' || register == 'professional') {
+      return _paragraphs(s);
+    }
+    return s;
   }
 
   // ---- register (tone): what makes Casual, Business, Professional and AI Prompting differ
@@ -71,10 +91,12 @@ class RuleFormatter {
     switch (register) {
       case 'business':
         t = _swap(t, _reg('slang'));
+        t = _swap(t, _reg('businessWords'));
         return _swap(t, _reg('businessStart'), startOnly: true);
       case 'professional':
         t = _swap(t, _reg('slang'));
         t = _swap(t, _reg('professionalStart'), startOnly: true);
+        t = _swap(t, _reg('businessWords'));
         t = _swap(t, _reg('professionalWords'));
         final drop = List<String>.from(
                 lang.register['professionalDrop'] as List? ?? const [])
@@ -211,6 +233,192 @@ class RuleFormatter {
           !RegExp(r'^(e\.g\.|i\.e\.|etc\.|vs\.)$').hasMatch(tw);
     }
     return b.toString().trim();
+  }
+
+  // ---- shared: sentence splitting that does not break on "e.g." / "Mr." / "No."
+  static final _abbrev = RegExp(
+      r'(?:e\.g|i\.e|etc|vs|mr|mrs|ms|dr|inc|no|approx|st)\.$',
+      caseSensitive: false);
+
+  List<String> _sentences(String s) {
+    final raw = s.trim().split(RegExp(r'(?<=[.?!])\s+'));
+    final out = <String>[];
+    for (final x in raw) {
+      if (x.isEmpty) continue;
+      if (out.isNotEmpty && _abbrev.hasMatch(out.last)) {
+        out[out.length - 1] = '${out.last} $x';
+      } else {
+        out.add(x);
+      }
+    }
+    return out;
+  }
+
+  int _wc(String s) =>
+      s.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+
+  String _cap1(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+  // ---- business / professional: paragraphs so a longer dictation reads as sections
+  static final _transition = RegExp(
+      r'^(?:Additionally|However|Furthermore|Moreover|Next|Finally|Separately|Regarding|In addition|Meanwhile|Otherwise|As for|On another note|In any case|Also|Another)\b');
+  static final _closing = RegExp(
+      r'^(?:Thank you|Thanks|Best regards|Kind regards|Regards|Sincerely|Looking forward|Talk soon|Speak soon|Please let me know|Let me know)\b');
+
+  /// Four or more sentences become short paragraphs: greeting on its own line, a new paragraph
+  /// at a transition ("However", "Additionally"...) or after about three sentences, closing last.
+  /// Text the speaker already broke into lines (bullets, "new line") is left alone.
+  String _paragraphs(String s) {
+    if (s.contains('\n')) return s;
+    final sents = _sentences(s);
+    if (sents.length < 4) return s;
+    var greeting = '';
+    final g = RegExp(
+            r"^((?:Hi|Hello|Dear|Hey)\s+[A-Z][\w.'-]*(?:\s+[A-Z][\w.'-]*)?,)\s+(.+)$")
+        .firstMatch(sents.first);
+    if (g != null) {
+      greeting = g.group(1)!;
+      sents[0] = _cap1(g.group(2)!);
+    }
+    final closing = <String>[];
+    while (sents.length > 2 && _closing.hasMatch(sents.last)) {
+      closing.insert(0, sents.removeLast());
+    }
+    final paras = <String>[];
+    var cur = <String>[];
+    var words = 0;
+    void flush() {
+      if (cur.isNotEmpty) paras.add(cur.join(' '));
+      cur = [];
+      words = 0;
+    }
+
+    for (final x in sents) {
+      if (cur.isNotEmpty &&
+          ((_transition.hasMatch(x) && cur.length >= 2) ||
+              cur.length >= 3 ||
+              words >= 60)) {
+        flush();
+      }
+      cur.add(x);
+      words += _wc(x);
+    }
+    flush();
+    return [
+      if (greeting.isNotEmpty) greeting,
+      ...paras,
+      if (closing.isNotEmpty) closing.join(' '),
+    ].join('\n\n');
+  }
+
+  // ---- AI prompting: lay a longer dictation out as labelled parts a model can use directly
+  static final _outputSpec = RegExp(
+      r'^(?:max|under|at most|at least|exactly|about)\s+\d|^output\b|^no explanation|^(?:code|json|yaml|csv|markdown|xml|html)\s+only|^be (?:concise|brief)|^\d+\s+(?:bullets|sentences|words|lines|paragraphs|examples|items|steps|options|characters)\b|\b(?:in|as)\s+(?:a\s+)?(?:table|list|bullets?|bullet points|json|markdown|csv|steps?)\b|\b(?:tone|format|style)\b',
+      caseSensitive: false);
+
+  /// Role / Goal / Context / Task / Include / Avoid / Output. Short, single-purpose prompts stay one
+  /// plain line (labels cost tokens); labels appear when the dictation has several parts.
+  String _structurePrompt(String s) {
+    if (s.contains('\n')) return s;
+    final sents = <String>[];
+    for (final x in _sentences(s)) {
+      // "include X, and do not use Y" is two instructions
+      sents.addAll(x
+          .split(RegExp(
+              r",?\s+and\s+(?=(?:do not|don't|never|avoid|include|make sure|ensure|keep)\b)",
+              caseSensitive: false))
+          .map((y) => _cap1(y.trim()))
+          .map((y) => RegExp(r'[.?!]$').hasMatch(y) ? y : '$y.'));
+    }
+    if (sents.isEmpty) return s;
+    final verbs =
+        List<String>.from(lang.register['promptVerbs'] as List? ?? const [])
+            .toSet();
+    final role = <String>[], goal = <String>[], ctx = <String>[];
+    final task = <String>[],
+        inc = <String>[],
+        avoid = <String>[],
+        out = <String>[];
+    String bare(String x) => x.replaceAll(RegExp(r'[.]+$'), '').trim();
+    for (var x in sents) {
+      final low = x.toLowerCase();
+      RegExp r;
+      RegExpMatch? m;
+      if (low.startsWith('goal:')) {
+        goal.add(bare(x.substring(5).trim()));
+        continue;
+      }
+      m = RegExp(r'^act as (?:an? )?(.+)$', caseSensitive: false).firstMatch(x);
+      if (m != null) {
+        final body = bare(m.group(1)!);
+        final cut = RegExp(r'\s+and\s+(\w+)\s', caseSensitive: false)
+            .allMatches('$body ')
+            .where((c) => verbs.contains(c.group(1)!.toLowerCase()))
+            .toList();
+        if (cut.isNotEmpty) {
+          role.add(body.substring(0, cut.first.start));
+          final rest = body
+              .substring(cut.first.start)
+              .replaceFirst(RegExp(r'^\s+and\s+', caseSensitive: false), '');
+          task.add('${_cap1(rest)}.');
+        } else {
+          role.add(body);
+        }
+        continue;
+      }
+      if (_outputSpec.hasMatch(x) && _wc(x) <= 12) {
+        out.add(x);
+        continue;
+      }
+      r = RegExp(
+          r"^(?:do not|don't|never|avoid)\s+(?:use|include|add|mention|say|put|show)?\s*(.+)$",
+          caseSensitive: false);
+      m = r.firstMatch(x) ??
+          RegExp(r'^(?:without|no)\s+(.+)$', caseSensitive: false)
+              .firstMatch(x);
+      if (m != null) {
+        avoid.add(bare(m.group(1)!));
+        continue;
+      }
+      m = RegExp(
+              r'^(?:(?:include|cover|mention)\s+(.+)|(?:make sure|ensure)(?: that)?(?: it| you| the \w+)?\s+(?:includes?|covers?|mentions?|contains?|has|have)\s+(.+)|(?:it|this|you|the \w+)\s+(?:should|must)\s+(?:include|cover|mention|contain|have)\s+(.+))$',
+              caseSensitive: false)
+          .firstMatch(x);
+      if (m != null) {
+        inc.add(bare(m.group(1) ?? m.group(2) ?? m.group(3)!));
+        continue;
+      }
+      final first =
+          RegExp(r'^[A-Za-z]+').firstMatch(x)?.group(0)?.toLowerCase();
+      if (x.trimRight().endsWith('?') ||
+          (first != null && verbs.contains(first))) {
+        task.add(x);
+      } else {
+        ctx.add(x);
+      }
+    }
+    final parts = (role.isNotEmpty ? 1 : 0) +
+        (goal.isNotEmpty ? 1 : 0) +
+        (ctx.isNotEmpty ? 1 : 0) +
+        (task.isNotEmpty ? 1 : 0) +
+        (inc.isNotEmpty ? 1 : 0) +
+        (avoid.isNotEmpty ? 1 : 0) +
+        (out.isNotEmpty ? 1 : 0);
+    final words = _wc(s);
+    if ((task.isEmpty && goal.isEmpty) ||
+        parts < 2 ||
+        (words < 25 && parts < 4)) {
+      return s;
+    }
+    return [
+      if (role.isNotEmpty) 'Role: ${role.join('; ')}',
+      if (goal.isNotEmpty) 'Goal: ${goal.join('; ')}.',
+      if (ctx.isNotEmpty) 'Context: ${ctx.join(' ')}',
+      if (task.isNotEmpty) 'Task: ${task.join(' ')}',
+      if (inc.isNotEmpty) 'Include: ${inc.join('; ')}',
+      if (avoid.isNotEmpty) 'Avoid: ${avoid.join('; ')}',
+      if (out.isNotEmpty) 'Output: ${out.join(' ')}',
+    ].join('\n');
   }
 
   List<String> _tokenize(String s) => _tokRe

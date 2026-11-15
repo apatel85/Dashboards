@@ -98,15 +98,32 @@ has 'done.{1,8}Allow the microphone' && ok "mic step detected as done" || { bad 
 has 'done.{1,8}Allow the floating button' && ok "overlay permission detected as done" || { bad "overlay step"; shownodes; }
 has 'done.{1,8}Turn on the typing service' && ok "accessibility service detected as enabled" || { bad "accessibility step"; shownodes; }
 tap "Show button"
+sleep 4
+has 'done.{1,8}Show the floating button' && ok "setup page ticks the button step (service running)" || { bad "button step not ticked"; shownodes; adb logcat -d | grep -iE "FloatingService|VoiceFlow|AndroidRuntime" | tail -15; }
+has 'Dictate here|You.re set|Done' && ok "all steps done: Try-it box offered" || { bad "steps not all done"; shownodes; }
+[ -z "$(adb logcat -d VoiceFlow:I '*:S' | grep 'BUBBLE visible')" ] && ok "button stays hidden when no text box is in use" || bad "button showed with no text box focused"
+
+echo "== the button follows typing: shows with a focused text box, hides when leaving"
+adb shell am start -n $PKG/.TestActivity >/dev/null; sleep 4
+focus t_text
 BUB=""
 for i in $(seq 1 15); do
   BUB=$(adb logcat -d VoiceFlow:I '*:S' | grep -o 'BUBBLE_AT [0-9]* [0-9]*' | tail -1 | cut -d' ' -f2,3)
   [ -n "$BUB" ] && break; sleep 2
 done
 echo "bubble at: '$BUB'"
-[ -n "$BUB" ] && ok "floating button is on screen" || { bad "floating button never appeared"; adb logcat -d | grep -iE "FloatingService|VoiceFlow|AndroidRuntime" | tail -15; }
-has 'done.{1,8}Show the floating button' && ok "setup page ticks the button step" || { bad "button step not ticked"; shownodes; }
-has 'Dictate here|You.re set|Done' && ok "all steps done: Try-it box offered" || { bad "steps not all done"; shownodes; }
+[ -n "$BUB" ] && ok "button appears when a text box is focused" || { bad "button never appeared"; adb logcat -d | grep -iE "FloatingService|VoiceFlow|AndroidRuntime" | tail -15; }
+adb logcat -c
+adb shell input keyevent KEYCODE_HOME; sleep 5
+adb logcat -d VoiceFlow:I '*:S' | grep -q 'BUBBLE hidden' && ok "button hides when leaving the text box" || bad "button stayed on the home screen"
+adb shell am start -n $PKG/.TestActivity >/dev/null; sleep 3
+focus t_text
+B2=""
+for i in $(seq 1 15); do
+  B2=$(adb logcat -d VoiceFlow:I '*:S' | grep -o 'BUBBLE_AT [0-9]* [0-9]*' | tail -1 | cut -d' ' -f2,3)
+  [ -n "$B2" ] && break; sleep 2
+done
+[ -n "$B2" ] && { ok "button comes back with the next text box"; BUB=$B2; } || bad "button did not come back"
 
 adb shell am start -n $PKG/.TestActivity >/dev/null; sleep 4
 
@@ -172,4 +189,4 @@ echo "== diagnostics"
 adb logcat -d | tr -d '\r' | grep -E "VoiceFlow|E2E|dev.voiceflow|FATAL EXCEPTION" | tail -40
 adb shell dumpsys meminfo $PKG | grep -E "TOTAL PSS" | head -1
 echo "RESULT pass=$PASS fail=$FAIL"
-[ $FAIL -eq 0 ] && [ $PASS -ge 18 ]
+[ $FAIL -eq 0 ] && [ $PASS -ge 21 ]
