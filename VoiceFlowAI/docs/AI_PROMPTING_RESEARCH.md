@@ -64,5 +64,5 @@ Researched 2026-11-15 by web search. **Reliability labels:** PRIMARY = the model
 
 ## Known limits
 - Layout and length rules are pattern rules on punctuated text; they do not understand the request.
-- A prompt with fewer than about 25 words and under 4 parts stays one plain line (labels cost tokens).
+- Plain line or labelled parts is chosen by a static score (0.7.2): length (35+ words 1 point, 80+ 2), several asks 1, build/bug vocabulary 2, explicit constraints (include/avoid/output) up to 2, a role 1; labels need 3+ points, two or more distinct parts, and at least 20 words (unless 4+ parts), because labels cost tokens and the sources say a short prompt often works. The thresholds are our judgement, not from a study.
 - Browser-based AI (claude.ai in Chrome) cannot be recognised on Android; set Chrome's style by hand in Style -> Apps, or use the AI app.

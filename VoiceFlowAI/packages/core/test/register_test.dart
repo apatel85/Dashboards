@@ -168,9 +168,10 @@ void main() {
         () {
       // "museums." / "systems." / "items." end in "ms."; "casino." ends in "no."
       final short = fmt(
-          'Explain what to see. Do not include museums. Include one rainy day option. Keep it fun.',
+          'Act as a travel planner for a family trip. Explain what to see in Lisbon over four days. Do not include museums. Include one rainy day option. Keep it fun.',
           'ai_prompting');
       expect(short, contains('Avoid: museums'));
+      expect(short, contains('Include: one rainy day option'));
       expect(short, isNot(contains('museums.')));
       expect(short, contains('Include: one rainy day option'));
       final o = f.format(
@@ -187,5 +188,54 @@ void main() {
       expect(o, contains('Mr. Smith approved'));
       expect(o, contains('Dr. Lee will join'));
     });
+  });
+
+  group('AI prompting: which route (static, no AI call)', () {
+    final p = loadProfile('ai_prompting');
+    const style = PromptStyle(conciseFirst: true);
+    String run(String t) => f.format(t, p, promptStyle: style);
+    const hint =
+        'Start concise (about 200 words); offer more detail if needed.';
+
+    test('a general question, even with some background, stays one plain line',
+        () {
+      final o = run(
+          "How can we optimize this AI prompting? It seems like the AI prompt worked. When I dictated it put it in the format of what I need to get done. If I am just asking a general question to an AI chatbot, I'm not sure putting it into goal, result, output and context is overkill. Is there a way to assess which route to go?");
+      expect(o, isNot(contains('\n')));
+      expect(o, isNot(contains('Task:')));
+      expect(o, startsWith('How can we optimize this AI prompting?'));
+      expect(o, isNot(contains('It seems like')));
+      expect(o, endsWith(hint));
+    });
+    test('a short question is a single line', () {
+      expect(run('What is the difference between a process and a thread?'),
+          'What is the difference between a process and a thread? $hint');
+    });
+    test('a bug-fix brief gets labelled parts and no length hint', () {
+      final o = run(
+          'The app crashes when I open the settings page on Android. I think the error is in the new picker code. Fix the bug and add a test for it. The fix should not change the existing layout. Keep the change small.');
+      expect(
+          o, startsWith('Task: Fix the bug and add a test for it.\nContext: '));
+      expect(o, contains('The app crashes when I open the settings page'));
+      expect(o, isNot(contains('Start concise')));
+    });
+    test('a new-feature brief is split into goal, task, context, avoid', () {
+      final o = run(
+          'We need a new feature in the app. Create a screen that lists installed apps and lets the user pick a style for each one. It must work on Android and Windows. Do not use any paid service. The goal is to make per-app styles easy to set.');
+      expect(o, contains('Task: Create a screen that lists installed apps'));
+      expect(o, contains('Goal: make per-app styles easy to set.'));
+      expect(o, contains('Avoid: any paid service'));
+      expect(o, contains('Context: We need a new feature in the app.'));
+    });
+    test('short technical prompts stay one line', () {
+      expect(run('Please fix the bug in this function'),
+          'Fix the bug in this function.');
+    });
+  });
+
+  test('a hyphenated word keeps its hyphen; twenty-five is still a number', () {
+    expect(fmt('we need per-app styles for well-known apps', 'business'),
+        'We need per-app styles for well-known apps.');
+    expect(fmt('we have twenty-five people', 'business'), 'We have 25 people.');
   });
 }

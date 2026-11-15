@@ -372,6 +372,10 @@ class RuleFormatter {
       r'^(?:max|under|at most|at least|exactly|about)\s+\d|^output\b|^no explanation|^(?:code|json|yaml|csv|markdown|xml|html)\s+only|^be (?:concise|brief)|^\d+\s+(?:bullets|sentences|words|lines|paragraphs|examples|items|steps|options|characters)\b|\b(?:in|as)\s+(?:a\s+)?(?:table|list|bullets?|bullet points|json|markdown|csv|steps?)\b|\b(?:tone|format|style)\b',
       caseSensitive: false);
 
+  static final _buildWords = RegExp(
+      r'\b(?:app|application|feature|bugs?|errors?|crash\w*|fix|refactor\w*|implement\w*|migrat\w+|deploy\w*|debug\w*|integrat\w+|api|database|function|script|endpoint|component|module|pipeline|workflow|dashboard|website|code|codebase|repo|repository|build|redesign\w*|architecture|logic)\b',
+      caseSensitive: false);
+
   /// Role / Goal / Context / Task / Include / Avoid / Output. Short, single-purpose prompts stay one
   /// plain line (labels cost tokens); labels appear when the dictation has several parts.
   String _structurePrompt(String s, PromptStyle style) {
@@ -483,9 +487,22 @@ class RuleFormatter {
         (avoid.isNotEmpty ? 1 : 0) +
         (out.isNotEmpty ? 1 : 0);
     final words = _wc(s);
-    if ((task.isEmpty && goal.isEmpty) ||
-        parts < 2 ||
-        (words < 25 && parts < 4)) {
+    // Static route choice: a plain short line for a general question, labelled parts for a real
+    // brief. Points: length, several asks, build/bug vocabulary, explicit constraints, a role.
+    var score = 0;
+    if (words >= 80) {
+      score += 2;
+    } else if (words >= 35) {
+      score += 1;
+    }
+    if (task.length >= 2) score += 1;
+    if (_buildWords.hasMatch(s)) score += 2;
+    final constraints = inc.length + avoid.length + out.length;
+    score += constraints > 2 ? 2 : constraints;
+    if (role.isNotEmpty) score += 1;
+    // a very short prompt stays one line however technical it sounds (labels cost tokens)
+    final tooShort = words < 20 && parts < 4;
+    if ((task.isEmpty && goal.isEmpty) || parts < 2 || score < 3 || tooShort) {
       return hint == null ? s : '$s $hint';
     }
     if (hint != null) out.add(hint);
@@ -506,10 +523,56 @@ class RuleFormatter {
     };
   }
 
-  List<String> _tokenize(String s) => _tokRe
-      .allMatches(s.replaceAll('\r', ''))
-      .map((m) => m.group(0)!)
-      .toList();
+  static const _tensWords = {
+    'twenty',
+    'thirty',
+    'forty',
+    'fifty',
+    'sixty',
+    'seventy',
+    'eighty',
+    'ninety'
+  };
+  static const _unitWords = {
+    'one',
+    'two',
+    'three',
+    'four',
+    'five',
+    'six',
+    'seven',
+    'eight',
+    'nine'
+  };
+  static final _alpha = RegExp(r"^[A-Za-z]+(?:['\u2019][A-Za-z]+)*$");
+
+  /// Words and punctuation. A hyphen between two words ("per-app", "well-known") stays inside the
+  /// word; "twenty-five" becomes "twenty five" so the number conversion reads it.
+  List<String> _tokenize(String s) {
+    final raw = _tokRe
+        .allMatches(s.replaceAll('\r', ''))
+        .map((m) => m.group(0)!)
+        .toList();
+    final out = <String>[];
+    for (var i = 0; i < raw.length; i++) {
+      final between = raw[i] == '-' &&
+          out.isNotEmpty &&
+          i + 1 < raw.length &&
+          _alpha.hasMatch(out.last) &&
+          _alpha.hasMatch(raw[i + 1]);
+      if (between) {
+        if (_tensWords.contains(out.last.toLowerCase()) &&
+            _unitWords.contains(raw[i + 1].toLowerCase())) {
+          continue; // "twenty-five" -> "twenty five" (the number conversion reads it)
+        }
+        out[out.length - 1] = '${out.last}-${raw[i + 1]}';
+        i++;
+      } else {
+        out.add(raw[i]);
+      }
+    }
+    return out;
+  }
 
   List<String> _spokenPunct(List<String> t) {
     final phrases = lang.spokenPunct.entries
