@@ -92,7 +92,7 @@ void main() {
           chain: PolishChain([e])).run(speechPcm(), opts());
       expect(r.status, DictationStatus.ok);
       expect(r.polishUsed, isFalse);
-      expect(r.finalText, 'Hello team the launch is in 2 weeks.');
+      expect(r.finalText, 'Hello team, the launch is in 2 weeks.');
     }
   });
   test('adversarial dictation is formatted, not obeyed', () async {

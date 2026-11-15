@@ -409,6 +409,12 @@ class SelfCorrection {
     if (byClass != null) return byClass + term;
     final byName = _replaceCapitalised(left, right);
     if (byName != null && rw.length <= 3) return byName + term;
+    // A restart: "meet at the, no wait, at the coffee place" - the speaker backs up and says the
+    // lead-in again, so the first copy of it (and the marker) goes.
+    final restart = _restart(left, rw);
+    if (restart != null) {
+      return '$restart ${right.trimLeft()}$term'.trim();
+    }
     if (rw.length <= 3) {
       final lw = left.split(RegExp(r'\s+'));
       if (lw.length > rw.length + 1) {
@@ -416,6 +422,26 @@ class SelfCorrection {
       }
     }
     return s;
+  }
+
+  /// If the right side begins with the last 1-3 words of [left], returns [left] without them.
+  /// Needs at least two words of real lead-in left over and one new word on the right.
+  static String? _restart(String left, List<String> rw) {
+    String norm(String w) =>
+        w.toLowerCase().replaceAll(RegExp(r"[^a-z0-9']"), '');
+    final lw = left.trim().split(RegExp(r'\s+'));
+    for (var k = 3; k >= 1; k--) {
+      if (lw.length < k + 1 || rw.length <= k) continue;
+      var same = true;
+      for (var i = 0; i < k; i++) {
+        if (norm(lw[lw.length - k + i]) != norm(rw[i])) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return lw.sublist(0, lw.length - k).join(' ');
+    }
+    return null;
   }
 
   static Set<String> _content(String s) => RegExp(r"[A-Za-z0-9']+")

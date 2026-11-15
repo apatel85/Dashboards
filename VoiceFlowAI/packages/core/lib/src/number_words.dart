@@ -46,7 +46,16 @@ class NumberWords {
           final p = cur.last.toLowerCase();
           final prevBig = (units[p] ?? 0) >= 10 || tens.containsKey(p);
           final startsNew = tens.containsKey(w) || (units[w] ?? 0) >= 10;
-          if (prevBig && startsNew) {
+          // "forty two fifty" is two numbers, never 40 + 2 + 50 = 92: a tens word can only
+          // continue a run after a scale word ("two hundred fifty"). Clinician shorthand
+          // ("one forty") is the one exception and is handled in _value.
+          final afterScale = scales.containsKey(p);
+          final shorthandPair = shorthandHundreds &&
+              cur.length == 1 &&
+              (units[p] ?? 99) >= 1 &&
+              (units[p] ?? 99) <= 9;
+          if (startsNew && !afterScale && !shorthandPair ||
+              prevBig && startsNew) {
             runs.add(cur);
             cur = <String>[];
           }
@@ -78,10 +87,13 @@ class NumberWords {
       if (runs.length == 1 &&
           runs[0].length == 1 &&
           vals[0] < 10 &&
-          !unitWords.contains(nextTok)) {
+          !unitWords.contains(nextTok) &&
+          !_timeContext(toks, i)) {
         out.add(toks[i]); // lone small number stays a word
       } else if (runs.length == 2 && vals.every((v) => v >= 10 && v < 100)) {
-        out.add('${vals[0]}${vals[1].toString().padLeft(2, '0')}'); // year
+        // "nineteen ninety nine" -> 1999 (a year); "total should be forty two fifty" -> 4,250
+        final joined = '${vals[0]}${vals[1].toString().padLeft(2, '0')}';
+        out.add(_amountContext(toks, i) ? _comma(int.parse(joined)) : joined);
       } else if (runs.length == 1 &&
           runs[0].length > 1 &&
           runs[0].every((w) =>
@@ -98,6 +110,62 @@ class NumberWords {
     }
     return out;
   }
+
+  static const _amountWords = {
+    'total',
+    'price',
+    'cost',
+    'costs',
+    'amount',
+    'invoice',
+    'balance',
+    'fee',
+    'fees',
+    'owe',
+    'owes',
+    'charge',
+    'charged',
+    'bill',
+    'budget',
+    'worth',
+    'pay',
+    'paid',
+    'salary',
+    'revenue',
+    'refund',
+    'quote',
+    'payment',
+  };
+
+  /// Money was being talked about just before this number ("the total should be ...").
+  bool _amountContext(List<String> toks, int i) {
+    for (var k = i - 1; k >= 0 && k >= i - 8; k--) {
+      if (_amountWords.contains(toks[k].toLowerCase())) return true;
+    }
+    return false;
+  }
+
+  static const _timePreps = {
+    'at',
+    'around',
+    'by',
+    'until',
+    'till',
+    'before',
+    'after'
+  };
+
+  /// "around seven", "at six", "instead of seven": a time or a value, so digits ("one of" stays).
+  bool _timeContext(List<String> toks, int i) {
+    if (i == 0) return false;
+    final p = toks[i - 1].toLowerCase();
+    if (_timePreps.contains(p)) return true;
+    return p == 'of' && i >= 2 && toks[i - 2].toLowerCase() == 'instead';
+  }
+
+  String _comma(int v) => v
+      .toString()
+      .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
 
   /// Group thousands from 10,000 up; smaller values (e.g. 2500) stay plain.
   String _fmt(int v) => v < 10000

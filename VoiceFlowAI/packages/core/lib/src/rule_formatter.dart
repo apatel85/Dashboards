@@ -4,12 +4,14 @@ import 'context_fixes.dart';
 import 'lang.dart';
 import 'number_words.dart';
 import 'profile.dart';
+import 'segmenter.dart';
 import 'self_correction.dart';
 
 /// Deterministic formatter (spec §5.3). Must be good without any LLM.
 class RuleFormatter {
   final LangData lang;
   final NumberWords _nums;
+  late final Segmenter _segmenter = Segmenter(lang);
   final DateTime Function() _clock;
   RuleFormatter(this.lang, {DateTime Function()? clock})
       : _nums = NumberWords(lang),
@@ -124,7 +126,13 @@ class RuleFormatter {
     t = _spokenPunct(t);
     t = _fillers(t, p.fullFillers);
     t = _repeats(t);
+    t = _repairApostrophes(
+        t); // before segmenting: "its going" -> "it's going" is a subject + verb
+    t = _segmenter.apply(t, register: register);
     t = _register(t, register);
+    if (p.expandSpokenForms && register == 'casual') {
+      t = _swap(t, _reg('spokenForms'));
+    }
     t = t.map(_contraction).toList();
     if (p.expandContractions) t = t.map(_expand).toList();
     t = t.map(_fixI).toList();
@@ -153,8 +161,10 @@ class RuleFormatter {
       }
       t = _nums.convert(t, shorthandHundreds: shorthandHundreds);
       t = [for (final w in t) w.replaceAll('\u0001', '')];
+      t = _currency(t);
     }
     t = _tidyPunct(t);
+    t = _streetNames(t);
     t = _capitalize(t);
     final s = _join(t, listed);
     if (register == 'prompt') {
@@ -168,6 +178,23 @@ class RuleFormatter {
       return _paragraphs(s);
     }
     return s;
+  }
+
+  /// "20 dollars" / "200 bucks" -> "$20" / "$200" (whole amounts only).
+  List<String> _currency(List<String> t) {
+    const words = {'dollars', 'dollar', 'bucks', 'buck'};
+    final out = <String>[];
+    for (var i = 0; i < t.length; i++) {
+      if (RegExp(r'^\d[\d,]*$').hasMatch(t[i]) &&
+          i + 1 < t.length &&
+          words.contains(t[i + 1].toLowerCase())) {
+        out.add('\$${t[i]}');
+        i++;
+        continue;
+      }
+      out.add(t[i]);
+    }
+    return out;
   }
 
   // ---- register (tone): what makes Casual, Business, Professional and AI Prompting differ
@@ -716,6 +743,78 @@ class RuleFormatter {
           !_nums.tens.containsKey(lw)) {
         out = out.sublist(0, n - 2);
       }
+    }
+    return out;
+  }
+
+  Map<String, dynamic> get _apos =>
+      Map<String, dynamic>.from((lang.raw['apostrophe'] as Map?) ?? const {});
+  Set<String> _aposSet(String k) =>
+      List<String>.from(_apos[k] as List? ?? const []).toSet();
+
+  /// Speech models often drop apostrophes. Most are fixed by the contractions table; this adds the
+  /// ones that need the next word to decide: "its gonna be" -> "it's", "id like" -> "I'd".
+  /// ("its" before a noun stays "its"; "were" and "well" are real words and are never touched.)
+  List<String> _repairApostrophes(List<String> t) {
+    final itsBefore = _aposSet('itsBefore');
+    final idBefore = _aposSet('idBefore');
+    final idNotAfter = _aposSet('idNotAfter');
+    final out = [...t];
+    for (var i = 0; i < out.length; i++) {
+      final w = out[i];
+      if (w != w.toLowerCase()) continue;
+      final next = i + 1 < out.length ? out[i + 1].toLowerCase() : '';
+      if (w == 'its' && next.isNotEmpty) {
+        // an -ing word after "its" is a verb ("its going"), but a few nouns end in -ing too
+        final ing = next.length > 4 &&
+            next.endsWith('ing') &&
+            !const {
+              'building',
+              'ceiling',
+              'training',
+              'meeting',
+              'pricing',
+              'funding',
+              'branding'
+            }.contains(next);
+        if (itsBefore.contains(next) || ing) out[i] = "it's";
+      } else if (w == 'id' && idBefore.contains(next)) {
+        final prev = i > 0 ? out[i - 1].toLowerCase() : '';
+        if (!idNotAfter.contains(prev)) out[i] = "I'd";
+      }
+    }
+    return out;
+  }
+
+  /// "main street" -> "Main Street" (after a preposition-free lead word).
+  List<String> _streetNames(List<String> t) {
+    final suffix = _aposSet('streetSuffix');
+    final notAfter = _aposSet('streetNotAfter');
+    final out = [...t];
+    for (var i = 1; i < out.length; i++) {
+      final w = out[i];
+      if (!suffix.contains(w.toLowerCase()) || w != w.toLowerCase()) continue;
+      final prev = out[i - 1];
+      if (!RegExp(r'^[a-z]+$').hasMatch(prev) || notAfter.contains(prev)) {
+        continue;
+      }
+      // needs a preposition one word earlier: "on main street", "at oak avenue"
+      if (i < 2 ||
+          !const {
+            'on',
+            'at',
+            'to',
+            'from',
+            'near',
+            'down',
+            'along',
+            'off',
+            'of'
+          }.contains(out[i - 2].toLowerCase())) {
+        continue;
+      }
+      out[i - 1] = prev[0].toUpperCase() + prev.substring(1);
+      out[i] = w[0].toUpperCase() + w.substring(1);
     }
     return out;
   }

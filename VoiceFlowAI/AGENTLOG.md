@@ -7,6 +7,13 @@
 - iOS out of scope. English first. Flutter pinned 3.50.0 (Dart 3.14).
 - Golden fixtures live in `packages/core/test_fixtures/formatting/<profile>/cases.json`.
 
+## 2026-11-15 — spec stages 1-2 (segmentation, apostrophes, number fix) — IN PROGRESS (not released)
+- Working through "Dictation App Conversion Spec (Final)" in its section-15 order; full map and status in `docs/CONVERSION_SPEC_STATUS.md`. Baseline of 20 spec examples: 1 passing before, 7 now.
+- **Found:** "forty-two fifty not forty-five twenty" became "92 not 65" (groups were added). Fixed; money context gives "4,250", years unchanged.
+- **Added:** `Segmenter` (greeting comma, closers, discourse markers, subject+verb breaks, question marks; lists in `lang/en.json`), apostrophe repair ("its going", "id like"), casual digits and spoken forms, `$20` amounts, street names, restart self-correction.
+- **Goldens changed on purpose (diffs reviewed):** casual "at eight"->"at 8", "gonna/wanna/gotta" expanded, "twenty dollars"->"$20", business "at nine"->"at 9", greeting commas ("Hi John,"), AI prompt run-on now two sentences, cricket "five wickets"->"5 wickets".
+- **Evidence:** core 472 / app 132 tests, analyze and format clean (local). No emulator/phone run for these stages yet. Not done: spec changes 3-8, Professional word map and restructuring, Prompt-mode routes (see status doc and the open decisions there).
+
 ## 2026-11-15 — 0.7.5: hang fixes, press-and-hold style chooser — IN PROGRESS (CI/emulator pending)
 - Owner reported: after some use the button hangs (stays solid; tapping it opens settings), and asked for press-and-hold on the button to choose the style. Also attached "Dictation App Conversion Spec (Final)" (52 pp.) - its stages are being done in section-15 order in later entries; this entry is only the hang and the chooser.
 - **Hang - cause NOT reproduced** (no device/logs here). Found by reading the code, each a plausible cause of "after some use": (1) `SherpaSttEngine.unload()` killed the decoder isolate right after sending `close`, so `recognizer.free()` never ran, and `ImeEngine.destroy()` (idle unload after 5 min) never asked it to - native model memory (~480 MB) leaked on every unload/reload; (2) `transcribe()` waited for the decoder with no timeout; (3) a failed Dart start-up was cached forever (`backend ??=`), so every later call failed and the button treated that as "model not ready" and opened the app; (4) cold-engine calls retried on separate timers, so audio chunks could overtake `streamStart`; (5) the button used a possibly stale `modelReady` and opened the app at once; (6) `streamEnd` had no ceiling, so a silent engine left "working" forever; the mic being taken by a call left it "listening" forever.

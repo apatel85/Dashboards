@@ -52,8 +52,7 @@ void main() {
           fmt(at(20), 'we need to be at 9.45 percent'), isNot(contains(':')));
       expect(at(20).format('the call is at ten am', loadProfile('business')),
           'The call is at 10 am.');
-      expect(
-          fmt(at(20), 'send it to john at nine'), 'Send it to John at nine.');
+      expect(fmt(at(20), 'send it to john at nine'), 'Send it to John at 9.');
     });
   });
 }
