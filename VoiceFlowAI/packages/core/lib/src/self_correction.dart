@@ -9,15 +9,59 @@ class SelfCorrection {
       r"\s*[,;—-]\s*(?:no,?\s+wait|wait,?\s+no|i mean|or rather|sorry|actually)[,:]?\s+",
       caseSensitive: false);
   static const _preps = {
-    'at', 'on', 'in', 'by', 'for', 'to', 'from', 'until', 'till', 'before', 'after'
+    'at',
+    'on',
+    'in',
+    'by',
+    'for',
+    'to',
+    'from',
+    'until',
+    'till',
+    'before',
+    'after'
   };
   static const _stop = {
-    'the', 'a', 'an', 'it', 'is', 'are', 'was', 'were', 'to', 'of', 'and', 'or', 'for', 'in',
-    'on', 'at', 'i', 'we', 'you', 'he', 'she', 'they', 'this', 'that', 'my', 'our', 'be', 'will',
-    'not', 'with', 'so', 'me', 'us', 'do', 'have', 'has'
+    'the',
+    'a',
+    'an',
+    'it',
+    'is',
+    'are',
+    'was',
+    'were',
+    'to',
+    'of',
+    'and',
+    'or',
+    'for',
+    'in',
+    'on',
+    'at',
+    'i',
+    'we',
+    'you',
+    'he',
+    'she',
+    'they',
+    'this',
+    'that',
+    'my',
+    'our',
+    'be',
+    'will',
+    'not',
+    'with',
+    'so',
+    'me',
+    'us',
+    'do',
+    'have',
+    'has'
   };
   static final _classes = <RegExp>[
-    RegExp(r'\b\d{1,2}(?::\d{2})?\s?(?:AM|PM|a\.m\.|p\.m\.)(?=\W|$)', caseSensitive: false),
+    RegExp(r'\b\d{1,2}(?::\d{2})?\s?(?:AM|PM|a\.m\.|p\.m\.)(?=\W|$)',
+        caseSensitive: false),
     RegExp(r'\b(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b',
         caseSensitive: false),
     RegExp(
@@ -114,10 +158,13 @@ class SelfCorrection {
   /// when [b] brings its own ("at 9 AM on Monday" + "on Tuesday at 9 AM").
   static String? _replaceSpan(String prev, String a, String b) {
     final aw = a.split(RegExp(r'\s+'));
-    final core = (aw.isNotEmpty && _preps.contains(aw.first.toLowerCase()) && aw.length > 1)
+    final core = (aw.isNotEmpty &&
+            _preps.contains(aw.first.toLowerCase()) &&
+            aw.length > 1)
         ? aw.sublist(1).join(' ')
         : a;
-    final re = RegExp('\\b${RegExp.escape(core)}(?=\\W|\$)', caseSensitive: false);
+    final re =
+        RegExp('\\b${RegExp.escape(core)}(?=\\W|\$)', caseSensitive: false);
     final ms = re.allMatches(prev).toList();
     if (ms.isEmpty) return null;
     final m = ms.last;
