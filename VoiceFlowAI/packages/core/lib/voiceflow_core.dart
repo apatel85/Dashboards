@@ -8,6 +8,7 @@ export 'src/rule_formatter.dart';
 export 'src/rule_validator.dart';
 export 'src/masker.dart';
 export 'src/segmenter.dart';
+export 'src/prompt_router.dart';
 export 'src/voice_commands.dart';
 export 'src/polish_prompt.dart';
 export 'src/polish_validator.dart';

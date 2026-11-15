@@ -78,14 +78,15 @@ String _promptLayout(PromptStyle style) => switch (style.format) {
 
 /// The user content: material first, instruction last. [transcript] is the cleaned transcript,
 /// [draft] the offline result; both may be masked.
-String buildPolishContent(Profile profile, String transcript, String draft) {
+String buildPolishContent(Profile profile, String transcript, String draft,
+    {String? route}) {
   final mode = polishMode(profile);
   final tone = switch (profile.id) {
     'professional' => 'formal',
     'business' => 'neutral',
     _ => 'as spoken',
   };
-  final type = mode == 'prompt' ? 'generic' : 'GENERAL';
+  final type = mode == 'prompt' ? (route ?? 'generic') : 'GENERAL';
   return '<transcript>$transcript</transcript>\n'
       '<draft>$draft</draft>\n'
       'Mode: $mode. Type: $type. Tone: $tone.\n'

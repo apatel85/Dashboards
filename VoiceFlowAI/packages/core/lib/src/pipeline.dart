@@ -219,7 +219,8 @@ class DictationPipeline {
             promptStyle: o.promptStyle,
             banned: List<String>.from(
                 lang.register['bannedWords'] as List? ?? const [])),
-        buildPolishContent(o.profile, sentTranscript, sentDraft),
+        buildPolishContent(o.profile, sentTranscript, sentDraft,
+            route: o.profile.id == 'ai_prompting' ? _fmt.lastRoute : null),
         allowCloud: allowCloud);
     if (out == null) return (ruled, false);
     // Checks run on what was sent (placeholders and all); only an accepted reply is restored.

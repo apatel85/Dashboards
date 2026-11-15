@@ -10,6 +10,8 @@ void main() {
   _stage6();
   _stage7();
   _stage8();
+  _stage9();
+  _stage10();
   final f = RuleFormatter(loadLang());
   String fmt(String s, [String p = 'business']) => f.format(s, loadProfile(p));
 
@@ -549,6 +551,109 @@ void _stage8() {
       expect(
           f.format('can you send me the numbers thanks', loadProfile('casual')),
           contains('Can you send me the numbers'));
+    });
+  });
+}
+
+void _stage9() {
+  final f = RuleFormatter(loadLang());
+  String c(String s) => f.format(s, loadProfile('casual'));
+  group('grammar slips and sound-alikes a pattern can decide', () {
+    test('the spec examples', () {
+      expect(c('i seen the email yesterday but i didn\'t had time to reply'),
+          "I saw the email yesterday but I didn't have time to reply.");
+      expect(
+          c('there going to be late because of they\'re flight your going to have to pick up the kids'),
+          "They're going to be late because of their flight. You're going to have to pick up the kids.");
+    });
+    test('real uses of there/their/your are left alone', () {
+      expect(c('i left it over there going home'), isNot(contains("they're")));
+      expect(c('there is going to be a meeting'),
+          'There is going to be a meeting.');
+      expect(c('put your coat on'), 'Put your coat on.');
+      expect(c('their house is big'), 'Their house is big.');
+      expect(c('where are they going'), isNot(contains("they're")));
+    });
+    test('"could of" and "more then"', () {
+      expect(c('we could of won'), 'We could have won.');
+      expect(c('it is more then enough'), 'It is more than enough.');
+    });
+  });
+}
+
+void _stage10() {
+  final lang = loadLang();
+  final r = PromptRouter(lang);
+  final f = RuleFormatter(lang);
+  String ai(String s) => f.format(s, loadProfile('ai_prompting'));
+
+  group('prompt router (spec section 5): route by the deliverable', () {
+    test('each route from keyword signals', () {
+      expect(
+          r.route('what is the current sales tax rate in new jersey'), 'ASK');
+      expect(r.route('compare klaviyo and mailchimp for my store'), 'RESEARCH');
+      expect(r.route('write an email to our supplier about the late shipment'),
+          'WRITE');
+      expect(
+          r.route('take this description and make it way shorter'), 'REWRITE');
+      expect(r.route('tell me why october was down compared to september'),
+          'ASK'); // needs "the export" / "analyze" to be ANALYZE
+      expect(r.route('analyze the sales export and find the top three reasons'),
+          'ANALYZE');
+      expect(r.route('build an app so warehouse staff can scan a barcode'),
+          'BUILD');
+      expect(r.route('the tracker app is broken when i export'), 'FIX');
+      expect(r.route('send the invoice to the client'), 'DO');
+      expect(
+          r.route('should i open a third location or buy online ads'), 'PLAN');
+    });
+    test('a question about a deliverable is not the deliverable', () {
+      expect(r.route('what would it take to build an inventory app'), 'ASK');
+      expect(r.route('how do apps handle logins'), 'ASK');
+      expect(r.route('can you send the invoice'), 'DO');
+    });
+  });
+
+  group('DO requests that cannot be undone carry an approval constraint', () {
+    test('added when the speaker did not ask for a look first', () {
+      expect(ai('send an email to the whole team about the new schedule'),
+          endsWith('Get approval first [default].'));
+    });
+    test('not added when they asked for drafts, or said to go ahead', () {
+      expect(ai('write replies to the returns emails but do not send anything'),
+          isNot(contains('approval')));
+      expect(ai('send the invoice to the client go ahead and send it'),
+          isNot(contains('approval')));
+    });
+    test('not added to other routes', () {
+      expect(ai('compare klaviyo and mailchimp for my shopify store'),
+          isNot(contains('approval')));
+    });
+  });
+
+  group('two unrelated requests become two prompts', () {
+    test('the spec example', () {
+      final o = ai(
+          "what's the weather in atlanta on friday and oh also draft a note to the landlord saying the ac is out again");
+      expect(f.lastRoute, 'SPLIT');
+      expect(o, startsWith('Prompt 1: What'));
+      expect(o, contains('\n\nPrompt 2: Draft a note to the landlord'));
+    });
+    test('more detail about the same request stays one prompt', () {
+      final o = ai(
+          'we are building a dictation app and it should convert speech into prompts. also it will save tokens for input and output');
+      expect(o, isNot(contains('Prompt 1')));
+    });
+    test('the validator does not treat "Prompt 1" as an invented number', () {
+      ai("what's the weather in atlanta on friday and oh also draft a note to the landlord saying the ac is out again");
+      expect(f.lastFallbackReason, isNull);
+    });
+  });
+
+  group('"do you know" is not filler', () {
+    test('the question keeps its words', () {
+      expect(ai('do you know what the sales tax is in new jersey'),
+          contains('Do you know what the sales tax'));
     });
   });
 }

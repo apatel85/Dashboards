@@ -570,7 +570,6 @@
       "what i need is": "",
       "for me": "",
       "essentially": "",
-      "you know": "",
       "the thing is": "",
       "i think": "",
       "sort of": "",
@@ -1160,7 +1159,10 @@
       "anyway",
       "oh and",
       "oh also",
-      "one more thing"
+      "one more thing",
+      "and oh also",
+      "and also",
+      "and oh and"
     ],
     "subjects": [
       "we",
@@ -1464,7 +1466,9 @@
       "knew",
       "heard",
       "seems",
-      "seemed"
+      "seemed",
+      "many",
+      "much"
     ],
     "subordinators": [
       "if",
@@ -1563,5 +1567,100 @@
       "effective",
       "commencing"
     ]
+  },
+  "grammarFixes": [
+    {
+      "pattern": "\\bi seen\\b",
+      "replace": "I saw"
+    },
+    {
+      "pattern": "\\b(didn'?t|doesn'?t|don'?t) had\\b",
+      "replace": "$1 have"
+    },
+    {
+      "pattern": "\\b(could|would|should|must) of\\b",
+      "replace": "$1 have"
+    },
+    {
+      "pattern": "(?<!\\b(?:over|out|in|up|down|from|to|near|right|back|go|went|get|got|stand|sit|is|was|be|are|were|been) )\\bthere (going|coming|not|late|gonna|being|trying|always|never|still|all|probably)\\b",
+      "replace": "they're $1"
+    },
+    {
+      "pattern": "\\byour (going|coming|not|welcome|being|gonna|late|right|wrong|correct|so|very|really|still|always|never|all)\\b",
+      "replace": "you're $1"
+    },
+    {
+      "pattern": "\\btheir (going|coming|not|late|gonna|being|always|never|still|probably)\\b",
+      "replace": "they're $1"
+    },
+    {
+      "pattern": "\\bthey'?re (flight|house|car|kids|phone|team|plan|plans|dog|cat|boss|office|family|parents)\\b",
+      "replace": "their $1"
+    },
+    {
+      "pattern": "\\byou'?re (house|car|phone|team|plan|plans|dog|cat|boss|office|family|parents|email|account)\\b",
+      "replace": "your $1"
+    },
+    {
+      "pattern": "\\b(a lot|alot) more then\\b",
+      "replace": "a lot more than"
+    },
+    {
+      "pattern": "\\b(more|less|better|worse|bigger|smaller|rather|other) then\\b",
+      "replace": "$1 than"
+    }
+  ],
+  "promptRoutes": {
+    "order": [
+      {
+        "route": "REWRITE",
+        "pattern": "\\b(rewrite|reword|rephrase|shorten|summari[sz]e|translate|proofread|paraphrase)\\b|\\bmake (?:this|it|that|them)(?: way| much| a lot| a bit)? (?:sound|shorter|longer|more|less|simpler|clearer|better)\\b"
+      },
+      {
+        "route": "FIX",
+        "pattern": "\\b(bug|bugs|error|errors|not working|doesn'?t work|broken|crash|crashes|crashed|crashing|fails|failing|exception)\\b.*\\b(app|code|function|script|site|website|page|tracker|api|build|program|software|feature)\\b|\\b(app|code|function|script|site|website|page|tracker|api|build|program|software|feature)\\b.*\\b(bug|bugs|error|errors|not working|doesn'?t work|broken|crash|crashes|crashed|crashing|fails|failing|exception)\\b"
+      },
+      {
+        "route": "ANALYZE",
+        "pattern": "\\banaly[sz]e\\b|\\b(?:the|my|this) (?:export|spreadsheet|csv|sales data|data|numbers)\\b.*\\b(?:why|trend|how many|break ?down)\\b|\\bwhy did\\b.*\\b(?:drop|fall|fell|go up|go down|decline|increase)\\b"
+      },
+      {
+        "route": "DO",
+        "pattern": "\\b(?:send|schedule|book|order|post|cancel|delete|pay|publish|forward|submit|transfer|reply to|update the)\\b(?! (?:me|us) (?:a |an |the )?(?:list|summary|explanation|example|idea|ideas))"
+      },
+      {
+        "route": "BUILD",
+        "pattern": "\\b(?:build|create|make|develop|code|write)\\b.{0,40}\\b(?:app|tool|script|website|dashboard|automation|bot|plugin|extension|program|feature)\\b"
+      },
+      {
+        "route": "WRITE",
+        "pattern": "\\b(?:write|draft|compose)\\b|\\bemail to\\b|\\bpost (?:about|for)\\b"
+      },
+      {
+        "route": "RESEARCH",
+        "pattern": "\\b(?:research|compare|versus|pros and cons|look into|find out|latest|recommend)\\b|\\bvs\\.? "
+      },
+      {
+        "route": "PLAN",
+        "pattern": "\\b(?:should i|should we|strategy|ideas for|brainstorm|how should we|plan for|plan to)\\b"
+      }
+    ],
+    "questionStart": "^(?:what|why|how|when|where|who|which|does|do|is|are)\\b",
+    "irreversible": "\\b(?:send|delete|pay|publish|post|cancel|order|remove|forward|reply to|submit|transfer|book|buy)\\b",
+    "waiver": "\\b(?:go ahead|just send|no need to (?:ask|check|confirm)|don'?t ask|without asking|right away|send it now)\\b",
+    "approved": "\\b(?:before (?:sending|you send|posting|it goes|publishing)|let me (?:review|check|see|look)|as a draft|save (?:it |them )?as (?:a )?drafts?|for my approval|ask me first|get approval|don'?t send|do not send|draft)\\b",
+    "splitMarkers": [
+      "and oh also",
+      "and also",
+      "and oh and",
+      "oh also",
+      "oh and",
+      "also",
+      "another thing",
+      "separately",
+      "one more thing"
+    ],
+    "approval": "Get approval first [default].",
+    "requestStart": "^(?:draft|write|send|schedule|book|check|find|tell|look up|remind|create|make|build|fix|explain|summari[sz]e|translate|what|how|when|where|why|who|which|can you|could you|would you|please|do you|is there|are there)\\b"
   }
 }

@@ -4,6 +4,7 @@ import 'context_fixes.dart';
 import 'lang.dart';
 import 'number_words.dart';
 import 'profile.dart';
+import 'prompt_router.dart';
 import 'rule_validator.dart';
 import 'segmenter.dart';
 import 'self_correction.dart';
@@ -12,6 +13,33 @@ import 'self_correction.dart';
 class RuleFormatter {
   final LangData lang;
   final NumberWords _nums;
+  late final List<(RegExp, String)> _grammarRules = [
+    for (final r in (lang.raw['grammarFixes'] as List? ?? const []))
+      (
+        RegExp(r['pattern'] as String, caseSensitive: false),
+        r['replace'] as String
+      )
+  ];
+
+  /// Clear grammar slips and sound-alike pairs that a pattern can decide ("i seen" -> "I saw",
+  /// "there going" -> "they're going"). Rules live in `lang/en.json` `grammarFixes`; a capital at
+  /// the start of a match is kept.
+  String _grammar(String s) {
+    for (final (re, rep) in _grammarRules) {
+      s = s.replaceAllMapped(re, (m) {
+        final out = rep.replaceAllMapped(RegExp(r'\$(\d)'), (g) {
+          final i = int.parse(g.group(1)!);
+          return i <= m.groupCount ? (m.group(i) ?? '') : '';
+        });
+        final cap = m[0]!.isNotEmpty &&
+            m[0]![0] == m[0]![0].toUpperCase() &&
+            m[0]![0] != m[0]![0].toLowerCase();
+        return cap && !out.startsWith('I ') ? _cap1(out) : out;
+      });
+    }
+    return s;
+  }
+
   late final Segmenter _segmenter = Segmenter(lang);
   final DateTime Function() _clock;
   RuleFormatter(this.lang,
@@ -45,7 +73,7 @@ class RuleFormatter {
   /// self-corrections resolved, nothing else (no tone, no layout). This is what cloud polish gets
   /// alongside the offline draft.
   String clean(String input) {
-    var s = SelfCorrection.apply(ContextFixes.apply(input));
+    var s = SelfCorrection.apply(_grammar(ContextFixes.apply(input)));
     final fill = lang.fillersPure.map(RegExp.escape).join('|');
     if (fill.isNotEmpty) {
       s = s.replaceAll(
@@ -61,9 +89,13 @@ class RuleFormatter {
       {bool shorthandHundreds = false,
       PromptStyle promptStyle = const PromptStyle()}) {
     lastFallbackReason = null;
-    input = ContextFixes.apply(input); // "tax messages" -> "text messages"
+    lastRoute = null;
+    _routeInput = '';
+    input = _grammar(
+        ContextFixes.apply(input)); // "tax messages" -> "text messages"
     input = SelfCorrection.apply(input); // keeps only the corrected version
     final cleaned = input;
+    _routeInput = cleaned;
     input = _dropBareGreeting(input, p.register);
     input = _dropLeadingSo(input, p.register);
     input = ClockTime.apply(input, now: _clock());
@@ -87,7 +119,8 @@ class RuleFormatter {
   /// The one default the rule path adds to prompts (spec: defaults are marked as assumed). Its
   /// number is not a spoken fact, so the fact checks do not count it.
   static final _concise = RegExp(r'Start concise \(about \d+ words\)[^.]*\.?');
-  String _withoutDefaults(String s) => s.replaceAll(_concise, '');
+  String _withoutDefaults(String s) =>
+      s.replaceAll(_concise, '').replaceAll(RegExp(r'Prompt \d: '), '');
 
   static final _leadingSo = RegExp(
       r'(^|[.?!]\s+|\n\s*)(?:(?:alright|all right|okay|ok|right|well|anyway)[,.]?\s+)?so,?\s+(?:(?:yeah|yep|yup),?\s+)?(?!(?:far|many|much|long|good|great|bad|big|little|called|that|as)\b)([A-Za-z])',
@@ -210,9 +243,8 @@ class RuleFormatter {
     final s = _join(t, listed);
     if (register == 'prompt') {
       // a prompt is one flow of text: pasted line breaks must not stop it being structured
-      return _structurePrompt(
-          _promptRules(s.replaceAll(
-              RegExp(r'[ \t]*\n+(?![ \t]*(?:\d+\.|-)\s)[ \t]*'), ' ')),
+      return _promptOutput(
+          s.replaceAll(RegExp(r'[ \t]*\n+(?![ \t]*(?:\d+\.|-)\s)[ \t]*'), ' '),
           promptStyle);
     }
     if (register == 'business' || register == 'professional') {
@@ -234,6 +266,46 @@ class RuleFormatter {
         continue;
       }
       out.add(t[i]);
+    }
+    return out;
+  }
+
+  late final PromptRouter _router = PromptRouter(lang);
+
+  /// The route the last Prompt-mode call chose (ASK, RESEARCH, WRITE, REWRITE, ANALYZE, BUILD,
+  /// FIX, DO, PLAN, or SPLIT for two unrelated requests); null for other tones.
+  String? lastRoute;
+
+  /// The cleaned words as spoken, for checks the prompt rules would hide ("go ahead and send it").
+  String _routeInput = '';
+
+  /// Prompt mode: split two unrelated requests, route each, lay it out, add what the route needs.
+  String _promptOutput(String flat, PromptStyle style) {
+    final parts = _router.split(flat);
+    if (parts != null) {
+      final a = _onePrompt(parts.$1, style);
+      final b = _onePrompt(parts.$2, style);
+      lastRoute = 'SPLIT';
+      return 'Prompt 1: $a\n\nPrompt 2: $b';
+    }
+    return _onePrompt(flat, style);
+  }
+
+  String _onePrompt(String flat, PromptStyle style) {
+    final route = _router.route(flat);
+    lastRoute = route;
+    var out = _structurePrompt(_promptRules(flat), style);
+    if (_router.needsApproval(flat, route) &&
+        (_routeInput.isEmpty || _router.needsApproval(_routeInput, 'DO')) &&
+        _router.approvalLine.isNotEmpty) {
+      final line = _router.approvalLine;
+      out = out.contains('\n')
+          ? switch (style.format) {
+              'xml' => '$out\n<constraints>$line</constraints>',
+              'markdown' => '$out\n\n### Constraints\n$line',
+              _ => '$out\nConstraints: $line',
+            }
+          : '$out $line';
     }
     return out;
   }
@@ -744,10 +816,32 @@ class RuleFormatter {
       }
       var hit = false;
       for (final m in multi) {
-        // "just so you know" is a phrase, not a filler "you know"
+        // "just so you know" and "do you know what ..." are phrases, not the filler "you know"
         if (m.join(' ') == 'you know' &&
-            out.isNotEmpty &&
-            out.last.toLowerCase() == 'so') {
+            ((out.isNotEmpty &&
+                    const {
+                      'so',
+                      'do',
+                      'did',
+                      'would',
+                      'could',
+                      'if',
+                      'as',
+                      'does'
+                    }.contains(out.last.toLowerCase())) ||
+                (i + 2 < t.length &&
+                    const {
+                      'what',
+                      'how',
+                      'where',
+                      'when',
+                      'why',
+                      'who',
+                      'if',
+                      'that',
+                      'whether',
+                      'which'
+                    }.contains(t[i + 2].toLowerCase())))) {
           continue;
         }
         if (i + m.length <= t.length &&
