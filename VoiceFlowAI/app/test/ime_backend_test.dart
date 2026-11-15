@@ -85,6 +85,42 @@ void main() {
     expect(e['text'], 'john@example.com');
   });
 
+  test(
+    'streaming dictation: chunks in, one result out; password and cancel',
+    () async {
+      await install();
+      final pcm = tone();
+      // Same audio, delivered through the channel the floating button uses.
+      await b.handle(const MethodCall('streamStart', {'fieldKind': 'text'}));
+      const step = 3200;
+      for (var i = 0; i < pcm.length; i += step) {
+        final end = i + step > pcm.length ? pcm.length : i + step;
+        await b.handle(MethodCall('streamChunk', {'pcm': pcm.sublist(i, end)}));
+      }
+      final r = await b.handle(const MethodCall('streamEnd')) as Map;
+      expect(r['status'], 'ok');
+      expect(r['text'], isNotEmpty);
+
+      await b.handle(
+        const MethodCall('streamStart', {'fieldKind': 'password'}),
+      );
+      await b.handle(MethodCall('streamChunk', {'pcm': pcm}));
+      final p = await b.handle(const MethodCall('streamEnd')) as Map;
+      expect(p['status'], 'passwordField');
+
+      final calls = stt.calls;
+      await b.handle(const MethodCall('streamStart', {'fieldKind': 'text'}));
+      await b.handle(MethodCall('streamChunk', {'pcm': pcm}));
+      await b.handle(const MethodCall('streamCancel'));
+      expect(
+        ((await b.handle(const MethodCall('streamEnd'))) as Map)['status'],
+        'error',
+        reason: 'a cancelled stream has nothing to finish',
+      );
+      expect(stt.calls, calls, reason: 'nothing was transcribed after cancel');
+    },
+  );
+
   test('setProfile remembers per app and is used next time', () async {
     await install();
     await b.setProfile('ai_prompting', 'com.example.chat');

@@ -259,30 +259,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onbDone => 'You\'re set';
 
   @override
-  String get setupTitle => 'Set up VoiceFlow keyboard';
+  String get setupTitle => 'Set up VoiceFlow';
 
   @override
-  String get setupIntro => 'Four quick steps. Your voice stays on this phone.';
-
-  @override
-  String get setupEnable => 'Turn on the VoiceFlow keyboard';
-
-  @override
-  String get setupEnableBody =>
-      'Open keyboard settings and switch VoiceFlow on.';
-
-  @override
-  String get setupEnableButton => 'Open keyboard settings';
-
-  @override
-  String get setupSelect => 'Choose VoiceFlow as your keyboard';
-
-  @override
-  String get setupSelectBody =>
-      'Pick VoiceFlow in the list. You can switch back any time with the globe key.';
-
-  @override
-  String get setupSelectButton => 'Choose keyboard';
+  String get setupIntro => 'Five quick steps. Your voice stays on this phone.';
 
   @override
   String get setupMic => 'Allow the microphone';
@@ -306,7 +286,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setupTryBody =>
-      'Tap the box, then tap the microphone on the VoiceFlow keyboard and speak.';
+      'Tap the box, then tap the floating VoiceFlow button and speak.';
 
   @override
   String get setupTryHint => 'Dictate here';
@@ -476,4 +456,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setLicenses => 'Open-source licenses';
+
+  @override
+  String get setupOverlay => 'Allow the floating button';
+
+  @override
+  String get setupOverlayBody =>
+      'Lets VoiceFlow show a small button over other apps. Find VoiceFlow in the list and switch it on.';
+
+  @override
+  String get setupOverlayButton => 'Open display settings';
+
+  @override
+  String get setupAccess => 'Turn on the typing service';
+
+  @override
+  String get setupAccessBody =>
+      'VoiceFlow types your words into the box you are using through an Android accessibility service. It only inserts text you dictated, never reads or stores what is on screen, and refuses password fields. Open the list, choose VoiceFlow and switch it on.';
+
+  @override
+  String get setupAccessButton => 'Open accessibility settings';
+
+  @override
+  String get setupBubble => 'Show the floating button';
+
+  @override
+  String get setupBubbleBody =>
+      'Puts the button on screen. Tap it to start dictating, tap again to stop. Drag it anywhere.';
+
+  @override
+  String get setupBubbleButton => 'Show button';
 }

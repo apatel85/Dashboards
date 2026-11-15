@@ -4,8 +4,9 @@ import '../l10n/app_localizations.dart';
 import '../state/android_setup.dart';
 import '../state/onboarding_controller.dart';
 
-/// Android first-run checklist (spec §9.3 adapted): the keyboard is the product, so setup is
-/// about getting it enabled, selected, allowed to listen and given its speech model.
+/// Android first-run checklist (spec §9.3 adapted): the floating button is the product, so setup
+/// is about letting it listen, appear over other apps, type into the focused field, and giving it
+/// its speech model.
 class AndroidSetupPage extends StatefulWidget {
   const AndroidSetupPage({super.key, required this.controller});
   final AndroidSetupController controller;
@@ -54,26 +55,6 @@ class _AndroidSetupPageState extends State<AndroidSetupPage>
               const SizedBox(height: 16),
               _step(
                 context,
-                'enable',
-                c.enabled,
-                c.current == SetupStep.enable,
-                t.setupEnable,
-                t.setupEnableBody,
-                button: t.setupEnableButton,
-                onPressed: c.openKeyboardSettings,
-              ),
-              _step(
-                context,
-                'select',
-                c.selected,
-                c.current == SetupStep.select,
-                t.setupSelect,
-                t.setupSelectBody,
-                button: t.setupSelectButton,
-                onPressed: c.pickKeyboard,
-              ),
-              _step(
-                context,
                 'mic',
                 c.micOk,
                 c.current == SetupStep.mic,
@@ -83,7 +64,37 @@ class _AndroidSetupPageState extends State<AndroidSetupPage>
                 onPressed: c.allowMic,
                 extra: c.micAsked && !c.micOk ? Text(t.setupMicDenied) : null,
               ),
+              _step(
+                context,
+                'overlay',
+                c.overlayOk,
+                c.current == SetupStep.overlay,
+                t.setupOverlay,
+                t.setupOverlayBody,
+                button: t.setupOverlayButton,
+                onPressed: c.openOverlaySettings,
+              ),
+              _step(
+                context,
+                'access',
+                c.accessOk,
+                c.current == SetupStep.accessibility,
+                t.setupAccess,
+                t.setupAccessBody,
+                button: t.setupAccessButton,
+                onPressed: c.openAccessibilitySettings,
+              ),
               _modelStep(context, t, c),
+              _step(
+                context,
+                'bubble',
+                c.bubbleOn,
+                c.current == SetupStep.bubble,
+                t.setupBubble,
+                t.setupBubbleBody,
+                button: t.setupBubbleButton,
+                onPressed: c.showBubble,
+              ),
               if (c.allDone) ...[
                 const SizedBox(height: 8),
                 Card(

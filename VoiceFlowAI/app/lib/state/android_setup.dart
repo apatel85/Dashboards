@@ -6,33 +6,43 @@ import 'onboarding_controller.dart';
 
 /// What the Android setup checklist needs from the OS.
 abstract class SetupPlatform {
-  Future<bool> keyboardEnabled();
-  Future<bool> keyboardSelected();
   Future<bool> micGranted();
-  Future<void> openKeyboardSettings();
-  Future<void> showKeyboardPicker();
+  Future<bool> overlayGranted();
+  Future<bool> accessibilityEnabled();
+  Future<bool> bubbleRunning();
+  Future<void> openOverlaySettings();
+  Future<void> openAccessibilitySettings();
+  Future<void> showBubble();
+  Future<void> hideBubble();
 }
 
 class ChannelSetupPlatform implements SetupPlatform {
   static const _ch = MethodChannel('voiceflow/setup');
   Future<bool> _b(String m) async => (await _ch.invokeMethod<bool>(m)) ?? false;
   @override
-  Future<bool> keyboardEnabled() => _b('keyboardEnabled');
-  @override
-  Future<bool> keyboardSelected() => _b('keyboardSelected');
-  @override
   Future<bool> micGranted() => _b('micGranted');
   @override
-  Future<void> openKeyboardSettings() =>
-      _ch.invokeMethod('openKeyboardSettings');
+  Future<bool> overlayGranted() => _b('overlayGranted');
   @override
-  Future<void> showKeyboardPicker() => _ch.invokeMethod('showKeyboardPicker');
+  Future<bool> accessibilityEnabled() => _b('accessibilityEnabled');
+  @override
+  Future<bool> bubbleRunning() => _b('bubbleRunning');
+  @override
+  Future<void> openOverlaySettings() => _ch.invokeMethod('openOverlaySettings');
+  @override
+  Future<void> openAccessibilitySettings() =>
+      _ch.invokeMethod('openAccessibilitySettings');
+  @override
+  Future<void> showBubble() => _ch.invokeMethod('showBubble');
+  @override
+  Future<void> hideBubble() => _ch.invokeMethod('hideBubble');
 }
 
-enum SetupStep { enable, select, mic, model, done }
+enum SetupStep { mic, overlay, accessibility, model, bubble, done }
 
-/// Android first-run checklist: enable keyboard, select keyboard, allow microphone,
-/// download model, then try it. Ticks come from the OS, so they update on resume.
+/// Android first-run checklist: allow microphone, allow drawing over other apps (the floating
+/// button), turn on the accessibility service (how text is typed into the focused field),
+/// download the model, show the button. Ticks come from the OS, so they update on resume.
 class AndroidSetupController extends ChangeNotifier {
   AndroidSetupController({
     required this.platform,
@@ -49,33 +59,51 @@ class AndroidSetupController extends ChangeNotifier {
   final VoidCallback? onFinished;
   final OnboardingController _model;
 
-  bool enabled = false, selected = false, micOk = false;
+  bool micOk = false, overlayOk = false, accessOk = false, bubbleOn = false;
   bool micAsked = false;
 
   ModelUiState get model => _model.model;
   int get percent => _model.percent;
   bool get modelOk => _model.model == ModelUiState.installed;
-  bool get allDone => enabled && selected && micOk && modelOk;
+  bool get allDone => micOk && overlayOk && accessOk && modelOk && bubbleOn;
 
   /// First thing still to do, in order.
   SetupStep get current {
-    if (!enabled) return SetupStep.enable;
-    if (!selected) return SetupStep.select;
     if (!micOk) return SetupStep.mic;
+    if (!overlayOk) return SetupStep.overlay;
+    if (!accessOk) return SetupStep.accessibility;
     if (!modelOk) return SetupStep.model;
+    if (!bubbleOn) return SetupStep.bubble;
     return SetupStep.done;
   }
 
   /// Re-read the OS state (call on start and whenever the app resumes).
   Future<void> refresh() async {
-    enabled = await platform.keyboardEnabled();
-    selected = enabled && await platform.keyboardSelected();
     micOk = await platform.micGranted();
+    overlayOk = await platform.overlayGranted();
+    accessOk = await platform.accessibilityEnabled();
+    bubbleOn = await platform.bubbleRunning();
     notifyListeners();
   }
 
-  Future<void> openKeyboardSettings() => platform.openKeyboardSettings();
-  Future<void> pickKeyboard() => platform.showKeyboardPicker();
+  Future<void> openOverlaySettings() => platform.openOverlaySettings();
+  Future<void> openAccessibilitySettings() =>
+      platform.openAccessibilitySettings();
+
+  Future<void> showBubble() async {
+    await platform.showBubble();
+    // The service starts asynchronously: give it a moment before reading its state.
+    for (var i = 0; i < 15; i++) {
+      if (await platform.bubbleRunning()) break;
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+    await refresh();
+  }
+
+  Future<void> hideBubble() async {
+    await platform.hideBubble();
+    await refresh();
+  }
 
   Future<void> allowMic() async {
     micAsked = true;

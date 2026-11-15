@@ -4,15 +4,16 @@ import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import java.io.ByteArrayOutputStream
 import kotlin.math.abs
 
-/** 16 kHz mono 16-bit capture into memory. Audio never touches disk. */
-class MicRecorder(private val onLevel: (Float) -> Unit) {
+/**
+ * 16 kHz mono 16-bit capture, streamed in ~100 ms chunks to [onChunk] (called on the capture
+ * thread). Nothing is buffered here, so there is no length limit; audio never touches disk.
+ */
+class MicRecorder(private val onChunk: (ByteArray, Float) -> Unit) {
     private var rec: AudioRecord? = null
     private var thread: Thread? = null
     @Volatile private var running = false
-    private val buf = ByteArrayOutputStream()
 
     @SuppressLint("MissingPermission")
     fun start(): Boolean {
@@ -23,7 +24,6 @@ class MicRecorder(private val onLevel: (Float) -> Unit) {
                 AudioFormat.ENCODING_PCM_16BIT, maxOf(min, 16000))
         } catch (e: Exception) { return false }
         if (r.state != AudioRecord.STATE_INITIALIZED) { r.release(); return false }
-        synchronized(buf) { buf.reset() }
         rec = r
         running = true
         r.startRecording()
@@ -33,7 +33,6 @@ class MicRecorder(private val onLevel: (Float) -> Unit) {
                 val n = r.read(b, 0, b.size)
                 if (n < 0) break
                 if (n > 0) {
-                    synchronized(buf) { buf.write(b, 0, n) }
                     var peak = 0
                     var i = 0
                     while (i + 1 < n) {
@@ -41,15 +40,15 @@ class MicRecorder(private val onLevel: (Float) -> Unit) {
                         if (v > peak) peak = v
                         i += 2
                     }
-                    onLevel(minOf(1f, peak / 12000f))
+                    onChunk(b.copyOf(n), minOf(1f, peak / 12000f))
                 }
             }
         }.also { it.start() }
         return true
     }
 
-    /** Stops and returns everything captured. Safe to call twice. */
-    fun stop(): ByteArray {
+    /** Stops capture. Safe to call twice. */
+    fun stop() {
         running = false
         thread?.join(500)
         thread = null
@@ -58,6 +57,5 @@ class MicRecorder(private val onLevel: (Float) -> Unit) {
             it.release()
         }
         rec = null
-        return synchronized(buf) { buf.toByteArray() }
     }
 }

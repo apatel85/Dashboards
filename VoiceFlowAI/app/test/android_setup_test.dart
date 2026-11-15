@@ -8,52 +8,65 @@ import 'helpers.dart';
 import 'onboarding_test.dart' show FakeInstaller, FakeMic;
 
 class FakePlatform implements SetupPlatform {
-  bool enabled = false, selected = false, mic = false;
-  int settingsOpened = 0, pickerShown = 0;
-  @override
-  Future<bool> keyboardEnabled() async => enabled;
-  @override
-  Future<bool> keyboardSelected() async => selected;
+  bool mic = false, overlay = false, access = false, bubble = false;
+  int overlayOpened = 0, accessOpened = 0, shown = 0, hidden = 0;
   @override
   Future<bool> micGranted() async => mic;
   @override
-  Future<void> openKeyboardSettings() async => settingsOpened++;
+  Future<bool> overlayGranted() async => overlay;
   @override
-  Future<void> showKeyboardPicker() async => pickerShown++;
+  Future<bool> accessibilityEnabled() async => access;
+  @override
+  Future<bool> bubbleRunning() async => bubble;
+  @override
+  Future<void> openOverlaySettings() async => overlayOpened++;
+  @override
+  Future<void> openAccessibilitySettings() async => accessOpened++;
+  @override
+  Future<void> showBubble() async {
+    shown++;
+    bubble = true;
+  }
+
+  @override
+  Future<void> hideBubble() async {
+    hidden++;
+    bubble = false;
+  }
 }
 
 void main() {
   test('steps come in order and follow the OS state', () async {
     final p = FakePlatform();
-    final inst = FakeInstaller();
-    final mic = FakeMic();
-    final c = AndroidSetupController(platform: p, mic: mic, installer: inst);
-    await c.refresh();
-    expect(c.current, SetupStep.enable);
-    p.enabled = true;
-    await c.refresh();
-    expect(c.current, SetupStep.select);
-    // "selected" only counts once enabled (a stale selection must not skip a step)
-    p.enabled = false;
-    p.selected = true;
-    await c.refresh();
-    expect(c.selected, false);
-    p.enabled = true;
+    final c = AndroidSetupController(
+      platform: p,
+      mic: FakeMic(),
+      installer: FakeInstaller(),
+    );
     await c.refresh();
     expect(c.current, SetupStep.mic);
     p.mic = true;
     await c.refresh();
+    expect(c.current, SetupStep.overlay);
+    p.overlay = true;
+    await c.refresh();
+    expect(c.current, SetupStep.accessibility);
+    p.access = true;
+    await c.refresh();
     expect(c.current, SetupStep.model);
     await c.download();
+    expect(c.current, SetupStep.bubble);
+    expect(c.allDone, false);
+    await c.showBubble();
     expect(c.current, SetupStep.done);
     expect(c.allDone, true);
+    await c.hideBubble();
+    expect(c.current, SetupStep.bubble);
     c.dispose();
   });
 
   test('allowMic asks the OS then re-reads the grant', () async {
-    final p = FakePlatform()
-      ..enabled = true
-      ..selected = true;
+    final p = FakePlatform();
     final mic = FakeMic()..allow = false;
     final c = AndroidSetupController(
       platform: p,
@@ -70,8 +83,8 @@ void main() {
   testWidgets('page shows only the active step, ticks, and finishes', (
     t,
   ) async {
-    size(t, const Size(400, 900));
-    final p = FakePlatform();
+    size(t, const Size(400, 1000));
+    final p = FakePlatform()..mic = true;
     var finished = 0;
     final c = AndroidSetupController(
       platform: p,
@@ -82,20 +95,19 @@ void main() {
     addTearDown(c.dispose);
     await t.pumpWidget(host(AndroidSetupPage(controller: c)));
     await t.pump();
-    expect(find.byKey(const Key('btn-enable')), findsOneWidget);
-    expect(find.byKey(const Key('btn-select')), findsNothing);
+    expect(find.byKey(const Key('btn-overlay')), findsOneWidget);
+    expect(find.byKey(const Key('btn-access')), findsNothing);
 
-    await t.tap(find.byKey(const Key('btn-enable')));
-    expect(p.settingsOpened, 1);
-    p.enabled = true;
+    await t.tap(find.byKey(const Key('btn-overlay')));
+    expect(p.overlayOpened, 1);
+    p.overlay = true;
     await c.refresh(); // what resuming from system settings does
     await t.pump();
-    expect(find.byKey(const Key('btn-select')), findsOneWidget);
-    await t.tap(find.byKey(const Key('btn-select')));
-    expect(p.pickerShown, 1);
+    expect(find.byKey(const Key('btn-access')), findsOneWidget);
+    await t.tap(find.byKey(const Key('btn-access')));
+    expect(p.accessOpened, 1);
 
-    p.selected = true;
-    p.mic = true;
+    p.access = true;
     await c.refresh();
     await t.pump();
     expect(find.byKey(const Key('btn-model')), findsOneWidget);
@@ -104,6 +116,13 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 50));
     });
     await t.pump();
+    expect(find.byKey(const Key('btn-bubble')), findsOneWidget);
+    await t.runAsync(() async {
+      await t.tap(find.byKey(const Key('btn-bubble')));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await t.pump();
+    expect(p.shown, 1);
     expect(find.byKey(const Key('setup-try')), findsOneWidget);
     await t.tap(find.byKey(const Key('setup-finish')));
     expect(finished, 1);

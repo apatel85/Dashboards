@@ -1,8 +1,8 @@
 # VoiceFlow AI
 
-Hold a key (Windows) or tap the mic (Android keyboard), speak, and clean text appears in the app you are typing in. Personal, free ($0), private by default. English first.
+Hold a key (Windows) or tap the floating mic button (Android), speak, and clean text appears in the app you are typing in. Personal, free ($0), private by default. English first.
 
-**Status:** pre-release. Everything below is covered by automated tests on real Windows and Android-emulator runners (see `AGENTLOG.md` for exactly what is and is not verified). **Nothing has been tried yet with a real voice on a real PC or phone**: the owner checklists in `docs/MANUAL_TEST_CHECKLIST.md` (W1–W12, A1–A9) are still to be run.
+**Status:** pre-release. Everything below is covered by automated tests on real Windows and Android-emulator runners (see `AGENTLOG.md` for exactly what is and is not verified). **Nothing has been tried yet with a real voice on a real PC or phone**: the owner checklists in `docs/MANUAL_TEST_CHECKLIST.md` (W1–W12, A1–A12) are still to be run.
 
 ## Install on Windows
 1. Open the download page (`index.html`) or the GitHub Releases entry named `voiceflow-v…` and download **VoiceFlow-Setup-x.y.z.exe** (or the portable zip).
@@ -13,8 +13,8 @@ Hold a key (Windows) or tap the mic (Android keyboard), speak, and clean text ap
 ## Install on Android (sideload)
 1. On the phone, open the release page and download **VoiceFlow-x.y.z-arm64.apk** (64-bit ARM phones, Android 8+). Check it against the SHA-256 in the release notes.
 2. Open the file. Android asks you to allow **Install unknown apps** for your browser or file manager: allow it for that one app. **Play Protect may warn** because the build is signed with a debug key, not a store key.
-3. Open **VoiceFlow**. A checklist guides you: turn the keyboard on → choose it as your keyboard → allow the microphone → download the speech model once (≈160 MB) → try it.
-4. In any text box, tap the microphone on the VoiceFlow keyboard, speak, tap it again.
+3. Open **VoiceFlow**. A checklist guides you: allow the microphone → allow the floating button (display over other apps) → turn on the VoiceFlow typing service (Accessibility) → download the speech model once (≈160 MB) → show the button.
+4. In any text box, tap it so the cursor is there, tap the floating mic, speak (any length), tap the mic again. Your normal keyboard is untouched.
 If a properly signed build replaces this one later, uninstall and reinstall once.
 
 ## Use
@@ -30,9 +30,9 @@ If a properly signed build replaces this one later, uninstall and reinstall once
 
 The tray icon menu switches style, copies the last dictation, and toggles *Start with Windows*. The main window has a Record button and a "Try it" box that always work.
 
-**Android keyboard:** the chip at top left is the style (tap to change; remembered per app), the mic starts and stops dictation (✕ cancels, ↶ undoes, auto-stops at 28 s), email, web-address and number fields get literal text, and **password fields are blocked** (the mic shows a lock). A second chip may suggest a pack for the app you are in.
+**Android floating button:** tap to start, tap to stop; drag it anywhere. **Long-press** while listening cancels; long-press while idle cycles the style (remembered per app). There is **no time limit**: audio is cut at your pauses and transcribed while you talk. Email, web-address and number fields get literal text, and **password fields are refused**. Saying "scratch that" removes the last dictation. If no text box has focus, the text is left on the clipboard instead of lost. The typing is done by an Android accessibility service that only inserts text you dictated and never reads or stores the screen.
 
-**Both:** *Packs* teach VoiceFlow the words, abbreviations and note templates of your work (two illustrative samples ship: General Business and Healthcare Clinic; you can import your own `.json` pack, invalid ones are refused with a plain reason). *Settings* holds cloud polish, a backup/restore of your settings, and the licenses.
+**Both:** *Packs* teach VoiceFlow the words, abbreviations and note templates of your work (three illustrative samples ship: General Business, Healthcare Clinic and Cricket; you can import your own `.json` pack, invalid ones are refused with a plain reason). *Settings* holds cloud polish, a backup/restore of your settings, and the licenses.
 
 ## Privacy (what leaves your device, exactly)
 * **Audio never leaves your device** and is not saved. No accounts, analytics, telemetry or crash reports. Dictated text is not stored anywhere (there is no history yet).
@@ -44,11 +44,11 @@ The tray icon menu switches style, copies the last dictation, and toggles *Start
 ## Known limits
 * Not code-signed (SmartScreen warning on Windows, Play Protect warning on Android, possible antivirus heuristics). The APK is signed with a debug key.
 * Windows: password fields are only detected in classic text boxes; **browser password fields are not detected**: do not dictate while one is focused. Windows running as administrator cannot receive typed text from a non-admin VoiceFlow: you get a notice and the text is saved.
-* Android: no hold-to-talk mode yet; the style chip only cycles; the microphone permission is requested from the app's checklist, not from the keyboard.
-* English only. Whisper "base.en" model. Utterances over about 28 s are cut off rather than split at pauses.
+* Android: no hold-to-talk mode yet; long-press only cycles the style; the button is not restored after a reboot or after Android stops the app (open VoiceFlow and tap Show button); pack suggestions and the Undo button of the old keyboard are gone (use *Packs* in the app and say "scratch that"). Some apps (certain games, banking apps, custom-drawn text fields) do not expose their text box to accessibility services, so typing there falls back to the clipboard.
+* English only. Whisper "base.en" model. Long dictations are split at pauses (about every 8-24 s) and joined; a forced cut inside an unbroken 24 s stretch can slightly mangle the word at the cut.
 * Pack suggestions use the app (and, on Windows, the last thing you said); matching on window titles is not wired up yet. The sample packs are illustrative and make no clinical or legal accuracy claim.
 * No history page and no Dictionary page yet. The hotkey is configurable in code but not in Settings.
-* While the speech model is loaded the app uses roughly 0.5 GB more memory; it unloads itself after 5 idle minutes (the Android keyboard drops its whole engine).
+* While the speech model is loaded the app uses roughly 0.5 GB more memory; it unloads itself after 5 idle minutes (the Android button drops its whole engine).
 
 ## Remove
 Windows: uninstall from *Settings → Apps*; settings and the model stay in `%APPDATA%\dev.voiceflow`: delete that folder to remove everything. Android: uninstall the app (this removes its data and the model).

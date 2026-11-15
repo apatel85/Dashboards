@@ -1,7 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- E2E flavor only. The shipped APK has neither this permission nor this activity. -->
+    <!-- E2E flavor only. The shipped APK has none of: this permission, this activity, this receiver. -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <application>
         <activity android:name=".TestActivity" android:exported="true" />
+        <receiver android:name=".E2eReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="dev.voiceflow.E2E_INSTALL_MODEL"/>
+                <action android:name="dev.voiceflow.E2E_INSTALL_PACK"/>
+                <action android:name="dev.voiceflow.E2E_DICTATE_WAV"/>
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

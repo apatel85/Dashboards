@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Runs inside the emulator (CI). Drives the REAL keyboard: Kotlin IME -> headless Flutter engine ->
-# real Whisper -> formatter -> InputConnection -> a native EditText. The emulator mic is silent,
-# so the test feeds a fixture WAV through the same dictate() path the microphone uses.
+# Runs inside the emulator (CI). Drives the REAL floating button: overlay service -> headless Flutter
+# engine -> real Whisper -> formatter -> accessibility service -> a native EditText. The emulator mic
+# is silent, so the test feeds fixture WAVs through the same streaming path the microphone uses.
 set -u
 PKG=dev.voiceflow.voiceflow_app
+A11Y=$PKG/$PKG.VoiceFlowAccessibilityService
 ROOT=${ROOT:-.}
 APK=$ROOT/VoiceFlowAI/app/build/app/outputs/flutter-apk/app-e2e-release.apk
 PASS=0; FAIL=0
@@ -14,12 +15,14 @@ adb install -r "$APK" >/dev/null || { echo "FAIL install"; exit 1; }
 adb logcat -c
 adb shell appops set $PKG MANAGE_EXTERNAL_STORAGE allow
 adb shell pm grant $PKG android.permission.RECORD_AUDIO
-adb shell ime enable $PKG/.VoiceFlowIME >/dev/null
-adb shell ime set $PKG/.VoiceFlowIME >/dev/null
+# What the person does in Settings: allow display over other apps, switch the typing service on.
+adb shell appops set $PKG SYSTEM_ALERT_WINDOW allow
+adb shell settings put secure enabled_accessibility_services "$A11Y"
+adb shell settings put secure accessibility_enabled 1
 adb shell am start -n $PKG/.TestActivity >/dev/null
 sleep 4
 
-# The keyboard is its own window; a plain dump only sees the active (app) window.
+# The floating button is its own window; --windows sees all of them.
 dump() { adb shell uiautomator dump --windows /sdcard/ui.xml >/dev/null 2>&1 || adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; }
 # bounds centre of a view by content-desc, from uiautomator
 center() {
@@ -37,7 +40,6 @@ has() {
 import os,re,sys
 sys.exit(0 if re.search(os.environ['PAT'],sys.stdin.read()) else 1)"
 }
-chip_desc() { adb shell cat /sdcard/ui.xml | grep -o 'content-desc="Style: [^"]*"' | head -1; }
 tap() { local c; c=$(center "$1"); [ -n "$c" ] && adb shell input tap $c; sleep 1; }
 field_text() {
   dump
@@ -68,99 +70,103 @@ for i in $(seq 1 100); do
   sleep 4
 done
 if [ $DL -eq 1 ]; then ok "real in-app model download works (network + SHA-256 + unpack)"; else bad "real model download"; shownodes; adb logcat -d '*:E' | grep -iE "socket|permission|UnknownHost|dev.voiceflow" | tail -8; fi
-adb shell am start -n $PKG/.TestActivity >/dev/null; sleep 4
 
-# --- model: pushed by CI, installed by the e2e seam (real download path is covered on Windows CI)
+# --- model: pushed by CI, installed by the e2e seam (only used if the real download failed)
 MD=/sdcard/Download/vf-model
 adb shell mkdir -p $MD
 for f in base.en-encoder.int8.onnx base.en-decoder.int8.onnx base.en-tokens.txt; do
   adb push "$ROOT/sherpa-onnx-whisper-base.en/$f" $MD/ >/dev/null || echo "push failed $f"
 done
 adb push "$ROOT/VoiceFlowAI/test_fixtures/audio/scarlet_0.wav" /sdcard/Download/scarlet_0.wav >/dev/null
+# ~60 s of speech: the same sentence six times with a pause between. Proves there is no time limit.
+python3 - "$ROOT/VoiceFlowAI/test_fixtures/audio/scarlet_0.wav" /tmp/long.wav <<'PY'
+import sys,wave
+w=wave.open(sys.argv[1]); p=w.getparams(); d=w.readframes(w.getnframes()); w.close()
+gap=b"\x00\x00"*int(p.framerate*1.2)
+o=wave.open(sys.argv[2],"wb"); o.setparams(p); o.writeframes((d+gap)*6); o.close()
+print("long.wav seconds=%.1f"%(6*(len(d)+len(gap))/2/p.framerate))
+PY
+adb push /tmp/long.wav /sdcard/Download/long.wav >/dev/null
 SHA=$(grep -o '"sha256": *"[0-9a-f]*"' "$ROOT/VoiceFlowAI/app/assets/models.json" | head -1 | grep -o '[0-9a-f]\{64\}')
 ID=$(grep -o '"id": *"[^"]*"' "$ROOT/VoiceFlowAI/app/assets/models.json" | head -1 | sed 's/.*: *"//;s/"//')
 [ $DL -eq 1 ] || adb shell "am broadcast -a dev.voiceflow.E2E_INSTALL_MODEL -p $PKG --es src $MD --es id $ID --es sha $SHA" >/dev/null
+if [ $DL -eq 1 ]; then ok "model present from the real download"; else adb logcat -d E2E:I '*:S' | grep -q MODEL_INSTALLED && ok "model installed (test seam fallback)" || bad "model install"; fi
 
-dictate() { # $1 = number of RESULT lines expected so far
-  adb shell "am broadcast -a dev.voiceflow.E2E_DICTATE_WAV -p $PKG --es wav /sdcard/Download/scarlet_0.wav" >/dev/null
-  for i in $(seq 1 90); do
+echo "== setup page: OS-backed ticks, then the Show button starts the floating service"
+adb shell am start -n $PKG/.MainActivity >/dev/null; sleep 5
+has 'done.{1,8}Allow the microphone' && ok "mic step detected as done" || { bad "mic step"; shownodes; }
+has 'done.{1,8}Allow the floating button' && ok "overlay permission detected as done" || { bad "overlay step"; shownodes; }
+has 'done.{1,8}Turn on the typing service' && ok "accessibility service detected as enabled" || { bad "accessibility step"; shownodes; }
+tap "Show button"
+BUB=""
+for i in $(seq 1 15); do
+  BUB=$(adb logcat -d VoiceFlow:I '*:S' | grep -o 'BUBBLE_AT [0-9]* [0-9]*' | tail -1 | cut -d' ' -f2,3)
+  [ -n "$BUB" ] && break; sleep 2
+done
+echo "bubble at: '$BUB'"
+[ -n "$BUB" ] && ok "floating button is on screen" || { bad "floating button never appeared"; adb logcat -d | grep -iE "FloatingService|VoiceFlow|AndroidRuntime" | tail -15; }
+has 'done.{1,8}Show the floating button' && ok "setup page ticks the button step" || { bad "button step not ticked"; shownodes; }
+has 'Dictate here|You.re set|Done' && ok "all steps done: Try-it box offered" || { bad "steps not all done"; shownodes; }
+
+adb shell am start -n $PKG/.TestActivity >/dev/null; sleep 4
+
+dictate() { # $1 = RESULT lines expected so far, $2 = wav
+  adb shell "am broadcast -a dev.voiceflow.E2E_DICTATE_WAV -p $PKG --es wav $2" >/dev/null
+  for i in $(seq 1 120); do
     [ "$(adb logcat -d E2E:I '*:S' | grep -c 'RESULT')" -ge "$1" ] && break
     sleep 2
   done
   sleep 1
 }
+count() { printf '%s' "$1" | grep -oi "squalid quarter of the brothels" | wc -l; }
 
-if [ $DL -eq 1 ]; then ok "model present from the real download"; else adb logcat -d E2E:I '*:S' | grep -q MODEL_INSTALLED && ok "model installed (test seam fallback)" || bad "model install"; fi
-
-echo "== text field: real Whisper in the IME commits formatted text"
-focus t_text; dictate 1
+echo "== text field: real Whisper commits formatted text through the accessibility service"
+focus t_text; dictate 1 /sdcard/Download/scarlet_0.wav
 T=$(field_text t_text); echo "t_text='$T'"
 echo "$T" | grep -qi "squalid quarter of the brothels" && ok "text committed to plain field" || bad "plain field text"
 
 echo "== email field: literal, no spaces, no capitals"
-focus t_email; dictate 2
+focus t_email; dictate 2 /sdcard/Download/scarlet_0.wav
 E=$(field_text t_email); echo "t_email='$E'"
 { echo "$E" | grep -q "squalidquarterofthebrothels" && ! echo "$E" | grep -q " "; } && ok "email field formatted literally" || bad "email field"
 
 echo "== password field: refused, nothing typed"
-focus t_password; dictate 3
-adb logcat -d E2E:I '*:S' | grep RESULT | tail -1 | grep -q "status=passwordField" && ok "password refused" || bad "password status"
+focus t_password
+adb shell "am broadcast -a dev.voiceflow.E2E_DICTATE_WAV -p $PKG --es wav /sdcard/Download/scarlet_0.wav" >/dev/null
+sleep 5
+adb logcat -d VoiceFlow:I '*:S' | grep -q "SAY Dictation is off in password fields" && ok "password refused with a notice" || bad "password notice"
 [ -z "$(field_text t_password | tr -d '•')" ] && ok "password field untouched" || bad "password field got text"
+[ "$(adb logcat -d E2E:I '*:S' | grep -c 'RESULT')" -eq 2 ] && ok "password never reached the speech pipeline" || bad "password reached the pipeline"
 
+echo "== no time limit: about a minute of speech in one dictation"
+focus t_text
+BEFORE=$(count "$(field_text t_text)")
+dictate 3 /sdcard/Download/long.wav
+AFTERN=$(count "$(field_text t_text)")
+echo "sentence count before=$BEFORE after=$AFTERN (6 were spoken)"
+[ $((AFTERN-BEFORE)) -ge 5 ] && ok "long dictation fully transcribed (no cap)" || bad "long dictation truncated"
 
-echo "== keyboard UI (real views, driven through uiautomator)"
-focus t_password; focus t_text; sleep 3
-has 'content-desc="Dictate"' && ok "keyboard shows the mic" || { bad "mic not visible"
-  echo "---- UI nodes now:"; adb shell cat /sdcard/ui.xml | python3 -c "
-import re,sys
-for n in re.findall(r'<node [^>]*>',sys.stdin.read()): 
-  g=lambda k:(re.search(k+'=\"([^\"]*)\"',n) or [0,''])[1]
-  print(g('package'),g('class').split('.')[-1],repr(g('text')),repr(g('content-desc')),g('bounds'))" | head -40
-  adb shell dumpsys input_method | grep -E "mCurMethodId|mInputShown|mShowRequested|isInputViewShown|mImeWindowVis" | head; }
-BEFORE=$(field_text t_text)
-COMMA=$(center ","); echo "comma centre: '$COMMA'"
-adb shell cat /sdcard/ui.xml | grep -o 'content-desc="[^"]*"[^>]*bounds="[^"]*"' | grep -E 'desc="(,|\.|Delete|Dictate|Space)"' | sed 's/class=[^ ]* //;s/package=[^ ]* //' | cut -c1-200
-tap ","; sleep 2; AFTER=$(field_text t_text); echo "typed: '${AFTER: -3}'"
-
-# Focusing by tapping puts the caret mid-text, so compare content, not the tail.
-nc() { printf '%s' "$1" | tr -cd ',' | wc -c; }
-{ [ ${#AFTER} -eq $((${#BEFORE}+1)) ] && [ "$(nc "$AFTER")" -eq $(($(nc "$BEFORE")+1)) ]; } && ok "punctuation key types" || bad "punctuation key"
-tap "Delete"; sleep 2; [ "$(field_text t_text)" = "$BEFORE" ] && ok "backspace deletes" || bad "backspace"
-has 'Style: '; P1=$(chip_desc)
-tap "Style: [^\"]*"
-has 'Style: '; P2=$(chip_desc)
-echo "chip: $P1 -> $P2"
-[ -n "$P1" ] && [ "$P1" != "$P2" ] && ok "profile chip cycles" || bad "profile chip"
-tap "Dictate"; sleep 2
-has 'text="Listening' && ok "tap mic -> listening" || { bad "listening state"; shownodes; adb logcat -d VoiceFlow:I E2E:I AndroidRuntime:E '*:S' | tail -15; }
-tap "Stop dictation"
+echo "== the real button: tap to listen, tap to stop (silent emulator mic)"
+focus t_text
+adb logcat -c
+set -- $BUB
+adb shell input tap $1 $2; sleep 3
+adb logcat -d VoiceFlow:I '*:S' | grep -q "STATE listening" && ok "tap on the floating button -> listening" || { bad "button tap did not start listening"; adb logcat -d | grep -E "VoiceFlow|SAY" | tail -8; }
+T2=$(field_text t_text)
+[ -n "$T2" ] && ok "field kept focus and text while the button was tapped" || bad "field lost its text"
+adb shell input tap $1 $2
 DONE=0
 for i in $(seq 1 30); do
-  if has "text=\"(Inserted|Didn.t catch that)"; then DONE=1; break; fi
+  adb logcat -d E2E:I '*:S' | grep -q "RESULT status=" && { DONE=1; break; }
   sleep 2
 done
-[ $DONE -eq 1 ] && ok "tap again -> processed to a result (silent emulator mic)" || { bad "processing never finished"; shownodes; }
-focus t_password; sleep 2
-has 'text="Dictation is off in password fields"' && ok "password field: mic locked with notice" || bad "password notice"
+[ $DONE -eq 1 ] && ok "tap again -> processed to a result" || bad "processing never finished"
+adb logcat -d E2E:I '*:S' | grep RESULT | tail -1
 
-echo "== pack suggestion chip (user pack dropped in the pack folder; detector matches this app)"
-adb push "$ROOT/VoiceFlowAI/app/android/e2e/e2e_pack.json" /sdcard/Download/e2e_pack.json >/dev/null
-adb shell "am broadcast -a dev.voiceflow.E2E_INSTALL_PACK -p $PKG --es src /sdcard/Download/e2e_pack.json --es name e2e_pack.json" >/dev/null
-sleep 2
-focus t_password; focus t_text; sleep 4
-has 'content-desc="Suggested pack: E2E Test Pack' && ok "pack suggestion chip appears" || { bad "pack chip"; shownodes; adb logcat -d VoiceFlow:I E2E:I '*:S' | tail -8; }
-tap "Suggested pack: [^\"]*"; sleep 3
-if has 'content-desc="Suggested pack: E2E Test Pack'; then bad "chip still there after tap"; else ok "chip gone after turning the pack on"; fi
-adb logcat -d VoiceFlow:I '*:S' | grep -q "pack_on id=e2e_test" && ok "pack turned on (saved as active)" || bad "pack not activated"
-focus t_password; focus t_text; sleep 4
-if has 'content-desc="Suggested pack: E2E Test Pack'; then bad "suggested again though it is on"; else ok "not suggested again once on"; fi
-
-echo "== app setup checklist (real platform channel: enabled / selected / mic / model)"
-adb shell am start -n $PKG/.MainActivity >/dev/null; sleep 8
-has 'Set up VoiceFlow keyboard' && ok "setup page shows on first run" || { bad "setup page"; shownodes; }
-# keyboard enabled + selected + mic granted + model installed above => every step is ticked
-# and the Try-it box with the Done button is offered
-has 'Dictate here|You.re set|Done' && ok "all four steps detected as done through the OS" || { bad "steps not detected"; shownodes; }
+echo "== long-press on the idle button cycles the style"
+adb logcat -c
+adb shell input swipe $1 $2 $1 $2 900; sleep 3
+adb logcat -d VoiceFlow:I '*:S' | grep -q "STYLE " && ok "long-press changes the style" || bad "style did not change"
 
 echo "== diagnostics"
 adb logcat -d | tr -d '\r' | grep -E "VoiceFlow|E2E|dev.voiceflow|FATAL EXCEPTION" | tail -40

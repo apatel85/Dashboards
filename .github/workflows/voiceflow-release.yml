@@ -215,8 +215,8 @@ jobs:
           * Portable: \`VoiceFlow-portable-$VER.zip\` (unzip anywhere and run \`voiceflow_app.exe\`)
           * Windows will warn you (SmartScreen: "More info" -> "Run anyway") because the app is **not code-signed**. Some antivirus tools may also flag the global keyboard hook and synthesised keystrokes it uses to type into other apps.
 
-          **Android keyboard**
-          * \`VoiceFlow-$VER-arm64.apk\` for 64-bit ARM phones (Android 8+). Sideload it: allow "Install unknown apps" for your browser or file manager, open the APK, then follow the setup checklist inside the app (turn the keyboard on, choose it, allow the microphone, download the speech model once).
+          **Android floating button**
+          * \`VoiceFlow-$VER-arm64.apk\` for 64-bit ARM phones (Android 8+). Sideload it: allow "Install unknown apps" for your browser or file manager, open the APK, then follow the setup checklist inside the app (allow the microphone, allow the floating button, turn on the VoiceFlow typing service in Accessibility, download the speech model once, show the button). Your own keyboard is not replaced.
           * Debug-signed (no release key yet): Play Protect may warn. If a properly signed build replaces it later you will need to uninstall and reinstall once.
           * Only automated emulator tests have run so far; real-phone checks are still pending.
           * **Android APKs 0.3.1 and 0.4.0 could not download the speech model** (the network permission was missing from the release build). Use 0.5.0 or later.

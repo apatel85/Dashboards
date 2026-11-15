@@ -3,6 +3,10 @@
          model download and the optional cloud polish. Nothing else is sent anywhere. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- The floating button: drawn over other apps by a microphone foreground service. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <application
         android:label="voiceflow_app"
         android:name="${applicationName}"
@@ -30,14 +34,20 @@
             </intent-filter>
         </activity>
         <service
-            android:name=".VoiceFlowIME"
-            android:label="VoiceFlow"
+            android:name=".FloatingService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+        <service
+            android:name=".VoiceFlowAccessibilityService"
+            android:label="@string/vf_a11y_label"
             android:exported="true"
-            android:permission="android.permission.BIND_INPUT_METHOD">
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
-                <action android:name="android.view.InputMethod" />
+                <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
-            <meta-data android:name="android.view.im" android:resource="@xml/method" />
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service" />
         </service>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

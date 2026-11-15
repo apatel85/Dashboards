@@ -535,50 +535,14 @@ abstract class AppLocalizations {
   /// No description provided for @setupTitle.
   ///
   /// In en, this message translates to:
-  /// **'Set up VoiceFlow keyboard'**
+  /// **'Set up VoiceFlow'**
   String get setupTitle;
 
   /// No description provided for @setupIntro.
   ///
   /// In en, this message translates to:
-  /// **'Four quick steps. Your voice stays on this phone.'**
+  /// **'Five quick steps. Your voice stays on this phone.'**
   String get setupIntro;
-
-  /// No description provided for @setupEnable.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn on the VoiceFlow keyboard'**
-  String get setupEnable;
-
-  /// No description provided for @setupEnableBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Open keyboard settings and switch VoiceFlow on.'**
-  String get setupEnableBody;
-
-  /// No description provided for @setupEnableButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Open keyboard settings'**
-  String get setupEnableButton;
-
-  /// No description provided for @setupSelect.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose VoiceFlow as your keyboard'**
-  String get setupSelect;
-
-  /// No description provided for @setupSelectBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick VoiceFlow in the list. You can switch back any time with the globe key.'**
-  String get setupSelectBody;
-
-  /// No description provided for @setupSelectButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose keyboard'**
-  String get setupSelectButton;
 
   /// No description provided for @setupMic.
   ///
@@ -619,7 +583,7 @@ abstract class AppLocalizations {
   /// No description provided for @setupTryBody.
   ///
   /// In en, this message translates to:
-  /// **'Tap the box, then tap the microphone on the VoiceFlow keyboard and speak.'**
+  /// **'Tap the box, then tap the floating VoiceFlow button and speak.'**
   String get setupTryBody;
 
   /// No description provided for @setupTryHint.
@@ -921,6 +885,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open-source licenses'**
   String get setLicenses;
+
+  /// No description provided for @setupOverlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow the floating button'**
+  String get setupOverlay;
+
+  /// No description provided for @setupOverlayBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets VoiceFlow show a small button over other apps. Find VoiceFlow in the list and switch it on.'**
+  String get setupOverlayBody;
+
+  /// No description provided for @setupOverlayButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Open display settings'**
+  String get setupOverlayButton;
+
+  /// No description provided for @setupAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on the typing service'**
+  String get setupAccess;
+
+  /// No description provided for @setupAccessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'VoiceFlow types your words into the box you are using through an Android accessibility service. It only inserts text you dictated, never reads or stores what is on screen, and refuses password fields. Open the list, choose VoiceFlow and switch it on.'**
+  String get setupAccessBody;
+
+  /// No description provided for @setupAccessButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Open accessibility settings'**
+  String get setupAccessButton;
+
+  /// No description provided for @setupBubble.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the floating button'**
+  String get setupBubble;
+
+  /// No description provided for @setupBubbleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Puts the button on screen. Tap it to start dictating, tap again to stop. Drag it anywhere.'**
+  String get setupBubbleBody;
+
+  /// No description provided for @setupBubbleButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Show button'**
+  String get setupBubbleButton;
 }
 
 class _AppLocalizationsDelegate

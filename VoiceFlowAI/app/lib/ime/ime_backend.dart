@@ -135,57 +135,147 @@ class ImeBackend {
     };
   }
 
+  /// Everything one dictation needs, or an early status (password field, model missing).
+  Future<
+    ({Map<String, Object?>? early, DictationOptions? options, Profile? profile})
+  >
+  _prepare(Map<dynamic, dynamic> args) async {
+    final kind = FieldKind.values.firstWhere(
+      (k) => k.name == args['fieldKind'],
+      orElse: () => FieldKind.text,
+    );
+    if (kind == FieldKind.password) {
+      return (early: {'status': 'passwordField'}, options: null, profile: null);
+    }
+    if (!models.installed) {
+      return (early: {'status': 'modelMissing'}, options: null, profile: null);
+    }
+    final s = await _settings();
+    final pkg = args['packageName'] as String?;
+    final perApp = PerAppProfiles(
+      s.perAppProfiles,
+      onChanged: (_) {},
+      ignore: const {},
+    );
+    final profile = _profile(
+      (args['profileId'] as String?) ??
+          perApp.profileFor(pkg) ??
+          s.defaultProfileId,
+    );
+    final packs = (await _packStore(s)).active;
+    _polish.settings = s; // keeps the chain (429 back-off, counters) while settings are unchanged
+    return (
+      early: null,
+      options: DictationOptions(
+        profile,
+        packs: packs,
+        dictionary: s.dictionary,
+        corrections: s.corrections,
+        fieldKind: kind,
+      ),
+      profile: profile,
+    );
+  }
+
+  DictationPipeline _pipeline(_CaptureSink sink) => DictationPipeline(
+    assets.lang,
+    stt,
+    sink,
+    polishProvider: () => _polish.chain,
+  );
+
+  Map<String, Object?> _result(DictationResult r, Profile profile) => {
+    'status': r.status.name,
+    'text': r.finalText,
+    'polish': r.polishUsed,
+    'hint': r.hint,
+    'profile': {'id': profile.id, 'name': profile.name},
+  };
+
   /// [args]: `pcm` (16 kHz mono 16-bit), optional `profileId`, `packageName`, `fieldKind`.
   /// Profile order: explicit choice, then what you picked for that app, then your default.
   Future<Map<String, Object?>> dictate(Map<dynamic, dynamic> args) async {
     try {
-      final kind = FieldKind.values.firstWhere(
-        (k) => k.name == args['fieldKind'],
-        orElse: () => FieldKind.text,
-      );
-      if (kind == FieldKind.password) return {'status': 'passwordField'};
-      if (!models.installed) return {'status': 'modelMissing'};
-      final pcm = args['pcm'] as Uint8List;
-      final s = await _settings();
-      final pkg = args['packageName'] as String?;
-      final perApp = PerAppProfiles(
-        s.perAppProfiles,
-        onChanged: (_) {},
-        ignore: const {},
-      );
-      final profile = _profile(
-        (args['profileId'] as String?) ??
-            perApp.profileFor(pkg) ??
-            s.defaultProfileId,
-      );
-
-      final packs = (await _packStore(s)).active;
+      final p = await _prepare(args);
+      if (p.early != null) return p.early!;
       await ensureLoaded();
-      final sink = _CaptureSink();
-      _polish.settings = s; // keeps the chain (429 back-off, counters) while settings are unchanged
-      final r =
-          await DictationPipeline(
-            assets.lang,
-            stt,
-            sink,
-            polishProvider: () => _polish.chain,
-          ).run(
-            pcm,
-            DictationOptions(
-              profile,
-              packs: packs,
-              dictionary: s.dictionary,
-              corrections: s.corrections,
-              fieldKind: kind,
-            ),
+      final r = await _pipeline(_CaptureSink())
+          .run(args['pcm'] as Uint8List, p.options!);
+      return _result(r, p.profile!);
+    } catch (_) {
+      return {'status': 'error'};
+    }
+  }
+
+  // ---- streaming dictation: no length limit. Audio arrives in small chunks while the person
+  // talks; the core session cuts it at pauses and transcribes as it goes.
+  LongDictationSession? _stream;
+  Future<void> _streamChain = Future.value();
+  Future<void>? _streamLoad;
+  Map<String, Object?>? _streamEarly;
+  DictationOptions? _streamOptions;
+  Profile? _streamProfile;
+
+  /// [args]: `profileId`, `packageName`, `fieldKind`. Returns right away; chunks may follow
+  /// immediately and are queued behind the preparation.
+  void streamStart(Map<dynamic, dynamic> args) {
+    _stream?.cancel();
+    _stream = null;
+    _streamEarly = null;
+    _streamOptions = null;
+    _streamProfile = null;
+    _streamLoad = null;
+    _streamChain = _prepare(args)
+        .then((p) {
+          if (p.early != null) {
+            _streamEarly = p.early;
+            return;
+          }
+          _streamOptions = p.options;
+          _streamProfile = p.profile;
+          final o = p.options!;
+          _stream = _pipeline(_CaptureSink()).startSession(
+            hints: {
+              ...o.dictionary,
+              for (final k in o.packs) ...k.vocabulary,
+            }.toList(),
           );
-      return {
-        'status': r.status.name,
-        'text': r.finalText,
-        'polish': r.polishUsed,
-        'hint': r.hint,
-        'profile': {'id': profile.id, 'name': profile.name},
-      };
+          // Load the speech model while the person is still talking.
+          _streamLoad = ensureLoaded().then<void>(
+            (_) {},
+            onError: (Object e) {
+              throw e;
+            },
+          );
+        })
+        .catchError((Object _) {
+          _streamEarly = {'status': 'error'};
+        });
+  }
+
+  void streamChunk(Uint8List pcm) {
+    _streamChain = _streamChain.then((_) => _stream?.add(pcm));
+  }
+
+  void streamCancel() {
+    _streamChain = _streamChain.then((_) {
+      _stream?.cancel();
+      _stream = null;
+    });
+  }
+
+  Future<Map<String, Object?>> streamEnd() async {
+    try {
+      await _streamChain;
+      final early = _streamEarly;
+      if (early != null) return early;
+      final session = _stream;
+      if (session == null) return {'status': 'error'};
+      _stream = null;
+      await _streamLoad;
+      final r = await _pipeline(_CaptureSink())
+          .runSession(session, _streamOptions!);
+      return _result(r, _streamProfile!);
     } catch (_) {
       return {'status': 'error'};
     }
@@ -216,6 +306,17 @@ class ImeBackend {
         return status();
       case 'dictate':
         return dictate(a);
+      case 'streamStart':
+        streamStart(a);
+        return null;
+      case 'streamChunk':
+        streamChunk(a['pcm'] as Uint8List);
+        return null;
+      case 'streamCancel':
+        streamCancel();
+        return null;
+      case 'streamEnd':
+        return streamEnd();
       case 'setProfile':
         return setProfile(a['id'] as String, a['packageName'] as String?);
       case 'suggestions':

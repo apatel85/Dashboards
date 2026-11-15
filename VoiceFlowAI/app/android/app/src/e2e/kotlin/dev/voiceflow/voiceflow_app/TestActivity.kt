@@ -12,7 +12,6 @@ import android.widget.LinearLayout
 class TestActivity : Activity() {
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         fun field(desc: String, type: Int) = EditText(this).apply {
             contentDescription = desc
