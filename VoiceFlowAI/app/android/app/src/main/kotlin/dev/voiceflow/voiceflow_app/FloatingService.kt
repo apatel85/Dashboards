@@ -244,7 +244,9 @@ class FloatingService : Service() {
         if (f.password) { say(R.string.vf_password); return false }
         kind = f.kind; pkg = f.pkg
         main.removeCallbacks(idleUnload)
-        DartBridge.call(this, "streamStart", mapOf("packageName" to pkg, "fieldKind" to kind))
+        DartBridge.call(this, "streamStart", mapOf(
+            "packageName" to pkg, "fieldKind" to kind, "before" to f.before, "after" to f.after,
+        ))
         state = BubbleState.LISTENING
         bubble?.state = state
         Log.i("VoiceFlow", "STATE listening pkg=$pkg kind=$kind")

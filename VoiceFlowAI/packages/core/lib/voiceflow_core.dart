@@ -31,3 +31,4 @@ export 'src/self_correction.dart';
 export 'src/app_defaults.dart';
 export 'src/clock_time.dart';
 export 'src/context_fixes.dart';
+export 'src/text_context.dart';

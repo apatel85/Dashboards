@@ -12,6 +12,7 @@ import 'profile.dart';
 import 'rule_formatter.dart';
 import 'vad.dart';
 import 'app_defaults.dart';
+import 'text_context.dart';
 import 'long_dictation.dart';
 import 'voice_commands.dart';
 
@@ -26,12 +27,16 @@ class DictationOptions {
 
   /// AI Prompting only: layout and length behaviour (see [PromptStyle]).
   final PromptStyle promptStyle;
+
+  /// Text around the cursor, so a dictation fits into its sentence (see [ContinuationFlow]).
+  final TextContext surrounding;
   const DictationOptions(this.profile,
       {this.packs = const [],
       this.dictionary = const [],
       this.corrections = const {},
       this.fieldKind = FieldKind.text,
-      this.promptStyle = const PromptStyle()});
+      this.promptStyle = const PromptStyle(),
+      this.surrounding = const TextContext()});
 }
 
 /// Capture is done by the caller; `run` takes the recorded PCM (spec §5.2).
@@ -60,12 +65,11 @@ class DictationPipeline {
       : vad = vad ?? const EnergyVad();
 
   /// A dictation of any length: feed it audio while the person talks, then [runSession].
+  late final Set<String> _common =
+      lang.list('commonWords').map((e) => e.toLowerCase()).toSet();
+
   LongDictationSession startSession({List<String> hints = const []}) =>
-      LongDictationSession(stt,
-          vad: vad,
-          hints: hints,
-          commonWords:
-              lang.list('commonWords').map((e) => e.toLowerCase()).toSet());
+      LongDictationSession(stt, vad: vad, hints: hints, commonWords: _common);
 
   Future<DictationResult> run(Uint8List pcm, DictationOptions o) {
     final s = startSession(hints: _hints(o))..add(pcm);
@@ -156,6 +160,7 @@ class DictationPipeline {
       if (text.isEmpty) {
         return DictationResult(DictationStatus.noSpeech, rawTranscript: raw);
       }
+      text = ContinuationFlow.adapt(text, o.surrounding, _common);
       String? hint;
       if (o.profile.id == 'ai_prompting' && !polishUsed) {
         hint = lang.needsPolishHint;

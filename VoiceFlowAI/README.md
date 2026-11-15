@@ -44,6 +44,8 @@ The tray icon menu switches style, copies the last dictation, and toggles *Start
 
 **Words the speech model gets wrong:** look-alikes are chosen from context ("tax messages" -> "text messages", "buck fixing" -> "bug fixing", "cash" -> "cache", "sequel" -> "SQL"), "get hub / java script / chat gpt" become GitHub / JavaScript / ChatGPT, and "a/an" follow the next word. A retraction can be its own sentence ("No, sorry.") and can fix a day, time, date, amount, percent, quantity, name or place; if the speech model dropped the retraction, a very short "It's on Tuesday at 10 am." right after the same kind of fact replaces it. A 48-dictation test corpus covers this: see `docs/CORRECTION_CORPUS_REPORT.md`.
 
+**Fits the sentence it goes into:** on Android the typing service reads a few characters either side of the cursor (on the device only; never stored, logged or sent), so dictating in the middle of a sentence does not start with a capital or end with a full stop. See `docs/COMPETITOR_RESEARCH.md` for what Lemon, Wispr Flow and Fireflies publish and what we did and did not take from them.
+
 **Times:** "after nine forty five" becomes "after 9:45 PM": with no AM/PM spoken, before noon on your phone's clock gives AM, otherwise PM. Say "AM" or "PM" (or "in the morning") and that wins.
 
 **Both:** *Packs* teach VoiceFlow the words, abbreviations and note templates of your work (three illustrative samples ship: General Business, Healthcare Clinic and Cricket; you can import your own `.json` pack, invalid ones are refused with a plain reason). *Settings* holds cloud polish, a backup/restore of your settings, and the licenses.

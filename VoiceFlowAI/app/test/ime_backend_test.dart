@@ -167,6 +167,25 @@ void main() {
     expect(l['text'], isNot(contains('Start concise')));
   });
 
+  test('a dictation fits the sentence around the cursor', () async {
+    await install();
+    stt.text = 'we should go now';
+    Future<String?> say(Map<String, Object?> ctx) async {
+      await b.handle(MethodCall('streamStart', {'fieldKind': 'text', ...ctx}));
+      await b.handle(MethodCall('streamChunk', {'pcm': tone()}));
+      return ((await b.handle(const MethodCall('streamEnd'))) as Map)['text']
+          as String?;
+    }
+
+    expect(await say({'before': 'I think '}), 'we should go now.');
+    expect(await say({'before': 'Hello. '}), 'We should go now.');
+    expect(await say({}), 'We should go now.');
+    expect(
+      await say({'before': 'We could ', 'after': ' and then eat'}),
+      'we should go now',
+    );
+  });
+
   test('setProfile remembers per app and is used next time', () async {
     await install();
     await b.setProfile('ai_prompting', 'com.example.chat');

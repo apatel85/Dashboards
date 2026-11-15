@@ -172,6 +172,10 @@ class ImeBackend {
         dictionary: s.dictionary,
         corrections: s.corrections,
         fieldKind: kind,
+        surrounding: TextContext(
+          before: _clip(args['before']),
+          after: _clip(args['after']),
+        ),
         promptStyle: PromptStyle.resolve(
           promptFormat: s.promptFormat,
           aiLength: s.aiLength,
@@ -180,6 +184,12 @@ class ImeBackend {
       ),
       profile: profile,
     );
+  }
+
+  /// Only a few characters either side of the cursor are ever used, and only for casing/punctuation.
+  String _clip(Object? v) {
+    final s = v is String ? v : '';
+    return s.length > 200 ? s.substring(s.length - 200) : s;
   }
 
   DictationPipeline _pipeline(_CaptureSink sink) => DictationPipeline(

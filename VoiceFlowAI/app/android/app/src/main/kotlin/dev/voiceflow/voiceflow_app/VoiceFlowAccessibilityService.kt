@@ -15,7 +15,11 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 
 /** What kind of field has focus. [password] fields are never dictated into. */
-data class FieldInfo(val pkg: String?, val kind: String, val password: Boolean)
+/** [before]/[after] are a few characters either side of the cursor, used only on this device to fit a dictation into its sentence. */
+data class FieldInfo(
+    val pkg: String?, val kind: String, val password: Boolean,
+    val before: String = "", val after: String = "",
+)
 
 /** Maps an Android inputType to how dictated text must be formatted. */
 fun fieldKindOf(t: Int): String {
@@ -76,7 +80,22 @@ class VoiceFlowAccessibilityService : AccessibilityService() {
         val n = focused() ?: return null
         if (!n.isEditable) return null
         val kind = if (n.isPassword) "password" else fieldKindOf(n.inputType)
-        return FieldInfo(n.packageName?.toString(), kind, kind == "password")
+        if (kind == "password") return FieldInfo(n.packageName?.toString(), kind, true)
+        // A placeholder ("Message") is not text: treat it as an empty box.
+        val raw = n.text?.toString().orEmpty()
+        val hint = n.hintText?.toString()
+        val placeholder = n.isShowingHintText ||
+            (raw.isNotEmpty() && (raw == hint || raw == n.contentDescription?.toString())) ||
+            (raw.isNotEmpty() && raw.length <= 30 && n.textSelectionStart <= 0 && n.textSelectionEnd <= 0)
+        var before = ""; var after = ""
+        if (!placeholder) {
+            var s = n.textSelectionStart; var e = n.textSelectionEnd
+            if (s < 0 || e < 0) { s = raw.length; e = raw.length }
+            s = s.coerceIn(0, raw.length); e = e.coerceIn(s, raw.length)
+            before = raw.substring(maxOf(0, s - 80), s)
+            after = raw.substring(e, minOf(raw.length, e + 24))
+        }
+        return FieldInfo(n.packageName?.toString(), kind, false, before, after)
     }
 
     private data class Last(val pkg: String?, val before: String, val after: String, val at: Long)
