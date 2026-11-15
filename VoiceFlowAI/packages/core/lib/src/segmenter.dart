@@ -28,6 +28,9 @@ class Segmenter {
 
   late final Set<String> _addressees = _set('addressees');
   late final Set<String> _adjuncts = _set('adjunctLeads');
+  late final Set<String> _longBreakers = _set('longBreakers');
+  late final Set<String> _longStarts = _set('longSubjectStarts');
+  late final int _longClause = (_d?['longClause'] as int?) ?? 14;
   late final Set<String> _subjects = _set('subjects');
   late final Set<String> _contracted = _set('contractedSubjects');
   late final Set<String> _verbs = _set('verbs');
@@ -295,6 +298,21 @@ class Segmenter {
           if (sinceComma >= 0) sinceComma += closer.length;
         }
         continue;
+      }
+
+      // A very long clause with no break: a conjunction that opens a new clause ("... and I don't
+      // see ...", "... because the size is ...") starts a new sentence.
+      if (clauseWords >= _longClause &&
+          _longBreakers.contains(lw) &&
+          i + 1 < t.length &&
+          (_subjectVerb(t, i + 1) ||
+              (_longStarts.contains(t[i + 1].toLowerCase()) &&
+                  i + 2 < t.length &&
+                  _isWord(t[i + 2]))) &&
+          pw.isNotEmpty &&
+          !const {'and', 'but', 'or', 'so', 'because', 'if', 'that', 'than'}
+              .contains(pw)) {
+        breakHere();
       }
 
       // a discourse marker starting a new point, or a new subject and verb

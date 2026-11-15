@@ -113,7 +113,11 @@ Future<void> main(List<String> args) async {
       polishProvider: () => polish.chain,
     ),
     options: () => DictationOptions(
-      controller.profile,
+      resolveProfessional(
+        controller.profile,
+        settings.professionalTone,
+        (id) => assets.profiles.where((p) => p.id == id).firstOrNull,
+      ),
       packs: packStore.active, // the packs you turned on, in priority order
       dictionary: settings.dictionary,
       corrections: settings.corrections,

@@ -14,6 +14,7 @@ void main() {
   _stage10();
   _stage11();
   _stage12();
+  _stage13();
   final f = RuleFormatter(loadLang());
   String fmt(String s, [String p = 'business']) => f.format(s, loadProfile(p));
 
@@ -736,6 +737,33 @@ void _stage12() {
     test('only at the start: a later mention is ordinary text', () async {
       final r = await run('we talked about prompt mode yesterday', 'casual');
       expect(r.finalText, 'We talked about prompt mode yesterday.');
+    });
+  });
+}
+
+void _stage13() {
+  group('Professional is one mode with tone levels', () {
+    final biz = loadProfile('business');
+    final formal = loadProfile('professional');
+    Profile? byId(String id) => id == 'professional' ? formal : biz;
+    test('the tone level picks the profile', () {
+      expect(resolveProfessional(biz, 'neutral', byId).id, 'business');
+      expect(resolveProfessional(biz, 'formal', byId).id, 'professional');
+      // a profile saved as the formal one stays formal; others are untouched
+      expect(resolveProfessional(formal, 'neutral', byId).id, 'professional');
+      expect(resolveProfessional(loadProfile('casual'), 'formal', byId).id,
+          'casual');
+    });
+    test('the tone level is a saved setting', () {
+      final s = Settings();
+      expect(s.professionalTone, 'neutral');
+      s.professionalTone = 'formal';
+      expect(Settings.fromJson(s.toJson()).professionalTone, 'formal');
+      expect(Settings.fromJson({'professionalTone': 'weird'}).professionalTone,
+          'neutral');
+    });
+    test('email apps use Professional (tone from the setting)', () {
+      expect(AppDefaults.profileFor('com.google.android.gm'), 'business');
     });
   });
 }

@@ -56,3 +56,10 @@ class Profile {
   factory Profile.fromJsonString(String s) =>
       Profile.fromJson(jsonDecode(s) as Map<String, dynamic>);
 }
+
+/// Professional is one mode with tone levels: the "business" profile is the neutral level and the
+/// "professional" profile the formal level. [tone] (`neutral` | `formal`) picks the level for a
+/// Professional choice; a profile saved as the formal one stays formal.
+Profile resolveProfessional(
+        Profile p, String tone, Profile? Function(String id) byId) =>
+    p.id == 'business' && tone == 'formal' ? (byId('professional') ?? p) : p;

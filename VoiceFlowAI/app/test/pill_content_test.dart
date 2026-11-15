@@ -19,7 +19,7 @@ void main() {
     expect(p.text, startsWith('●'));
     expect(p.text, contains('Listening…'));
     expect(p.text, contains('00:00'));
-    expect(p.text, contains('Business'));
+    expect(p.text, contains('Professional'));
 
     c.startProcessing();
     expect(pillContent(c, t)!.text, '◌  Transcribing…');
@@ -59,20 +59,23 @@ void main() {
     final c = await makeController(tester);
     expect(c.profile.id, 'business');
     c.cycleProfile();
-    expect(c.profile.id, 'professional');
-    expect(pillContent(c, t)!.text, 'Profile: Professional');
+    expect(c.profile.id, 'ai_prompting');
+    expect(pillContent(c, t)!.text, 'Profile: AI Prompting');
     await tester.pump(const Duration(milliseconds: 1600));
     expect(pillContent(c, t), isNull);
   });
 
-  testWidgets('cycling wraps around the four profiles', (tester) async {
-    final c = await makeController(tester);
-    final seen = <String>[];
-    for (var i = 0; i < 4; i++) {
-      c.cycleProfile();
-      seen.add(c.profile.id);
-    }
-    expect(seen, ['professional', 'ai_prompting', 'casual', 'business']);
-    await tester.pump(const Duration(milliseconds: 1600));
-  });
+  testWidgets(
+    'cycling wraps around the three choices (Professional is one choice with a tone level)',
+    (tester) async {
+      final c = await makeController(tester);
+      final seen = <String>[];
+      for (var i = 0; i < 4; i++) {
+        c.cycleProfile();
+        seen.add(c.profile.id);
+      }
+      expect(seen, ['ai_prompting', 'casual', 'business', 'ai_prompting']);
+      await tester.pump(const Duration(milliseconds: 1600));
+    },
+  );
 }

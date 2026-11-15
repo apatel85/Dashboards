@@ -26,7 +26,7 @@ void main() {
       expect(find.text('Listening…'), findsOneWidget);
       expect(find.byIcon(Icons.mic), findsOneWidget);
       expect(find.text('00:00'), findsOneWidget);
-      expect(find.text('Profile: Business'), findsOneWidget);
+      expect(find.text('Profile: Professional'), findsOneWidget);
       c.reset();
       await t.pump();
     });
@@ -165,7 +165,7 @@ void main() {
         await t.pump();
         expect(
           t.widget<SelectableText>(find.byKey(const Key('tryit-output'))).data,
-          'The patient do not have any allergies.',
+          "The patient don't have any allergies.", // the Professional choice is neutral by default
         );
       },
     );

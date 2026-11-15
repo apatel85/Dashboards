@@ -65,3 +65,8 @@ Professional word map / emotion map / restructuring (spec sections 8-10) or the 
    (and says either pay for the tier or mask by default before release beyond testing).
 3. **Optional downloads** (Whisper small.en, punctuation model, Harper grammar checker via FFI) each
    need a measured gain on a real device before adoption; none is started.
+
+## Update after the owner's 0.8.0 test
+- **Business and Professional are now one choice.** The chip row shows Casual, Professional and AI prompting; a Neutral/Formal tone level (Style page) picks the wording. Under the hood the two profile files stay (spec section 1A: keep the profile files), "business" is the neutral level and "professional" the formal one, and built-in email apps use Professional. A per-app choice saved earlier as the formal profile stays formal.
+- **Download size is unchanged (still the 160 MB speech model) because nothing new is downloadable yet.** The punctuation model, Whisper small.en and the grammar checker are NOT started: each needs a pinned download and a measured gain on a real phone.
+- **Long run-on dictations** are now cut into sentences (a long clause breaks at "and/but/because" + a new subject), so Prompt mode has sentences to work with; "one sixty megabytes" now reads as 160. Prompt mode still keeps a general question as one plain line (owner decision in 0.7.2) and does not yet drop chatter from a rambling question.

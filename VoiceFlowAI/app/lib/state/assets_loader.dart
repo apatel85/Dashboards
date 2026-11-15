@@ -18,6 +18,11 @@ class AppAssets {
     this.packSources = const [],
   ]);
 
+  /// What the person chooses between: Casual, Professional, AI prompting. The formal level of
+  /// Professional is a tone setting, not a separate choice.
+  List<Profile> get chips =>
+      profiles.where((p) => p.id != 'professional').toList();
+
   static const profileIds = [
     'casual',
     'business',

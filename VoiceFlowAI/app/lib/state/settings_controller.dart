@@ -32,6 +32,11 @@ class SettingsController extends ChangeNotifier {
     await _commit();
   }
 
+  Future<void> setProfessionalTone(String tone) async {
+    settings.professionalTone = tone == 'formal' ? 'formal' : 'neutral';
+    await _commit();
+  }
+
   Future<void> setMaskCloud(bool on) async {
     settings.maskCloud = on;
     await _commit();

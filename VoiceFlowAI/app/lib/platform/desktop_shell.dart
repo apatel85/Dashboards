@@ -62,11 +62,13 @@ class DesktopShell with TrayListener, WindowListener {
             label: t.navStyle,
             submenu: Menu(
               items: [
-                for (final p in c.assets.profiles)
+                for (final p in c.assets.chips)
                   MenuItem.checkbox(
                     key: 'profile:${p.id}',
                     label: p.name,
-                    checked: p.id == c.profile.id,
+                    checked:
+                        p.id == c.profile.id ||
+                        (p.id == 'business' && c.profile.id == 'professional'),
                   ),
               ],
             ),

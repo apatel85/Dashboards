@@ -730,6 +730,30 @@ abstract class AppLocalizations {
   /// **'Optional. After the on-device formatting, VoiceFlow can ask an AI service to tidy your text a little more. Only text is sent, never audio. Off by default.'**
   String get setCloudBody;
 
+  /// No description provided for @styleToneLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tone level'**
+  String get styleToneLevel;
+
+  /// No description provided for @styleToneNeutral.
+  ///
+  /// In en, this message translates to:
+  /// **'Neutral'**
+  String get styleToneNeutral;
+
+  /// No description provided for @styleToneFormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Formal'**
+  String get styleToneFormal;
+
+  /// No description provided for @styleToneNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Neutral keeps contractions and sounds direct and polite. Formal writes full sentences without contractions. You can also say \"make this formal\" or \"professional mode\" at the start of a dictation.'**
+  String get styleToneNote;
+
   /// No description provided for @setCloudSwitch.
   ///
   /// In en, this message translates to:

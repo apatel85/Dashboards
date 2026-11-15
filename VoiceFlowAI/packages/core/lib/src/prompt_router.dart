@@ -38,7 +38,9 @@ class PromptRouter {
   String get approvalLine => (_d['approval'] as String?) ?? '';
 
   String route(String text) {
-    final t = text.trim();
+    // The request comes first; a verb like "shorten" far down a long ramble is a description,
+    // not the instruction.
+    final t = text.trim().split(RegExp(r'\s+')).take(30).join(' ');
     final isQuestion = _question?.hasMatch(t) ?? false;
     for (final (name, re) in _order) {
       if (!re.hasMatch(t)) continue;

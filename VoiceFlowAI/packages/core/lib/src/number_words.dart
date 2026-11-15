@@ -8,7 +8,10 @@ class NumberWords {
       : units = Map<String, int>.from(l.numbers['units'] as Map),
         tens = Map<String, int>.from(l.numbers['tens'] as Map),
         scales = Map<String, int>.from(l.numbers['scales'] as Map),
-        unitWords = Set<String>.from(l.numbers['unitWords'] as List);
+        unitWords = Set<String>.from(l.numbers['unitWords'] as List),
+        _sizeUnits =
+            Set<String>.from(l.numbers['sizeUnits'] as List? ?? const []);
+  final Set<String> _sizeUnits;
 
   bool _isNum(String t) {
     final w = t.toLowerCase();
@@ -51,7 +54,7 @@ class NumberWords {
           // continue a run after a scale word ("two hundred fifty"). Clinician shorthand
           // ("one forty") is the one exception and is handled in _value.
           final afterScale = scales.containsKey(p);
-          final shorthandPair = shorthandHundreds &&
+          final shorthandPair = (shorthandHundreds || _unitAhead(toks, j)) &&
               cur.length == 1 &&
               (units[p] ?? 99) >= 1 &&
               (units[p] ?? 99) <= 9;
@@ -65,8 +68,13 @@ class NumberWords {
         j++;
       }
       if (cur.isNotEmpty) runs.add(cur);
-      final vals =
-          runs.map((r) => _value(r, shorthand: shorthandHundreds)).toList();
+      // "one sixty MB" is 160, "two fifty dollars" is 250: a single digit word and a tens word
+      // followed by a unit read as hundreds (without a unit it stays two numbers).
+      final nextWord = j < toks.length ? toks[j].toLowerCase() : '';
+      final unitFollows = _sizeUnits.contains(nextWord);
+      final vals = runs
+          .map((r) => _value(r, shorthand: shorthandHundreds || unitFollows))
+          .toList();
       // "two point five" -> 2.5 (digits only after "point"; a bare "point" stays a word).
       if (j + 1 < toks.length && toks[j].toLowerCase() == 'point') {
         var k = j + 1;
@@ -145,6 +153,15 @@ class NumberWords {
       if (_amountWords.contains(toks[k].toLowerCase())) return true;
     }
     return false;
+  }
+
+  /// Skips number words from [from] and says whether a size/amount unit comes next ("sixty MB").
+  bool _unitAhead(List<String> toks, int from) {
+    var k = from;
+    while (k < toks.length && _isNum(toks[k])) {
+      k++;
+    }
+    return k < toks.length && _sizeUnits.contains(toks[k].toLowerCase());
   }
 
   static const _timePreps = {

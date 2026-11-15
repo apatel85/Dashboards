@@ -133,12 +133,14 @@ class ImeBackend {
       (packageName == null ? null : perApp.profileFor(packageName)) ??
           s.defaultProfileId,
     );
+    // Professional is one choice with a tone level: the formal profile is not listed on its own
+    final shown = p.id == 'professional' ? _profile('business') : p;
     return {
       'modelReady': models.installed,
       'onboardingDone': s.onboardingDone,
-      'profile': {'id': p.id, 'name': p.name},
+      'profile': {'id': shown.id, 'name': shown.name},
       'profiles': [
-        for (final x in assets.profiles) {'id': x.id, 'name': x.name},
+        for (final x in assets.chips) {'id': x.id, 'name': x.name},
       ],
       'cloud': s.cloudActive,
     };
@@ -166,10 +168,14 @@ class ImeBackend {
       onChanged: (_) {},
       ignore: const {},
     );
-    final profile = _profile(
-      (args['profileId'] as String?) ??
-          perApp.profileFor(pkg) ??
-          s.defaultProfileId,
+    final profile = resolveProfessional(
+      _profile(
+        (args['profileId'] as String?) ??
+            perApp.profileFor(pkg) ??
+            s.defaultProfileId,
+      ),
+      s.professionalTone,
+      (id) => assets.profiles.where((p) => p.id == id).firstOrNull,
     );
     final packs = (await _packStore(s)).active;
     _polish.settings = s; // keeps the chain (429 back-off, counters) while settings are unchanged

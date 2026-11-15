@@ -17,16 +17,16 @@ class KnownApp {
 class AppDefaults {
   static const known = <KnownApp>[
     // email: professional
-    KnownApp('com.google.android.gm', 'Gmail', 'professional', 'email'),
-    KnownApp('com.microsoft.office.outlook', 'Outlook (phone)', 'professional',
+    KnownApp('com.google.android.gm', 'Gmail', 'business', 'email'),
+    KnownApp(
+        'com.microsoft.office.outlook', 'Outlook (phone)', 'business', 'email'),
+    KnownApp('outlook.exe', 'Outlook (PC)', 'business', 'email'),
+    KnownApp('olk.exe', 'Outlook, new (PC)', 'business', 'email'),
+    KnownApp('com.yahoo.mobile.client.android.mail', 'Yahoo Mail', 'business',
         'email'),
-    KnownApp('outlook.exe', 'Outlook (PC)', 'professional', 'email'),
-    KnownApp('olk.exe', 'Outlook, new (PC)', 'professional', 'email'),
-    KnownApp('com.yahoo.mobile.client.android.mail', 'Yahoo Mail',
-        'professional', 'email'),
-    KnownApp('ch.protonmail.android', 'Proton Mail', 'professional', 'email'),
-    KnownApp('com.samsung.android.email.provider', 'Samsung Email',
-        'professional', 'email'),
+    KnownApp('ch.protonmail.android', 'Proton Mail', 'business', 'email'),
+    KnownApp('com.samsung.android.email.provider', 'Samsung Email', 'business',
+        'email'),
     // work chat: business
     KnownApp('com.slack', 'Slack (phone)', 'business', 'work chat'),
     KnownApp('slack.exe', 'Slack (PC)', 'business', 'work chat'),

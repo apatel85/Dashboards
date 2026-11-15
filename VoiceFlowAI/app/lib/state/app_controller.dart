@@ -65,8 +65,10 @@ class AppController extends ChangeNotifier {
 
   /// Ctrl+Alt+P: next profile; the pill shows its name for 1.5 s (spec §9.3).
   void cycleProfile() {
-    final i = assets.profiles.indexWhere((p) => p.id == _profile.id);
-    profile = assets.profiles[(i + 1) % assets.profiles.length];
+    final chips = assets.chips;
+    final cur = _profile.id == 'professional' ? 'business' : _profile.id;
+    final i = chips.indexWhere((p) => p.id == cur);
+    profile = chips[(i + 1) % chips.length];
     flash('Profile: ${_profile.name}');
   }
 

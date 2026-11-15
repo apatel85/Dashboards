@@ -6,6 +6,10 @@ class Settings {
   static const currentVersion = 2;
   int version = currentVersion;
   String defaultProfileId = 'casual';
+
+  /// Professional is one mode with tone levels (spec section 8). `neutral` is the default;
+  /// `formal` expands contractions and uses the formal wording.
+  String professionalTone = 'neutral';
   Map<String, String> perAppProfiles = {};
   String hotkey = 'F9';
   String language = 'en';
@@ -40,6 +44,7 @@ class Settings {
   Map<String, dynamic> toJson() => {
         'version': version,
         'defaultProfileId': defaultProfileId,
+        'professionalTone': professionalTone,
         'perAppProfiles': perAppProfiles,
         'hotkey': hotkey,
         'language': language,
@@ -89,6 +94,8 @@ class Settings {
     final j = migrate(raw);
     final s = Settings();
     s.defaultProfileId = j['defaultProfileId'] as String? ?? s.defaultProfileId;
+    s.professionalTone =
+        j['professionalTone'] == 'formal' ? 'formal' : 'neutral';
     s.perAppProfiles =
         Map<String, String>.from(j['perAppProfiles'] as Map? ?? const {});
     s.hotkey = j['hotkey'] as String? ?? s.hotkey;

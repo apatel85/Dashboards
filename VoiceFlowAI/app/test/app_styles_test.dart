@@ -14,7 +14,10 @@ void main() {
       'well-known apps have a default; your choice wins; unknown is null',
       () {
         final p = PerAppProfiles({}, onChanged: (_) {});
-        expect(p.profileFor('com.google.android.gm'), 'professional'); // Gmail
+        expect(
+          p.profileFor('com.google.android.gm'),
+          'business',
+        ); // Gmail: Professional
         expect(p.profileFor('com.whatsapp'), 'casual');
         expect(p.profileFor('com.slack'), 'business'); // package is com.Slack
         expect(p.profileFor('com.anthropic.claude'), 'ai_prompting');
@@ -26,7 +29,7 @@ void main() {
         }, onChanged: (_) {});
         expect(q.profileFor('com.google.android.gm'), 'casual');
         q.replaceAll({});
-        expect(q.profileFor('com.google.android.gm'), 'professional');
+        expect(q.profileFor('com.google.android.gm'), 'business');
       },
     );
 
@@ -89,6 +92,48 @@ void main() {
     );
   });
 
+  testWidgets(
+    'Style page: one Professional card with a Neutral/Formal tone level',
+    (t) async {
+      size(t, const Size(500, 3000));
+      final ctl = await makeController(t);
+      final s = Settings();
+      final sc = SettingsController(s, () async {});
+      addTearDown(sc.dispose);
+      await t.pumpWidget(
+        host(
+          StylePage(
+            controller: ctl,
+            settings: sc,
+            listApps: () async => const [],
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(find.text('Professional'), findsWidgets);
+      expect(find.text('Professional (formal)'), findsNothing);
+      expect(find.byKey(const Key('style-pro-tone')), findsOneWidget);
+      expect(s.professionalTone, 'neutral');
+      expect(
+        find.text('Hi John, thank you for the update. Could we meet Thursday?'),
+        findsOneWidget,
+      );
+      await t.tap(find.text('Formal'));
+      await t.pumpAndSettle();
+      expect(s.professionalTone, 'formal');
+      // the sample under the card now shows the formal wording
+      expect(
+        find.text(
+          'Hello John, thank you for the update. Could we meet Thursday?',
+        ),
+        findsOneWidget,
+      );
+      // and the choice survives a settings round trip
+      final back = Settings.fromJson(s.toJson());
+      expect(back.professionalTone, 'formal');
+    },
+  );
+
   testWidgets('Style page: Apps list shows built-ins and saves a change', (
     t,
   ) async {
@@ -144,7 +189,7 @@ void main() {
     );
     await t.tap(find.byKey(const Key('app-add-button')));
     await t.pumpAndSettle();
-    expect(s.perAppProfiles['com.example.notes'], 'professional');
+    expect(s.perAppProfiles['com.example.notes'], 'business');
     // the new row shows the friendly name
     expect(find.byKey(const Key('app-row-com.example.notes')), findsOneWidget);
     expect(find.text('Notes'), findsOneWidget);

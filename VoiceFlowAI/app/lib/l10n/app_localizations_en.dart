@@ -373,6 +373,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Optional. After the on-device formatting, VoiceFlow can ask an AI service to tidy your text a little more. Only text is sent, never audio. Off by default.';
 
   @override
+  String get styleToneLevel => 'Tone level';
+
+  @override
+  String get styleToneNeutral => 'Neutral';
+
+  @override
+  String get styleToneFormal => 'Formal';
+
+  @override
+  String get styleToneNote =>
+      'Neutral keeps contractions and sounds direct and polite. Formal writes full sentences without contractions. You can also say \"make this formal\" or \"professional mode\" at the start of a dictation.';
+
+  @override
   String get setCloudSwitch => 'Use cloud polish';
 
   @override

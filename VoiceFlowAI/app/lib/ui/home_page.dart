@@ -96,10 +96,13 @@ class _HomePageState extends State<HomePage> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        for (final p in c.assets.profiles)
+                        for (final p in c.assets.chips)
                           ChoiceChip(
                             label: Text(p.name),
-                            selected: p.id == c.profile.id,
+                            selected:
+                                p.id == c.profile.id ||
+                                (p.id == 'business' &&
+                                    c.profile.id == 'professional'),
                             onSelected: (_) => c.profile = p,
                           ),
                       ],

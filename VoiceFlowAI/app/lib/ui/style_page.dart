@@ -30,7 +30,7 @@ class StylePage extends StatefulWidget {
 
 class _StylePageState extends State<StylePage> {
   final _newApp = TextEditingController();
-  String _newProfile = 'professional';
+  String _newProfile = 'business';
   final Map<String, String> _names =
       {}; // id -> friendly name, learned from the picker
 
@@ -57,6 +57,41 @@ class _StylePageState extends State<StylePage> {
   }
 
   AppController get controller => widget.controller;
+
+  /// The profile whose output a card shows: Professional follows its tone level.
+  Profile _shown(Profile p) => p.id == 'business'
+      ? resolveProfessional(
+          p,
+          widget.settings?.settings.professionalTone ?? 'neutral',
+          (id) =>
+              controller.assets.profiles.where((x) => x.id == id).firstOrNull,
+        )
+      : p;
+
+  Widget _toneLevel(AppLocalizations t) => Padding(
+    padding: const EdgeInsets.only(top: 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(t.styleToneLevel, style: Theme.of(context).textTheme.labelMedium),
+        const SizedBox(height: 4),
+        SegmentedButton<String>(
+          key: const Key('style-pro-tone'),
+          segments: [
+            ButtonSegment(value: 'neutral', label: Text(t.styleToneNeutral)),
+            ButtonSegment(value: 'formal', label: Text(t.styleToneFormal)),
+          ],
+          selected: {widget.settings!.settings.professionalTone},
+          onSelectionChanged: (v) async {
+            await widget.settings!.setProfessionalTone(v.first);
+            if (mounted) setState(() {});
+          },
+        ),
+        const SizedBox(height: 4),
+        Text(t.styleToneNote, style: Theme.of(context).textTheme.bodySmall),
+      ],
+    ),
+  );
 
   Future<void> _pickApp() async {
     final picked = await showDialog<PickableApp>(
@@ -100,7 +135,7 @@ class _StylePageState extends State<StylePage> {
                   const SizedBox(height: 4),
                   Text(t.styleIntro),
                   const SizedBox(height: 16),
-                  for (final p in controller.assets.profiles) ...[
+                  for (final p in controller.assets.chips) ...[
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -117,7 +152,10 @@ class _StylePageState extends State<StylePage> {
                                         .titleMedium,
                                   ),
                                 ),
-                                if (p.id == controller.profile.id)
+                                if (p.id == controller.profile.id ||
+                                    (p.id == 'business' &&
+                                        controller.profile.id ==
+                                            'professional'))
                                   Chip(label: Text(t.styleDefault))
                                 else
                                   OutlinedButton(
@@ -137,7 +175,11 @@ class _StylePageState extends State<StylePage> {
                               t.styleAfter,
                               style: Theme.of(context).textTheme.labelMedium,
                             ),
-                            Text(controller.format(samples[p.id] ?? '', p)),
+                            Text(
+                              controller.format(samples[p.id] ?? '', _shown(p)),
+                            ),
+                            if (p.id == 'business' && widget.settings != null)
+                              _toneLevel(t),
                           ],
                         ),
                       ),
@@ -161,7 +203,7 @@ class _StylePageState extends State<StylePage> {
     Key? key,
   }) {
     final t = AppLocalizations.of(context);
-    final profiles = controller.assets.profiles;
+    final profiles = controller.assets.chips;
     final value = profiles.any((p) => p.id == current) ? current! : 'auto';
     return DropdownButton<String>(
       key: key,

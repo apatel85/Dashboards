@@ -297,6 +297,11 @@ class RuleFormatter {
     return out;
   }
 
+  static final _spokenQ = RegExp(
+      r"^(?:(?:has|have|is|are|does|do|did|can|could|should|would|will)\s+(?:the|this|that|it|there|we|you|i|they|he|she|a|an|any|my|our)\b|(?:what|why|how|when|where|who|which)\s+(?:is|are|was|were|does|do|did|can|could|should|would|will|has|have)\b)",
+      caseSensitive: false);
+  bool _spokenQuestion(String x) => _wc(x) >= 4 && _spokenQ.hasMatch(x.trim());
+
   late final PromptRouter _router = PromptRouter(lang);
 
   /// The route the last Prompt-mode call chose (ASK, RESEARCH, WRITE, REWRITE, ANALYZE, BUILD,
@@ -684,7 +689,9 @@ class RuleFormatter {
       final first =
           RegExp(r'^[A-Za-z]+').firstMatch(x)?.group(0)?.toLowerCase();
       if (x.trimRight().endsWith('?') ||
-          (first != null && verbs.contains(first))) {
+          (first != null && verbs.contains(first)) ||
+          // a spoken question has no "?" until it is punctuated: "has the pack been updated"
+          (first != null && _spokenQuestion(x))) {
         task.add(x);
       } else {
         ctx.add(x);

@@ -61,7 +61,11 @@ void main() {
   test('status reports model, profile list, cloud', () async {
     var s = await b.status();
     expect(s['modelReady'], false);
-    expect((s['profiles'] as List).length, 4);
+    expect(
+      (s['profiles'] as List).length,
+      3,
+      reason: 'Casual, Professional, AI prompting (formal is a tone level)',
+    );
     await install();
     s = await b.status();
     expect(s['modelReady'], true);
@@ -71,25 +75,25 @@ void main() {
   test(
     'status(packageName) reports the style that applies in that app',
     () async {
-      await b.setProfile('professional', 'com.example.mail');
+      await b.setProfile('ai_prompting', 'com.example.mail');
       expect(
         ((await b.status('com.example.mail'))['profile'] as Map)['id'],
-        'professional',
+        'ai_prompting',
       );
       // another app, and no app, fall back to the default style
       expect(
         ((await b.status('com.example.other'))['profile'] as Map)['id'],
-        isNot('professional'),
+        isNot('ai_prompting'),
       );
       expect(
         ((await b.status())['profile'] as Map)['id'],
-        isNot('professional'),
+        isNot('ai_prompting'),
       );
       // the Kotlin chooser asks over the channel with a packageName argument
       final viaChannel = await b.handle(
         const MethodCall('status', {'packageName': 'com.example.mail'}),
       ) as Map;
-      expect((viaChannel['profile'] as Map)['id'], 'professional');
+      expect((viaChannel['profile'] as Map)['id'], 'ai_prompting');
     },
   );
 
@@ -154,7 +158,7 @@ void main() {
       'pcm': tone(),
       'packageName': 'com.google.android.gm',
     });
-    expect((g['profile'] as Map)['id'], 'professional');
+    expect((g['profile'] as Map)['id'], 'business'); // Gmail: Professional
     final w = await b.dictate({'pcm': tone(), 'packageName': 'com.whatsapp'});
     expect((w['profile'] as Map)['id'], 'casual');
     // the user's own choice wins over the built-in one
@@ -223,9 +227,39 @@ void main() {
     final other = await b.dictate({'pcm': tone(), 'packageName': 'com.other'});
     // another app falls back to the global default, which is Casual for a new install
     expect((other['profile'] as Map)['id'], 'casual');
-    await b.setProfile('professional', null);
-    expect(((await b.status())['profile'] as Map)['id'], 'professional');
+    await b.setProfile('ai_prompting', null);
+    expect(((await b.status())['profile'] as Map)['id'], 'ai_prompting');
   });
+
+  test(
+    'Professional is one choice; its tone level picks neutral or formal',
+    () async {
+      await install();
+      stt.text = 'we cant make the meeting thursday';
+      final neutral = await b.dictate({
+        'pcm': tone(),
+        'packageName': 'com.google.android.gm',
+      });
+      expect((neutral['profile'] as Map)['id'], 'business');
+      expect(neutral['text'], contains("can't"));
+      final s = await store.load();
+      s.professionalTone = 'formal';
+      await store.save(s);
+      final formal = await b.dictate({
+        'pcm': tone(),
+        'packageName': 'com.google.android.gm',
+      });
+      expect((formal['profile'] as Map)['id'], 'professional');
+      expect(formal['text'], contains('cannot'));
+      // the chooser still shows a single, ticked "Professional"
+      final st = await b.status('com.google.android.gm');
+      expect((st['profile'] as Map)['name'], 'Professional');
+      expect(
+        [for (final p in st['profiles'] as List) (p as Map)['name']],
+        ['Casual', 'Professional', 'AI Prompting'],
+      );
+    },
+  );
 
   test('unload calls through', () async {
     await b.handle(const MethodCall('unload'));
