@@ -1,0 +1,187 @@
+{
+  "id": "cricket",
+  "name": "Sports (Cricket)",
+  "version": "1.0.0",
+  "description": "Illustrative sample pack for cricket commentary, scorecards and match notes. Terms and rules are examples; check what you dictate.",
+  "vocabulary": [
+    "lbw",
+    "googly",
+    "yorker",
+    "bouncer",
+    "doosra",
+    "wicketkeeper",
+    "mid-wicket",
+    "silly point",
+    "cover drive",
+    "carrom ball",
+    "powerplay",
+    "run rate",
+    "strike rate",
+    "economy rate",
+    "no-ball",
+    "leg bye",
+    "hat-trick",
+    "half century",
+    "golden duck",
+    "tailender",
+    "nightwatchman",
+    "all rounder",
+    "slip cordon",
+    "square leg",
+    "fine leg",
+    "third man",
+    "deep midwicket",
+    "Duckworth-Lewis-Stern",
+    "Ranji Trophy",
+    "maiden over",
+    "IPL",
+    "BBL",
+    "T20",
+    "ODI",
+    "DRS",
+    "DLS",
+    "LBW",
+    "Ashes",
+    "Kohli",
+    "Tendulkar",
+    "Bumrah",
+    "Cricbuzz",
+    "ESPNcricinfo",
+    "chinaman",
+    "off spinner",
+    "leg spinner",
+    "swing",
+    "seam",
+    "reverse swing",
+    "declaration",
+    "follow-on",
+    "partnership",
+    "run-out",
+    "stumped",
+    "caught behind",
+    "review"
+  ],
+  "abbreviations": {
+    "lbw": "LBW",
+    "drs": "DRS",
+    "ipl": "IPL",
+    "bbl": "BBL",
+    "odi": "ODI",
+    "dls": "DLS",
+    "t20": "T20",
+    "dlf": "DLS"
+  },
+  "promptFragment": "Cricket dictation. Keep player names, scores such as 150/3, overs such as 19.4, and cricket terms exactly. Do not invent match facts.",
+  "templates": [
+    {
+      "id": "match_summary",
+      "name": "Match summary",
+      "trigger": [
+        "match summary"
+      ],
+      "skeleton": "Match:\nToss:\nResult:\nTop scorer:\nBest bowler:\nPlayer of the match:\n"
+    },
+    {
+      "id": "scorecard_line",
+      "name": "Scorecard line",
+      "trigger": [
+        "scorecard line"
+      ],
+      "skeleton": "Batter:    Runs:    Balls:    4s:    6s:    SR:\n"
+    }
+  ],
+  "detectors": {
+    "apps": [
+      "cricbuzz",
+      "espncricinfo",
+      "cricinfo",
+      "cricheroes"
+    ],
+    "windowTitleKeywords": [
+      "cricket",
+      "scorecard",
+      "match",
+      "innings",
+      "ipl"
+    ],
+    "contentKeywords": [
+      "wicket",
+      "over",
+      "innings",
+      "bowled",
+      "lbw",
+      "runs",
+      "batter",
+      "bowler"
+    ]
+  },
+  "numbers": {
+    "shorthandHundreds": true
+  },
+  "rules": [
+    {
+      "pattern": "\\b(\\d{1,3}) for (\\d{1,2})\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
+      "replace": "$1/$2"
+    },
+    {
+      "pattern": "\\b(\\d{1,3}) for one\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
+      "replace": "$1/1"
+    },
+    {
+      "pattern": "\\b(\\d{1,3}) for two\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
+      "replace": "$1/2"
+    },
+    {
+      "pattern": "\\b(\\d{1,3}) for three\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
+      "replace": "$1/3"
+    },
+    {
+      "pattern": "\\b(\\d{1,3}) for four\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
+      "replace": "$1/4"
+    },
+    {
+      "pattern": "\\b(\\d{1,3}) for five\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
+      "replace": "$1/5"
+    },
+    {
+      "pattern": "\\b(\\d{1,3}) for six\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
+      "replace": "$1/6"
+    },
+    {
+      "pattern": "\\b(\\d{1,3}) for seven\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
+      "replace": "$1/7"
+    },
+    {
+      "pattern": "\\b(\\d{1,3}) for eight\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
+      "replace": "$1/8"
+    },
+    {
+      "pattern": "\\b(\\d{1,3}) for nine\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
+      "replace": "$1/9"
+    },
+    {
+      "pattern": "\\b(\\d{1,3}) for ten\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
+      "replace": "$1/10"
+    },
+    {
+      "pattern": "\\b(\\d+) not out\\b",
+      "replace": "$1*"
+    },
+    {
+      "pattern": "\\bd l s\\b",
+      "replace": "DLS"
+    },
+    {
+      "pattern": "\\bt twenty\\b",
+      "replace": "T20"
+    },
+    {
+      "pattern": "\\bduckworth lewis stern\\b",
+      "replace": "Duckworth–Lewis–Stern"
+    }
+  ],
+  "safety": {
+    "preferRuleFormatterForNumbers": true,
+    "cloudAllowed": true
+  }
+}

@@ -20,7 +20,7 @@ List<String> _errs(Object? j) => PackValidator.validate(j);
 void main() {
   vocabularyDoesNotRewriteRealWords();
   // ---- pack goldens (>= 10 per pack)
-  for (final id in ['healthcare_clinic', 'general_business']) {
+  for (final id in ['healthcare_clinic', 'general_business', 'cricket']) {
     final pack = loadPack(id);
     final cases = jsonDecode(
         File('test_fixtures/packs/$id/cases.json').readAsStringSync()) as List;
@@ -57,7 +57,7 @@ void main() {
   // ---- validation: malformed packs never crash and say what is wrong
   group('validator', () {
     test('both bundled packs are valid', () {
-      for (final id in ['healthcare_clinic', 'general_business']) {
+      for (final id in ['healthcare_clinic', 'general_business', 'cricket']) {
         final j = jsonDecode(
             File('../../app/assets/packs/$id/pack.json').readAsStringSync());
         expect(_errs(j), isEmpty, reason: id);

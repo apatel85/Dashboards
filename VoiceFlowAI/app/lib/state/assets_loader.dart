@@ -24,7 +24,7 @@ class AppAssets {
     'professional',
     'ai_prompting',
   ];
-  static const packIds = ['general_business', 'healthcare_clinic'];
+  static const packIds = ['general_business', 'healthcare_clinic', 'cricket'];
 
   static Future<AppAssets> load([AssetBundle? bundle]) async {
     final b = bundle ?? rootBundle;

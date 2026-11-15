@@ -50,6 +50,7 @@ void main() {
     expect(store.registry.all.map((p) => p.id).toSet(), {
       'general_business',
       'healthcare_clinic',
+      'cricket',
     });
     expect(store.active.map((p) => p.id), [
       'healthcare_clinic',
