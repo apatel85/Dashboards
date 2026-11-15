@@ -6,6 +6,14 @@
 - Backtest-before-adopt: no strategy ships without historical validation.
 - Free data sources only. He trades ES/NQ futures options 0DTE/1DTE, SPX 0DTE/1DTE.
 
+## 2026-11-15 — Strategy research + backtest plan (plan only, nothing executed)
+
+- **Request:** Ankit: research the top day/swing/growth traders (long-standing and last 5–7 years, real verifiable records), stage a debate to reach one strategy, define the technical and fundamental inputs and a rating system, plan a backtest on ≥ 2 years of history, and say how results will be reported. Planning only — no execution.
+- **Change:** new `TradeDesk/STRATEGY_PLAN.md`. One strategy ("Catalyst Momentum Outlier"): regime gate + 0–100 trade score + readiness watchlist; modules A1 episodic pivot, A2 contraction breakout, B 5-min ORB on Stocks in Play, C index 0DTE/1DTE noise-band momentum, D single-stock options overlay; challengers H1 RSI-2 and H2 0DTE condor. Backtest design with frozen pass/fail gates, phases 0–9, report template. No app, pipeline or data change.
+- **Version:** none (no build).
+- **Verified:** by web search on 2026-11-15 only — USIC winners 2021–2025, the ORB paper's claimed and independently re-run Sharpe, the Beckmeyer 0DTE findings, Cboe's 2025 0DTE share. **Not verified:** every other trader record and every rule detail attributed to a trader (written from memory) — Phase 0 of the plan checks them against primary sources before anything is coded. No backtest has been run; the plan contains no results of ours.
+- **Open for Ankit:** decisions D1–D5 in §11 of the plan (0DTE/1DTE reading, paid options data, shorts, account size, free intraday API keys).
+
 ## 2026-11-14 — Money-win side next to trigger hits on Performance (feature)
 
 - **Request:** Ankit (2026-11-14, his call on the win-definition question): "show both now" — trigger hits AND money wins side by side. Money win = R at 10 days > 0 (close_10d above the suggestion price). The breakout-identification / trigger-target revisit (min target >3%, staged T1/T2/T3) is a separate research track — this change is display only, no scoring or pipeline change.
