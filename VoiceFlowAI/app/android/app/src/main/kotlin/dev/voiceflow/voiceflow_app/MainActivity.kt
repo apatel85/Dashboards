@@ -40,6 +40,11 @@ class MainActivity : FlutterActivity() {
                         startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                         result.success(null)
                     }
+                    "openAppInfo" -> {
+                        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.parse("package:$packageName")))
+                        result.success(null)
+                    }
                     "showBubble" -> {
                         ContextCompat.startForegroundService(this, Intent(this, FloatingService::class.java))
                         result.success(null)

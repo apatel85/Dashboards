@@ -12,6 +12,7 @@ abstract class SetupPlatform {
   Future<bool> bubbleRunning();
   Future<void> openOverlaySettings();
   Future<void> openAccessibilitySettings();
+  Future<void> openAppInfo();
   Future<void> showBubble();
   Future<void> hideBubble();
 }
@@ -32,6 +33,8 @@ class ChannelSetupPlatform implements SetupPlatform {
   @override
   Future<void> openAccessibilitySettings() =>
       _ch.invokeMethod('openAccessibilitySettings');
+  @override
+  Future<void> openAppInfo() => _ch.invokeMethod('openAppInfo');
   @override
   Future<void> showBubble() => _ch.invokeMethod('showBubble');
   @override
@@ -89,6 +92,8 @@ class AndroidSetupController extends ChangeNotifier {
   Future<void> openOverlaySettings() => platform.openOverlaySettings();
   Future<void> openAccessibilitySettings() =>
       platform.openAccessibilitySettings();
+
+  Future<void> openAppInfo() => platform.openAppInfo();
 
   Future<void> showBubble() async {
     await platform.showBubble();

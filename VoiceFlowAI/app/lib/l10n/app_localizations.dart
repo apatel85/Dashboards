@@ -939,6 +939,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show button'**
   String get setupBubbleButton;
+
+  /// No description provided for @setupAccessRestricted.
+  ///
+  /// In en, this message translates to:
+  /// **'If VoiceFlow is greyed out or says \"App was denied access\", Android is protecting you from apps installed outside the Play Store. Tap \"Open app info\", then the ⋮ menu at the top right, then \"Allow restricted settings\". After that, switch the service on.'**
+  String get setupAccessRestricted;
+
+  /// No description provided for @setupAppInfoButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Open app info'**
+  String get setupAppInfoButton;
 }
 
 class _AppLocalizationsDelegate

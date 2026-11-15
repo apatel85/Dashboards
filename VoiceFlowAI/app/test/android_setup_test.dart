@@ -9,7 +9,11 @@ import 'onboarding_test.dart' show FakeInstaller, FakeMic;
 
 class FakePlatform implements SetupPlatform {
   bool mic = false, overlay = false, access = false, bubble = false;
-  int overlayOpened = 0, accessOpened = 0, shown = 0, hidden = 0;
+  int overlayOpened = 0,
+      accessOpened = 0,
+      appInfoOpened = 0,
+      shown = 0,
+      hidden = 0;
   @override
   Future<bool> micGranted() async => mic;
   @override
@@ -22,6 +26,9 @@ class FakePlatform implements SetupPlatform {
   Future<void> openOverlaySettings() async => overlayOpened++;
   @override
   Future<void> openAccessibilitySettings() async => accessOpened++;
+  @override
+  Future<void> openAppInfo() async => appInfoOpened++;
+
   @override
   Future<void> showBubble() async {
     shown++;
@@ -106,6 +113,9 @@ void main() {
     expect(find.byKey(const Key('btn-access')), findsOneWidget);
     await t.tap(find.byKey(const Key('btn-access')));
     expect(p.accessOpened, 1);
+    await t.ensureVisible(find.byKey(const Key('btn-appinfo')));
+    await t.tap(find.byKey(const Key('btn-appinfo')));
+    expect(p.appInfoOpened, 1);
 
     p.access = true;
     await c.refresh();

@@ -83,6 +83,18 @@ class _AndroidSetupPageState extends State<AndroidSetupPage>
                 t.setupAccessBody,
                 button: t.setupAccessButton,
                 onPressed: c.openAccessibilitySettings,
+                extra: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(t.setupAccessRestricted),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      key: const Key('btn-appinfo'),
+                      onPressed: c.openAppInfo,
+                      child: Text(t.setupAppInfoButton),
+                    ),
+                  ],
+                ),
               ),
               _modelStep(context, t, c),
               _step(

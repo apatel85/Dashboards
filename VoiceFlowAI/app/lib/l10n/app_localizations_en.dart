@@ -486,4 +486,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setupBubbleButton => 'Show button';
+
+  @override
+  String get setupAccessRestricted =>
+      'If VoiceFlow is greyed out or says \"App was denied access\", Android is protecting you from apps installed outside the Play Store. Tap \"Open app info\", then the ⋮ menu at the top right, then \"Allow restricted settings\". After that, switch the service on.';
+
+  @override
+  String get setupAppInfoButton => 'Open app info';
 }
