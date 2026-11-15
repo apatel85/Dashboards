@@ -1,3 +1,5 @@
+import 'app_defaults.dart';
+import 'clock_time.dart';
 import 'lang.dart';
 import 'number_words.dart';
 import 'profile.dart';
@@ -7,10 +9,13 @@ import 'self_correction.dart';
 class RuleFormatter {
   final LangData lang;
   final NumberWords _nums;
-  RuleFormatter(this.lang) : _nums = NumberWords(lang);
+  final DateTime Function() _clock;
+  RuleFormatter(this.lang, {DateTime Function()? clock})
+      : _nums = NumberWords(lang),
+        _clock = clock ?? DateTime.now;
 
   static final _tokRe = RegExp(
-      r"\d+(?:\.\d+)?|[A-Za-z]+(?:['’][A-Za-z]+)*|[.,?!;:]|\n|[^\sA-Za-z0-9.,?!;:]");
+      r"\d{1,2}:\d{2}|\d+(?:\.\d+)?|[A-Za-z]+(?:['’][A-Za-z]+)*|[.,?!;:]|\n|[^\sA-Za-z0-9.,?!;:]");
   static const _terminal = {'.', '?', '!'};
   static const _punct = {'.', '?', '!', ',', ';', ':'};
   static const _whWords = {
@@ -24,13 +29,16 @@ class RuleFormatter {
   };
   static const _noDedupe = {'had', 'that', 'is'};
 
-  String format(String input, Profile p, {bool shorthandHundreds = false}) {
+  String format(String input, Profile p,
+      {bool shorthandHundreds = false,
+      PromptStyle promptStyle = const PromptStyle()}) {
     input = SelfCorrection.apply(input); // keeps only the corrected version
     input = _dropBareGreeting(input, p.register);
-    final out = _format(input, p, shorthandHundreds, p.register);
+    input = ClockTime.apply(input, now: _clock());
+    final out = _format(input, p, shorthandHundreds, p.register, promptStyle);
     // "thanks" alone, or a prompt that was only pleasantries: keep the plain text, not nothing.
     if (out.trim().isEmpty && p.register != 'business') {
-      return _format(input, p, shorthandHundreds, 'business');
+      return _format(input, p, shorthandHundreds, 'business', promptStyle);
     }
     return out;
   }
@@ -51,8 +59,8 @@ class RuleFormatter {
     return _cap1(rest.trimLeft());
   }
 
-  String _format(
-      String input, Profile p, bool shorthandHundreds, String register) {
+  String _format(String input, Profile p, bool shorthandHundreds,
+      String register, PromptStyle promptStyle) {
     var t = _tokenize(input);
     t = _spokenPunct(t);
     t = _fillers(t, p.fullFillers);
@@ -73,7 +81,9 @@ class RuleFormatter {
     t = _tidyPunct(t);
     t = _capitalize(t);
     final s = _join(t, listed);
-    if (register == 'prompt') return _structurePrompt(_promptRules(s));
+    if (register == 'prompt') {
+      return _structurePrompt(_promptRules(s), promptStyle);
+    }
     if (register == 'business' || register == 'professional') {
       return _paragraphs(s);
     }
@@ -237,7 +247,7 @@ class RuleFormatter {
 
   // ---- shared: sentence splitting that does not break on "e.g." / "Mr." / "No."
   static final _abbrev = RegExp(
-      r'(?:e\.g|i\.e|etc|vs|mr|mrs|ms|dr|inc|no|approx|st)\.$',
+      r'(?:^|\s)(?:e\.g|i\.e|etc|vs|mr|mrs|ms|dr|inc|no|approx|st)\.$',
       caseSensitive: false);
 
   List<String> _sentences(String s) {
@@ -318,7 +328,7 @@ class RuleFormatter {
 
   /// Role / Goal / Context / Task / Include / Avoid / Output. Short, single-purpose prompts stay one
   /// plain line (labels cost tokens); labels appear when the dictation has several parts.
-  String _structurePrompt(String s) {
+  String _structurePrompt(String s, PromptStyle style) {
     if (s.contains('\n')) return s;
     final sents = <String>[];
     for (final x in _sentences(s)) {
@@ -397,6 +407,28 @@ class RuleFormatter {
         ctx.add(x);
       }
     }
+    // Open-ended request with no spoken length: start concise, offer to expand (a design choice,
+    // switchable in Settings; a length the speaker gave is always kept as said).
+    String? hint;
+    if (style.conciseFirst) {
+      final spoken = out.any((o) =>
+          RegExp(r'\d').hasMatch(o) ||
+          o.toLowerCase().startsWith('be concise'));
+      final open = List<String>.from(
+              lang.register['openEndedVerbs'] as List? ?? const [])
+          .toSet();
+      final t0 = task.isEmpty ? '' : task.first;
+      final v0 = RegExp(r'^[A-Za-z]+').firstMatch(t0)?.group(0)?.toLowerCase();
+      final isOpen = (v0 != null && open.contains(v0)) ||
+          (t0.endsWith('?') &&
+              _wc(t0) >= 6 &&
+              RegExp(r'^(?:what|why|how|which|should|explain)\b',
+                      caseSensitive: false)
+                  .hasMatch(t0));
+      if (!spoken && isOpen) {
+        hint = 'Start concise (about 200 words); offer more detail if needed.';
+      }
+    }
     final parts = (role.isNotEmpty ? 1 : 0) +
         (goal.isNotEmpty ? 1 : 0) +
         (ctx.isNotEmpty ? 1 : 0) +
@@ -408,17 +440,24 @@ class RuleFormatter {
     if ((task.isEmpty && goal.isEmpty) ||
         parts < 2 ||
         (words < 25 && parts < 4)) {
-      return s;
+      return hint == null ? s : '$s $hint';
     }
-    return [
-      if (role.isNotEmpty) 'Role: ${role.join('; ')}',
-      if (goal.isNotEmpty) 'Goal: ${goal.join('; ')}.',
-      if (ctx.isNotEmpty) 'Context: ${ctx.join(' ')}',
-      if (task.isNotEmpty) 'Task: ${task.join(' ')}',
-      if (inc.isNotEmpty) 'Include: ${inc.join('; ')}',
-      if (avoid.isNotEmpty) 'Avoid: ${avoid.join('; ')}',
-      if (out.isNotEmpty) 'Output: ${out.join(' ')}',
-    ].join('\n');
+    if (hint != null) out.add(hint);
+    // Task first (instructions lead), background after it, format and limits last as a recap.
+    final sections = <(String, String, String)>[
+      if (role.isNotEmpty) ('role', 'Role', role.join('; ')),
+      if (task.isNotEmpty) ('task', 'Task', task.join(' ')),
+      if (goal.isNotEmpty) ('goal', 'Goal', '${goal.join('; ')}.'),
+      if (ctx.isNotEmpty) ('context', 'Context', ctx.join(' ')),
+      if (inc.isNotEmpty) ('include', 'Include', inc.join('; ')),
+      if (avoid.isNotEmpty) ('avoid', 'Avoid', avoid.join('; ')),
+      if (out.isNotEmpty) ('output', 'Output', out.join(' ')),
+    ];
+    return switch (style.format) {
+      'xml' => sections.map((e) => '<${e.$1}>${e.$3}</${e.$1}>').join('\n'),
+      'markdown' => sections.map((e) => '### ${e.$2}\n${e.$3}').join('\n\n'),
+      _ => sections.map((e) => '${e.$2}: ${e.$3}').join('\n'),
+    };
   }
 
   List<String> _tokenize(String s) => _tokRe

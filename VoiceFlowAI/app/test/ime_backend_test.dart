@@ -121,6 +121,52 @@ void main() {
     },
   );
 
+  test('well-known apps get their own style and prompt layout', () async {
+    await install();
+    stt.text = 'hello team please see the budget attached';
+    // Gmail: Professional by default (nothing was chosen for it)
+    final g = await b.dictate({
+      'pcm': tone(),
+      'packageName': 'com.google.android.gm',
+    });
+    expect((g['profile'] as Map)['id'], 'professional');
+    final w = await b.dictate({'pcm': tone(), 'packageName': 'com.whatsapp'});
+    expect((w['profile'] as Map)['id'], 'casual');
+    // the user's own choice wins over the built-in one
+    await b.setProfile('business', 'com.google.android.gm');
+    final g2 = await b.dictate({
+      'pcm': tone(),
+      'packageName': 'com.google.android.gm',
+    });
+    expect((g2['profile'] as Map)['id'], 'business');
+    // Claude: AI Prompting, laid out with XML tags when the prompt has several parts
+    stt.text = 'Act as a travel planner. I am visiting Lisbon for four days in March with two kids. Explain what to see and where to eat. Do not include museums. Include one rainy day option.';
+    final c = await b.dictate({
+      'pcm': tone(),
+      'packageName': 'com.anthropic.claude',
+    });
+    expect((c['profile'] as Map)['id'], 'ai_prompting');
+    expect(c['text'], contains('<role>travel planner</role>'));
+    expect(c['text'], contains('<avoid>museums</avoid>'));
+    // ChatGPT: ### sections
+    final o = await b.dictate({
+      'pcm': tone(),
+      'packageName': 'com.openai.chatgpt',
+    });
+    expect(o['text'], contains('### Task'));
+    // the person can force one layout everywhere, and turn the length hint off
+    final s = await store.load();
+    s.promptFormat = 'labels';
+    s.aiLength = 'as_said';
+    await store.save(s);
+    final l = await b.dictate({
+      'pcm': tone(),
+      'packageName': 'com.anthropic.claude',
+    });
+    expect(l['text'], contains('Role: travel planner'));
+    expect(l['text'], isNot(contains('Start concise')));
+  });
+
   test('setProfile remembers per app and is used next time', () async {
     await install();
     await b.setProfile('ai_prompting', 'com.example.chat');

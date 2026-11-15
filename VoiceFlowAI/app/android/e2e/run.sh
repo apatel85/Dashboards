@@ -155,10 +155,16 @@ adb logcat -d VoiceFlow:I '*:S' | grep -q "SAY Dictation is off in password fiel
 [ -z "$(field_text t_password | tr -d '•')" ] && ok "password field untouched" || bad "password field got text"
 [ "$(adb logcat -d E2E:I '*:S' | grep -c 'RESULT')" -eq 2 ] && ok "password never reached the speech pipeline" || bad "password reached the pipeline"
 
+echo "== a placeholder shown as text (WhatsApp's \"Message\") is not typed into"
+focus t_hint
+dictate 3 /sdcard/Download/scarlet_0.wav
+HT=$(field_text t_hint); echo "t_hint='$HT'"
+{ echo "$HT" | grep -qi "squalid quarter of the brothels" && ! echo "$HT" | grep -q "^Message"; } && ok "placeholder text is not part of the dictation" || bad "placeholder was treated as text"
+
 echo "== no time limit: about a minute of speech in one dictation"
 focus t_text
 BEFORE=$(count "$(field_text t_text)")
-dictate 3 /sdcard/Download/long.wav
+dictate 4 /sdcard/Download/long.wav
 AFTERN=$(count "$(field_text t_text)")
 echo "sentence count before=$BEFORE after=$AFTERN (6 were spoken)"
 [ $((AFTERN-BEFORE)) -ge 5 ] && ok "long dictation fully transcribed (no cap)" || bad "long dictation truncated"
@@ -189,4 +195,4 @@ echo "== diagnostics"
 adb logcat -d | tr -d '\r' | grep -E "VoiceFlow|E2E|dev.voiceflow|FATAL EXCEPTION" | tail -40
 adb shell dumpsys meminfo $PKG | grep -E "TOTAL PSS" | head -1
 echo "RESULT pass=$PASS fail=$FAIL"
-[ $FAIL -eq 0 ] && [ $PASS -ge 21 ]
+[ $FAIL -eq 0 ] && [ $PASS -ge 22 ]

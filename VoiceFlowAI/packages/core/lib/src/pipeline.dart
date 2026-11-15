@@ -11,6 +11,7 @@ import 'post_processor.dart';
 import 'profile.dart';
 import 'rule_formatter.dart';
 import 'vad.dart';
+import 'app_defaults.dart';
 import 'long_dictation.dart';
 import 'voice_commands.dart';
 
@@ -22,11 +23,15 @@ class DictationOptions {
 
   /// What we are typing into. Email / URL / number fields get literal text.
   final FieldKind fieldKind;
+
+  /// AI Prompting only: layout and length behaviour (see [PromptStyle]).
+  final PromptStyle promptStyle;
   const DictationOptions(this.profile,
       {this.packs = const [],
       this.dictionary = const [],
       this.corrections = const {},
-      this.fieldKind = FieldKind.text});
+      this.fieldKind = FieldKind.text,
+      this.promptStyle = const PromptStyle()});
 }
 
 /// Capture is done by the caller; `run` takes the recorded PCM (spec §5.2).
@@ -165,7 +170,8 @@ class DictationPipeline {
   Future<(String, bool)> _text(String text, DictationOptions o, bool allowCloud,
       List<String> glossary) async {
     final ruled = _fmt.format(text, o.profile,
-        shorthandHundreds: o.packs.any((p) => p.shorthandHundreds));
+        shorthandHundreds: o.packs.any((p) => p.shorthandHundreds),
+        promptStyle: o.promptStyle);
     final chain = _chain;
     // A pack that wants exact numbers keeps the rule output whenever there is a digit in it.
     final keepNumbers = o.packs.any((p) => p.preferRuleFormatterForNumbers) &&
@@ -179,7 +185,9 @@ class DictationPipeline {
       return (ruled, false);
     }
     final out = await chain.complete(
-        buildPolishPrompt(o.profile, packs: o.packs, glossary: glossary), ruled,
+        buildPolishPrompt(o.profile,
+            packs: o.packs, glossary: glossary, promptStyle: o.promptStyle),
+        ruled,
         allowCloud: allowCloud);
     if (out == null) return (ruled, false);
     return _validator.validate(ruled, out, glossary: glossary) == null

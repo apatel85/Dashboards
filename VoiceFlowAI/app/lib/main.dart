@@ -59,12 +59,13 @@ Future<void> main(List<String> args) async {
     exit(0); // another VoiceFlow is already running in this session
   }
   final polish = PolishHolder(settings);
+  final controller = AppController(assets);
   final settingsController = SettingsController(
     settings,
     () => store.save(settings),
     onImported: () => packStore.syncFromSettings(),
+    onPerAppChanged: (m) => controller.perApp?.replaceAll(m),
   );
-  final controller = AppController(assets);
   if (Platform.isWindows) {
     controller.foregroundApp = foregroundAppId;
     controller.perApp = PerAppProfiles(
@@ -116,6 +117,11 @@ Future<void> main(List<String> args) async {
       packs: packStore.active, // the packs you turned on, in priority order
       dictionary: settings.dictionary,
       corrections: settings.corrections,
+      promptStyle: PromptStyle.resolve(
+        promptFormat: settings.promptFormat,
+        aiLength: settings.aiLength,
+        appId: controller.foregroundApp?.call(),
+      ),
     ),
     modelReady: () => models.installed,
     loadEngine: loadEngine,

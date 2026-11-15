@@ -172,6 +172,11 @@ class ImeBackend {
         dictionary: s.dictionary,
         corrections: s.corrections,
         fieldKind: kind,
+        promptStyle: PromptStyle.resolve(
+          promptFormat: s.promptFormat,
+          aiLength: s.aiLength,
+          appId: pkg,
+        ),
       ),
       profile: profile,
     );

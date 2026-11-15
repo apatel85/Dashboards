@@ -58,8 +58,8 @@ void main() {
     final o = fmt(_shot, 'ai_prompting');
     int words(String s) => s.split(RegExp(r'\s+')).length;
     expect(words(o), lessThan(words(_shot) * 0.8));
-    expect(o, startsWith('Goal: save the tokens.\nContext: '));
-    expect(o, contains('\nTask: Create this app to have proper dictation'));
+    expect(o, startsWith('Task: Create this app to have proper dictation'));
+    expect(o, contains('\nGoal: save the tokens.\nContext: '));
     expect(o, contains('for input and output'));
     expect(o.toLowerCase(), isNot(contains("let's try this again")));
     expect(o.toLowerCase(), isNot(contains("let's test it")));

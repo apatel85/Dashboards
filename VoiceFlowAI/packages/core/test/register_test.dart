@@ -74,7 +74,8 @@ void main() {
       expect(
           fmt(_claude, 'ai_prompting'),
           'Role: senior data engineer\n'
-          'Task: Review my SQL for performance problems. I have a Postgres database with about 10,000,000 rows, and the main report takes 30 seconds.\n'
+          'Task: Review my SQL for performance problems.\n'
+          'Context: I have a Postgres database with about 10,000,000 rows, and the main report takes 30 seconds.\n'
           'Include: index suggestions\n'
           'Avoid: jargon\n'
           'Output: Under 200 words. Output table.');
@@ -93,6 +94,98 @@ void main() {
       expect(o, contains('Context: We are building a dictation app.'));
       expect(o, contains('Task: Create a landing page headline.'));
       expect(o, contains('Output: Under 10 words.'));
+    });
+  });
+
+  group('AI prompting: layout per target and length behaviour', () {
+    final p = loadProfile('ai_prompting');
+    String run(String t, {String format = 'labels', bool concise = false}) =>
+        f.format(t, p,
+            promptStyle: PromptStyle(format: format, conciseFirst: concise));
+
+    test('XML tags for Claude', () {
+      expect(
+          run(_claude, format: 'xml'),
+          '<role>senior data engineer</role>\n'
+          '<task>Review my SQL for performance problems.</task>\n'
+          '<context>I have a Postgres database with about 10,000,000 rows, and the main report takes 30 seconds.</context>\n'
+          '<include>index suggestions</include>\n'
+          '<avoid>jargon</avoid>\n'
+          '<output>Under 200 words. Output table.</output>');
+    });
+    test('### sections for ChatGPT', () {
+      final o = run(_claude, format: 'markdown');
+      expect(o, startsWith('### Role\nsenior data engineer\n\n### Task\n'));
+      expect(o, endsWith('### Output\nUnder 200 words. Output table.'));
+    });
+    test('task leads, output (format and limits) is the recap at the end', () {
+      final o = run(_claude);
+      expect(o.indexOf('Task:'), lessThan(o.indexOf('Include:')));
+      expect(o.split('\n').last, startsWith('Output:'));
+    });
+    test('a spoken length is kept exactly and nothing is added', () {
+      expect(run(_claude, concise: true), isNot(contains('Start concise')));
+    });
+    test('open-ended request with no length: start concise, offer more', () {
+      const hint =
+          'Start concise (about 200 words); offer more detail if needed.';
+      expect(
+          run('Explain how Kubernetes pods talk to each other.', concise: true),
+          'Explain how Kubernetes pods talk to each other. $hint');
+      expect(
+          run('What is the difference between a process and a thread?',
+              concise: true),
+          endsWith(hint));
+      // off by default and when the person chooses "exactly what I say"
+      expect(run('Explain how Kubernetes pods talk to each other.'),
+          'Explain how Kubernetes pods talk to each other.');
+    });
+    test('tasks with a natural size get no length hint', () {
+      for (final t in [
+        'Translate this paragraph into Spanish and keep the formatting.',
+        'Summarize this article in 5 bullets.',
+        'Fix the bug in this function.',
+      ]) {
+        expect(run(t, concise: true), isNot(contains('Start concise')),
+            reason: t);
+      }
+    });
+    test('the hint joins the Output part of a structured prompt', () {
+      const t =
+          'Act as a travel planner. I am visiting Lisbon for four days in March with two kids. Explain what to see and where to eat. Do not include museums. Include one rainy day option.';
+      final o = run(t, concise: true);
+      expect(o, contains('Role: travel planner'));
+      expect(o, contains('Avoid: museums'));
+      expect(
+          o,
+          contains(
+              'Output: Start concise (about 200 words); offer more detail if needed.'));
+    });
+  });
+
+  group('sentence splitting', () {
+    test('words that merely end like an abbreviation still end the sentence',
+        () {
+      // "museums." / "systems." / "items." end in "ms."; "casino." ends in "no."
+      final short = fmt(
+          'Explain what to see. Do not include museums. Include one rainy day option. Keep it fun.',
+          'ai_prompting');
+      expect(short, contains('Avoid: museums'));
+      expect(short, isNot(contains('museums.')));
+      expect(short, contains('Include: one rainy day option'));
+      final o = f.format(
+          'Act as a travel planner. I am visiting Lisbon in March with two kids. Explain what to see and where to eat. Do not include museums. Include one rainy day option.',
+          loadProfile('ai_prompting'));
+      expect(o, contains('Avoid: museums'));
+      expect(o, isNot(contains('museums.')));
+      expect(o, contains('Include: one rainy day option'));
+    });
+    test('real abbreviations do not end a sentence', () {
+      final o = fmt(
+          'We reviewed the plan. Mr. Smith approved the budget, e.g. the new hires. The vendors were paid. Dr. Lee will join the call. Thanks for your time.',
+          'business');
+      expect(o, contains('Mr. Smith approved'));
+      expect(o, contains('Dr. Lee will join'));
     });
   });
 }

@@ -4,7 +4,10 @@ import android.accessibilityservice.AccessibilityService
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.InputType
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
@@ -84,7 +87,17 @@ class VoiceFlowAccessibilityService : AccessibilityService() {
         val n = focused() ?: return "noField"
         if (!n.isEditable) return "noField"
         if (n.isPassword || fieldKindOf(n.inputType) == "password") return "password"
-        val cur = if (n.isShowingHintText) "" else n.text?.toString().orEmpty()
+        val raw = n.text?.toString().orEmpty()
+        // A placeholder ("Message" in WhatsApp) must never be treated as text the person typed.
+        val hint = n.hintText?.toString()
+        val knownHint = n.isShowingHintText ||
+            (raw.isNotEmpty() && (raw == hint || raw == n.contentDescription?.toString()))
+        // Some apps expose the placeholder as plain text with no hint flag. Short text with the caret
+        // at the very start could be that or real text: paste is right in both cases.
+        val maybeHint = !knownHint && raw.isNotEmpty() && raw.length <= 30 &&
+            n.textSelectionStart <= 0 && n.textSelectionEnd <= 0
+        if (maybeHint) return pasteInsert(n, text)
+        val cur = if (knownHint) "" else raw
         var s = n.textSelectionStart; var e = n.textSelectionEnd
         if (s < 0 || e < 0) { s = cur.length; e = cur.length }
         s = s.coerceIn(0, cur.length); e = e.coerceIn(s, cur.length)
@@ -108,6 +121,23 @@ class VoiceFlowAccessibilityService : AccessibilityService() {
         val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         cm.setPrimaryClip(ClipData.newPlainText("VoiceFlow", ins))
         return if (n.performAction(AccessibilityNodeInfo.ACTION_PASTE)) "ok" else "failed"
+    }
+
+    /** Pastes at the caret (never touches placeholder text); the clipboard is put back afterwards. */
+    private fun pasteInsert(n: AccessibilityNodeInfo, ins: String): String {
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val prev = try { cm.primaryClip } catch (_: Exception) { null }
+        cm.setPrimaryClip(ClipData.newPlainText("VoiceFlow", ins))
+        val ok = n.performAction(AccessibilityNodeInfo.ACTION_PASTE)
+        Handler(Looper.getMainLooper()).postDelayed({
+            try {
+                if (prev != null) cm.setPrimaryClip(prev)
+                else if (Build.VERSION.SDK_INT >= 28) cm.clearPrimaryClip()
+            } catch (_: Exception) {}
+        }, 600)
+        last = null // what the field held before is not known, so no undo for this one
+        Log.i("VoiceFlow", "insert via paste ok=$ok")
+        return if (ok) "ok" else "failed"
     }
 
     /** Undo only while the field still holds exactly what we left there. */

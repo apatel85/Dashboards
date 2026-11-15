@@ -26,6 +26,10 @@ class Settings {
   List<String> dictionary = [];
   Map<String, String> corrections = {};
 
+  /// AI Prompting: layout (auto | labels | xml | markdown) and answer length (concise_first | as_said).
+  String promptFormat = 'auto';
+  String aiLength = 'concise_first';
+
   /// True only if the user opted in AND consented.
   bool get cloudActive => cloudPolish && cloudConsent;
 
@@ -49,6 +53,8 @@ class Settings {
         'activePacks': activePacks,
         'dictionary': dictionary,
         'corrections': corrections,
+        'promptFormat': promptFormat,
+        'aiLength': aiLength,
       };
 
   /// Export without secrets. There are none in Settings by design; history is
@@ -98,6 +104,8 @@ class Settings {
     s.dictionary = List<String>.from(j['dictionary'] as List? ?? const []);
     s.corrections =
         Map<String, String>.from(j['corrections'] as Map? ?? const {});
+    s.promptFormat = j['promptFormat'] as String? ?? s.promptFormat;
+    s.aiLength = j['aiLength'] as String? ?? s.aiLength;
     return s;
   }
 }

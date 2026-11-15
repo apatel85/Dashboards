@@ -54,7 +54,10 @@ class _AppShellState extends State<AppShell> {
         service: widget.service,
         packStore: widget.packStore,
       ),
-      StylePage(controller: widget.controller),
+      StylePage(
+        controller: widget.controller,
+        settings: widget.settingsController,
+      ),
       for (var i = 2; i < items.length; i++)
         if (i == 5 && widget.settingsController != null)
           SettingsPage(

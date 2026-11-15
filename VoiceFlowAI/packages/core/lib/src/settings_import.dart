@@ -112,6 +112,15 @@ extension SettingsImporter on Settings {
     s.defaultProfileId = str('defaultProfileId', max: 40) ?? s.defaultProfileId;
     s.perAppProfiles =
         map('perAppProfiles', _maxPerApp, itemMax: 120) ?? s.perAppProfiles;
+    final pf = str('promptFormat', max: 12);
+    if (pf != null &&
+        const {'auto', 'labels', 'xml', 'markdown'}.contains(pf)) {
+      s.promptFormat = pf;
+    }
+    final al = str('aiLength', max: 16);
+    if (al != null && const {'concise_first', 'as_said'}.contains(al)) {
+      s.aiLength = al;
+    }
     s.hotkey = str('hotkey', max: 30) ?? s.hotkey;
     s.language = str('language', max: 10) ?? s.language;
     s.soundsOn = flag('soundsOn') ?? s.soundsOn;

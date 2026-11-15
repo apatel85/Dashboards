@@ -493,4 +493,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setupAppInfoButton => 'Open app info';
+
+  @override
+  String get setAiTitle => 'AI Prompting';
+
+  @override
+  String get setAiBody =>
+      'How a dictated AI prompt is laid out and how long its answer should be. Claude, ChatGPT and other AI apps are recognised automatically.';
+
+  @override
+  String get setPromptFormat => 'Prompt layout';
+
+  @override
+  String get setFormatAuto =>
+      'Automatic (XML tags for Claude, ### sections for ChatGPT, labelled lines otherwise)';
+
+  @override
+  String get setFormatLabels => 'Labelled lines (Task: …)';
+
+  @override
+  String get setFormatXml => 'XML tags (<task>…</task>)';
+
+  @override
+  String get setFormatMarkdown => 'Markdown sections (### Task)';
+
+  @override
+  String get setAiLength => 'Answer length';
+
+  @override
+  String get setLengthConcise =>
+      'Start concise (about 200 words) and offer more detail';
+
+  @override
+  String get setLengthAsSaid => 'Exactly what I say (no added length)';
+
+  @override
+  String get styleAppsTitle => 'Style for each app';
+
+  @override
+  String get styleAppsBody =>
+      'VoiceFlow picks a style from the app you are typing in: email apps Professional, work chat Business, personal chat Casual, AI apps AI Prompting. Change any of them here. Apps not listed use your default style.';
+
+  @override
+  String get styleAppAuto => 'Automatic';
+
+  @override
+  String get styleAppAddTitle => 'Add another app';
+
+  @override
+  String get styleAppAddHint =>
+      'App id (Android package like com.example.app, or a program like notes.exe)';
+
+  @override
+  String get styleAppAddButton => 'Add';
 }

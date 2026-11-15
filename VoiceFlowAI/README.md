@@ -34,6 +34,12 @@ The tray icon menu switches style, copies the last dictation, and toggles *Start
 
 **Styles:** *Casual* keeps your words. *Business* swaps slang for plain workplace wording ("figure out" → "determine"), and *Professional* goes further with formal vocabulary and connectors ("Additionally,", "However,"); both lay a longer message out in short paragraphs with the greeting and closing on their own lines. *AI Prompting* strips greetings, filler and chatter and, for a multi-part dictation, writes labelled lines (Role / Goal / Context / Task / Include / Avoid / Output). A spoken self-correction ("Monday, actually Tuesday") keeps only the corrected version. A bare opening "Hi," / "Hello," is not kept in Business, Professional or AI Prompting; a named one ("Hi John,") is.
 
+**Style for each app:** VoiceFlow picks a style from the app you are typing in: email apps (Gmail, Outlook, ...) Professional, work chat (Slack, Teams) Business, personal chat (WhatsApp, Telegram, Messages) Casual, AI apps (Claude, ChatGPT, Gemini, Copilot, Perplexity, DeepSeek) AI Prompting. Open *Style*, scroll to *Style for each app* to change any of them or add another app by its id. An app that is not listed uses your default style. The ids are the best-known ones and are not verified on every phone; a browser-based AI (claude.ai in Chrome) cannot be recognised, so set the browser's style by hand.
+
+**AI Prompting layout and length (Settings):** the layout follows the AI app (XML tags for Claude, `### Task` sections for ChatGPT, labelled lines otherwise) and can be forced. A length you speak ("under 100 words") is kept exactly. If you give none for an open-ended request, the prompt ends with "Start concise (about 200 words); offer more detail if needed." - switch that off with *Exactly what I say*. See `docs/AI_PROMPTING_RESEARCH.md` for the sources and what is design choice versus established practice.
+
+**Times:** "after nine forty five" becomes "after 9:45 PM": with no AM/PM spoken, before noon on your phone's clock gives AM, otherwise PM. Say "AM" or "PM" (or "in the morning") and that wins.
+
 **Both:** *Packs* teach VoiceFlow the words, abbreviations and note templates of your work (three illustrative samples ship: General Business, Healthcare Clinic and Cricket; you can import your own `.json` pack, invalid ones are refused with a plain reason). *Settings* holds cloud polish, a backup/restore of your settings, and the licenses.
 
 ## Privacy (what leaves your device, exactly)

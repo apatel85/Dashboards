@@ -951,6 +951,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open app info'**
   String get setupAppInfoButton;
+
+  /// No description provided for @setAiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Prompting'**
+  String get setAiTitle;
+
+  /// No description provided for @setAiBody.
+  ///
+  /// In en, this message translates to:
+  /// **'How a dictated AI prompt is laid out and how long its answer should be. Claude, ChatGPT and other AI apps are recognised automatically.'**
+  String get setAiBody;
+
+  /// No description provided for @setPromptFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt layout'**
+  String get setPromptFormat;
+
+  /// No description provided for @setFormatAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic (XML tags for Claude, ### sections for ChatGPT, labelled lines otherwise)'**
+  String get setFormatAuto;
+
+  /// No description provided for @setFormatLabels.
+  ///
+  /// In en, this message translates to:
+  /// **'Labelled lines (Task: …)'**
+  String get setFormatLabels;
+
+  /// No description provided for @setFormatXml.
+  ///
+  /// In en, this message translates to:
+  /// **'XML tags (<task>…</task>)'**
+  String get setFormatXml;
+
+  /// No description provided for @setFormatMarkdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown sections (### Task)'**
+  String get setFormatMarkdown;
+
+  /// No description provided for @setAiLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer length'**
+  String get setAiLength;
+
+  /// No description provided for @setLengthConcise.
+  ///
+  /// In en, this message translates to:
+  /// **'Start concise (about 200 words) and offer more detail'**
+  String get setLengthConcise;
+
+  /// No description provided for @setLengthAsSaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Exactly what I say (no added length)'**
+  String get setLengthAsSaid;
+
+  /// No description provided for @styleAppsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Style for each app'**
+  String get styleAppsTitle;
+
+  /// No description provided for @styleAppsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'VoiceFlow picks a style from the app you are typing in: email apps Professional, work chat Business, personal chat Casual, AI apps AI Prompting. Change any of them here. Apps not listed use your default style.'**
+  String get styleAppsBody;
+
+  /// No description provided for @styleAppAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get styleAppAuto;
+
+  /// No description provided for @styleAppAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add another app'**
+  String get styleAppAddTitle;
+
+  /// No description provided for @styleAppAddHint.
+  ///
+  /// In en, this message translates to:
+  /// **'App id (Android package like com.example.app, or a program like notes.exe)'**
+  String get styleAppAddHint;
+
+  /// No description provided for @styleAppAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get styleAppAddButton;
 }
 
 class _AppLocalizationsDelegate

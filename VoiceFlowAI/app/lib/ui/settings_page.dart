@@ -230,6 +230,70 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
               ],
             ]),
+            _card(context, t.setAiTitle, [
+              Text(t.setAiBody),
+              const SizedBox(height: 8),
+              Text(
+                t.setPromptFormat,
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              DropdownButton<String>(
+                key: const Key('set-prompt-format'),
+                isExpanded: true,
+                value:
+                    const {
+                      'auto',
+                      'labels',
+                      'xml',
+                      'markdown',
+                    }.contains(s.promptFormat)
+                    ? s.promptFormat
+                    : 'auto',
+                items: [
+                  DropdownMenuItem(
+                    value: 'auto',
+                    child: Text(
+                      t.setFormatAuto,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'labels',
+                    child: Text(t.setFormatLabels),
+                  ),
+                  DropdownMenuItem(value: 'xml', child: Text(t.setFormatXml)),
+                  DropdownMenuItem(
+                    value: 'markdown',
+                    child: Text(t.setFormatMarkdown),
+                  ),
+                ],
+                onChanged: (v) => v == null ? null : c.setPromptFormat(v),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                t.setAiLength,
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              DropdownButton<String>(
+                key: const Key('set-ai-length'),
+                isExpanded: true,
+                value: s.aiLength == 'as_said' ? 'as_said' : 'concise_first',
+                items: [
+                  DropdownMenuItem(
+                    value: 'concise_first',
+                    child: Text(
+                      t.setLengthConcise,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'as_said',
+                    child: Text(t.setLengthAsSaid),
+                  ),
+                ],
+                onChanged: (v) => v == null ? null : c.setAiLength(v),
+              ),
+            ]),
             _card(context, t.setPrivacyTitle, [Text(t.setPrivacyBody)]),
             _card(context, t.setBackupTitle, [
               Text(t.setBackupBody),
