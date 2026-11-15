@@ -4,6 +4,7 @@ import 'context_fixes.dart';
 import 'lang.dart';
 import 'number_words.dart';
 import 'profile.dart';
+import 'rule_validator.dart';
 import 'segmenter.dart';
 import 'self_correction.dart';
 
@@ -13,9 +14,11 @@ class RuleFormatter {
   final NumberWords _nums;
   late final Segmenter _segmenter = Segmenter(lang);
   final DateTime Function() _clock;
-  RuleFormatter(this.lang, {DateTime Function()? clock})
+  RuleFormatter(this.lang,
+      {DateTime Function()? clock, RuleValidator? validator})
       : _nums = NumberWords(lang),
-        _clock = clock ?? DateTime.now;
+        _clock = clock ?? DateTime.now,
+        _validator = validator ?? RuleValidator(lang);
 
   static final _tokRe = RegExp(
       r"\d{1,2}:\d{2}|\d+(?:st|nd|rd|th)\b|\d+(?:\.\d+)?|[A-Za-z]+(?:['’][A-Za-z]+)*|[.,?!;:]|\n|[^\sA-Za-z0-9.,?!;:]");
@@ -32,21 +35,43 @@ class RuleFormatter {
   };
   static const _noDedupe = {'had', 'that', 'is'};
 
+  final RuleValidator _validator;
+
+  /// Why the last [format] call fell back to minimal formatting (null when it did not). For logs
+  /// and tests; the person never sees an error.
+  String? lastFallbackReason;
+
   String format(String input, Profile p,
       {bool shorthandHundreds = false,
       PromptStyle promptStyle = const PromptStyle()}) {
+    lastFallbackReason = null;
     input = ContextFixes.apply(input); // "tax messages" -> "text messages"
     input = SelfCorrection.apply(input); // keeps only the corrected version
+    final cleaned = input;
     input = _dropBareGreeting(input, p.register);
     input = _dropLeadingSo(input, p.register);
     input = ClockTime.apply(input, now: _clock());
-    final out = _format(input, p, shorthandHundreds, p.register, promptStyle);
+    var out = _format(input, p, shorthandHundreds, p.register, promptStyle);
     // "thanks" alone, or a prompt that was only pleasantries: keep the plain text, not nothing.
     if (out.trim().isEmpty && p.register != 'business') {
-      return _format(input, p, shorthandHundreds, 'business', promptStyle);
+      return _format(input, p, shorthandHundreds, 'minimal', promptStyle);
+    }
+    // Spec section 14: the rule path is checked against the cleaned input. A failure means a
+    // tone or structure stage lost or invented a fact, so fall back to minimal formatting in
+    // the selected profile (no tone vocabulary, no restructuring) rather than show it.
+    final reason = _validator.check(cleaned, _withoutDefaults(out),
+        shorthandHundreds: shorthandHundreds);
+    if (reason != null) {
+      lastFallbackReason = reason;
+      out = _format(input, p, shorthandHundreds, 'minimal', promptStyle);
     }
     return out;
   }
+
+  /// The one default the rule path adds to prompts (spec: defaults are marked as assumed). Its
+  /// number is not a spoken fact, so the fact checks do not count it.
+  static final _concise = RegExp(r'Start concise \(about \d+ words\)[^.]*\.?');
+  String _withoutDefaults(String s) => s.replaceAll(_concise, '');
 
   static final _leadingSo = RegExp(
       r'(^|[.?!]\s+|\n\s*)(?:(?:alright|all right|okay|ok|right|well|anyway)[,.]?\s+)?so,?\s+(?:(?:yeah|yep|yup),?\s+)?(?!(?:far|many|much|long|good|great|bad|big|little|called|that|as)\b)([A-Za-z])',
@@ -128,7 +153,7 @@ class RuleFormatter {
     t = _repeats(t);
     t = _repairApostrophes(
         t); // before segmenting: "its going" -> "it's going" is a subject + verb
-    t = _segmenter.apply(t, register: register);
+    if (register != 'minimal') t = _segmenter.apply(t, register: register);
     t = _register(t, register);
     if (p.expandSpokenForms && register == 'casual') {
       t = _swap(t, _reg('spokenForms'));

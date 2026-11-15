@@ -7,9 +7,12 @@ import 'helpers.dart';
 String _run(String s, DomainPack p, {List<DomainPack>? packs}) {
   final lang = loadLang();
   final all = packs ?? [p];
-  final t = RuleFormatter(lang).format(s, loadProfile('business'),
+  final post = PostProcessor(lang);
+  final t = RuleFormatter(lang).format(
+      post.beforeNumbers(post.fixHeard(s, packs: all), all),
+      loadProfile('business'),
       shorthandHundreds: all.any((x) => x.shorthandHundreds));
-  return PostProcessor(lang).process(t, packs: all);
+  return post.finish(t, packs: all);
 }
 
 Map<String, dynamic> _minimal([Map<String, dynamic>? extra]) =>

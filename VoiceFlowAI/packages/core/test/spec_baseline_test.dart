@@ -20,12 +20,14 @@ void main() {
 
   String run(Map c) {
     final p = loadProfile(c['profile'] as String);
-    var t = f.format(c['raw'] as String, p);
-    if (c['pack'] != null) {
-      final pack = loadPack(c['pack'] as String);
-      t = PostProcessor(lang).process(t, packs: [pack]);
-    }
-    return t;
+    final packs = [if (c['pack'] != null) loadPack(c['pack'] as String)];
+    final post = PostProcessor(lang);
+    final raw = post.beforeNumbers(
+        post.fixHeard(c['raw'] as String, packs: packs), packs);
+    return post.finish(
+        f.format(raw, p,
+            shorthandHundreds: packs.any((x) => x.shorthandHundreds)),
+        packs: packs);
   }
 
   if (writing) {

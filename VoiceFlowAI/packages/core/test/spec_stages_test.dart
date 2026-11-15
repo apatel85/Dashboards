@@ -5,6 +5,8 @@ import 'helpers.dart';
 /// Unit tests for the stages added from the "Dictation App Conversion Spec (Final)", in the order
 /// of its section 15. Each group also checks what must NOT change ("when unsure, do less").
 void main() {
+  _stage34();
+  _stage5();
   final f = RuleFormatter(loadLang());
   String fmt(String s, [String p = 'business']) => f.format(s, loadProfile(p));
 
@@ -145,6 +147,159 @@ void main() {
           fmt('meet me on main street', 'casual'), 'Meet me on Main Street.');
       expect(fmt('the main street was closed', 'casual'),
           'The main street was closed.');
+    });
+  });
+}
+
+void _stage34() {
+  final lang = loadLang();
+  final post = PostProcessor(lang);
+  final f = RuleFormatter(lang);
+
+  group('heard-as fixes run before formatting (spec change 3)', () {
+    test(
+        'a user correction is applied to the raw words, so the formatter sees it',
+        () {
+      final fixed = post.fixHeard('send it to pre ya tomorrow',
+          corrections: {'pre ya': 'Priya'});
+      expect(fixed, 'send it to Priya tomorrow');
+      expect(f.format(fixed, loadProfile('business')),
+          'Send it to Priya tomorrow.');
+    });
+    test('the dictionary fixes a near-miss spelling of a glossary term', () {
+      expect(
+          post.fixHeard('we use shopifi for orders', dictionary: ['Shopify']),
+          'we use Shopify for orders');
+    });
+    test('abbreviations and pack rules stay at the end', () {
+      final cricket = loadPack('cricket');
+      expect(post.finish('it was lbw', packs: [cricket]), 'it was LBW');
+    });
+  });
+
+  group('pack patterns see number words before they become digits (change 4)',
+      () {
+    final cricket = loadPack('cricket');
+    String run(String s) {
+      final packs = [cricket];
+      return post.finish(
+          f.format(post.beforeNumbers(post.fixHeard(s, packs: packs), packs),
+              loadProfile('casual'),
+              shorthandHundreds: true),
+          packs: packs);
+    }
+
+    test('"four for twenty two" becomes 4/22 in a cricket pack', () {
+      expect(run('bumrah finished with four for twenty two'),
+          'Bumrah finished with 4/22.');
+      expect(run('india are one fifty for three'), 'India are 150/3.');
+    });
+    test('not when a unit or currency word follows the second number', () {
+      expect(run('we paid four for twenty dollars'), isNot(contains('4/20')));
+      expect(run('it took four for twenty minutes'), isNot(contains('4/20')));
+    });
+    test('without the pack nothing changes', () {
+      expect(f.format('four for twenty two', loadProfile('casual')),
+          'Four for 22.');
+    });
+    test(
+        'the pack file with a "stage" key still validates; a bad stage is refused',
+        () {
+      expect(
+          PackValidator.validate({
+            'id': 'x',
+            'name': 'X',
+            'rules': [
+              {
+                'stage': 'words',
+                'pattern': r'\b({num}) for ({num})\b',
+                'replace': r'$1/$2'
+              }
+            ]
+          }),
+          isEmpty);
+      expect(
+          PackValidator.validate({
+            'id': 'x',
+            'name': 'X',
+            'rules': [
+              {'stage': 'soon', 'pattern': 'a', 'replace': 'b'}
+            ]
+          }),
+          isNotEmpty);
+    });
+  });
+}
+
+class _AlwaysFails extends RuleValidator {
+  _AlwaysFails(super.lang);
+  @override
+  String? check(String cleaned, String output,
+          {bool shorthandHundreds = false}) =>
+      'forced';
+}
+
+void _stage5() {
+  final lang = loadLang();
+  final v = RuleValidator(lang);
+
+  group('rule validator (spec section 14 checks 1, 2, 3, 5, 7)', () {
+    test('a clean result passes', () {
+      expect(v.check('we meet at ten on friday', 'We meet at 10 on Friday.'),
+          isNull);
+    });
+    test('a lost number is caught', () {
+      expect(v.check('send twenty reports', 'Send reports.'),
+          contains('lost number 20'));
+    });
+    test('an invented number is caught', () {
+      expect(v.check('send the reports', 'Send 5 reports.'),
+          contains('invented number 5'));
+    });
+    test('a lost negation is caught; contractions count; "want" does not', () {
+      expect(v.check('do not send it', 'Send it.'), 'lost a negation');
+      expect(v.check("we can't go", 'We go.'), 'lost a negation');
+      expect(v.check('i want you to go', 'I want you to go.'), isNull);
+    });
+    test('a limit written as "max" stands in for "not more than"', () {
+      expect(
+          v.check('not more than three sentences', 'Max 3 sentences.'), isNull);
+    });
+    test('filler and new shouting are caught', () {
+      expect(v.check('hello there', 'Hello um there.'), startsWith('filler'));
+      expect(v.check('send it now', 'Send it IMMEDIATELY.'),
+          startsWith('shouting'));
+    });
+    test('unbalanced tags are caught', () {
+      expect(v.check('write it', '<goal>Write it.'), 'unbalanced tags');
+      expect(v.check('write it', '<goal>Write it.</goal>'), isNull);
+    });
+    test('list numbering is not an invented number', () {
+      expect(v.check('one apples two pears', '1. Apples\n2. Pears'), isNull);
+    });
+  });
+
+  group('fallback to minimal formatting in the selected profile', () {
+    test('a failed check gives the minimal text, not tone vocabulary', () {
+      final strict = RuleFormatter(lang, validator: _AlwaysFails(lang));
+      final normal = RuleFormatter(lang);
+      const said = 'hey john we gotta figure out the budget';
+      final tone = normal.format(said, loadProfile('professional'));
+      final out = strict.format(said, loadProfile('professional'));
+      expect(strict.lastFallbackReason, 'forced');
+      expect(out, isNot(tone));
+      expect(out, contains('figure out')); // word map not applied
+      expect(out, startsWith('Hey John'));
+      expect(out, endsWith('.'));
+    });
+    test('no false alarms: the validator never fires on the goldens', () {
+      final f = RuleFormatter(lang);
+      for (final id in ['casual', 'business', 'professional', 'ai_prompting']) {
+        for (final c in goldens(id)) {
+          f.format(c['in'] as String, loadProfile(id));
+          expect(f.lastFallbackReason, isNull, reason: '$id: ${c['in']}');
+        }
+      }
     });
   });
 }

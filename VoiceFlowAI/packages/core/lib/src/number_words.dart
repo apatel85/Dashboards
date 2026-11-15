@@ -19,7 +19,8 @@ class NumberWords {
   ///
   /// With [shorthandHundreds], a single digit word followed by a tens word is read the way
   /// clinicians say it: "one forty" = 140, "one twenty five" = 125 (not 41 / 46).
-  List<String> convert(List<String> toks, {bool shorthandHundreds = false}) {
+  List<String> convert(List<String> toks,
+      {bool shorthandHundreds = false, bool keepSmallWords = true}) {
     final out = <String>[];
     var i = 0;
     while (i < toks.length) {
@@ -87,6 +88,7 @@ class NumberWords {
       if (runs.length == 1 &&
           runs[0].length == 1 &&
           vals[0] < 10 &&
+          keepSmallWords &&
           !unitWords.contains(nextTok) &&
           !_timeContext(toks, i)) {
         out.add(toks[i]); // lone small number stays a word

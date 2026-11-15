@@ -155,8 +155,7 @@ class DictationPipeline {
             sb.write(items.join('\n'));
         }
       }
-      var text = _post.process(sb.toString().trim(),
-          dictionary: o.dictionary, corrections: o.corrections, packs: o.packs);
+      var text = _post.finish(sb.toString().trim(), packs: o.packs);
       if (text.isEmpty) {
         return DictationResult(DictationStatus.noSpeech, rawTranscript: raw);
       }
@@ -174,6 +173,14 @@ class DictationPipeline {
 
   Future<(String, bool)> _text(String text, DictationOptions o, bool allowCloud,
       List<String> glossary) async {
+    // Heard-as fixes (the user's corrections and dictionary) and pack patterns that need the
+    // spoken number words come first, so everything after sees the right names and values.
+    text = _post.beforeNumbers(
+        _post.fixHeard(text,
+            dictionary: o.dictionary,
+            corrections: o.corrections,
+            packs: o.packs),
+        o.packs);
     final ruled = _fmt.format(text, o.profile,
         shorthandHundreds: o.packs.any((p) => p.shorthandHundreds),
         promptStyle: o.promptStyle);

@@ -5,6 +5,8 @@ export 'src/pack.dart';
 export 'src/pack_registry.dart';
 export 'src/pack_detector.dart';
 export 'src/rule_formatter.dart';
+export 'src/rule_validator.dart';
+export 'src/segmenter.dart';
 export 'src/voice_commands.dart';
 export 'src/polish_prompt.dart';
 export 'src/polish_validator.dart';

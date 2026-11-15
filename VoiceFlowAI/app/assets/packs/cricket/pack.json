@@ -120,6 +120,11 @@
   },
   "rules": [
     {
+      "stage": "words",
+      "pattern": "\\b({num}) for ({num})\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each|percent))",
+      "replace": "$1/$2"
+    },
+    {
       "pattern": "\\b(\\d{1,3}) for (\\d{1,2})\\b(?! (?:dollars?|people|hours?|minutes?|years?|days?|bucks|each))",
       "replace": "$1/$2"
     },

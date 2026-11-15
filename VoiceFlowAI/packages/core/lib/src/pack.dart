@@ -13,7 +13,16 @@ class PackTemplate {
 class PackRule {
   final RegExp pattern;
   final String replace;
-  const PackRule(this.pattern, this.replace);
+
+  /// `"stage": "words"` in the pack file: the rule runs on the spoken words BEFORE numbers become
+  /// digits, so it can see "four for twenty two". `{num}` in the pattern matches a spoken or
+  /// written number and the captured numbers are handed to [replace] as digits.
+  final bool beforeNumbers;
+
+  /// The pattern text as written (needed to expand `{num}`).
+  final String source;
+  const PackRule(this.pattern, this.replace,
+      {this.beforeNumbers = false, this.source = ''});
 
   String apply(String s) => s.replaceAllMapped(pattern, (m) {
         return replace.replaceAllMapped(RegExp(r'\$(\d)'), (g) {
@@ -113,7 +122,9 @@ class DomainPack {
       rules: [
         for (final r in (j['rules'] as List? ?? const []))
           PackRule(RegExp(r['pattern'] as String, caseSensitive: false),
-              r['replace'] as String)
+              r['replace'] as String,
+              beforeNumbers: r['stage'] == 'words',
+              source: r['pattern'] as String)
       ],
       shorthandHundreds: (nums['shorthandHundreds'] as bool?) ?? false,
       preferRuleFormatterForNumbers:
@@ -263,6 +274,10 @@ class PackValidator {
           if (r is! Map || r['pattern'] is! String || r['replace'] is! String) {
             e.add('$at needs text "pattern" and "replace".');
             continue;
+          }
+          final stage = r['stage'];
+          if (stage != null && stage != 'words') {
+            e.add('$at.stage can only be "words" (or left out).');
           }
           final p = r['pattern'] as String;
           if (p.isEmpty || p.length > 200) {
