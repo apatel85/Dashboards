@@ -16,6 +16,7 @@ void main() {
   _stage12();
   _stage13();
   _punctuatedSafetyNet();
+  _promptChatter();
   final f = RuleFormatter(loadLang());
   String fmt(String s, [String p = 'business']) => f.format(s, loadProfile(p));
 
@@ -845,6 +846,42 @@ void _punctuatedSafetyNet() {
           f.format(said, loadProfile('casual')), "We're going to start at 7.");
       expect(f.format(said, loadProfile('casual'), spokenForms: false),
           "We're gonna start at 7.");
+    });
+  });
+}
+
+void _promptChatter() {
+  final f = RuleFormatter(loadLang());
+  String ai(String s) => f.format(s, loadProfile('ai_prompting'));
+  int words(String s) =>
+      s.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+  group('AI prompting cuts conversational chatter and keeps every fact', () {
+    test('a chatty request becomes a short instruction', () {
+      const said =
+          'Okay so I just wanted to ask, I was wondering if you could basically help me write a really short email to my landlord about the broken heater, you know, and I think it should be polite but firm, and just keep it under three sentences, thanks.';
+      final o = ai(said);
+      expect(words(o), lessThan(words(said) * 0.65));
+      expect(o, contains('email to my landlord about the broken heater'));
+      expect(o, contains('polite but firm'));
+      expect(o, contains('3 sentences'));
+      for (final gone in [
+        'Okay',
+        'basically',
+        'you know',
+        'thanks',
+        'wondering'
+      ]) {
+        expect(o, isNot(contains(gone)));
+      }
+    });
+    test('negations, numbers and limiting words survive', () {
+      final o = ai(
+          "So basically I don't want to change the import part and I think the export should only take two seconds, to be honest.");
+      expect(o, contains("don't want to change the import part"));
+      expect(o, matches(RegExp(r'only take (2|two) seconds')));
+      expect(o, isNot(contains('to be honest')));
+      final just = ai('explain why it fails but just the cause no code');
+      expect(just, contains('just the cause'));
     });
   });
 }
