@@ -6,6 +6,15 @@
 - Backtest-before-adopt: no strategy ships without historical validation.
 - Free data sources only. He trades ES/NQ futures options 0DTE/1DTE, SPX 0DTE/1DTE.
 
+## 2026-11-16 — Scoring revamp build spec (spec only, nothing executed)
+
+- **Request:** Ankit: "Per trade 3% loss and 15% gain." No execution; wants a detailed plan any AI agent can follow to run any backtest and to build a new scoring mechanism into the live TradeDesk — breakout candidates plus a 0DTE/1DTE option play.
+- **Change:** new `TradeDesk/STRATEGY_BUILD_SPEC.md` — current-state audit, target design (one shared scoring library `pipeline/lib/cmo/` used by the nightly pipeline, a Node backtest harness and the browser), new contracts (`breakouts.json`, `dte-plan.json`, `strategy-validation.json`), live triggers through the existing Schwab proxy, logging/grading changes, work orders WO-00 … WO-13 with acceptance checks. `STRATEGY_PLAN.md` updated: 3%/15% per trade, backtest moved from Python to Node, pointer to the spec. No app, pipeline or data change.
+- **Version:** none (no build).
+- **Verified:** the current-state table in the spec was written from reading the code (`build-brief.mjs` scan loop, `build-lotto.mjs`, `grade-predictions.mjs`, `refresh.sh`, the live workflow, `src/lib/useSchwabLive.ts` and callers). **Not verified:** the Schwab proxy's own source (not in this repo) — its capabilities are inferred from the callers; Schwab's data-redistribution terms; everything listed as unverified in the 2026-11-15 entry. No backtest has been run.
+- **Finding to act on:** `public/data/lotto-validation.json` marks lotto setups S1/S2 "validated", but no script in the repo generates it and its methodology line reads "S&P 500 (0 tickers)" — not reproducible. The spec re-tests S1–S4 in the new harness (WO-02/03).
+- **Open for Ankit:** O1–O4 in §13 of the spec (options reading of 3%/15%, share position size, which contracts, where private Schwab snapshots live). Defaults are in place; none blocks WO-00–WO-03.
+
 ## 2026-11-15 — Strategy research + backtest plan (plan only, nothing executed)
 
 - **Request:** Ankit: research the top day/swing/growth traders (long-standing and last 5–7 years, real verifiable records), stage a debate to reach one strategy, define the technical and fundamental inputs and a rating system, plan a backtest on ≥ 2 years of history, and say how results will be reported. Planning only — no execution.

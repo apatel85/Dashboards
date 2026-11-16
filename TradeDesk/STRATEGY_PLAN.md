@@ -9,6 +9,9 @@ needs Ankit's yes) · he trades ES/NQ futures options and SPX options, 0DTE/1DTE
 
 ---
 
+> **Building it into the app:** `STRATEGY_BUILD_SPEC.md` is the step-by-step build spec (work orders, file
+> names, data contracts, acceptance checks). This file is the research and the strategy rules.
+
 ## 0. How to use this file (executor instructions)
 
 1. Read `AGENTS.md`, then `TradeDesk/AGENTLOG.md`, then this file top to bottom.
@@ -224,21 +227,23 @@ All must be **point-in-time**: a number may be used only from the date it was fi
 
 ### 4.5 Element 5 — Risk and position management (applies to every module)
 
-- Account: $10,000 (Decision D4). Ankit's rule: **3% loss, 15% gain** — a 5-to-1 payoff, which breaks
-  even at a 16.7% win rate. Two readings are both run and reported side by side until he picks one:
-  - **Reading 1 (account risk):** each trade risks 3% of the account ($300) and targets 5R ($1,500).
-    Position size = $300 ÷ stop distance. This works for stocks and options alike.
-  - **Reading 2 (price move):** stock stop 3% below entry, target 15% above. Not usable for options,
-    where a 3% move in premium is noise; options fall back to Reading 1.
+- Account: $10,000 (Decision D4). Ankit's rule, confirmed 2026-11-16: **per trade, 3% loss and 15%
+  gain** — a 5-to-1 payoff, which breaks even at a 16.7% win rate.
+  - **Shares:** stop 3% from the entry price, target 15% from it, long or short. If a setup's technical
+    stop (day's low, base low, opening-range low) is more than 3% away, the setup is not a trade — the
+    3% is never widened. Default position size 25% of the account, four positions at most.
+  - **Options:** a 3% stop on the option's own price is inside the bid-ask spread, so the same shape is
+    applied to money — premium at risk ≤ 3% of the account ($300), profit target 5 × the premium. The
+    literal version is back-tested as a labelled comparison (open question O1 in the build spec).
 - The 15% / 5R target replaces "sell half at +2R" as the primary exit. The original staged exit stays in
   the variant list for comparison, because a fixed 5R target will be reached on a minority of trades.
-- Every result is also shown at 1% risk per trade. At 3%, ten losses in a row is a 26% drawdown, and
-  ten-loss streaks are normal for a strategy that wins 30–40% of the time.
+- Losing streaks of ten or more are normal for a strategy that wins 20–35% of the time, which is what a
+  1-to-5 shape implies. The report shows the longest streak and its dollar cost at the default sizing.
 - Small-account constraints to verify in Phase 0 and model in the engine: the pattern-day-trader rule
   for margin accounts under $25,000 (check its current status — changes were proposed in 2025; futures
   options on ES/NQ are outside it), whole-share and whole-contract sizing, and the fact that $300 of risk
   buys one SPX spread at most. Module B is cut from the paper's 20 names a day to the top 3 by score.
-- Reject any stock trade whose stop is further than 1.0 × ATR(14) or 8% from entry.
+- Reject any stock trade whose technical stop is further than 3% from entry (replaces the earlier ATR cap).
 - Max single position 20% of equity; max total open risk 5% of equity; max 2 positions per industry group.
 - Day modules: stop trading for the day at −2R; max 3 index option trades per day.
 - Options: the premium paid is the risk — at most $300 per trade (3% of the account).
@@ -409,21 +414,10 @@ Free historical intraday option quotes of usable quality do not exist. Two tiers
 
 ### 8.1 Build
 
-Python 3.11, pandas, numpy, pyarrow; no backtesting framework (the logic must be readable in one file per
-module). Location: `TradeDesk/research/backtest/`. Layout:
-
-```
-research/backtest/
-  README.md            how to run, data sources, env vars
-  config/params.yaml   every threshold in §4–§6, frozen and committed BEFORE the first run
-  data/                fetch scripts + cached parquet (cache git-ignored)
-  features/            indicators and score (unit-tested against hand-computed cases)
-  modules/             a1_ep.py a2_breakout.py b_orb.py c_index_0dte.py d_overlay.py h1_rsi2.py h2_condor.py
-  engine/              fills, costs, sizing, portfolio accounting
-  eval/                metrics, bootstrap, walk-forward, report builder
-  results/<run_id>/    report.md summary.json trades.csv equity.csv charts/
-  tests/
-```
+Node 20, in `TradeDesk/research/backtest/`, importing the same scoring library the live app uses
+(`pipeline/lib/cmo/`) so the tested score and the displayed score cannot drift apart. Layout, command
+line and acceptance checks are in `STRATEGY_BUILD_SPEC.md` → WO-01 and WO-02. Every threshold is frozen
+in `params.json` and committed before the first run.
 
 ### 8.2 Execution model
 
@@ -476,7 +470,7 @@ A module is **adopted** only if, out-of-sample and after costs, all of these hol
 | Trades out-of-sample | ≥ 100 (≥ 60 for index options modules) |
 | Expectancy | ≥ +0.20 R, and the lower end of the 90% interval > 0 |
 | Profit factor | ≥ 1.3 |
-| Max drawdown at 1% risk per trade (also reported at 3%) | ≤ 20% |
+| Max drawdown at the default sizing (25% per position, 4 positions) | ≤ 20% |
 | Rolling 6-month windows profitable | ≥ 60% |
 | Random-entry benchmark | Beats the 95th percentile |
 | Parameter stability | Profit factor stays ≥ 1.1 across ±20% |
@@ -523,7 +517,7 @@ data. Do not substitute a weaker test and present it as the real one.
 
 1. **Verdict line per module:** Adopt / Watch / Reject, with the gate that decided it.
 2. **Headline table** (out-of-sample, after costs): trades · win rate · payoff · break-even win rate ·
-   expectancy R · profit factor · max drawdown · CAGR and dollar P&L on $10,000 at 3% and at 1% risk · 90% interval on expectancy.
+   expectancy R · profit factor · max drawdown · CAGR and dollar P&L on $10,000 at the default sizing · 90% interval on expectancy.
 3. **Same table in-sample**, side by side, with the number of variants tried.
 4. **By year and by regime state.**
 5. **By score grade** — whether the rating system ranks trades correctly.
@@ -569,7 +563,7 @@ Still open:
 
 | # | Question | Until answered |
 |---|---|---|
-| D6 | Does "3% loss / 15% gain" mean 3% of the **account** risked per trade ($300, target $1,500), or a 3% / 15% move in the **trade's price**? | Both readings are run (§4.5) |
+| D6 | Answered 2026-11-16: 3% loss / 15% gain is **per trade** (price move for shares; see §4.5 for options) | — |
 | D7 | Keys: Schwab app key, secret and refresh token, plus an Alpaca free key, stored as GitHub secrets (never in a file). Schwab refresh tokens expire after about 7 days, so the forward snapshot job needs a weekly re-login by Ankit | Swing phases run on Yahoo alone; intraday and options phases wait |
 
 ---
