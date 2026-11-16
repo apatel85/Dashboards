@@ -12,7 +12,7 @@
 - **Change:** `STRATEGY_BUILD_SPEC.md` rewritten (revision 2). Stops, targets, sizing and the 3%/15% rule removed. A "win" is now reaching a tier in the called direction inside a fixed window (10 sessions for stocks; same day / next close for options). Each candidate carries a measured probability per tier, built from backtest bucket tables, shown with case count, base rate and lift. New: market reference strip on every tab (§7.7), Supabase tables + access rules (§8), verdict checks based on calibration and lift (WO-03). `STRATEGY_PLAN.md`: banner listing which of its sections are now superseded. No app, pipeline, data or Supabase change.
 - **Version:** none (no build).
 - **Verified:** nothing new beyond the entries below. **Assumed, to be checked in WO-00:** Schwab symbols for futures/indexes (`/ES`, `/NQ`, `$VIX`, `$TNX`) and whether the proxy serves them and futures option chains; Yahoo 5-minute depth for `ES=F`/`NQ=F`; Supabase free-tier size.
-- **Open for Ankit:** O1 (index tiers 0.5/1.0/1.5% instead of 5/10/15%), O2 (10-session window), O3 (which Supabase project).
+- **Revision 3 (same day, Ankit's answers):** indexes are reference only — index option plays, the noise-band signal and index tiers removed; option plays are on stocks only; probabilities computed for 3, 5, 10 and 20 sessions (10 is the main view); Supabase = the app's existing project. No open questions remain in the spec.
 
 ## 2026-11-16 — Scoring revamp build spec (spec only, nothing executed)
 > Superseded the same day by revision 2 above (3%/15% rule dropped).

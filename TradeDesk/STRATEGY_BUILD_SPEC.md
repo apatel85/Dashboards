@@ -1,7 +1,9 @@
 # TradeDesk — Scoring Revamp Build Spec
 
 **Status:** SPEC ONLY. Nothing in this file has been built or run.
-**Revision:** 2 (2026-11-16). Revision 1 was built around a 3% stop / 15% target per trade. Ankit has
+**Revision:** 3 (2026-11-16). Revision 3: the indexes are reference only — no plays or predictions on
+them; option plays are on stocks; probabilities are shown for 3, 5, 10 and 20 sessions.
+Revision 2 (same day): Revision 1 was built around a 3% stop / 15% target per trade. Ankit has
 set that aside. The goal is now **win probability and expected size of move**, not profit and loss.
 **Companion to:** `STRATEGY_PLAN.md` (research, debate, setup rules, data sources). Where the two files
 disagree, this file wins.
@@ -11,7 +13,8 @@ What gets built:
 1. A new **breakout-candidate mechanism**: finds candidates, and for each one states how likely it is to
    move 5%, 10% and 15%.
 2. A new **0DTE / 1DTE option play engine** on the same footing: how likely is the move.
-3. A **market reference strip** always on screen: SPY, QQQ, ES, NQ, VIX, 10-year yield.
+3. A **market reference strip** always on screen: SPY, QQQ, ES, NQ, VIX, 10-year yield — for reference
+   only. No signal, play or prediction is produced for them.
 4. A **backtest harness** that produces those probabilities from history and can test any later idea.
 5. All new data in **Supabase**.
 
@@ -67,7 +70,9 @@ differ. The live one is `/.github/workflows/`. WO-00 records which is authoritat
 | Size of move | Tier 1 = 5%, Tier 2 = 10%, Tier 3 = 15% (2026-11-16) | Every candidate carries a probability for each tier. The tier is a selection criterion |
 | Options | 0DTE and 1DTE only | No option play runs past the next session |
 | Direction | Long and short | Every candidate, probability and grade carries a direction |
-| Reference points | SPY, QQQ, ES, NQ, VIX, 10-year — always visible (2026-11-16) | Market strip on every tab (§7.7). Option plays are produced for SPY, QQQ, ES and NQ |
+| Reference points | SPY, QQQ, ES, NQ, VIX, 10-year — always visible, **reference only** (2026-11-16) | Market strip on every tab (§7.7). No plays, signals or probabilities for them. Option plays are on stocks |
+| Window | 10 sessions as the main view; 3, 5 and 20 also shown (2026-11-16) | Probabilities are computed and stored for all four windows |
+| Supabase | The project the app already uses (2026-11-16) | No new project |
 | Data | Schwab API + Yahoo; free additions allowed; **data in Supabase** (2026-11-16) | New tables (§8). No new public JSON files |
 | Scope | Plan and instructions only | No code until Ankit says go |
 
@@ -77,16 +82,17 @@ A candidate **wins a tier** when the price moves that far in the called directio
 
 | Kind | Measured on | Window | Tier 1 | Tier 2 | Tier 3 |
 |---|---|---|---|---|---|
-| Breakout candidate (stock) | The stock, from the pivot | 10 trading sessions after the trigger | 5% | 10% | 15% |
-| 0DTE play on a stock | The stock, from the signal price | Until that day's close | 5% | 10% | 15% |
-| 1DTE play on a stock | The stock, from the signal price | Until the next session's close | 5% | 10% | 15% |
-| 0DTE / 1DTE play on SPY, QQQ, ES, NQ | The index or future, from the signal price | Same as above | 0.5% | 1.0% | 1.5% |
+| Breakout candidate (stock) | The stock, from the pivot | 10 trading sessions after the trigger (main view); also 3, 5 and 20 | 5% | 10% | 15% |
+| 0DTE play (stock) | The stock, from the signal price | Until that day's close | 5% | 10% | 15% |
+| 1DTE play (stock) | The stock, from the signal price | Until the next session's close | 5% | 10% | 15% |
 
 Longs use the highest price reached in the window; shorts use the lowest.
 
-**Why the index tiers are scaled down (open question O1):** SPY and QQQ move 5% in a day a handful of
-times a decade, so a 5 / 10 / 15% tier would read "0%" every day and tell you nothing. One-tenth scale
-(0.5 / 1.0 / 1.5%) is a normal, a strong and an outsized index day. Stocks keep 5 / 10 / 15%.
+**What to expect from the option tiers.** A stock moving 5% between a morning signal and the close is
+an unusual day, and 10–15% is rare outside earnings and news. So most option plays will show low
+probabilities, and the ones that show high ones are exactly the outliers the engine exists to find.
+Also, most stocks only list options that expire on Fridays, so 0DTE plays on them exist on Fridays and
+1DTE plays on Thursdays; a smaller set of heavily traded names has more expiries. WO-00 lists which.
 
 **What is recorded but not judged, because losses are set aside:** the worst move against the call
 before the tier was reached, and the time taken. They are stored with every graded record so that
@@ -148,7 +154,6 @@ Design rules:
 | `score.mjs` | `tradeScore(inputs)` and `readinessScore(inputs)` → `{score, grade, components[]}` |
 | `rank.mjs` | `percentileRank` across the universe |
 | `tiers.mjs` | `tierOutcome(bars, entryIndex, entryPrice, direction, window, tiers)` → which tiers were reached, sessions taken, worst move against · `bucketKey(candidate)` · `lookupProbability(table, key)` with the fallback order of §6.4 |
-| `index-signal.mjs` | `noiseProfile`, `bandsAt`, `signalState` (plan §6.3) |
 | `orb.mjs` | `openingRange`, `orbSignal`, `openingRvol` |
 | `options.mjs` | `bsPrice, bsDelta, bsGamma` (move the copies duplicated in `build-lotto.mjs` and `build-gex.mjs` here), `expectedMove`, `chooseContract` |
 | `dte-score.mjs` | `dteScore(inputs) → {score, grade, components[]}` |
@@ -198,8 +203,8 @@ The score **ranks** candidates. It is not itself a probability; §6.4 turns it i
 ### 6.4 Tier probabilities — how "likely to move 5 / 10 / 15%" is produced
 
 **Step 1 — label history (backtest, WO-03).** Run the detectors over every session of the test period.
-For each historical candidate that triggered, `tierOutcome` records which tiers it reached within 10
-sessions.
+For each historical candidate that triggered, `tierOutcome` records which tiers it reached within 3, 5,
+10 and 20 sessions. Steps 2–5 are done once per window, so there are four tables.
 
 **Step 2 — build the probability table.** Group historical candidates into buckets and count:
 
@@ -220,7 +225,9 @@ daily-range band, with no setup required. That is the base rate. `lift = p ÷ ba
 probability with what actually happened (§9, WO-03 gates).
 
 **Step 6 — what a candidate carries on screen.**
-- `p_t1, p_t2, p_t3`, each with case count, interval, base rate and lift.
+- `p_t1, p_t2, p_t3` for the 10-session window, each with case count, interval, base rate and lift; the
+  same for 3, 5 and 20 sessions in `prob_detail`. The screen shows 10 by default with a 3 / 5 / 10 / 20
+  switch. `tier` and `high_probability` are decided on the 10-session numbers.
 - `tier`: the highest tier whose probability is at least 50%. None reach 50% → no tier.
 - `high_probability`: true only if that tier's probability is ≥ 65%, the low end of its interval is
   ≥ 50%, lift is ≥ 1.3, and the bucket passed the out-of-sample check.
@@ -250,34 +257,31 @@ Each live trigger is written to Supabase (§8) so it is graded like everything e
 
 ## 7. New mechanism 2 — 0DTE / 1DTE option plays
 
-### 7.1 Kinds of play
+### 7.1 Kinds of play — stocks only
 
 | Play | Underlying | Signal | Expiry |
 |---|---|---|---|
-| `index_momentum` | SPY, QQQ, ES, NQ | Price leaves the intraday noise band (plan §6.3) | 0DTE |
-| `index_overnight` | SPY, QQQ, ES, NQ | Band signal still on in the last 30 minutes | 1DTE |
 | `stock_trigger` | A breakout candidate that triggered, grade A or better, with a 0 or 1 DTE option listed | The breakout trigger | 0DTE if listed today, else 1DTE |
 | `stock_orb` | Any liquid stock with opening RVOL in the day's top 20 and a 0 or 1 DTE option listed | 5-minute opening range break (plan §6.2) | same |
+
+No plays on SPY, QQQ, ES or NQ. The index-momentum rules in plan §6.3 are not built.
 
 ### 7.2 Nightly — `build-dte-plan.mjs`
 
 Everything knowable before the open, published as one row per session:
-- Noise profile for SPY, QQQ, ES and NQ: for each half-hour mark, the 14-session average absolute move
-  from the open. SPY and QQQ from Yahoo 5-minute bars (keyless). ES and NQ from Yahoo `ES=F` / `NQ=F`
-  if the 5-minute history proves complete in WO-00; otherwise the SPY and QQQ profiles are reused for
-  them and the row says so.
-- Dealer gamma state and levels from `gex.json`.
+- Which breakout candidates and which liquid stocks have a 0 or 1 DTE expiry in the coming session.
+- Dealer gamma state per stock from `gex.json` where it covers the name; market-level state otherwise.
 - The session's scheduled events (FOMC, CPI, jobs report, monthly expiry) from a hand-maintained
-  `pipeline/data/events.json`.
-- Daily regime; prior day's high, low and close.
-- Which breakout candidates have a 0 or 1 DTE expiry.
+  `pipeline/data/events.json`, plus each watched stock's own earnings date.
+- Daily regime.
 
 ### 7.3 Live — the play itself (browser)
 
-Every 60 seconds during the session, per underlying:
-1. Bands at the current half-hour mark; session VWAP from 1-minute candles.
-2. Signal: `long` above the upper band, `short` below the lower band, otherwise `none`. The condition
-   that ends the signal is shown with it: back through the band or VWAP, or 15:55 ET.
+Every 60 seconds during the session, for the watched stocks (cap 40):
+1. After 09:35 ET: 5-minute opening range, opening RVOL, session VWAP from 1-minute candles.
+2. Signal: `long` on a break of the opening-range high (or the breakout pivot), `short` on a break of
+   the low, otherwise `none`. The condition that ends the signal is shown with it: back inside the
+   opening range or through VWAP.
 3. Signal on → score it (§7.5), look up tier probabilities (§7.5), fetch the 0DTE or 1DTE chain through
    the proxy and name a contract (§7.4).
 4. Write the play to Supabase the first time it appears.
@@ -291,9 +295,6 @@ Names the contract that expresses the call; it does not size or price a trade.
   underlying would have to reach for Tier 1, 2, 3).
 - Output: `{ symbol, type, strike, expiry, delta, mid, spread_pct, tier_strikes: {t1, t2, t3} }`, or
   `null` with a plain reason ("No contract with a tight enough spread").
-- SPY and QQQ use their own options. ES and NQ use their futures options through the proxy; if the
-  proxy cannot serve futures option chains (WO-00 finds out), the ES and NQ cards show the signal,
-  levels and probabilities with "contract not available from this data source".
 
 ### 7.5 Score and probabilities for option plays
 
@@ -301,7 +302,7 @@ Score (0–100), separate from the stock score because the inputs differ:
 
 | Component key | Max | Full marks when |
 |---|---|---|
-| `signal` | 30 | Price ≥ 0.5 noise-units beyond the band (index) or opening RVOL ≥ 5 (stock) |
+| `signal` | 30 | Opening RVOL ≥ 5 and the break holds above the opening range for 5 minutes |
 | `gamma` | 15 | Dealers short gamma (moves extend); zero when long gamma (pinning) |
 | `alignment` | 15 | Signal agrees with the VWAP side and the daily regime |
 | `pricing` | 15 | Expected move from the at-the-money straddle ≤ 20-day realised daily move |
@@ -310,8 +311,9 @@ Score (0–100), separate from the stock score because the inputs differ:
 | `event` | 5 | No scheduled event later in the session |
 
 Tier probabilities use the same method as §6.4 with the option tiers and windows of §3.1 and
-`bucket = play kind × direction × grade × gamma state × time-of-day band` (before 10:30, 10:30–13:00,
-after 13:00). Base rate = the same underlying making that move from that time of day on any session.
+`bucket = play kind × direction × grade × daily-range band × time-of-day band` (before 10:30,
+10:30–13:00, after 13:00). Base rate = any liquid stock in the same daily-range band making that move
+from that time of day on any session.
 Same `tier`, `high_probability`, thin-bucket and "not enough history" rules.
 
 Hard gates regardless of score: a scheduled event in the next 30 minutes → the card says "wait for the
@@ -323,9 +325,10 @@ Stays as it is until the new engine has a verdict. Then the Options tab leads wi
 lotto moves below as "Older scanner". In WO-03 the harness re-tests S1–S4; `lotto-validation.json` is
 either regenerated by a script that is in the repo, or its "validated" flags are set to `false`.
 
-### 7.7 Market reference strip — always visible
+### 7.7 Market reference strip — always visible, reference only
 
-A single strip under the page header on **every tab**, never collapsed:
+A single strip under the page header on **every tab**, never collapsed. It shows where the market is.
+It carries no signal, no score and no prediction.
 
 | Shown as | Live symbol (Schwab proxy) | Nightly fallback (Yahoo) | Display |
 |---|---|---|---|
@@ -339,8 +342,6 @@ A single strip under the page header on **every tab**, never collapsed:
 - Live for signed-in users on the existing 60-second poll (add the six symbols to the quote universe).
   Otherwise the last stored snapshot with its date.
 - Each item shows an "as of" time; anything older than 3 minutes in market hours greys out.
-- SPY, QQQ, ES and NQ also show their state from §7.3 as a word: "above range", "inside range",
-  "below range". Tapping one opens its card on the Options tab.
 - Exact Schwab symbols for futures and indexes are confirmed in WO-00; the table above is the
   expected form, not yet checked against the proxy.
 - Phone: six items in two rows of three, 44 px tall targets, no horizontal scroll.
@@ -363,7 +364,7 @@ A single strip under the page header on **every tab**, never collapsed:
 | `cmo_backtest_runs` | One backtest run | Backtest | `run_id`, `module`, `args` (json), `params_version`, `git_sha`, `started_at`, `summary` (json) |
 | `cmo_backtest_cases` | One historical candidate | Backtest | `run_id`, `session_date`, `ticker`, `direction`, `setup`, `score`, `grade`, `bucket_key`, `hit_t1`, `hit_t2`, `hit_t3`, `sessions_to_t1`, `worst_against_pct`, `in_sample` |
 | `market_reference` | One snapshot of one reference symbol | Pipeline nightly; browser may refresh | `ts`, `symbol`, `value`, `change`, `change_pct`, `source` |
-| `option_chain_snapshots` | One chain at one time | Snapshot job (WO-12) | `ts`, `underlying`, `expiry`, `spot`, `chain` (json, strikes within ±5% of spot only) |
+| `option_chain_snapshots` | One chain at one time | Snapshot job (WO-12) | `ts`, `underlying`, `expiry`, `spot`, `chain` (json, strikes within ±15% of spot only) |
 
 ### 8.2 Access
 
@@ -383,8 +384,8 @@ A single strip under the page header on **every tab**, never collapsed:
 - **Grading** (`pipeline/grade-predictions.mjs`, new functions; the existing `breakout` and `lotto`
   grading and their JSON file are left untouched and shown as "previous scoring"):
   - `gradeCandidate`: entry = the first session within 5 where price trades through the pivot. None →
-    `never_triggered`. Otherwise `tierOutcome` over the next 10 sessions → `hit_t1, hit_t2, hit_t3`,
-    `sessions_to_t1`, `best_move_pct`, `worst_against_pct`. Final once the window has closed.
+    `never_triggered`. Otherwise `tierOutcome` over the next 3, 5, 10 and 20 sessions, each → `hit_t1, hit_t2, hit_t3`,
+    `sessions_to_t1`, `best_move_pct`, `worst_against_pct`. Final once the 20-session window has closed.
   - `gradePlay`: same, on the underlying's 5-minute bars (Yahoo, keyless), with the option windows and
     tiers of §3.1.
 - **Scorecard** (computed by a Supabase view, `cmo_scorecard`): per kind, setup, direction, grade and
@@ -396,7 +397,7 @@ A single strip under the page header on **every tab**, never collapsed:
 - The free Supabase tier has a small database (about 500 MB — confirm the current figure in WO-00).
 - Bulk price history for the backtest (two years of minute bars for hundreds of tickers) does **not**
   go in Supabase. It stays in the harness's local cache. Only results and probability tables are stored.
-- `option_chain_snapshots` is trimmed to strikes within ±5% of spot and four underlyings, with a
+- `option_chain_snapshots` is trimmed to strikes within ±15% of spot and the day's watched stocks (cap 40), with a
   90-session retention; WO-12 measures real size over its first week and adjusts before continuing.
 - `cmo_candidates` keeps 180 sessions; older rows are deleted (their predictions stay in `cmo_predictions`).
 
@@ -410,8 +411,8 @@ In order. Each is one branch-sized piece with its own log entry. "Accept" must p
 - Record which workflow folder is live and how the two differ.
 - From the callers in `src/lib/`, and by asking Ankit where needed, establish what the Schwab proxy
   serves: quotes for `/ES`, `/NQ`, `$VIX`, `$TNX`; minute candles and how far back; option chains for
-  equities and for futures.
-- Check Yahoo 5-minute history depth for `ES=F` and `NQ=F`.
+  stocks.
+- List which stocks in the universe have option expiries on days other than Friday.
 - Read Schwab's developer terms on storing market data; read Supabase's current free-tier limits.
 - Verify every trader rule in the plan against a primary source (plan Phase 0).
 - Accept: `research/backtest/SOURCES.md` exists; the log entry lists each fact confirmed, each
@@ -450,11 +451,11 @@ research/backtest/
 CLI — the interface for **any** backtest, including ideas added later:
 ```
 node research/backtest/run.mjs \
-  --module A1|A2|A1S|A2S|A3S|index_momentum|index_overnight|stock_trigger|stock_orb|S1|S2|S3|S4|<new> \
+  --module A1|A2|A1S|A2S|A3S|stock_trigger|stock_orb|S1|S2|S3|S4|<new> \
   --from 2019-01-01 --to 2026-10-31 \
   --split 2024-11-01             # from here on is out-of-sample
-  --window 10                    # sessions; option modules use the §3.1 windows
-  --tiers 5,10,15                # index modules: 0.5,1,1.5
+  --windows 3,5,10,20            # sessions; option modules use the §3.1 windows instead
+  --tiers 5,10,15
   --variant <name in params.json> \
   --ablate regime|growth|catalyst|rs|volume|group|options \
   --publish                      # write tables and verdict to Supabase
@@ -512,7 +513,8 @@ Separately reported, and not a pass/fail: which buckets, if any, reach the 65% "
 - §7.7, in `src/App.tsx` under the page header, on every tab. Reads `market_reference` first, then live
   quotes when the Schwab session is up.
 - Accept: verification gate; all six items render at 1280 and 390 with no overflow; signed-out,
-  off-hours and stale states each rendered; 10-year shows yield and basis points, not dollars.
+  off-hours and stale states each rendered; 10-year shows yield and basis points, not dollars; the
+  strip contains no signal, score or probability.
 
 **WO-08 · Scanner tab — breakout candidates**
 - New primary section in `src/tabs/Scanner.tsx`, above the smart-money list, reading Supabase:
@@ -522,6 +524,7 @@ Separately reported, and not a pass/fail: which buckets, if any, reach the 65% "
     Sort: Tier 1 probability, score, distance to pivot.
   - Row: ticker · setup in plain words · tier badge ("Tier 2 — 10% move") · the three probabilities as
     a small three-step bar (5% / 10% / 15%) · grade · pivot · distance to pivot.
+  - Window switch: 3 / 5 / 10 / 20 sessions, default 10; the probabilities and sort follow it.
   - Expanded: for each tier — probability, "X of N similar cases", the range it could plausibly be,
     the base rate for stocks this volatile, and lift in words ("about 1.6 times the usual rate");
     then the seven score bars (reuse `HBar`), the `why` sentences, catalyst and growth facts, next
@@ -542,12 +545,13 @@ Separately reported, and not a pass/fail: which buckets, if any, reach the 65% "
 
 **WO-10 · Options tab — 0DTE / 1DTE plays**
 - New top section in `src/tabs/Options.tsx`:
-  - Four cards always present — SPY, QQQ, ES, NQ — each with its state in words, band levels, VWAP,
-    gamma state and today's events.
-  - Signal on → direction, 0DTE or 1DTE, tier badge and the three probabilities (0.5 / 1.0 / 1.5% for
-    these four), the named contract with the strikes that match each tier, the condition that ends
-    the signal, score bars.
-  - Stock plays listed below with their 5 / 10 / 15% probabilities, each linking to its Scanner row.
+  - One card per stock play: direction, 0DTE or 1DTE, tier badge and the three probabilities (5 / 10 /
+    15% by the close, or by the next close), the named contract with the strikes that match each tier,
+    opening range and VWAP levels, the stock's gamma state, the condition that ends the signal, score
+    bars. Each links to its Scanner row when the stock is also a breakout candidate.
+  - Sort and filter as on the Scanner: tier, high probability only, long / short.
+  - A day with no listed 0 or 1 DTE expiries among the watched stocks says so: "No same-day or
+    next-day expiries on today's candidates."
   - Before 09:35 ET and after the close: "Plays appear after 9:35 ET". No stale play is ever shown.
 - Lotto section per §7.6.
 - Accept: verification gate; a replayed session renders the expected cards at three chosen times; the
@@ -561,8 +565,8 @@ Separately reported, and not a pass/fail: which buckets, if any, reach the 65% "
 - Accept: verification gate; every figure re-derived from `cmo_predictions`.
 
 **WO-12 · Option chain snapshots and re-validation on real quotes**
-- Separate workflow with secrets: every 5 minutes in the session, Schwab chains for SPY, QQQ and (if the
-  proxy allows) ES and NQ, into `option_chain_snapshots`. Schwab refresh tokens last about 7 days; on
+- Separate workflow with secrets: every 5 minutes in the session, Schwab chains for the day's watched
+  stocks that have a 0 or 1 DTE expiry (cap 40), into `option_chain_snapshots`. Schwab refresh tokens last about 7 days; on
   expiry the job fails loudly and the Admin tab shows "Schwab re-login needed".
 - After 60 sessions: re-check the contract-selection rules and the `pricing` score component against
   real quotes; update `cmo_validation.data_quality` to `real` where it applies.
@@ -585,8 +589,7 @@ WO-00 → WO-01 → WO-02 → WO-03 ──(verdicts; report)──→ WO-04 → 
 WO-12 any time after WO-02 once keys exist.   WO-13 alongside each screen work order.
 ```
 
-- Before WO-02: confirm which Supabase project to use (default: the one the app already logs in with)
-  and add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` as GitHub secrets.
+- Before WO-02: add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` as GitHub secrets.
 - Before WO-03's minute-data runs: a free Alpaca key as `ALPACA_KEY_ID`, `ALPACA_SECRET_KEY`.
 - Before WO-09: confirm the Schwab proxy may be called for candles and chains at the WO-09 rates.
 - Before WO-12: `SCHWAB_APP_KEY`, `SCHWAB_APP_SECRET`, `SCHWAB_REFRESH_TOKEN`.
@@ -637,10 +640,7 @@ without its case count; past frequencies are not a promise about the future, sai
 
 ---
 
-## 13. Open questions (defaults apply until answered; none blocks WO-00 to WO-03)
+## 13. Open questions
 
-| # | Question | Default |
-|---|---|---|
-| O1 | For SPY, QQQ, ES and NQ plays, are tiers of 0.5 / 1.0 / 1.5% right? (5 / 10 / 15% is kept for stocks; an index almost never moves 5% in a day) | Yes |
-| O2 | Is 10 trading sessions the right window for a breakout candidate to make its move? The report will also show 3, 5 and 20 | 10 |
-| O3 | Which Supabase project? | The one the app already uses for login |
+None at this revision. Answered on 2026-11-16: indexes are reference only (no index tiers needed);
+windows are 3, 5, 10 and 20 sessions with 10 as the main view; Supabase is the app's existing project.
