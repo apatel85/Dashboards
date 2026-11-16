@@ -6,7 +6,16 @@
 - Backtest-before-adopt: no strategy ships without historical validation.
 - Free data sources only. He trades ES/NQ futures options 0DTE/1DTE, SPX 0DTE/1DTE.
 
+## 2026-11-16 — Build spec revision 2: win probability + move tiers, Supabase, market strip (spec only)
+
+- **Request:** Ankit: set profit/loss aside; goal is breakout candidates and 0DTE/1DTE options with high win probability; classify by likely move — 5% Tier 1, 10% Tier 2, 15% Tier 3; always show SPY, QQQ, ES, NQ, VIX and the 10-year as reference points; data in Supabase.
+- **Change:** `STRATEGY_BUILD_SPEC.md` rewritten (revision 2). Stops, targets, sizing and the 3%/15% rule removed. A "win" is now reaching a tier in the called direction inside a fixed window (10 sessions for stocks; same day / next close for options). Each candidate carries a measured probability per tier, built from backtest bucket tables, shown with case count, base rate and lift. New: market reference strip on every tab (§7.7), Supabase tables + access rules (§8), verdict checks based on calibration and lift (WO-03). `STRATEGY_PLAN.md`: banner listing which of its sections are now superseded. No app, pipeline, data or Supabase change.
+- **Version:** none (no build).
+- **Verified:** nothing new beyond the entries below. **Assumed, to be checked in WO-00:** Schwab symbols for futures/indexes (`/ES`, `/NQ`, `$VIX`, `$TNX`) and whether the proxy serves them and futures option chains; Yahoo 5-minute depth for `ES=F`/`NQ=F`; Supabase free-tier size.
+- **Open for Ankit:** O1 (index tiers 0.5/1.0/1.5% instead of 5/10/15%), O2 (10-session window), O3 (which Supabase project).
+
 ## 2026-11-16 — Scoring revamp build spec (spec only, nothing executed)
+> Superseded the same day by revision 2 above (3%/15% rule dropped).
 
 - **Request:** Ankit: "Per trade 3% loss and 15% gain." No execution; wants a detailed plan any AI agent can follow to run any backtest and to build a new scoring mechanism into the live TradeDesk — breakout candidates plus a 0DTE/1DTE option play.
 - **Change:** new `TradeDesk/STRATEGY_BUILD_SPEC.md` — current-state audit, target design (one shared scoring library `pipeline/lib/cmo/` used by the nightly pipeline, a Node backtest harness and the browser), new contracts (`breakouts.json`, `dte-plan.json`, `strategy-validation.json`), live triggers through the existing Schwab proxy, logging/grading changes, work orders WO-00 … WO-13 with acceptance checks. `STRATEGY_PLAN.md` updated: 3%/15% per trade, backtest moved from Python to Node, pointer to the spec. No app, pipeline or data change.

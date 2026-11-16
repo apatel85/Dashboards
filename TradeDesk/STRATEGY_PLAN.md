@@ -10,7 +10,15 @@ needs Ankit's yes) · he trades ES/NQ futures options and SPX options, 0DTE/1DTE
 ---
 
 > **Building it into the app:** `STRATEGY_BUILD_SPEC.md` is the step-by-step build spec (work orders, file
-> names, data contracts, acceptance checks). This file is the research and the strategy rules.
+> names, Supabase tables, acceptance checks). This file is the research and the setup rules.
+>
+> **Change of goal, 2026-11-16 (Ankit):** profit and loss are set aside for now. The goal is **high win
+> probability**, where a win is a move of 5% (Tier 1), 10% (Tier 2) or 15% (Tier 3). The following parts
+> of this file are therefore **superseded by the build spec** and kept only as background: §1 point 1
+> (expectancy as the target), §4.5 (sizing, stops, the 3% / 15% rule), the exit rules inside §6, the
+> challengers in §6.4, §8.3 costs, the gates in §8.6, the report template in §10.2 and the decision
+> table in §11. Still in force: §2 (who was studied), §3 (the debate), §4.1–4.4 (regime, universe,
+> technical and fundamental inputs), §5 (the score), the setup and signal definitions in §6, and §7 (data).
 
 ## 0. How to use this file (executor instructions)
 
