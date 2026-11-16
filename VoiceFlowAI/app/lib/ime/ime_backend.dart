@@ -9,6 +9,7 @@ import '../engines/sherpa_stt.dart';
 import '../state/assets_loader.dart';
 import '../state/pack_store.dart';
 import '../state/polish_holder.dart';
+import '../state/history_file.dart';
 import '../state/per_app_profiles.dart';
 import '../state/settings_store.dart';
 
@@ -36,6 +37,7 @@ class ImeBackend {
     required this.ensureLoaded,
     required this.unloadEngine,
     this.packsDir,
+    this.history,
     PolishHolder? polish,
   }) : _polish = polish ?? PolishHolder(Settings());
 
@@ -48,6 +50,9 @@ class ImeBackend {
 
   /// Where imported packs live (shared with the main app).
   final Directory? packsDir;
+
+  /// What was heard and what was typed, for troubleshooting (shared file with the app window).
+  final HistoryStore? history;
   final PolishHolder _polish;
   final Set<String> _dismissed =
       {}; // suggestions waved away until the engine restarts
@@ -80,6 +85,9 @@ class ImeBackend {
       },
       unloadEngine: engine.unload,
       packsDir: Directory('${support.path}/packs'),
+      history: HistoryStore(
+        FileHistoryStorage(File('${support.path}/history.json')),
+      ),
     );
   }
 
@@ -178,6 +186,7 @@ class ImeBackend {
       (id) => assets.profiles.where((p) => p.id == id).firstOrNull,
     );
     final packs = (await _packStore(s)).active;
+    history?.enabled = s.historyEnabled;
     _polish.settings = s; // keeps the chain (429 back-off, counters) while settings are unchanged
     return (
       early: null,
@@ -188,6 +197,7 @@ class ImeBackend {
         corrections: s.corrections,
         maskCloud: s.maskCloud,
         spokenForms: s.spokenForms,
+        appId: pkg,
         profileById: (id) =>
             assets.profiles.where((p) => p.id == id).firstOrNull,
         fieldKind: kind,
@@ -216,6 +226,7 @@ class ImeBackend {
     stt,
     sink,
     polishProvider: () => _polish.chain,
+    history: history,
   );
 
   Map<String, Object?> _result(DictationResult r, Profile profile) => {

@@ -25,6 +25,8 @@ void main() {
   late ImeBackend b;
   late SettingsStore store;
   int loads = 0, unloads = 0;
+  late MemoryHistoryStorage histMem;
+  late HistoryStore hist;
 
   Future<void> install() async {
     final m = ModelManager(spec, Directory('${tmp.path}/models'));
@@ -39,6 +41,8 @@ void main() {
     stt = FakeStt('hello world');
     loads = unloads = 0;
     store = SettingsStore(Directory('${tmp.path}/s'));
+    histMem = MemoryHistoryStorage();
+    hist = HistoryStore(histMem);
     b = ImeBackend(
       assets: (await AppAssets.load()),
       store: store,
@@ -46,6 +50,7 @@ void main() {
       stt: stt,
       ensureLoaded: () async => loads++,
       unloadEngine: () async => unloads++,
+      history: hist,
     );
   });
   tearDown(() => tmp.deleteSync(recursive: true));
@@ -258,6 +263,39 @@ void main() {
         [for (final p in st['profiles'] as List) (p as Map)['name']],
         ['Casual', 'Professional', 'AI Prompting'],
       );
+    },
+  );
+
+  test('the keyboard path saves what was heard and what was typed', () async {
+    await install();
+    stt.text = 'um we gotta ship this by friday';
+    final r = await b.dictate({
+      'pcm': tone(),
+      'profileId': 'business',
+      'packageName': 'com.slack',
+    });
+    expect(r['status'], 'ok');
+    final reader = HistoryStore(histMem);
+    await reader.load(); // as the History page does, from the shared file
+    final e = reader.items.single;
+    expect(e.raw, 'um we gotta ship this by friday');
+    expect(e.text, r['text']);
+    expect(e.profileId, 'business');
+    expect(e.app, 'com.slack');
+  });
+
+  test(
+    'switching history off in Settings stops saving from the keyboard',
+    () async {
+      await install();
+      final s = await store.load();
+      s.historyEnabled = false;
+      await store.save(s);
+      stt.text = 'hello there friend';
+      await b.dictate({'pcm': tone(), 'profileId': 'casual'});
+      final reader = HistoryStore(histMem);
+      await reader.load();
+      expect(reader.items, isEmpty);
     },
   );
 

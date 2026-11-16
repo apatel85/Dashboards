@@ -48,6 +48,8 @@ The tray icon menu switches style, copies the last dictation, and toggles *Start
 
 **Times:** "after nine forty five" becomes "after 9:45 PM": with no AM/PM spoken, before noon on your phone's clock gives AM, otherwise PM. Say "AM" or "PM" (or "in the morning") and that wins.
 
+**History (both):** every dictation is saved on the device for 7 days (up to 200) with what the speech engine heard (raw) next to what was typed, the mode, the app, the prompt route and any fallback. Search it, re-run today's rules on an old dictation to see if a change helped, copy everything as a plain-text report, switch saving off or clear it. Password fields are never saved; the file is not encrypted.
+
 **Both:** *Packs* teach VoiceFlow the words, abbreviations and note templates of your work (three illustrative samples ship: General Business, Healthcare Clinic and Cricket; you can import your own `.json` pack, invalid ones are refused with a plain reason). *Settings* holds cloud polish, a backup/restore of your settings, and the licenses.
 
 ## Privacy (what leaves your device, exactly)

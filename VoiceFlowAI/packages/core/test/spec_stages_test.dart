@@ -17,6 +17,7 @@ void main() {
   _stage13();
   _punctuatedSafetyNet();
   _promptChatter();
+  _history();
   final f = RuleFormatter(loadLang());
   String fmt(String s, [String p = 'business']) => f.format(s, loadProfile(p));
 
@@ -882,6 +883,106 @@ void _promptChatter() {
       expect(o, isNot(contains('to be honest')));
       final just = ai('explain why it fails but just the cause no code');
       expect(just, contains('just the cause'));
+    });
+  });
+}
+
+void _history() {
+  group('history keeps the raw transcript next to the converted text', () {
+    test('the pipeline records raw, converted, mode, app and route', () async {
+      final store = HistoryStore(MemoryHistoryStorage());
+      final p = DictationPipeline(
+          loadLang(), FakeStt('um we gotta ship this by friday'), FakeSink(),
+          history: store);
+      await p.run(speechPcm(),
+          DictationOptions(loadProfile('business'), appId: 'com.slack'));
+      final e = store.items.single;
+      expect(e.raw, 'um we gotta ship this by friday');
+      expect(e.text, 'We have to ship this by Friday.');
+      expect(e.profileId, 'business');
+      expect(e.app, 'com.slack');
+      expect(e.fallback, isNull);
+    });
+    test(
+        'a spoken mode command is kept in the raw text, removed from the typed text',
+        () async {
+      final store = HistoryStore(MemoryHistoryStorage());
+      final p = DictationPipeline(loadLang(),
+          FakeStt('prompt mode explain kubernetes pods'), FakeSink(),
+          history: store);
+      await p.run(
+          speechPcm(),
+          DictationOptions(loadProfile('casual'),
+              profileById: (id) => loadProfile(id)));
+      final e = store.items.single;
+      expect(e.raw, startsWith('prompt mode'));
+      expect(e.text, isNot(contains('prompt mode')));
+      expect(e.profileId, 'ai_prompting');
+      expect(e.route, 'ASK');
+    });
+    test('password fields are never kept', () async {
+      final store = HistoryStore(MemoryHistoryStorage());
+      final p = DictationPipeline(loadLang(), FakeStt('my secret'), FakeSink(),
+          history: store);
+      await p.run(
+          speechPcm(),
+          DictationOptions(loadProfile('casual'),
+              fieldKind: FieldKind.password));
+      expect(store.items, isEmpty);
+    });
+    test('switched off means nothing is saved', () async {
+      final store = HistoryStore(MemoryHistoryStorage(), enabled: false);
+      final p = DictationPipeline(
+          loadLang(), FakeStt('hello there friend'), FakeSink(),
+          history: store);
+      await p.run(speechPcm(), DictationOptions(loadProfile('casual')));
+      expect(store.items, isEmpty);
+    });
+    test('entries survive a reload; old entries without raw still load',
+        () async {
+      final mem = MemoryHistoryStorage();
+      final a = HistoryStore(mem);
+      await a.add('Typed.', 'casual',
+          raw: 'typed', polished: true, route: 'ASK', fallback: 'x', app: 'a');
+      final b = HistoryStore(mem);
+      await b.load();
+      final e = b.items.single;
+      expect([e.raw, e.polished, e.route, e.fallback, e.app],
+          ['typed', true, 'ASK', 'x', 'a']);
+      mem.data =
+          '{"v":1,"items":[{"at":"${DateTime.now().toIso8601String()}","text":"Old.","profile":"casual"}]}';
+      final c = HistoryStore(mem);
+      await c.load();
+      expect(c.items.single.text, 'Old.');
+      expect(c.items.single.raw, '');
+    });
+    test('two writers do not overwrite each other', () async {
+      final mem = MemoryHistoryStorage();
+      final window = HistoryStore(mem);
+      final keyboard = HistoryStore(mem);
+      await window.add('One.', 'casual', raw: 'one');
+      await keyboard.add('Two.', 'casual', raw: 'two');
+      await window.add('Three.', 'casual', raw: 'three');
+      final all = HistoryStore(mem);
+      await all.load();
+      expect([for (final e in all.items) e.raw], ['three', 'two', 'one']);
+    });
+    test('the cap and the report', () async {
+      final s = HistoryStore(MemoryHistoryStorage(), maxItems: 3);
+      for (var i = 1; i <= 5; i++) {
+        await s.add('T$i.', 'casual', raw: 'r$i');
+      }
+      expect([for (final e in s.items) e.raw], ['r5', 'r4', 'r3']);
+      final report = historyReport(s.items, profileName: (_) => 'Casual');
+      expect(report, contains('HEARD: r5'));
+      expect(report, contains('TYPED: T5.'));
+      expect(report, contains('Casual'));
+      expect(historyReport(const []), contains('no dictations saved'));
+    });
+    test('search looks in the raw text too', () async {
+      final s = HistoryStore(MemoryHistoryStorage());
+      await s.add('Hello.', 'casual', raw: 'hello um');
+      expect(s.search('um'), hasLength(1));
     });
   });
 }

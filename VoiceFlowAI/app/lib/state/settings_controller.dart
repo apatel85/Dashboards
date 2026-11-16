@@ -37,6 +37,11 @@ class SettingsController extends ChangeNotifier {
     await _commit();
   }
 
+  Future<void> setHistoryEnabled(bool on) async {
+    settings.historyEnabled = on;
+    await _commit();
+  }
+
   Future<void> setSpokenForms(bool on) async {
     settings.spokenForms = on;
     await _commit();

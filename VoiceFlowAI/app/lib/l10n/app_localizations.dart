@@ -730,6 +730,132 @@ abstract class AppLocalizations {
   /// **'Optional. After the on-device formatting, VoiceFlow can ask an AI service to tidy your text a little more. Only text is sent, never audio. Off by default.'**
   String get setCloudBody;
 
+  /// No description provided for @historyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get historyTitle;
+
+  /// No description provided for @historyIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Every dictation is saved here on this device: what the speech engine heard next to what was typed, so you can see where the conversion helps or goes wrong. Password fields are never saved. Kept for 7 days, up to 200 dictations.'**
+  String get historyIntro;
+
+  /// No description provided for @historySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save history on this device'**
+  String get historySave;
+
+  /// No description provided for @historySaveNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored unencrypted in the app\'s private folder. Turn off to stop saving; Clear removes everything.'**
+  String get historySaveNote;
+
+  /// No description provided for @historyEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing saved yet. Dictate something and it will appear here.'**
+  String get historyEmpty;
+
+  /// No description provided for @historySearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search what was heard or typed'**
+  String get historySearch;
+
+  /// No description provided for @historyHeard.
+  ///
+  /// In en, this message translates to:
+  /// **'Heard (raw)'**
+  String get historyHeard;
+
+  /// No description provided for @historyTyped.
+  ///
+  /// In en, this message translates to:
+  /// **'Typed (converted)'**
+  String get historyTyped;
+
+  /// No description provided for @historyOlder.
+  ///
+  /// In en, this message translates to:
+  /// **'(not saved: this entry is from before raw text was kept)'**
+  String get historyOlder;
+
+  /// No description provided for @historyCopyHeard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy heard'**
+  String get historyCopyHeard;
+
+  /// No description provided for @historyCopyTyped.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy typed'**
+  String get historyCopyTyped;
+
+  /// No description provided for @historyRerun.
+  ///
+  /// In en, this message translates to:
+  /// **'Run today\'s rules again'**
+  String get historyRerun;
+
+  /// No description provided for @historySame.
+  ///
+  /// In en, this message translates to:
+  /// **'Same result as when it was typed.'**
+  String get historySame;
+
+  /// No description provided for @historyDiffers.
+  ///
+  /// In en, this message translates to:
+  /// **'Different result with today\'s rules:'**
+  String get historyDiffers;
+
+  /// No description provided for @historyCopyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy report'**
+  String get historyCopyReport;
+
+  /// No description provided for @historyCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get historyCopied;
+
+  /// No description provided for @historyClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all'**
+  String get historyClear;
+
+  /// No description provided for @historyClearAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove every saved dictation from this device?'**
+  String get historyClearAsk;
+
+  /// No description provided for @historyRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get historyRefresh;
+
+  /// No description provided for @historyPolished.
+  ///
+  /// In en, this message translates to:
+  /// **'polished'**
+  String get historyPolished;
+
+  /// No description provided for @historyFellBack.
+  ///
+  /// In en, this message translates to:
+  /// **'fell back: {why}'**
+  String historyFellBack(String why);
+
   /// No description provided for @styleSpokenForms.
   ///
   /// In en, this message translates to:
@@ -865,7 +991,7 @@ abstract class AppLocalizations {
   /// No description provided for @setPrivacyBody.
   ///
   /// In en, this message translates to:
-  /// **'Audio stays on this device and is never saved. No accounts, analytics or crash reports. Dictated text is not kept: there is no history yet. Settings and imported packs are stored in your user data folder.'**
+  /// **'Audio stays on this device and is never saved. No accounts, analytics or crash reports. Dictated text is kept in the History page on this device (raw and converted, 7 days) unless you turn that off there. Settings and imported packs are stored in your user data folder.'**
   String get setPrivacyBody;
 
   /// No description provided for @setGeneralTitle.

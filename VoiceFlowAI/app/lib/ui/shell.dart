@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:voiceflow_core/voiceflow_core.dart' show HistoryStore;
 
 import '../l10n/app_localizations.dart';
 import '../state/app_controller.dart';
@@ -7,6 +8,7 @@ import '../state/pack_store.dart';
 import '../state/polish_holder.dart';
 import '../state/settings_controller.dart';
 import 'settings_page.dart';
+import 'history_page.dart';
 import 'home_page.dart';
 import 'packs_page.dart';
 import 'style_page.dart';
@@ -22,6 +24,7 @@ class AppShell extends StatefulWidget {
     this.settingsController,
     this.polish,
     this.pickSettingsFile,
+    this.history,
   });
   final AppController controller;
   final DictationService? service;
@@ -30,6 +33,7 @@ class AppShell extends StatefulWidget {
   final SettingsController? settingsController;
   final PolishHolder? polish;
   final SettingsFilePicker? pickSettingsFile;
+  final HistoryStore? history;
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -64,6 +68,12 @@ class _AppShellState extends State<AppShell> {
             controller: widget.settingsController!,
             polish: widget.polish,
             pick: widget.pickSettingsFile ?? pickSettingsFile,
+          )
+        else if (i == 4 && widget.history != null)
+          HistoryPage(
+            store: widget.history!,
+            controller: widget.controller,
+            settings: widget.settingsController,
           )
         else if (i == 3 && widget.packStore != null)
           PacksPage(

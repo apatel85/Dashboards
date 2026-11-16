@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show ValueListenable, ValueNotifier;
 import 'package:flutter_localizations/flutter_localizations.dart'
     show GlobalWidgetsLocalizations;
 import 'package:material_ui/material_ui.dart';
+import 'package:voiceflow_core/voiceflow_core.dart' show HistoryStore;
 
 import 'l10n/app_localizations.dart';
 import 'state/app_controller.dart';
@@ -26,6 +27,7 @@ class VoiceFlowApp extends StatelessWidget {
     this.packStore,
     this.settingsController,
     this.polish,
+    this.history,
     this.onboardingFinished,
   });
   final AppController controller;
@@ -39,6 +41,7 @@ class VoiceFlowApp extends StatelessWidget {
   final PackStore? packStore;
   final SettingsController? settingsController;
   final PolishHolder? polish;
+  final HistoryStore? history;
   final ValueListenable<bool>? onboardingFinished;
 
   @override
@@ -64,6 +67,7 @@ class VoiceFlowApp extends StatelessWidget {
             packStore: packStore,
             settingsController: settingsController,
             polish: polish,
+            history: history,
           );
         }
         return androidSetup != null

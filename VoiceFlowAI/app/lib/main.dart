@@ -28,6 +28,7 @@ import 'state/onboarding_controller.dart';
 import 'state/pack_store.dart';
 import 'state/polish_holder.dart';
 import 'state/settings_controller.dart';
+import 'state/history_file.dart';
 import 'state/settings_store.dart';
 
 // Keeps the keyboard's headless entrypoint (imeMain) in the compiled program;
@@ -59,6 +60,11 @@ Future<void> main(List<String> args) async {
     exit(0); // another VoiceFlow is already running in this session
   }
   final polish = PolishHolder(settings);
+  final history = HistoryStore(
+    FileHistoryStorage(File('${support.path}/history.json')),
+    enabled: settings.historyEnabled,
+  );
+  await history.load();
   final controller = AppController(assets);
   final settingsController = SettingsController(
     settings,
@@ -111,6 +117,7 @@ Future<void> main(List<String> args) async {
       engine,
       sink,
       polishProvider: () => polish.chain,
+      history: history,
     ),
     options: () => DictationOptions(
       resolveProfessional(
@@ -122,6 +129,7 @@ Future<void> main(List<String> args) async {
       dictionary: settings.dictionary,
       corrections: settings.corrections,
       maskCloud: settings.maskCloud,
+      appId: controller.foregroundApp?.call(),
       spokenForms: settings.spokenForms,
       profileById: (id) => assets.profiles.where((p) => p.id == id).firstOrNull,
       promptStyle: PromptStyle.resolve(
@@ -203,6 +211,7 @@ Future<void> main(List<String> args) async {
       packStore: packStore,
       settingsController: settingsController,
       polish: polish,
+      history: history,
       onboardingFinished: finished,
     ),
   );

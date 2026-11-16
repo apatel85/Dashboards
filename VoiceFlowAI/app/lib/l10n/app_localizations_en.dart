@@ -373,6 +373,76 @@ class AppLocalizationsEn extends AppLocalizations {
       'Optional. After the on-device formatting, VoiceFlow can ask an AI service to tidy your text a little more. Only text is sent, never audio. Off by default.';
 
   @override
+  String get historyTitle => 'History';
+
+  @override
+  String get historyIntro =>
+      'Every dictation is saved here on this device: what the speech engine heard next to what was typed, so you can see where the conversion helps or goes wrong. Password fields are never saved. Kept for 7 days, up to 200 dictations.';
+
+  @override
+  String get historySave => 'Save history on this device';
+
+  @override
+  String get historySaveNote =>
+      'Stored unencrypted in the app\'s private folder. Turn off to stop saving; Clear removes everything.';
+
+  @override
+  String get historyEmpty =>
+      'Nothing saved yet. Dictate something and it will appear here.';
+
+  @override
+  String get historySearch => 'Search what was heard or typed';
+
+  @override
+  String get historyHeard => 'Heard (raw)';
+
+  @override
+  String get historyTyped => 'Typed (converted)';
+
+  @override
+  String get historyOlder =>
+      '(not saved: this entry is from before raw text was kept)';
+
+  @override
+  String get historyCopyHeard => 'Copy heard';
+
+  @override
+  String get historyCopyTyped => 'Copy typed';
+
+  @override
+  String get historyRerun => 'Run today\'s rules again';
+
+  @override
+  String get historySame => 'Same result as when it was typed.';
+
+  @override
+  String get historyDiffers => 'Different result with today\'s rules:';
+
+  @override
+  String get historyCopyReport => 'Copy report';
+
+  @override
+  String get historyCopied => 'Copied';
+
+  @override
+  String get historyClear => 'Clear all';
+
+  @override
+  String get historyClearAsk =>
+      'Remove every saved dictation from this device?';
+
+  @override
+  String get historyRefresh => 'Refresh';
+
+  @override
+  String get historyPolished => 'polished';
+
+  @override
+  String historyFellBack(String why) {
+    return 'fell back: $why';
+  }
+
+  @override
   String get styleSpokenForms => 'Write \"gonna\" as \"going to\" in Casual';
 
   @override
@@ -447,7 +517,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setPrivacyBody =>
-      'Audio stays on this device and is never saved. No accounts, analytics or crash reports. Dictated text is not kept: there is no history yet. Settings and imported packs are stored in your user data folder.';
+      'Audio stays on this device and is never saved. No accounts, analytics or crash reports. Dictated text is kept in the History page on this device (raw and converted, 7 days) unless you turn that off there. Settings and imported packs are stored in your user data folder.';
 
   @override
   String get setGeneralTitle => 'General';

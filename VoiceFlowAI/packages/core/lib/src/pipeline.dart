@@ -38,6 +38,9 @@ class DictationOptions {
   /// Casual: expand "gonna" -> "going to" (the Settings switch).
   final bool spokenForms;
 
+  /// The app being typed into (package name or program), kept with the history entry.
+  final String? appId;
+
   /// Looks a profile up by id, so a spoken mode command ("professional mode ...") can switch the
   /// profile for this one dictation. Without it, mode commands are left in the text.
   final Profile? Function(String id)? profileById;
@@ -50,6 +53,7 @@ class DictationOptions {
       surrounding: surrounding,
       maskCloud: maskCloud,
       spokenForms: spokenForms,
+      appId: appId,
       profileById: profileById);
 
   const DictationOptions(this.profile,
@@ -61,6 +65,7 @@ class DictationOptions {
       this.surrounding = const TextContext(),
       this.maskCloud = false,
       this.spokenForms = true,
+      this.appId,
       this.profileById});
 }
 
@@ -116,6 +121,7 @@ class DictationPipeline {
   Future<DictationResult> runSession(
       LongDictationSession session, DictationOptions o) async {
     String raw = '';
+    var heard = ''; // exactly what the speech engine returned, for the history
     if (o.fieldKind == FieldKind.password) {
       session.cancel();
       return const DictationResult(DictationStatus.passwordField);
@@ -128,6 +134,7 @@ class DictationPipeline {
         return const DictationResult(DictationStatus.noSpeech);
       }
       if (raw.isEmpty) return const DictationResult(DictationStatus.noSpeech);
+      heard = raw;
       final speechSecs = r.speechSeconds;
       if (speechSecs < 2 && lang.phantoms.contains(raw.toLowerCase().trim())) {
         return DictationResult(DictationStatus.noSpeech, rawTranscript: raw);
@@ -139,7 +146,7 @@ class DictationPipeline {
         if (value.isEmpty) {
           return DictationResult(DictationStatus.noSpeech, rawTranscript: raw);
         }
-        return await _insert(raw, value, false, o);
+        return await _insert(heard, value, false, o);
       }
 
       // A spoken mode at the start ("professional mode", "turn this into a prompt") switches the
@@ -175,7 +182,7 @@ class DictationPipeline {
         }
       }
       final template = _template(raw, o.packs);
-      if (template != null) return await _insert(raw, template, false, o);
+      if (template != null) return await _insert(heard, template, false, o);
 
       final allowCloud = o.packs.every((p) => p.cloudAllowed);
       final glossary = [
@@ -213,7 +220,10 @@ class DictationPipeline {
       if (o.profile.id == 'ai_prompting' && !polishUsed) {
         hint = lang.needsPolishHint;
       }
-      return await _insert(raw, text, polishUsed, o, hint: hint);
+      return await _insert(heard, text, polishUsed, o,
+          hint: hint,
+          route: o.profile.id == 'ai_prompting' ? _fmt.lastRoute : null,
+          fallback: _fmt.lastFallbackReason);
     } catch (e) {
       return DictationResult(DictationStatus.error,
           rawTranscript: raw, error: e.runtimeType.toString());
@@ -297,7 +307,7 @@ class DictationPipeline {
 
   Future<DictationResult> _insert(
       String raw, String text, bool polishUsed, DictationOptions o,
-      {String? hint}) async {
+      {String? hint, String? route, String? fallback}) async {
     InsertResult r;
     try {
       r = await sink.insert(text);
@@ -307,6 +317,16 @@ class DictationPipeline {
     if (r == InsertResult.passwordField) {
       return DictationResult(DictationStatus.passwordField, rawTranscript: raw);
     }
+    // Kept for troubleshooting whether or not the text could be typed (never for password
+    // fields, which return above). Never allowed to break the dictation itself.
+    try {
+      await history?.add(text, o.profile.id,
+          raw: raw,
+          polished: polishUsed,
+          route: route,
+          fallback: fallback,
+          app: o.appId);
+    } catch (_) {}
     if (r != InsertResult.ok) {
       recover.save(text);
       return DictationResult(DictationStatus.insertFailed,
@@ -315,7 +335,6 @@ class DictationPipeline {
           polishUsed: polishUsed,
           error: r.name);
     }
-    await history?.add(text, o.profile.id);
     return DictationResult(DictationStatus.ok,
         rawTranscript: raw,
         finalText: text,
