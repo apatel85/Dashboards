@@ -782,6 +782,7 @@ INNER = """<div id="lb" onclick="this.style.display='none'"><img id="lbimg" src=
 <div class="stat clickable" data-seg="manual" title="Show only manual captures"><div class="n" style="color:#1e3a5f">""" + str(n_src["manual"]) + """</div><div class="l">🚩 Manual — tap to filter</div></div>
 <div class="stat clickable" data-seg="mobile" title="Show only mobile testing bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["mobile"]) + """</div><div class="l">📱 Mobile testing — tap to filter</div></div>
 <div class="stat clickable" data-seg="lanek" title="Show only Lane K bugs"><div class="n" style="color:#1e3a5f">""" + str(n_src["lanek"]) + """</div><div class="l">🛣️ Lane K — tap to filter</div></div>
+<div class="stat clickable" data-seg="prg" title="Show only Programs and Classes rows"><div class="n" style="color:#1e3a5f">""" + str(len(PRG_RESULTS.get("rows", []))) + """</div><div class="l">📋 Programs and Classes — tap to filter</div></div>
 <div class="stat clickable" data-seg="open" title="Show only open bugs"><div class="n" style="color:#b91c1c">""" + str(n_open) + """</div><div class="l">Open now — tap to filter</div></div>
 </div>""" + HEALTH_HTML + """</header>
 <div class="toolbar">
@@ -1015,7 +1016,9 @@ function applyFilters(){
   });
   document.querySelectorAll('.seg').forEach(s=>{
     const anyVisible=[...s.querySelectorAll('.card')].some(c=>c.style.display!=='none');
-    s.style.display=anyVisible?'':'none';
+    const hasResults=!!s.querySelector('.resbox');
+    const segMatch=!F.seg||s.dataset.src===F.seg;
+    s.style.display=(anyVisible||(hasResults&&segMatch))?'':'none';
   });
 }
 document.querySelectorAll('.stat.clickable').forEach(t=>t.addEventListener('click',()=>{
