@@ -6,7 +6,7 @@
  * (labeled as such, never presented as precise models).
  */
 import { companyFacts, latestQuarterlyValue, yearAgoQuarterlyValue } from './sec.mjs';
-import { clamp, r2 } from './util.mjs';
+import { clamp, r2, unixToDate } from './util.mjs';
 
 export const REV_TAGS = [
   'RevenueFromContractWithCustomerExcludingAssessedTax',
@@ -72,7 +72,10 @@ export function buildStreak(history) {
       surprise_pct = r2(((actual - est) / Math.abs(est)) * 100, 1);
       eps_result = actual > est * 1.01 ? 'beat' : actual >= est * 0.99 ? 'in-line' : 'miss';
     }
-    return { quarter, eps_result, surprise_pct };
+    // Fiscal quarter-END date (YYYY-MM-DD) — the anchor for matching the
+    // quarter to its report (announcement) date via the Nasdaq calendar.
+    // NOTE: quarter.raw / endDate is the quarter end, NOT the report date.
+    return { quarter, eps_result, surprise_pct, quarter_end: endRaw ? unixToDate(endRaw) : null };
   });
 }
 
