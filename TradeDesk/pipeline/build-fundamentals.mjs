@@ -83,8 +83,12 @@ function collectTickers() {
   return { hot: [...hot], warm: [...warm] };
 }
 
-// Max Yahoo calls per run to bound runtime (~1.5s each).
-const MAX_FETCH_PER_RUN = 250;
+// Max Yahoo calls per run to bound runtime (~1.5s each). Override with
+// MAX_FETCH_PER_RUN for one-off full refreshes (e.g. after a formula fix).
+const MAX_FETCH_PER_RUN = Number(process.env.MAX_FETCH_PER_RUN) || 250;
+// FORCE_REFRESH=1 refetches every hot + warm ticker (one-off full refresh;
+// the normal staleness rules still apply on scheduled runs).
+const FORCE_REFRESH = process.env.FORCE_REFRESH === '1';
 // Hot tickers refresh daily; warm tickers refresh every 14 days.
 const HOT_STALE_MS = 24 * 3600 * 1000;
 const WARM_STALE_MS = 14 * 24 * 3600 * 1000;
@@ -92,10 +96,22 @@ const WARM_STALE_MS = 14 * 24 * 3600 * 1000;
 const MODULES = ['price', 'summaryDetail', 'defaultKeyStatistics', 'financialData', 'assetProfile', 'incomeStatementHistory'];
 
 function growthRates(incomeHist) {
-  // incomeStatementHistory: annual statements, oldest first (usually 4).
-  const revs = (incomeHist || [])
-    .map((s) => raw(s.totalRevenue))
-    .filter((v) => typeof v === 'number' && v > 0);
+  // Yahoo returns annual statements NEWEST first (verified 2026-11-17:
+  // NVDA [FY26 215.94B, FY25 130.50B, FY24 60.92B, FY23 26.97B]).
+  // The old code assumed oldest-first and read the wrong ends, which
+  // inverted every growth figure (NVDA showed -55.7% YoY instead of
+  // +65.5%; AAPL -2.0% instead of +15.1%; MSFT -13.5% instead of +17.8%).
+  // Sort ascending by fiscal year-end; if fewer than 2 statements carry
+  // an endDate, reverse Yahoo's newest-first order instead.
+  const entries = (incomeHist || [])
+    .map((s) => ({ date: raw(s.endDate), rev: raw(s.totalRevenue) }))
+    .filter((x) => typeof x.rev === 'number' && x.rev > 0);
+  if (entries.length < 2) return { revenue_growth_yoy: null, revenue_cagr_3y: null };
+  const dated = entries.filter((x) => typeof x.date === 'number');
+  const ordered = dated.length >= 2
+    ? [...dated].sort((a, b) => a.date - b.date)
+    : [...entries].reverse();
+  const revs = ordered.map((x) => x.rev);
   if (revs.length < 2) return { revenue_growth_yoy: null, revenue_cagr_3y: null };
   const yoy = (revs[revs.length - 1] - revs[revs.length - 2]) / revs[revs.length - 2];
   let cagr = null;
@@ -232,16 +248,26 @@ async function main() {
     if (!f?.fetched_at) return true;
     return nowMs - new Date(f.fetched_at).getTime() > staleMs;
   };
-  const queue = [
-    ...hot.filter((t) => isStale(t, HOT_STALE_MS)),
-    ...warm.filter((t) => !fundamentals[t]),
-    ...warm.filter((t) => fundamentals[t] && isStale(t, WARM_STALE_MS)),
-  ].slice(0, MAX_FETCH_PER_RUN);
+  // FORCE_REFRESH also sweeps every cached ticker: the live universe
+  // (hot + warm) is smaller than the cached map, and a formula fix must
+  // correct rows that have rotated out of the universe too.
+  const queue = FORCE_REFRESH
+    ? [...new Set([...hot, ...warm, ...Object.keys(fundamentals)])]
+    : [
+        ...hot.filter((t) => isStale(t, HOT_STALE_MS)),
+        ...warm.filter((t) => !fundamentals[t]),
+        ...warm.filter((t) => fundamentals[t] && isStale(t, WARM_STALE_MS)),
+      ];
+  const cappedQueue = queue.slice(0, MAX_FETCH_PER_RUN);
+  if (cappedQueue.length < queue.length) {
+    console.log(`[fundamentals] queue ${queue.length} capped to ${cappedQueue.length} (MAX_FETCH_PER_RUN=${MAX_FETCH_PER_RUN})`);
+  }
+  const runQueue = cappedQueue;
 
-  console.log(`[fundamentals] hot=${hot.length} warm=${warm.length} cached=${Object.keys(fundamentals).length} to_fetch=${queue.length}`);
+  console.log(`[fundamentals] hot=${hot.length} warm=${warm.length} cached=${Object.keys(fundamentals).length} to_fetch=${runQueue.length}`);
   let ok = 0, fail = 0;
-  for (let i = 0; i < queue.length; i++) {
-    const t = queue[i];
+  for (let i = 0; i < runQueue.length; i++) {
+    const t = runQueue[i];
     try {
       const qs = await yahooQuoteSummary(t, MODULES);
       const f = extract(t, qs);
@@ -252,7 +278,7 @@ async function main() {
       console.warn(`[fundamentals] ${t}: ${e.message}`);
     }
     if ((i + 1) % 25 === 0) {
-      console.log(`[fundamentals] ${i + 1}/${queue.length} (ok=${ok} fail=${fail})`);
+      console.log(`[fundamentals] ${i + 1}/${runQueue.length} (ok=${ok} fail=${fail})`);
       await sleep(500);
     }
   }
