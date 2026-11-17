@@ -65,6 +65,13 @@ _lrp = os.path.join(HERE, "data", "lanek-results.json")
 if os.path.exists(_lrp):
     LANEK_RESULTS = json.load(open(_lrp))
 
+PRG_RESULTS = {}
+_prp = os.path.join(HERE, "data", "prg-results.json")
+if os.path.exists(_prp):
+    PRG_RESULTS = json.load(open(_prp))
+
+RESULT_VERDICT = {"Not run": "NOT_TESTED", "Pass": "PASS", "Fail": "FAIL", "Blocked": "BLOCKED"}
+
 VERDICT_COLOR = {"PASS": "#15803d", "FAIL": "#b91c1c", "BLOCKED": "#6b7280", "NOT_TESTED": "#b45309"}
 VERDICT_LABEL = {"PASS": "PASS", "FAIL": "FAIL", "BLOCKED": "BLOCKED", "NOT_TESTED": "NOT TESTED"}
 
@@ -110,6 +117,71 @@ def lanek_results_html():
         note = f'<p class="rsnote">{esc(t["note"])}</p>' if t.get("note") and steps else ""
         out.append(f"""<details class="rticket"><summary><span class="rtid">{esc(t['id'])}</span> {esc(t['title'])} """
                    f"""<span class="rtarea">{esc(t.get('area', ''))}</span><span class="rtcounts">{summ}</span></summary>{note}{body}</details>""")
+    out.append("</div>")
+    return "".join(out)
+
+def _csv_cell(v):
+    v = "" if v is None else str(v)
+    if any(c in v for c in (",", '"', "\n", "\r")):
+        return '"' + v.replace('"', '""') + '"'
+    return v
+
+def prg_results_html():
+    """Programs and classes test rows (Nov 17 workbook): every row, its verdict,
+    the full row text, screenshots, and a CSV download that pastes straight
+    back into the workbook's yellow columns."""
+    if not PRG_RESULTS or not PRG_RESULTS.get("rows"):
+        return ""
+    rows = PRG_RESULTS["rows"]
+    counts = {"PASS": 0, "FAIL": 0, "BLOCKED": 0, "NOT_TESTED": 0}
+    for r in rows:
+        counts[RESULT_VERDICT.get(r.get("result", "Not run"), "NOT_TESTED")] += 1
+    n_tested = len(rows) - counts["NOT_TESTED"]
+    n_shotless = sum(1 for r in rows
+                     if RESULT_VERDICT.get(r.get("result", "Not run"), "NOT_TESTED") != "NOT_TESTED"
+                     and not r.get("shots"))
+    csv_cols = ["ID", "Module", "Ticket", "Priority", "Money-critical", "Role / persona",
+                "App", "Scenario", "Preconditions / test data", "Steps", "Expected result",
+                "Result", "Actual result", "Defect ID", "Tester", "Date run",
+                "Confirm with AS", "Source", "Notes and ideas"]
+    csv_keys = ["id", "module", "ticket", "priority", "money", "role", "app", "scenario",
+                "preconditions", "steps", "expected", "result", "actual", "defect_id",
+                "tester", "date_run", "confirm_as", "source", "notes"]
+    csv_text = ",".join(csv_cols) + "\r\n" + "\r\n".join(
+        ",".join(_csv_cell(r.get(k, "")) for k in csv_keys) for r in rows)
+    csv_b64 = base64.b64encode(csv_text.encode("utf-8")).decode()
+    shotless = f" · <span style=\"color:#b45309\">{n_shotless} tested without a screenshot</span>" if n_shotless else ""
+    out = [f"""<div class="resbox"><div class="reshead"><b>📋 Test results — every row</b><span class="ressum">{len(rows)} rows · """
+           f"""{sum(1 for r in rows if r.get('priority') == 'P1')} P1 · {sum(1 for r in rows if r.get('money') == 'Yes')} money-critical: """
+           f"""<span style="color:#15803d">{counts['PASS']} pass</span> · <span style="color:#b91c1c">{counts['FAIL']} fail</span> · """
+           f"""<span style="color:#6b7280">{counts['BLOCKED']} blocked</span> · <span style="color:#b45309">{counts['NOT_TESTED']} not run</span>{shotless}</span></div>"""
+           f"""<p class="resenv">{esc(PRG_RESULTS.get('environment', ''))} · {esc(PRG_RESULTS.get('plan', ''))}</p>"""
+           f"""<a class="csvbtn" href="data:text/csv;base64,{csv_b64}" download="prg-results.csv">⬇ Download results CSV (pastes into the workbook)</a>"""]
+    for r in rows:
+        v = RESULT_VERDICT.get(r.get("result", "Not run"), "NOT_TESTED")
+        meta = " · ".join(x for x in [r.get("priority", ""), "Money-critical" if r.get("money") == "Yes" else "",
+                                       r.get("ticket", ""), r.get("app", "")] if x)
+        body = ""
+        for label, key in [("Preconditions", "preconditions"), ("Steps", "steps"),
+                           ("Expected result", "expected"), ("Actual result", "actual")]:
+            if r.get(key):
+                body += f'<div class="prgfield"><b>{label}:</b> {esc(r[key])}</div>'
+        if r.get("defect_id"):
+            body += f'<div class="prgfield"><b>Defect:</b> {esc(r["defect_id"])}</div>'
+        if r.get("confirm_as"):
+            body += f'<div class="prgfield"><b>Confirm with AS:</b> {esc(r["confirm_as"])}</div>'
+        if r.get("notes"):
+            body += f'<div class="prgfield"><b>Notes:</b> {esc(r["notes"])}</div>'
+        thumbs = ""
+        for sh in r.get("shots", []):
+            p = os.path.join(HERE, sh)
+            if os.path.exists(p):
+                thumbs += f'<img src="{U(p)}" class="rsthumb" alt="screenshot" loading="lazy" onclick="openLB(this.src)">'
+        if not r.get("shots") and v != "NOT_TESTED":
+            thumbs = '<div class="rsnoshot">No screenshot captured for this step.</div>'
+        out.append(f"""<details class="rticket"><summary><span class="rtid">{esc(r['id'])}</span> {esc(r.get('scenario', ''))} """
+                   f"""<span class="rtarea">{esc(meta)}</span><span class="rtcounts">{VERDICT_LABEL[v].lower()}</span></summary>"""
+                   f"""<p class="rsnote">{esc(r.get('module', ''))} · {esc(r.get('role', ''))} · {esc(r.get('source', ''))}</p>{body}{thumbs}</details>""")
     out.append("</div>")
     return "".join(out)
 
@@ -229,7 +301,7 @@ SEV_ORDER = ["High", "Medium", "Low", "Info"]
 SEV_COLOR = {"High": "#b91c1c", "Medium": "#b45309", "Low": "#4d7c0f", "Info": "#1d4ed8"}
 STATUS_COLOR = {"Open": "#b91c1c", "Partly fixed": "#b45309", "Still failing": "#7f1d1d",
                 "Blocked": "#6b7280", "Fixed": "#15803d"}
-SOURCE_LABEL = {"arlo": "Arlo dev pass", "team": "QA team retest", "manual": "Manual capture", "mobile": "📱 Mobile testing", "lanek": "🛣️ Lane K"}
+SOURCE_LABEL = {"arlo": "Arlo dev pass", "team": "QA team retest", "manual": "Manual capture", "mobile": "📱 Mobile testing", "lanek": "🛣️ Lane K", "prg": "📋 Programs and Classes"}
 SEGMENTS = [
     ("team", "🧪 Tested by the QA team",
      "Bugs from the QA team's 2026-10-15 retest report — 186 retests (159 Fixed · 19 Partly fixed · 6 Still failing · 2 Blocked) plus 16 new bugs they filed."),
@@ -241,6 +313,8 @@ SEGMENTS = [
      "Guardian + coach Android app findings from the emulator pass — each with repro steps and screenshots."),
     ("lanek", "🛣️ Lane K",
      "Lane K pricing-model QA on dev (Nov 11, 2026 plan) — every step of all 28 tickets with its verdict below, then the issues filed from them."),
+    ("prg", "📋 Programs and Classes",
+     "Programs and classes test scripts (17 Nov 2026 workbook, v1) — all 58 rows with their verdict below, then the defects filed from them."),
 ]
 
 def esc(s):
@@ -470,13 +544,14 @@ for src, title, desc in SEGMENTS:
     n_open = sum(1 for b in BUGS if b["source"] == src and b["status"] == "Open")
     empty_msg = ('Nothing here yet — mobile findings from the emulator pass will appear here.' if src == 'mobile'
                  else 'Nothing here yet — Lane K findings will appear here once the dev pass runs. Scope: 21 tickets ready for QA (Facility 10 · Guardian 7 · backend-only 2 · Guardian mobile 1 · Coach 1); 7 wait on engineering (602, 604, 638, 599 + partly-ready 581, 583, 586).' if src == 'lanek'
+                 else 'Nothing here yet — defects filed from the Programs and classes rows will appear here.' if src == 'prg'
                  else 'Nothing here yet — flag an issue with the QA Capture extension and it will appear in this segment.')
     segments += f"""
     <section class="seg" data-src="{src}">
       <div class="seghead"><h2>{title}</h2>
         <span class="segcount">{n} issue{'s' if n != 1 else ''} · {n_open} open</span></div>
       <p class="segdesc">{desc}</p>
-      {lanek_results_html() if src == 'lanek' else ''}
+      {lanek_results_html() if src == 'lanek' else prg_results_html() if src == 'prg' else ''}
       {''.join(ordered) if ordered else f'<p class="segempty">{empty_msg}</p>'}
     </section>"""
 
@@ -564,6 +639,9 @@ header p{color:#c3d2e5;font-size:14px}
 .rsobs{font-size:13px;color:#374151;margin-top:2px}
 .rsthumb{width:100%;max-width:520px;border-radius:8px;border:1px solid #e5e7eb;margin-top:8px;cursor:zoom-in}
 .rsnoshot{font-size:12px;color:#9ca3af;margin-top:6px}
+.prgfield{font-size:13px;color:#374151;margin:4px 0;white-space:pre-line}
+.prgfield b{color:#111827}
+.csvbtn{display:inline-block;background:#1e3a5f;color:#fff;font-size:13px;font-weight:600;border-radius:8px;padding:8px 14px;text-decoration:none;margin:4px 0 12px}
 .pill{color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
 .count{font-size:14px;color:#6b7280}
 .card{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:12px;overflow:hidden}
