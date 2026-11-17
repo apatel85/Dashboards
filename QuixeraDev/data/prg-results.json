@@ -263,8 +263,8 @@
       "preconditions": "A complete program draft on the last step.",
       "steps": "1. Double-click Create program (or press it twice fast).\n2. Open Programs and search the name.",
       "expected": "The button reads \"Creating program\u2026\" and the footer locks while it works. Exactly one program exists. No duplicate-name error or orphan draft appears.",
-      "result": "Blocked",
-      "actual": "Blocked \u2014 the draft 'PRG-021 Test Program' (template 113) cannot reach the last step without content: pressing Next on Curriculum with 'No sessions yet' and an empty skill pool gives 'Fix 2 things before you continue.' \u2014 'Add at least one skill to the skill pool before you can continue.' and 'Add at least one session plan. A membership program needs one before it can be created.' The double-click Create program test could not be run; no duplicate check was possible. Draft remains at Curriculum. (Follow-up: complete the draft with one skill + one session plan, then re-run.) Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
+      "result": "Pass",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Re-run after Batch 2 Blocked: completed the draft (added skill 'Off break' to the pool and session plan 'PRG-011 Session 1'). The wizard required more than the row stated to pass Curriculum \u2014 Next first refused with 'Fix 2 things before you continue.' / 'PRG-011 Session 1 needs at least one activity.' and 'PRG-011 Session 1 needs at least one skill.' \u2014 so 'Off break' was assigned to the session and activity 'PRG-011 Activity 1' added (wizard-required). First double-click on Create program was refused by validation \u2014 'Fix 1 thing before you continue.' / 'A Participation Agreement is required for programs for athletes under 18. Use the default or upload your own.' After selecting the default Participation Agreement, the second double-click created the program: navigated to /programs/templates/113?tab=schedules with toast 'Success / Program created', program 'PRG-021 Test Program', Active, 'Program \u00b7 Cricket \u00b7 Under 11 \u00b7 10 and under', 'How families pay: membership, Beginner group'. The intermediate 'Creating program\u2026' button text and footer lock were NOT observed \u2014 navigation was immediate in the returned view. Search for 'PRG-021 Test Program' finds exactly ONE program (Not running now: 'Membership \u00b7 Beginner', 'No classes yet', Status Active, Next step 'Create class'). No duplicate-name error, no orphan draft.",
       "defect_id": "",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
@@ -272,7 +272,8 @@
       "source": "web#685 (one Idempotency-Key per create intent); web#644 follow-up",
       "notes": "",
       "shots": [
-        "bugs/shots/PRG-011-1.jpg"
+        "bugs/shots/PRG-011-1.jpg",
+        "bugs/shots/PRG-011-2.jpg"
       ]
     },
     {
@@ -750,15 +751,18 @@
       "preconditions": "A class created before 16 Nov (before suffixes), e.g. one the team seeded, whose stored name doesn't follow '{program} \u00b7 {suffix}'.",
       "steps": "1. Open that class's rename dialog.\n2. Read the field and the note, then save without changing anything.",
       "expected": "The field shows the old name as the suffix with the note \"This class was named before suffixes. Saving renames it to \"{program} \u00b7 {suffix}\".\" After saving, the class name is composed as program plus suffix.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Pass",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Class 'QA_AP 576 Class' (programs/189, created 12 Nov under QA Walk Program). Step 1: the Rename class dialog shows the field as a group with prefix 'QA Walk Program \u00b7' and the textbox containing the old name 'QA_AP 576 Class', with the notes 'Families see \"QA Walk Program \u00b7 QA_AP 576 Class\". Leave it blank to use the program name.' and 'This class was named before suffixes. Saving renames it to \"QA Walk Program \u00b7 QA_AP 576 Class\".' (plus 'Families see the new name straight away. Emails already sent keep the old one.'). Step 2: saving without changing anything gave the toast 'Success / Class renamed to QA Walk Program \u00b7 QA_AP 576 Class.', the heading is now 'QA Walk Program \u00b7 QA_AP 576 Class', and Recent activity shows 'Class renamed / Nov 17, 2026 \u00b7 11:27 PM \u00b7 Ankit Patel'. The class name is now composed as program plus suffix, as expected. Note: the class page also shows 'PRICE \u2014 Needs a price \u2014 Set price \u2014 This class was published before prices. Families cannot enroll online until it has one.' \u2014 the class overview HAS a Price row (see QXR-576 update).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-893 What must be true and copy; data#408",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-032-1.jpg",
+        "bugs/shots/PRG-032-2.jpg"
+      ]
     },
     {
       "id": "PRG-033",
@@ -816,15 +820,19 @@
       "preconditions": "A program draft where Sessions has no class size saved.",
       "steps": "1. Open the last step directly from the rail (if allowed) or reach it and read the Create button.\n2. Press it.",
       "expected": "Create reads \"Finish {steps} to create the program.\" naming Sessions, the rail marks it, and pressing it does not create the program.",
-      "result": "Not run",
-      "actual": "",
-      "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "result": "Fail",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Draft template 115 'PRG-035 Test Program' (Under 11, Cricket, 'Per class, by term') at Sessions with class size empty. Step 2: the last step cannot be opened \u2014 the rail's 'Curriculum' and 'Prerequisites and waivers' are not links (they read 'Finish Sessions first'), and navigating directly to /programs/templates/115/setup/prerequisites-waivers redirects back to /programs/templates/115/setup/sessions. There is therefore no held Create button reading 'Finish Sessions to create the program.' to read or press (step 3). The expected held-Create state does not exist in this build; the app gates the last step by redirect instead. Nothing was created \u2014 the draft remains at Sessions, '2 of 5 steps done', 40%. Defect DEF-007.",
+      "defect_id": "DEF-007",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-900 What must be true; data#401 incompleteSteps",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-035-1.jpg",
+        "bugs/shots/PRG-035-2.jpg",
+        "bugs/shots/PRG-035-3.jpg"
+      ]
     },
     {
       "id": "PRG-036",
@@ -838,15 +846,20 @@
       "preconditions": "Program draft (note its id {id}) whose furthest finished step is Sessions.",
       "steps": "1. On Sessions, reload the page.\n2. Edit the address to /programs/templates/{id}/setup/prerequisites-waivers and open it.\n3. Open /programs/templates/{id}/setup/waivers (an old address).\n4. Open /programs/new/anything.",
       "expected": "After reload you are on /programs/templates/{id}/setup/sessions with saved values. The prerequisites address sends you to /setup/curriculum. The old waivers address lands on the furthest step you may open. /programs/new/anything goes to /programs/new/basics. Steps after the furthest one show in the rail but are not links (\"Finish {step} first\").",
-      "result": "Not run",
-      "actual": "",
-      "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "result": "Fail",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Draft template 115, id 115 ('PRG-035 Test Program'); furthest finished step is Sessions. Step 1 Pass: reloading Sessions kept the address /programs/templates/115/setup/sessions and the step state (fields empty as left; Basics and How families pay stayed 'Done'). Step 2 FAIL: editing the address to /programs/templates/115/setup/prerequisites-waivers sent the browser to /programs/templates/115/setup/sessions, NOT to /setup/curriculum as expected (twice, in PRG-035 and here). Step 3 Pass: the old address /programs/templates/115/setup/waivers also landed on /programs/templates/115/setup/sessions \u2014 the furthest step that may be opened. Step 4 Pass: /programs/new/anything went to /programs/new/basics (Step 1 of 5: Basics, empty, '0 of 5 steps done'). Rail behaviour confirmed throughout: steps after the furthest one show in the rail but are not links, reading 'Finish Sessions first' (and 'Finish Basics first' on the new Basics page). Defect DEF-007 (same redirect behaviour as PRG-035).",
+      "defect_id": "DEF-007",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-900 Check 6; QXR-899 Check 1",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-036-1.jpg",
+        "bugs/shots/PRG-036-2.jpg",
+        "bugs/shots/PRG-036-3.jpg",
+        "bugs/shots/PRG-036-4.jpg"
+      ]
     },
     {
       "id": "PRG-037",
@@ -860,15 +873,19 @@
       "preconditions": "Program draft open on Curriculum.",
       "steps": "1. Type a session title and press the wizard's close control.\n2. Press Keep editing, then close again and press Leave anyway.\n3. Reopen, type a change, and use the browser Back button.\n4. Open Create program, type a name on Basics, press browser Back.",
       "expected": "Close shows \"Leave without saving?\" with \"Your changes on this step are not saved yet.\", Keep editing and Leave anyway. Keep editing keeps the text and returns focus to the close control. Leave anyway saves nothing. Browser Back from a later step saves that step once and moves. On /programs/new/basics with typed text and no draft, Back shows the same dialog and the address stays.",
-      "result": "Not run",
-      "actual": "",
-      "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "result": "Fail",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Draft 'PRG-021 Test Program' (template 113) at Curriculum. Step 1 FAIL: typing a session title in the Add-session 'Session theme' box and pressing the wizard Close control showed NO dialog \u2014 navigated straight to /programs; repeated twice with the same result. The typed title was not saved (reopen showed 'No sessions yet'). Step 2 PASS: after ADDING a session plan ('PRG-037 Session', a real unsaved change \u2014 header 'Unsaved changes'), Close DID show the dialog 'Leave without saving?' / 'Your changes on this step are not saved yet.' with 'Keep editing' and 'Leave anyway'. 'Keep editing' returned to the step with the session plan still listed and 'Unsaved changes' still shown; closing again and pressing 'Leave anyway' navigated to /programs and saved nothing. Focus returning to the close control after Keep editing could not be verified. Step 3 FAIL: after reopening and adding the skill 'Off break' (chip shown, 'Unsaved changes'), browser Back navigated to /programs with NO dialog and did NOT save the step \u2014 reopening Curriculum showed the skill pool empty again, 'Draft saved 5:59 pm'. Step 4 FAIL: on /programs/new/basics with 'PRG-037 Test Program' typed, browser Back showed NO dialog and did NOT stay \u2014 it navigated back to /programs/templates/113/setup/curriculum. No 'PRG-037 Test Program' draft exists, so nothing was created. The guard fires only after a session plan is added, never for typed-but-unadded input, and never on browser Back. Defect DEF-006.",
+      "defect_id": "DEF-006",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-899 Leaving and Check 3; D-083",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-037-1.jpg",
+        "bugs/shots/PRG-037-3.jpg",
+        "bugs/shots/PRG-037-4.jpg"
+      ]
     },
     {
       "id": "PRG-038",
@@ -1036,15 +1053,20 @@
       "preconditions": "Term program draft at Sessions, all fields empty.",
       "steps": "1. Enter only 12 sessions and press Next.\n2. Enter minimum 0 and press Next.\n3. Enter minimum 8 and maximum 6, press Next.\n4. Enter 6 to 12, a length of 60 minutes, choose waitlist on, press Next.",
       "expected": "Missing fields show \"Enter the minimum class size.\", \"Enter the maximum class size.\" and \"Choose whether the waitlist is on.\" 0 shows \"The class size starts at 1.\" 8 to 6 is refused because the maximum can't be lower than the minimum (names 8). The valid set saves and new classes start from 6 to 12 and 60 minutes.",
-      "result": "Not run",
-      "actual": "",
-      "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "result": "Fail",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Draft template 116 'PRG-045 Test Program' (Under 11, Cricket, 'Per class, by term') at Sessions, all fields empty. Step 1 Partial: entering only 12 sessions and pressing Next gave 'Fix 3 things before you continue.' \u2014 'Enter 15 to 300 minutes.' (session length), 'Enter the minimum class size.', 'Enter the maximum class size.' \u2014 but NO 'Choose whether the waitlist is on.' error; the waitlist switch left off is apparently an acceptable state, not an error. Step 2 Pass: minimum 0 gave exactly 'The class size starts at 1.' Step 3 FAIL: minimum 8 and maximum 6 gave NO range error \u2014 the only error was 'Fix 1 thing before you continue.' / 'Enter 15 to 300 minutes.' The maximum-can't-be-lower-than-the-minimum check (naming 8) did not fire while the session length was empty (it may be masked by the missing-length error, not absent \u2014 re-test with length filled is planned). Step 4 Pass: 6 to 12, 60 minutes, waitlist on saved and advanced to Step 4 of 5: Curriculum ('3 of 5 steps done', 60%, 'Draft saved 6:26 pm', Sessions 'Done'), showing 12 sessions to title. The program was not created, so the expectation that 'new classes start from 6 to 12 and 60 minutes' was not verified (it would require creating a class). Defect DEF-008.",
+      "defect_id": "DEF-008",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "data#366; data#379; web#663",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-045-1.jpg",
+        "bugs/shots/PRG-045-2.jpg",
+        "bugs/shots/PRG-045-3.jpg",
+        "bugs/shots/PRG-045-4.jpg"
+      ]
     },
     {
       "id": "PRG-046",
