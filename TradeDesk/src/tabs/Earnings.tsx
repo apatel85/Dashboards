@@ -121,8 +121,11 @@ function StreakCell({ streak }: { streak: EarningsQuarter[] }) {
 }
 
 /** Expected figures for the report coming up (upcoming rows only): EPS and
- * revenue estimates plus the dollar implied move. Revenue est is "—" when
- * the sources carry none — never invented. */
+ * revenue estimates plus the dollar implied move, and the market context
+ * from the T3 template — YTD, from the 52-week high, analyst ratings,
+ * average target. Each item renders only when its field exists; the
+ * pipeline leaves a field null when the source has no value for it.
+ * Revenue est is "—" when the sources carry none — never invented. */
 function ExpectedBlock({ e }: { e: EarningsEntry }) {
   const dollarMove =
     e.current_price != null && e.implied_move_pct != null
@@ -148,6 +151,39 @@ function ExpectedBlock({ e }: { e: EarningsEntry }) {
           </b>
         </span>
       </div>
+      {(e.ytd_pct != null || e.from_high_pct != null || e.ratings_buy != null || e.target_mean != null) && (
+        <div className="stat-strip mb-context-strip">
+          {e.ytd_pct != null ? (
+            <span className="stat-item">
+              <span className="stat-item-label">Year to date</span>
+              <b className={`num ${e.ytd_pct >= 0 ? 'up' : 'down'}`}>{fmtPct(e.ytd_pct, 1, false)}</b>
+            </span>
+          ) : null}
+          {e.from_high_pct != null ? (
+            <span className="stat-item">
+              <span className="stat-item-label">From 52w high</span>
+              <b className={`num ${e.from_high_pct >= 0 ? 'up' : 'down'}`}>{fmtPct(e.from_high_pct, 1, false)}</b>
+            </span>
+          ) : null}
+          {e.ratings_buy != null || e.ratings_hold != null || e.ratings_sell != null ? (
+            <span className="stat-item">
+              <span className="stat-item-label">Analyst ratings</span>
+              <b className="num">
+                {e.ratings_buy ?? '—'} Buy · {e.ratings_hold ?? '—'} Hold · {e.ratings_sell ?? '—'} Sell
+              </b>
+            </span>
+          ) : null}
+          {e.target_mean != null ? (
+            <span className="stat-item">
+              <span className="stat-item-label">Avg target</span>
+              <b className="num">
+                {fmtMoney(e.target_mean)}
+                {e.target_analysts != null ? <span className="muted"> ({e.target_analysts} analysts)</span> : null}
+              </b>
+            </span>
+          ) : null}
+        </div>
+      )}
       {e.rev_est_b == null && (
         <p className="muted small">
           No revenue estimate is published for this report in the free sources we use.
@@ -161,9 +197,9 @@ function ExpectedBlock({ e }: { e: EarningsEntry }) {
  * Per-stock post-earnings history, computed from the streak (v2026-11-17a):
  * beats, average surprise, share that rose the next day, average moves.
  * The reaction aggregates and per-quarter reactions render only when the
- * pipeline supplies perf fields per quarter — until then an honest line
- * says they arrive with the next pipeline run. Never renders a zero for
- * missing data.
+ * pipeline supplies perf fields per quarter — no free source tested
+ * (2026-11-17) carries past report dates, so they stay absent and an
+ * honest line says so. Never renders a zero for missing data.
  */
 function StreakPerformance({ streak }: { streak: EarningsQuarter[] }) {
   if (!streak || streak.length === 0) return null;
@@ -245,7 +281,7 @@ function StreakPerformance({ streak }: { streak: EarningsQuarter[] }) {
         </>
       ) : (
         <span className="perf-line muted small">
-          Price reactions for past quarters arrive with the next pipeline run — beats and
+          Price reactions for past quarters aren&rsquo;t published by the free sources we use — beats and
           surprises above are from today&rsquo;s data.
         </span>
       )}
