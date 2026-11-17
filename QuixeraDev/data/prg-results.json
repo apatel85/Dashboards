@@ -94,15 +94,17 @@
       "preconditions": "Published term program 'U12 Batting Foundations' with one published upcoming class where Maya Tester has paid for Aria Tester (any Stripe 4242 enrolment).",
       "steps": "1. Open the program and press Edit, confirm.\n2. Go to How families pay and read the section.\n3. Try to choose \"Through a membership\" and save.",
       "expected": "The section reads \"How families pay is locked because 1 class has bookings. Move or cancel those bookings first.\" The change is refused with \"This program has bookings, so how families pay can't change.\" The program stays term; Aria's place and Maya's payment are untouched.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 precondition fails: program 'U12 Batting Foundations' does not exist on dev (Programs search, Running and Not running: 0 matches, 'Nothing running matches \u201cU12 Batting Foundations\u201d'). No published upcoming class and no Maya/Aria paid booking to test the lock against. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-648 Check 6; data#376; data#391; D-095",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/SEARCH-U12.jpg"
+      ]
     },
     {
       "id": "PRG-005",
@@ -116,11 +118,11 @@
       "preconditions": "Published membership program 'Beginner Membership' (group Beginner, 1 a week) with a published Tuesday class.",
       "steps": "1. As Desk Tester, try to enrol Aria Tester into the Tuesday class as a paid class place.\n2. As Maya Tester on Members web, open the Tuesday class and look for a class price or Enroll.",
       "expected": "The desk is refused with \"This class is joined through a membership. Families sign up from the program's page.\" No invoice or charge is made. The guardian sees no class price for that class and is pointed to sign up through the program's membership.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 no Desk Tester login exists (workbook logins all '[AS to fill]'), and no Desk view exists under this account: the profile menu offers only Profile, Preferences, Switch to Coach, Sign Out. The menu itself was not captured (the saved ROLE-check image shows the Programs page, not the menu), so this row carries no screenshot. Precondition program 'Beginner Membership' also does not exist (0 matches). Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "data#391 CLASS_JOINED_BY_MEMBERSHIP; web#683",
       "notes": "",
@@ -138,15 +140,17 @@
       "preconditions": "Published program 'U12 Batting Foundations' with no classes yet.",
       "steps": "1. On the program page press Add a class.\n2. On the Schedule step tick Tuesday and Thursday and read the class name field.\n3. Change the suffix to 'Tue and Thu' and read the help line.\n4. Finish and save the class as a draft, then open the program page's Classes tab.",
       "expected": "The name field shows the fixed prefix \"U12 Batting Foundations \u00b7\" (not editable) and a suffix prefilled from the ticked days. The help line reads \"Families see \"U12 Batting Foundations \u00b7 Tue and Thu\". Leave it blank to use the program name.\" The class is saved as \"U12 Batting Foundations \u00b7 Tue and Thu\". The Classes tab Class column shows the short label 'Tue and Thu'.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 precondition fails: program 'U12 Batting Foundations' does not exist (0 matches, Running and Not running). The class-name suffix flow could not be tested. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-893 Checks 1 and 3; D-048; web#691",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/SEARCH-U12.jpg"
+      ]
     },
     {
       "id": "PRG-007",
@@ -160,15 +164,17 @@
       "preconditions": "'U12 Batting Foundations' has a live (not cancelled, not ended) class with suffix 'Saturday Autumn'. A second program 'U10 Fielding Term' exists.",
       "steps": "1. Add a class to 'U12 Batting Foundations' and type the suffix 'saturday autumn'. Save.\n2. Add a class to 'U10 Fielding Term' with suffix 'Saturday Autumn'. Save.",
       "expected": "The first save is refused under the field with \"U12 Batting Foundations already has a class called saturday autumn. Add a different suffix.\" and focus moves to the field. The second program's class saves.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 precondition fails: 'U12 Batting Foundations' does not exist (0 matches); its live class with suffix 'Saturday Autumn' therefore does not exist either. The second program 'U10 Fielding Term' does exist (Draft, step 2), but step 1 needs U12. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-893 Check 4; data#408; web#691",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/SEARCH-U12.jpg"
+      ]
     },
     {
       "id": "PRG-008",
@@ -182,15 +188,17 @@
       "preconditions": "Class 'U12 Batting Foundations \u00b7 Tue and Thu' exists.",
       "steps": "1. Edit the program and rename it to 'U12 Batting'. Save and make it live again.\n2. Open the class and read its name.\n3. Open the class rename dialog and change the suffix to 'Tue and Thu, 4 pm'. Save.",
       "expected": "After the program rename the class still reads 'U12 Batting Foundations \u00b7 Tue and Thu'. The rename dialog shows the prefix 'U12 Batting \u00b7'. After saving the class reads 'U12 Batting \u00b7 Tue and Thu, 4 pm' with no doubled prefix.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 precondition fails: class 'U12 Batting Foundations \u00b7 Tue and Thu' does not exist because the program does not exist (0 matches). The rename flow could not be tested. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "Yes: screen location of the class rename dialog.",
       "source": "QXR-893 Check 2; data#408; web#691",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/SEARCH-U12.jpg"
+      ]
     },
     {
       "id": "PRG-009",
@@ -204,15 +212,20 @@
       "preconditions": "No program named 'Adult Evening Nets' exists.",
       "steps": "1. Create a program 'Adult Evening Nets' with age group Adult, Per class, by term, 8 sessions, class size 4 to 10, a title for every session.\n2. On Prerequisites and waivers add one prerequisite and no Participation Agreement. Press Create program.\n3. Add a class with a price and publish it.",
       "expected": "The program is created with no \"at least one waiver\" error and lands on the program page with \"Program created\" and \"Add a class\". The class publishes with no agreement error.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Pass",
+      "actual": "PASS \u2014 'Adult Evening Nets' did not exist (0 matches). Created: age group Adult (18 and over), sport Cricket, Per class, by term, 8 sessions, session length 60 minutes (workbook gives no length \u2014 60 was the tester's choice), class size Minimum 4 / Maximum 10, session titles 'Nets Session 1' \u2026 'Nets Session 8'. Prerequisites and waivers: prerequisite 'Personal Cricket Gear' (Equipment) ticked; NO Participation Agreement \u2014 the page states 'Optional for an Adult program.' and 'The agreement is skipped for Adult programs.' (waivers section below the fold in the capture; wording as reported). Create program: no 'at least one waiver' error; landed on the program page (templates/114) with 'Program created' (toast as reported; the program page itself confirms creation) and 'Add a class'. Class: the wizard has 8 steps incl. a Price step (Program, Schedule, Coach, Location & Slots, Capacity, Sessions, Price, Preview) \u2014 CORRECTION to the Lane K note that the class wizard has only 7 steps and no Price step. Mondays 23 Nov 2026\u201311 Jan 2027, 1 hour, coach Ankit Patel, capacity 4\u201310; Cricmax Test_AP has no lanes set up yet, so the venue used was 'Cricmax - Home Location', Lane 2 - Regular Lane, Monday 6:00\u20137:00 PM. Price step: 'Price for the term *' $200 (workbook gives no amount \u2014 $200 was the tester's choice); Preview 'Ready to publish', 'Price $200 for the term \u00b7 $25 a session'. Published: toast 'Class published \u2014 8 sessions booked.' Program now Active, 1 class 'Adult Evening Nets \u00b7 Mon', 0/10, Next session Nov 23, 2026 | 6 PM, Lane 2. No agreement error at any point. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-900 Checks 1 and 3",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-009-1.jpg",
+        "bugs/shots/PRG-009-2.jpg",
+        "bugs/shots/PRG-009-3.jpg",
+        "bugs/shots/PRG-009-4.jpg"
+      ]
     },
     {
       "id": "PRG-010",
@@ -226,15 +239,17 @@
       "preconditions": "Settings \u203a Waivers has one MANDATORY waiver and one OPTIONAL waiver besides the default Participation Agreement.",
       "steps": "1. Create an Under 12 program and reach Prerequisites and waivers.\n2. Try to untick the MANDATORY waiver.\n3. Read the OPTIONAL waiver.",
       "expected": "The MANDATORY waiver is ticked and can't be removed. The OPTIONAL one is unticked. Family-facing wording says \"Participation Agreement\", never \"waiver\".",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 precondition fails: Settings \u203a Waivers (20 rows) has no mandatory/optional designation \u2014 columns are NAME and ACTIONS only, and the waiver details show no mandatory/optional or enforcement field. The only waivers with 'mandatory'/'optional' in their names are Draft QA test waivers ('QA-QXR-450-\u2026 WD mandatory to deactivate', '\u2026 WO optional never signed', 'QA-QXR-477-\u2026 optional waiver'), none of which appears in the program wizard's Waivers list \u2014 in PRG-009's wizard every listed waiver was marked 'Optional'. The default 'Participation Agreement' is Active v1.0, Nov 15 2026. Row not run; 'PRG-010 Test Program' not created. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-900 Arpit 10 Nov option A; D-086; D-015",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/WAIVERS-check.jpg"
+      ]
     },
     {
       "id": "PRG-011",
@@ -248,15 +263,17 @@
       "preconditions": "A complete program draft on the last step.",
       "steps": "1. Double-click Create program (or press it twice fast).\n2. Open Programs and search the name.",
       "expected": "The button reads \"Creating program\u2026\" and the footer locks while it works. Exactly one program exists. No duplicate-name error or orphan draft appears.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 the draft 'PRG-021 Test Program' (template 113) cannot reach the last step without content: pressing Next on Curriculum with 'No sessions yet' and an empty skill pool gives 'Fix 2 things before you continue.' \u2014 'Add at least one skill to the skill pool before you can continue.' and 'Add at least one session plan. A membership program needs one before it can be created.' The double-click Create program test could not be run; no duplicate check was possible. Draft remains at Curriculum. (Follow-up: complete the draft with one skill + one session plan, then re-run.) Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "web#685 (one Idempotency-Key per create intent); web#644 follow-up",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-011-1.jpg"
+      ]
     },
     {
       "id": "PRG-012",
@@ -270,15 +287,17 @@
       "preconditions": "Coach One signed in. A program id from a second test academy ({otherId}).",
       "steps": "1. As Coach One, open /programs/new/basics.\n2. As Desk Tester, open the same address.\n3. As Admin Tester of UAT Cricket Academy, open /programs/templates/{otherId}/setup/basics.",
       "expected": "Coach One is redirected away (as the admin guard does today). Desk Tester is redirected unless the desk role is a facility admin. The admin sees \"Program not found\" with \"It may have been deleted, or it belongs to another academy.\" and no data from the other academy.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 step 1 observed: as Coach (Switch to Coach), opening /programs/new/basics did NOT open the wizard and showed no error \u2014 it redirected straight back to /instructor/home (Coach dashboard). Only admins reach the program wizard, as the row asserts for step 1. Steps 2\u20133 not run: no Desk Tester login exists (profile menu offers only Profile, Preferences, Switch to Coach, Sign Out \u2014 no Desk view), and no confirmed program id from a second academy. Switched back to Admin; facility selector still showed Cricmax Test_AP (no re-selection needed). Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "Yes: whether Desk Tester's role counts as FACILITY_ADMIN (then the desk reaches the wizard).",
       "source": "QXR-899 Addresses, Checks 2 and 7",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-012-1.jpg"
+      ]
     },
     {
       "id": "PRG-013",
@@ -519,11 +538,11 @@
       "preconditions": "Term program 'U10 Fielding Term' with one class whose end date has passed and no active bookings. Desk Tester can create a pay-later/pending enrolment.",
       "steps": "1. As Desk Tester, add Leo Tester to that ended class as unpaid/pending (not paid).\n2. As Admin Tester, open the program, press Edit and confirm.\n3. Then cancel/reject Leo's pending booking in Enrollments and try Edit again.",
       "expected": "While Leo's pending booking exists, editing is refused with \"1 booking on a class that has ended is still waiting for payment or consent. Reject it in Enrollments, then edit this program.\" After rejecting it, the program opens for editing and How families pay reads that it can still change (no running or upcoming class has bookings).",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 no Desk Tester login exists (workbook logins all '[AS to fill]'), and no Desk view exists under this account (profile menu: Profile, Preferences, Switch to Coach, Sign Out). The menu itself was not captured (the saved ROLE-check image shows the Programs page, not the menu), so this row carries no screenshot. The precondition (ended class with a pending Leo booking) also does not exist. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "Yes: whether the desk can create a pending booking on an ended class in the UI, or the team seeds one.",
       "source": "QXR-648 comment 12 Nov (Brijal, approved); data#391",
       "notes": "",
@@ -541,15 +560,17 @@
       "preconditions": "Published term program 'U9 Switch Test' (8 sessions) with one draft class and one published, not-started class, no bookings. Membership group Beginner published.",
       "steps": "1. Press Edit on the program and confirm.\n2. On How families pay read the line under the options.\n3. Pick \"Through a membership\", choose Beginner and 1 a week, press Next.\n4. Read the confirm dialog, press the keep button first, then repeat and confirm the switch.\n5. Open the published class afterwards.",
       "expected": "Before the switch the line reads \"No class has bookings yet, so you can still change this. It locks once one does.\" The confirm is titled \"Switch to through a membership?\" and lists counts such as \"{n} published classes go back to draft.\" and the draft class losing its term price. Keep leaves everything as it was. Confirming moves the published class back to draft. The class now has no class price and reads \"Places in this class come with a membership. The family signs up from the program's page.\"",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 precondition fails: program 'U9 Switch Test' does not exist (0 matches, Running and Not running). The switch flow could not be tested. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-648 lock and switch copy; data#391; web#683",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/SEARCH-U9.jpg"
+      ]
     },
     {
       "id": "PRG-025",
@@ -563,15 +584,17 @@
       "preconditions": "The program from the previous row, now membership, no bookings.",
       "steps": "1. Edit the program, choose \"Per class, by term\" on How families pay.\n2. Read the confirm and press \"Switch to term\".\n3. Without saving Sessions, open one of its draft classes and try to save a price of $240.\n4. Go back to the program's Sessions step, set 8 sessions, save, then save the class price again.",
       "expected": "The confirm is titled \"Switch to per class, by term?\" with buttons \"Keep membership\" and \"Switch to term\" and says plans stay and the membership group is unlinked. The first class price save is refused with \"Set the program's number of sessions on its Sessions step first, then set this class's price.\" After Sessions is saved, $240 saves. Publishing a class with no price is refused as price required.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 depends on PRG-024's program 'U9 Switch Test', which does not exist (0 matches). Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-648 decided 13 Nov; data#391; web#683",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/SEARCH-U9.jpg"
+      ]
     },
     {
       "id": "PRG-026",
@@ -585,15 +608,17 @@
       "preconditions": "Published membership program 'Beginner Membership'.",
       "steps": "1. Add a class to it and on Schedule tick Tuesday and Thursday.\n2. Save / press Next.\n3. Untick Thursday and save again.",
       "expected": "Two days are refused with \"A membership class meets once a week. Create another class for another day.\" One day saves.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 precondition fails: published membership program 'Beginner Membership' does not exist (0 matches, Running and Not running). Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-648 current spec; data#391 CLASS_DAYS_MISMATCH",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/SEARCH-BeginnerMembership.jpg"
+      ]
     },
     {
       "id": "PRG-027",
@@ -607,15 +632,17 @@
       "preconditions": "Term program 'U12 Batting Foundations' named in a Pass that is on sale (Kayur's QXR-594 Pass), no bookings on the program's running classes.",
       "steps": "1. Edit the program and try to switch How families pay to \"Through a membership\".\n2. In the Pass editor, try to add the membership program 'Beginner Membership' to that Pass and save.",
       "expected": "The switch is refused with sentences naming the Pass and \"To offer it through a membership, create a new membership program.\" The Pass save is refused with \"A program in this Pass is joined through a membership, so a Pass can't discount it.\" Nothing changes on the Pass or the program.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 precondition fails: term program 'U12 Batting Foundations' does not exist (0 matches) and no Pass on sale names it. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-648 decided 11 Nov; membership#138; data#391; web#683",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/SEARCH-U12.jpg"
+      ]
     },
     {
       "id": "PRG-028",
@@ -629,15 +656,17 @@
       "preconditions": "Program 'Beginner Membership' linked to group Beginner at 1 a week.",
       "steps": "1. Open Memberships & Packages \u203a Groups, open Beginner, press Archive.\n2. Try to remove or deactivate the last '1 a week' plan in Beginner.",
       "expected": "Archive is refused with \"A program uses this group. Move it to another group or archive it first.\" Removing the last 1-a-week plan is refused because a program runs at 1 a week (names the program). The group and plans are unchanged.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 precondition fails: program 'Beginner Membership' linked to group Beginner does not exist (0 matches). Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "Yes: screen location of the Groups tab actions.",
       "source": "membership#138; web#683; D-011",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/SEARCH-BeginnerMembership.jpg"
+      ]
     },
     {
       "id": "PRG-029",
@@ -651,15 +680,17 @@
       "preconditions": "Group Beginner sells 1 a week and 2 a week (Quarterly and Annual). Program 'Beginner Membership' fixed at 1 a week, published, with a Tuesday class. Platform auto-renew switch OFF.",
       "steps": "1. As Maya Tester, open Programs and open 'Beginner Membership'.\n2. Start signing up Aria and read the plans offered.",
       "expected": "Only the group's 1-a-week plans are offered (no 2-a-week plan, no Monthly while auto-renew is off). Internal plan names are never shown to the family. Do not complete payment unless QXR-1067 is fixed (D-229).",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 no Maya Tester login exists (workbook logins all '[AS to fill]'); no guardian access under this account. Precondition also fails on the group structure: group Beginner sells only 1 a week (Annual $1,400, Semi-annual $1,350, Quarterly $1,500) \u2014 2 a week is the separate group 'beginner twice a week'. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "Yes: QXR-649 signup screens are not final (D-230); confirm this row is run now or later.",
       "source": "QXR-648 Check 4b; D-002; D-229; D-230",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-RECON2-groups.jpg"
+      ]
     },
     {
       "id": "PRG-030",
