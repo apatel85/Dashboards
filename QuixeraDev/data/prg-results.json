@@ -15,15 +15,18 @@
       "preconditions": "Signed in as Admin Tester at UAT Cricket Academy. At least one published membership group exists (see data needed).",
       "steps": "1. Open Programs and press Create program.\n2. On Basics enter name 'U10 Fielding Term', pick age group Under 10, sport Cricket, press Next.\n3. On step 2 read the heading, sub-line and both options before touching anything.\n4. Pick \"Per class, by term\" and press Next.\n5. Walk through Sessions, Curriculum and Prerequisites and waivers (use the default Participation Agreement) and press Create program.",
       "expected": "Step 2 heading reads \"How families pay\" with sub-line \"How families get a place in this program's classes.\" Neither option is selected on arrival. Options read \"Through a membership\" and \"Per class, by term\". No step in the program wizard asks for a price. The program is created and the program page shows \"Program created\" with \"Add a class\"; the empty Classes tab says each class sets its own price.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 no 'UAT Cricket Academy' facility on dev. Facility selector offers 4 (New test facility, Cricmax Test, Cricmax - Home Location, Cromwell Connecticut); Facilities page lists 5 total, 1 inactive (South Windsor Connecticut). No steps run, so the step-2 heading/options, the 'Per class, by term' vs 'Term' label, the 'Program created' outcome and the duplicate-name question are all untested. Nothing created.",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "Yes: PR #654 calls the term tile \"Term\" while the ticket copy says \"Per class, by term\"; confirm which label is on screen is acceptable.",
       "source": "QXR-648 current spec, Checks 3 and 5; web#654; QXR-900",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-RECON-facilities.jpg",
+        "bugs/shots/PRG-RECON-groups.jpg"
+      ]
     },
     {
       "id": "PRG-002",
@@ -37,15 +40,18 @@
       "preconditions": "Use a second test academy (or ask the team to unpublish/archive every membership group in a scratch academy) so no membership group is published. Signed in as its admin.",
       "steps": "1. Start a new program and reach How families pay.\n2. Try to pick \"Through a membership\".\n3. Press the link under it.",
       "expected": "\"Through a membership\" cannot be picked. A line under it says a membership group is needed (ticket: \"Set up a membership group first\"; PR #683: \"No membership group ready yet\") with a link to Memberships & Packages that opens in a new tab. \"Per class, by term\" still works.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 no academy with zero published groups. All 4 selectable facilities show the same 2 published groups (Beginner; beginner twice a week); South Windsor Connecticut is Inactive and cannot be selected. No group unpublished or archived (per instructions). The disabled-state wording ('Set up a membership group first' vs 'No membership group ready yet') and the new-tab link are untested.",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "Yes: which of the two lines is the final wording.",
       "source": "QXR-648 Check 5; web#654; web#683; D-012",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-RECON-facilities.jpg",
+        "bugs/shots/PRG-RECON-groups.jpg"
+      ]
     },
     {
       "id": "PRG-003",
@@ -59,15 +65,17 @@
       "preconditions": "Published membership group 'Beginner' selling '1 a week' and '2 a week' plans (Quarterly and Annual). New program draft at How families pay.",
       "steps": "1. Pick \"Through a membership\" and press Next without choosing a group.\n2. Pick group 'Beginner' and press Next without choosing sessions per week.\n3. Open the sessions-per-week choice and read what is offered.\n4. Pick 1 a week, read the price panel, press Next.",
       "expected": "Step 1 refused with \"Pick the membership group this program is priced under.\" Step 2 refused with \"Pick how many sessions a week this program runs.\" Only the values the Beginner group sells (1 and 2 a week) are offered. A read-only panel \"What families pay in the Beginner group\" lists the group's prices; the admin never picks individual plans or types a price. With both set, Next moves to Sessions.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Blocked \u2014 no Beginner group selling both 1 and 2 a week. 'Beginner' sells only 1 a week (Annual $1,400, Semi-annual $1,350, Quarterly $1,500); '2 a week' is the separate group 'beginner twice a week' (Annual $2,400, Semi-annual $1,300, Quarterly $700). The validation messages and the 'What families pay in the Beginner group' panel are untested.",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-648 Checks 1, 4a; data#391; web#683; D-011",
-      "notes": "",
-      "shots": []
+      "notes": "Live Beginner prices ($1,400/$1,350/$1,500) do not match workbook Set-up 5 ($1,080/$600/$330); no Intermediate group exists on dev.",
+      "shots": [
+        "bugs/shots/PRG-RECON-groups.jpg"
+      ]
     },
     {
       "id": "PRG-004",
