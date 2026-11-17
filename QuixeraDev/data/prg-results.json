@@ -15,17 +15,20 @@
       "preconditions": "Signed in as Admin Tester at UAT Cricket Academy. At least one published membership group exists (see data needed).",
       "steps": "1. Open Programs and press Create program.\n2. On Basics enter name 'U10 Fielding Term', pick age group Under 10, sport Cricket, press Next.\n3. On step 2 read the heading, sub-line and both options before touching anything.\n4. Pick \"Per class, by term\" and press Next.\n5. Walk through Sessions, Curriculum and Prerequisites and waivers (use the default Participation Agreement) and press Create program.",
       "expected": "Step 2 heading reads \"How families pay\" with sub-line \"How families get a place in this program's classes.\" Neither option is selected on arrival. Options read \"Through a membership\" and \"Per class, by term\". No step in the program wizard asks for a price. The program is created and the program page shows \"Program created\" with \"Add a class\"; the empty Classes tab says each class sets its own price.",
-      "result": "Blocked",
-      "actual": "Blocked \u2014 no 'UAT Cricket Academy' facility on dev. Facility selector offers 4 (New test facility, Cricmax Test, Cricmax - Home Location, Cromwell Connecticut); Facilities page lists 5 total, 1 inactive (South Windsor Connecticut). No steps run, so the step-2 heading/options, the 'Per class, by term' vs 'Term' label, the 'Program created' outcome and the duplicate-name question are all untested. Nothing created.",
-      "defect_id": "",
+      "result": "Fail",
+      "actual": "FAIL \u2014 run under Cricmax Test_AP (workbook names UAT Cricket Academy; substituted per Ankit's 17 Nov decision). Basics: no 'Under 10' age-group radio exists \u2014 used 'Under 11 (10 and under)'. Entering 'U10 Fielding Term' shows inline 'A program called \"U10 Fielding Term\" already exists. Use a different name so families and coaches can tell them apart.' and Next is refused with error summary 'Fix 1 thing before you continue.' No program was created, so 'Program created / Add a class / empty Classes tab' was not reached. Step-2 wording verified separately in the PRG-021 draft in the same wizard: heading 'How families pay', sub-line 'How families get a place in this program's classes.', neither option selected, options 'Through a membership' and 'Per class, by term' (ticket copy, not PR #654's 'Term'). No step asks for a price. Cause is the script contradicting its own Set-up 6, which lists 'U10 Fielding Term' as existing \u2014 filed as DEF-005 (script/data, not an app bug).",
+      "defect_id": "DEF-005",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
       "confirm_as": "Yes: PR #654 calls the term tile \"Term\" while the ticket copy says \"Per class, by term\"; confirm which label is on screen is acceptable.",
       "source": "QXR-648 current spec, Checks 3 and 5; web#654; QXR-900",
       "notes": "",
       "shots": [
-        "bugs/shots/PRG-RECON-facilities.jpg",
-        "bugs/shots/PRG-RECON-groups.jpg"
+        "bugs/shots/PRG-RECON2-selector.jpg",
+        "bugs/shots/PRG-001-1.jpg",
+        "bugs/shots/PRG-001-2.jpg",
+        "bugs/shots/PRG-001-3.jpg",
+        "bugs/shots/PRG-021-1.jpg"
       ]
     },
     {
@@ -41,7 +44,7 @@
       "steps": "1. Start a new program and reach How families pay.\n2. Try to pick \"Through a membership\".\n3. Press the link under it.",
       "expected": "\"Through a membership\" cannot be picked. A line under it says a membership group is needed (ticket: \"Set up a membership group first\"; PR #683: \"No membership group ready yet\") with a link to Memberships & Packages that opens in a new tab. \"Per class, by term\" still works.",
       "result": "Blocked",
-      "actual": "Blocked \u2014 no academy with zero published groups. All 4 selectable facilities show the same 2 published groups (Beginner; beginner twice a week); South Windsor Connecticut is Inactive and cannot be selected. No group unpublished or archived (per instructions). The disabled-state wording ('Set up a membership group first' vs 'No membership group ready yet') and the new-tab link are untested.",
+      "actual": "Blocked \u2014 precondition fails under Cricmax Test_AP: the Beginner and 'beginner twice a week' groups exist with prices set, so 'Through a membership' is pickable (not disabled). Picking it shows a 'Membership group *' picker offering 'Beginner \u2014 1 a week' and 'beginner twice a week \u2014 2 a week' plus a 'Manage groups in Memberships & Packages' link. No 'Set up a membership group first' / 'No membership group ready yet' line appears. No group unpublished or archived. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
@@ -49,8 +52,8 @@
       "source": "QXR-648 Check 5; web#654; web#683; D-012",
       "notes": "",
       "shots": [
-        "bugs/shots/PRG-RECON-facilities.jpg",
-        "bugs/shots/PRG-RECON-groups.jpg"
+        "bugs/shots/PRG-RECON2-groups.jpg",
+        "bugs/shots/PRG-002-1.jpg"
       ]
     },
     {
@@ -66,7 +69,7 @@
       "steps": "1. Pick \"Through a membership\" and press Next without choosing a group.\n2. Pick group 'Beginner' and press Next without choosing sessions per week.\n3. Open the sessions-per-week choice and read what is offered.\n4. Pick 1 a week, read the price panel, press Next.",
       "expected": "Step 1 refused with \"Pick the membership group this program is priced under.\" Step 2 refused with \"Pick how many sessions a week this program runs.\" Only the values the Beginner group sells (1 and 2 a week) are offered. A read-only panel \"What families pay in the Beginner group\" lists the group's prices; the admin never picks individual plans or types a price. With both set, Next moves to Sessions.",
       "result": "Blocked",
-      "actual": "Blocked \u2014 no Beginner group selling both 1 and 2 a week. 'Beginner' sells only 1 a week (Annual $1,400, Semi-annual $1,350, Quarterly $1,500); '2 a week' is the separate group 'beginner twice a week' (Annual $2,400, Semi-annual $1,300, Quarterly $700). The validation messages and the 'What families pay in the Beginner group' panel are untested.",
+      "actual": "Blocked \u2014 precondition fails: the 'Beginner' group sells ONLY '1 a week' (Annual $1,400, Semi-annual $1,350, Quarterly $1,500); '2 a week' is the separate group 'beginner twice a week' (Annual $2,400, Semi-annual $1,300, Quarterly $700). Confirmed on the Groups tab and in the wizard: after picking group 'Beginner', 'Sessions per week *' offers only one radio, '1 a week'. The row was not executed. The read-only panel seen while setting up PRG-022 reads 'What families pay in the Beginner group' / '1 a week \u00b7 Annual, Semi-annual, Quarterly' with the note 'Read-only. The program has no price of its own; families pay for the membership they pick in this group\u2026'. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
       "defect_id": "",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
@@ -74,7 +77,9 @@
       "source": "QXR-648 Checks 1, 4a; data#391; web#683; D-011",
       "notes": "Live Beginner prices ($1,400/$1,350/$1,500) do not match workbook Set-up 5 ($1,080/$600/$330); no Intermediate group exists on dev.",
       "shots": [
-        "bugs/shots/PRG-RECON-groups.jpg"
+        "bugs/shots/PRG-RECON2-groups.jpg",
+        "bugs/shots/PRG-003-1.jpg",
+        "bugs/shots/PRG-003-2.jpg"
       ]
     },
     {
@@ -463,15 +468,18 @@
       "preconditions": "New program draft at step 2, nothing picked.",
       "steps": "1. Press Next without choosing an option.\n2. Press Next a second time quickly (double click).",
       "expected": "The step does not advance and the address does not change. An error summary at the top reads \"Fix 1 thing before you continue.\" and links to the options; the message reads \"Choose how families pay.\" Nothing is saved past step 2. Next itself is never greyed out.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Pass",
+      "actual": "PASS \u2014 fresh draft 'PRG-021 Test Program' (template 113) at step 2 with nothing picked; pressing Next twice (double click) did not advance the step and the address stayed at /programs/templates/113/setup/how-families-pay. Error summary 'Fix 1 thing before you continue.' linking to 'Choose how families pay.', inline 'Choose how families pay.' under the options. Next was never greyed out (dark-green/enabled throughout); nothing saved past step 2 (still '1 of 5 steps done', 20%). Matches the PR-following script (Next never disabled, error shown). Run under Cricmax Test_AP.",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "Yes: D-012 says Next stays disabled until a pick; the later QXR-899 rule (owner, 10 Nov) and PR #654 say Next is never disabled and shows the error. Script follows the PR.",
       "source": "QXR-648 reconciled 11 Nov; QXR-899 one rule for both wizards; web#654; D-012",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-021-1.jpg",
+        "bugs/shots/PRG-021-2.jpg"
+      ]
     },
     {
       "id": "PRG-022",
@@ -485,15 +493,19 @@
       "preconditions": "Membership program draft (group Beginner, 1 a week) at Sessions.",
       "steps": "1. Read the Sessions step.\n2. Fill the class size 6 to 12 and session length, press Next.",
       "expected": "No number of sessions is asked. In place of the waitlist switch it reads \"Membership classes always have a waitlist.\" The program saves with its waitlist on.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Pass",
+      "actual": "PASS \u2014 same draft (Through a membership, group Beginner, 1 a week) at Sessions (Step 3 of 5, /setup/sessions): no number of sessions is asked; fields are 'Session length (minutes)', 'Class size \u2014 Minimum / Maximum', note 'Classes run the session plans from Curriculum in order, then start again.' In place of a waitlist switch: 'Membership classes always have a waitlist.' Filled session length 60 minutes (workbook gives no length value \u2014 60 was the tester's choice), class size Minimum 6, Maximum 12, pressed Next: landed on Step 4 of 5 Curriculum (/programs/templates/113/setup/curriculum, '3 of 5 steps done', 60%), 'Program skill pool' and 'No sessions yet'. Draft left at Curriculum, not created/published; no price entered anywhere. Run under Cricmax Test_AP.",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-648 Check 7; QXR-900 Check 2; web#663",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-002-1.jpg",
+        "bugs/shots/PRG-022-1.jpg",
+        "bugs/shots/PRG-022-2.jpg"
+      ]
     },
     {
       "id": "PRG-023",
