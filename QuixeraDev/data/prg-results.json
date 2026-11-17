@@ -466,11 +466,11 @@
       "preconditions": "Aria cancelled tomorrow's session in time and holds that makeup. Coach One on Coach web.",
       "steps": "1. Today, open tomorrow's session attendance and try to mark Aria Present.\n2. On the session date, mark Aria Present and read the confirm; confirm.\n3. Check Aria's makeups as Maya and her notices.\n4. Change Aria back to Absent.",
       "expected": "Aria shows \"Cancelled by family\". Present and Late are not allowed before the session date. Marking asks for a confirm (\"Confirm attended\"). After confirm the makeup is removed and Maya gets a notice. Changing back to Absent returns the makeup and tells the family.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Preconditions fail: no Aria enrolment exists (no Maya/Aria test family; no guardian login), so there is no family-cancelled session with a makeup to test. Coach One access exists via Switch to Coach, but the row cannot run without the cancelled session.",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "Yes: D-158 still open (makeup removed only by a confirmed Present/Late). Coach Android marks moved to QXR-1047.",
       "source": "data#410; web#693; D-158",
       "notes": "",
@@ -899,15 +899,17 @@
       "preconditions": "'U12 Batting Foundations' live with Aria enrolled and paid.",
       "steps": "1. Press Edit and confirm.\n2. Read the title and rail.\n3. Change the description and save.\n4. Try to change the age group or the age-at-enrollment switch on Basics.\n5. Press Create to make it live again.",
       "expected": "The wizard opens on Basics titled \"Edit program\" with every step open and no \"Picked up where you left off\" toast. The description saves. Age group and age rule are read-only (live enrollments). After Create the program is live again; Aria's place and Maya's payment are unchanged.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Precondition fails: program 'U12 Batting Foundations' does not exist (0 matches, Running and Not running), so there is no live U12 program with Aria enrolled and paid.",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-899 Check 8; web#653; D-003",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/SEARCH-U12.jpg"
+      ]
     },
     {
       "id": "PRG-039",
@@ -1080,15 +1082,17 @@
       "preconditions": "Term program with a full published class, waitlist on, Aria waiting in position 1.",
       "steps": "1. Edit the program, Sessions step, turn the waitlist off and read the dialog. Save.\n2. As another guardian, try to join the waitlist of that class.\n3. As Maya, open Aria's waitlist entry.",
       "expected": "The dialog says how many are waiting. New joins are refused. Aria's entry stays and any offer runs its course. The switch is copied to every draft and published class of the program.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Preconditions fail: no Aria enrolment exists (no Maya/Aria test family; no guardian login), and no full published class with a waitlist exists to test against \u2014 the Programs list shows 0 classes full (fill rate 24% overall).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "D-031; data#366",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-037-1.jpg"
+      ]
     },
     {
       "id": "PRG-047",
@@ -1102,15 +1106,17 @@
       "preconditions": "Coach Two teaches 'U10 Fielding Term \u00b7 Tue' Tue 5:00 pm. A second class 'U12 Batting Foundations \u00b7 Tue' Tue 5:00 pm, published, no coach.",
       "steps": "1. On the second class, assign Coach Two through today's class screens.\n2. Open Action needed.",
       "expected": "The assign is refused because Coach Two is busy (the web may show a generic error; note its text). Action needed lists any class whose coach is busy at its times. A lead coach flag is only a label.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Precondition fails: the second class 'U12 Batting Foundations \u00b7 Tue' does not exist (program 'U12 Batting Foundations' has 0 matches, Running and Not running).",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "Yes: the new Coaches step screens (lead, Free/Busy list) come with QXR-901, not on dev; confirm the old class screens are the ones to test.",
       "source": "data#367; D-045; D-047",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/SEARCH-U12.jpg"
+      ]
     },
     {
       "id": "PRG-048",
