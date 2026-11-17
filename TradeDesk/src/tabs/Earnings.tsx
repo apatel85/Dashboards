@@ -196,10 +196,11 @@ function ExpectedBlock({ e }: { e: EarningsEntry }) {
 /**
  * Per-stock post-earnings history, computed from the streak (v2026-11-17a):
  * beats, average surprise, share that rose the next day, average moves.
- * The reaction aggregates and per-quarter reactions render only when the
- * pipeline supplies perf fields per quarter — no free source tested
- * (2026-11-17) carries past report dates, so they stay absent and an
- * honest line says so. Never renders a zero for missing data.
+ * The reaction aggregates and per-quarter reactions render when the
+ * pipeline supplies perf fields per quarter (v2026-11-17c: report dates
+ * from the Nasdaq calendar backfill + 1D/7D/30D moves from Yahoo bars).
+ * A quarter with no report date in the calendar keeps null reactions and
+ * the honest line says so. Never renders a zero for missing data.
  */
 function StreakPerformance({ streak }: { streak: EarningsQuarter[] }) {
   if (!streak || streak.length === 0) return null;
@@ -281,8 +282,9 @@ function StreakPerformance({ streak }: { streak: EarningsQuarter[] }) {
         </>
       ) : (
         <span className="perf-line muted small">
-          Price reactions for past quarters aren&rsquo;t published by the free sources we use — beats and
-          surprises above are from today&rsquo;s data.
+          No price reactions found for these quarters — their report dates
+          aren&rsquo;t in the free calendar we use. Beats and surprises above
+          are from today&rsquo;s data.
         </span>
       )}
     </div>
