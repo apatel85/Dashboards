@@ -27,10 +27,29 @@
  *    first expiration AFTER the earnings date (never a sector table).
  *    iv_rank: null — true IV rank needs historical IV, which no free keyless
  *    source provides. Documented; not faked.
- *  - Yahoo quoteSummary [assetProfile, earningsHistory]: sector/industry +
- *    last-4-quarter EPS streak (beat/in-line/miss vs estimate, real).
+ *  - Yahoo quoteSummary [assetProfile, earningsHistory, earningsTrend,
+ *    recommendationTrend, financialData]: sector/industry + last-4-quarter
+ *    EPS streak (beat/in-line/miss vs estimate, real) + current-quarter
+ *    revenue/EPS estimates (earningsTrend period '0q', verified 2026-11-17:
+ *    NVDA rev avg $108.71B / EPS 2.47) + analyst ratings
+ *    (recommendationTrend period '0m': strongBuy+buy / hold / sell+strongSell;
+ *    NVDA 47/14/1, matching the T3 Live template) + average price target
+ *    (financialData targetMeanPrice; NVDA $267.65).
  *    revenue_result in the streak: null — no keyless source carries
  *    historical revenue *estimates* (flagged contract deviation, see README).
+ *  - Yahoo v8 chart (range '1y'): current price + price timestamp + 52w
+ *    high/low + YTD (vs prior year-end close) + from-52w-high, all from the
+ *    same single call as the price.
+ *  - STREAK REACTIONS — NOT POPULATED (verified infeasible 2026-11-17):
+ *    Yahoo v8 chart `events=earn` returns ZERO earnings events in all
+ *    tested forms (range 2y, period1/period2, query1 + query2, div/split/earn
+ *    combo — dividends arrive, earnings do not), earningsHistory carries no
+ *    announcement date (quarter.raw is the fiscal quarter-END, not the
+ *    report date), and calendarEvents gives the NEXT earnings only. SEC
+ *    10-Q filing dates are not announcement dates. So streak entries carry
+ *    no report_date / perf_1d/7d/30d — the UI says so honestly instead of
+ *    fabricating. earningsHistory returns exactly 4 quarters, so the streak
+ *    stays at 4 (no 8-quarter extension).
  *  - SEC EDGAR companyfacts (official): health_score from real fundamentals.
  *  - Yahoo search: dated news headlines + deterministic lexicon sentiment.
  *  - insider_signal / political_signal: computed from data/insiders.json and
@@ -190,16 +209,27 @@ async function main() {
   for (const u of universe) {
     console.log(`[earnings] enriching ${u.ticker} (${u.reporting_date} ${u.report_time})`);
 
-    // Price
-    let price = null, priceTs = null;
+    // Price + YTD + from-52w-high (all from the one 1y chart call).
+    let price = null, priceTs = null, ytdPct = null, fromHighPct = null;
     try {
-      const ch = await yahooChart(u.ticker, { interval: '1d', range: '5d' });
+      const ch = await yahooChart(u.ticker, { interval: '1d', range: '1y' });
       const meta = ch?.chart?.result?.[0]?.meta || {};
       const ts = ch?.chart?.result?.[0]?.timestamp || [];
       const closes = ch?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || [];
-      const lastClose = [...closes].reverse().find((c) => c != null);
+      const bars = [];
+      for (let i = 0; i < ts.length; i++) {
+        if (closes[i] != null) bars.push({ date: unixToDate(ts[i]), close: closes[i] });
+      }
+      const lastClose = bars.length ? bars[bars.length - 1].close : null;
       price = parseMoney(meta.regularMarketPrice) ?? (lastClose != null ? r2(lastClose) : null);
       if (ts.length) priceTs = msToIso(ts[ts.length - 1] * 1000);
+      // YTD: price vs the last close of the prior calendar year.
+      const prevYearEnd = `${new Date().getUTCFullYear() - 1}-12-31`;
+      const yeBase = [...bars].reverse().find((b) => b.date <= prevYearEnd);
+      if (price != null && yeBase && yeBase.close > 0) ytdPct = r2(((price / yeBase.close) - 1) * 100, 1);
+      // From the highs: price vs the 52-week high from the same chart meta.
+      const high52 = parseMoney(meta.fiftyTwoWeekHigh);
+      if (price != null && high52 && high52 > 0) fromHighPct = r2(((price / high52) - 1) * 100, 1);
       if (priceTs && (Date.now() - new Date(priceTs).getTime()) / 86400000 > STALE_DAYS) {
         console.warn(`[earnings] ${u.ticker}: quote older than ${STALE_DAYS}d (${priceTs}) — dropping ticker`);
         staleDropped++;
@@ -217,10 +247,12 @@ async function main() {
       console.error(`[earnings] ${u.ticker}: implied-move computation failed: ${e.message}`);
     }
 
-    // Sector + EPS streak
+    // Sector + EPS streak + estimates + ratings + target (one quoteSummary call).
     let sector = null, industry = null, streak = [];
+    let revEstB = null, ratingsBuy = null, ratingsHold = null, ratingsSell = null;
+    let targetMean = null, targetAnalysts = null;
     try {
-      const qs = await yahooQuoteSummary(u.ticker, ['assetProfile', 'earningsHistory']);
+      const qs = await yahooQuoteSummary(u.ticker, ['assetProfile', 'earningsHistory', 'earningsTrend', 'recommendationTrend', 'financialData']);
       sector = qs?.assetProfile?.sector || null;
       industry = qs?.assetProfile?.industry || null;
       streak = buildStreak(qs?.earningsHistory?.history).map((q) => ({
@@ -230,8 +262,29 @@ async function main() {
         // beat/miss cannot be computed honestly — null, never filler.
         revenue_result: null,
       }));
+      // Current-quarter revenue estimate: earningsTrend period '0q',
+      // revenueEstimate.avg (raw dollars) → billions. Verified 2026-11-17
+      // (NVDA $108.71B, 42 analysts; AAPL $156.43B; MSFT $96.69B).
+      const trend0q = (qs?.earningsTrend?.trend || []).find((t) => t?.period === '0q');
+      const revAvg = trend0q?.revenueEstimate?.avg?.raw;
+      if (Number.isFinite(revAvg) && revAvg > 0) revEstB = r2(revAvg / 1e9, 2);
+      // Analyst ratings: recommendationTrend period '0m' carries PLAIN
+      // counts (not {raw} objects). T3-style fold: buy = strongBuy + buy,
+      // sell = sell + strongSell. Verified 2026-11-17 (NVDA 47/14/1).
+      const rec0m = (qs?.recommendationTrend?.trend || []).find((t) => t?.period === '0m');
+      const n = (x) => (Number.isFinite(x) ? x : null);
+      if (rec0m && (n(rec0m.strongBuy) != null || n(rec0m.buy) != null || n(rec0m.hold) != null || n(rec0m.sell) != null || n(rec0m.strongSell) != null)) {
+        ratingsBuy = (n(rec0m.strongBuy) ?? 0) + (n(rec0m.buy) ?? 0);
+        ratingsHold = n(rec0m.hold);
+        ratingsSell = (n(rec0m.sell) ?? 0) + (n(rec0m.strongSell) ?? 0);
+      }
+      // Average price target + analyst count.
+      const tm = qs?.financialData?.targetMeanPrice?.raw;
+      if (Number.isFinite(tm) && tm > 0) targetMean = r2(tm, 2);
+      const na = qs?.financialData?.numberOfAnalystOpinions?.raw;
+      if (Number.isFinite(na) && na > 0) targetAnalysts = Math.round(na);
     } catch (e) {
-      console.error(`[earnings] ${u.ticker}: quoteSummary failed: ${e.message} — sector/streak null`);
+      console.error(`[earnings] ${u.ticker}: quoteSummary failed: ${e.message} — sector/streak/estimates null`);
     }
 
     // Fundamentals → health
@@ -290,8 +343,15 @@ async function main() {
       eps_est: u.eps_est,
       eps_actual: null, // reports in the future in a forward calendar
       surprise_pct: null,
-      rev_est_b: null, // Nasdaq calendar carries no revenue forecast (documented)
+      rev_est_b: revEstB, // Yahoo earningsTrend 0q revenueEstimate.avg (verified 2026-11-17)
       rev_actual_b: null,
+      ytd_pct: ytdPct, // vs prior year-end close, from the 1y chart call
+      from_high_pct: fromHighPct, // vs 52w high, from the 1y chart meta
+      ratings_buy: ratingsBuy,
+      ratings_hold: ratingsHold,
+      ratings_sell: ratingsSell,
+      target_mean: targetMean,
+      target_analysts: targetAnalysts,
       current_price: price,
       price_ts: priceTs,
       implied_move_pct: impliedMove,
@@ -413,6 +473,13 @@ async function main() {
       surprise_pct: u.surprise_pct,
       rev_est_b: null,
       rev_actual_b: null,
+      ytd_pct: null, // lean past rows: no 1y chart enrichment (see header)
+      from_high_pct: null,
+      ratings_buy: null,
+      ratings_hold: null,
+      ratings_sell: null,
+      target_mean: null,
+      target_analysts: null,
       current_price: last ? last.close : null,
       price_ts: last ? msToIso(last.ts * 1000) : null,
       implied_move_pct: null, // post-report: the options-implied move is meaningless
