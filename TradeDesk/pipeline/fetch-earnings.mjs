@@ -37,19 +37,27 @@
  *    (financialData targetMeanPrice; NVDA $267.65).
  *    revenue_result in the streak: null — no keyless source carries
  *    historical revenue *estimates* (flagged contract deviation, see README).
- *  - Yahoo v8 chart (range '1y'): current price + price timestamp + 52w
+ *  - Yahoo v8 chart (range '2y'): current price + price timestamp + 52w
  *    high/low + YTD (vs prior year-end close) + from-52w-high, all from the
- *    same single call as the price.
- *  - STREAK REACTIONS — NOT POPULATED (verified infeasible 2026-11-17):
- *    Yahoo v8 chart `events=earn` returns ZERO earnings events in all
- *    tested forms (range 2y, period1/period2, query1 + query2, div/split/earn
- *    combo — dividends arrive, earnings do not), earningsHistory carries no
- *    announcement date (quarter.raw is the fiscal quarter-END, not the
- *    report date), and calendarEvents gives the NEXT earnings only. SEC
- *    10-Q filing dates are not announcement dates. So streak entries carry
- *    no report_date / perf_1d/7d/30d — the UI says so honestly instead of
- *    fabricating. earningsHistory returns exactly 4 quarters, so the streak
- *    stays at 4 (no 8-quarter extension).
+ *    same single call as the price. The 2y range (not 1y) also covers the
+ *    oldest streak quarter's 30-trading-day reaction window.
+ *  - STREAK REACTIONS — POPULATED (v2026-11-17c, verified 2026-11-17):
+ *    report dates come from the Nasdaq calendar looped backwards
+ *    (NVDA's 4 quarters found at 2025-11-19, 2026-02-25, 2026-05-20,
+ *    2026-08-26). The Yahoo quote earnings endpoint 404s (both URL forms,
+ *    full browser headers) and Yahoo chart events=earn returns zero
+ *    earnings events, so the calendar is the only free source that
+ *    carries past report dates. A persistent cache
+ *    (earnings-report-dates.json, committed with the data files) holds
+ *    ticker → report dates; the backfill loop runs only until every
+ *    upcoming ticker has 4 cached dates, then never again (the past-60-day
+ *    loop keeps the cache current). Matching: a streak quarter's report
+ *    date is the earliest cached date in (quarter_end, quarter_end +
+ *    90 days]. Reactions use the same baseline method as the reported
+ *    rows (close on the report date; 1/7/30 trading days after). A
+ *    quarter with no date in the window keeps null reactions — never
+ *    fabricated. earningsHistory returns exactly 4 quarters, so the
+ *    streak stays at 4 (no 8-quarter extension).
  *  - SEC EDGAR companyfacts (official): health_score from real fundamentals.
  *  - Yahoo search: dated news headlines + deterministic lexicon sentiment.
  *  - insider_signal / political_signal: computed from data/insiders.json and
@@ -206,17 +214,21 @@ async function main() {
   // ── Step 3: enrich ───────────────────────────────────────────────────────
   const entries = [];
   let staleDropped = 0;
+  // Daily bars per upcoming ticker, kept for the Step 5 streak reactions.
+  const barsByTicker = new Map();
   for (const u of universe) {
     console.log(`[earnings] enriching ${u.ticker} (${u.reporting_date} ${u.report_time})`);
 
-    // Price + YTD + from-52w-high (all from the one 1y chart call).
+    // Price + YTD + from-52w-high (all from the one 2y chart call; the 2y
+    // range also covers the oldest streak quarter's 30d reaction window).
     let price = null, priceTs = null, ytdPct = null, fromHighPct = null;
+    let bars = [];
     try {
-      const ch = await yahooChart(u.ticker, { interval: '1d', range: '1y' });
+      const ch = await yahooChart(u.ticker, { interval: '1d', range: '2y' });
       const meta = ch?.chart?.result?.[0]?.meta || {};
       const ts = ch?.chart?.result?.[0]?.timestamp || [];
       const closes = ch?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || [];
-      const bars = [];
+      bars = [];
       for (let i = 0; i < ts.length; i++) {
         if (closes[i] != null) bars.push({ date: unixToDate(ts[i]), close: closes[i] });
       }
@@ -238,6 +250,8 @@ async function main() {
     } catch (e) {
       console.error(`[earnings] ${u.ticker}: chart fetch failed: ${e.message} — price will be null`);
     }
+    // Keep the bars for the Step 5 streak reactions.
+    if (bars.length) barsByTicker.set(u.ticker, bars);
 
     // Options-implied move (real chain math)
     let impliedMove = null;
@@ -504,6 +518,95 @@ async function main() {
     });
   }
   console.log(`[earnings] past entries added: ${pastUniverse.length}`);
+
+  // ── Step 5: streak reactions — report dates + 1D/7D/30D moves ──────────
+  // Report dates come from the Nasdaq calendar (see header). The cache
+  // persists across runs; the backfill loop below runs only until every
+  // upcoming ticker has 4 cached dates, then never again.
+  const REPORT_DATE_CACHE = 'earnings-report-dates.json';
+  const MAX_BACKFILL_DAYS = 400;
+  const BACKFILL_START_DAYS = 61; // past-60 loop already covered 1..60
+  let reportDateCache = { as_of: null, tickers: {} };
+  try {
+    const c = JSON.parse(fs.readFileSync(path.join(OUT_DIR, REPORT_DATE_CACHE), 'utf8'));
+    if (c?.tickers && typeof c.tickers === 'object') reportDateCache = c;
+  } catch {
+    // No cache yet — the backfill below builds it.
+  }
+  const cacheAdd = (ticker, date) => {
+    if (!ticker || !/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return;
+    const arr = reportDateCache.tickers[ticker] || (reportDateCache.tickers[ticker] = []);
+    if (!arr.includes(date)) { arr.push(date); arr.sort().reverse(); }
+    if (arr.length > 12) arr.length = 12;
+  };
+  // Merge Step 4's past rows (already fetched — no extra requests).
+  for (const r of pastRows) cacheAdd(String(r.symbol || '').trim().toUpperCase(), r._date);
+  const upcomingEntries = entries.filter((e) => e.status === 'upcoming');
+  const needsBackfill = () =>
+    upcomingEntries.some((e) => (reportDateCache.tickers[e.ticker] || []).length < 4);
+  if (needsBackfill()) {
+    console.log('[earnings] report-date cache incomplete — backfilling from Nasdaq calendar…');
+    for (let i = BACKFILL_START_DAYS; i <= MAX_BACKFILL_DAYS && needsBackfill(); i++) {
+      const d = addDays(today, -i);
+      try {
+        const j = await fetchJson(`https://api.nasdaq.com/api/calendar/earnings?date=${d}`, {
+          label: `nasdaq earnings calendar (backfill) ${d}`,
+        });
+        for (const r of j?.data?.rows || []) {
+          cacheAdd(String(r.symbol || '').trim().toUpperCase(), d);
+        }
+      } catch (e) {
+        console.error(`[earnings] backfill fetch FAILED for ${d}: ${e.message} — continuing`);
+      }
+      if (i % 50 === 0) {
+        console.log(`[earnings] backfill day -${i} (cache: ${Object.keys(reportDateCache.tickers).length} tickers)`);
+      }
+    }
+  }
+  // Prune dates older than the backfill window so the cache stays small.
+  const pruneCutoff = addDays(today, -MAX_BACKFILL_DAYS - 30);
+  for (const [t, arr] of Object.entries(reportDateCache.tickers)) {
+    reportDateCache.tickers[t] = arr.filter((d) => d >= pruneCutoff);
+    if (!reportDateCache.tickers[t].length) delete reportDateCache.tickers[t];
+  }
+  reportDateCache.as_of = new Date().toISOString();
+  writeJsonAtomic(path.join(OUT_DIR, REPORT_DATE_CACHE), reportDateCache);
+  console.log(`[earnings] report-date cache: ${Object.keys(reportDateCache.tickers).length} tickers`);
+
+  // Attach report dates + reactions to each upcoming entry's streak.
+  // Matching: the earliest cached date in (quarter_end, quarter_end + 90d].
+  // Reactions use the same baseline method as the reported rows (close on
+  // the report date; 1/7/30 trading days after). No date in the window →
+  // null reactions, never fabricated.
+  let streaksWithReactions = 0, streakQuartersWithReactions = 0;
+  for (const e of upcomingEntries) {
+    const bars = barsByTicker.get(e.ticker) || [];
+    for (const q of e.streak) {
+      if (!q.quarter_end) continue;
+      const windowEnd = addDays(q.quarter_end, 90);
+      const dates = (reportDateCache.tickers[e.ticker] || [])
+        .filter((d) => d > q.quarter_end && d <= windowEnd)
+        .sort();
+      if (!dates.length) continue;
+      const reportDate = dates[0];
+      let baseIdx = -1;
+      for (let i = 0; i < bars.length; i++) {
+        if (bars[i].date <= reportDate) baseIdx = i;
+        else break;
+      }
+      if (baseIdx < 0) continue;
+      const base = bars[baseIdx];
+      const closeAt = (n) => (baseIdx + n < bars.length ? bars[baseIdx + n] : null);
+      const pct = (b) => (base && b && base.close > 0 ? r2(((b.close / base.close) - 1) * 100, 1) : null);
+      q.report_date = reportDate;
+      q.perf_1d_pct = pct(closeAt(1));
+      q.perf_7d_pct = pct(closeAt(7));
+      q.perf_30d_pct = pct(closeAt(30));
+      streakQuartersWithReactions++;
+    }
+    if (e.streak.some((q) => q.report_date)) streaksWithReactions++;
+  }
+  console.log(`[earnings] streak reactions: ${streaksWithReactions}/${upcomingEntries.length} tickers, ${streakQuartersWithReactions} quarters`);
 
   entries.sort((a, b) =>
     a.reporting_date !== b.reporting_date
