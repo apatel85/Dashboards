@@ -422,15 +422,18 @@
       "preconditions": "Signed in as Admin Tester. Aria enrolled in a term class with a session 30 hours away.",
       "steps": "1. Open the facility settings Makeups tab and read the card.\n2. Change notice from 24 to 48 hours and save.\n3. As Maya, tap Can't make it on the session 30 hours away and read the dialog (do not confirm). Set notice back to 24.",
       "expected": "Defaults: notice 24 hours, expiry 30 days after the class ends, same program, late cancel earns off, no per-class limit, classes may not set their own values. No money value setting exists. With 48 hours the dialog reads \"Cancel {day}'s session? Less than 48 hours' notice, so no makeup is earned.\"",
-      "result": "Not run",
-      "actual": "",
-      "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "result": "Fail",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Makeups tab location: a top-level tab on the Settings page (settings?tab=makeups), not under a separate 'Academy settings' section. Step 1 Pass: the Makeups card matches the agreed defaults exactly \u2014 Cancel notice 24 Hours; Makeups expire 30 'Days after the class ends', 'Never' unchecked; Advanced: 'Makeups count for: Same program', 'A late cancel earns a makeup' switch OFF, 'Most makeups an athlete can earn in one class' empty with 'No limit' checked, 'Classes may set their own notice and allowance' switch OFF. No money value setting exists anywhere on the card. Notes: 'Changes apply to cancels from now on. Families already enrolled keep their rule wherever it is more generous.' and 'A makeup is removed when the athlete is marked present at the session it came from.' Step 2 FAIL: changing Cancel notice 24 \u2192 48 and clicking Save does NOT persist (tried four times with different input methods; the field showed 48 and the note switched to '41 enrolled families keep their current rule where it is more generous. Families who enroll from now on get the new rule.', but no confirmation ever appeared and every reload showed 24 again). The 'set it back to 24' restore is moot \u2014 the setting remains at the agreed default of 24 hours, unaltered. Step 3 was not attempted (needs Maya). Defect DEF-010.",
+      "defect_id": "DEF-010",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "Yes: exact location of the Makeups tab in facility settings.",
       "source": "QXR-598 Settings defaults, readiness 12 Nov; web#693",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-018-1.jpg",
+        "bugs/shots/PRG-018-2.jpg"
+      ]
     },
     {
       "id": "PRG-019",
@@ -1011,15 +1014,18 @@
       "preconditions": "Under 12 is used by 'U12 Batting Foundations'.",
       "steps": "1. In Settings \u203a Academy settings \u203a Age groups, change Under 12's age to 13 and save.\n2. Archive Under 12.\n3. Start a new program and open the age group choice on Basics.\n4. Open 'U12 Batting Foundations'.",
       "expected": "The age change is refused (\"Add a new age group instead\"). After archiving, Under 12 is not offered on Basics, and the existing program still shows it as \"Under 12 (archived)\". Restore brings it back.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Blocked",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Precondition fails twice: no 'Under 12' age group exists on dev (Settings \u203a Age groups lists Under 9/11/13/15/17/Adult; the table has no archived indicator and no group is shown as archived), and no program 'U12 Batting Foundations' exists (0 matches, Running and Not running). The age-change refusal, the archive behaviour and the 'Under 12 (archived)' display cannot be tested. The age-group list is shown in AGEGROUPS-list.jpg.",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-892 Check 4; QXR-660 Basics fields",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/AGEGROUPS-list.jpg",
+        "bugs/shots/SEARCH-U12.jpg"
+      ]
     },
     {
       "id": "PRG-044",
@@ -1033,15 +1039,18 @@
       "preconditions": "New program at Basics.",
       "steps": "1. Press Next with no age group.\n2. Pick Under 12, turn on \"Age at enrollment\", set youngest 8 and oldest 12, press Next.\n3. Set oldest 11, press Next.\n4. Start an Adult program, turn the rule on with youngest 18 and oldest empty.",
       "expected": "No age group is refused. Oldest 12 is refused with \"The oldest age can't go past 11.\" in the error summary. Oldest 11 saves. Adult with youngest 18 and no oldest saves. Tiles read like \"Under 12 \u00b7 11 and under\", never a code or cut-off date.",
-      "result": "Not run",
-      "actual": "",
-      "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "result": "Blocked",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Step 1 Pass: a new program 'PRG-044 Test Program' (sport Cricket) with no age group was refused on Next \u2014 error summary 'Fix 1 thing before you continue.' with the link 'Choose who this program is for.', and the same inline message under the tiles. Steps 2\u20134 Blocked: there is NO 'Age at enrollment' control anywhere on the Basics step \u2014 the form contains only Program Name, Sport, Age group and Description (optional). Checked with Under 13 selected (the group covering age 12, used in place of the non-existent 'Under 12') and with Adult selected; no youngest/oldest fields and no age-rule toggle appeared for any age group, and a page search for 'Age at enrollment' found nothing. So the oldest-12 refusal ('The oldest age can't go past 11.'), the oldest-11 save, and the Adult youngest-18/no-oldest save could not be tested. Tiles read as plain names and ages ('Under 13 \u00b7 12 and under', 'Adult \u00b7 18 and over') \u2014 never a code or cut-off date. Neither program was created. Defect DEF-009. Side observation: closing Basics with dirty form values DID show the 'Leave without saving?' dialog \u2014 the guard triggers on a dirty step (refines DEF-006).",
+      "defect_id": "DEF-009",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-660 Basics fields and range cap; data#375",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-044-1.jpg",
+        "bugs/shots/PRG-044-2.jpg"
+      ]
     },
     {
       "id": "PRG-045",
@@ -1284,15 +1293,17 @@
       "preconditions": "Term program at Curriculum; rows 3 and 7 have an activity but no title.",
       "steps": "1. Press Next.",
       "expected": "Nothing is saved. The summary reads \"Fix 2 things before you continue.\" listing session 3 then session 7, each linked to its title. Typed content stays.",
-      "result": "Not run",
-      "actual": "",
+      "result": "Pass",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). Draft 'PRG-045 Test Program' (template 116) at Curriculum with 12 untitled sessions. Added activity 'PRG-055 Activity 3' to session 3 and 'PRG-055 Activity 7' to session 7, leaving both titles empty, then pressed Next. Exact match to expected: nothing was saved ('Unsaved changes' header; still '3 of 5 steps done', 60%), and the error summary read 'Fix 2 things before you continue.' listing 'Add a title for session 3.' then 'Add a title for session 7.', each linked to its title field (session 3's title field shows 'Add a title for session 3.', session 7's shows 'Add a title for session 7.'). Typed content stayed: session 3's activity box still holds 'PRG-055 Activity 3' and session 7's still holds 'PRG-055 Activity 7' (verified by expanding session 7). The program was not created.",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-661 Check 8",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-055-1.jpg"
+      ]
     },
     {
       "id": "PRG-056",
@@ -1306,15 +1317,18 @@
       "preconditions": "Age groups list open.",
       "steps": "1. Add a group named 'under 12'.\n2. Add 'Under 7' with age 0, then 100, then 1, then 99 (rename between tries).\n3. Add 'Juniors' with the same age as Under 12.\n4. Delete an unused group.",
       "expected": "'under 12' is refused as a duplicate. 0 and 100 are refused, 1 and 99 accepted. Same age as another group is allowed. Delete asks \"Delete {group}? No program uses it. It leaves the list for good.\" with \"Delete age group\" and \"Keep it\".",
-      "result": "Not run",
-      "actual": "",
+      "result": "Pass",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). The Add age group form asks for a single age: 'Name *' and 'Under age *' (not a range). Step 1: no 'Under 12' group exists on dev (Settings \u203a Age groups lists Under 9/11/13/15/17/Adult), so the duplicate test used the lowercase of an existing group, 'under 11' (Under age 11) \u2014 refused as a duplicate, case-insensitively: 'An age group called under 11 already exists.' Step 2: 'Under 7' with age 0 refused ('Enter an age from 1 to 99.'), age 100 refused with the same message, age 1 accepted (created 'Under 7', displayed as '0 and under'), and after renaming that group to 'Under 7 age 1' between tries, age 99 accepted (created 'Under 7', displayed as '98 and under'). Step 3: 'Juniors' with Under age 11 \u2014 the same age as the existing Under 11 group ('10 and under'; substitution for the non-existent Under 12) \u2014 accepted, displayed '10 and under'. Same age as another group is allowed. Step 4: created the throwaway 'PRG-056 Delete Me' (age 5, '4 and under', 0 programs) and deleted it; the confirm dialog read exactly 'Delete PRG-056 Delete Me?' / 'No program uses it. It leaves the list for good.' with 'Keep it' and 'Delete age group'. The group is gone from the list. Test groups remain: 'Under 7 age 1' (0 and under), 'Under 7' (98 and under), 'Juniors' (10 and under); no pre-existing group was deleted. Note: the group name is 'Under {age}' but the display is '{age-1} and under' (Under age 1 \u2192 '0 and under') \u2014 the same convention as Under 11 = '10 and under'. Steps 1 and 4 captures came out blank (dialogs do not render in print captures); the wording is from the live view, and the deletion is corroborated by the later Basics tiles, which show no 'PRG-056 Delete Me'.",
       "defect_id": "",
-      "tester": "",
-      "date_run": "",
+      "tester": "Arlo (as Ankit Patel admin)",
+      "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-892 What must be true, Check 1; D-079",
       "notes": "",
-      "shots": []
+      "shots": [
+        "bugs/shots/PRG-056-2.jpg",
+        "bugs/shots/PRG-056-3.jpg"
+      ]
     },
     {
       "id": "PRG-057",
