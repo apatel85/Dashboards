@@ -38,10 +38,21 @@ function median(vals: number[]): number | null {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
+export interface SympathyPeer {
+  ticker: string;
+  name: string;
+  market_cap: number | null;
+}
+
 /**
  * Loads fundamentals.json once. Returns:
  * - get(ticker): the ticker's metrics or null
  * - peerStats(ticker): sector medians + peer count for coloring vs peers
+ * - sympathy(ticker, industry, limit): same-industry peers ("Should move in
+ *   sympathy") — entries whose `subsector` matches the earnings row's
+ *   `industry` (fundamentals stores it as subsector), largest market cap
+ *   first, excluding the ticker itself. At most `limit` peers; fewer (even
+ *   zero) when the data has fewer — never padded with invented names.
  */
 export function useFundamentals() {
   const { data } = useJsonData<FundamentalsFile>('fundamentals.json');
@@ -50,6 +61,20 @@ export function useFundamentals() {
   const get = (ticker: string): FundamentalMetrics | null => {
     if (!ticker) return null;
     return map[ticker.toUpperCase()] ?? null;
+  };
+
+  const sympathy = (
+    ticker: string,
+    industry: string | null | undefined,
+    limit = 12,
+  ): SympathyPeer[] => {
+    if (!industry || industry === 'Unknown') return [];
+    const upper = ticker.toUpperCase();
+    return Object.entries(map)
+      .filter(([t, p]) => t !== upper && p.subsector === industry)
+      .map(([t, p]) => ({ ticker: t, name: p.name, market_cap: p.market_cap }))
+      .sort((a, b) => (b.market_cap ?? -1) - (a.market_cap ?? -1))
+      .slice(0, limit);
   };
 
   const peerStats = (ticker: string): PeerStats | null => {
@@ -71,7 +96,7 @@ export function useFundamentals() {
     return { medians, peerCount: peers.length };
   };
 
-  return { get, peerStats, asOf: data?.as_of ?? null };
+  return { get, peerStats, sympathy, asOf: data?.as_of ?? null };
 }
 
 /**

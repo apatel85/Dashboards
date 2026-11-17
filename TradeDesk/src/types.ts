@@ -161,6 +161,14 @@ export interface EarningsQuarter {
   eps_result: 'beat' | 'in-line' | 'miss';
   revenue_result: 'beat' | 'in-line' | 'miss' | null; // null: no keyless source for historical revenue estimates
   surprise_pct: number | null;
+  /** Report (announcement) date, YYYY-MM-DD — from Yahoo earningsHistory when available. */
+  report_date?: string | null;
+  /** Price reaction vs the close on the report date, in percent (1/7/30 trading
+   * days after). Null where the window hasn't elapsed or the pipeline has not
+   * populated reactions yet — the UI must never render a zero for these. */
+  perf_1d_pct?: number | null;
+  perf_7d_pct?: number | null;
+  perf_30d_pct?: number | null;
 }
 
 export interface NewsItem {
@@ -193,6 +201,19 @@ export interface EarningsEntry {
   health_score: number | null; // 0-100 fundamental health
   prob_up_pct: number | null; // model estimate, 0-100
   conviction: number | null; // 0-100
+  /** Year-to-date return vs the prior year-end close (upcoming rows only;
+   * null until the pipeline populates it). */
+  ytd_pct?: number | null;
+  /** Current price vs the 52-week high, in percent (upcoming rows only;
+   * negative = below the high). */
+  from_high_pct?: number | null;
+  /** Analyst recommendations (Yahoo recommendationTrend counts). */
+  ratings_buy?: number | null;
+  ratings_hold?: number | null;
+  ratings_sell?: number | null;
+  /** Mean analyst target price + number of analysts behind it. */
+  target_mean?: number | null;
+  target_analysts?: number | null;
   /** Last 4 reported quarters, most recent first. */
   streak: EarningsQuarter[];
   insider_signal: Signal;

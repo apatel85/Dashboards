@@ -5,6 +5,18 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#edf0f3" />
+    <script>
+      /* Apply the stored theme before React mounts (no flash of the wrong
+       * theme). Values: auto | light | dark, key td-theme. Auto (or
+       * absent) leaves data-theme unset here — the CSS media query then
+       * follows the device setting. */
+      try {
+        var __tdTheme = localStorage.getItem('td-theme');
+        if (__tdTheme === 'light' || __tdTheme === 'dark' || __tdTheme === 'auto') {
+          document.documentElement.setAttribute('data-theme', __tdTheme);
+        }
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

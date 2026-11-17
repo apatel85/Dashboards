@@ -69,7 +69,10 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  /* Auto mode only: a manual Light choice (data-theme="light") suppresses
+   * this block; a manual Dark choice is served by the [data-theme="dark"]
+   * block in mockb-tokens.css, which outranks this plain :root rule. */
+  :root:not([data-theme="light"]) {
     --bg: #080b0f;
     --panel: #10161f;
     --panel-2: #171f2c;
@@ -2044,14 +2047,16 @@ body {
   font-weight: 600;
   margin: 4px 0 8px;
 }
+/* Compact 4-column grid (v2026-11-17a): 2 columns on phone, 4 on tablet
+ * and up. The grid is shared by every tab that renders <Fundamentals />. */
 .fundamentals-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 6px 10px;
 }
-@media (min-width: 920px) {
+@media (min-width: 768px) {
   .fundamentals-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 .fundamentals-cell {

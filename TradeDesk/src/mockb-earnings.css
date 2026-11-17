@@ -307,3 +307,43 @@
 .mb-earnings .mb-after-report p {
   margin: 8px 0 0;
 }
+
+/* ── v2026-11-17a: expected block, streak history, sympathy ─────────── */
+/* "Expected this report" strip at the top of an expanded upcoming row. */
+.mb-earnings .mb-expected {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.mb-earnings .mb-expected p {
+  margin: 8px 0 0;
+}
+/* Per-stock post-earnings history under the Last-N-quarters cards. */
+.mb-earnings .mb-streak-perf {
+  margin: 10px 0 4px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.mb-earnings .mb-streak-perf .perf-line {
+  display: block;
+}
+.mb-earnings .mb-streak-react {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+/* Same-industry sympathy list, full width under the detail grid. */
+.mb-earnings .mb-sympathy {
+  margin-top: 14px;
+}
+.mb-earnings .sympathy-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  margin: 8px 0;
+}
+.mb-earnings .mb-sympathy p {
+  margin: 6px 0 0;
+}

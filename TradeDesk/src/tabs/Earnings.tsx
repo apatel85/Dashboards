@@ -12,9 +12,9 @@ import {
 } from '../components/ui';
 import { useJsonData } from '../lib/useJsonData';
 import { setQuoteUniverse, useLivePrice } from '../lib/quotes';
+import { useFundamentals } from '../lib/useFundamentals';
 import PremarketLine from '../components/PremarketLine';
 import { Fundamentals } from '../components/Fundamentals';
-import { VizBlock, HBar, HistBars } from '../components/Infographics';
 import { fmtMoney, fmtNum, fmtPct, fmtDayLabel, fmtTimeET, prettify } from '../lib/format';
 import type { EarningsEntry, EarningsQuarter } from '../types';
 
@@ -120,6 +120,167 @@ function StreakCell({ streak }: { streak: EarningsQuarter[] }) {
   );
 }
 
+/** Expected figures for the report coming up (upcoming rows only): EPS and
+ * revenue estimates plus the dollar implied move. Revenue est is "—" when
+ * the sources carry none — never invented. */
+function ExpectedBlock({ e }: { e: EarningsEntry }) {
+  const dollarMove =
+    e.current_price != null && e.implied_move_pct != null
+      ? (e.current_price * e.implied_move_pct) / 100
+      : null;
+  return (
+    <div className="mb-expected">
+      <span className="detail-label">Expected this report</span>
+      <div className="stat-strip">
+        <span className="stat-item">
+          <span className="stat-item-label">EPS est</span>
+          <b className="num">{fmtNum(e.eps_est)}</b>
+        </span>
+        <span className="stat-item">
+          <span className="stat-item-label">Revenue est</span>
+          <b className="num">{e.rev_est_b != null ? `$${fmtNum(e.rev_est_b, 1)}B` : '—'}</b>
+        </span>
+        <span className="stat-item">
+          <span className="stat-item-label">Implied move</span>
+          <b className="num">
+            {fmtPct(e.implied_move_pct, 1, false)}
+            {dollarMove != null ? ` (±${fmtMoney(dollarMove)})` : ''}
+          </b>
+        </span>
+      </div>
+      {e.rev_est_b == null && (
+        <p className="muted small">
+          No revenue estimate is published for this report in the free sources we use.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Per-stock post-earnings history, computed from the streak (v2026-11-17a):
+ * beats, average surprise, share that rose the next day, average moves.
+ * The reaction aggregates and per-quarter reactions render only when the
+ * pipeline supplies perf fields per quarter — until then an honest line
+ * says they arrive with the next pipeline run. Never renders a zero for
+ * missing data.
+ */
+function StreakPerformance({ streak }: { streak: EarningsQuarter[] }) {
+  if (!streak || streak.length === 0) return null;
+  const beats = streak.filter((q) => q.eps_result === 'beat').length;
+  const surps = streak.map((q) => q.surprise_pct).filter((v): v is number => v != null);
+  const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+  const avgSurp = avg(surps);
+  const r1d = streak.map((q) => q.perf_1d_pct).filter((v): v is number => v != null);
+  const r7d = streak.map((q) => q.perf_7d_pct).filter((v): v is number => v != null);
+  const r30d = streak.map((q) => q.perf_30d_pct).filter((v): v is number => v != null);
+  const hasReactions = r1d.length > 0 || r7d.length > 0 || r30d.length > 0;
+  const rose1d = r1d.filter((v) => v > 0).length;
+  const avg1d = avg(r1d);
+  const avg7d = avg(r7d);
+  const avg30d = avg(r30d);
+  const avgAbs1d = r1d.length ? r1d.reduce((a, b) => a + Math.abs(b), 0) / r1d.length : null;
+  const reacted = streak.filter(
+    (q) => q.perf_1d_pct != null || q.perf_7d_pct != null || q.perf_30d_pct != null,
+  );
+  return (
+    <div className="mb-streak-perf">
+      <span className="perf-line">
+        Beats{' '}
+        <b className="num">
+          {beats} of {streak.length}
+        </b>
+        {avgSurp != null ? (
+          <>
+            {' · '}avg surprise{' '}
+            <b className={`num ${pctTone(avgSurp)}`}>{fmtPct(avgSurp, 1)}</b>
+          </>
+        ) : null}
+        {hasReactions ? (
+          <>
+            {' · '}rose the next day{' '}
+            <b className="num">
+              {rose1d} of {r1d.length}
+            </b>
+          </>
+        ) : null}
+      </span>
+      {hasReactions ? (
+        <>
+          <span className="perf-line">
+            Avg move after past reports:{' '}
+            {avg1d != null ? (
+              <>
+                1D <b className={`num ${pctTone(avg1d)}`}>{fmtPct(avg1d, 1)}</b>
+              </>
+            ) : null}
+            {avg7d != null ? (
+              <>
+                {' · '}7D <b className={`num ${pctTone(avg7d)}`}>{fmtPct(avg7d, 1)}</b>
+              </>
+            ) : null}
+            {avg30d != null ? (
+              <>
+                {' · '}30D <b className={`num ${pctTone(avg30d)}`}>{fmtPct(avg30d, 1)}</b>
+              </>
+            ) : null}
+            {avgAbs1d != null ? (
+              <>
+                {' · '}avg |1D| <b className="num">±{fmtPct(avgAbs1d, 1, false)}</b>
+              </>
+            ) : null}
+          </span>
+          <ul className="mb-streak-react">
+            {reacted.map((q) => (
+              <li key={q.quarter}>
+                <span className="muted">{q.quarter}</span>
+                {' · '}
+                <ResultBadge result={q.eps_result} />
+                {q.surprise_pct != null ? ` ${fmtPct(q.surprise_pct, 1)}` : ''}
+                {q.report_date ? ` · reported ${fmtDayLabel(q.report_date)}` : ''}
+                {` · 1D ${fmtPct(q.perf_1d_pct, 1)} · 7D ${fmtPct(q.perf_7d_pct, 1)} · 30D ${fmtPct(q.perf_30d_pct, 1)}`}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <span className="perf-line muted small">
+          Price reactions for past quarters arrive with the next pipeline run — beats and
+          surprises above are from today&rsquo;s data.
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Same-industry peers that often move with this stock around earnings
+ * (T3 cheat-sheet idea). From fundamentals.json only — same subsector as
+ * the row's industry, largest first, top 12. Hidden when the data has no
+ * peers; never padded with invented names.
+ */
+function SympathyBlock({ ticker, industry }: { ticker: string; industry: string }) {
+  const { sympathy } = useFundamentals();
+  const peers = sympathy(ticker, industry, 12);
+  if (peers.length === 0) return null;
+  return (
+    <div className="mb-sympathy">
+      <span className="detail-label">Should move in sympathy — {industry}</span>
+      <div className="sympathy-list">
+        {peers.map((p) => (
+          <span key={p.ticker} title={p.name}>
+            <TvLink ticker={p.ticker} />
+          </span>
+        ))}
+      </div>
+      <p className="muted small">
+        Same {industry} industry, largest first. These often move with {ticker} around
+        earnings — a watchlist, not a recommendation.
+      </p>
+    </div>
+  );
+}
+
 function EarningsRow({ e, maxMove }: { e: EarningsEntry; maxMove: number }) {
   const [open, setOpen] = useState(false);
   const lp = useLivePrice(e.ticker, e.current_price);
@@ -168,6 +329,11 @@ function EarningsRow({ e, maxMove }: { e: EarningsEntry; maxMove: number }) {
         </td>
         <td data-th="Impl. move" className="num r">
           <span className="mb-move-num">{fmtPct(e.implied_move_pct, 1, false)}</span>
+          {e.implied_move_pct != null && e.current_price != null ? (
+            <span className="subname">
+              ±{fmtMoney((e.current_price * e.implied_move_pct) / 100)}
+            </span>
+          ) : null}
           {e.implied_move_pct != null && maxMove > 0 ? (
             <span
               className="mb-move-bar"
@@ -227,10 +393,16 @@ function EarningsRow({ e, maxMove }: { e: EarningsEntry; maxMove: number }) {
         <tr className="detail-row">
           <td colSpan={7}>
             {e.status === 'reported' && <AfterReportBlock e={e} />}
+            {e.status === 'upcoming' && <ExpectedBlock e={e} />}
             <div className="detail-grid">
               <div>
-                <span className="detail-label">Last 4 quarters (EPS result · surprise)</span>
+                <span className="detail-label">
+                  {e.streak.length > 0
+                    ? `Last ${e.streak.length} quarters (EPS result · surprise)`
+                    : 'Last quarters (EPS result · surprise)'}
+                </span>
                 <StreakCell streak={e.streak} />
+                <StreakPerformance streak={e.streak} />
                 <div className="detail-facts">
                   <span>
                     Sector <b>{e.sector}</b> · {e.industry}
@@ -238,11 +410,6 @@ function EarningsRow({ e, maxMove }: { e: EarningsEntry; maxMove: number }) {
                   <span>
                     Cap <b>{e.cap_tier}</b>
                   </span>
-                  {e.rev_est_b != null ? (
-                    <span>
-                      Rev est <b className="num">${fmtNum(e.rev_est_b)}B</b>
-                    </span>
-                  ) : null}
                   {e.iv_rank != null ? (
                     <span>
                       IV rank <b className="num">{e.iv_rank}</b>
@@ -273,6 +440,7 @@ function EarningsRow({ e, maxMove }: { e: EarningsEntry; maxMove: number }) {
                 )}
               </div>
             </div>
+            <SympathyBlock ticker={e.ticker} industry={e.industry} />
             <Fundamentals ticker={e.ticker} />
           </td>
         </tr>
@@ -290,8 +458,6 @@ export default function EarningsTab() {
   const today = etToday();
   const tomorrow = addDaysStr(today, 1);
   const [openBuckets, setOpenBuckets] = useState<Set<string>>(() => new Set([today, tomorrow]));
-  /** "What actually happened" card: collapsed by default. */
-  const [earnVizOpen, setEarnVizOpen] = useState(false);
 
   useEffect(() => {
     if (data) setQuoteUniverse(data.map((e) => e.ticker));
@@ -378,44 +544,6 @@ export default function EarningsTab() {
     [filtered],
   );
 
-  /** What actually happened after earnings (reported rows only): surprise
-   * distribution + 1d/7d move distributions. Computed from the full feed,
-   * not the filtered view, so the picture stays stable while searching. */
-  const earnViz = useMemo(() => {
-    const rows = data ?? [];
-    const rep = rows.filter((e) => e.status === 'reported');
-    const withSurp = rep.filter((e) => e.surprise_pct != null);
-    const med = (xs: number[]) => {
-      if (!xs.length) return null;
-      const s = [...xs].sort((a, b) => a - b);
-      return s[Math.floor(s.length / 2)];
-    };
-    const dist = (get: (e: EarningsEntry) => number | null | undefined) => {
-      const vals = rep.map(get).filter((v): v is number => v != null);
-      return {
-        n: vals.length,
-        med: med(vals),
-        ups: vals.filter((v) => v > 0).length,
-        buckets: {
-          bigDown: vals.filter((v) => v < -5).length,
-          down: vals.filter((v) => v >= -5 && v < 0).length,
-          up: vals.filter((v) => v >= 0 && v < 5).length,
-          bigUp: vals.filter((v) => v >= 5).length,
-        },
-      };
-    };
-    return {
-      reported: rep.length,
-      beats: withSurp.filter((e) => (e.surprise_pct as number) > 0).length,
-      misses: withSurp.filter((e) => (e.surprise_pct as number) < 0).length,
-      surpMed: med(withSurp.map((e) => e.surprise_pct as number)),
-      surpN: withSurp.length,
-      d1: dist((e) => e.perf_1d_pct),
-      d7: dist((e) => e.perf_7d_pct),
-      d30: dist((e) => e.perf_30d_pct),
-    };
-  }, [data]);
-
   if (loading) return <LoadingPanel what="earnings calendar" />;
   if (error || !data)
     return <ErrorPanel file="public/data/earnings.json" error={error ?? 'empty file'} />;
@@ -490,92 +618,6 @@ export default function EarningsTab() {
         <b>C</b> = setup strength · <b>Impl. move</b> = how much the options
         market expects the stock to move
       </p>
-
-      {/* What actually happened: surprise + post-earnings moves, reported
-          rows only. Collapsed by default. */}
-      <div className="mb-card">
-        <button
-          type="button"
-          className="mb-card-head"
-          onClick={() => setEarnVizOpen((o) => !o)}
-          aria-expanded={earnVizOpen}
-        >
-          <span className="mb-card-num">00</span>
-          <span className="mb-card-title">What actually happened</span>
-          <span className="mb-card-sub">Reported rows: surprise and the move after</span>
-          <span className="mb-count-badge">{earnViz.reported}</span>
-          <span className="mb-chev" aria-hidden="true">{earnVizOpen ? '▾' : '▸'}</span>
-        </button>
-        {earnVizOpen && (
-          <div className="mb-card-body">
-            <VizBlock
-              title="Beat or miss — earnings surprise"
-              read={
-                <>
-                  {earnViz.beats} of {earnViz.surpN} reported rows beat the estimate and{' '}
-                  {earnViz.misses} missed — median surprise{' '}
-                  {earnViz.surpMed != null ? fmtPct(earnViz.surpMed) : '—'}. Beating the estimate
-                  is the norm, not the exception.
-                </>
-              }
-            >
-              <HBar label="Beat (above estimate)" value={String(earnViz.beats)} pct={earnViz.surpN ? (earnViz.beats / earnViz.surpN) * 100 : 0} tone="up" />
-              <HBar label="Missed (below estimate)" value={String(earnViz.misses)} pct={earnViz.surpN ? (earnViz.misses / earnViz.surpN) * 100 : 0} tone="down" />
-            </VizBlock>
-
-            <VizBlock
-              title="The move after the report"
-              read={
-                <>
-                  Day after: {earnViz.d1.ups} of {earnViz.d1.n} up, median{' '}
-                  {earnViz.d1.med != null ? fmtPct(earnViz.d1.med) : '—'}. A week out:{' '}
-                  {earnViz.d7.ups} of {earnViz.d7.n} up, median{' '}
-                  {earnViz.d7.med != null ? fmtPct(earnViz.d7.med) : '—'}. The day-after move is
-                  mostly noise — {earnViz.d1.n - earnViz.d1.ups} of {earnViz.d1.n} were flat or
-                  down the day after reporting.
-                </>
-              }
-              note={
-                earnViz.d30.n < 10
-                  ? `30-day moves: only ${earnViz.d30.n} reported rows are old enough — too few to read anything into, so no chart for them.`
-                  : undefined
-              }
-            >
-              <p className="mb-funnel-level">Day after the report — {earnViz.d1.n} rows</p>
-              <HistBars
-                buckets={[
-                  { label: 'Down over 5%', count: earnViz.d1.buckets.bigDown, tone: 'down' },
-                  { label: 'Down 0–5%', count: earnViz.d1.buckets.down, tone: 'down' },
-                  { label: 'Up 0–5%', count: earnViz.d1.buckets.up, tone: 'up' },
-                  { label: 'Up over 5%', count: earnViz.d1.buckets.bigUp, tone: 'up' },
-                ]}
-              />
-              <p className="mb-funnel-level">7 days after — {earnViz.d7.n} rows</p>
-              <HistBars
-                buckets={[
-                  { label: 'Down over 5%', count: earnViz.d7.buckets.bigDown, tone: 'down' },
-                  { label: 'Down 0–5%', count: earnViz.d7.buckets.down, tone: 'down' },
-                  { label: 'Up 0–5%', count: earnViz.d7.buckets.up, tone: 'up' },
-                  { label: 'Up over 5%', count: earnViz.d7.buckets.bigUp, tone: 'up' },
-                ]}
-              />
-              {earnViz.d30.n >= 10 && (
-                <>
-                  <p className="mb-funnel-level">30 days after — {earnViz.d30.n} rows</p>
-                  <HistBars
-                    buckets={[
-                      { label: 'Down over 5%', count: earnViz.d30.buckets.bigDown, tone: 'down' },
-                      { label: 'Down 0–5%', count: earnViz.d30.buckets.down, tone: 'down' },
-                      { label: 'Up 0–5%', count: earnViz.d30.buckets.up, tone: 'up' },
-                      { label: 'Up over 5%', count: earnViz.d30.buckets.bigUp, tone: 'up' },
-                    ]}
-                  />
-                </>
-              )}
-            </VizBlock>
-          </div>
-        )}
-      </div>
 
       {filtered.length === 0 ? (
         <p className="mb-empty">No companies match these filters. Clear the search or pick a different size.</p>

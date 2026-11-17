@@ -83,8 +83,41 @@
   --mb-tap:44px;
   --mb-anim:var(--move);
 }
+
+/* ── Manual theme override (v2026-11-17a) ────────────────────────────
+ * The header toggle writes data-theme="auto" | "light" | "dark" on <html>
+ * (persisted in localStorage as td-theme). Auto (or absent) = the device
+ * setting, via the prefers-color-scheme query below. A manual choice wins
+ * over the device: [data-theme="dark"] applies in a light device, and
+ * [data-theme="light"] suppresses the dark media query (its selector
+ * excludes [data-theme="light"]). Both blocks carry the full token set so
+ * no value leaks from the other mode. */
+:root[data-theme="light"]{
+  color-scheme: light;
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#080b0f;
+  --panel:#10161f;
+  --panel-2:#151e2a;
+  --panel-3:#0b1119;
+  --ink:#e9eef5;
+  --muted:#a7b4c6;
+  --faint:#8798ad;
+  --line:#2a3646;
+  --line-soft:#1e2938;
+  --up:#3ed08d;
+  --up-bg:rgba(46,194,126,.13);
+  --down:#ff7d68;
+  --down-bg:rgba(242,96,76,.13);
+  --info:#7db1ff;
+  --info-bg:rgba(88,166,255,.12);
+  --signal-soft:rgba(245,165,36,.12);
+  --desk:#131c28;
+  --focus:#7db1ff;
+}
 @media (prefers-color-scheme: dark){
-  :root{
+  :root:not([data-theme="light"]){
     --bg:#080b0f;
     --panel:#10161f;
     --panel-2:#151e2a;
