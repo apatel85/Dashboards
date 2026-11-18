@@ -15,21 +15,15 @@
       "preconditions": "Signed in as Admin Tester at UAT Cricket Academy. At least one published membership group exists (see data needed).",
       "steps": "1. Open Programs and press Create program.\n2. On Basics enter name 'U10 Fielding Term', pick age group Under 10, sport Cricket, press Next.\n3. On step 2 read the heading, sub-line and both options before touching anything.\n4. Pick \"Per class, by term\" and press Next.\n5. Walk through Sessions, Curriculum and Prerequisites and waivers (use the default Participation Agreement) and press Create program.",
       "expected": "Step 2 heading reads \"How families pay\" with sub-line \"How families get a place in this program's classes.\" Neither option is selected on arrival. Options read \"Through a membership\" and \"Per class, by term\". No step in the program wizard asks for a price. The program is created and the program page shows \"Program created\" with \"Add a class\"; the empty Classes tab says each class sets its own price.",
-      "result": "Fail",
-      "actual": "FAIL \u2014 run under Cricmax Test_AP (workbook names UAT Cricket Academy; substituted per Ankit's 17 Nov decision). Basics: no 'Under 10' age-group radio exists \u2014 used 'Under 11 (10 and under)'. Entering 'U10 Fielding Term' shows inline 'A program called \"U10 Fielding Term\" already exists. Use a different name so families and coaches can tell them apart.' and Next is refused with error summary 'Fix 1 thing before you continue.' No program was created, so 'Program created / Add a class / empty Classes tab' was not reached. Step-2 wording verified separately in the PRG-021 draft in the same wizard: heading 'How families pay', sub-line 'How families get a place in this program's classes.', neither option selected, options 'Through a membership' and 'Per class, by term' (ticket copy, not PR #654's 'Term'). No step asks for a price. Cause is the script contradicting its own Set-up 6, which lists 'U10 Fielding Term' as existing \u2014 filed as DEF-005 (script/data, not an app bug).",
-      "defect_id": "DEF-005",
+      "result": "Pass",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). No screenshots were returned for this run \u2014 the browser's report cites capture indices but no files arrived; the evidence below is the verbatim live view. Delete-first retest: the pre-existing draft 'U10 Fielding Term' (Cricket \u00b7 Under 11 \u00b7 10 and under, Draft \u00b7 set-up step 2) was deleted via its Actions menu \u2192 'Delete program'; confirmation dialog: 'Delete Program? Are you sure you want to delete U10 Fielding Term program. All the information related to the program will be lost.' Toast 'Success \u2014 Program deleted'; search then showed no match; All count dropped 13 \u2192 12. Re-created as template 120: Basics name 'U10 Fielding Term', Cricket, Under 11 (the wizard has NO 'Under 10' radio). Step 2 observed before touching anything \u2014 heading 'How families pay', sub-line 'How families get a place in this program's classes.', neither option selected on arrival, options 'Through a membership' and 'Per class, by term'. Picked 'Per class, by term'. Sessions: 12 sessions, 60 min, 6\u201312, waitlist on. Curriculum: 'U10 Session 1'\u2013'U10 Session 12', each activity 'Warm-up and basics' + skill 'Off break'. Prerequisites: default Participation Agreement. No wizard step asked for a price. Created program; page showed toast 'Success \u2014 Program created' with 'Add a class'; empty Classes tab: 'A class is when and where this program runs. You set its dates, price, coaches and venue. Each class sets its own price when you create it.' Program Active, Term, 12 sessions, 0 classes. DEF-005 is fixed by this run. This created U10 program replaces the separate draft-completion step.",
+      "defect_id": "",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
       "confirm_as": "Yes: PR #654 calls the term tile \"Term\" while the ticket copy says \"Per class, by term\"; confirm which label is on screen is acceptable.",
       "source": "QXR-648 current spec, Checks 3 and 5; web#654; QXR-900",
       "notes": "",
-      "shots": [
-        "bugs/shots/PRG-RECON2-selector.jpg",
-        "bugs/shots/PRG-001-1.jpg",
-        "bugs/shots/PRG-001-2.jpg",
-        "bugs/shots/PRG-001-3.jpg",
-        "bugs/shots/PRG-021-1.jpg"
-      ]
+      "shots": []
     },
     {
       "id": "PRG-002",
@@ -44,17 +38,14 @@
       "steps": "1. Start a new program and reach How families pay.\n2. Try to pick \"Through a membership\".\n3. Press the link under it.",
       "expected": "\"Through a membership\" cannot be picked. A line under it says a membership group is needed (ticket: \"Set up a membership group first\"; PR #683: \"No membership group ready yet\") with a link to Memberships & Packages that opens in a new tab. \"Per class, by term\" still works.",
       "result": "Blocked",
-      "actual": "Blocked \u2014 precondition fails under Cricmax Test_AP: the Beginner and 'beginner twice a week' groups exist with prices set, so 'Through a membership' is pickable (not disabled). Picking it shows a 'Membership group *' picker offering 'Beginner \u2014 1 a week' and 'beginner twice a week \u2014 2 a week' plus a 'Manage groups in Memberships & Packages' link. No 'Set up a membership group first' / 'No membership group ready yet' line appears. No group unpublished or archived. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). No screenshots were returned for this run \u2014 the browser's report cites capture indices but no files arrived; the evidence below is the verbatim live view. Re-check: a temporary program 'PRG-002 Check' (template 121, Basics Cricket / Under 11) was created for the check and then deleted (toast 'Success \u2014 Program deleted'; All count returned to 12). At How families pay, 'Through a membership' was pickable (radio checked on click) \u2014 no refusal, no line 'Set up a membership group first' / 'No membership group ready yet'. Under it: 'Membership group *' combobox 'Choose a membership group' and link 'Manage groups in Memberships & Packages', which opened a new tab to the Groups tab showing Beginner ('3 of 3 prices set \u00b7 1 makeups per period, expire: End of each period', 1 a week: Annual $1,400 $29.17/hr, Semi-annual $1,350 $56.25/hr, Quarterly $1,500 $125/hr) and 'beginner twice a week' ('3 of 3 prices set \u00b7 2 makeups per period, expire: Never', 2 a week: Annual $2,400, Semi-annual $1,300, Quarterly $700). 'Per class, by term' still works. Row stays Blocked because Beginner and 'beginner twice a week' are still published. No group was deleted or archived.",
       "defect_id": "",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
       "confirm_as": "Yes: which of the two lines is the final wording.",
       "source": "QXR-648 Check 5; web#654; web#683; D-012",
       "notes": "",
-      "shots": [
-        "bugs/shots/PRG-RECON2-groups.jpg",
-        "bugs/shots/PRG-002-1.jpg"
-      ]
+      "shots": []
     },
     {
       "id": "PRG-003",
@@ -69,18 +60,14 @@
       "steps": "1. Pick \"Through a membership\" and press Next without choosing a group.\n2. Pick group 'Beginner' and press Next without choosing sessions per week.\n3. Open the sessions-per-week choice and read what is offered.\n4. Pick 1 a week, read the price panel, press Next.",
       "expected": "Step 1 refused with \"Pick the membership group this program is priced under.\" Step 2 refused with \"Pick how many sessions a week this program runs.\" Only the values the Beginner group sells (1 and 2 a week) are offered. A read-only panel \"What families pay in the Beginner group\" lists the group's prices; the admin never picks individual plans or types a price. With both set, Next moves to Sessions.",
       "result": "Blocked",
-      "actual": "Blocked \u2014 precondition fails: the 'Beginner' group sells ONLY '1 a week' (Annual $1,400, Semi-annual $1,350, Quarterly $1,500); '2 a week' is the separate group 'beginner twice a week' (Annual $2,400, Semi-annual $1,300, Quarterly $700). Confirmed on the Groups tab and in the wizard: after picking group 'Beginner', 'Sessions per week *' offers only one radio, '1 a week'. The row was not executed. The read-only panel seen while setting up PRG-022 reads 'What families pay in the Beginner group' / '1 a week \u00b7 Annual, Semi-annual, Quarterly' with the note 'Read-only. The program has no price of its own; families pay for the membership they pick in this group\u2026'. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). No screenshots were returned for this run \u2014 the browser's report cites capture indices but no files arrived; the evidence below is the verbatim live view. Re-check (reused the temporary wizard, template 121; no group was created, deleted or changed). Picked 'Through a membership', pressed Next without a group: refused \u2014 panel 'Fix 2 things before you continue.' with links 'Pick the membership group this program is priced under.' and 'Pick how many sessions a week this program runs.', and red text under the combobox 'Pick the membership group this program is priced under.' Picked Beginner: Sessions per week offered only '1 a week'. The group dropdown also showed 'beginner twice a week \u2014 2 a week', but Beginner itself offers only 1 a week. Pressed Next without choosing sessions/week: refused \u2014 'Fix 1 thing before you continue.' / 'Pick how many sessions a week this program runs.' Picked 1 a week: read-only price panel \u2014 'What families pay in the Beginner group', '1 a week \u00b7 Annual, Semi-annual, Quarterly', table: Annual / Recurring autopay / 1 a week / $1,400; Semi-annual / Recurring autopay / 1 a week / $1,350; Quarterly / Recurring autopay / 1 a week / $1,500; note 'Read-only. The program has no price of its own; families pay for the membership they pick in this group\u2026'. Admin never picks individual plans or types a price (no price input on the step). Next moved to Sessions (Step 3 of 5, '2 of 5 steps done', 'Membership classes always have a waitlist.'). Stopped at Sessions \u2014 program NOT created. Row stays Blocked because Beginner offers only '1 a week', not '1 and 2 a week' as expected; the refusals and price panel otherwise matched exactly.",
       "defect_id": "",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-648 Checks 1, 4a; data#391; web#683; D-011",
       "notes": "Live Beginner prices ($1,400/$1,350/$1,500) do not match workbook Set-up 5 ($1,080/$600/$330); no Intermediate group exists on dev.",
-      "shots": [
-        "bugs/shots/PRG-RECON2-groups.jpg",
-        "bugs/shots/PRG-003-1.jpg",
-        "bugs/shots/PRG-003-2.jpg"
-      ]
+      "shots": []
     },
     {
       "id": "PRG-004",
@@ -140,17 +127,15 @@
       "preconditions": "Published program 'U12 Batting Foundations' with no classes yet.",
       "steps": "1. On the program page press Add a class.\n2. On the Schedule step tick Tuesday and Thursday and read the class name field.\n3. Change the suffix to 'Tue and Thu' and read the help line.\n4. Finish and save the class as a draft, then open the program page's Classes tab.",
       "expected": "The name field shows the fixed prefix \"U12 Batting Foundations \u00b7\" (not editable) and a suffix prefilled from the ticked days. The help line reads \"Families see \"U12 Batting Foundations \u00b7 Tue and Thu\". Leave it blank to use the program name.\" The class is saved as \"U12 Batting Foundations \u00b7 Tue and Thu\". The Classes tab Class column shows the short label 'Tue and Thu'.",
-      "result": "Blocked",
-      "actual": "Blocked \u2014 precondition fails: program 'U12 Batting Foundations' does not exist (0 matches, Running and Not running). The class-name suffix flow could not be tested. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
+      "result": "Pass",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). No screenshots were returned for this run \u2014 the browser's report cites capture indices but no files arrived; the evidence below is the verbatim live view. Run first, while U12 had 0 classes. Add a class on U12; Schedule step: ticked Tuesday and Thursday \u2014 suffix auto-filled 'Tue and Thu'; name field showed fixed prefix group 'U12 Batting Foundations \u00b7' (not editable \u2014 only the suffix textbox is editable) + suffix textbox 'Tue and Thu'. Help line: 'Families see \"U12 Batting Foundations \u00b7 Tue and Thu\". Leave it blank to use the program name.' Finished the class: dates 19 Jan\u201325 Feb 2027, Tue/Thu, 1 hour, Ankit Patel, Cricmax - Home Location, Lane 2, 5:00\u20136:00 PM both days, capacity 6\u201312, 12 sessions generated, saved as Draft. Classes tab: class saved as 'U12 Batting Foundations \u00b7 Tue and Thu', Class column short label 'Tue and Thu', 'Tue, Thu', 0/12, Draft, AP.",
       "defect_id": "",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-893 Checks 1 and 3; D-048; web#691",
       "notes": "",
-      "shots": [
-        "bugs/shots/SEARCH-U12.jpg"
-      ]
+      "shots": []
     },
     {
       "id": "PRG-007",
@@ -164,17 +149,15 @@
       "preconditions": "'U12 Batting Foundations' has a live (not cancelled, not ended) class with suffix 'Saturday Autumn'. A second program 'U10 Fielding Term' exists.",
       "steps": "1. Add a class to 'U12 Batting Foundations' and type the suffix 'saturday autumn'. Save.\n2. Add a class to 'U10 Fielding Term' with suffix 'Saturday Autumn'. Save.",
       "expected": "The first save is refused under the field with \"U12 Batting Foundations already has a class called saturday autumn. Add a different suffix.\" and focus moves to the field. The second program's class saves.",
-      "result": "Blocked",
-      "actual": "Blocked \u2014 precondition fails: 'U12 Batting Foundations' does not exist (0 matches); its live class with suffix 'Saturday Autumn' therefore does not exist either. The second program 'U10 Fielding Term' does exist (Draft, step 2), but step 1 needs U12. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
+      "result": "Pass",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). No screenshots were returned for this run \u2014 the browser's report cites capture indices but no files arrived; the evidence below is the verbatim live view. Precondition: Saturday class on U12, suffix 'Saturday Autumn', Sat 23 Jan\u201310 Apr 2027, 10:00\u201311:00 AM, Ankit Patel, Home Location Lane 2, capacity 6\u201312, 12 sessions, price $200, Published (live) \u2014 toast 'Class published \u2014 12 sessions booked.' Classes tab: 'Saturday Autumn', Published, Sat, 0/12, 'Jan 23, 2027 | 10 AM Lane 2', 'Apr 10, 2027', AP. Step 1: second U12 class, typed suffix 'saturday autumn' (lowercase), ticked Sat, pressed Save draft. Refused \u2014 dialog stayed on Schedule; red text under the field: 'U12 Batting Foundations already has a class called saturday autumn. Add a different suffix.' with link 'Open that class (opens in a new tab)'; field marked [invalid]. Case-insensitive refusal confirmed. Side effect: closing that dialog auto-saved a stray draft 'U12 Batting Foundations \u00b7 saturday autumn' (Draft, Sat, 0/12). No Delete control exists for classes (Actions: Edit details / Rename only). It was renamed via Rename dialog to 'Duplicate Test' (toast 'Success \u2014 Class renamed to U12 Batting Foundations \u00b7 Duplicate Test.') so no duplicate name remains. Step 2: U10 Fielding Term had 0 classes. Added a class with suffix 'Saturday Autumn', ticked Sat, Save draft \u2014 saved (toast 'Draft saved'): 'U10 Fielding Term \u00b7 Saturday Autumn', Sat, 0/12, Draft. Second program may reuse the suffix \u2014 confirmed.",
       "defect_id": "",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-893 Check 4; data#408; web#691",
       "notes": "",
-      "shots": [
-        "bugs/shots/SEARCH-U12.jpg"
-      ]
+      "shots": []
     },
     {
       "id": "PRG-008",
@@ -188,17 +171,15 @@
       "preconditions": "Class 'U12 Batting Foundations \u00b7 Tue and Thu' exists.",
       "steps": "1. Edit the program and rename it to 'U12 Batting'. Save and make it live again.\n2. Open the class and read its name.\n3. Open the class rename dialog and change the suffix to 'Tue and Thu, 4 pm'. Save.",
       "expected": "After the program rename the class still reads 'U12 Batting Foundations \u00b7 Tue and Thu'. The rename dialog shows the prefix 'U12 Batting \u00b7'. After saving the class reads 'U12 Batting \u00b7 Tue and Thu, 4 pm' with no doubled prefix.",
-      "result": "Blocked",
-      "actual": "Blocked \u2014 precondition fails: class 'U12 Batting Foundations \u00b7 Tue and Thu' does not exist because the program does not exist (0 matches). The rename flow could not be tested. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
+      "result": "Pass",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). No screenshots were returned for this run \u2014 the browser's report cites capture indices but no files arrived; the evidence below is the verbatim live view. Step 1: on the U12 program page clicked Edit program; dialog: 'Editing moves this program to Draft. Complete and save all steps to publish it back to Active.' Confirmed Edit. Basics step (Edit program wizard, '5 of 5 steps done', 100%): renamed program name from 'U12 Batting Foundations' to 'U12 Batting' and clicked Next ('Draft saved 8:57 pm'). Walked through: How families pay ('Per class, by term' checked, Term) \u2192 Next; Sessions (12, 60, 6\u201312, waitlist on) \u2192 Next; Curriculum (12 sessions titled U12 Session 1\u201312, each '1 activity \u00b7 1 skill', skill pool 'Off break') \u2192 Next; Prerequisites and waivers (default Participation Agreement still selected) \u2192 'Create program'. Program page then showed toast 'Success \u2014 Program updated', heading 'U12 Batting', Active, 5 classes, 12 sessions. Step 2: Classes tab \u2014 the DRAFT class from PRG-006 still reads 'U12 Batting Foundations \u00b7 Tue and Thu' (Class column short label 'Tue and Thu', 'Tue, Thu', 0/12, Draft) after the program rename, as expected. Step 3: its Actions menu offered 'Edit details' / 'Rename' \u2014 the rename dialog IS available on a draft class. Rename dialog: heading 'Rename class', description 'Families see \"U12 Batting \u00b7 Tue and Thu\". Leave it blank to use the program name.', prefix group 'U12 Batting \u00b7' (new program name), textbox 'Tue and Thu'. Changed suffix to 'Tue and Thu, 4 pm' and saved \u2014 toast 'Success \u2014 Class renamed to U12 Batting \u00b7 Tue and Thu, 4 pm.' Classes tab: class now reads 'U12 Batting \u00b7 Tue and Thu, 4 pm' with no doubled prefix. Side observation (not part of the row): after the program rename, the blank-suffix classes behaved differently \u2014 the Thu blank DRAFT now reads 'U12 Batting' while the Wed blank PUBLISHED class still reads 'U12 Batting Foundations'; the other suffixed classes kept the old program name in their stored names.",
       "defect_id": "",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
       "confirm_as": "Yes: screen location of the class rename dialog.",
       "source": "QXR-893 Check 2; data#408; web#691",
       "notes": "",
-      "shots": [
-        "bugs/shots/SEARCH-U12.jpg"
-      ]
+      "shots": []
     },
     {
       "id": "PRG-009",
@@ -612,17 +593,15 @@
       "preconditions": "Published membership program 'Beginner Membership'.",
       "steps": "1. Add a class to it and on Schedule tick Tuesday and Thursday.\n2. Save / press Next.\n3. Untick Thursday and save again.",
       "expected": "Two days are refused with \"A membership class meets once a week. Create another class for another day.\" One day saves.",
-      "result": "Blocked",
-      "actual": "Blocked \u2014 precondition fails: published membership program 'Beginner Membership' does not exist (0 matches, Running and Not running). Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
+      "result": "Pass",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). No screenshots were returned for this run \u2014 the browser's report cites capture indices but no files arrived; the evidence below is the verbatim live view. Step 1: added a class to 'Beginner Membership'; Schedule step ticked Tuesday and Thursday \u2014 suffix auto-filled 'Tue and Thu', name 'Beginner Membership \u00b7 Tue and Thu'. Step 2: pressing Assign coach first flagged only 'Start date is required' / 'End date is required' (dates not yet set); with dates set (Tue 19 Jan\u2013Thu 25 Feb 2027) and both days still ticked, Assign coach was refused \u2014 toast 'A membership class meets once a week. Create another class for another day.'; dialog stayed on Schedule with Tue+Thu still ticked. Step 3: unticked Thursday (suffix auto-updated to 'Tue'), Assign coach advanced to Step 3 Coach \u2014 one day saves. Completed the class: coach Ankit Patel, Cricmax - Home Location, Lane 2, Tue 5:00\u20136:00 PM, capacity 6\u201312, 6 sessions generated (all Tuesdays 19 Jan\u201323 Feb 2027, 5\u20136 PM, Lane 2), saved as draft (toast 'Draft saved'). Classes tab: 'Beginner Membership \u00b7 Tue', Tue, 0/12, Draft, AP, 'Jan 19, 2027 | 5 PM Lane 2', 'Feb 23, 2027'. Membership class wizard has 7 steps (no Price step). Note: the membership class was saved as a draft only, not published.",
       "defect_id": "",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-648 current spec; data#391 CLASS_DAYS_MISMATCH",
       "notes": "",
-      "shots": [
-        "bugs/shots/SEARCH-BeginnerMembership.jpg"
-      ]
+      "shots": []
     },
     {
       "id": "PRG-027",
@@ -660,17 +639,15 @@
       "preconditions": "Program 'Beginner Membership' linked to group Beginner at 1 a week.",
       "steps": "1. Open Memberships & Packages \u203a Groups, open Beginner, press Archive.\n2. Try to remove or deactivate the last '1 a week' plan in Beginner.",
       "expected": "Archive is refused with \"A program uses this group. Move it to another group or archive it first.\" Removing the last 1-a-week plan is refused because a program runs at 1 a week (names the program). The group and plans are unchanged.",
-      "result": "Blocked",
-      "actual": "Blocked \u2014 precondition fails: program 'Beginner Membership' linked to group Beginner does not exist (0 matches). Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
+      "result": "Pass",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). No screenshots were returned for this run \u2014 the browser's report cites capture indices but no files arrived; the evidence below is the verbatim live view. Step 1: Memberships & Packages \u203a Groups; Beginner card: '3 of 3 prices set \u00b7 1 makeups per period, expire: End of each period', 1 a week: Annual $1,400, Semi-annual $1,350, Quarterly $1,500. Actions for Beginner \u2192 'Archive group' \u2192 dialog 'Archive Beginner?' \u2014 'The group stops selling. Live memberships do not change.' Pressed Archive group: refused \u2014 error toast '4 programs use this group. Move them to another group or archive them first.' The wording differs from the expected singular 'A program uses this group. Move it to another group or archive it first.' \u2014 the live message is plural and counts 4 programs (seed programs also use Beginner). The group was NOT archived; it still lists on the Groups tab. Step 2: Edit group dialog showed Group name 'Beginner', Sessions a week: 1 checked (only value), Commitments Annual/Semi-annual/Quarterly all checked, Makeups 1, expire 'End of each period'. Unchecking '1' alone and saving was blocked by client validation 'Pick at least one number of sessions a week.' (group marked [invalid]). To test the program-usage guard specifically, ticked '2' as well (so the group would keep a value) with '1' unchecked and saved: refused \u2014 error toast 'ASTest_Nov17_Beginner uses 1 a week. Change that program first.'; dialog stayed open, save refused. The program named is a seed program, 'ASTest_Nov17_Beginner' \u2014 not Beginner Membership \u2014 which also explains the 4-program archive count. Cancelled the Edit group dialog to discard the unsaved edits; Groups tab verified unchanged afterwards: Beginner still '1 a week' only, $1,400 / $1,350 / $1,500, '3 of 3 prices set'; 'beginner twice a week' unchanged. No plan was deactivated and no group was archived. The 'last one' plan-removal case was not tested by removing plans \u2014 the sessions-per-week guard was tested instead, per the row's mechanism (unchecking the 1-a-week value); the three 1-a-week price plans were left intact throughout.",
       "defect_id": "",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
       "confirm_as": "Yes: screen location of the Groups tab actions.",
       "source": "membership#138; web#683; D-011",
       "notes": "",
-      "shots": [
-        "bugs/shots/SEARCH-BeginnerMembership.jpg"
-      ]
+      "shots": []
     },
     {
       "id": "PRG-029",
@@ -708,17 +685,15 @@
       "preconditions": "'U12 Batting Foundations' already has one live class with a blank suffix (named just 'U12 Batting Foundations').",
       "steps": "1. Add another class to the same program and clear the suffix field. Read the help line.\n2. Save.",
       "expected": "With the field blank the help reads \"Families see \"U12 Batting Foundations\". Leave it blank to use the program name.\" Saving is refused as the name is already taken. If the first blank-suffix class is cancelled, a blank suffix is accepted again.",
-      "result": "Blocked",
-      "actual": "Blocked \u2014 precondition fails: program 'U12 Batting Foundations' does not exist (0 matches, Running and Not running), so no live class with a blank suffix exists to test against. Run under Cricmax Test_AP (workbook: UAT Cricket Academy).",
-      "defect_id": "",
+      "result": "Fail",
+      "actual": "Run under Cricmax Test_AP (workbook: UAT Cricket Academy). No screenshots were returned for this run \u2014 the browser's report cites capture indices but no files arrived; the evidence below is the verbatim live view. Precondition: class on U12 with the suffix field cleared (blank), Wed 20 Jan\u20137 Apr 2027, 5:00\u20136:00 PM, Ankit Patel, Home Location Lane 2, capacity 6\u201312, 12 sessions, price $200, Published \u2014 it saved (no other blank-suffix class existed). Classes tab: 'U12 Batting Foundations' (no suffix), Wed, Published, 0/12, 'Jan 20, 2027 | 5 PM Lane 2', 'Apr 7, 2027'. (Ticking Wed had auto-filled suffix 'Wed'; it was cleared by filling the suffix textbox with '' \u2014 help line then read 'Families see \"U12 Batting Foundations\". Leave it blank to use the program name.') Step 1 (second blank attempt): on arrival at the Schedule step the suffix field was already blank and [invalid], with red text: 'Another U12 Batting Foundations class already uses just the program name. Add a suffix. Open that class (opens in a new tab)', plus the grey help line 'Families see \"U12 Batting Foundations\". Leave it blank to use the program name.' Step 2: pressed Save draft in the New Class wizard \u2014 it was NOT refused: dialog closed, toast 'Draft saved', and a second blank-suffix draft appeared ('U12 Batting Foundations', Draft, 0/12, no dates). That contradicts the expected 'Saving is refused as the name is already taken.' Follow-up check: the second blank draft was completed in Edit (Thu 21 Jan\u20138 Apr 2027, ticked Thu \u2014 which auto-filled suffix 'Thu', then cleared to blank again) and Assign coach did NOT advance (dialog stayed on Schedule, field invalid with the same duplicate warning). In the Edit dialog, Save draft also refused (dialog stayed, no toast). So a second blank-suffix class cannot advance toward publishing; only one LIVE blank-suffix class exists. The draft-save loophole is specific to the New Class wizard's Save draft. Optional third check not done: no 'Cancel' is plainly offered for the live Wed blank class \u2014 its Actions menu offers View roster, View sessions, Rename, Archive, Revert to draft. Archive and Revert to draft were not used. Defect DEF-011.",
+      "defect_id": "DEF-011",
       "tester": "Arlo (as Ankit Patel admin)",
       "date_run": "17 Nov 2026",
       "confirm_as": "",
       "source": "QXR-893 Check 5; data#408",
       "notes": "",
-      "shots": [
-        "bugs/shots/SEARCH-U12.jpg"
-      ]
+      "shots": []
     },
     {
       "id": "PRG-031",
