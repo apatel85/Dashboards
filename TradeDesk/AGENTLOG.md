@@ -6,6 +6,14 @@
 - Backtest-before-adopt: no strategy ships without historical validation.
 - Free data sources only. He trades ES/NQ futures options 0DTE/1DTE, SPX 0DTE/1DTE.
 
+## 2026-11-20 — Scoring revamp spec Rev 4 approved and pushed to main (docs only, no build)
+
+- **Request:** Ankit (2026-11-20 ~11:42 ET): "Yes, approve Rev 4 — push it to main as the new spec."
+- **Change:** `TradeDesk/STRATEGY_BUILD_SPEC.md` replaced with Revision 4 (693 lines, was 646 in Rev 3). Folds in all 12 fixes from `research/scoring-revamp-review-2026-11-20.md` plus Ankit's 2026-11-20 decisions: option plays stocks only (index plays deferred to a later revisit, not dropped), and the backtest saves data to real files first and tests from those files only. Key changes: option tiers judged on the close, not the intraday high; expected move computed from tier probabilities (beyond 15% counts as 15%); buckets simplified (regime out as a dimension, ATR distance in); calibration by Wilson interval instead of a flat ±7 points; snapshots 15 min / 30 sessions / chosen contract + tier strikes only; weekly Schwab re-login planned as a chore; Supabase staging via a second free project if branching is unavailable; TNX divided by 10; lotto-validation claim corrected (`backtest-lotto.mjs` does generate it); `score_version` on the brief; never-triggered rate on the scorecard. `STRATEGY_PLAN.md` unchanged (Rev 3 plan stands; the spec wins where they disagree). No app, pipeline, data or Supabase change.
+- **Version:** none (no build).
+- **Verified:** single commit with the AGENTLOG entry; blob sha and line count re-derived from live main after the push (see verification). The 12 review flags are now folded in. Next: WO-00 ground truth — still needs Ankit's go-ahead; no code until he says go.
+- **Still open:** WO-00, then WO-03 backtest verdicts (the gate).
+
 ## 2026-11-20 — Scoring revamp docs moved to main from branch ccr-9303d741-r241z9 (docs only, no build)
 
 - **Request:** Ankit (2026-11-20 ~10:53 ET): "Let's move the two docs."
