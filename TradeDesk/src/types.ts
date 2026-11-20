@@ -466,7 +466,7 @@ export interface GexChangesFile {
 
 /* ── tabs ───────────────────────────────────────────────────────── */
 
-export type TabId = 'brief' | 'options' | 'scanner' | 'congress' | 'insiders' | 'earnings' | 'research' | 'performance' | 'deepdive' | 'news' | 'reference' | 'admin';
+export type TabId = 'brief' | 'options' | 'scanner' | 'congress' | 'insiders' | 'earnings' | 'research' | 'performance' | 'deepdive' | 'news' | 'reference' | 'downturn' | 'admin';
 
 export interface TabDef {
   id: TabId;

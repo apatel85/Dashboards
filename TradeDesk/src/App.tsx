@@ -15,6 +15,7 @@ import PerformanceTab from './tabs/Performance';
 import DeepDiveTab from './tabs/DeepDive';
 import NewsTab from './tabs/News';
 import ReferenceTab from './tabs/Reference';
+import DownturnTab from './tabs/Downturn';
 import AdminTab from './tabs/Admin';
 import { supabase } from './lib/supabase';
 import { SCHWAB_AUTH_START_URL, useSchwabLive } from './lib/useSchwabLive';
@@ -27,6 +28,9 @@ import './mockb-infographics.css';
  * Mock B command-center tab order — numbered 01–12, exactly as the mockup.
  * Signals is absorbed by Scanner; Screener's table + presets live in
  * Deep Dive. Reference carries the 33 definitions + data-file inventory.
+ * Downturn is the 13th tab (added 2026-11-20, v2026-11-20b): the
+ * DownturnWatchlist list moved in, where the live data plumbing exists.
+ * It sits after Reference on purpose — the mockup's 01–12 order is intact.
  */
 const TABS: TabDef[] = [
   { id: 'brief', label: 'Daily Brief', dataFile: 'daily-brief.json' },
@@ -40,6 +44,7 @@ const TABS: TabDef[] = [
   { id: 'deepdive', label: 'Deep Dive', dataFile: 'signals.json' },
   { id: 'news', label: 'News', dataFile: 'news.json' },
   { id: 'reference', label: 'Reference', dataFile: '' },
+  { id: 'downturn', label: 'Downturn', dataFile: '' },
 ];
 
 const TAB_IDS = TABS.map((t) => t.id);
@@ -51,7 +56,7 @@ const ADMIN_TAB: TabDef = { id: 'admin', label: 'Admin', dataFile: 'tradedesk_in
 const ALL_TAB_IDS = [...TAB_IDS, 'admin'] as TabId[];
 
 /** Build version — bump on every push so we can confirm what's live. */
-export const BUILD_VERSION = '2026-11-20a';
+export const BUILD_VERSION = '2026-11-20b';
 
 /** "14:32:05" in ET for the Schwab pill's updated time. */
 function fmtClockET(ms: number): string {
@@ -225,6 +230,9 @@ function Shell() {
           </TabErrorBoundary>
           <TabErrorBoundary tabName="Reference" key={`reference-${activeTab}`}>
             {activeTab === 'reference' && <ReferenceTab />}
+          </TabErrorBoundary>
+          <TabErrorBoundary tabName="Downturn" key={`downturn-${activeTab}`}>
+            {activeTab === 'downturn' && <DownturnTab />}
           </TabErrorBoundary>
           {isAdmin && (
             <TabErrorBoundary tabName="Admin" key={`admin-${activeTab}`}>
