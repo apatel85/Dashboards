@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Downturn Watchlist — 25 quality stocks to watch for the bounce</title>
-<meta name="description" content="25 low-debt, high-quality stocks screened from 1,147 tickers to monitor in the November 2026 downturn. Data as of Nov 19, 2026 close. Monitor list, not buy recommendations.">
+<title>Downturn Watchlist — 26 quality stocks to watch for the bounce</title>
+<meta name="description" content="26 quality stocks screened from 1,147 tickers to monitor in the November 2026 downturn — low-debt compounders plus a rotation bucket. Data as of Nov 19, 2026 close (AAPL Nov 20 morning). Monitor list, not buy recommendations.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Libre+Franklin:wght@400;600;700;800&family=IBM+Plex+Mono:wght@600;700&display=swap" rel="stylesheet">
@@ -536,9 +536,9 @@
   <header class="page-head">
     <div>
       <h1>Downturn Watchlist</h1>
-      <p class="plain" style="margin-top:6px;max-width:62ch">25 low-debt, high-quality stocks to monitor while the market falls — so you know what to buy when it bounces.</p>
+      <p class="plain" style="margin-top:6px;max-width:62ch">26 quality stocks to monitor while the market falls — low-debt compounders plus a rotation bucket of AI adopters. So you know what to buy when it bounces.</p>
     </div>
-    <div class="dateline">Data as of <span class="mono">Nov 19, 2026 close</span><br><span class="mono">v1.0.0</span> · Monitor list, not buy recommendations</div>
+    <div class="dateline">Data as of <span class="mono">Nov 19, 2026 close</span> · AAPL <span class="mono">Nov 20 AM</span><br><span class="mono">v1.1.0</span> · Monitor list, not buy recommendations</div>
   </header>
 
   <section class="mood" aria-label="Market context">
@@ -561,11 +561,12 @@
         <input id="q" type="search" placeholder="Try NVDA, MU, gold…" autocomplete="off">
       </div>
       <div class="chips" id="tierChips" role="group" aria-label="Filter by tier">
-        <button class="chip" data-tier="0" aria-pressed="true">All · 25</button>
+        <button class="chip" data-tier="0" aria-pressed="true">All · 26</button>
         <button class="chip" data-tier="1" aria-pressed="false">Tier 1 · 7</button>
-        <button class="chip" data-tier="2" aria-pressed="false">Tier 2 · 4</button>
+        <button class="chip" data-tier="2" aria-pressed="false">Tier 2 · 2</button>
         <button class="chip" data-tier="3" aria-pressed="false">Tier 3 · 8</button>
-        <button class="chip" data-tier="4" aria-pressed="false">Tier 4 · 6</button>
+        <button class="chip" data-tier="4" aria-pressed="false">Tier 4 · 5</button>
+        <button class="chip" data-tier="5" aria-pressed="false">Tier 5 · 4</button>
       </div>
       <div class="toolbar" style="margin-top:10px">
         <select id="sort" aria-label="Sort rows">
@@ -577,27 +578,90 @@
           <option value="roe">Sort: ROE, high to low</option>
           <option value="yoy">Sort: revenue YoY, high to low</option>
           <option value="pe">Sort: P/E, low to high</option>
+          <option value="fcfy">Sort: FCF yield, high to low</option>
         </select>
       </div>
       <p class="refresh-line" id="refreshLine"><span class="stale-dot"></span><span id="refreshText">Snapshot: Nov 19, 2026 close. Live refresh checking…</span></p>
-      <p class="explain">Quality metrics refresh live from TradeDesk data when the page can reach it; prices refresh for the 6 names the quotes feed covers. Anything not refreshed stays on the Nov 19 snapshot and is labelled as such.</p>
+      <p class="explain">Quality metrics refresh live from TradeDesk data when the page can reach it; prices refresh for the names the quotes feed covers (MU, NVDA, TSM, MSFT, AAPL). AAPL&rsquo;s Nov 20 morning price is pinned and never overwritten. Anything not refreshed stays on the Nov 19 snapshot and is labelled as such. FCF metrics are a Nov 20 TTM snapshot and do not refresh.</p>
     </div>
 
     <main id="list">
       <p class="rowcount" id="rowCount"></p>
       <div id="rows"></div>
 
+
+      <section aria-label="Builders on FCF watch">
+        <div class="sec-head"><h2>Builders on FCF watch</h2><span class="hint">Not in the 26 — not sells</span></div>
+        <p class="plain">GOOGL and AMZN failed the debate&rsquo;s hard FCF test: <strong>FCF must be positive</strong>. They are not sells — they are on watch until FCF turns. <strong>WPM was dropped outright:</strong> gold miners are a level-based trade, not a quality holding; NEM stays as the gold name (its FCF is $9.2B, yield 8.0%).</p>
+        <article class="idea">
+          <button class="toggle" aria-expanded="false" onclick="var a=this.parentElement;var o=a.classList.toggle('open');this.setAttribute('aria-expanded',o)">
+            <span class="rank">W1</span>
+            <span class="idea-main"><span class="idea-ticker-row"><span class="idea-ticker">GOOGL</span><a class="chart-pill" href="https://www.tradingview.com/chart/?symbol=GOOGL" target="_blank" rel="noopener" onclick="event.stopPropagation()">Chart ↗</a></span>
+            <span class="idea-name">Alphabet Inc. · Communication Services</span>
+            <span class="wl-strip"><span>D/E <b>0.22</b></span><span>ROE <b>44%</b></span><span>Rev YoY <b>+15.1%</b></span><span>P/E <b>14.2</b></span></span></span>
+            <span class="idea-head-right"><span class="idea-price">$272.66</span><span class="wl-off">-33.3% off high</span></span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="panel"><div class="kv-grid">
+            <div class="kv"><div class="k">FCF (TTM)</div><div class="v">-$1.2B</div></div>
+            <div class="kv"><div class="k">FCF margin</div><div class="v">-0.2%</div></div>
+            <div class="kv"><div class="k">Capex intensity</div><div class="v">38.4% of revenue</div></div>
+            <div class="kv"><div class="k">Net debt / FCF</div><div class="v">net cash</div></div>
+            <div class="kv"><div class="k">Debt / EBITDA</div><div class="v">0.81×</div></div>
+            <div class="kv"><div class="k">Gross margin</div><div class="v">60.9%</div></div>
+          </div>
+          <div class="flag-box why red"><h3>Flag — read before acting</h3><p>FCF turned negative while capex runs at 38.4% of revenue. The Nov 5 research already established Alphabet turned FCF-negative; the debate&rsquo;s FCF test now bites. The balance sheet is fine (net cash, debt/EBITDA 0.81×) — this is a capex-cycle problem, not a solvency problem.</p></div>
+          <div class="trig"><h3>What brings it back</h3><p><strong>FCF turning positive as the capex wave crests</strong> — then it re-enters the list on the same screen.</p></div>
+          </div>
+        </article>
+        <article class="idea">
+          <button class="toggle" aria-expanded="false" onclick="var a=this.parentElement;var o=a.classList.toggle('open');this.setAttribute('aria-expanded',o)">
+            <span class="rank">W2</span>
+            <span class="idea-main"><span class="idea-ticker-row"><span class="idea-ticker">AMZN</span><a class="chart-pill" href="https://www.tradingview.com/chart/?symbol=AMZN" target="_blank" rel="noopener" onclick="event.stopPropagation()">Chart ↗</a></span>
+            <span class="idea-name">Amazon.com, Inc. · Consumer Cyclical</span>
+            <span class="wl-strip"><span>D/E <b>0.50</b></span><span>ROE <b>27%</b></span><span>Rev YoY <b>+12.4%</b></span><span>P/E <b>20.8</b></span></span></span>
+            <span class="idea-head-right"><span class="idea-price">$257.37</span><span class="wl-off mild">-10.4% off high</span></span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="panel"><div class="kv-grid">
+            <div class="kv"><div class="k">FCF (TTM)</div><div class="v">-$34.7B</div></div>
+            <div class="kv"><div class="k">FCF margin</div><div class="v">-4.4%</div></div>
+            <div class="kv"><div class="k">Capex intensity</div><div class="v">25.5% of revenue</div></div>
+            <div class="kv"><div class="k">Net debt</div><div class="v">$190.6B</div></div>
+            <div class="kv"><div class="k">Debt / EBITDA</div><div class="v">1.66×</div></div>
+            <div class="kv"><div class="k">Gross margin</div><div class="v">51.4%</div></div>
+          </div>
+          <div class="flag-box why red"><h3>Flag — read before acting</h3><p>The worst FCF in the old list (−$34.7B) and the largest net debt ($190.6B) — plus the highest gross D/E (0.50, the old screen cap). The business is fine; the buildout is eating it.</p></div>
+          <div class="trig"><h3>What brings it back</h3><p><strong>FCF turning positive and net debt falling from $190.6B</strong> — then it re-enters the list on the same screen.</p></div>
+          </div>
+        </article>
+        <p class="plain" style="margin-top:12px"><strong>Valuation watch</strong> (applications / quality names that fail the screen — Damodaran trigger-price names, not adds): CRWD, PANW (fail ROE/margin/PE), SHOP (PE 81×), LLY (fails D/E + PE; ND/FCF 4.8×), AZN (fails D/E; ND/FCF 4.6×), DIS (fails ROE/margin/CAGR; ND/FCF 5.5×), SBUX (fails 6 criteria; debt/EBITDA 3.9×), F (fails 4).</p>
+      </section>
+
+      <section aria-label="Gates — what would say now">
+        <div class="sec-head"><h2>Gates — what would say &ldquo;now&rdquo;</h2><span class="hint">Three checks before treating a bounce as real</span></div>
+        <div class="why neutral"><h3>Credit gate — sector repricing, not systemic <span class="pill ok">OPEN</span></h3>
+        <p>AI credit is stressed while broad credit is calm: <strong>CoreWeave CDS 1,289bp, Oracle ~300bp</strong>, vs CDX IG 59→62bp. The low-debt screen is the right posture; the gate blocks leveraged AI names — <strong>none of the 26 are levered</strong>. If broad high-yield blows out, the screen breaks: that is a regime change, not a dip.</p></div>
+        <div class="why neutral"><h3>Breadth gate — Klement&rsquo;s 200-day rule <span class="pill put">NOT YET</span></h3>
+        <p>Nov 20 morning: <strong>SPY $712.41 vs SMA200 $732.87 — 2.8% BELOW the 200-day</strong>. The rule says &ldquo;not yet.&rdquo; Re-cross above the 200-day, with breadth improving, is the confirmation signal.</p></div>
+        <div class="why neutral"><h3>Event calendar — re-screen after each</h3>
+        <p><strong>Fed Dec 8–9</strong> (hike ~100% priced; Waller pushing 50bp) · <strong>Hyperscaler 2027 capex guidance</strong> (every $1 less capex = $1 less semis revenue) · <strong>Data-center regulation milestones</strong> · <strong>NVDA permanent CEO</strong>.</p></div>
+        <p class="plain" style="margin-top:10px"><strong>Bounce checklist from the debate:</strong> bulls watch VIX easing + the Nov 5 internal low holding; bears watch capex guidance, AI credit spreads, and the 200-day. No named voice gave a numeric SOX reclaim level or a credit-spread buy trigger — those are gaps, not consensus.</p>
+      </section>
       <section aria-label="How the list was built">
-        <div class="sec-head"><h2>How the list was built</h2><span class="hint">Reproducible screen</span></div>
-        <p class="plain">Universe: <strong>1,147 tickers</strong> in TradeDesk fundamentals. Screen: market cap ≥ $2B; debt/equity ≤ 0.50; ROE ≥ 15%; profit margin ≥ 15%; revenue YoY ≥ +5%; revenue 3-year CAGR ≥ +5%; trailing P/E 0–40. <strong>57 passed</strong>; the 25 below were ranked by quality plus how far they have fallen, with sector caps and judgment calls (GOOG deduped; NHI dropped — a 152% margin is a data error; foreign OTC ADRs dropped; weak-quarter names dropped).</p>
-        <p class="plain" style="margin-top:8px">Debt/equity is shown as a ratio. <strong>Zero-debt large caps effectively don&rsquo;t exist</strong> — the lowest in the universe is 0.001, the median 0.69. This is the lowest-debt quality cohort: D/E 0.01–0.50. QoQ is the last two quarter-over-quarter revenue changes, most recent last; it is noisy for seasonal names (Intuit tax season, Deckers footwear).</p>
-        <p class="plain" style="margin-top:8px"><strong>Honourable mentions</strong> — passed the screen but held up well (−4% to −15% off highs), so they are quality names, not bounce names: GRMN, SPOT, QLYS, CBOE, CME, HIG, COCO, ABNB.</p>
-        <p class="plain" style="margin-top:8px"><strong>Invalidation:</strong> if the AI-capex story breaks (hyperscaler capex cuts, memory price rollover), Tier 1&rsquo;s growth case breaks with it. Re-screen weekly while the downturn lasts.</p>
+        <div class="sec-head"><h2>How the list was built</h2><span class="hint">Reproducible screen + expert debate</span></div>
+        <p class="plain">Universe: <strong>1,147 tickers</strong> in TradeDesk fundamentals. Original screen: market cap ≥ $2B; debt/equity ≤ 0.50; ROE ≥ 15%; profit margin ≥ 15%; revenue YoY ≥ +5%; revenue 3-year CAGR ≥ +5%; trailing P/E 0–40. <strong>57 passed</strong>. The Nov 20 expert debate (value vs growth vs current-downturn tracks — Lee, Ives, Kelly, Goldman, Saxo, Wood vs Grantham, Gensler, Klement, Burry, Sløk, Dalio; Damodaran, Marks, Druckenmiller, Buffett in the middle) then added ten tests: <strong>(1)</strong> FCF / owner-earnings yield — FCF must be positive; <strong>(2)</strong> refinancing risk — net debt/FCF ≤ 5×, debt/EBITDA ≤ 3×; <strong>(3)</strong> pricing power — gross margin level, under 25% is thin; <strong>(4)</strong> AI-revenue quality — DSO trend, guarantees, customer concentration (qualitative this pass); <strong>(5)</strong> capex ROI — capex intensity + FCF margin, flag when capex &gt; 25% of revenue AND FCF margin &lt; 15%; <strong>(6)</strong> customer concentration; <strong>(7)</strong> credit regime gate; <strong>(8)</strong> breadth confirmation (S&amp;P vs 200-day); <strong>(9)</strong> rotation / applications bucket; <strong>(10)</strong> event calendar.</p>
+        <p class="plain" style="margin-top:8px"><strong>What changed in v1.1.0:</strong> GOOGL (FCF −$1.2B, capex 38.4%) and AMZN (FCF −$34.7B, net debt $190.6B) moved to Builders Watch; WPM dropped (gold is a level-based trade; NEM stays). New Tier 5 (Rotation &amp; applications): AAPL — fails the old screen on gross D/E only (0.84), overturned by the net-debt lens (ND/FCF 0.4×) — plus QLYS, ALL, CINF. The 26 break down 7 + 2 + 8 + 5 + 4.</p>
+        <p class="plain" style="margin-top:8px">Debt/equity is shown as a ratio. <strong>Zero-debt large caps effectively don&rsquo;t exist</strong> — the lowest in the universe is 0.001, the median 0.69. This is the lowest-debt quality cohort: D/E 0.01–0.50 (AAPL 0.84 is the Tier 5 exception, carried by net debt, not gross debt). QoQ is the last two quarter-over-quarter revenue changes, most recent last; it is noisy for seasonal names (Intuit tax season, Deckers footwear). FCF = operating cash flow − capex, TTM, from Yahoo financialData.</p>
+        <p class="plain" style="margin-top:8px"><strong>Data quality — read this before trusting a cell:</strong> Yahoo&rsquo;s annual/quarterly statement modules are degraded on the free endpoint (gross profit and EBIT return 0, balance sheets return empty), so margin trend and DSO trend are NOT computable — recorded as gaps, not faked. Foreign ADRs report in local currency (TSM TWD, PDD/TCOM CNY, SKHY KRW): FCF dollars and yields are artefacts (TSM&rsquo;s true yield ≈1.8%, PDD&rsquo;s ≈6.3%); ratios are currency-neutral and valid. SKHY and TCOM have no FCF in Yahoo at all (shown n/a, not zero). Insurers&rsquo; FCF is a rough proxy (capex near-meaningless for them); HIG&rsquo;s 20.2% FCF yield is not trusted — HIG was NOT added. WPM&rsquo;s FCF (−$3.1B, capex 172% of revenue) is anomalous and was not used as a drop reason on its own.</p>
+        <p class="plain" style="margin-top:8px"><strong>NOT added as screens, and why:</strong> insider buying — explicitly rejected (none of the five value thinkers uses it); buybacks / shareholder yield — contested, dangerous if debt-funded; relative strength / institutional flows as a quality screen — contested, and 13F data is 45–75 days stale (timing overlay only); own-history multiples as a hard screen — a 5-year history IS the bubble (10-year context only).</p>
+        <p class="plain" style="margin-top:8px"><strong>Honourable mentions</strong> — passed the screen but held up well (−4% to −15% off highs), so they are quality names, not bounce names: GRMN, SPOT, CBOE, CME, HIG, COCO, ABNB. (QLYS, ALL and CINF moved into Tier 5 in v1.1.0.)</p>
+        <p class="plain" style="margin-top:8px"><strong>Invalidation:</strong> if the AI-capex story breaks (hyperscaler capex cuts, memory price rollover), Tier 1&rsquo;s growth case breaks with it. Re-screen weekly while the downturn lasts, and after each event on the calendar above.</p>
       </section>
 
       <footer class="foot">
-        <p><strong>DownturnWatchlist v1.0.0</strong> · Data as of Nov 19, 2026 close · Research: Nov 20, 2026.</p>
-        <p>Sources: TradeDesk fundamentals.json (Nov 17 regeneration) for D/E, ROE, margin, revenue YoY / 3-yr CAGR, P/E and market cap; Yahoo 1-year daily bars for price vs 52-week high; Yahoo quarterly statements for QoQ revenue. Index levels: Yahoo, Nov 19 close.</p>
+        <p><strong>DownturnWatchlist v1.1.0</strong> · Data as of Nov 19, 2026 close (AAPL Nov 20 morning, intraday) · Research: Nov 20, 2026 (screen + expert debate).</p>
+        <p>Sources: TradeDesk fundamentals.json (Nov 17 regeneration) for D/E, ROE, margin, revenue YoY / 3-yr CAGR, P/E and market cap; Yahoo 1-year daily bars for price vs 52-week high; Yahoo quarterly statements for QoQ revenue; Yahoo financialData (TTM, Nov 20 pull) for FCF, capex, gross margin and debt/EBITDA — note values win; GM and debt/EBITDA for 10 names and FCF $ for QLYS, ALL, CINF were filled from the same pull (see AGENTLOG). Index levels: Yahoo, Nov 19 close; SPY vs 200-day: Nov 20 morning.</p>
         <p>This is a monitor list, not buy recommendations and not financial advice.</p>
       </footer>
       <pre id="diag"></pre>
@@ -606,47 +670,51 @@
 </div>
 
 <div class="topcall">
-  <div class="tc-main"><span class="tc-k">Deepest quality fall</span><span class="mono">MU $690.44</span> · −45% off high · D/E 0.04 · ROE 88%</div>
+  <div class="tc-main"><span class="tc-k">Top call — memory</span><span class="mono">MU $690.44</span> · −45% off high · D/E 0.04 · ROE 88%</div>
   <button type="button" onclick="document.getElementById('list').scrollIntoView({behavior:'smooth'})">See the list</button>
 </div>
 
 <script>
 "use strict";
-/* DownturnWatchlist v1.0.0 — embedded snapshot, Nov 19, 2026 close.
-   All figures verified against TradeDesk fundamentals.json + Yahoo 1y bars + Yahoo quarterly statements.
-   QoQ = last two quarter-over-quarter revenue changes, most recent last. */
+/* DownturnWatchlist v1.1.0 — embedded snapshot, Nov 19, 2026 close (AAPL Nov 20 morning, intraday).
+   Original 25 verified against TradeDesk fundamentals.json + Yahoo 1y bars + Yahoo quarterly statements.
+   v1.1.0 adds FCF metrics (TTM, Yahoo financialData): note values win; GM / debt-EBITDA / FCF $ for
+   QLYS, ALL, CINF filled from the same endpoint Nov 20 (see AGENTLOG). QoQ = last two
+   quarter-over-quarter revenue changes, most recent last. */
 const DATA = [
-{t:"MU",n:"Micron Technology, Inc.",s:"Technology",i:"Semiconductors",tr:1,p:690.44,off:-45.0,de:0.04,roe:88,mg:64,yoy:256.3,cagr:104.6,q:[73.7,30.8],pe:9.3,mc:781.2,f:"Memory is cyclical — the +256% YoY is an HBM/DRAM price explosion, not a permanent run-rate. The bounce case is real but the cycle turns fast; watch DRAM spot pricing.",fk:"risk"},
-{t:"NVDA",n:"NVIDIA Corporation",s:"Technology",i:"Semiconductors",tr:1,p:145.98,off:-40.0,de:0.14,roe:117,mg:63,yoy:65.5,cagr:100.0,q:[17.9,20.4],pe:15.7,mc:3525.0,f:"The −40% includes a leadership crisis (Huang stepped down), not just multiple compression. The business is still growing +20% QoQ. Bellwether: if NVDA can't base, the tape can't.",fk:"risk"},
-{t:"SKHY",n:"SK hynix Inc.",s:"Technology",i:"Semiconductors",tr:1,p:119.20,off:-40.4,de:0.06,roe:93,mg:70,yoy:46.8,cagr:29.6,q:[50.9,31.9],pe:6.6,mc:840.6,f:"Memory is cyclical — the +47% YoY is HBM/DRAM pricing, not a permanent run-rate. Watch DRAM spot pricing.",fk:"risk"},
-{t:"LRCX",n:"Lam Research Corporation",s:"Technology",i:"Semiconductor Equipment & Materials",tr:1,p:203.68,off:-53.6,de:0.27,roe:70,mg:32,yoy:26.0,cagr:10.1,q:[15.1,22.3],pe:30.4,mc:254.4},
-{t:"AMAT",n:"Applied Materials, Inc.",s:"Technology",i:"Semiconductor Equipment & Materials",tr:1,p:338.93,off:-54.2,de:0.25,roe:43,mg:29,yoy:21.4,cagr:9.1,q:[15.2,14.2],pe:26.9,mc:269.0},
-{t:"TSM",n:"Taiwan Semiconductor Manufacturing",s:"Technology",i:"Semiconductors",tr:1,p:352.09,off:-27.8,de:0.15,roe:42,mg:51,yoy:31.6,cagr:18.9,q:[12.0,17.6],pe:22.8,mc:1826.1},
-{t:"ASML",n:"ASML Holding N.V.",s:"Technology",i:"Semiconductor Equipment & Materials",tr:1,p:1356.20,off:-32.2,de:0.09,roe:66,mg:34,yoy:15.6,cagr:15.6,q:[6.4,25.0],pe:33.4,mc:522.7},
-{t:"GOOGL",n:"Alphabet Inc.",s:"Communication Services",i:"Internet Content & Information",tr:2,p:272.66,off:-33.3,de:0.22,roe:44,mg:50,yoy:15.1,cagr:12.5,q:[9.0,6.5],pe:14.2,mc:3352.1},
-{t:"MSFT",n:"Microsoft Corporation",s:"Technology",i:"Software - Infrastructure",tr:2,p:498.30,off:-10.9,de:0.28,roe:34,mg:41,yoy:17.8,cagr:16.1,q:[8.6,2.5],pe:26.0,mc:3700.5},
-{t:"META",n:"Meta Platforms, Inc.",s:"Communication Services",i:"Internet Content & Information",tr:2,p:596.22,off:-23.5,de:0.42,roe:32,mg:31,yoy:22.2,cagr:19.9,q:[8.0,6.2],pe:20.3,mc:1524.1},
-{t:"AMZN",n:"Amazon.com, Inc.",s:"Consumer Cyclical",i:"Internet Retail",tr:2,p:257.37,off:-10.4,de:0.50,roe:27,mg:17,yoy:12.4,cagr:11.7,q:[10.5,0.7],pe:20.8,mc:2783.0,f:"Highest debt on this list (D/E 0.50 — the screen cap).",fk:"risk"},
-{t:"UI",n:"Ubiquiti Inc.",s:"Technology",i:"Communication Equipment",tr:3,p:663.22,off:-39.7,de:0.05,roe:85,mg:30,yoy:27.2,cagr:19.0,q:[18.9,9.5],pe:37.5,mc:40.1,f:"Priciest on the list (37.5×) but already turning: +8.8% in the last month, above its 50-day.",fk:"note"},
-{t:"FSLR",n:"First Solar, Inc.",s:"Technology",i:"Solar",tr:3,p:151.95,off:-52.7,de:0.03,roe:19,mg:37,yoy:24.1,cagr:25.8,q:[1.1,16.5],pe:8.8,mc:16.4},
-{t:"AGX",n:"Argan, Inc.",s:"Industrials",i:"Engineering & Construction",tr:3,p:295.85,off:-63.3,de:0.02,roe:40,mg:15,yoy:8.1,cagr:27.6,q:[11.0,32.0],pe:23.0,mc:4.1},
-{t:"TWLO",n:"Twilio Inc.",s:"Technology",i:"Software - Infrastructure",tr:3,p:178.78,off:-42.0,de:0.12,roe:15,mg:22,yoy:13.7,cagr:9.8,q:[6.6,4.0],pe:24.4,mc:30.0},
-{t:"FFIV",n:"F5, Inc.",s:"Technology",i:"Software - Infrastructure",tr:3,p:318.09,off:-34.2,de:0.05,roe:19,mg:21,yoy:10.6,cagr:6.7,q:[6.6,6.1],pe:24.2,mc:17.3},
-{t:"INTU",n:"Intuit Inc.",s:"Technology",i:"Software - Application",tr:3,p:310.02,off:-54.6,de:0.44,roe:24,mg:21,yoy:13.9,cagr:14.3,q:[-49.1,0.0],pe:18.8,mc:82.8,f:"QoQ swing is seasonal (tax season), not deterioration.",fk:"note"},
-{t:"PDD",n:"PDD Holdings Inc.",s:"Consumer Cyclical",i:"Internet Retail",tr:3,p:86.00,off:-31.4,de:0.01,roe:23,mg:20,yoy:9.7,cagr:49.0,q:[5.8,-3.6],pe:9.7,mc:122.4,f:"Lowest debt on this list (D/E 0.01). Already turning: +9.2% in the last month.",fk:"note"},
-{t:"DECK",n:"Deckers Outdoor Corporation",s:"Consumer Cyclical",i:"Footwear & Accessories",tr:3,p:78.95,off:-35.4,de:0.23,roe:44,mg:19,yoy:9.8,cagr:14.7,q:[-8.9,45.2],pe:10.8,mc:10.9,f:"QoQ swing is seasonal (footwear), not deterioration.",fk:"note"},
-{t:"WPM",n:"Wheaton Precious Metals Corp.",s:"Basic Materials",i:"Gold",tr:4,p:116.13,off:-29.9,de:0.16,roe:23,mg:60,yoy:80.2,cagr:29.5,q:[3.1,-16.9],pe:27.5,mc:57.5,f:"Growth is gold-price-driven; the last quarters shrank even as gold rose. A hedge bucket, not a growth bucket.",fk:"risk"},
-{t:"NEM",n:"Newmont Corporation",s:"Basic Materials",i:"Gold",tr:4,p:100.05,off:-26.0,de:0.16,roe:27,mg:35,yoy:21.3,cagr:23.9,q:[-16.3,4.0],pe:12.9,mc:115.2,f:"Growth is gold-price-driven; the last quarter shrank. A hedge bucket, not a growth bucket.",fk:"risk"},
-{t:"ASND",n:"Ascendis Pharma A/S",s:"Healthcare",i:"Biotechnology",tr:4,p:255.96,off:-9.3,de:0.30,roe:132,mg:73,yoy:98.0,cagr:141.4,q:[37.6,9.0],pe:17.8,mc:17.7,f:"Biotech, lumpy revenue — held-up quality, not fallen value.",fk:"note"},
-{t:"MEDP",n:"Medpace Holdings, Inc.",s:"Healthcare",i:"Diagnostics & Research",tr:4,p:633.98,off:-8.6,de:0.29,roe:118,mg:18,yoy:20.0,cagr:20.1,q:[0.1,1.2],pe:35.9,mc:18.1,f:"Flat last two quarters — held-up quality, not fallen value.",fk:"note"},
-{t:"VRTX",n:"Vertex Pharmaceuticals Incorporated",s:"Healthcare",i:"Biotechnology",tr:4,p:520.66,off:-8.4,de:0.31,roe:21,mg:31,yoy:8.9,cagr:10.4,q:[11.6,3.2],pe:33.5,mc:132.0},
-{t:"TCOM",n:"Trip.com Group Limited",s:"Consumer Cyclical",i:"Travel Services",tr:4,p:42.26,off:-46.5,de:0.17,roe:16,mg:37,yoy:17.1,cagr:46.0,q:[5.3,-3.4],pe:8.6,mc:26.8,f:"Already turning: +7.5% in the last month — relative strength, not capitulation.",fk:"note"}
+{t:"MU",n:"Micron Technology, Inc.",s:"Technology",i:"Semiconductors",tr:1,p:690.44,off:-45.0,de:0.04,roe:88,mg:64,yoy:256.3,cagr:104.6,q:[73.7,30.8],pe:9.3,mc:781.2,fcf:29.1,fcfy:3.7,fcfm:21.9,cx:45.5,ndf:"cash",deb:0.05,gm:80.7,f:"Memory is cyclical — the +256% YoY is an HBM/DRAM price explosion, not a permanent run-rate. The bounce case is real but the cycle turns fast; watch DRAM spot pricing.",fk:"risk"},
+{t:"NVDA",n:"NVIDIA Corporation",s:"Technology",i:"Semiconductors",tr:1,p:145.98,off:-40.0,de:0.14,roe:117,mg:63,yoy:65.5,cagr:100.0,q:[17.9,20.4],pe:15.7,mc:3525.0,fcf:99.2,fcfy:2.8,fcfm:27.4,cx:16.5,ndf:"cash",deb:0.16,gm:74.9,f:"The −40% includes a leadership crisis (Huang stepped down), not just multiple compression. The business is still growing +20% QoQ. Bellwether: if NVDA can't base, the tape can't. AI-revenue-quality flags: DSO stretched 45→60 days, $108.5B in partner guarantees, OpenAI exposure.",fk:"risk"},
+{t:"SKHY",n:"SK hynix Inc.",s:"Technology",i:"Semiconductors",tr:1,p:119.20,off:-40.4,de:0.06,roe:93,mg:70,yoy:46.8,cagr:29.6,q:[50.9,31.9],pe:6.6,mc:840.6,fcf:null,fcfy:null,fcfm:null,cx:null,ndf:"cash",deb:0.08,gm:77.4,f:"Memory is cyclical — the +47% YoY is HBM/DRAM pricing, not a permanent run-rate. Watch DRAM spot pricing. FCF is n/a in Yahoo (KRW reporting) — not penalised.",fk:"risk"},
+{t:"LRCX",n:"Lam Research Corporation",s:"Technology",i:"Semiconductor Equipment & Materials",tr:1,p:203.68,off:-53.6,de:0.27,roe:70,mg:32,yoy:26.0,cagr:10.1,q:[15.1,22.3],pe:30.4,mc:254.4,fcf:4.5,fcfy:1.8,fcfm:17.4,cx:11.6,ndf:"cash",deb:0.37,gm:51.1},
+{t:"AMAT",n:"Applied Materials, Inc.",s:"Technology",i:"Semiconductor Equipment & Materials",tr:1,p:338.93,off:-54.2,de:0.25,roe:43,mg:29,yoy:21.4,cagr:9.1,q:[15.2,14.2],pe:26.9,mc:269.0,fcf:2.5,fcfy:0.9,fcfm:7.3,cx:18.4,ndf:"cash",deb:0.55,gm:50.0,f:"Thin FCF yield (0.9%) — the thinnest in Tier 1; FCF margin 7.3%.",fk:"risk"},
+{t:"TSM",n:"Taiwan Semiconductor Manufacturing",s:"Technology",i:"Semiconductors",tr:1,p:352.09,off:-27.8,de:0.15,roe:42,mg:51,yoy:31.6,cagr:18.9,q:[12.0,17.6],pe:22.8,mc:1826.1,fcf:null,fcfy:1.8,fx:1,fcfm:21.1,cx:42.2,ndf:"cash",deb:0.30,gm:65.8,f:"FCF yield ≈1.8% after TWD→USD conversion; Yahoo reports TSM in TWD — ratios are valid, dollar figures are not.",fk:"note"},
+{t:"ASML",n:"ASML Holding N.V.",s:"Technology",i:"Semiconductor Equipment & Materials",tr:1,p:1356.20,off:-32.2,de:0.09,roe:66,mg:34,yoy:15.6,cagr:15.6,q:[6.4,25.0],pe:33.4,mc:522.7,fcf:10.4,fcfy:2.0,fcfm:26.3,cx:31.3,ndf:"cash",deb:0.12,gm:54.3},
+{t:"MSFT",n:"Microsoft Corporation",s:"Technology",i:"Software - Infrastructure",tr:2,p:498.30,off:-10.9,de:0.28,roe:34,mg:41,yoy:17.8,cagr:16.1,q:[8.6,2.5],pe:26.0,mc:3700.5,fcf:3.0,fcfy:0.1,fcfm:0.9,cx:55.7,ndf:23.2,deb:0.65,gm:67.7,f:"RED FLAG — FCF +$3.0B barely positive, FCF margin 0.9%, capex 55.7% of revenue (worst in the list). ND/FCF 23.2× is a denominator artefact, and debt/EBITDA 0.65 is low — but the Damodaran test is failing in real time. Stays only because FCF is still positive and leverage is low.",fk:"risk"},
+{t:"META",n:"Meta Platforms, Inc.",s:"Communication Services",i:"Internet Content & Information",tr:2,p:596.22,off:-23.5,de:0.42,roe:32,mg:31,yoy:22.2,cagr:19.9,q:[8.0,6.2],pe:20.3,mc:1524.1,fcf:16.8,fcfy:1.1,fcfm:7.0,cx:48.1,ndf:1.9,deb:0.99,gm:81.0,f:"Yellow flag — FCF $16.8B, margin 7.0%, capex 48.1% of revenue. The buildout is eating the business; watch the next capex guide.",fk:"risk"},
+{t:"UI",n:"Ubiquiti Inc.",s:"Technology",i:"Communication Equipment",tr:3,p:663.22,off:-39.7,de:0.05,roe:85,mg:30,yoy:27.2,cagr:19.0,q:[18.9,9.5],pe:37.5,mc:40.1,fcf:0.8,fcfy:2.0,fcfm:22.4,cx:7.1,ndf:"cash",deb:0.06,gm:46.5,f:"Priciest on the list (37.5×) but already turning: +8.8% in the last month, above its 50-day.",fk:"note"},
+{t:"FSLR",n:"First Solar, Inc.",s:"Technology",i:"Solar",tr:3,p:151.95,off:-52.7,de:0.03,roe:19,mg:37,yoy:24.1,cagr:25.8,q:[1.1,16.5],pe:8.8,mc:16.4,fcf:0.7,fcfy:4.2,fcfm:13.7,cx:3.0,ndf:"cash",deb:0.13,gm:49.3},
+{t:"AGX",n:"Argan, Inc.",s:"Industrials",i:"Engineering & Construction",tr:3,p:295.85,off:-63.3,de:0.02,roe:40,mg:15,yoy:8.1,cagr:27.6,q:[11.0,32.0],pe:23.0,mc:4.1,fcf:0.5,fcfy:11.5,fcfm:39.4,cx:7.4,ndf:"cash",deb:0.06,gm:20.7,f:"Thinnest gross margin in the list (20.7%) — pricing power is the thing to watch.",fk:"risk"},
+{t:"TWLO",n:"Twilio Inc.",s:"Technology",i:"Software - Infrastructure",tr:3,p:178.78,off:-42.0,de:0.12,roe:15,mg:22,yoy:13.7,cagr:9.8,q:[6.6,4.0],pe:24.4,mc:30.0,fcf:1.1,fcfy:3.6,fcfm:18.5,cx:1.9,ndf:"cash",deb:1.80,gm:48.6,f:"Highest leverage among the kept names (debt/EBITDA 1.80×) — but net cash, so no refinancing risk.",fk:"note"},
+{t:"FFIV",n:"F5, Inc.",s:"Technology",i:"Software - Infrastructure",tr:3,p:318.09,off:-34.2,de:0.05,roe:19,mg:21,yoy:10.6,cagr:6.7,q:[6.6,6.1],pe:24.2,mc:17.3,fcf:0.6,fcfy:3.5,fcfm:17.7,cx:10.4,ndf:"cash",deb:0.27,gm:81.9},
+{t:"INTU",n:"Intuit Inc.",s:"Technology",i:"Software - Application",tr:3,p:310.02,off:-54.6,de:0.44,roe:24,mg:21,yoy:13.9,cagr:14.3,q:[-49.1,0.0],pe:18.8,mc:82.8,fcf:7.1,fcfy:8.5,fcfm:32.3,cx:10.0,ndf:0.3,deb:1.06,gm:80.6,f:"QoQ swing is seasonal (tax season), not deterioration.",fk:"note"},
+{t:"PDD",n:"PDD Holdings Inc.",s:"Consumer Cyclical",i:"Internet Retail",tr:3,p:86.00,off:-31.4,de:0.01,roe:23,mg:20,yoy:9.7,cagr:49.0,q:[5.8,-3.6],pe:9.7,mc:122.4,fcf:null,fcfy:6.3,fx:1,fcfm:12.2,cx:12.0,ndf:"cash",deb:0.05,gm:56.7,f:"Lowest debt on this list (D/E 0.01). Already turning: +9.2% in the last month. FCF yield ≈6.3% after CNY conversion.",fk:"note"},
+{t:"DECK",n:"Deckers Outdoor Corporation",s:"Consumer Cyclical",i:"Footwear & Accessories",tr:3,p:78.95,off:-35.4,de:0.23,roe:44,mg:19,yoy:9.8,cagr:14.7,q:[-8.9,45.2],pe:10.8,mc:10.9,fcf:0.8,fcfy:7.5,fcfm:14.6,cx:5.6,ndf:"cash",deb:0.39,gm:58.9,f:"QoQ swing is seasonal (footwear), not deterioration.",fk:"note"},
+{t:"NEM",n:"Newmont Corporation",s:"Basic Materials",i:"Gold",tr:4,p:100.05,off:-26.0,de:0.16,roe:27,mg:35,yoy:21.3,cagr:23.9,q:[-16.3,4.0],pe:12.9,mc:115.2,fcf:9.2,fcfy:8.0,fcfm:34.4,cx:14.8,ndf:"cash",deb:0.32,gm:68.0,f:"Growth is gold-price-driven; the last quarter shrank. A hedge bucket, not a growth bucket. The clean gold name: passes the new FCF criteria; WPM was dropped.",fk:"risk"},
+{t:"ASND",n:"Ascendis Pharma A/S",s:"Healthcare",i:"Biotechnology",tr:4,p:255.96,off:-9.3,de:0.30,roe:132,mg:73,yoy:98.0,cagr:141.4,q:[37.6,9.0],pe:17.8,mc:17.7,fcf:0.1,fcfy:0.8,fcfm:11.7,cx:32.9,ndf:"cash",deb:1.19,gm:91.9,f:"Biotech, lumpy revenue — held-up quality, not fallen value. Thinnest FCF cover in the list ($0.1B, yield 0.8%) — kept because it is net cash with no leverage risk.",fk:"note"},
+{t:"MEDP",n:"Medpace Holdings, Inc.",s:"Healthcare",i:"Diagnostics & Research",tr:4,p:633.98,off:-8.6,de:0.29,roe:118,mg:18,yoy:20.0,cagr:20.1,q:[0.1,1.2],pe:35.9,mc:18.1,fcf:0.5,fcfy:2.8,fcfm:17.5,cx:7.9,ndf:"cash",deb:0.27,gm:72.2,f:"Flat last two quarters — held-up quality, not fallen value.",fk:"note"},
+{t:"VRTX",n:"Vertex Pharmaceuticals Incorporated",s:"Healthcare",i:"Biotechnology",tr:4,p:520.66,off:-8.4,de:0.31,roe:21,mg:31,yoy:8.9,cagr:10.4,q:[11.6,3.2],pe:33.5,mc:132.0,fcf:2.3,fcfy:1.8,fcfm:18.1,cx:10.5,ndf:0.1,deb:1.27,gm:54.8},
+{t:"TCOM",n:"Trip.com Group Limited",s:"Consumer Cyclical",i:"Travel Services",tr:4,p:42.26,off:-46.5,de:0.17,roe:16,mg:37,yoy:17.1,cagr:46.0,q:[5.3,-3.4],pe:8.6,mc:26.8,fcf:null,fcfy:null,fcfm:null,cx:null,ndf:"cash",deb:2.36,gm:80.0,f:"Already turning: +7.5% in the last month — relative strength, not capitulation. Debt/EBITDA 2.36× is the highest leverage ratio in the kept list; FCF is n/a in Yahoo (CNY reporting).",fk:"note"},
+{t:"AAPL",n:"Apple Inc.",s:"Technology",i:"Consumer Electronics",tr:5,p:350.73,off:-2.8,de:0.84,roe:142,mg:28,yoy:15.1,cagr:7.7,q:[-1.6,4.6],pe:38.89,mc:5074.8,fcf:105.7,fcfy:2.1,fcfm:22.1,cx:8.2,ndf:0.4,deb:0.55,gm:48.8,pn:"Nov 20 morning, intraday",offnote:"Off 52-week high, Nov 20 morning",f:"The adopter, not a builder — FCF $105.7B is the largest in the set. Fails the original screen on gross D/E only (0.84); the net-debt lens overturns it (ND/FCF 0.4×). −2.8% off high, above its 50-day.",fk:"note"},
+{t:"QLYS",n:"Qualys, Inc.",s:"Technology",i:"Software - Infrastructure",tr:5,p:192.43,off:-18.3,de:0.08,roe:36,mg:30,yoy:10.1,cagr:11.0,q:[3.7,3.2],pe:29.41,mc:6.2,fcf:0.3,fcfy:4.1,fcfm:35.4,cx:10.7,ndf:"cash",deb:0.20,gm:83.3,f:"Druckenmiller's applications name (cybersecurity) that actually passes — GM 83.3%, FCF margin 35.4%, net cash.",fk:"note"},
+{t:"ALL",n:"The Allstate Corporation",s:"Financial Services",i:"Insurance - Property & Casualty",tr:5,p:266.77,off:-5.1,de:0.23,roe:39,mg:17,yoy:5.6,cagr:10.4,q:[9.8,-6.7],pe:6.16,mc:67.2,fcf:8.8,fcfy:13.2,fcfm:12.6,cx:5.9,ndf:0.1,deb:0.48,gm:34.9,f:"Insurance, near highs (+6.3% in the last month). Yahoo FCF for insurers is a rough proxy — read the yield with that caveat.",fk:"note"},
+{t:"CINF",n:"Cincinnati Financial Corporation",s:"Financial Services",i:"Insurance - Property & Casualty",tr:5,p:188.04,off:-3.9,de:0.05,roe:17,mg:20,yoy:11.4,cagr:24.4,q:[49.3,-28.7],pe:11.13,mc:29.1,fcf:2.4,fcfy:8.3,fcfm:18.1,cx:5.2,ndf:"cash",deb:0.25,gm:26.2,f:"QoQ is lumpy (insurance seasonality: +49.3% / −28.7%). Near highs (+8.3% in the last month).",fk:"note"}
 ];
 const TIERS = {
   1:{name:"Tier 1 — The epicenter", sub:"Semis / memory / AI infrastructure"},
   2:{name:"Tier 2 — Mega-cap quality", sub:"Cash machines, moderate falls"},
   3:{name:"Tier 3 — Fallen quality", sub:"Other sectors"},
-  4:{name:"Tier 4 — Diversifiers & relative strength", sub:"Gold, healthcare, already-turning names"}
+  4:{name:"Tier 4 — Diversifiers & relative strength", sub:"Gold, healthcare, already-turning names"},
+  5:{name:"Tier 5 — Rotation & applications", sub:"AI adopters + names near 52-week highs"}
 };
 const TRIGGERS = "Reclaim the 50-day on volume, or a base + break above the recent high. Scale in — don't catch the falling knife. A new low while the index stabilises = off the list.";
 const fmtPrice = v => "$" + v.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
@@ -663,6 +731,22 @@ if (params.get("sort")) state.sort = params.get("sort");
 function kv(k, v, field, tk){
   return '<div class="kv"><div class="k">'+k+'</div><div class="v"'+(field?' data-f="'+field+'" data-tk="'+tk+'"':'')+'>'+v+'</div></div>';
 }
+function fcfCell(label, val){ return '<div class="kv"><div class="k">'+label+'</div><div class="v">'+val+'</div></div>'; }
+function fcfHtml(d){
+  const na = "n/a";
+  let h = '<p class="group-title">Free cash flow — TTM <span style="text-transform:none;letter-spacing:0">· Yahoo financialData · FCF = operating cash flow − capex</span></p><div class="kv-grid">'
+    + fcfCell("FCF (TTM)", d.fcf==null?na:"$"+d.fcf.toFixed(1)+"B")
+    + fcfCell("FCF yield", d.fcfy==null?na:(d.fx?"≈":"")+d.fcfy.toFixed(1)+"%")
+    + fcfCell("FCF margin", d.fcfm==null?na:d.fcfm.toFixed(1)+"%")
+    + fcfCell("Capex intensity", d.cx==null?na:d.cx.toFixed(1)+"% of revenue")
+    + fcfCell("Net debt / FCF", d.ndf==="cash"?"net cash":(typeof d.ndf==="number"?d.ndf.toFixed(1)+"×":na))
+    + fcfCell("Debt / EBITDA", d.deb==null?na:d.deb.toFixed(2)+"×")
+    + fcfCell("Gross margin", d.gm==null?na:d.gm.toFixed(1)+"%")
+    + '</div>';
+  if (d.fx) h += '<p class="explain">≈ = local-currency artefact: Yahoo reports this name in '+(d.t==="TSM"?"TWD (true yield ≈1.8%)":"CNY (true yield ≈6.3%)")+'; the yield shown is the converted estimate from the research note. Ratios (margin, capex, leverage) are currency-neutral and valid.</p>';
+  if (d.fcf==null) h += '<p class="explain">FCF is n/a in Yahoo for this name — shown as n/a, not zero.</p>';
+  return h;
+}
 function rowHtml(d, idx){
   const offCls = d.off <= -15 ? "wl-off" : "wl-off mild";
   const flag = d.f ? '<div class="flag-box '+(d.fk==="risk"?"why red":"why neutral")+'"><h3>'+(d.fk==="risk"?"Flag — read before acting":"Note")+'</h3><p>'+esc(d.f)+'</p></div>' : "";
@@ -674,7 +758,7 @@ function rowHtml(d, idx){
     + '<span class="idea-name">'+esc(d.n)+' · '+esc(d.s)+'</span>'
     + '<span class="wl-strip"><span>D/E <b data-f="de" data-tk="'+d.t+'">'+d.de.toFixed(2)+'</b></span><span>ROE <b data-f="roe" data-tk="'+d.t+'">'+d.roe+'%</b></span><span>Rev YoY <b data-f="yoy" data-tk="'+d.t+'">'+fmtPct(d.yoy)+'</b></span><span>P/E <b data-f="pe" data-tk="'+d.t+'">'+d.pe.toFixed(1)+'</b></span></span>'
     + '</span>'
-    + '<span class="idea-head-right"><span class="idea-price" data-f="price" data-tk="'+d.t+'">'+fmtPrice(d.p)+'</span><span class="'+offCls+'" title="Off 52-week high, Nov 19, 2026 close">'+d.off.toFixed(1)+'% off high</span></span>'
+    + '<span class="idea-head-right"><span class="idea-price" data-f="price" data-tk="'+d.t+'">'+fmtPrice(d.p)+(d.pn?' <span style="font-size:11px;color:var(--info)">· AM</span>':'')+'</span><span class="'+offCls+'" title="'+(d.offnote||"Off 52-week high, Nov 19, 2026 close")+'">'+d.off.toFixed(1)+'% off high</span></span>'
     + '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>'
     + '</button>'
     + '<div class="panel"><div class="kv-grid">'
@@ -688,9 +772,9 @@ function rowHtml(d, idx){
     + kv("Market cap", fmtMc(d.mc))
     + kv("Sector", esc(d.s))
     + kv("Industry", esc(d.i))
-    + '</div>' + flag
+    + '</div>' + fcfHtml(d) + flag
     + '<div class="trig"><h3>Bounce trigger</h3><p><strong>'+esc(TRIGGERS)+'</strong></p></div>'
-    + '<div class="detail-links"><a class="chart-pill" href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(d.t)+'" target="_blank" rel="noopener">Chart on TradingView ↗</a><span class="plain">Off-high and QoQ as of Nov 19, 2026 close.</span></div>'
+    + '<div class="detail-links"><a class="chart-pill" href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(d.t)+'" target="_blank" rel="noopener">Chart on TradingView ↗</a><span class="plain">'+(d.pn?"Price "+d.pn+". Off-high as of Nov 20 morning; QoQ from latest filings.":"Off-high and QoQ as of Nov 19, 2026 close.")+'</span></div>'
     + '</div></article>';
 }
 function filtered(){
@@ -704,6 +788,7 @@ function filtered(){
   else if (s==="roe") rows = [...rows].sort((a,b)=>b.roe-a.roe);
   else if (s==="yoy") rows = [...rows].sort((a,b)=>b.yoy-a.yoy);
   else if (s==="pe") rows = [...rows].sort((a,b)=>a.pe-b.pe);
+  else if (s==="fcfy") rows = [...rows].sort((a,b)=>(b.fcfy??-1)-(a.fcfy??-1));
   return rows;
 }
 function render(){
@@ -711,7 +796,7 @@ function render(){
   const box = $("rows");
   let html = "";
   if (state.sort === "tier" && !state.q){
-    [1,2,3,4].forEach(tr => {
+    [1,2,3,4,5].forEach(tr => {
       const inTier = rows.filter(d=>d.tr===tr);
       if (!inTier.length) return;
       html += '<section class="tier-sec open" data-tier="'+tr+'">'
@@ -723,7 +808,7 @@ function render(){
     html = rows.map((d,i)=>rowHtml(d, i+1)).join("");
   }
   box.innerHTML = html || '<p class="plain" style="margin-top:14px">No rows match that search or filter.</p>';
-  $("rowCount").innerHTML = 'Showing <span class="mono">'+rows.length+'</span> of <span class="mono">25</span> stocks';
+  $("rowCount").innerHTML = 'Showing <span class="mono">'+rows.length+'</span> of <span class="mono">26</span> stocks';
   box.querySelectorAll(".idea > .toggle").forEach(btn => {
     btn.addEventListener("click", e => {
       if (e.target.closest("a")) return;
@@ -782,6 +867,7 @@ async function liveRefresh(){
     ]);
     const fund = fr.fundamentals || {};
     const quotes = (qr && qr.quotes) || {};
+    const covered = DATA.filter(d=>quotes[d.t]).length;
     window.__liveFund = []; window.__livePrice = [];
     DATA.forEach(d => {
       const v = fund[d.t];
@@ -800,16 +886,16 @@ async function liveRefresh(){
         }
       }
       const qv = quotes[d.t];
-      if (qv && isFinite(qv.price)){ d.p = qv.price; refreshedPrice++; window.__livePrice.push(d.t); }
+      if (qv && isFinite(qv.price) && !d.pn){ d.p = qv.price; refreshedPrice++; window.__livePrice.push(d.t); }
     });
     window.__refreshed = true;
     render();
     const t = new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:"America/New_York"});
-    line.textContent = "Live refresh " + t + " ET — quality metrics refreshed for " + refreshedFund + " of 25, prices for " + refreshedPrice + " of 25 (quotes feed covers 6). Off-high and QoQ stay on the Nov 19 snapshot.";
+    line.textContent = "Live refresh " + t + " ET — quality metrics refreshed for " + refreshedFund + " of 26, prices for " + refreshedPrice + " of 26 (quotes feed covers " + covered + "). Off-high and QoQ stay on the Nov 19 snapshot; AAPL price stays Nov 20 morning.";
     document.querySelector("#refreshLine .stale-dot, #refreshLine .live-dot")?.remove();
     $("refreshLine").insertAdjacentHTML("afterbegin", '<span class="live-dot"></span>');
   }catch(err){
-    line.textContent = "Live refresh unavailable (" + String(err.message||err).slice(0,60) + ") — showing the Nov 19, 2026 snapshot.";
+    line.textContent = "Live refresh unavailable (" + String(err.message||err).slice(0,60) + ") — showing the Nov 19, 2026 snapshot (AAPL: Nov 20 morning).";
   }
 }
 liveRefresh();
