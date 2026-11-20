@@ -6,6 +6,14 @@
 - Backtest-before-adopt: no strategy ships without historical validation.
 - Free data sources only. He trades ES/NQ futures options 0DTE/1DTE, SPX 0DTE/1DTE.
 
+## 2026-11-20 — Scoring revamp docs moved to main from branch ccr-9303d741-r241z9 (docs only, no build)
+
+- **Request:** Ankit (2026-11-20 ~10:53 ET): "Let's move the two docs."
+- **Change:** `TradeDesk/STRATEGY_PLAN.md` (595 lines) and `TradeDesk/STRATEGY_BUILD_SPEC.md` (646 lines) copied unchanged from branch `ccr-9303d741-r241z9` (head `3f62024`, Nov 16) to main. The branch was 5 ahead / 122 behind main with no PR, so the two files were moved directly instead of merging the branch — the branch's own AGENTLOG entries were NOT carried over, to avoid clobbering the Nov 17–20 entries on main. The build spec on the branch is the Rev 3 spec, substantively identical to `ScoringLogicUpdated.txt`. No app, pipeline, data or Supabase change.
+- **Version:** none (no build).
+- **Verified:** both files 404 on main before the move; after the move both return via the contents API with the branch blob shas (PLAN `5627b65`, SPEC `840c3fd`); line counts re-derived from the live files. The 12 review flags from `scoring-revamp-review-2026-11-20.md` are NOT folded in — that is the next decision.
+- **Still open:** fold the 12 review fixes into a revised spec (or send back to the Rev 3 author); then WO-00. No code until Ankit says go.
+
 ## 2026-11-20 — Fix Performance tab crash, React error #310 (bugfix, v2026-11-20a)
 
 - **Request:** Ankit (2026-11-20 ~09:57 ET): "Error on performance tab of traderdesk — Minified React error #310."
