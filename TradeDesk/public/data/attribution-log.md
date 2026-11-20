@@ -173,3 +173,7 @@ Not enough history yet.
 ## 2026-11-20
 Judged: 0 ideas (≥30d hold) · Pending: 13
 Not enough history yet.
+
+## 2026-11-20
+Judged: 0 ideas (≥30d hold) · Pending: 13
+Not enough history yet.
