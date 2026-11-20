@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Downturn Watchlist — 25 quality stocks to watch for the bounce</title>
+<meta name="description" content="25 low-debt, high-quality stocks screened from 1,147 tickers to monitor in the November 2026 downturn. Data as of Nov 19, 2026 close. Monitor list, not buy recommendations.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Libre+Franklin:wght@400;600;700;800&family=IBM+Plex+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+
+      /* ============ TOKENS ============ */
+      :root{
+        color-scheme: light dark;
+        --bg:#edf0f3;
+        --panel:#ffffff;
+        --panel-2:#f2f5f8;
+        --panel-3:#e9edf2;
+        --ink:#0f1620;
+        --muted:#44546a;
+        --faint:#5b6c82;
+        --line:#ccd4de;
+        --line-soft:#dde3ea;
+        --up:#0b7a4a;
+        --up-bg:#e2f3ea;
+        --down:#bc3524;
+        --down-bg:#fbe9e5;
+        --info:#1c5cb4;
+        --info-bg:#e4edfa;
+        --signal:#f2a71b;
+        --signal-ink:#211300;
+        --signal-soft:#fdf0d3;
+        --desk:#10161f;
+        --desk-ink:#eef3f9;
+        --desk-muted:#b3c0d1;
+        --desk-line:#2c3949;
+        --focus:#1c5cb4;
+        --r-sm:6px; --r-md:10px; --r-lg:14px;
+        --move:200ms ease;
+      }
+      @media (prefers-color-scheme: dark){
+        :root{
+          --bg:#080b0f;
+          --panel:#10161f;
+          --panel-2:#151e2a;
+          --panel-3:#0b1119;
+          --ink:#e9eef5;
+          --muted:#a7b4c6;
+          --faint:#8798ad;
+          --line:#2a3646;
+          --line-soft:#1e2938;
+          --up:#3ed08d;
+          --up-bg:rgba(46,194,126,.13);
+          --down:#ff7d68;
+          --down-bg:rgba(242,96,76,.13);
+          --info:#7db1ff;
+          --info-bg:rgba(88,166,255,.12);
+          --signal-soft:rgba(245,165,36,.12);
+          --desk:#131c28;
+          --focus:#7db1ff;
+        }
+      }
+
+      /* ============ BASE ============ */
+      *{ box-sizing:border-box; }
+      html{ -webkit-text-size-adjust:100%; }
+      body{
+        margin:0; background:var(--bg); color:var(--ink);
+        font-family:"Libre Franklin", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size:15px; line-height:1.5;
+      }
+      h1,h2,h3,p{ margin:0; }
+      .mono{ font-family:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric:tabular-nums; }
+      .serif{ font-family:"Newsreader", Georgia, "Times New Roman", serif; }
+      button, select, summary, input:not([type="checkbox"], [type="radio"]){ min-height:2.75rem; }
+      button{ font-family:inherit; }
+      :focus-visible{ outline:2px solid var(--focus); outline-offset:2px; border-radius:4px; }
+      .skip{ position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+      .skip:focus{ position:fixed; left:8px; top:8px; width:auto; height:auto; margin:0; clip-path:none; overflow:visible; background:var(--ink); color:var(--bg); padding:10px 16px; z-index:60; font-weight:700; }
+      a{ color:var(--info); }
+      .shell{ max-width:1140px; margin:0 auto; padding:24px 20px 40px; }
+
+      /* ============ PAGE HEAD ============ */
+      .page-head{ display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:8px 24px; border-bottom:2px solid var(--ink); padding-bottom:14px; }
+      h1{ font-family:"Newsreader", Georgia, serif; font-size:34px; font-weight:700; letter-spacing:-.01em; line-height:1.1; }
+      .dateline{ color:var(--muted); font-size:13px; text-align:right; }
+      .dateline .mono{ color:var(--ink); font-weight:600; }
+
+      /* ============ LAYOUT ============ */
+      .layout{ display:block; margin-top:20px; }
+      @media (min-width:920px){
+        .layout{ display:grid; grid-template-columns:348px minmax(0,1fr); gap:28px; align-items:start; }
+        .rail{ position:sticky; top:20px; }
+      }
+
+      /* ============ SEARCH ============ */
+      .search-label{ display:block; font-size:13px; font-weight:700; margin-bottom:8px; }
+      .search-label span{ color:var(--muted); font-weight:500; }
+      .searchbox{ position:relative; }
+      .searchbox svg{ position:absolute; left:13px; top:50%; transform:translateY(-50%); width:18px; height:18px; stroke:var(--faint); pointer-events:none; }
+      .searchbox input{
+        width:100%; padding:12px 14px 12px 40px; border-radius:var(--r-md);
+        background:var(--panel); border:1px solid var(--line); color:var(--ink);
+        font:600 15px "Libre Franklin", sans-serif; outline:none;
+      }
+      .searchbox input::placeholder{ color:var(--faint); font-weight:500; }
+      .searchbox input:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--info-bg); }
+      .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+      .chip{
+        min-height:44px; padding:6px 15px; border-radius:999px; cursor:pointer;
+        background:var(--panel); border:1px solid var(--line); color:var(--muted);
+        font:700 13px "IBM Plex Mono", monospace;
+      }
+      .chip:hover{ border-color:var(--ink); color:var(--ink); }
+      .search-result{ display:none; margin-top:14px; }
+      .search-result.show{ display:block; animation:rise var(--move); }
+      .sr-card{ background:var(--panel); border:1.5px solid var(--info); border-radius:var(--r-lg); padding:16px; }
+      .sr-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+      .sr-ticker{ font:700 20px "IBM Plex Mono", monospace; }
+      .sr-name{ color:var(--muted); font-size:13px; margin-top:1px; }
+      .sr-right{ text-align:right; }
+      .sr-price{ font:700 17px "IBM Plex Mono", monospace; }
+      .sr-badge{ display:inline-block; margin-top:5px; font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px; }
+      .sr-verdict{ margin-top:10px; font-size:14px; }
+      .sr-extra{ margin-top:10px; border-top:1px solid var(--line-soft); padding-top:10px; font-size:13px; color:var(--muted); }
+      .sr-extra p{ margin:0 0 6px; }
+      .sr-extra p:last-child{ margin-bottom:0; }
+      .sr-note{ margin-top:10px; background:var(--info-bg); border-radius:var(--r-md); padding:9px 11px; font-size:12.5px; color:var(--ink); }
+
+      /* ============ CHART PILL (TradingView) ============ */
+      .chart-pill{
+        display:inline-flex; align-items:center; gap:3px; min-height:32px; padding:4px 10px;
+        border-radius:999px; border:1px solid var(--info); background:var(--info-bg); color:var(--info);
+        font:700 11.5px "IBM Plex Mono", monospace; text-decoration:none; white-space:nowrap; vertical-align:middle;
+      }
+      .chart-pill:hover{ border-color:var(--ink); color:var(--ink); }
+      td .chart-pill{ margin-left:6px; }
+
+      /* ============ MOOD — the one bold block ============ */
+      .mood{ background:var(--desk); color:var(--desk-ink); border-radius:var(--r-lg); padding:20px 18px 16px; margin-top:22px; }
+      .mood-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+      .mood-pill{ background:var(--signal); color:var(--signal-ink); font-weight:800; font-size:12.5px; letter-spacing:.05em; padding:6px 12px; border-radius:999px; text-transform:uppercase; }
+      .mood-when{ color:var(--desk-muted); font-size:12px; }
+      .mood-say{ font-family:"Newsreader", Georgia, serif; font-size:23px; font-weight:600; line-height:1.3; margin-top:14px; }
+      .mood-plain{ color:var(--desk-muted); font-size:13.5px; margin-top:8px; }
+      .mood-plain strong{ color:var(--desk-ink); }
+      .mood-stats{ display:grid; grid-template-columns:1fr; gap:0; margin-top:14px; border-top:1px solid var(--desk-line); }
+      .mstat{ padding:11px 0 10px; border-bottom:1px solid var(--desk-line); display:grid; grid-template-columns:92px 74px 1fr; gap:10px; align-items:baseline; }
+      .mstat .k{ font-size:11px; font-weight:700; letter-spacing:.04em; color:var(--desk-muted); text-transform:uppercase; }
+      .mstat .v{ font:700 16px "IBM Plex Mono", monospace; }
+      .mstat .e{ font-size:12px; color:var(--desk-muted); line-height:1.4; }
+      @media (max-width:430px){
+        .mstat{ grid-template-columns:1fr auto; }
+        .mstat .e{ grid-column:1 / -1; }
+      }
+      .breadth{ margin-top:13px; }
+      .breadth-track{ height:8px; border-radius:99px; background:#2a3646; overflow:hidden; }
+      .breadth-fill{ height:100%; background:var(--signal); }
+      .breadth-cap{ display:flex; justify-content:space-between; gap:12px; font-size:12px; color:var(--desk-muted); margin-top:6px; }
+
+      /* ============ SECTION HEADS ============ */
+      .sec-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:28px 0 4px; }
+      .sec-head h2{ font-size:19px; font-weight:800; letter-spacing:-.01em; }
+      .sec-head .hint{ color:var(--faint); font-size:12.5px; text-align:right; }
+      .plain{ color:var(--muted); font-size:13.5px; }
+      .plain strong{ color:var(--ink); }
+      .explain{ font-size:12.5px; color:var(--muted); margin-top:4px; }
+      .up{ color:var(--up); } .down{ color:var(--down); }
+
+      /* ============ ACCORDION SHARED ============ */
+      .toggle, .mini-toggle{
+        width:100%; display:flex; align-items:center; gap:12px; text-align:left;
+        background:none; border:0; color:var(--ink); cursor:pointer; font-family:inherit;
+      }
+      .chev{ flex:0 0 auto; width:18px; height:18px; stroke:var(--faint); transition:transform var(--move); }
+      .open > .toggle .chev, .open > .mini-toggle .chev{ transform:rotate(180deg); }
+      .panel{ display:none; }
+      .open > .panel{ display:block; animation:rise var(--move); }
+      @keyframes rise{ from{ opacity:0; transform:translateY(3px);} to{ opacity:1; transform:none;} }
+      @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+
+      /* ============ IDEA LEDGER ROWS ============ */
+      .idea{ background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg); margin-top:12px; overflow:hidden; }
+      .idea .toggle{ padding:15px 16px; }
+      .rank{ flex:0 0 auto; font:700 12px "IBM Plex Mono", monospace; color:var(--faint); border:1px solid var(--line); border-radius:var(--r-sm); padding:4px 7px; }
+      .idea-main{ flex:1 1 auto; min-width:0; }
+      .idea-ticker-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+      .idea-ticker{ font:700 19px "IBM Plex Mono", monospace; }
+      .idea-price{ font:600 13.5px "IBM Plex Mono", monospace; color:var(--muted); }
+      .idea-name{ display:block; color:var(--muted); font-size:12.5px; margin-top:1px; }
+      .idea-verdict{ display:block; font-size:13.5px; color:var(--muted); margin-top:5px; }
+      .idea-verdict strong{ color:var(--ink); }
+      .idea-why{ display:block; font-size:13.5px; color:var(--muted); margin-top:6px; line-height:1.45; }
+      .idea-why strong{ color:var(--ink); }
+      .idea-risk{ display:block; font-size:13px; line-height:1.45; margin-top:8px; background:var(--down-bg); color:var(--ink); border-radius:var(--r-md); padding:8px 10px; }
+      .idea-risk strong{ color:var(--down); }
+      @media (prefers-color-scheme: dark){ .idea-risk strong{ color:var(--down); } }
+      @media (max-width:640px){
+        .idea--brief .score{ display:none; }
+        .idea--brief .chart-pill{ display:none; }
+      }
+      .tensec{ background:var(--panel); border:1.5px solid var(--ink); border-radius:var(--r-lg); padding:16px; margin-bottom:4px; }
+      .tensec-k{ font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); }
+      .tensec-say{ font-family:"Newsreader", Georgia, serif; font-size:21px; font-weight:600; line-height:1.35; margin-top:6px; }
+      .tensec p{ font-size:13.5px; color:var(--muted); margin-top:8px; }
+      .tensec p strong{ color:var(--ink); }
+      .score{ flex:0 0 auto; width:58px; text-align:center; }
+      .score-num{ font:700 21px "IBM Plex Mono", monospace; line-height:1; }
+      .score-num.up{ color:var(--up); } .score-num.down{ color:var(--down); }
+      .score-bar{ height:5px; border-radius:99px; background:var(--panel-3); margin-top:6px; overflow:hidden; }
+      .score-bar i{ display:block; height:100%; border-radius:99px; }
+      .score-cap{ font-size:9.5px; font-weight:800; letter-spacing:.08em; color:var(--faint); margin-top:4px; }
+      .idea .panel{ border-top:1px solid var(--line-soft); padding:15px 16px 17px; }
+
+      .pill{ font-size:10.5px; font-weight:800; letter-spacing:.04em; padding:3px 8px; border-radius:999px; white-space:nowrap; }
+      .pill.put{ background:var(--down-bg); color:var(--down); border:1px solid var(--down); }
+      .pill.ok{ background:var(--up-bg); color:var(--up); border:1px solid var(--up); }
+      .pill.grey{ background:var(--panel-2); color:var(--muted); border:1px solid var(--line); }
+      .pill.info{ background:var(--info-bg); color:var(--info); border:1px solid var(--info); }
+
+      .kv-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+      @media (min-width:920px){ .kv-grid{ grid-template-columns:repeat(4,1fr); } }
+      .kv{ background:var(--panel-2); border:1px solid var(--line-soft); border-radius:var(--r-md); padding:10px 12px; }
+      .kv .k{ font-size:11px; font-weight:700; color:var(--faint); }
+      .kv .v{ font:700 16px "IBM Plex Mono", monospace; margin-top:2px; }
+      .kv .e{ font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.4; }
+
+      .why{ background:var(--up-bg); border-radius:var(--r-md); padding:12px 14px; margin-top:12px; }
+      .why.red{ background:var(--down-bg); }
+      .why.neutral{ background:var(--panel-2); }
+      .why h3{ margin:0 0 7px; font-size:13.5px; font-weight:800; }
+      .why ul{ margin:0; padding:0; list-style:none; }
+      .why li{ font-size:13.5px; padding:3px 0 3px 22px; position:relative; }
+      .why li::before{ content:""; position:absolute; left:2px; top:9px; width:9px; height:5px; border-left:2.5px solid var(--up); border-bottom:2.5px solid var(--up); transform:rotate(-45deg); }
+      .why.red li::before{ border-color:var(--down); }
+      .why p{ margin:7px 0 0; font-size:12.5px; color:var(--muted); }
+
+      .group-title{ font-size:12px; font-weight:800; letter-spacing:.05em; color:var(--faint); text-transform:uppercase; margin:18px 0 8px; }
+      .fund-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+      @media (min-width:920px){ .fund-grid{ grid-template-columns:repeat(3,1fr); } }
+      .fund{ background:var(--panel-2); border:1px solid var(--line-soft); border-radius:var(--r-md); padding:9px 11px; }
+      .fund .k{ font-size:11px; font-weight:600; color:var(--faint); }
+      .fund .v{ font:700 15px "IBM Plex Mono", monospace; margin-top:1px; }
+      .fund .e{ font-size:11px; color:var(--muted); margin-top:2px; line-height:1.35; }
+      .fair{ margin-top:12px; border-top:1px dashed var(--line); padding-top:10px; }
+      .fair-row{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:13.5px; padding:3px 0; }
+      .fair-row .fv{ font:700 14px "IBM Plex Mono", monospace; white-space:nowrap; }
+
+      .strip{ display:flex; align-items:stretch; background:var(--panel-2); border:1px solid var(--line-soft); border-radius:var(--r-md); padding:10px 4px; margin-top:12px; }
+      .strip .cell{ flex:1 1 0; text-align:center; min-width:0; padding:0 3px; }
+      .strip .cell + .cell{ border-left:1px solid var(--line); }
+      .strip .k{ font-size:9px; font-weight:700; letter-spacing:.02em; color:var(--faint); text-transform:uppercase; white-space:nowrap; }
+      .strip .v{ font:700 12.5px "IBM Plex Mono", monospace; white-space:nowrap; margin-top:2px; }
+
+      .ticket{ margin-top:6px; }
+      .ticket-row{ display:flex; justify-content:space-between; gap:14px; padding:8px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; }
+      .ticket-row:last-child{ border-bottom:0; }
+      .ticket-row .tk{ color:var(--muted); flex:0 0 104px; font-weight:600; }
+      .ticket-row .tv{ text-align:right; }
+      .ticket-row .tv .mono{ font-weight:700; }
+      .ticket-row .tv .e{ display:block; font-size:11.5px; color:var(--muted); margin-top:1px; }
+
+      /* ============ INDEX CARDS ============ */
+      .index-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg); margin-top:12px; overflow:hidden; }
+      .index-card .toggle{ padding:15px 16px; }
+      .idx-num{ flex:0 0 auto; font:700 13px "IBM Plex Mono", monospace; color:var(--faint); }
+      .sec-main{ flex:1 1 auto; min-width:0; }
+      .sec-title{ display:block; font-size:16px; font-weight:800; }
+      .sec-sub{ display:block; font-size:12.5px; color:var(--muted); margin-top:1px; }
+      .sec-sub strong{ color:var(--ink); }
+      .count-pill{ flex:0 0 auto; font:700 12px "IBM Plex Mono", monospace; padding:5px 10px; border-radius:999px; background:var(--panel-2); border:1px solid var(--line); color:var(--ink); white-space:nowrap; }
+      .count-pill.red{ color:var(--down); border-color:var(--down); background:var(--down-bg); }
+      .count-pill.green{ color:var(--up); border-color:var(--up); background:var(--up-bg); }
+      .index-card .panel{ border-top:1px solid var(--line-soft); padding:14px 16px 16px; }
+
+      .optbox{ background:var(--panel-2); border:1px solid var(--line); border-radius:var(--r-md); margin-top:10px; overflow:hidden; }
+      .mini-toggle{ padding:11px 12px; min-height:44px; }
+      .opt-main{ flex:1 1 auto; min-width:0; }
+      .opt-ticker{ font:700 16px "IBM Plex Mono", monospace; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+      .opt-name{ display:block; font-size:11.5px; color:var(--muted); }
+      .opt-key{ font:600 12.5px "IBM Plex Mono", monospace; color:var(--muted); text-align:right; white-space:nowrap; }
+      .opt-key b{ color:var(--ink); font-size:14px; }
+      .optbox .panel{ border-top:1px solid var(--line-soft); padding:11px 12px 13px; }
+      .etf-note{ margin-top:10px; font-size:12px; background:var(--info-bg); border-radius:var(--r-sm); padding:8px 10px; }
+
+      /* congress */
+      .splitbar{ display:flex; height:28px; border-radius:var(--r-sm); overflow:hidden; margin-top:4px; font:700 12px "IBM Plex Mono", monospace; }
+      .splitbar .buys{ background:var(--up); color:#04160c; display:flex; align-items:center; justify-content:center; }
+      .splitbar .sells{ background:var(--down); color:#fff5f2; display:flex; align-items:center; justify-content:center; flex:1; }
+      @media (prefers-color-scheme: dark){ .splitbar .sells{ color:#1c0500; } }
+
+      /* earnings */
+      .earn-row{ display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--line-soft); }
+      .earn-row:last-child{ border-bottom:0; }
+      .earn-date{ flex:0 0 54px; text-align:center; background:var(--panel-2); border:1px solid var(--line-soft); border-radius:var(--r-md); padding:6px 2px; }
+      .earn-date .m{ font-size:9.5px; font-weight:800; letter-spacing:.08em; color:var(--faint); }
+      .earn-date .d{ font:700 17px "IBM Plex Mono", monospace; }
+
+      /* ============ EARNINGS — aligned grid, bars, inline expand ============ */
+      .earn-grid{ display:grid; grid-template-areas:"date co eps price move hpc"; grid-template-columns:58px minmax(140px,1fr) 76px 94px 118px 188px; column-gap:14px; align-items:start; }
+      .earn-grid > span{ min-width:0; }
+      .ea-date{ grid-area:date; } .ea-co{ grid-area:co; } .ea-eps{ grid-area:eps; }
+      .ea-price{ grid-area:price; } .ea-move{ grid-area:move; } .ea-hpc{ grid-area:hpc; }
+      .earn-head{ padding:10px 0 8px; border-bottom:1.5px solid var(--line); font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--faint); }
+      .earn-head .r{ text-align:right; }
+      .earn-head .nowrap{ white-space:nowrap; }
+      .earn-item{ border-bottom:1px solid var(--line-soft); }
+      .earn-item:last-child{ border-bottom:0; }
+      .earn-toggle{ width:100%; background:none; border:0; color:var(--ink); cursor:pointer; text-align:left; padding:12px 0; font-family:inherit; align-items:start; }
+      .earn-toggle:hover .ea-co .t{ color:var(--info); }
+      .earn-cell.num{ text-align:right; font-weight:700; }
+      .earn-cell .sub{ display:block; font-size:12px; color:var(--muted); font-weight:400; margin-top:1px; }
+      .earn-cell .t{ font-size:15px; }
+      .earn-cell .exp-hint{ font-size:11px; font-weight:700; color:var(--info); letter-spacing:.03em; }
+      .earn-exp{ display:inline-block; transition:transform var(--move); }
+      .earn-item.open .earn-exp{ transform:rotate(180deg); }
+      .earn-datecell .earn-date{ display:block; margin:0 auto; }
+      .earn-datecell .earn-date .d{ display:block; }
+      .earn-datecell .sub{ text-align:center; }
+      .hpc{ display:grid; gap:4px; }
+      .hpc-row{ display:grid; grid-template-columns:11px minmax(0,1fr) 28px; gap:6px; align-items:center; }
+      .hpc-k{ font:700 10.5px "IBM Plex Mono", monospace; color:var(--faint); }
+      .hpc-v{ font:700 11.5px "IBM Plex Mono", monospace; text-align:right; }
+      .bar-track{ display:block; height:6px; border-radius:99px; background:var(--panel-3); overflow:hidden; }
+      .bar-fill{ display:block; height:100%; border-radius:99px; }
+      .move-num{ text-align:right; font-weight:700; display:block; }
+      .move-track{ margin-top:5px; }
+      .earn-detail{ display:none; padding:2px 0 18px 72px; }
+      .earn-item.open .earn-detail{ display:block; animation:rise var(--move); }
+      .quarter-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(128px,1fr)); gap:8px; }
+      .quarter{ background:var(--panel-2); border:1px solid var(--line-soft); border-radius:var(--r-md); padding:9px 11px; }
+      .quarter .q-k{ font-size:11px; font-weight:700; color:var(--faint); }
+      .quarter .q-r{ margin-top:5px; }
+      .quarter .q-v{ font-size:14px; font-weight:700; margin-top:5px; }
+      @media (max-width:760px){
+        .earn-grid{ grid-template-areas:"date co eps price" "date co move hpc"; grid-template-columns:46px minmax(0,1fr) 62px 98px; row-gap:9px; column-gap:10px; }
+        .earn-date{ padding:5px 1px; } .earn-date .d{ font-size:15px; }
+        .earn-head .ea-move, .earn-head .ea-hpc{ font-size:10px; }
+        .earn-detail{ padding-left:0; }
+        .move-num{ text-align:left; }
+        .ea-move .move-num{ font-size:12.5px; }
+      }
+
+      /* ============ RESEARCH — inline row expand ============ */
+      .res-row{ cursor:pointer; }
+      .res-row:hover td{ background:var(--panel-2); }
+      .res-row:focus-visible{ outline:2px solid var(--focus); outline-offset:-2px; }
+      .res-exp{ display:inline-block; font-size:11px; font-weight:700; color:var(--info); margin-left:6px; white-space:nowrap; transition:transform var(--move); }
+      .res-row[aria-expanded="true"] .res-exp{ transform:rotate(180deg); }
+      .ledger tr.res-detail-row[hidden]{ display:none !important; }
+      .res-detail-cell{ background:var(--panel-2); }
+      @media (max-width:640px){ .res-detail-cell{ padding:12px !important; } }
+
+      /* legend */
+      .legend-row{ display:flex; gap:12px; padding:8px 0; border-bottom:1px solid var(--line-soft); }
+      .legend-row:last-child{ border-bottom:0; }
+      .legend-term{ flex:0 0 108px; font:700 12.5px "IBM Plex Mono", monospace; padding-top:1px; }
+      .legend-def{ flex:1 1 auto; font-size:12.5px; color:var(--muted); }
+      .legend-def strong{ color:var(--ink); }
+
+      footer{ margin-top:30px; border-top:1px solid var(--line); padding-top:14px; text-align:center; color:var(--faint); font-size:11.5px; line-height:1.6; }
+
+      /* ============ DETAIL TABS ============ */
+      .tabbar{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+      .tab-btn{
+        flex:1 1 auto; min-height:48px; padding:10px 14px; border-radius:var(--r-md);
+        border:1px solid var(--line); background:var(--panel); color:var(--muted);
+        font:700 14px "Libre Franklin", sans-serif; cursor:pointer;
+        display:flex; align-items:center; justify-content:center; gap:8px;
+      }
+      .tab-btn .tab-n{ font:700 11px "IBM Plex Mono", monospace; color:var(--faint); }
+      .tab-btn:hover{ border-color:var(--ink); color:var(--ink); }
+      .tab-btn[aria-selected="true"]{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+      .tab-btn[aria-selected="true"] .tab-n{ color:var(--bg); opacity:.65; }
+      @media (max-width:560px){ .tab-btn{ flex:1 1 30%; font-size:13px; padding:10px 8px; } }
+      .view{ display:none; }
+      .view.active{ display:block; animation:rise var(--move); }
+      .detail-head{ margin-top:26px; border-bottom:2px solid var(--ink); padding-bottom:12px; }
+      .detail-head h2{ font-family:"Newsreader", Georgia, serif; font-size:28px; font-weight:700; letter-spacing:-.01em; line-height:1.15; }
+      .detail-head .plain{ margin-top:6px; max-width:62ch; }
+      .jump-links{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+      .jump-link{
+        min-height:44px; padding:9px 14px; border-radius:999px; cursor:pointer;
+        border:1px solid var(--info); background:var(--info-bg); color:var(--info);
+        font:700 13px "Libre Franklin", sans-serif;
+      }
+      .jump-link:hover{ border-color:var(--ink); color:var(--ink); }
+      .jump-link.back{ border-color:var(--line); background:var(--panel-2); color:var(--muted); }
+      .earn-like{ display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--line-soft); }
+      .earn-like:last-child{ border-bottom:0; }
+      .earn-main{ flex:1 1 auto; }
+      .earn-main .t{ font:700 15px "IBM Plex Mono", monospace; }
+      .earn-main .n{ font-size:12px; color:var(--muted); }
+      .earn-main .e{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+
+      /* ============ DATA TABLES + TOOLBARS ============ */
+      .toolbar{ display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 6px; }
+      .toolbar input[type="search"], .toolbar select{
+        min-height:44px; padding:9px 12px; border-radius:var(--r-md); border:1px solid var(--line);
+        background:var(--panel); color:var(--ink); font:600 13.5px "Libre Franklin", sans-serif;
+      }
+      .toolbar input[type="search"]{ flex:1 1 180px; }
+      .toolbar select{ flex:0 1 auto; max-width:100%; }
+      .toolbar input:focus, .toolbar select:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--info-bg); outline:none; }
+      .rowcount{ font-size:12.5px; color:var(--muted); margin:8px 0 2px; }
+      .rowcount .mono{ font-weight:700; color:var(--ink); }
+      .more-btn{
+        width:100%; min-height:48px; margin-top:10px; border-radius:var(--r-md); cursor:pointer;
+        border:1px solid var(--line); background:var(--panel-2); color:var(--ink);
+        font:700 13.5px "Libre Franklin", sans-serif;
+      }
+      .more-btn:hover{ border-color:var(--ink); }
+      .ledger{ width:100%; border-collapse:collapse; font-size:13.5px; }
+      .ledger th{ text-align:left; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--faint); padding:8px 8px 8px 0; border-bottom:1.5px solid var(--line); }
+      .ledger td{ padding:10px 8px 10px 0; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+      .ledger tr:last-child td{ border-bottom:0; }
+      .ledger .mono{ font-weight:700; }
+      .ledger .sub{ display:block; font-size:12px; color:var(--muted); font-weight:400; }
+      @media (max-width:640px){
+        .ledger thead{ display:none; }
+        .ledger, .ledger tbody, .ledger tr, .ledger td{ display:block; width:100%; }
+        .ledger tr{ border:1px solid var(--line-soft); border-radius:var(--r-md); padding:10px 12px; margin-top:10px; background:var(--panel-2); }
+        .ledger td{ border-bottom:0; padding:4px 0; }
+        .ledger td::before{ content:attr(data-k); display:block; font-size:10.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--faint); }
+        .ledger td.nolabel::before{ content:none; }
+      }
+      .status-pill{ font-size:10.5px; font-weight:800; letter-spacing:.04em; padding:3px 8px; border-radius:999px; white-space:nowrap; }
+      .status-pill.wait{ background:var(--info-bg); color:var(--info); border:1px solid var(--info); }
+      .status-pill.hold{ background:var(--up-bg); color:var(--up); border:1px solid var(--up); }
+      .status-pill.risk{ background:var(--down-bg); color:var(--down); border:1px solid var(--down); }
+      .status-pill.base{ background:var(--panel-2); color:var(--muted); border:1px solid var(--line); }
+      .news-row{ padding:11px 0; border-bottom:1px solid var(--line-soft); }
+      .news-row:last-child{ border-bottom:0; }
+      .news-row .nt{ font-size:14px; font-weight:600; line-height:1.45; }
+      .news-row .nt a{ color:var(--ink); text-decoration:none; }
+      .news-row .nt a:hover{ color:var(--info); text-decoration:underline; }
+      .news-row .nm{ font-size:12px; color:var(--muted); margin-top:3px; display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; }
+      .analyst{ padding:9px 0; border-bottom:1px solid var(--line-soft); }
+      .analyst:last-child{ border-bottom:0; }
+      .analyst .ah{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+      .analyst .an{ font:700 12px "IBM Plex Mono", monospace; }
+      .analyst .as{ font-size:13px; color:var(--muted); margin-top:3px; }
+
+      /* ============ ADMIN ============ */
+      .admin-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:12px 0; border-bottom:1px solid var(--line-soft); }
+      .admin-row:last-of-type{ border-bottom:0; }
+      .admin-who{ flex:1 1 220px; min-width:0; }
+      .admin-email{ font:700 14px "IBM Plex Mono", monospace; overflow-wrap:anywhere; }
+      .admin-note{ font-size:12px; color:var(--muted); margin-top:1px; }
+      .role-pill{ font-size:10.5px; font-weight:800; letter-spacing:.05em; padding:4px 9px; border-radius:999px; white-space:nowrap; }
+      .role-pill.admin{ background:var(--ink); color:var(--bg); }
+      .role-pill.member{ background:var(--panel-2); color:var(--muted); border:1px solid var(--line); }
+      .admin-actions{ display:flex; flex-wrap:wrap; gap:8px; }
+      .small-btn{ min-height:44px; padding:9px 14px; border-radius:var(--r-md); border:1px solid var(--line); background:var(--panel); color:var(--ink); font:700 13px "Libre Franklin", sans-serif; cursor:pointer; }
+      .small-btn:hover{ border-color:var(--ink); }
+      .small-btn.danger{ color:var(--down); border-color:var(--down); background:var(--down-bg); }
+      .small-btn[disabled]{ opacity:.45; cursor:not-allowed; }
+      .admin-form{ display:grid; grid-template-columns:1fr; gap:10px; margin-top:4px; }
+      @media (min-width:720px){ .admin-form{ grid-template-columns:1fr 170px auto; align-items:end; } }
+      .field label{ display:block; font-size:12px; font-weight:700; margin-bottom:6px; }
+      .field input, .field select{ width:100%; min-height:48px; padding:11px 12px; border-radius:var(--r-md); border:1px solid var(--line); background:var(--panel); color:var(--ink); font:600 14px "Libre Franklin", sans-serif; }
+      .field input:focus, .field select:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--info-bg); outline:none; }
+      .primary-btn{ min-height:48px; padding:11px 20px; border-radius:var(--r-md); border:1px solid var(--ink); background:var(--ink); color:var(--bg); font:800 14px "Libre Franklin", sans-serif; cursor:pointer; white-space:nowrap; }
+      .form-msg{ display:none; margin-top:10px; font-size:13px; background:var(--up-bg); color:var(--up); border-radius:var(--r-md); padding:10px 12px; font-weight:600; }
+      .form-msg.show{ display:block; }
+      .check-list{ margin:0; padding:0; list-style:none; }
+      .check-list li{ font-size:13.5px; padding:5px 0 5px 22px; position:relative; }
+      .check-list li::before{ content:""; position:absolute; left:2px; top:11px; width:9px; height:5px; border-left:2.5px solid var(--up); border-bottom:2.5px solid var(--up); transform:rotate(-45deg); }
+      .check-list li.no::before{ content:"×"; border:0; transform:none; left:3px; top:2px; font-weight:800; color:var(--down); font-size:15px; }
+
+      /* ============ STICKY BOTTOM CALL (phones) ============ */
+      .topcall{ display:none; }
+      @media (max-width:919px){
+        body{ padding-bottom:84px; }
+        .topcall{
+          display:flex; align-items:center; gap:12px;
+          position:fixed; left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:50;
+          background:var(--desk); color:var(--desk-ink); border-radius:var(--r-lg);
+          padding:10px 10px 10px 14px; box-shadow:0 8px 28px rgba(0,0,0,.35);
+        }
+        .topcall .tc-main{ flex:1 1 auto; min-width:0; font-size:12.5px; line-height:1.4; }
+        .topcall .tc-main .mono{ font-weight:700; }
+        .topcall .tc-k{ display:block; font-size:10px; font-weight:800; letter-spacing:.06em; color:var(--signal); text-transform:uppercase; }
+        .topcall button{
+          flex:0 0 auto; min-height:44px; border:0; cursor:pointer; border-radius:var(--r-md);
+          background:var(--signal); color:var(--signal-ink); font:800 13.5px "Libre Franklin", sans-serif; padding:10px 16px;
+        }
+      }
+    
+</style>
+<style>
+  /* ---- DownturnWatchlist additions (Mock B tokens only) ---- */
+  .wl-strip{ display:flex; flex-wrap:wrap; gap:2px 12px; font:600 12.5px "IBM Plex Mono", monospace; color:var(--muted); margin-top:5px; }
+  .wl-strip b{ color:var(--ink); font-weight:700; }
+  .wl-strip .live-mark{ color:var(--up); font-weight:700; }
+  .wl-off{ font-size:10.5px; font-weight:800; letter-spacing:.04em; padding:3px 8px; border-radius:999px; white-space:nowrap; background:var(--down-bg); color:var(--down); border:1px solid var(--down); }
+  .wl-off.mild{ background:var(--panel-2); color:var(--muted); border-color:var(--line); }
+  .idea .toggle{ align-items:flex-start; }
+  .idea-head-right{ flex:0 0 auto; text-align:right; }
+  .idea-head-right .idea-price{ display:block; font:700 15px "IBM Plex Mono", monospace; }
+  .idea-head-right .wl-off{ display:inline-block; margin-top:4px; }
+  .flag-box{ margin-top:12px; }
+  .flag-box h3{ margin:0 0 7px; font-size:13.5px; font-weight:800; }
+  .flag-box p{ margin:0; font-size:13.5px; line-height:1.5; }
+  .trig{ background:var(--up-bg); border-radius:var(--r-md); padding:12px 14px; margin-top:12px; }
+  .trig h3{ margin:0 0 7px; font-size:13.5px; font-weight:800; }
+  .trig p{ margin:0; font-size:13.5px; line-height:1.5; color:var(--muted); }
+  .trig p strong{ color:var(--ink); }
+  .detail-links{ margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .detail-links .plain{ font-size:12.5px; }
+  .tier-sec{ margin-top:8px; }
+  .tier-sec > .toggle{ padding:4px 0; }
+  .tier-sec .sec-head{ margin:20px 0 0; }
+  .tier-sec .chev{ width:18px; height:18px; }
+  .rowcount{ font-size:12.5px; color:var(--muted); margin:10px 0 2px; }
+  .rowcount .mono{ font-weight:700; color:var(--ink); }
+  .refresh-line{ font-size:12.5px; color:var(--muted); margin-top:8px; }
+  .refresh-line .live-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--up); margin-right:5px; }
+  .refresh-line .stale-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--signal); margin-right:5px; }
+  .kv .v.live{ color:var(--up); }
+  .kv .v.live::after{ content:" ●"; font-size:10px; vertical-align:super; }
+  #diag{ display:none; white-space:pre-wrap; font:12px "IBM Plex Mono", monospace; background:var(--panel-2); border:1px solid var(--line); border-radius:var(--r-md); padding:10px; margin-top:16px; }
+  #diag.show{ display:block; }
+  .foot{ margin-top:34px; border-top:1px solid var(--line); padding-top:14px; font-size:12.5px; color:var(--muted); }
+  .foot p{ margin:0 0 6px; }
+  @media (max-width:640px){
+    .idea-head-right .idea-price{ font-size:14px; }
+    .wl-strip{ font-size:11.5px; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#list">Skip to the list</a>
+<div class="shell">
+  <header class="page-head">
+    <div>
+      <h1>Downturn Watchlist</h1>
+      <p class="plain" style="margin-top:6px;max-width:62ch">25 low-debt, high-quality stocks to monitor while the market falls — so you know what to buy when it bounces.</p>
+    </div>
+    <div class="dateline">Data as of <span class="mono">Nov 19, 2026 close</span><br><span class="mono">v1.0.0</span> · Monitor list, not buy recommendations</div>
+  </header>
+
+  <section class="mood" aria-label="Market context">
+    <div class="mood-top"><span class="mood-pill">Selling · Nov 20</span><span class="mood-when">Nov 19 close</span></div>
+    <p class="mood-say">An AI-cycle repricing, not (yet) an earnings collapse.</p>
+    <p class="mood-plain">Nov 5: Nasdaq −5.5% into correction, semis −12.2%, $2.5T wiped — AI-regulation scrutiny after the midterm sweep, on top of AI-capex ROI doubt and crowded, levered positioning. Nov 19: Dow −1,100, S&amp;P down a 6th straight session; Anthropic&rsquo;s record IPO (priced $83, opened $111.50, closed ~$97) did not stop the selling — the IPO absorbed cash and forced selling elsewhere. NVDA is −22% since the Huang revelations and step-down.</p>
+    <div class="mood-stats">
+      <div class="mstat"><span class="k">S&amp;P 500</span><span class="v">7,175.83</span><span class="e">−8.5% off its 52-week high · −7.5% in 1 month</span></div>
+      <div class="mstat"><span class="k">Nasdaq</span><span class="v">23,879</span><span class="e">−13.9% off its 52-week high · −10.6% in 1 month</span></div>
+      <div class="mstat"><span class="k">SOX semis</span><span class="v">9,419.72</span><span class="e">−35.7% off its 52-week high · −18.1% in 1 month — the epicenter</span></div>
+    </div>
+    <p class="mood-plain" style="margin-top:12px">The bounce, when it comes, likely starts with the epicenter names stabilizing — SOX reclaiming its 50-day, NVDA basing — and breadth improving. <strong>No bottom call here.</strong> This page is for monitoring with triggers, not buying the open.</p>
+  </section>
+
+  <div class="layout">
+    <div class="rail">
+      <label class="search-label" for="q">Search <span>— ticker or company name</span></label>
+      <div class="searchbox">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Try NVDA, MU, gold…" autocomplete="off">
+      </div>
+      <div class="chips" id="tierChips" role="group" aria-label="Filter by tier">
+        <button class="chip" data-tier="0" aria-pressed="true">All · 25</button>
+        <button class="chip" data-tier="1" aria-pressed="false">Tier 1 · 7</button>
+        <button class="chip" data-tier="2" aria-pressed="false">Tier 2 · 4</button>
+        <button class="chip" data-tier="3" aria-pressed="false">Tier 3 · 8</button>
+        <button class="chip" data-tier="4" aria-pressed="false">Tier 4 · 6</button>
+      </div>
+      <div class="toolbar" style="margin-top:10px">
+        <select id="sort" aria-label="Sort rows">
+          <option value="tier">Sort: tier order</option>
+          <option value="off">Sort: deepest fall first</option>
+          <option value="price-desc">Sort: price, high to low</option>
+          <option value="price-asc">Sort: price, low to high</option>
+          <option value="de">Sort: lowest debt first</option>
+          <option value="roe">Sort: ROE, high to low</option>
+          <option value="yoy">Sort: revenue YoY, high to low</option>
+          <option value="pe">Sort: P/E, low to high</option>
+        </select>
+      </div>
+      <p class="refresh-line" id="refreshLine"><span class="stale-dot"></span><span id="refreshText">Snapshot: Nov 19, 2026 close. Live refresh checking…</span></p>
+      <p class="explain">Quality metrics refresh live from TradeDesk data when the page can reach it; prices refresh for the 6 names the quotes feed covers. Anything not refreshed stays on the Nov 19 snapshot and is labelled as such.</p>
+    </div>
+
+    <main id="list">
+      <p class="rowcount" id="rowCount"></p>
+      <div id="rows"></div>
+
+      <section aria-label="How the list was built">
+        <div class="sec-head"><h2>How the list was built</h2><span class="hint">Reproducible screen</span></div>
+        <p class="plain">Universe: <strong>1,147 tickers</strong> in TradeDesk fundamentals. Screen: market cap ≥ $2B; debt/equity ≤ 0.50; ROE ≥ 15%; profit margin ≥ 15%; revenue YoY ≥ +5%; revenue 3-year CAGR ≥ +5%; trailing P/E 0–40. <strong>57 passed</strong>; the 25 below were ranked by quality plus how far they have fallen, with sector caps and judgment calls (GOOG deduped; NHI dropped — a 152% margin is a data error; foreign OTC ADRs dropped; weak-quarter names dropped).</p>
+        <p class="plain" style="margin-top:8px">Debt/equity is shown as a ratio. <strong>Zero-debt large caps effectively don&rsquo;t exist</strong> — the lowest in the universe is 0.001, the median 0.69. This is the lowest-debt quality cohort: D/E 0.01–0.50. QoQ is the last two quarter-over-quarter revenue changes, most recent last; it is noisy for seasonal names (Intuit tax season, Deckers footwear).</p>
+        <p class="plain" style="margin-top:8px"><strong>Honourable mentions</strong> — passed the screen but held up well (−4% to −15% off highs), so they are quality names, not bounce names: GRMN, SPOT, QLYS, CBOE, CME, HIG, COCO, ABNB.</p>
+        <p class="plain" style="margin-top:8px"><strong>Invalidation:</strong> if the AI-capex story breaks (hyperscaler capex cuts, memory price rollover), Tier 1&rsquo;s growth case breaks with it. Re-screen weekly while the downturn lasts.</p>
+      </section>
+
+      <footer class="foot">
+        <p><strong>DownturnWatchlist v1.0.0</strong> · Data as of Nov 19, 2026 close · Research: Nov 20, 2026.</p>
+        <p>Sources: TradeDesk fundamentals.json (Nov 17 regeneration) for D/E, ROE, margin, revenue YoY / 3-yr CAGR, P/E and market cap; Yahoo 1-year daily bars for price vs 52-week high; Yahoo quarterly statements for QoQ revenue. Index levels: Yahoo, Nov 19 close.</p>
+        <p>This is a monitor list, not buy recommendations and not financial advice.</p>
+      </footer>
+      <pre id="diag"></pre>
+    </main>
+  </div>
+</div>
+
+<div class="topcall">
+  <div class="tc-main"><span class="tc-k">Deepest quality fall</span><span class="mono">MU $690.44</span> · −45% off high · D/E 0.04 · ROE 88%</div>
+  <button type="button" onclick="document.getElementById('list').scrollIntoView({behavior:'smooth'})">See the list</button>
+</div>
+
+<script>
+"use strict";
+/* DownturnWatchlist v1.0.0 — embedded snapshot, Nov 19, 2026 close.
+   All figures verified against TradeDesk fundamentals.json + Yahoo 1y bars + Yahoo quarterly statements.
+   QoQ = last two quarter-over-quarter revenue changes, most recent last. */
+const DATA = [
+{t:"MU",n:"Micron Technology, Inc.",s:"Technology",i:"Semiconductors",tr:1,p:690.44,off:-45.0,de:0.04,roe:88,mg:64,yoy:256.3,cagr:104.6,q:[73.7,30.8],pe:9.3,mc:781.2,f:"Memory is cyclical — the +256% YoY is an HBM/DRAM price explosion, not a permanent run-rate. The bounce case is real but the cycle turns fast; watch DRAM spot pricing.",fk:"risk"},
+{t:"NVDA",n:"NVIDIA Corporation",s:"Technology",i:"Semiconductors",tr:1,p:145.98,off:-40.0,de:0.14,roe:117,mg:63,yoy:65.5,cagr:100.0,q:[17.9,20.4],pe:15.7,mc:3525.0,f:"The −40% includes a leadership crisis (Huang stepped down), not just multiple compression. The business is still growing +20% QoQ. Bellwether: if NVDA can't base, the tape can't.",fk:"risk"},
+{t:"SKHY",n:"SK hynix Inc.",s:"Technology",i:"Semiconductors",tr:1,p:119.20,off:-40.4,de:0.06,roe:93,mg:70,yoy:46.8,cagr:29.6,q:[50.9,31.9],pe:6.6,mc:840.6,f:"Memory is cyclical — the +47% YoY is HBM/DRAM pricing, not a permanent run-rate. Watch DRAM spot pricing.",fk:"risk"},
+{t:"LRCX",n:"Lam Research Corporation",s:"Technology",i:"Semiconductor Equipment & Materials",tr:1,p:203.68,off:-53.6,de:0.27,roe:70,mg:32,yoy:26.0,cagr:10.1,q:[15.1,22.3],pe:30.4,mc:254.4},
+{t:"AMAT",n:"Applied Materials, Inc.",s:"Technology",i:"Semiconductor Equipment & Materials",tr:1,p:338.93,off:-54.2,de:0.25,roe:43,mg:29,yoy:21.4,cagr:9.1,q:[15.2,14.2],pe:26.9,mc:269.0},
+{t:"TSM",n:"Taiwan Semiconductor Manufacturing",s:"Technology",i:"Semiconductors",tr:1,p:352.09,off:-27.8,de:0.15,roe:42,mg:51,yoy:31.6,cagr:18.9,q:[12.0,17.6],pe:22.8,mc:1826.1},
+{t:"ASML",n:"ASML Holding N.V.",s:"Technology",i:"Semiconductor Equipment & Materials",tr:1,p:1356.20,off:-32.2,de:0.09,roe:66,mg:34,yoy:15.6,cagr:15.6,q:[6.4,25.0],pe:33.4,mc:522.7},
+{t:"GOOGL",n:"Alphabet Inc.",s:"Communication Services",i:"Internet Content & Information",tr:2,p:272.66,off:-33.3,de:0.22,roe:44,mg:50,yoy:15.1,cagr:12.5,q:[9.0,6.5],pe:14.2,mc:3352.1},
+{t:"MSFT",n:"Microsoft Corporation",s:"Technology",i:"Software - Infrastructure",tr:2,p:498.30,off:-10.9,de:0.28,roe:34,mg:41,yoy:17.8,cagr:16.1,q:[8.6,2.5],pe:26.0,mc:3700.5},
+{t:"META",n:"Meta Platforms, Inc.",s:"Communication Services",i:"Internet Content & Information",tr:2,p:596.22,off:-23.5,de:0.42,roe:32,mg:31,yoy:22.2,cagr:19.9,q:[8.0,6.2],pe:20.3,mc:1524.1},
+{t:"AMZN",n:"Amazon.com, Inc.",s:"Consumer Cyclical",i:"Internet Retail",tr:2,p:257.37,off:-10.4,de:0.50,roe:27,mg:17,yoy:12.4,cagr:11.7,q:[10.5,0.7],pe:20.8,mc:2783.0,f:"Highest debt on this list (D/E 0.50 — the screen cap).",fk:"risk"},
+{t:"UI",n:"Ubiquiti Inc.",s:"Technology",i:"Communication Equipment",tr:3,p:663.22,off:-39.7,de:0.05,roe:85,mg:30,yoy:27.2,cagr:19.0,q:[18.9,9.5],pe:37.5,mc:40.1,f:"Priciest on the list (37.5×) but already turning: +8.8% in the last month, above its 50-day.",fk:"note"},
+{t:"FSLR",n:"First Solar, Inc.",s:"Technology",i:"Solar",tr:3,p:151.95,off:-52.7,de:0.03,roe:19,mg:37,yoy:24.1,cagr:25.8,q:[1.1,16.5],pe:8.8,mc:16.4},
+{t:"AGX",n:"Argan, Inc.",s:"Industrials",i:"Engineering & Construction",tr:3,p:295.85,off:-63.3,de:0.02,roe:40,mg:15,yoy:8.1,cagr:27.6,q:[11.0,32.0],pe:23.0,mc:4.1},
+{t:"TWLO",n:"Twilio Inc.",s:"Technology",i:"Software - Infrastructure",tr:3,p:178.78,off:-42.0,de:0.12,roe:15,mg:22,yoy:13.7,cagr:9.8,q:[6.6,4.0],pe:24.4,mc:30.0},
+{t:"FFIV",n:"F5, Inc.",s:"Technology",i:"Software - Infrastructure",tr:3,p:318.09,off:-34.2,de:0.05,roe:19,mg:21,yoy:10.6,cagr:6.7,q:[6.6,6.1],pe:24.2,mc:17.3},
+{t:"INTU",n:"Intuit Inc.",s:"Technology",i:"Software - Application",tr:3,p:310.02,off:-54.6,de:0.44,roe:24,mg:21,yoy:13.9,cagr:14.3,q:[-49.1,0.0],pe:18.8,mc:82.8,f:"QoQ swing is seasonal (tax season), not deterioration.",fk:"note"},
+{t:"PDD",n:"PDD Holdings Inc.",s:"Consumer Cyclical",i:"Internet Retail",tr:3,p:86.00,off:-31.4,de:0.01,roe:23,mg:20,yoy:9.7,cagr:49.0,q:[5.8,-3.6],pe:9.7,mc:122.4,f:"Lowest debt on this list (D/E 0.01). Already turning: +9.2% in the last month.",fk:"note"},
+{t:"DECK",n:"Deckers Outdoor Corporation",s:"Consumer Cyclical",i:"Footwear & Accessories",tr:3,p:78.95,off:-35.4,de:0.23,roe:44,mg:19,yoy:9.8,cagr:14.7,q:[-8.9,45.2],pe:10.8,mc:10.9,f:"QoQ swing is seasonal (footwear), not deterioration.",fk:"note"},
+{t:"WPM",n:"Wheaton Precious Metals Corp.",s:"Basic Materials",i:"Gold",tr:4,p:116.13,off:-29.9,de:0.16,roe:23,mg:60,yoy:80.2,cagr:29.5,q:[3.1,-16.9],pe:27.5,mc:57.5,f:"Growth is gold-price-driven; the last quarters shrank even as gold rose. A hedge bucket, not a growth bucket.",fk:"risk"},
+{t:"NEM",n:"Newmont Corporation",s:"Basic Materials",i:"Gold",tr:4,p:100.05,off:-26.0,de:0.16,roe:27,mg:35,yoy:21.3,cagr:23.9,q:[-16.3,4.0],pe:12.9,mc:115.2,f:"Growth is gold-price-driven; the last quarter shrank. A hedge bucket, not a growth bucket.",fk:"risk"},
+{t:"ASND",n:"Ascendis Pharma A/S",s:"Healthcare",i:"Biotechnology",tr:4,p:255.96,off:-9.3,de:0.30,roe:132,mg:73,yoy:98.0,cagr:141.4,q:[37.6,9.0],pe:17.8,mc:17.7,f:"Biotech, lumpy revenue — held-up quality, not fallen value.",fk:"note"},
+{t:"MEDP",n:"Medpace Holdings, Inc.",s:"Healthcare",i:"Diagnostics & Research",tr:4,p:633.98,off:-8.6,de:0.29,roe:118,mg:18,yoy:20.0,cagr:20.1,q:[0.1,1.2],pe:35.9,mc:18.1,f:"Flat last two quarters — held-up quality, not fallen value.",fk:"note"},
+{t:"VRTX",n:"Vertex Pharmaceuticals Incorporated",s:"Healthcare",i:"Biotechnology",tr:4,p:520.66,off:-8.4,de:0.31,roe:21,mg:31,yoy:8.9,cagr:10.4,q:[11.6,3.2],pe:33.5,mc:132.0},
+{t:"TCOM",n:"Trip.com Group Limited",s:"Consumer Cyclical",i:"Travel Services",tr:4,p:42.26,off:-46.5,de:0.17,roe:16,mg:37,yoy:17.1,cagr:46.0,q:[5.3,-3.4],pe:8.6,mc:26.8,f:"Already turning: +7.5% in the last month — relative strength, not capitulation.",fk:"note"}
+];
+const TIERS = {
+  1:{name:"Tier 1 — The epicenter", sub:"Semis / memory / AI infrastructure"},
+  2:{name:"Tier 2 — Mega-cap quality", sub:"Cash machines, moderate falls"},
+  3:{name:"Tier 3 — Fallen quality", sub:"Other sectors"},
+  4:{name:"Tier 4 — Diversifiers & relative strength", sub:"Gold, healthcare, already-turning names"}
+};
+const TRIGGERS = "Reclaim the 50-day on volume, or a base + break above the recent high. Scale in — don't catch the falling knife. A new low while the index stabilises = off the list.";
+const fmtPrice = v => "$" + v.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtPct = (v, d=1) => (v>0?"+":"") + v.toFixed(d) + "%";
+const fmtMc = v => v >= 1000 ? "$" + (v/1000).toFixed(2) + "T" : "$" + v.toFixed(1) + "B";
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const $ = id => document.getElementById(id);
+const state = { tier:0, q:"", sort:"tier" };
+const params = new URLSearchParams(location.search);
+if (params.get("tier")) state.tier = parseInt(params.get("tier"),10) || 0;
+if (params.get("q")) state.q = params.get("q");
+if (params.get("sort")) state.sort = params.get("sort");
+
+function kv(k, v, field, tk){
+  return '<div class="kv"><div class="k">'+k+'</div><div class="v"'+(field?' data-f="'+field+'" data-tk="'+tk+'"':'')+'>'+v+'</div></div>';
+}
+function rowHtml(d, idx){
+  const offCls = d.off <= -15 ? "wl-off" : "wl-off mild";
+  const flag = d.f ? '<div class="flag-box '+(d.fk==="risk"?"why red":"why neutral")+'"><h3>'+(d.fk==="risk"?"Flag — read before acting":"Note")+'</h3><p>'+esc(d.f)+'</p></div>' : "";
+  return '<article class="idea" data-tk="'+d.t+'">'
+    + '<button class="toggle" aria-expanded="false">'
+    + '<span class="rank">'+String(idx).padStart(2,"0")+'</span>'
+    + '<span class="idea-main"><span class="idea-ticker-row"><span class="idea-ticker">'+d.t+'</span>'
+    + '<a class="chart-pill" href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(d.t)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">Chart ↗</a></span>'
+    + '<span class="idea-name">'+esc(d.n)+' · '+esc(d.s)+'</span>'
+    + '<span class="wl-strip"><span>D/E <b data-f="de" data-tk="'+d.t+'">'+d.de.toFixed(2)+'</b></span><span>ROE <b data-f="roe" data-tk="'+d.t+'">'+d.roe+'%</b></span><span>Rev YoY <b data-f="yoy" data-tk="'+d.t+'">'+fmtPct(d.yoy)+'</b></span><span>P/E <b data-f="pe" data-tk="'+d.t+'">'+d.pe.toFixed(1)+'</b></span></span>'
+    + '</span>'
+    + '<span class="idea-head-right"><span class="idea-price" data-f="price" data-tk="'+d.t+'">'+fmtPrice(d.p)+'</span><span class="'+offCls+'" title="Off 52-week high, Nov 19, 2026 close">'+d.off.toFixed(1)+'% off high</span></span>'
+    + '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>'
+    + '</button>'
+    + '<div class="panel"><div class="kv-grid">'
+    + kv("Debt / equity", d.de.toFixed(2), "de", d.t)
+    + kv("ROE", d.roe+"%", "roe", d.t)
+    + kv("Profit margin", d.mg+"%", "mg", d.t)
+    + kv("Revenue YoY", fmtPct(d.yoy), "yoy", d.t)
+    + kv("Revenue 3-yr CAGR", fmtPct(d.cagr), "cagr", d.t)
+    + kv("Revenue QoQ", fmtPct(d.q[0])+" / "+fmtPct(d.q[1]))
+    + kv("P/E (trailing)", d.pe.toFixed(1), "pe", d.t)
+    + kv("Market cap", fmtMc(d.mc))
+    + kv("Sector", esc(d.s))
+    + kv("Industry", esc(d.i))
+    + '</div>' + flag
+    + '<div class="trig"><h3>Bounce trigger</h3><p><strong>'+esc(TRIGGERS)+'</strong></p></div>'
+    + '<div class="detail-links"><a class="chart-pill" href="https://www.tradingview.com/chart/?symbol='+encodeURIComponent(d.t)+'" target="_blank" rel="noopener">Chart on TradingView ↗</a><span class="plain">Off-high and QoQ as of Nov 19, 2026 close.</span></div>'
+    + '</div></article>';
+}
+function filtered(){
+  let rows = DATA.filter(d => (state.tier===0 || d.tr===state.tier)
+    && (!state.q || d.t.toLowerCase().includes(state.q) || d.n.toLowerCase().includes(state.q)));
+  const s = state.sort;
+  if (s==="off") rows = [...rows].sort((a,b)=>a.off-b.off);
+  else if (s==="price-desc") rows = [...rows].sort((a,b)=>b.p-a.p);
+  else if (s==="price-asc") rows = [...rows].sort((a,b)=>a.p-b.p);
+  else if (s==="de") rows = [...rows].sort((a,b)=>a.de-b.de);
+  else if (s==="roe") rows = [...rows].sort((a,b)=>b.roe-a.roe);
+  else if (s==="yoy") rows = [...rows].sort((a,b)=>b.yoy-a.yoy);
+  else if (s==="pe") rows = [...rows].sort((a,b)=>a.pe-b.pe);
+  return rows;
+}
+function render(){
+  const rows = filtered();
+  const box = $("rows");
+  let html = "";
+  if (state.sort === "tier" && !state.q){
+    [1,2,3,4].forEach(tr => {
+      const inTier = rows.filter(d=>d.tr===tr);
+      if (!inTier.length) return;
+      html += '<section class="tier-sec open" data-tier="'+tr+'">'
+        + '<button class="toggle" aria-expanded="true"><span class="sec-head" style="margin:0;flex:1"><h2>'+TIERS[tr].name+' <span class="count-pill">'+inTier.length+'</span></h2><span class="hint">'+TIERS[tr].sub+'</span></span>'
+        + '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>'
+        + '<div class="panel">' + inTier.map((d,i)=>rowHtml(d, i+1)).join("") + '</div></section>';
+    });
+  } else {
+    html = rows.map((d,i)=>rowHtml(d, i+1)).join("");
+  }
+  box.innerHTML = html || '<p class="plain" style="margin-top:14px">No rows match that search or filter.</p>';
+  $("rowCount").innerHTML = 'Showing <span class="mono">'+rows.length+'</span> of <span class="mono">25</span> stocks';
+  box.querySelectorAll(".idea > .toggle").forEach(btn => {
+    btn.addEventListener("click", e => {
+      if (e.target.closest("a")) return;
+      const art = btn.parentElement;
+      const open = art.classList.toggle("open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  });
+  box.querySelectorAll(".tier-sec > .toggle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const sec = btn.parentElement;
+      const open = sec.classList.toggle("open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  });
+  if (window.__refreshed) applyRefreshMarks();
+}
+$("q").addEventListener("input", e => { state.q = e.target.value.trim().toLowerCase(); render(); });
+$("sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
+$("tierChips").addEventListener("click", e => {
+  const b = e.target.closest("[data-tier]"); if (!b) return;
+  state.tier = parseInt(b.dataset.tier,10);
+  document.querySelectorAll("#tierChips .chip").forEach(c => c.setAttribute("aria-pressed", c===b ? "true" : "false"));
+  render();
+});
+if (state.q) $("q").value = state.q;
+if (state.sort) $("sort").value = state.sort;
+document.querySelectorAll("#tierChips .chip").forEach(c => c.setAttribute("aria-pressed", parseInt(c.dataset.tier,10)===state.tier ? "true" : "false"));
+render();
+/* Deep-link: ?open=NVDA expands that row on load */
+if (params.get("open")){
+  const tk = params.get("open").toUpperCase();
+  const art = document.querySelector('.idea[data-tk="'+tk+'"]');
+  if (art){ art.classList.add("open"); art.querySelector(".toggle").setAttribute("aria-expanded","true"); }
+}
+
+/* ---- Live refresh (CORS * verified on both files) ---- */
+const FUND_URL = "https://apatel85.github.io/Dashboards/TradeDesk/dist/data/fundamentals.json";
+const QUOTES_URL = "https://apatel85.github.io/Dashboards/TradeDesk/dist/data/quotes.json";
+let refreshedFund = 0, refreshedPrice = 0;
+function markLive(tk, field){
+  document.querySelectorAll('[data-f="'+field+'"][data-tk="'+tk+'"]').forEach(el => el.classList.add("live"));
+}
+function applyRefreshMarks(){
+  /* re-applied after every render so marks survive re-renders */
+  (window.__liveFund||[]).forEach(tk => ["de","roe","mg","yoy","cagr","pe"].forEach(f => markLive(tk,f)));
+  (window.__livePrice||[]).forEach(tk => markLive(tk,"price"));
+}
+function fmtLivePct(v){ return (v>0?"+":"") + v.toFixed(1) + "%"; }
+async function liveRefresh(){
+  const line = $("refreshText");
+  try{
+    const [fr, qr] = await Promise.all([
+      fetch(FUND_URL).then(r => { if(!r.ok) throw new Error("fund "+r.status); return r.json(); }),
+      fetch(QUOTES_URL).then(r => { if(!r.ok) throw new Error("quotes "+r.status); return r.json(); }).catch(()=>null)
+    ]);
+    const fund = fr.fundamentals || {};
+    const quotes = (qr && qr.quotes) || {};
+    window.__liveFund = []; window.__livePrice = [];
+    DATA.forEach(d => {
+      const v = fund[d.t];
+      if (v){
+        const upd = {};
+        if (isFinite(v.debt_equity)) upd.de = v.debt_equity/100;
+        if (isFinite(v.roe)) upd.roe = v.roe*100;
+        if (isFinite(v.profit_margin)) upd.mg = v.profit_margin*100;
+        if (isFinite(v.revenue_growth_yoy)) upd.yoy = v.revenue_growth_yoy*100;
+        if (isFinite(v.revenue_cagr_3y)) upd.cagr = v.revenue_cagr_3y*100;
+        if (isFinite(v.pe_trailing)) upd.pe = v.pe_trailing;
+        if (Object.keys(upd).length){
+          Object.assign(d, upd);
+          refreshedFund++;
+          window.__liveFund.push(d.t);
+        }
+      }
+      const qv = quotes[d.t];
+      if (qv && isFinite(qv.price)){ d.p = qv.price; refreshedPrice++; window.__livePrice.push(d.t); }
+    });
+    window.__refreshed = true;
+    render();
+    const t = new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:"America/New_York"});
+    line.textContent = "Live refresh " + t + " ET — quality metrics refreshed for " + refreshedFund + " of 25, prices for " + refreshedPrice + " of 25 (quotes feed covers 6). Off-high and QoQ stay on the Nov 19 snapshot.";
+    document.querySelector("#refreshLine .stale-dot, #refreshLine .live-dot")?.remove();
+    $("refreshLine").insertAdjacentHTML("afterbegin", '<span class="live-dot"></span>');
+  }catch(err){
+    line.textContent = "Live refresh unavailable (" + String(err.message||err).slice(0,60) + ") — showing the Nov 19, 2026 snapshot.";
+  }
+}
+liveRefresh();
+
+/* ---- Verification diagnostics (?diag=1) ---- */
+if (params.get("diag")){
+  setTimeout(() => {
+    const de = document.documentElement;
+    const info = {
+      rows: document.querySelectorAll(".idea").length,
+      tiers: document.querySelectorAll(".tier-sec").length,
+      scrollW: de.scrollWidth, clientW: de.clientWidth,
+      overflowX: de.scrollWidth > window.innerWidth,
+      innerWidth: window.innerWidth,
+      firstRowTicker: document.querySelector(".idea .idea-ticker")?.textContent || null,
+      sort: state.sort, tier: state.tier, q: state.q,
+      countLine: $("rowCount").textContent
+    };
+    const pre = $("diag");
+    pre.textContent = "DIAG " + JSON.stringify(info, null, 1);
+    pre.classList.add("show");
+  }, 300);
+}
+</script>
+</body>
+</html>
