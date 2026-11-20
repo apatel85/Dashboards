@@ -6,6 +6,13 @@
 - Backtest-before-adopt: no strategy ships without historical validation.
 - Free data sources only. He trades ES/NQ futures options 0DTE/1DTE, SPX 0DTE/1DTE.
 
+## 2026-11-20 — Downturn tab: price timestamp (fix, v2026-11-20c)
+
+- **Request:** Ankit (2026-11-20 ~13:42 ET): "For prices as of <time stamp> so we know the time of the price quote."
+- **Change:** the Downturn tab's dateline now reads "Prices as of Nov 20, 2026, 11:45 AM ET (Yahoo ~15-min delayed)" — the vague "midday" is gone. `SNAPSHOT_LABEL` in `src/tabs/downturnData.ts` is now the exact fetch time (11:45 AM ET; `SNAPSHOT_TS` 2026-11-20T16:45:00Z was already that). The 11:45 is the fetch time; the "~15-min delayed" qualifier stays because Yahoo quotes lag trading by ~15 min. The dateline is dynamic: when the quotes feed is newer than the snapshot it appends "· live prices as of {feed time}" (feed time via the existing `fmtTimeET`). The status line's three branches and the per-row "Off-high as of …" line all use the same label now — no more hardcoded "midday" anywhere user-visible. No price, figure, or logic changed.
+- **Version:** v2026-11-20c (`BUILD_VERSION` bump).
+- **Verified:** `npm run build` clean (3.06s); new bundle `index-CSJHYLD0.js` contains "11:45 AM ET" and "Prices as of", zero hits for the old "Snapshot: Nov 20 midday" / "Nov 20 midday snapshot" strings, version 2026-11-20c ×1 / 2026-11-20b ×0. No full render re-run for this string-only change (render path untouched); Ankit's on-device check is the final gate.
+
 ## 2026-11-20 — Downturn tab (new tab, v2026-11-20b)
 
 - **Request:** Ankit (2026-11-20 ~11:49 ET): "if it works better, incorporate that into tradedesk into new tab" — the DownturnWatchlist list moved into TradeDesk, where the live data plumbing already exists. The standalone page is untouched and still live; retiring it is his later call.

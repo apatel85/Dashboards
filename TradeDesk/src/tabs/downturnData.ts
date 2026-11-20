@@ -21,7 +21,7 @@ export interface DownturnRow {
   fx: number | null; flag: string; fk: string;
 }
 
-export const SNAPSHOT_LABEL = 'Nov 20, 2026 midday, intraday';
+export const SNAPSHOT_LABEL = 'Nov 20, 2026, 11:45 AM ET';
 /** ISO time the midday prices were fetched — live quotes older than this must NOT override the snapshot. */
 export const SNAPSHOT_TS = '2026-11-20T16:45:00Z';
 

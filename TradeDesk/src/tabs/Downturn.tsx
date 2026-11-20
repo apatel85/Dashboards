@@ -391,15 +391,18 @@ export default function DownturnTab() {
         run through an expert debate. Monitor list, not buy recommendations.
       </p>
       <p className="mb-dt-dateline">
-        Prices {SNAPSHOT_LABEL} (Yahoo ~15-min delayed) · FCF metrics are the
-        Nov 20 TTM snapshot and do not refresh
+        {`Prices as of ${SNAPSHOT_LABEL} (Yahoo ~15-min delayed)${
+          feedNewer && quotes.data
+            ? ` · live prices as of ${fmtTimeET(quotes.data.as_of)}`
+            : ''
+        } · FCF metrics are the Nov 20 TTM snapshot and do not refresh`}
       </p>
       <p className="mb-dt-status" role="status">
         {quotes.loading
-          ? 'Snapshot: Nov 20, 2026 midday. Live refresh checking…'
+          ? `Snapshot: ${SNAPSHOT_LABEL}. Live refresh checking…`
           : quotes.data
-            ? `Snapshot: Nov 20 midday. Live refresh ${fmtTimeET(quotes.data.as_of)} — fundamentals for ${fundCount} of 26, prices for ${quotesCovered} of 26 in the quotes feed${feedNewer ? ' (feed is newer than the snapshot — showing live prices)' : ' (feed is older than the snapshot — showing snapshot prices)'}. Off-high stays on the snapshot; FCF metrics never refresh.`
-            : 'Live refresh unavailable — showing the Nov 20 midday snapshot. Off-high and FCF metrics stay on the snapshot.'}
+            ? `Snapshot: ${SNAPSHOT_LABEL}. Live refresh ${fmtTimeET(quotes.data.as_of)} — fundamentals for ${fundCount} of 26, prices for ${quotesCovered} of 26 in the quotes feed${feedNewer ? ' (feed is newer than the snapshot — showing live prices)' : ' (feed is older than the snapshot — showing snapshot prices)'}. Off-high stays on the snapshot; FCF metrics never refresh.`
+            : `Live refresh unavailable — showing the ${SNAPSHOT_LABEL} snapshot. Off-high and FCF metrics stay on the snapshot.`}
       </p>
 
       <div className="mb-dt-controls">
