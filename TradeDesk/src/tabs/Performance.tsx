@@ -218,63 +218,16 @@ function PredictionSection() {
     return arr;
   }, [data, typeFilter, resultFilter, sortKey, sortDir]);
 
-  const toggleSort = (key: PredSortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else { setSortKey(key); setSortDir(key === 'ticker' ? 'asc' : 'desc'); }
-  };
-  const sortArrow = (key: PredSortKey) => (sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '');
-
-  const countLabel = loading
-    ? 'loading…'
-    : data
-      ? `${data.summary.breakout.tracked + data.summary.lotto.tracked} recorded`
-      : 'no data yet';
-
-  const head = (
-    <button type="button" className="mb-card-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-      <span className="mb-card-num">01</span>
-      <span className="mb-card-title">Daily predictions — did they work?</span>
-      <span className="mb-card-sub">Breakouts &amp; option plays, graded</span>
-      <span className="mb-count-badge">{countLabel}</span>
-      <span className="mb-chev" aria-hidden="true">{open ? '▾' : '▸'}</span>
-    </button>
-  );
-
-  if (loading) {
-    return (
-      <section className="mb-card">
-        {head}
-        {open && (
-          <div className="mb-card-body">
-            <LoadingPanel what="daily prediction tracking" />
-          </div>
-        )}
-      </section>
-    );
-  }
-
-  if (error || !data) {
-    return (
-      <section className="mb-card">
-        {head}
-        {open && (
-          <div className="mb-card-body">
-            <div className="empty-title">Tracking starts with the next morning pipeline run</div>
-            <p className="muted">
-              Every breakout candidate and 0DTE option play the app suggests will be recorded here
-              and graded as the market answers — no history has been published yet.
-            </p>
-          </div>
-        )}
-      </section>
-    );
-  }
-
-  const b = data.summary.breakout;
-  const l = data.summary.lotto;
-
-  /* ── infographic inputs, computed from the same rows ───────────── */
+  /* ── infographic inputs, computed from the same rows ─────────────
+   * This hook MUST stay above the loading/error early returns below:
+   * React requires the same hooks in the same order on every render, and
+   * calling it only once data loads crashed the tab with "rendered more
+   * hooks than during the previous render" (React #310) on first load.
+   * The factory returns null until data arrives; the early returns
+   * guarantee it is non-null by the time the JSX below reads it. */
   const viz = useMemo(() => {
+    if (!data) return null;
+    const l = data.summary.lotto;
     const all = data.rows ?? [];
     const bo = all.filter((r) => r.type === 'breakout');
     const lo = all.filter((r) => r.type === 'lotto');
@@ -341,7 +294,65 @@ function PredictionSection() {
       oldest, daysAgo, first10d: oldest ? addWeekdays(oldest, 10) : null,
       finMfe, finRnow,
     };
-  }, [data, l.avg_modeled_multiple]);
+  }, [data]);
+
+  const toggleSort = (key: PredSortKey) => {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortDir(key === 'ticker' ? 'asc' : 'desc'); }
+  };
+  const sortArrow = (key: PredSortKey) => (sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '');
+
+  const countLabel = loading
+    ? 'loading…'
+    : data
+      ? `${data.summary.breakout.tracked + data.summary.lotto.tracked} recorded`
+      : 'no data yet';
+
+  const head = (
+    <button type="button" className="mb-card-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+      <span className="mb-card-num">01</span>
+      <span className="mb-card-title">Daily predictions — did they work?</span>
+      <span className="mb-card-sub">Breakouts &amp; option plays, graded</span>
+      <span className="mb-count-badge">{countLabel}</span>
+      <span className="mb-chev" aria-hidden="true">{open ? '▾' : '▸'}</span>
+    </button>
+  );
+
+  if (loading) {
+    return (
+      <section className="mb-card">
+        {head}
+        {open && (
+          <div className="mb-card-body">
+            <LoadingPanel what="daily prediction tracking" />
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <section className="mb-card">
+        {head}
+        {open && (
+          <div className="mb-card-body">
+            <div className="empty-title">Tracking starts with the next morning pipeline run</div>
+            <p className="muted">
+              Every breakout candidate and 0DTE option play the app suggests will be recorded here
+              and graded as the market answers — no history has been published yet.
+            </p>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  const b = data.summary.breakout;
+  const l = data.summary.lotto;
+  // viz is non-null here: the early returns above guarantee data loaded,
+  // and the hook above always runs (see its comment).
+  if (!viz) return null;
 
   return (
     <section className="mb-card">
