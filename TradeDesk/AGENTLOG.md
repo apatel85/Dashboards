@@ -6,6 +6,13 @@
 - Backtest-before-adopt: no strategy ships without historical validation.
 - Free data sources only. He trades ES/NQ futures options 0DTE/1DTE, SPX 0DTE/1DTE.
 
+## 2026-11-21 — WO-03 backtest harness (the gate)
+
+- **Request:** Ankit (go-ahead 14:38 ET): "Start WO-03 — the backtest harness" — build the Rev 4 backtest harness and run it (A1 first, then all five daily modules).
+- **Change:** new `TradeDesk/research/backtest/` harness (run.mjs CLI, fetchers, engine, eval, tests). Real cache: 518 tickers daily bars 2019–2026 (991,179 bars), meta, 182 earnings dates (cache/ is git-ignored, not pushed). First full run (2019-01-01 → 2026-10-31, OOS from 2024-11-01, params `cmo-rev4-wo01`): **all five daily modules REJECT (6/6 checks missed each)** — the setups are too rare to validate (A1 81, A2 25, A1S 115, A2S 129, A3S 16 graded candidates; needs ≥300). Tradeable (§4.5) is reported, not applied: under the library's stop-distance reading every A1/A1S/A2/A2S detection is non-tradeable (0 of 1,683); whether "3% loss" means stop distance or position risk needs Ankit's call. Grades can't reach A/A+ (max A1 70; growth/options components are 0 for everyone; RS is long-biased). Intraday/option modules (stock_trigger, stock_orb, S1–S4) NOT run — no free historical minute bars or option chains (needs a free Alpaca key). Also includes the WO-00 ground-truth doc `research/backtest/SOURCES.md` (previously local-only). Fix found during WO-03: `pipeline/lib/supabase-admin.mjs` sent the service key as both `apikey` and `Authorization: Bearer` — Bearer fails PGRST301 with the new `sb_secret_` keys, so the writer is now apikey-only (test updated to assert no Authorization header).
+- **Version:** params `cmo-rev4-wo01` (frozen, hash-verified vs GitHub main); run `all-20190101-20261031-split20241101`.
+- **Verified:** `node --test test/*.test.mjs` re-run independently — 32/32 pass (incl. ten hand-checked tierOutcome cases, determinism); admin tests re-run after the header fix — 12/12 pass; frozen-params sha256 matches GitHub main params.json; AES A1 case re-derived from the cached bars via the lib detector — pivot 13.34, gap +15.3%, tradeable false, stop 6.3%; determinism re-run twice by hand — byte-identical outputs; dry-run publish re-run — 1 run + 79 cases + 1 validation + 15 prob-table rows, 0 written; prob-table max bucket 47 cases (<100); no secrets in any file. No live publish (staging acceptance 03 not passed). Single tree commit via the Git Data API (this AGENTLOG entry in the same commit); blobs verified by reading back from GitHub after the push.
+
 ## 2026-11-21 — WO-02 Supabase schema: cmo tables + RLS + scorecard view
 
 - **Request:** Ankit (2026-11-21 09:16 ET): "go" — build the Rev 4 spec §8 schema.

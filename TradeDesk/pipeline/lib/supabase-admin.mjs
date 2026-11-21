@@ -149,9 +149,11 @@ function restUrl(client, path, query = '') {
 function postgrestHeaders(client, method) {
   const headers = {
     apikey: client.config.serviceKey,
-    Authorization: `Bearer ${client.config.serviceKey}`,
     'Content-Type': 'application/json',
   };
+  // apikey only — never Authorization: Bearer with an sb_secret_ key.
+  // The new secret keys are not JWTs, so Bearer fails PGRST301 (verified
+  // 2026-11-21). The apikey header alone authenticates as service_role.
   // PostgREST looks in `public` without these — see README-cmo.md.
   if (method === 'GET') headers['Accept-Profile'] = client.config.schema;
   else headers['Content-Profile'] = client.config.schema;

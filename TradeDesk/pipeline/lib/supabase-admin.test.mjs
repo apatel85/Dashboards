@@ -106,8 +106,8 @@ test('upsert batches 1200 rows into 3 requests with profile headers', async () =
   for (const { url, init } of seen) {
     assert.ok(url.startsWith(`${URL}/rest/v1/cmo_runs?on_conflict=run_id`));
     assert.equal(init.headers['Content-Profile'], 'cmo');
-    assert.equal(init.headers.Authorization, `Bearer ${KEY}`);
     assert.equal(init.headers.apikey, KEY);
+    assert.equal(init.headers.Authorization, undefined);
     assert.match(init.headers.Prefer, /resolution=merge-duplicates/);
   }
   assert.equal(JSON.parse(seen[0].init.body).length, 500);
