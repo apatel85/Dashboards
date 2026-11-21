@@ -1,0 +1,349 @@
+{
+  "a1": {
+    "exitHalfR": 2,
+    "exitSession": 5,
+    "gapMinPct": 10,
+    "hardStopSession": 30,
+    "prior63MaxPct": 50,
+    "rvolMin": 2
+  },
+  "a1s": {
+    "gapMinPct": 10,
+    "rvolMin": 2
+  },
+  "a2": {
+    "entryAbovePivotPct": 0.1,
+    "entryVolPaceMin": 1.5,
+    "maxAbovePivotAtr": 0.7
+  },
+  "a2s": {
+    "flagMaxSessions": 40,
+    "flagMinSessions": 10
+  },
+  "a3s": {
+    "largeCapMovePct": 50,
+    "largeCapUsd": 10000000000,
+    "minUpDays": 3,
+    "smallCapMovePct": 300,
+    "windowSessions": 5
+  },
+  "buckets": {
+    "adrBands": [
+      [
+        3,
+        5
+      ],
+      [
+        5,
+        8
+      ],
+      [
+        8,
+        null
+      ]
+    ],
+    "atrBands": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        null
+      ]
+    ],
+    "highProbCiLowMin": 50,
+    "highProbLiftMin": 1.3,
+    "highProbMin": 65,
+    "minCases": 100,
+    "tierProbMin": 50,
+    "wilsonZ90": 1.645
+  },
+  "contraction": {
+    "atrLong": 20,
+    "atrRatioMax": 0.7,
+    "atrShort": 5,
+    "maxBaseSessions": 40,
+    "maxDepthPct": 25,
+    "minBaseSessions": 10,
+    "volLong": 50,
+    "volRatioMax": 0.7,
+    "volShort": 5
+  },
+  "dte": {
+    "eventGateMinutes": 30,
+    "liquidityFullSpreadPct": 5,
+    "liquidityHalfSpreadPct": 10,
+    "pricingHalfMult": 1.5,
+    "pricingMaxMult": 1,
+    "signalHoldMinutes": 5,
+    "signalRvolMin": 5,
+    "staleMinutes": 3,
+    "time0dteCutoffET": "11:30",
+    "time1dteEndET": "15:55",
+    "time1dteStartET": "15:30"
+  },
+  "mainWindow": 10,
+  "noiseBand": {
+    "exitTimeET": "15:55",
+    "lookbackSessions": 14
+  },
+  "note": "Frozen by WO-01 (2026-11-21) from spec Rev 4 + SOURCES.md \u00a78 decisions. Every value's source is in the `sources` map (same dotted path). The harness (WO-03) refuses to run with uncommitted changes to this file. Do not edit a value without a spec revision.",
+  "options": {
+    "deltaMax": 50,
+    "deltaMin": 30,
+    "deltaTarget": 40,
+    "maxSpreadPct": 10,
+    "moduleDDelta": 50,
+    "moduleDPremiumMaxUsd": 300
+  },
+  "orb": {
+    "openingRvolMin": 1,
+    "rangeMinutes": 5,
+    "rangeVariantMinutes": 15,
+    "stopAtrPct": 10,
+    "targetR": 5,
+    "topN": 20,
+    "universeMinAtr14": 0.5,
+    "universeMinAvgVol14d": 1000000,
+    "universeMinPrice": 5
+  },
+  "params_version": "cmo-rev4-wo01",
+  "priorMove": {
+    "lookback": 63,
+    "maxWindow": 63,
+    "minPct": 30,
+    "minWindow": 21
+  },
+  "readiness": {
+    "catalystFullSessions": 10,
+    "catalystHalfSessions": 20,
+    "distanceFullPct": 3,
+    "distanceHalfPct": 5,
+    "watchlistMin": 70,
+    "weights": {
+      "catalyst": 15,
+      "contraction": 30,
+      "distance": 15,
+      "growth": 10,
+      "options": 5,
+      "rs": 25
+    }
+  },
+  "regime": {
+    "breadthGreenPct": 50,
+    "breadthRedPct": 30
+  },
+  "risk": {
+    "dayStopR": -2,
+    "gainPct": 15,
+    "lossPct": 3,
+    "maxPerGroup": 2,
+    "maxPositions": 4,
+    "maxSinglePct": 20,
+    "maxTotalOpenRiskPct": 5,
+    "optionPremiumMaxUsd": 300,
+    "optionTargetR": 5,
+    "positionPct": 25
+  },
+  "rs": {
+    "a2Min": 80,
+    "a2sMax": 20,
+    "blockSessions": 63,
+    "scoreFullMin": 90,
+    "scoreHalfMin": 70,
+    "templateMin": 70,
+    "weights": [
+      0.4,
+      0.2,
+      0.2,
+      0.2
+    ]
+  },
+  "score": {
+    "catalystFullGapPct": 8,
+    "catalystFullSurprisePct": 15,
+    "catalystHalfSurprisePct": 10,
+    "grades": {
+      "a": 75,
+      "aPlus": 85,
+      "b": 60
+    },
+    "groupTopPct": 20,
+    "growthEpsFull": 25,
+    "growthEpsHalf": 10,
+    "growthSalesFull": 20,
+    "growthSalesHalf": 10,
+    "volumeFullOpeningRvol": 5,
+    "volumeFullRvol": 3,
+    "volumeHalfRvol": 1.5,
+    "weights": {
+      "catalyst": 20,
+      "group": 5,
+      "growth": 10,
+      "options": 5,
+      "rs": 15,
+      "setup": 30,
+      "volume": 15
+    }
+  },
+  "shorts": {
+    "borrowFeePctYr": 3,
+    "htbSiFloatMaxPct": 20,
+    "minPrice": 10
+  },
+  "sources": {
+    "a1.exitHalfR": "plan \u00a76.1 (sell half at +2R or session 5; kept as labelled plan variant per SOURCES.md \u00a78 decision 8)",
+    "a1.exitSession": "plan \u00a76.1",
+    "a1.gapMinPct": "SOURCES.md \u00a78 decision 3 (Kullam\u00e4gi's published hard requirement is 10%; plan's 8% had no source)",
+    "a1.hardStopSession": "plan \u00a76.1 (hard time stop session 30)",
+    "a1.prior63MaxPct": "plan \u00a76.1 (not already up > 50% in prior 63 sessions)",
+    "a1.rvolMin": "plan \u00a76.1 (day RVOL \u2265 2)",
+    "a1s.gapMinPct": "SOURCES.md \u00a78 decision 3 (mirror of A1; 10% \u2014 his EP is long-only, the short mirror is plan construction)",
+    "a1s.rvolMin": "plan \u00a76.6 (RVOL \u2265 2)",
+    "a2.entryAbovePivotPct": "plan \u00a76.1 (buy stop 0.1% above pivot)",
+    "a2.entryVolPaceMin": "plan \u00a76.1 (volume on pace \u2265 1.5\u00d7 the 50-day average)",
+    "a2.maxAbovePivotAtr": "plan \u00a76.1 (not already > 0.7 ATR above the pivot)",
+    "a2s.flagMaxSessions": "plan \u00a76.6",
+    "a2s.flagMinSessions": "plan \u00a76.6 (10\u201340 session bear flag)",
+    "a3s.largeCapMovePct": "plan \u00a76.6 (large caps up \u2265 50% in 5 sessions)",
+    "a3s.largeCapUsd": "WO-01 judgment call \u2014 plan \u00a76.6 names large/small caps without a cutoff; $10B is the usual large-cap line (small < $2B, mid $2\u201310B). If marketCap is unknown the detector uses the stricter small-cap bar.",
+    "a3s.minUpDays": "plan \u00a76.6 (3+ consecutive up days)",
+    "a3s.smallCapMovePct": "SOURCES.md \u00a78 decision 4 (source's number is 300\u20131000%+; plan's 100% had no source)",
+    "a3s.windowSessions": "plan \u00a76.6 (in 5 sessions)",
+    "buckets.adrBands": "spec \u00a76.4 (ADR% bands 3\u20135, 5\u20138, over 8)",
+    "buckets.atrBands": "spec \u00a76.4 (ATR-distance bands within 1, 1\u20132, over 2)",
+    "buckets.highProbCiLowMin": "spec \u00a76.4 step 6 (low end of interval \u2265 50%)",
+    "buckets.highProbLiftMin": "spec \u00a76.4 step 6 (lift \u2265 1.3)",
+    "buckets.highProbMin": "spec \u00a76.4 step 6 (high_probability needs the tier probability \u2265 65%)",
+    "buckets.minCases": "spec \u00a76.4 step 3 (a bucket needs at least 100 cases)",
+    "buckets.tierProbMin": "spec \u00a76.4 step 6 (tier = highest tier whose probability is at least 50%)",
+    "buckets.wilsonZ90": "spec \u00a76.4 step 2 (90% Wilson interval)",
+    "contraction.atrLong": "plan \u00a74.3",
+    "contraction.atrRatioMax": "plan \u00a74.3 (5-day ATR \u2264 70% of 20-day ATR)",
+    "contraction.atrShort": "plan \u00a74.3",
+    "contraction.maxBaseSessions": "plan \u00a74.3",
+    "contraction.maxDepthPct": "plan \u00a74.3 (depth \u2264 25%)",
+    "contraction.minBaseSessions": "plan \u00a74.3 (base length 10\u201340 sessions)",
+    "contraction.volLong": "plan \u00a74.3",
+    "contraction.volRatioMax": "plan \u00a74.3 (5-day avg volume \u2264 70% of 50-day)",
+    "contraction.volShort": "plan \u00a74.3",
+    "dte.eventGateMinutes": "spec \u00a77.5 (scheduled event in the next 30 minutes \u2192 'wait for the release')",
+    "dte.liquidityFullSpreadPct": "spec \u00a77.5 (full marks: spread \u2264 5% of mid)",
+    "dte.liquidityHalfSpreadPct": "WO-01 judgment call \u2014 spec gives only the \u2264 5% line; \u2264 10% (the plan \u00a74.2 options-liquidity line) earns half",
+    "dte.pricingHalfMult": "WO-01 judgment call \u2014 spec gives only the \u2264 1\u00d7 full-mark line; \u2264 1.5\u00d7 earns half, above earns 0",
+    "dte.pricingMaxMult": "spec \u00a77.5 (full marks: expected move from ATM straddle \u2264 20-day realised daily move)",
+    "dte.signalHoldMinutes": "spec \u00a77.5 (break holds above the opening range for 5 minutes)",
+    "dte.signalRvolMin": "spec \u00a77.5 (full marks: opening RVOL \u2265 5)",
+    "dte.staleMinutes": "spec \u00a77.5 (data older than 3 minutes \u2192 card greys out)",
+    "dte.time0dteCutoffET": "spec \u00a77.5 (full marks: signal before 11:30 ET for 0DTE)",
+    "dte.time1dteEndET": "spec \u00a77.5",
+    "dte.time1dteStartET": "spec \u00a77.5 (1DTE window 15:30\u201315:55 ET)",
+    "mainWindow": "spec \u00a73",
+    "noiseBand.exitTimeET": "plan \u00a76.3 (exit at 15:55 ET)",
+    "noiseBand.lookbackSessions": "plan \u00a76.3 (noise = 14-session average)",
+    "options.deltaMax": "spec \u00a77.4",
+    "options.deltaMin": "spec \u00a77.4 (candidates between 30 and 50 delta)",
+    "options.deltaTarget": "spec \u00a77.4 (pick the one nearest 40 delta)",
+    "options.maxSpreadPct": "spec \u00a77.4 (reject bid-ask spread wider than 10% of mid); plan \u00a74.2 same line",
+    "options.moduleDDelta": "plan \u00a76.5 (single option at ~50 delta)",
+    "options.moduleDPremiumMaxUsd": "plan \u00a76.5 (premium \u2264 $300)",
+    "orb.openingRvolMin": "plan \u00a76.2 (opening 5-minute RVOL \u2265 1)",
+    "orb.rangeMinutes": "plan \u00a74.3/\u00a76.2 (opening range = high/low of first 5 minutes)",
+    "orb.rangeVariantMinutes": "plan \u00a74.3 (15 as a variant)",
+    "orb.stopAtrPct": "plan \u00a76.2 (stop 10% of ATR(14) from entry)",
+    "orb.targetR": "plan \u00a76.2 (exit at the 5R target \u2014 kept as labelled plan variant per SOURCES.md \u00a78 decision 8; the ORB paper exits at stop or close only)",
+    "orb.topN": "plan \u00a76.2 (top 20 by opening RVOL)",
+    "orb.universeMinAtr14": "plan \u00a76.2 (ATR(14) > $0.50)",
+    "orb.universeMinAvgVol14d": "plan \u00a76.2 (14-day average volume \u2265 1M shares)",
+    "orb.universeMinPrice": "plan \u00a76.2 (price > $5)",
+    "priorMove.lookback": "plan \u00a74.3",
+    "priorMove.maxWindow": "plan \u00a74.3",
+    "priorMove.minPct": "plan \u00a74.3 (largest rise over any 21\u201363 session window in last 63 sessions \u2265 30%)",
+    "priorMove.minWindow": "plan \u00a74.3",
+    "readiness.catalystFullSessions": "plan \u00a75 (dated catalyst within 10 sessions)",
+    "readiness.catalystHalfSessions": "WO-01 judgment call \u2014 plan gives only the \u2264 10-session line; 11\u201320 sessions earns half, none earns 0",
+    "readiness.distanceFullPct": "plan \u00a75 (distance to pivot \u2264 3%)",
+    "readiness.distanceHalfPct": "WO-01 judgment call \u2014 plan gives only the \u2264 3% full-mark line; 3\u20135% earns half, > 5% earns 0",
+    "readiness.watchlistMin": "plan \u00a75 (names \u2265 70 go on the watchlist)",
+    "readiness.weights": "plan \u00a75 (contraction 30, rs 25, distance 15, catalyst 15, growth 10, options 5)",
+    "regime.breadthGreenPct": "plan \u00a74.1 (Green needs \u2265 50% of universe above 50-day SMA)",
+    "regime.breadthRedPct": "plan \u00a74.1 (Red when breadth < 30%)",
+    "risk.dayStopR": "plan \u00a74.5 (stop trading for the day at \u22122R)",
+    "risk.gainPct": "plan \u00a74.5 D4/D6, kept per SOURCES.md \u00a78 decision 1 (15% gain)",
+    "risk.lossPct": "plan \u00a74.5 D4/D6, kept per SOURCES.md \u00a78 decision 1 (3% loss)",
+    "risk.maxPerGroup": "plan \u00a74.5 (max 2 positions per industry group)",
+    "risk.maxPositions": "plan \u00a74.5 (four positions at most)",
+    "risk.maxSinglePct": "plan \u00a74.5 (max single position 20% of equity)",
+    "risk.maxTotalOpenRiskPct": "plan \u00a74.5 (max total open risk 5% of equity)",
+    "risk.optionPremiumMaxUsd": "plan \u00a74.5 (premium at risk \u2264 3% of $10k account = $300)",
+    "risk.optionTargetR": "plan \u00a74.5 (profit target 5\u00d7 the premium)",
+    "risk.positionPct": "plan \u00a74.5 (default 25% of account)",
+    "rs.a2Min": "plan \u00a74.3/\u00a76.1 (A2 needs RS \u2265 80)",
+    "rs.a2sMax": "plan \u00a76.6 (A2-S needs RS \u2264 20)",
+    "rs.blockSessions": "plan \u00a74.3 (63-session blocks)",
+    "rs.scoreFullMin": "plan \u00a75 (RS component full at RS \u2265 90 and RS line at new high)",
+    "rs.scoreHalfMin": "plan \u00a75 (RS component half at RS 70\u201389)",
+    "rs.templateMin": "SOURCES.md \u00a78 decision 9 (Minervini book criterion 8: RS rating \u2265 70 in the template)",
+    "rs.weights": "plan \u00a74.3 (40% last 63 + 20% each prior three blocks)",
+    "score.catalystFullGapPct": "plan \u00a75 (full: gap \u2265 8% \u2014 JUDGMENT CALL: kept at 8% as written; the \u00a78 A1-gap decision (10%) applies to the A1 setup detector, not to this scoring row)",
+    "score.catalystFullSurprisePct": "plan \u00a75 (full: surprise \u2265 15% with raised guidance)",
+    "score.catalystHalfSurprisePct": "plan \u00a75 (half: earnings beat < 10% or soft news)",
+    "score.grades": "plan \u00a75 (A+ \u2265 85, A 75\u201384, B 60\u201374, C < 60)",
+    "score.groupTopPct": "plan \u00a75 (full: top 20%; half: top half)",
+    "score.growthEpsFull": "plan \u00a75 (full: EPS \u2265 25% and sales \u2265 20%, accelerating)",
+    "score.growthEpsHalf": "plan \u00a75 (0 when both EPS and sales growth < 10%; half when one qualifies)",
+    "score.growthSalesFull": "plan \u00a75",
+    "score.growthSalesHalf": "plan \u00a75",
+    "score.volumeFullOpeningRvol": "plan \u00a75",
+    "score.volumeFullRvol": "plan \u00a75 (full: RVOL \u2265 3 or opening-bar RVOL \u2265 5)",
+    "score.volumeHalfRvol": "plan \u00a75 (half: RVOL 1.5\u20133)",
+    "score.weights": "plan \u00a75 / spec \u00a76.3 (setup 30, catalyst 20, growth 10, rs 15, volume 15, group 5, options 5)",
+    "shorts.borrowFeePctYr": "plan \u00a76.6 (borrow fee flat 3%/yr placeholder)",
+    "shorts.htbSiFloatMaxPct": "plan \u00a76.6 (hard-to-borrow excluded when short interest \u00f7 float > 20%)",
+    "shorts.minPrice": "plan \u00a76.6 (no shorting under $10)",
+    "tiers.t1Pct": "spec \u00a73.1 (Decision 2026-11-16)",
+    "tiers.t2Pct": "spec \u00a73.1",
+    "tiers.t3Pct": "spec \u00a73.1",
+    "trendTemplate.aboveLowPct": "plan \u00a74.3 (close \u2265 30% above 52-week low)",
+    "trendTemplate.risingMinSessions": "plan \u00a74.3 (200-day rising \u2265 20 sessions)",
+    "trendTemplate.smaPeriods": "plan \u00a74.3 (Close > 50 > 150 > 200-day SMA)",
+    "trendTemplate.withinHighPct": "plan \u00a74.3 (within 25% of 52-week high)",
+    "universe.minAdrPct20d": "plan \u00a74.2 (ADR% 20-day \u2265 3%)",
+    "universe.minAvgDollarVol20d": "plan \u00a74.2 (20-day avg dollar volume \u2265 $20M)",
+    "universe.minPrice": "plan \u00a74.2 (price \u2265 $10)",
+    "universe.optionsAtmSpreadMaxPct": "plan \u00a74.2 (ATM bid-ask spread \u2264 10% of mid)",
+    "windows": "spec \u00a73 (3, 5, 10, 20; 10 is main view)"
+  },
+  "tiers": {
+    "t1Pct": 5,
+    "t2Pct": 10,
+    "t3Pct": 15
+  },
+  "trendTemplate": {
+    "aboveLowPct": 30,
+    "risingMinSessions": 20,
+    "smaPeriods": [
+      50,
+      150,
+      200
+    ],
+    "withinHighPct": 25
+  },
+  "universe": {
+    "minAdrPct20d": 3,
+    "minAvgDollarVol20d": 20000000,
+    "minPrice": 10,
+    "optionsAtmSpreadMaxPct": 10
+  },
+  "windows": [
+    3,
+    5,
+    10,
+    20
+  ]
+}

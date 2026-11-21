@@ -6,6 +6,13 @@
 - Backtest-before-adopt: no strategy ships without historical validation.
 - Free data sources only. He trades ES/NQ futures options 0DTE/1DTE, SPX 0DTE/1DTE.
 
+## 2026-11-21 — WO-01 shared library: pipeline/lib/cmo/ (params cmo-rev4-wo01)
+
+- **Request:** Ankit (2026-11-21 07:29 ET, via options tap): "Go — start WO-01" — build the Rev 4 spec §5 shared library.
+- **Change:** new `TradeDesk/pipeline/lib/cmo/` — 15 library files (`params.json` frozen at `params_version: "cmo-rev4-wo01"` with all 121 parameters sourced, `params.mjs`, `util.mjs`, `indicators.mjs`, `regime.mjs`, `fundamentals.mjs`, `setups.mjs`, `score.mjs`, `rank.mjs`, `tiers.mjs`, `orb.mjs`, `noiseBand.mjs`, `options.mjs`, `dte-score.mjs`, `index.mjs` with 55 exports, `README.md`) + 10 `node --test` suites + 33 real-data fixture JSONs (30 setup + 2 ORB + 1 noise-band, Yahoo daily/1-min bars). Params encode the §8 decisions: A1 gap 10%, A3-S small-cap 300%+, Minervini RS ≥70 in the template, 3%/15% risk, Module C as challenger, Module B 5R/H2 as labelled variants. Pure functions only — no fs/http imports, no clock reads. Deviations from spec §5, all documented in the library README: `noiseBand.mjs` added (not in the §5 file table — the Module C challenger needs an implementation); H1/H2 not implemented (plan §6.4 challengers, not in the §5 table); `epsSurprise` takes (actual, consensus) with no `asOf` (point-in-time discipline lives in the caller); `tierOutcome` gains an optional 7th `opts` arg (`{basis: 'extremes'|'close'}`) for §3.1 close-based judging; `chooseContract` returns `{contract, reason}` instead of a bare contract/null. Known gap: the A3S small-cap 300% bar has no real-data example in the set (closest real candidate, GME Jan 2021 +788%, is large-cap) — a micro-cap scan is needed for a small-cap fixture. No app, Supabase, or Schwab changes; no existing file modified.
+- **Version:** params `cmo-rev4-wo01`.
+- **Verified:** `node --test test/*.test.mjs` re-run independently — 107/107 pass, 0 fail; purity grep clean (no fs/http imports, no Date.now/new Date in library code); all 36 spec-named exports present in index.mjs; params spot-checked against §8 decisions (A1 10, A3S 300, RS template 70, risk 3/15, tiers 5/10/15); Wilson 90% intervals independently recomputed in Python and matched exactly (68/100 → [0.599391, 0.751124] etc.); no secrets in any file. Single tree commit via the Git Data API (this AGENTLOG entry in the same commit); blobs verified by reading back from GitHub after the push.
+
 ## 2026-11-20 — Downturn tab: price timestamp (fix, v2026-11-20c)
 
 - **Request:** Ankit (2026-11-20 ~13:42 ET): "For prices as of <time stamp> so we know the time of the price quote."
