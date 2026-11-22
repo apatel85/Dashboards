@@ -1,6 +1,7 @@
 # TradeDesk — Scoring Revamp Build Spec
 
 **Status:** SPEC ONLY. Nothing in this file has been built or run.
+**Revision:** 5 (2026-11-22, approved by Ankit 2026-11-22). Revision 5 changes one thing: the library's reading of the plan §4.5 3% rule. The 3% is the max LOSS per trade as a share of capital, enforced by position sizing (Ankit 2026-11-22) — it supersedes the stop-distance cap the WO-01 library applied (a setup whose technical stop is more than 3% away was rejected as not tradeable; the position is now sized down so the loss at the stop is at most 3% of capital). The spec's probability mechanism is unchanged: no stop, target, position size or dollar figure in the mechanism itself (§1); the sizing fields are recorded on detections so the backtest can report sizing economics.
 **Revision:** 4 (2026-11-20, approved by Ankit 2026-11-20). Revision 4 folds in the 12 fixes from the
 2026-11-20 review (`research/scoring-revamp-review-2026-11-20.md`) and two decisions Ankit made
 2026-11-20: option plays are stocks only (index plays deferred to a later revisit), and the backtest

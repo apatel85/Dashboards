@@ -6,6 +6,13 @@
 - Backtest-before-adopt: no strategy ships without historical validation.
 - Free data sources only. He trades ES/NQ futures options 0DTE/1DTE, SPX 0DTE/1DTE.
 
+## 2026-11-22 — WO-03 rework: 3% is max loss per trade as % of capital via sizing (spec Rev 5)
+
+- **Request:** Ankit (2026-11-22, via options tap): "Risk ≤3% of capital via sizing — rework the rule."
+- **Change:** `pipeline/lib/cmo/setups.mjs` — new `positionSizing()` (position = min(25% default, 20% single-max, 100×3%/stopDist); risk ≤3% by construction; tier R-multiples 5/10/15 ÷ stopDist); all five detectors size instead of capping, technical stop stays at invalidLevel, `tradeable` now means a valid size exists. `params.json` values unchanged (lossPct 3, version cmo-rev4-wo01); only the `sources["risk.lossPct"]` note reworded, and `research/backtest/frozen-params.json` re-frozen (sha256 c194cc60…, blob sha precomputed 9b941eb5…). Spec Rev 5 (header only); SOURCES.md §8 decision 1 reinterpretation appended. Harness: `--tag` run-id flag (new run `...-sizing`), sizing fields in cases.csv, FINAL_REPORT §10 sizing economics.
+- **Version:** params cmo-rev4-wo01 (frozen, hash-verified); spec Rev 5; run all-20190101-20261031-split20241101-sizing.
+- **Verified:** lib tests 128/128 (21 new sizing tests), harness tests 32/32, both re-run independently after all edits; params.json diff vs main is exactly one line; frozen-params sha256 and blob sha recomputed independently and matched; AES hand case re-checked (stop 6.3% → position 20%, risk 1.26%, tiers 0.79/1.59/2.38R); re-run --skip-fetch: 1,757 detected / 366 graded (identical to the first run), non-tradeable 1,683 → 0; verdicts UNCHANGED (all five REJECT, 6/6 misses — driven by case counts); sizing economics independently recomputed from cases.csv and matched FINAL_REPORT §10 exactly (pooled median position 20.00%, risk 2.54%, Tier 3 < 1R 36.6%, cap binds 63.4%); --publish --dry-run re-run on the new run, 0 written, no live publish. Single tree commit via the Git Data API (this AGENTLOG entry in the same commit); blobs verified by reading back from GitHub after the push.
+
 ## 2026-11-21 — WO-03 backtest harness (the gate)
 
 - **Request:** Ankit (go-ahead 14:38 ET): "Start WO-03 — the backtest harness" — build the Rev 4 backtest harness and run it (A1 first, then all five daily modules).

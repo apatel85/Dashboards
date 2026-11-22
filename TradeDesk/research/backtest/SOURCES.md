@@ -354,6 +354,8 @@ Ankit's answers (2026-11-20 18:35 ET):
 Item 7 — trader-rule decisions, decided by Arlo as "best route" (Ankit's call to veto; these feed WO-01's `params.json`):
 
 1. **3% loss / 15% gain (his D4/D6): KEEP.** His risk rule, not a trader quote — the traders' rules inform it, they don't override it. Rev 5 records the trade-off plainly: the 3% cap vetoes A1/A2 setups whose technical stop is wider, skipping many textbook trades by design.
+
+   Reinterpreted 2026-11-22 (Ankit's words, via options tap: "Risk ≤3% of capital via sizing — rework the rule"): the 3% is the max LOSS per trade as a share of CAPITAL, enforced by position sizing — NOT a cap on the technical stop distance. The technical stop stays at invalidLevel however far away it is; the position is sized as min(25% default, 20% single-position max, 100 × 3% / stopDist). The WO-03 finding that 0 of 1,683 detections were tradeable under the stop-distance reading is therefore retired as a veto — the harness re-runs with sizing (spec Rev 5, library `positionSizing`). The 15% gain target is unchanged. (Original decision above left intact; this paragraph records the reinterpretation.)
 2. **Score weights / regime thresholds / readiness: KEEP as labelled design choices.** No source can settle them; WO-03 ablation judges them (catalyst first).
 3. **A1 gap: 10%.** Kullamägi's published hard requirement; the plan's 8% has no source. A1-S mirror uses 10% too, labelled plan construction (his EP is long-only). RVOL ≥2 stays as the plan's operationalization; his "ADV in 15–30 min" is stricter — WO-03 tests 2× vs 3× sensitivity.
 4. **A3-S small-cap bar: 300%+.** Source's number (300–1000%+); the plan's 100% would fire far more often on ordinary runs.

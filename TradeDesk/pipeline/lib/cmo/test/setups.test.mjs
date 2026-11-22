@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { detectA1, detectA2, detectA1S, detectA2S, detectA3S } from '../setups.mjs';
+import { detectA1, detectA2, detectA1S, detectA2S, detectA3S, positionSizing } from '../setups.mjs';
 import { gapInfo, rvol, priorMove, trendTemplate, contraction } from '../indicators.mjs';
 import { openingRange, orbSignal } from '../orb.mjs';
 import { noiseValue, noiseBands, noiseSignal } from '../noiseBand.mjs';
@@ -187,3 +187,84 @@ test('noise-band fixture: real SPY 5-minute marks give a sane noise value and or
   assert.equal(noiseSignal(bands, bands.lower * 0.99).signal, 'short');
   assert.equal(noiseSignal(bands, (bands.upper + bands.lower) / 2).signal, 'none');
 });
+
+/**
+ * positionSizing — Rev 5 (Ankit 2026-11-22): the 3% is the max LOSS per
+ * trade as a share of capital, enforced by position sizing. Units are
+ * percent throughout (20 = 20% of capital).
+ */
+
+test('positionSizing: wide stop sizes down so risk is exactly 3% (risk binds)', () => {
+  const s = positionSizing(22.9);
+  assert.ok(s);
+  assert.ok(Math.abs(s.positionPct - 13.10) < 0.01, `position ${s.positionPct} vs 13.10`);
+  assert.ok(Math.abs(s.riskPct - 3) < 1e-9, `risk ${s.riskPct} vs 3`);
+  assert.ok(Math.abs(s.tierR1 - 5 / 22.9) < 1e-9);
+  assert.ok(Math.abs(s.tierR2 - 10 / 22.9) < 1e-9);
+  assert.ok(Math.abs(s.tierR3 - 15 / 22.9) < 1e-9);
+  assert.equal(s.sizeBinding, 'risk');
+});
+
+test('positionSizing: AES hand case — stop 6.3% away, 20% single-position cap binds', () => {
+  const s = positionSizing(6.3);
+  assert.ok(s);
+  assert.equal(s.positionPct, 20);
+  assert.ok(Math.abs(s.riskPct - 1.26) < 1e-9, `risk ${s.riskPct} vs 1.26`);
+  assert.ok(Math.abs(s.tierR1 - 0.7937) < 1e-3);
+  assert.ok(Math.abs(s.tierR2 - 1.5873) < 1e-3);
+  assert.ok(Math.abs(s.tierR3 - 2.3810) < 1e-3);
+  assert.equal(s.sizeBinding, 'single-max');
+});
+
+test('positionSizing: stop exactly 15% away — both caps bind at once (risk 3%, Tier 3 exactly 1R)', () => {
+  const s = positionSizing(15);
+  assert.equal(s.positionPct, 20);
+  assert.ok(Math.abs(s.riskPct - 3) < 1e-9);
+  assert.ok(Math.abs(s.tierR3 - 1) < 1e-9);
+  assert.equal(s.sizeBinding, 'single-max');
+});
+
+test('positionSizing: tight stop — cap binds, risk well under 3%', () => {
+  const s = positionSizing(2);
+  assert.equal(s.positionPct, 20);
+  assert.ok(Math.abs(s.riskPct - 0.4) < 1e-9);
+  assert.equal(s.sizeBinding, 'single-max');
+});
+
+test('positionSizing: no valid size without a real stop distance', () => {
+  for (const bad of [null, undefined, 0, -5, NaN, Infinity]) {
+    assert.equal(positionSizing(bad), null, `stopDist ${bad} should give null`);
+  }
+});
+
+test('positionSizing: risk never exceeds 3% and position never exceeds 20% (sweep)', () => {
+  for (let d = 0.1; d <= 100; d *= 1.5) {
+    const s = positionSizing(d);
+    assert.ok(s.riskPct <= 3 + 1e-9, `stop ${d}: risk ${s.riskPct}`);
+    assert.ok(s.positionPct <= 20 + 1e-9, `stop ${d}: position ${s.positionPct}`);
+    assert.ok(s.positionPct > 0);
+  }
+});
+
+// Every real example detection carries valid sizing and is tradeable
+// (all fixture closes are above the $10 short minimum).
+for (const [setup, { fn }] of Object.entries(DETECTORS)) {
+  for (const fx of fixtures(setup, 'example')) {
+    test(`${setup} sizing: ${fx.ticker} ${fx.signalDate} — valid size, risk ≤ 3%, tradeable`, () => {
+      const bars = fx.bars;
+      const index = bars.length - 1;
+      const ctx = { rs: fx.rsPercentile ?? undefined, marketCap: fx.marketCapUsd ?? undefined };
+      const r = fn(bars, index, ctx);
+      assert.ok(r, 'expected detection');
+      assert.ok(r.stopDist != null && r.stopDist > 0, `stopDist ${r.stopDist}`);
+      assert.ok(r.positionPct != null && r.positionPct > 0 && r.positionPct <= 20, `positionPct ${r.positionPct}`);
+      assert.ok(r.riskPct != null && r.riskPct > 0 && r.riskPct <= 3 + 1e-9, `riskPct ${r.riskPct}`);
+      assert.ok(Math.abs(r.tierR1 - 5 / r.stopDist) < 1e-9, `tierR1 ${r.tierR1} vs ${5 / r.stopDist}`);
+      assert.ok(Math.abs(r.tierR2 - 10 / r.stopDist) < 1e-9);
+      assert.ok(Math.abs(r.tierR3 - 15 / r.stopDist) < 1e-9);
+      assert.ok(['single-max', 'risk'].includes(r.sizeBinding), `sizeBinding ${r.sizeBinding}`);
+      assert.equal(r.tradeable, true);
+      assert.ok(r.notes.some((n) => n.startsWith('Position ')), 'sizing note present');
+    });
+  }
+}

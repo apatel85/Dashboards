@@ -19,7 +19,7 @@ export {
 } from './indicators.mjs';
 export { regimeState, regimeAllows } from './regime.mjs';
 export { epsSurprise, sue, growthYoY, acceleration, marginTrend } from './fundamentals.mjs';
-export { detectA1, detectA2, detectA1S, detectA2S, detectA3S } from './setups.mjs';
+export { detectA1, detectA2, detectA1S, detectA2S, detectA3S, positionSizing } from './setups.mjs';
 export { tradeScore, readinessScore, gradeFor } from './score.mjs';
 export { percentileRank } from './rank.mjs';
 export { tierOutcome, bucketKey, lookupProbability, wilsonInterval, adrBand, atrBand } from './tiers.mjs';

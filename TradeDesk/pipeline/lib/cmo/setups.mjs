@@ -3,12 +3,23 @@
  *
  * Each detector returns null (no setup) or:
  *   { setup, direction, pivot, invalidLevel, baseStart,
- *     distToPivotPct, tradeable, notes[] }
+ *     distToPivotPct, stopDist, positionPct, riskPct,
+ *     tierR1, tierR2, tierR3, sizeBinding, tradeable, notes[] }
  * `pivot` is the setup's own trigger level; `invalidLevel` is the level
  * below which the setup is no longer valid (the stop line). `tradeable`
- * applies the §4.5 / §6.6 trade filters (3% technical-stop cap, $10
- * minimum short price) — a pattern can be detected but not tradeable,
- * and the notes say why. Detection is not a trade recommendation.
+ * means a valid position size exists under the §4.5 sizing rule (Rev 5,
+ * Ankit 2026-11-22): the 3% is the max LOSS per trade as a share of
+ * capital, enforced by sizing the position down — the technical stop
+ * stays at invalidLevel no matter how far away it is. A pattern can be
+ * detected but not tradeable (no valid size, or the $10 minimum short
+ * price), and the notes say why. Detection is not a trade recommendation.
+ *
+ * Every detection carries the sizing fields from `positionSizing`:
+ * `stopDist` (% from pivot to invalidLevel), `positionPct` (% of capital),
+ * `riskPct` (% of capital lost if the stop is hit), `tierR1/2/3`
+ * (R-multiples of the 5/10/15% tiers), `sizeBinding` ('single-max' when
+ * the 20% single-position cap sets the size, 'risk' when the 3%
+ * capital-risk cap does). Nulls when no valid size exists.
  *
  * Detectors are pure price-action checks on daily bars
  * { ts, o, h, l, c, v }. What bars cannot prove is taken from `ctx`:
@@ -23,6 +34,16 @@
  * (labelled plan construction — Kullamägi's EP is long-only); A3-S
  * small-cap bar 300%+ (not 100%); PDT workarounds removed (no PDT
  * logic anywhere); J Law / Khandelwal contribute no rules.
+ * Rev 5 (Ankit 2026-11-22): the 3% rule is max loss per trade as a
+ * share of capital via position sizing — see `positionSizing` below.
+ * It supersedes the stop-distance cap the WO-01 detectors applied
+ * (a setup whose technical stop is more than 3% away was rejected);
+ * the plan §4.5 lines "the 3% is never widened" and "reject any stock
+ * trade whose technical stop is further than 3% from entry" are
+ * superseded by Ankit's decision. The plan gives no sizing-down
+ * formula — the min() formula below is the implementation choice,
+ * built from the plan's own numbers (25% default size, 20% single
+ * max, 3% loss).
  *
  * Judgment calls (plan text under-specified, marked in notes):
  * - A3S "up X% in 5 sessions" is close-to-close over 5 sessions.
@@ -43,6 +64,64 @@ import { atr, closeLocation, contraction, ema, gapInfo, priorMove, rvol, sma, tr
 
 function stopDistancePct(entry, stop) {
   return entry ? (Math.abs(entry - stop) / entry) * 100 : null;
+}
+
+/**
+ * positionSizing — Rev 5 (Ankit 2026-11-22): the 3% is the max LOSS per
+ * trade as a share of capital, enforced by position sizing. The technical
+ * stop stays at invalidLevel however far away it is; the position is
+ * sized so the loss at the stop is at most risk.lossPct% of capital:
+ *   positionPct = min(risk.positionPct, risk.maxSinglePct, 100 * risk.lossPct / stopDist)
+ *   riskPct     = positionPct * stopDist / 100   (percent of capital lost at the stop)
+ *   tierR       = tierPct / stopDist             (R-multiple of a tier move)
+ * All percents are in percent units (20 = 20% of capital); the 100 in
+ * the position formula converts the lossPct/stopDist ratio (a fraction)
+ * back to percent units. Returns null when no valid size exists
+ * (stopDist null, non-finite, or ≤ 0).
+ * `sizeBinding` names the term that set the size: 'single-max' when the
+ * 20% single-position cap binds, 'risk' when the 3% capital-risk cap
+ * binds. The 25% default never binds while maxSinglePct (20) is below it.
+ * Portfolio-level caps (maxTotalOpenRiskPct 5%, maxPositions 4,
+ * maxPerGroup 2) are NOT enforced here — a detector sizes one trade;
+ * the nightly build / live engine enforces the portfolio caps.
+ */
+export function positionSizing(stopDist, params = PARAMS) {
+  if (stopDist == null || !Number.isFinite(stopDist) || stopDist <= 0) return null;
+  // lossPct / stopDist is a fraction (3%/6.3% = 0.476); ×100 → percent units.
+  const riskCapPct = (params.risk.lossPct / stopDist) * 100;
+  const positionPct = Math.min(params.risk.positionPct, params.risk.maxSinglePct, riskCapPct);
+  const sizeBinding = positionPct === params.risk.maxSinglePct ? 'single-max'
+    : positionPct === riskCapPct ? 'risk' : 'default';
+  return {
+    positionPct,
+    riskPct: (positionPct * stopDist) / 100,
+    tierR1: params.tiers.t1Pct / stopDist,
+    tierR2: params.tiers.t2Pct / stopDist,
+    tierR3: params.tiers.t3Pct / stopDist,
+    sizeBinding,
+  };
+}
+
+/** Attach the sizing fields to a detection result (nulls when no valid size). */
+function withSizing(det, stopDist, params, extra = {}) {
+  const s = positionSizing(stopDist, params);
+  return {
+    ...det,
+    stopDist,
+    positionPct: s?.positionPct ?? null,
+    riskPct: s?.riskPct ?? null,
+    tierR1: s?.tierR1 ?? null,
+    tierR2: s?.tierR2 ?? null,
+    tierR3: s?.tierR3 ?? null,
+    sizeBinding: s?.sizeBinding ?? null,
+    tradeable: s != null,
+    ...extra,
+  };
+}
+
+/** One-line sizing note for the detection notes array. */
+function sizingNote(stopDist, sizing) {
+  return `Position ${sizing.positionPct.toFixed(1)}% of capital; stop ${stopDist.toFixed(1)}% away risks ${sizing.riskPct.toFixed(2)}% of capital; tiers pay ${sizing.tierR1.toFixed(2)}R / ${sizing.tierR2.toFixed(2)}R / ${sizing.tierR3.toFixed(2)}R (${sizing.sizeBinding} binds)`;
 }
 
 /**
@@ -72,15 +151,13 @@ export function detectA1(bars, index, ctx = {}, params = PARAMS) {
   ];
   if (ctx.catalyst) notes.push(`Catalyst: ${ctx.catalyst}`);
   else notes.push('Catalyst unconfirmed from bars — verify earnings / guidance / news before trading');
-  if (stopDist != null && stopDist > params.risk.lossPct) {
-    notes.push(`Technical stop ${stopDist.toFixed(1)}% away exceeds the ${params.risk.lossPct}% cap — detected, not tradeable under §4.5`);
-  }
-  return {
+  const sizing = positionSizing(stopDist, params);
+  if (sizing) notes.push(sizingNote(stopDist, sizing));
+  return withSizing({
     setup: 'A1', direction: 'long', pivot, invalidLevel, baseStart: index,
     distToPivotPct: ((pivot - bars[index].c) / bars[index].c) * 100,
-    tradeable: stopDist == null || stopDist <= params.risk.lossPct,
     notes,
-  };
+  }, stopDist, params);
 }
 
 /**
@@ -107,15 +184,13 @@ export function detectA2(bars, index, ctx = {}, params = PARAMS) {
     `Base ${con.baseLength} sessions, depth ${con.depthPct.toFixed(1)}% (≤ ${params.contraction.maxDepthPct}%)`,
     `Entry: buy stop ${params.a2.entryAbovePivotPct}% above pivot, only with volume on pace ≥ ${params.a2.entryVolPaceMin}× and price not > ${params.a2.maxAbovePivotAtr} ATR above the pivot`,
   ];
-  if (stopDist != null && stopDist > params.risk.lossPct) {
-    notes.push(`Technical stop ${stopDist.toFixed(1)}% away exceeds the ${params.risk.lossPct}% cap — detected, not tradeable under §4.5`);
-  }
-  return {
+  const sizing = positionSizing(stopDist, params);
+  if (sizing) notes.push(sizingNote(stopDist, sizing));
+  return withSizing({
     setup: 'A2', direction: 'long', pivot, invalidLevel, baseStart: con.baseStart,
     distToPivotPct: ((pivot - bars[index].c) / bars[index].c) * 100,
-    tradeable: stopDist == null || stopDist <= params.risk.lossPct,
     notes,
-  };
+  }, stopDist, params);
 }
 
 /**
@@ -144,19 +219,18 @@ export function detectA1S(bars, index, ctx = {}, params = PARAMS) {
   ];
   if (ctx.catalyst) notes.push(`Catalyst: ${ctx.catalyst}`);
   else notes.push('Catalyst unconfirmed from bars — verify miss / guidance cut before trading');
-  let tradeable = stopDist == null || stopDist <= params.risk.lossPct;
-  if (stopDist != null && stopDist > params.risk.lossPct) {
-    notes.push(`Technical stop ${stopDist.toFixed(1)}% away exceeds the ${params.risk.lossPct}% cap — detected, not tradeable under §4.5`);
-  }
+  const sizing = positionSizing(stopDist, params);
+  if (sizing) notes.push(sizingNote(stopDist, sizing));
+  let tradeable = sizing != null;
   if (bars[index].c < params.shorts.minPrice) {
     tradeable = false;
     notes.push(`Price $${bars[index].c.toFixed(2)} under $${params.shorts.minPrice} — no short per §6.6`);
   }
-  return {
+  return withSizing({
     setup: 'A1S', direction: 'short', pivot, invalidLevel, baseStart: index,
     distToPivotPct: ((bars[index].c - pivot) / bars[index].c) * 100,
-    tradeable, notes,
-  };
+    notes,
+  }, stopDist, params, { tradeable });
 }
 
 /**
@@ -204,19 +278,18 @@ export function detectA2S(bars, index, ctx = {}, params = PARAMS) {
     `RS ${ctx.rs} (needs ≤ ${params.rs.a2sMax})`,
     `Bear flag ${flagLength} sessions, tightening (second-half range ${range2.toFixed(2)} < first-half ${range1.toFixed(2)}), 10/20-day EMA falling`,
   ];
-  let tradeable = stopDist == null || stopDist <= params.risk.lossPct;
-  if (stopDist != null && stopDist > params.risk.lossPct) {
-    notes.push(`Technical stop ${stopDist.toFixed(1)}% away exceeds the ${params.risk.lossPct}% cap — detected, not tradeable under §4.5`);
-  }
+  const sizing = positionSizing(stopDist, params);
+  if (sizing) notes.push(sizingNote(stopDist, sizing));
+  let tradeable = sizing != null;
   if (bars[index].c < params.shorts.minPrice) {
     tradeable = false;
     notes.push(`Price $${bars[index].c.toFixed(2)} under $${params.shorts.minPrice} — no short per §6.6`);
   }
-  return {
+  return withSizing({
     setup: 'A2S', direction: 'short', pivot, invalidLevel, baseStart: flagStart,
     distToPivotPct: ((bars[index].c - pivot) / bars[index].c) * 100,
-    tradeable, notes,
-  };
+    notes,
+  }, stopDist, params, { tradeable });
 }
 
 /**
@@ -243,19 +316,22 @@ export function detectA3S(bars, index, ctx = {}, params = PARAMS) {
   if (streak < params.a3s.minUpDays) return null;
   const pivot = bars[index].l;
   const invalidLevel = bars[index].h;
+  const stopDist = stopDistancePct(pivot, invalidLevel);
   const notes = [
     `+${rise.toFixed(1)}% in ${params.a3s.windowSessions} sessions (needs ≥ ${bar}% for ${isLarge ? 'large' : 'small'} caps${ctx.marketCap == null ? ' — cap unknown, strict bar applied' : ''})`,
     `${streak} consecutive up days (needs ≥ ${params.a3s.minUpDays})`,
     `Pivot is the signal day's low (daily proxy for the opening-range low); stop at the day's high $${invalidLevel.toFixed(2)}`,
   ];
-  let tradeable = true;
+  const sizing = positionSizing(stopDist, params);
+  if (sizing) notes.push(sizingNote(stopDist, sizing));
+  let tradeable = sizing != null;
   if (bars[index].c < params.shorts.minPrice) {
     tradeable = false;
     notes.push(`Price $${bars[index].c.toFixed(2)} under $${params.shorts.minPrice} — no short per §6.6`);
   }
-  return {
+  return withSizing({
     setup: 'A3S', direction: 'short', pivot, invalidLevel, baseStart: index - params.a3s.windowSessions,
     distToPivotPct: ((bars[index].c - pivot) / bars[index].c) * 100,
-    tradeable, notes,
-  };
+    notes,
+  }, stopDist, params, { tradeable });
 }

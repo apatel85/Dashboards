@@ -31,7 +31,9 @@ function csvEscape(v) {
 export function casesCsv(candidates) {
   const head = [
     'ticker', 'date', 'setup', 'direction', 'score', 'grade', 'ablated_score', 'ablated_grade',
-    'bucket_key', 'triggered', 'entry_date', 'entry_price', 'regime', 'regime_excluded',
+    'bucket_key', 'triggered', 'entry_date', 'entry_price',
+    'tradeable', 'stop_dist_pct', 'position_pct', 'risk_pct', 'tier_r1', 'tier_r2', 'tier_r3', 'size_binding',
+    'regime', 'regime_excluded',
     'in_sample', 'adr_pct', 'atr_distance', 'rs', 'rvol', 'group_rank_pct',
     'catalyst_surprise', 'catalyst_gap_pct', 'earnings_matched_date',
     ...WINDOWS.flatMap((w) => [`w${w}_hit1`, `w${w}_hit2`, `w${w}_hit3`, `w${w}_sessions_to_1`, `w${w}_best_move_pct`, `w${w}_worst_against_pct`, `w${w}_complete`]),
@@ -41,7 +43,10 @@ export function casesCsv(candidates) {
     const row = [
       c.ticker, c.date, c.setup, c.direction, c.score, c.grade,
       c.ablated?.score ?? '', c.ablated?.grade ?? '', c.bucketKey,
-      c.triggered, c.entryDate ?? '', c.entryPrice ?? '', c.regime ?? '', c.regimeExcluded,
+      c.triggered, c.entryDate ?? '', c.entryPrice ?? '',
+      c.tradeable, c.stopDist ?? '', c.positionPct ?? '', c.riskPct ?? '',
+      c.tierR1 ?? '', c.tierR2 ?? '', c.tierR3 ?? '', c.sizeBinding ?? '',
+      c.regime ?? '', c.regimeExcluded,
       c.inSample, c.adrPct ?? '', c.atrDistance ?? '', c.rs ?? '', c.rvol ?? '',
       c.groupRankPct ?? '', c.catalystSurprise ?? '', c.catalystGapPct ?? '',
       c.earningsMatchedDate ?? '',
@@ -186,8 +191,43 @@ export function buildPublishRows(runId, module, evaluation, tierRows, baseRates,
   return { runs, cases, validation, probTables };
 }
 
+/** Sizing economics (Rev 5) over graded candidates (triggered + regime-allowed).
+ * Returns per-module medians plus a pooled row. Tier R < 1 means the tier
+ * target pays less than the risk at the stop. */
+export function sizingEconomics(candidates) {
+  const median = (xs) => {
+    const s = [...xs].sort((a, b) => a - b);
+    if (!s.length) return null;
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+  const one = (rows) => {
+    const g = rows.filter((c) => c.triggered && !c.regimeExcluded);
+    const pos = g.map((c) => c.positionPct).filter((x) => x != null);
+    const risk = g.map((c) => c.riskPct).filter((x) => x != null);
+    const r1 = g.map((c) => c.tierR1).filter((x) => x != null);
+    const r2 = g.map((c) => c.tierR2).filter((x) => x != null);
+    const r3 = g.map((c) => c.tierR3).filter((x) => x != null);
+    return {
+      n: g.length,
+      medianPositionPct: median(pos),
+      medianRiskPct: median(risk),
+      medianTierR1: median(r1),
+      medianTierR2: median(r2),
+      medianTierR3: median(r3),
+      tier3Below1R: r3.length ? r3.filter((x) => x < 1).length / r3.length : null,
+      capBinds: g.length ? g.filter((c) => c.sizeBinding === 'single-max').length / g.length : null,
+    };
+  };
+  const byModule = {};
+  for (const m of [...new Set(candidates.map((c) => c.setup))]) {
+    byModule[m] = one(candidates.filter((c) => c.setup === m));
+  }
+  return { byModule, pooled: one(candidates) };
+}
+
 /** FINAL_REPORT.md per spec §12's template (10 items). */
-export function writeFinalReport(dir, runId, moduleResults, { from, to, split, paramsVersion, cacheAudit, dataNotes }) {
+export function writeFinalReport(dir, runId, moduleResults, { from, to, split, paramsVersion, cacheAudit, dataNotes, sizing }) {
   const lines = [];
   lines.push(`# Scoring revamp — backtest final report (${runId})`, '');
   lines.push(`Window ${from} → ${to}; out-of-sample from ${split}; params \`${paramsVersion}\`.`, '');
@@ -224,7 +264,19 @@ export function writeFinalReport(dir, runId, moduleResults, { from, to, split, p
   for (const [m, r] of Object.entries(moduleResults)) lines.push(`- **${m}: ${r.verdict}**`);
   lines.push('', '## 9. Recommendation', '');
   lines.push('Adopt only the modules whose verdict is `adopt`. A `watch` module needs one more check to pass (named in its report) before it can be adopted; a `reject` module is not adopted. No module ships into the nightly flow until its verdict is `adopt` and the staging acceptance script (03) passes — the publish step stays dry-run until then.', '');
-  lines.push('## 10. Caveats', '');
+  if (sizing) {
+    const med = (x) => (x == null ? '—' : `${x.toFixed(2)}`);
+    lines.push('## 10. Sizing economics (Rev 5 — not in the §12 template)', '');
+    lines.push('Rev 5 (Ankit 2026-11-22): the 3% is the max loss per trade as a share of capital, enforced by position sizing — the technical stop stays at `invalidLevel` however far away it is. Population: graded candidates (triggered + regime-allowed). `positionPct` = % of capital; `riskPct` = % of capital lost if the stop is hit (≤ 3% by construction); tier R = tier move ÷ stop distance, so Tier 3 < 1R means the 15% target pays less than the risk. `cap binds` = share where the 20% single-position cap (not the 3% risk cap) sets the size.', '');
+    lines.push('| Module | n | Median position | Median risk | Median Tier 1R | Median Tier 2R | Median Tier 3R | Tier 3 < 1R | Cap binds |');
+    lines.push('|---|---:|---:|---:|---:|---:|---:|---:|---:|');
+    for (const [m, s] of Object.entries(sizing.byModule)) {
+      lines.push(`| ${m} | ${s.n} | ${med(s.medianPositionPct)}% | ${med(s.medianRiskPct)}% | ${med(s.medianTierR1)}R | ${med(s.medianTierR2)}R | ${med(s.medianTierR3)}R | ${s.tier3Below1R == null ? '—' : pct(s.tier3Below1R)} | ${s.capBinds == null ? '—' : pct(s.capBinds)} |`);
+    }
+    const p = sizing.pooled;
+    lines.push(`| **Pooled** | **${p.n}** | **${med(p.medianPositionPct)}%** | **${med(p.medianRiskPct)}%** | **${med(p.medianTierR1)}R** | **${med(p.medianTierR2)}R** | **${med(p.medianTierR3)}R** | **${p.tier3Below1R == null ? '—' : pct(p.tier3Below1R)}** | **${p.capBinds == null ? '—' : pct(p.capBinds)}** |`, '');
+  }
+  lines.push('## 11. Caveats', '');
   for (const n of dataNotes) lines.push(`- ${n}`);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'FINAL_REPORT.md'), lines.join('\n'));

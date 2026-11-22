@@ -10,7 +10,7 @@ Universe: 518 tickers (current S&P 500 + Nasdaq-100 constituents, fetched from W
 - Meta (sector / market cap): 0 file(s) missing; 1 ticker(s) with no sector — group component null for those, A3S uses the strict 300% bar.
 - Earnings calendars fetched: 182 gap dates, 21846 rows total.
 - Detections: pre-filter hits 85264, detector rejects 33853, illiquid pre-filter hits 49654.
-- Scan: 1757 detected, 1683 non-tradeable (3% stop cap / $10 short minimum), 753 regime-excluded, 1197 never triggered, 366 graded.
+- Scan: 1757 detected, 0 non-tradeable (no valid size / $10 short minimum), 753 regime-excluded, 1197 never triggered, 366 graded.
 
 ## Gaps (what is missing, and what it costs)
 
@@ -19,7 +19,7 @@ Universe: 518 tickers (current S&P 500 + Nasdaq-100 constituents, fetched from W
 - **Minute bars**: unavailable — ALPACA_KEY_ID / ALPACA_SECRET_KEY not set. Intraday modules (stock_orb) not run; opening RVOL is null.
 - **Historical option chains / IV / gamma**: no free source. S1–S4 and stock_trigger not run; options component is 0 for every candidate (5 pts unplayed).
 - **Historical index membership**: incomplete — the universe is today's constituents projected backwards. Survivorship bias: stocks that left the index or died are absent (their losers never enter); stocks that joined later appear from their first bar. The plan §7.4 members-only re-run was NOT done for this run: every module already rejects on sample size, and a members-only subset can only shrink the sample further — the check is moot here (it matters when a headline is adopt/watch, not when it is reject on cases).
-- **Tradeable (§4.5)**: reported, not applied as a grading filter (see engine/scan.mjs). Under the library's reading (technical stop ≤ 3% of the entry price) every A1/A1S/A2/A2S detection in 2019–2026 is non-tradeable (gap-day ranges run 5–12%, bases 10–25% deep); only A3S (which does not apply the cap) has tradeable candidates. Whether "3% loss" means stop distance or position risk (size down so the stop risks 3% of capital) needs Ankit's call.
+- **Tradeable (§4.5)**: reported, not applied as a grading filter (see engine/scan.mjs). Rev 5 (Ankit 2026-11-22): the 3% is the max loss per trade as a share of capital, enforced by position sizing — the technical stop stays at invalidLevel however far away it is. 0 of 1757 detections are non-tradeable (no valid size, or the $10 short minimum). Sizing economics (median position/risk, tier R-multiples, cap-bind share) are in FINAL_REPORT §10; per-candidate values are in cases.csv. The first run's finding (0 of 1,683 tradeable under the old stop-distance reading) is retired as a veto by Rev 5.
 - **Grade compression**: no candidate in any module scores A or A+ (max 70 for A1/A3S; A2 median 28, A2S median 15, all C). Setup "met" caps A1/A1S/A3S at 15/30, growth (10) and options (5) are 0 for every candidate, and the RS component (15) is long-biased — a short scores 0 on it by construction (RS ≤ 20). The A/A+ vs C ranking check is unevaluatable by construction in this run.
 - **Market cap**: current (2026), not point-in-time — A3S large/small classification can mislabel a stock that grew across the $10B line during the window.
 - **Earnings timing**: Nasdaq `time` is usually "time-not-supplied" on past dates, so a gap day matches a report on that date OR the prior session (BMO vs AMC is not distinguished).

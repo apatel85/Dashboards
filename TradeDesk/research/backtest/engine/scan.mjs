@@ -48,19 +48,19 @@
  * baseline grading (it is re-included by the regime ablation).
  *
  * Tradeable (§4.5) is NOT a grading filter — it is reported, not
- * applied. The library's `tradeable` reads the 3% rule as "the
- * technical stop must be ≤ 3% of the entry price". Measured on real
- * data that vetoes EVERY A1/A1S/A2/A2S detection in 2019–2026 (the
- * gap-day range alone is typically 5–12%; a base is 10–25% deep), so
- * grading tradeable-only would leave 16 candidates and answer nothing.
- * The backtest grades every detection — it judges whether the SETUP
- * predicts the move — and reports the tradeable share per module as a
- * headline finding. Whether "3% loss" means stop-distance ≤ 3% of
- * price (the library's reading) or risk ≤ 3% of capital via position
- * sizing (the stop can be 10–20% away; you size down) is the single
- * biggest open question from the first run, and needs Ankit's call.
- * A3S does not apply the cap in the library (only the $10 minimum), so
- * its tradeable share is 100%.
+ * applied. Rev 5 (Ankit 2026-11-22): the 3% is the max LOSS per trade
+ * as a share of CAPITAL, enforced by position sizing — the technical
+ * stop stays at invalidLevel however far away it is, and the position
+ * is sized down so the loss at the stop is at most 3% of capital
+ * (library `positionSizing`). The backtest grades every detection —
+ * it judges whether the SETUP predicts the move — and reports the
+ * sizing economics (median position/risk, tier R-multiples, the share
+ * where the 20% single-position cap binds) per module. `tradeable`
+ * now means a valid size exists (stopDist > 0 and finite, plus the
+ * $10 minimum short price); under the old stop-distance reading it
+ * vetoed EVERY A1/A1S/A2/A2S detection in 2019–2026, which is why
+ * the reading was reworked — see the first run's report for that
+ * finding, retired as a veto by Rev 5.
  *
  * Re-detection of the same setup+direction on the same ticker is
  * suppressed until the earliest of: the outcome window closes (entry +
@@ -358,6 +358,9 @@ export function scanAll(univ, opts, detections) {
     const cand = {
       ticker, setup, direction, date: d, index: i,
       pivot: det.pivot, invalidLevel: det.invalidLevel,
+      stopDist: det.stopDist, positionPct: det.positionPct, riskPct: det.riskPct,
+      tierR1: det.tierR1, tierR2: det.tierR2, tierR3: det.tierR3,
+      sizeBinding: det.sizeBinding,
       tradeable: det.tradeable, triggered, neverTriggered: !triggered,
       entryIndex, entryPrice: triggered ? det.pivot : null,
       entryDate: triggered ? p.dates[entryIndex] : null,

@@ -141,18 +141,27 @@ the data (entry + window ≤ last bar).
 
 ## Tradeable is reported, not applied
 
-The library's `tradeable` reads the §4.5 3% rule as "the technical stop
-must be ≤ 3% of the entry price". Measured on real data (2019–2026,
-518 stocks) that vetoes **every** A1, A1S, A2 and A2S detection — the
-gap-day range alone is typically 5–12% and a base is 10–25% deep — so
-grading tradeable-only would leave 16 candidates (all A3S, which does
-not apply the cap) and answer nothing. The backtest therefore grades
-every detection (it judges whether the *setup* predicts the move) and
-reports the tradeable share per module as a headline finding. Whether
-"3% loss" means stop-distance ≤ 3% of price (the library's reading) or
-risk ≤ 3% of capital via position sizing (the stop can be 10–20% away;
-you size down) is the single biggest open question from the first run,
-and needs Ankit's call before any module ships.
+Rev 5 (Ankit 2026-11-22): the §4.5 3% rule is the max LOSS per trade
+as a share of CAPITAL, enforced by position sizing — the technical stop
+stays at `invalidLevel` however far away it is, and the position is
+sized as `min(25% default, 20% single-position max, 100 × 3% /
+stopDist)` (library `positionSizing`). `tradeable` now means a valid
+size exists (stopDist > 0 and finite, plus the $10 minimum short
+price). Under the old stop-distance reading the rule vetoed **every**
+A1, A1S, A2 and A2S detection in 2019–2026 — the gap-day range alone
+is typically 5–12% and a base is 10–25% deep — so grading
+tradeable-only would have left 16 candidates (all A3S) and answered
+nothing; that finding is retired as a veto by Rev 5. The backtest
+grades every detection (it judges whether the *setup* predicts the
+move) and reports sizing economics per module in FINAL_REPORT §10
+(median position/risk, tier R-multiples, the share where the 20% cap
+binds, the share where Tier 3 pays < 1R); per-candidate values are in
+`cases.csv` (`tradeable, stop_dist_pct, position_pct, risk_pct,
+tier_r1/2/3, size_binding`).
+
+A run id can be tagged to keep re-runs apart: `--tag sizing`
+appends `-sizing` to the run id (same arguments without a tag would
+overwrite the earlier run's directory).
 
 ## Publish
 

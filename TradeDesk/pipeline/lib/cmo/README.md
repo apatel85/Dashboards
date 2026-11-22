@@ -28,7 +28,7 @@ it), chosen over long keys so WO-03 needs no adapter.
 | `indicators.mjs` | sma, ema, atr, adrPct, rvol, rsRaw, trendTemplate, priorMove, contraction, gapInfo, closeLocation, avwap, rsLineNewHigh |
 | `regime.mjs` | regimeState, regimeAllows (plan §4.1; longs Green/Yellow, shorts Red/Yellow) |
 | `fundamentals.mjs` | epsSurprise, sue, growthYoY, acceleration, marginTrend (all point-in-time via `asOf`) |
-| `setups.mjs` | detectA1, detectA2, detectA1S, detectA2S, detectA3S |
+| `setups.mjs` | detectA1, detectA2, detectA1S, detectA2S, detectA3S, positionSizing |
 | `score.mjs` | tradeScore, readinessScore, gradeFor |
 | `rank.mjs` | percentileRank |
 | `tiers.mjs` | tierOutcome, bucketKey, lookupProbability, wilsonInterval, adrBand, atrBand |
@@ -46,7 +46,8 @@ it), chosen over long keys so WO-03 needs no adapter.
 - The live engine (`src/lib/cmo-live.ts`, WO-09), the nightly builds
   (WO-04), the backtest harness (WO-03) and the Supabase schema (WO-02).
 - Any Rev 5 spec change: the §8 decisions are encoded in params.json
-  and the detectors, the spec text itself is untouched.
+  and the detectors; Rev 5 (2026-11-22, Ankit) re-reads the §4.5 3%
+  rule — see "Position sizing" below.
 
 ## Judgment calls (spec/plan under-specified — see the code comments)
 
@@ -73,6 +74,43 @@ it), chosen over long keys so WO-03 needs no adapter.
 10. `tierOutcome` gains an optional 7th `opts` argument
     (`{ basis: 'extremes' | 'close' }`) — the spec signature has no
     close-based switch, but §3.1 judges option plays on the close.
+
+## Position sizing — the 3% rule (Rev 5, 2026-11-22)
+
+Ankit's decision (2026-11-22): **the 3% is the max LOSS per trade as a
+share of capital, enforced by position sizing** — not a cap on the
+technical stop distance. It supersedes the stop-distance cap the WO-01
+detectors applied (a setup whose technical stop was more than 3% away
+was rejected as not tradeable) and the plan §4.5 lines "the 3% is never
+widened" and "reject any stock trade whose technical stop is further
+than 3% from entry". The technical stop stays at `invalidLevel`
+however far away it is. The plan gives no sizing-down formula — the
+formula below is the implementation choice, built from the plan's own
+numbers (25% default size, 20% single-position max, 3% loss):
+
+```
+positionPct = min(risk.positionPct, risk.maxSinglePct, 100 * risk.lossPct / stopDist)
+riskPct     = positionPct * stopDist / 100   (percent of capital lost if the stop is hit)
+tierR       = tierPct / stopDist             (R-multiple of a 5/10/15% tier move)
+```
+
+All percents are in percent units (20 = 20% of capital). `riskPct` is
+≤ 3% by construction. `sizeBinding` names the term that set the size:
+`'single-max'` when the 20% single-position cap binds (every stop
+≤ 15% away), `'risk'` when the 3% capital-risk cap binds (wider stops).
+
+Every detection carries `stopDist`, `positionPct`, `riskPct`,
+`tierR1/2/3`, `sizeBinding` (nulls when no valid size exists, i.e.
+stopDist null / non-finite / ≤ 0). `tradeable` now means "a valid
+position size exists" (plus the $10 minimum short price for A1S/A2S/
+A3S). Worked example (AES A1 2025-07-09, the hand-checked case): stop
+6.3% away → position 20.0% of capital (single-max binds), risk 1.26%
+of capital at the stop, tiers pay 0.79R / 1.59R / 2.38R.
+
+Portfolio-level caps (`maxTotalOpenRiskPct` 5%, `maxPositions` 4,
+`maxPerGroup` 2) are NOT enforced here — a detector sizes one trade;
+the nightly build (WO-04) / live engine (WO-09) enforces the
+portfolio caps. Whole-share rounding is likewise not modelled here.
 
 ## Reuse notes (WO-01 reuse check)
 

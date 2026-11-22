@@ -7,6 +7,7 @@
  *     [--ablate catalyst|growth|rs|volume|group|options|regime]
  *     [--variant <name>] [--publish] [--dry-run] [--skip-fetch]
  *     [--cache-dir <dir>] [--results-dir <dir>] [--with-sec]
+ *     [--tag <suffix>]   (appended to the run id, e.g. --tag sizing)
  *
  * Phases (data-first, spec §4):
  *   0. Params frozen check — sha256(pipeline/lib/cmo/params.json) must
@@ -51,7 +52,7 @@ import { prepareUniverse, prepareTicker } from './engine/prepare.mjs';
 import { detectOnly, scanAll, DAILY_MODULES } from './engine/scan.mjs';
 import { computeBaseRates, buildTierRows } from './eval/tables.mjs';
 import { calibrateModule } from './eval/calibrate.mjs';
-import { writeModuleOutputs, buildPublishRows, writeFinalReport } from './eval/report.mjs';
+import { writeModuleOutputs, buildPublishRows, writeFinalReport, sizingEconomics } from './eval/report.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
@@ -87,11 +88,12 @@ function gitSha() {
   }
 }
 
-function runIdFor({ module, from, to, split, ablate, variant }) {
+function runIdFor({ module, from, to, split, ablate, variant, tag }) {
   const d = (s) => s.replace(/-/g, '');
   return [
     module, `${d(from)}-${d(to)}`, `split${d(split)}`,
     ablate ? `ablate-${ablate}` : null, variant ? `var-${variant}` : null,
+    tag ? tag : null,
   ].filter(Boolean).join('-');
 }
 
@@ -159,6 +161,7 @@ export async function main(argv) {
   const split = arg(argv, '--split', '2024-11-01');
   const ablate = arg(argv, '--ablate', 'catalyst');
   const variant = arg(argv, '--variant', null);
+  const tag = arg(argv, '--tag', null);
   const doPublish = has(argv, '--publish');
   const dryRun = has(argv, '--dry-run');
   const skipFetch = has(argv, '--skip-fetch');
@@ -193,7 +196,7 @@ export async function main(argv) {
     throw new Error('--publish without --dry-run is refused: the staging acceptance script (03) has not passed, so no live publish is allowed. Re-run with --publish --dry-run to verify the rows only.');
   }
 
-  const runId = runIdFor({ module, from, to, split, ablate: ablate === 'catalyst' ? null : ablate, variant });
+  const runId = runIdFor({ module, from, to, split, ablate: ablate === 'catalyst' ? null : ablate, variant, tag });
   const runDir = path.join(resultsDir, runId);
   console.log(`[run] run_id=${runId}`);
 
@@ -317,7 +320,7 @@ export async function main(argv) {
     if (doPublish) {
       publishSets.push(buildPublishRows(runId, m, baseline, tierRows, baseRates, candidates, {
         paramsVersion, gitSha: gitSha(), oosFrom: split, oosTo: to,
-        args: { module: m, from, to, split, ablation: ablate, variant: variant ?? null },
+        args: { module: m, from, to, split, ablation: ablate, variant: variant ?? null, tag: tag ?? null },
       }));
     }
   }
@@ -348,13 +351,14 @@ export async function main(argv) {
     'Regime is unknown (null) until SPY has a 200-day SMA (~Oct 2019); candidates before then are regime-excluded, not graded.',
     'Prices are Yahoo split-adjusted, dividend-unadjusted closes (plan §7.4); split continuity is hand-checked in DATA_AUDIT.md.',
     'Intraday/option modules (stock_trigger, stock_orb, S1–S4) were NOT run: no free historical minute bars or option chains exist (Alpaca keys absent).',
-    'Tradeable (§4.5) is reported, not applied: under the library\'s reading (technical stop ≤ 3% of price) every A1/A1S/A2/A2S detection is non-tradeable. Whether "3% loss" means stop distance or position risk needs Ankit\'s call.',
+    'Tradeable (§4.5) is reported, not applied: Rev 5 (Ankit 2026-11-22) reads the 3% as the max loss per trade as a share of capital, enforced by position sizing — the technical stop stays at invalidLevel however far away it is. Sizing economics are in FINAL_REPORT §10; per-candidate position/risk/tier-R are in cases.csv.',
     'No candidate scores A or A+ in any module (setup "met" caps A1/A1S/A3S, growth and options are 0, the RS component is long-biased) — the ranking check is unevaluatable by construction in this run.',
   ];
   writeFinalReport(runDir, runId, moduleResults, {
     from, to, split, paramsVersion,
     cacheAudit: `Cache: ${tickers.length} tickers, ${dates.length} trading sessions, ${gapDates.length} earnings dates fetched (${earningsRows} rows). Full file list with row counts is in each module's summary.json.`,
     dataNotes,
+    sizing: sizingEconomics(candidates),
   });
   console.log(`[run] FINAL_REPORT.md → ${path.join(runDir, 'FINAL_REPORT.md')}`);
   console.log(`[run] DATA_AUDIT.md → ${auditFile}`);
@@ -413,14 +417,14 @@ function buildAudit({ tickers, dates, mStats, detectStats, scanStats, metaMissin
   lines.push(`- Meta (sector / market cap): ${metaMissing} file(s) missing; ${metaNoSector} ticker(s) with no sector — group component null for those, A3S uses the strict 300% bar.`);
   lines.push(`- Earnings calendars fetched: ${gapDates.length} gap dates, ${earningsRows} rows total.`);
   lines.push(`- Detections: pre-filter hits ${detectStats.preFilterHits}, detector rejects ${detectStats.detectorRejects}, illiquid pre-filter hits ${detectStats.illiquidPrefilter}.`);
-  lines.push(`- Scan: ${scanStats.detected} detected, ${scanStats.nonTradeable} non-tradeable (3% stop cap / $10 short minimum), ${scanStats.regimeExcluded} regime-excluded, ${scanStats.neverTriggered} never triggered, ${scanStats.graded} graded.`, '');
+  lines.push(`- Scan: ${scanStats.detected} detected, ${scanStats.nonTradeable} non-tradeable (no valid size / $10 short minimum), ${scanStats.regimeExcluded} regime-excluded, ${scanStats.neverTriggered} never triggered, ${scanStats.graded} graded.`, '');
   lines.push('## Gaps (what is missing, and what it costs)', '');
   lines.push('- **SEC facts (growth / SUE / margin)**: unavailable — SEC_CONTACT_EMAIL is not set, so fetch-sec.mjs refuses loudly. Growth scores 0 for every candidate (10 pts unplayed).');
   lines.push('- **Guidance / news**: no source — catalyst is earnings surprise + gap % only.');
   lines.push('- **Minute bars**: unavailable — ALPACA_KEY_ID / ALPACA_SECRET_KEY not set. Intraday modules (stock_orb) not run; opening RVOL is null.');
   lines.push('- **Historical option chains / IV / gamma**: no free source. S1–S4 and stock_trigger not run; options component is 0 for every candidate (5 pts unplayed).');
   lines.push('- **Historical index membership**: incomplete — the universe is today\'s constituents projected backwards. Survivorship bias: stocks that left the index or died are absent (their losers never enter); stocks that joined later appear from their first bar. The plan §7.4 members-only re-run was NOT done for this run: every module already rejects on sample size, and a members-only subset can only shrink the sample further — the check is moot here (it matters when a headline is adopt/watch, not when it is reject on cases).');
-  lines.push('- **Tradeable (§4.5)**: reported, not applied as a grading filter (see engine/scan.mjs). Under the library\'s reading (technical stop ≤ 3% of the entry price) every A1/A1S/A2/A2S detection in 2019–2026 is non-tradeable (gap-day ranges run 5–12%, bases 10–25% deep); only A3S (which does not apply the cap) has tradeable candidates. Whether "3% loss" means stop distance or position risk (size down so the stop risks 3% of capital) needs Ankit\'s call.');
+  lines.push(`- **Tradeable (§4.5)**: reported, not applied as a grading filter (see engine/scan.mjs). Rev 5 (Ankit 2026-11-22): the 3% is the max loss per trade as a share of capital, enforced by position sizing — the technical stop stays at invalidLevel however far away it is. ${scanStats.nonTradeable} of ${scanStats.detected} detections are non-tradeable (no valid size, or the $10 short minimum). Sizing economics (median position/risk, tier R-multiples, cap-bind share) are in FINAL_REPORT §10; per-candidate values are in cases.csv. The first run's finding (0 of 1,683 tradeable under the old stop-distance reading) is retired as a veto by Rev 5.`);
   lines.push('- **Grade compression**: no candidate in any module scores A or A+ (max 70 for A1/A3S; A2 median 28, A2S median 15, all C). Setup "met" caps A1/A1S/A3S at 15/30, growth (10) and options (5) are 0 for every candidate, and the RS component (15) is long-biased — a short scores 0 on it by construction (RS ≤ 20). The A/A+ vs C ranking check is unevaluatable by construction in this run.');
   lines.push('- **Market cap**: current (2026), not point-in-time — A3S large/small classification can mislabel a stock that grew across the $10B line during the window.');
   lines.push('- **Earnings timing**: Nasdaq `time` is usually "time-not-supplied" on past dates, so a gap day matches a report on that date OR the prior session (BMO vs AMC is not distinguished).', '');
