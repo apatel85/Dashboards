@@ -154,6 +154,11 @@
     background:var(--warn-bg);color:var(--warn-ink);border:1px solid var(--warn-line);
     border-radius:5px;padding:0 5px;margin-left:6px;vertical-align:1px;
   }
+  .newbadge{
+    display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.07em;
+    background:var(--accent);color:var(--accent-ink);
+    border-radius:999px;padding:2px 7px;margin-left:7px;vertical-align:2px;white-space:nowrap;
+  }
   .maxbox{text-align:right}
   .maxnum{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:30px;line-height:1}
   .maxlbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
@@ -337,7 +342,7 @@
       <ol class="job-steps">
         <li><span class="step-n">Step 1</span><b>Grade the week just played</b>Every call from last week's boards is checked against the final box scores and posted in the Results tab, hit or miss.</li>
         <li><span class="step-n">Step 2</span><b>Re-run the rolling backtest</b>Weeks 2 through the last completed week — the window grows by one week each Wednesday — and the calibration is re-verified before anything is projected.</li>
-        <li><span class="step-n">Step 3</span><b>Project the upcoming week — two passes</b>Pass 1 builds fresh boards for the upcoming week's games with the backtest-verified model and selects the board players. The refresh then enters the Vegas lines posted for those players — anytime-TD odds, direct 2+ TD odds where posted, and rushing/receiving yard lines, from public odds aggregators — and pass 2 computes the published numbers: touchdown probabilities as the 50/50 model–Vegas blend, yard boards with the Vegas line shown alongside. Then the boards republish to the GitHub Pages copy above.</li>
+        <li><span class="step-n">Step 3</span><b>Project the upcoming week — two passes</b>Pass 1 builds fresh boards for the upcoming week's games with the backtest-verified model and selects the board players. The refresh then enters the Vegas lines posted for those players — anytime-TD odds, direct 2+ TD odds where posted, and rushing/receiving yard lines, from public odds aggregators — and pass 2 computes the published numbers: touchdown probabilities as the 50/50 model–Vegas blend, yard boards with the Vegas line shown alongside. Before publishing, compare each new board player-by-player against last week's published boards — board by board, not across boards — and add a small <b>NEW</b> badge beside the name of any player who was not on that same board last week. Then the boards republish to the GitHub Pages copy above.</li>
       </ol>
     </div>
   </header>
@@ -493,6 +498,12 @@
        above, from public odds aggregators such as Win Daily, OddsChecker and Action Network. One honest limit: historical
        prop lines aren't recoverable in bulk, so the blend could not be backtested across Weeks 2–10 — Week 10 is the one
        week of evidence behind it, and this week's grading is its first live validation.</p>
+    <p><b>“New this week” badge — board-level rule.</b> A small <b>NEW</b> badge beside a player's name means he is appearing
+       on <i>that board</i> for the first time compared with last week's published boards. The comparison is strictly
+       board-by-board: being on a different board last week does not count. Every weekly rebuild repeats the same check
+       before publishing — compare each board against the prior week's published version of that same board and badge
+       only the players who were not on it. This week, against the Week 10 boards, that is Amon-Ra St. Brown on both
+       touchdown boards (he was only on the receiving board in Week 10) — and no one else.</p>
     <div class="bt-stats">
       <div class="bt"><div class="n">Wk 2–10</div><div class="d">rolling backtest window, re-run every Wednesday from Week 2 through the last completed week, strict no-lookahead — each week predicted only from data available before it</div></div>
       <div class="bt"><div class="n">6 — HELD</div><div class="d">TD-rate regression weight stays at 6: Week 10 was the first week the TD boards ran at or above price after the increase (1+ board 6 of 9 against a 58% average; 2+ list 5 of 10 against a 20% average), and pooled across Weeks 8–10 the 1+ board is 15 of 28 against a ~58% average — at price. One hot week doesn't justify loosening, and the 2+ season line (8 of 50) still trails its price, so the case for weight 7 is deferred, not dead</div></div>
@@ -859,6 +870,7 @@ var DATA = {
         "p": 52,
         "p2": 17,
         "vt": -115,
+        "isNew": true,
         "note": "two TDs in Munich on four catches — Tampa Bay's TD stinginess caps the λ; his first week on this board"
       }
     ],
@@ -961,7 +973,8 @@ var DATA = {
         "g": 9,
         "lam": 0.70,
         "p": 17,
-        "vt": -115
+        "vt": -115,
+        "isNew": true
       },
       {
         "n": "Jonathan Taylor",
@@ -1477,10 +1490,11 @@ function rowHTML(board, r, i, hasLines){
   var flag = r.flag ? '<span class="flag">' + r.flag + "</span>" : "";
   if (board.kind === "yards" && r.vl != null && (r.max - r.vl) >= 10)
     flag += '<span class="flag">Vegas cooler</span>';
+  var newBadge = r.isNew ? '<span class="newbadge" aria-label="New this week">NEW</span>' : "";
   var note = r.note ? ' · <span>' + r.note + "</span>" : "";
   var head =
     '<div class="rank">' + (i + 1) + "</div>" +
-    '<div class="who"><div class="name">' + r.n +
+    '<div class="who"><div class="name">' + r.n + newBadge +
       (r.qbrush ? '<span class="qbtag">RUSH ONLY</span>' : "") + flag + "</div>";
   var tail = "";
   if (board.kind === "yards"){
