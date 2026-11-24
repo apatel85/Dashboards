@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CareerLaunch — Job search + freelance, toward $10k/month</title>
+<meta name="description" content="One dashboard for a remote job search and a freelance pipeline toward $10,000 a month. Local-only: your profile never leaves your device in v1.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600;700&family=Libre+Franklin:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;--bg:#edf0f3;--panel:#fff;--panel-2:#f2f5f8;--panel-3:#e9edf2;--ink:#0f1620;--muted:#44546a;--faint:#5b6c82;--line:#ccd4de;--line-soft:#dde3ea;--up:#0b7a4a;--up-bg:#e2f3ea;--down:#bc3524;--down-bg:#fbe9e5;--info:#1c5cb4;--info-bg:#e4edfa;--signal:#f2a71b;--signal-ink:#211300;--signal-soft:#fdf0d3;--desk:#10161f;--desk-ink:#eef3f9;--desk-muted:#b3c0d1;--desk-line:#2c3949;--focus:#1c5cb4;--r-sm:6px;--r-md:10px;--r-lg:14px;--move:200ms ease}
+@media(prefers-color-scheme:dark){:root{--bg:#080b0f;--panel:#10161f;--panel-2:#151e2a;--panel-3:#0b1119;--ink:#e9eef5;--muted:#a7b4c6;--faint:#8798ad;--line:#2a3646;--line-soft:#1e2938;--up:#3ed08d;--down:#ff7d68;--info:#7db1ff;--desk:#131c28;--focus:#7db1ff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Libre Franklin",system-ui,sans-serif}
+.shell{max-width:1140px;margin:0 auto;padding:24px 20px 120px}
+h1{font:700 34px/1.1 "Newsreader",serif;margin:6px 0 4px}
+h2{font:800 19px/1.3 "Libre Franklin",sans-serif;margin:0}
+h3{font:700 15px/1.4 "Libre Franklin",sans-serif;margin:0}
+.sub{color:var(--muted);margin:0 0 16px}
+.mono{font-family:"IBM Plex Mono",monospace}
+.pill{display:inline-block;border-radius:999px;padding:4px 12px;font:700 12px/1.4 "Libre Franklin",sans-serif;border:1px solid var(--line);background:var(--panel-2)}
+.pill.amber{background:var(--signal-soft);color:var(--signal-ink);border-color:var(--signal)}
+.pill.green{background:var(--up-bg);color:var(--up);border-color:var(--up)}
+.pill.blue{background:var(--info-bg);color:var(--info);border-color:var(--info)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;margin:12px 0}
+.card h2{margin-bottom:4px}
+.muted{color:var(--muted)} .small{font-size:13px}
+button,select,input,textarea{font:inherit;color:inherit}
+button{min-height:44px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--panel-2);padding:10px 16px;cursor:pointer;font-weight:700}
+button.primary{background:var(--desk);color:var(--desk-ink);border-color:var(--desk)}
+button.danger{background:var(--down-bg);color:var(--down);border-color:var(--down)}
+input,select,textarea{width:100%;min-height:44px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--panel);padding:10px 12px;margin:4px 0 10px}
+textarea{min-height:90px;resize:vertical}
+label{font-weight:700;font-size:13px}
+.grid{display:grid;gap:12px}
+@media(min-width:720px){.grid.c2{grid-template-columns:1fr 1fr}.grid.c3{grid-template-columns:repeat(3,1fr)}}
+.stat{font:700 21px/1.2 "IBM Plex Mono",monospace}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.tabs button{border-radius:999px}
+.tabs button[aria-selected="true"]{background:var(--desk);color:var(--desk-ink);border-color:var(--desk)}
+.tabpage{display:none}.tabpage.active{display:block}
+details{border:1px solid var(--line);border-radius:var(--r-md);padding:12px;margin:8px 0;background:var(--panel)}
+summary{cursor:pointer;font-weight:800;min-height:44px;display:flex;align-items:center}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.bar{height:12px;border-radius:999px;background:var(--panel-3);overflow:hidden;margin:8px 0}
+.bar>i{display:block;height:100%;background:var(--signal)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+@media(max-width:640px){table,thead,tbody,tr,th,td{display:block}thead{display:none}tr{border:1px solid var(--line);border-radius:var(--r-md);margin:8px 0;padding:8px}td{border:0;padding:2px 6px}}
+.notice{background:var(--signal-soft);border:1px solid var(--signal);border-radius:var(--r-md);padding:12px;margin:12px 0}
+a{color:var(--info)}
+.stickybar{position:fixed;left:10px;right:10px;bottom:10px;background:var(--desk);color:var(--desk-ink);border-radius:var(--r-lg);padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;z-index:10}
+.stickybar a{color:var(--signal)}
+@media(min-width:920px){.stickybar{display:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+<p><span class="pill amber">v1.0.0 · local-only</span> <span class="pill">No server · No Supabase in v1</span></p>
+<h1>CareerLaunch</h1>
+<p class="sub">Job search + freelance pipeline, toward <strong>$10,000 a month</strong> remotely. Your profile never leaves your device in v1 — everything is stored in this browser only.</p>
+<div class="notice"><strong>Privacy:</strong> sample data below is clearly marked SAMPLE. Replace it with your own profile in Setup, then use Export to back it up. Never paste a real CV, address, or phone number into a public repo — this app has none, and it sends nothing anywhere.</div>
+
+<div class="tabs" role="tablist" aria-label="CareerLaunch sections">
+<button role="tab" aria-selected="true" data-tab="dash">Dashboard</button>
+<button role="tab" aria-selected="false" data-tab="job">Job track</button>
+<button role="tab" aria-selected="false" data-tab="free">Freelance track</button>
+<button role="tab" aria-selected="false" data-tab="setup">Setup &amp; profile</button>
+<button role="tab" aria-selected="false" data-tab="interview">Interview</button>
+</div>
+
+<section class="tabpage active" id="tab-dash">
+<div class="grid c3">
+<div class="card"><h2>Freelance progress</h2><div class="stat" id="dFree">$0 / $10,000</div><div class="bar"><i id="dFreeBar" style="width:0%"></i></div><p class="muted small" id="dFreeNote">Contracted + invoiced this month.</p></div>
+<div class="card"><h2>Job pipeline</h2><div class="stat" id="dJob">0 active</div><p class="muted small" id="dJobNote">Applied · interviewing · offers.</p></div>
+<div class="card"><h2>Follow-ups due</h2><div class="stat" id="dFollow">0 due</div><p class="muted small">10 days quiet → draft a follow-up. Max 2, drafts only, never auto-sent.</p></div>
+</div>
+<div class="card"><h2>Rate / hours calculator</h2>
+<div class="grid c3">
+<div><label>Hourly rate ($)</label><input id="calcRate" type="number" value="85" min="1"></div>
+<div><label>Billable hours / month</label><input id="calcHours" type="number" value="118" min="0"></div>
+<div><label>Monthly income</label><div class="stat" id="calcOut">$10,030</div><p class="muted small" id="calcNote">$75/hr needs 134 hrs · $100/hr needs 100 hrs for $10k.</p></div>
+</div></div>
+<div class="card"><h2>Next actions</h2><ul id="dNext"></ul></div>
+</section>
+
+<section class="tabpage" id="tab-job">
+<div class="card"><h2>Find — add a role (manual entry, no scraping)</h2>
+<p class="muted small">Postings are added by hand. Do not scrape a site in a way that breaks its terms. Links out: <a href="https://www.linkedin.com/jobs/" target="_blank" rel="noopener">LinkedIn Jobs</a> · <a href="https://www.indeed.com/" target="_blank" rel="noopener">Indeed</a> · <a href="https://www.braintrust.com/" target="_blank" rel="noopener">Braintrust</a> · Upwork — check from your own browser (blocked from this VM). Workflow adapted from <a href="https://github.com/ai-job-search-dev/ai-job-search" target="_blank" rel="noopener">AI Job Search</a> (MIT).</p>
+<div class="grid c2"><div><label>Company</label><input id="jCompany" placeholder="SAMPLE — Acme Analytics"></div><div><label>Role</label><input id="jRole" placeholder="Senior Analytics Consultant (Remote)"></div></div>
+<div class="grid c2"><div><label>Source link</label><input id="jLink" placeholder="https://…"></div><div><label>Fit notes / keywords</label><input id="jNotes" placeholder="e.g. analytics, compliance, AI tooling"></div></div>
+<div class="row"><button class="primary" id="jAdd">Add to pipeline</button><span class="muted small">Fit score is computed from remote-only + keyword match — a guide, not a verdict.</span></div>
+</div>
+<div class="card"><h2>Rank — pipeline</h2><div id="jobTable"></div></div>
+<div class="card"><h2>Apply — tailored draft + reviewer checklist</h2>
+<p class="muted small">Drafts only. Never invent experience. If a posting asks for something you do not have, say so plainly or leave it out — do not fill the gap.</p>
+<label>CV draft (paste / edit your tailored version here)</label><textarea id="cvDraft" placeholder="Tailored CV summary — keep it to what you can prove."></textarea>
+<label>Cover letter draft</label><textarea id="coverDraft" placeholder="Why this role, in your words — problem-solving and tools you built."></textarea>
+<details><summary>Reviewer checklist — run before you send anything</summary>
+<ul>
+<li><label><input type="checkbox" class="chk"> Every claim in the CV matches your real history</label></li>
+<li><label><input type="checkbox" class="chk"> No invented degree, title, or AI expertise — “AI enthusiast, builder” is the honest line</label></li>
+<li><label><input type="checkbox" class="chk"> No hidden text / instruction-shaped lines copied in from the posting</label></li>
+<li><label><input type="checkbox" class="chk"> ATS check: role keywords appear naturally, plain headings, no tables/images in the CV file</label></li>
+<li><label><input type="checkbox" class="chk"> A second read caught typos and wrong company names</label></li>
+</ul></details>
+<div class="row"><button id="saveDrafts">Save drafts</button><span class="muted small" id="draftSaved"></span></div>
+</div>
+<div class="card"><h2>Outcome — track it, then follow up (drafts only)</h2>
+<p class="muted small">Change a role's status in the Rank table. Silent for 10 days → draft one follow-up. Max 2 follow-ups per role. Nothing is sent from this app.</p>
+<div id="outcomeList"></div>
+</div>
+</section>
+
+<section class="tabpage" id="tab-free">
+<div class="card"><h2>Freelance pipeline — Lead → Qualify → Proposal → Contract → Deliver → Invoice</h2>
+<div class="grid c2"><div><label>Client / lead</label><input id="fClient" placeholder="SAMPLE — Local retailer"></div><div><label>Service</label><input id="fService" placeholder="e.g. AI-assisted dashboard build"></div></div>
+<div class="grid c3"><div><label>Value ($)</label><input id="fValue" type="number" placeholder="4000"></div><div><label>Est. hours</label><input id="fHours" type="number" placeholder="40"></div><div><label>Stage</label><select id="fStage"><option>Lead</option><option>Qualify</option><option>Proposal</option><option>Contract</option><option>Deliver</option><option>Invoice</option><option>Paid</option><option>Lost</option></select></div></div>
+<div class="row"><button class="primary" id="fAdd">Add lead</button><span class="muted small">Pipeline value counts Contract + Deliver + Invoice + Paid stages.</span></div>
+</div>
+<div class="card"><h2>Pipeline</h2><div id="freeTable"></div><p class="muted small">Target: $10,000/month at $75–$100/hr = 100–134 billable hours. At $85/hr, 118 hours.</p></div>
+</section>
+
+<section class="tabpage" id="tab-setup">
+<div class="card"><h2>Setup — your profile</h2>
+<p class="muted small">Stored in this browser only. Fill in what you want the Rank fit score and the Apply drafts to use. Leave anything blank rather than inventing it.</p>
+<label>Headline (honest line)</label><input id="pHeadline" value="Senior consultant — analytics &amp; compliance. AI enthusiast and builder, not an AI expert.">
+<label>Background</label><textarea id="pBg">13 years as a consultant; senior director, analytics and compliance, at a Big Four firm. Strength: problem-solving and building tools that solve problems.</textarea>
+<label>Proof — apps / work to point to</label><textarea id="pProof">TradeDesk — stock research hub; WagWise — dog-care PWA; Quixera — youth sports academy tools. All live on GitHub Pages.</textarea>
+<label>Target roles (comma-separated)</label><input id="pTargets" value="remote analytics consultant, AI-assisted full-stack developer, freelance AI builder">
+<label>Remote only?</label><select id="pRemote"><option value="yes">Yes — remote only</option><option value="no">Open to hybrid</option></select>
+<label>Roles to flag, not pursue automatically</label><input id="pFlag" value="All-day AI evaluation (e.g. DeepMind code-quality judging) — near my expertise line; my call, paused.">
+<div class="row"><button class="primary" id="pSave">Save profile</button><span class="muted small" id="pSaved"></span></div>
+</div>
+<div class="card"><h2>Data — export, import, reset</h2>
+<div class="row"><button id="exportBtn">Export JSON</button><button id="importBtn">Import JSON</button><button class="danger" id="resetBtn">Clear all data (incl. sample)</button></div>
+<input type="file" id="importFile" accept="application/json" style="display:none">
+<p class="muted small">Export is your backup and your sync in v1. Import replaces everything in this browser. There is no account and no server copy.</p>
+</div>
+</section>
+
+<section class="tabpage" id="tab-interview">
+<div class="card"><h2>Interview — STAR examples</h2>
+<p class="muted small">One story per box: Situation → Task → Action → Result, with a number where you have one. No invented results.</p>
+<label>Story 1 — a hard problem you solved</label><textarea id="star1" placeholder="SAMPLE: Built TradeDesk after…"></textarea>
+<label>Story 2 — a tool you built that changed how work got done</label><textarea id="star2"></textarea>
+<label>Story 3 — a time you said no / pushed back on a risky call</label><textarea id="star3"></textarea>
+<div class="row"><button id="starSave">Save stories</button><span class="muted small" id="starSaved"></span></div>
+</div>
+<div class="card"><h2>Mock questions</h2><ul>
+<li>Walk me through a dashboard you built end to end — what broke, and how did you know?</li>
+<li>You are AI-enthusiastic but not an AI expert. Where is that line for you, in practice?</li>
+<li>How do you verify an AI agent's work before you ship it?</li>
+<li>Tell me about a time a backtest or a number proved you wrong. What changed?</li>
+<li>Why remote, and how do you stay useful without being in the room?</li>
+</ul></div>
+</section>
+
+<div class="card"><h2>How this was built</h2>
+<p class="muted small">Workflow adapted from AI Job Search (MIT, ai-job-search-dev/ai-job-search) — Setup, Find, Rank, Apply, Interview, Outcome — as web steps, not Claude commands. Author's own account: 69 applications, 20 interviews, 1 contract; not independently verified, and not a promise. Design: Mock B baseline (Newsreader / Libre Franklin / IBM Plex Mono, pills, collapsed cards). v1.0.0, Nov 24, 2026. Ankit's phone check is the final gate.</p></div>
+</div>
+<div class="stickybar"><span><strong>$10k/mo</strong> <span id="sbFree" class="mono">$0</span></span><a href="#" onclick="document.querySelector('[data-tab=free]').click();return false">Freelance →</a></div>
+<script>
+const KEY='careerlaunch-v1';
+const SAMPLE={profile:{headline:'Senior consultant — analytics & compliance. AI enthusiast and builder, not an AI expert.',bg:'13 years as a consultant; senior director, analytics and compliance, at a Big Four firm. Strength: problem-solving and building tools that solve problems.',proof:'TradeDesk — stock research hub; WagWise — dog-care PWA; Quixera — youth sports academy tools. All live on GitHub Pages.',targets:'remote analytics consultant, AI-assisted full-stack developer, freelance AI builder',remote:'yes',flag:'All-day AI evaluation (e.g. DeepMind code-quality judging) — near my expertise line; my call, paused.'},
+jobs:[{id:1,company:'SAMPLE — Acme Analytics',role:'Senior Analytics Consultant (Remote)',link:'',notes:'analytics, compliance, AI tooling',status:'Saved',applied:'',followups:0},
+{ id:2,company:'SAMPLE — Braintrust client',role:'Freelance AI-assisted dashboard build',link:'https://www.braintrust.com/',notes:'dashboard, AI tooling',status:'Applied',applied:'2026-11-14',followups:0}],
+leads:[{id:1,client:'SAMPLE — Local retailer',service:'AI-assisted dashboard build',value:4000,hours:40,stage:'Proposal'},
+{ id:2,client:'SAMPLE — Cricket academy',service:'QA tooling + reporting',value:2500,hours:30,stage:'Lead'}],
+cv:'',cover:'',stars:['','','']};
+let S; try{S=JSON.parse(localStorage.getItem(KEY))||structuredClone(SAMPLE)}catch(e){S=structuredClone(SAMPLE)}
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function fit(j){let s=50;if((S.profile.remote||'yes')==='yes')s+=10;const t=(S.profile.targets||'').toLowerCase().split(',').map(x=>x.trim());const hay=((j.role||'')+' '+(j.notes||'')).toLowerCase();if(t.some(k=>k&&hay.includes(k.split(' ')[0])))s+=20;if(hay.includes('remote'))s+=10;return Math.min(95,s)}
+function money(n){return '$'+Number(n||0).toLocaleString()}
+function render(){
+ const paid=S.leads.filter(l=>['Contract','Deliver','Invoice','Paid'].includes(l.stage)).reduce((a,l)=>a+(+l.value||0),0);
+ document.getElementById('dFree').textContent=money(paid)+' / $10,000';
+ document.getElementById('dFreeBar').style.width=Math.min(100,paid/100)+'%';
+ document.getElementById('sbFree').textContent=money(paid);
+ const active=S.jobs.filter(j=>['Applied','Interview','Offer','Saved'].includes(j.status)).length;
+ document.getElementById('dJob').textContent=active+' active';
+ const due=S.jobs.filter(j=>j.status==='Applied'&&j.applied&&((Date.now()-new Date(j.applied))/864e5)>=10&&(j.followups||0)<2).length;
+ document.getElementById('dFollow').textContent=due+' due';
+ document.getElementById('dNext').innerHTML='<li>Review the '+due+' follow-up'+(due===1?'':'s')+' due — draft, do not auto-send.</li><li>Top job fit: '+(S.jobs.map(j=>j.role+' ('+fit(j)+')').join(' · ')||'add a role in Job track')+'.</li><li>Freelance pipeline: '+money(S.leads.reduce((a,l)=>a+(+l.value||0),0))+' total, '+money(paid)+' in Contract or later.</li>';
+ document.getElementById('jobTable').innerHTML=S.jobs.length?'<table><thead><tr><th>Role</th><th>Fit</th><th>Status</th><th>Applied</th><th>Follow-ups</th></tr></thead><tbody>'+S.jobs.map(j=>'<tr><td><strong>'+esc(j.role)+'</strong><br><span class="muted small">'+esc(j.company)+'</span>'+(j.link?' <a href="'+esc(j.link)+'" target="_blank" rel="noopener">link</a>':'')+'</td><td class="mono">'+fit(j)+'</td><td><select data-job="'+j.id+'" class="jStatus">'+['Saved','Applied','Interview','Offer','Rejected','Silent'].map(s=>'<option'+(s===j.status?' selected':'')+'>'+s+'</option>').join('')+'</select></td><td>'+esc(j.applied||'—')+'</td><td>'+(j.followups||0)+' / 2</td></tr>').join('')+'</tbody></table>':'<p class="muted">No roles yet. Add one above.</p>';
+ document.getElementById('freeTable').innerHTML=S.leads.length?'<table><thead><tr><th>Client</th><th>Service</th><th>Value</th><th>Hours</th><th>Stage</th></tr></thead><tbody>'+S.leads.map(l=>'<tr><td><strong>'+esc(l.client)+'</strong></td><td>'+esc(l.service)+'</td><td class="mono">'+money(l.value)+'</td><td class="mono">'+esc(l.hours)+'</td><td><select data-lead="'+l.id+'" class="fStage">'+['Lead','Qualify','Proposal','Contract','Deliver','Invoice','Paid','Lost'].map(s=>'<option'+(s===l.stage?' selected':'')+'>'+s+'</option>').join('')+'</select></td></tr>').join('')+'</tbody></table>':'<p class="muted">No leads yet.</p>';
+ document.getElementById('outcomeList').innerHTML=S.jobs.filter(j=>j.status==='Applied').map(j=>{const days=j.applied?Math.floor((Date.now()-new Date(j.applied))/864e5):0;return '<p><strong>'+esc(j.role)+'</strong> — '+esc(j.company)+' · applied '+esc(j.applied||'—')+' ('+days+' days ago) · follow-ups '+(j.followups||0)+'/2 '+(days>=10&&(j.followups||0)<2?'<button data-fu="'+j.id+'">Draft follow-up #'+((j.followups||0)+1)+'</button>':'<span class="muted small">not due yet / max reached</span>')+'</p>'}).join('')||'<p class="muted">No applied roles to track.</p>';
+ document.querySelectorAll('.jStatus').forEach(el=>el.onchange=()=>{const j=S.jobs.find(x=>x.id==el.dataset.job);j.status=el.value;if(el.value==='Applied'&&!j.applied)j.applied=new Date().toISOString().slice(0,10);save();render()});
+ document.querySelectorAll('.fStage').forEach(el=>el.onchange=()=>{S.leads.find(x=>x.id==el.dataset.lead).stage=el.value;save();render()});
+ document.querySelectorAll('[data-fu]').forEach(el=>el.onclick=()=>{const j=S.jobs.find(x=>x.id==el.dataset.fu);j.followups=(j.followups||0)+1;save();alert('Draft follow-up #'+j.followups+' for '+j.role+' — write it in your email, do not auto-send.');render()});
+}
+function calc(){const r=+document.getElementById('calcRate').value||0,h=+document.getElementById('calcHours').value||0;document.getElementById('calcOut').textContent=money(r*h);document.getElementById('calcNote').textContent=r>0?('At $'+r+'/hr you need '+Math.ceil(10000/r)+' hrs for $10k.'):'Enter a rate.'}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected','false'));b.setAttribute('aria-selected','true');document.querySelectorAll('.tabpage').forEach(p=>p.classList.remove('active'));document.getElementById('tab-'+b.dataset.tab).classList.add('active')});
+document.getElementById('calcRate').oninput=calc;document.getElementById('calcHours').oninput=calc;
+document.getElementById('jAdd').onclick=()=>{const c=document.getElementById('jCompany').value.trim(),r=document.getElementById('jRole').value.trim();if(!c||!r){alert('Add a company and a role.');return}S.jobs.push({id:Date.now(),company:c,role:r,link:document.getElementById('jLink').value.trim(),notes:document.getElementById('jNotes').value.trim(),status:'Saved',applied:'',followups:0});save();render()};
+document.getElementById('fAdd').onclick=()=>{const c=document.getElementById('fClient').value.trim();if(!c){alert('Add a client.');return}S.leads.push({id:Date.now(),client:c,service:document.getElementById('fService').value.trim(),value:+document.getElementById('fValue').value||0,hours:+document.getElementById('fHours').value||0,stage:document.getElementById('fStage').value});save();render()};
+document.getElementById('saveDrafts').onclick=()=>{S.cv=document.getElementById('cvDraft').value;S.cover=document.getElementById('coverDraft').value;save();document.getElementById('draftSaved').textContent='Saved locally.'};
+document.getElementById('pSave').onclick=()=>{S.profile={headline:document.getElementById('pHeadline').value,bg:document.getElementById('pBg').value,proof:document.getElementById('pProof').value,targets:document.getElementById('pTargets').value,remote:document.getElementById('pRemote').value,flag:document.getElementById('pFlag').value};save();document.getElementById('pSaved').textContent='Saved locally.';render()};
+document.getElementById('starSave').onclick=()=>{S.stars=[document.getElementById('star1').value,document.getElementById('star2').value,document.getElementById('star3').value];save();document.getElementById('starSaved').textContent='Saved locally.'};
+document.getElementById('exportBtn').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download='careerlaunch-export.json';a.click()};
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);save();location.reload()}catch(err){alert('That file is not valid CareerLaunch JSON.')}};r.readAsText(f)};
+document.getElementById('resetBtn').onclick=()=>{if(confirm('Clear ALL CareerLaunch data in this browser, including sample data?')){localStorage.removeItem(KEY);location.reload()}};
+// fill setup/interview from stored data
+document.getElementById('pHeadline').value=S.profile.headline||'';document.getElementById('pBg').value=S.profile.bg||'';document.getElementById('pProof').value=S.profile.proof||'';document.getElementById('pTargets').value=S.profile.targets||'';document.getElementById('pRemote').value=S.profile.remote||'yes';document.getElementById('pFlag').value=S.profile.flag||'';
+document.getElementById('cvDraft').value=S.cv||'';document.getElementById('coverDraft').value=S.cover||'';
+document.getElementById('star1').value=(S.stars||[])[0]||'';document.getElementById('star2').value=(S.stars||[])[1]||'';document.getElementById('star3').value=(S.stars||[])[2]||'';
+calc();render();
+</script>
+</body>
+</html>
