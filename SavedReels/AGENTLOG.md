@@ -1,5 +1,42 @@
 # AGENTLOG — SavedReels
 
+## 2026-11-24 — v1.1.0 — SavedReels: repo audit applied — Potential fake tab, limitations stated
+
+- **User request:** apply the Nov 24 repo audit (45 items) to the live
+  dashboard — move FAKE/UNCERTAIN repos out of the main tabs, state the
+  limitation on every LEGIT_LIMITED card, re-derive all counts.
+- **What changed:**
+  - `index.html` — new "Potential fake" tab with all 5 moved repos
+    (OmniRoute, Claude Ads, Deft, AutoHedge, Jev AI / TypeSafe AI), each with
+    the naming Reel(s), the Reel's claim, why it is fake/uncertain, and what
+    would confirm it. The OmniRoute caution card was removed from the main
+    view (its content moved to the fake tab). The AI category summary, the
+    "Also in your saves" list, and the Finance strategy #09 / AI verdict #2
+    cards now state the TradingAgents rebuilt-CLI limitation; verdict #1 now
+    says Karpathy Skills is by multica-ai, not Karpathy; verdict #3 no longer
+    calls the cybersecurity skills Anthropic's. Tab counts are computed live
+    from the data as well as hardcoded.
+  - `data/reels.json` — 3 concepts flagged `"audit": "potential-fake"`
+    (omniroute, deft-team-skills, jev-ai); the 10-repo card no longer names
+    or links AutoHedge / Claude Ads; 23 cards carry an `audit_note`
+    (16 kept-repo limitations + 7 "repo not verified" notes). No Reel
+    deleted — still 99 permalinks in `data/reels.json` / `data/seen.json`.
+  - `repo-audit.md` + `data/repo-audit.json` — the audit itself, now also
+    published in the repo so the verdicts are checkable.
+  - `README.md` — counts + new Repo audit section.
+  - Counts re-derived from the edited data: All 82, AI 40, Finance 15,
+    What's New 17, Consolidated 7, Potential fake 5; 99 distinct Reels,
+    85 concepts, 14 merged.
+- **Verification status:** embedded JSON verified identical to
+  `data/reels.json`; HTML parsed with no unclosed tags; page JS passes
+  `node --check`; the page's own filter logic was executed in Node against
+  the shipped data — tab counts 82/40/15/17/7/5, and searching OmniRoute,
+  AutoHedge, Deft, Jev, or Claude Ads returns 0 in the main tabs and 1 in
+  Potential fake. GitHub contents + SHAs read back after push; live URL
+  fetched (see commit message / parent report for status). Phone check by
+  Ankit is the final gate — layout at 390px not verified on a real device.
+
+
 ## 2026-11-24 — v1.0.0 — SavedReels: Facebook saved reels dashboard, consolidated + What's New
 
 - **User request:** build and push the SavedReels GitHub Pages app from the
