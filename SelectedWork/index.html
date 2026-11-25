@@ -113,12 +113,17 @@
   .hidden-card{display:none}
 
   /* ---------- Operating record ---------- */
-  .ops{display:grid;grid-template-columns:1.25fr .85fr;gap:18px;margin-top:22px}
+  .ops{display:grid;grid-template-columns:1fr;gap:18px;margin-top:22px}
+  .coop{margin-top:22px;background:var(--surface-2);border-radius:10px;padding:20px}
+  .coop h4{font-family:"Newsreader",Georgia,serif;font-size:1.2rem;font-weight:600;margin:0 0 6px;line-height:1.2}
+  .coop .big-stats .b{background:var(--surface)}
+  .timeline .sub{display:block;margin-top:8px;padding-left:14px;border-left:3px solid var(--accent);color:var(--muted);font-size:.92rem}
+  .timeline .sub strong{color:var(--ink)}
   .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
   .panel h3{font-family:"Newsreader",Georgia,serif;font-size:1.45rem;font-weight:600;margin:0 0 6px;line-height:1.2}
   .panel p{color:var(--ink-2);margin:0 0 12px}
   .panel p:last-child{margin-bottom:0}
-  .chart{margin:18px 0 6px}
+  .chart{margin:18px 0 6px;max-width:640px}
   .chart figcaption{font-size:.85rem;color:var(--muted);margin-top:8px}
   .phase{border-left:3px solid var(--accent);padding:2px 0 2px 14px;margin:14px 0}
   .phase .when{font-family:"IBM Plex Mono",monospace;font-size:.76rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
@@ -337,17 +342,17 @@
           <div class="b"><span class="n">3 &rarr; 10</span><span class="t">B2B business accounts grown under my ownership</span></div>
           <div class="b"><span class="n">2 stores</span><span class="t">run through store managers, never as a one-person operation</span></div>
         </div>
-      </div>
 
-      <div class="panel">
-        <h3>NJ Edible Arrangements Co-op — President</h3>
-        <p><strong>2019 – 2021.</strong> President of the New Jersey co-op — <strong>53 locations</strong> at the start of my term and the <strong>2nd-largest co-op in the US</strong>. My remit was co-op-wide marketing to lift overall sales across all 53 stores, not just my own two.</p>
-        <div class="big-stats">
-          <div class="b"><span class="n">4.5&times;</span><span class="t">return on marketing spend from the holiday campaigns I led</span></div>
-          <div class="b"><span class="n">53</span><span class="t">locations covered by the co-op marketing programme</span></div>
+        <div class="coop">
+          <h4>Within this venture — NJ Edible Arrangements Co-op, President</h4>
+          <p><strong>2019 – 2021.</strong> Part of the Edible ownership above, not a separate role: President of the New Jersey co-op — <strong>53 locations</strong> at the start of my term and the <strong>2nd-largest co-op in the US</strong>. My remit was co-op-wide marketing to lift overall sales across all 53 stores, not just my own two.</p>
+          <div class="big-stats">
+            <div class="b"><span class="n">4.5&times;</span><span class="t">return on marketing spend from the holiday campaigns I led</span></div>
+            <div class="b"><span class="n">53</span><span class="t">locations covered by the co-op marketing programme</span></div>
+          </div>
+          <p style="margin-top:16px">The goal was awareness across the NJ market, and we hit it — through mailers, radio, and free giveaways, timed to the holiday peaks when the return is highest.</p>
+          <p>That experience — making 53 independent owners&rsquo; marketing work as one programme — is the same job as making a tool work for a whole team instead of one person.</p>
         </div>
-        <p style="margin-top:16px">The goal was awareness across the NJ market, and we hit it — through mailers, radio, and free giveaways, timed to the holiday peaks when the return is highest.</p>
-        <p>That experience — making 53 independent owners&rsquo; marketing work as one programme — is the same job as making a tool work for a whole team instead of one person.</p>
       </div>
     </div>
   </section>
@@ -361,8 +366,7 @@
         <ul class="timeline">
           <li><span class="y">2007 – 2012</span><span><span class="r">PwC — Senior Associate</span><span class="d">Forensics and analytics, Jun 2007 – Nov 2012.</span></span></li>
           <li><span class="y">2012 – 2020</span><span><span class="r">EY — Senior Director, Analytics &amp; Compliance</span><span class="d">Built the NJ Life Sciences Forensics team (20+ people); led 50+ resources on a COVID response; PBM, 340B, and litigation analytics.</span></span></li>
-          <li><span class="y">2017 – 2026</span><span><span class="r">Edible Arrangements — Owner, 2 locations</span><span class="d">Oversight alongside EY to 2020, then more involved through store managers. Stores sold Jan 2026.</span></span></li>
-          <li><span class="y">2019 – 2021</span><span><span class="r">NJ Co-op — President</span><span class="d">53 locations; holiday campaigns returned 4.5&times; marketing spend.</span></span></li>
+          <li><span class="y">2017 – 2026</span><span><span class="r">Edible Arrangements — Owner, 2 locations</span><span class="d">Oversight alongside EY to 2020, then more involved through store managers. Stores sold Jan 2026.</span><span class="sub"><strong>NJ Co-op — President, 2019 – 2021</strong> (part of this venture): 53 locations; holiday campaigns returned 4.5&times; marketing spend.</span></span></li>
           <li><span class="y">2026 – now</span><span><span class="r">Independent Builder / AI Consultant</span><span class="d">CricMax engagement Mar–Jun 2026; P&amp;L, inventory, and analytics tools for small businesses.</span></span></li>
         </ul>
       </div>
