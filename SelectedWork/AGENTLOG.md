@@ -1,5 +1,10 @@
 # AGENTLOG — Selected Work (Portfolio)
 
+## 2026-11-25 — v1.0.2 — Consulting rate removed from the page
+- **Request:** Ankit: the resumes now point to this page instead of the old Muse snapshot, and the rate shown here ($75–$100 / hr) was not updated — remove it.
+- **Change:** Removed the "Consulting rate" row from the sidebar facts and replaced the Consulting value in the closing box with "Hourly or fixed scope, priced after a short diagnostic" — same wording as the freelance resume. No other numbers touched ($79 Pro license, $4M+ / $1M+ results, revenue chart unchanged).
+- **Verification:** Live Pages URL fetched after push — rate no longer present.
+
 ## 2026-11-25 — v1.0.1 — Co-op presidency nested under Edible venture
 - **Request:** Ankit: "Edible Coop President is part of the Edible Venture so that should be under that. Not seperate."
 - **Change:** Merged the standalone Co-op panel into the Edible panel as a nested sub-section ("Within this venture — NJ Edible Arrangements Co-op, President"); removed the standalone 2019–2021 timeline row and folded it in as a nested sub-line under the 2017–2026 Edible entry. All facts and numbers preserved (53 locations, 2nd-largest co-op, 4.5x holiday return). Same nesting applied to both resumes + LinkedIn file in the same pass.
