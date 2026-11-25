@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Selected Work — Ankit Patel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f3f5f1;
+    --surface:#ffffff;
+    --surface-2:#e8ede6;
+    --ink:#17201b;
+    --ink-2:#3d4a42;
+    --muted:#5c6a61;
+    --line:#d5dcd3;
+    --accent:#0e5a46;
+    --accent-ink:#ffffff;
+    --accent-soft:#dcebe3;
+    --ochre:#a8640f;
+    --ochre-soft:#f3e6cf;
+    --radius:14px;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#111613;
+      --surface:#1a211d;
+      --surface-2:#232c26;
+      --ink:#edf1ec;
+      --ink-2:#c6d0c7;
+      --muted:#9fb0a2;
+      --line:#303b33;
+      --accent:#57c69e;
+      --accent-ink:#0c1a14;
+      --accent-soft:#1e3a2f;
+      --ochre:#e5a44c;
+      --ochre-soft:#3a2e18;
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *{transition:none !important} }
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Public Sans",system-ui,-apple-system,Segoe UI,sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-underline-offset:3px}
+  button{font:inherit;cursor:pointer;min-height:44px}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px 72px}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:44px 0 8px;display:grid;grid-template-columns:1.55fr .95fr;gap:36px;align-items:start}
+  .role-line{font-family:"IBM Plex Mono",monospace;font-size:.82rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1{font-family:"Newsreader",Georgia,serif;font-weight:600;font-size:clamp(2.5rem,6vw,4.1rem);line-height:1.02;letter-spacing:-.01em;margin:0 0 16px}
+  .lede{font-size:1.16rem;line-height:1.6;color:var(--ink-2);margin:0 0 20px;max-width:56ch}
+  .lede strong{color:var(--ink)}
+  .hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+  .hero-tags li{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;font-size:.86rem;font-weight:600;color:var(--ink-2)}
+  .glance{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px 8px}
+  .glance h2{font-size:.8rem;font-family:"IBM Plex Mono",monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:600}
+  .glance dl{margin:0}
+  .glance .row{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid var(--line)}
+  .glance .row:first-of-type{border-top:none}
+  .glance dt{color:var(--muted);font-size:.9rem}
+  .glance dd{margin:0;font-weight:700;text-align:right;font-size:.95rem}
+  .glance .note{font-size:.88rem;color:var(--muted);padding:12px 0 14px;border-top:1px solid var(--line);margin-top:4px}
+
+  /* ---------- Proof strip ---------- */
+  .proof{margin:34px 0 6px;background:var(--ink);color:var(--bg);border-radius:var(--radius);padding:26px 26px 10px;display:grid;grid-template-columns:repeat(5,1fr);gap:20px}
+  @media (prefers-color-scheme: dark){ .proof{background:var(--surface-2);color:var(--ink)} }
+  .proof .stat{padding-bottom:14px}
+  .proof .num{font-family:"Newsreader",Georgia,serif;font-size:2rem;font-weight:700;line-height:1;display:block;margin-bottom:7px}
+  .proof .lbl{font-size:.84rem;line-height:1.4;opacity:.82;display:block}
+
+  /* ---------- Sections ---------- */
+  section{margin-top:56px}
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:8px}
+  h2.sec{font-family:"Newsreader",Georgia,serif;font-size:clamp(1.7rem,3.4vw,2.3rem);font-weight:600;margin:0;line-height:1.1}
+  .sec-sub{color:var(--muted);max-width:68ch;margin:8px 0 0;font-size:1rem}
+
+  /* ---------- Filters ---------- */
+  .filters{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 22px}
+  .filters button{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:9px 17px;font-weight:600;font-size:.92rem;transition:background .15s,color .15s,border-color .15s}
+  .filters button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .filters button:focus-visible,.case-btn:focus-visible{outline:3px solid var(--ochre);outline-offset:2px}
+
+  /* ---------- Project cards ---------- */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column}
+  .card.wide{grid-column:1 / -1}
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:10px}
+  .cat{font-family:"IBM Plex Mono",monospace;font-size:.74rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+  .status{font-size:.76rem;font-weight:700;border-radius:999px;padding:4px 10px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+  .status.consult{background:var(--ochre-soft);color:var(--ochre)}
+  .card h3{font-family:"Newsreader",Georgia,serif;font-size:1.55rem;font-weight:600;line-height:1.15;margin:0 0 8px}
+  .card .one{font-size:1.02rem;color:var(--ink-2);margin:0 0 14px}
+  .outcome{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border-radius:10px;padding:12px 14px;margin:0 0 16px}
+  .outcome .k{font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding-top:3px;white-space:nowrap}
+  .outcome .v{font-weight:600;font-size:.95rem}
+  .stack{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;padding:0;list-style:none}
+  .stack li{font-size:.78rem;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 8px}
+  .card-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .demo{font-size:.88rem;color:var(--muted);font-weight:600}
+  .case-btn{border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:999px;padding:9px 18px;font-weight:700;font-size:.9rem}
+  .case-btn[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink)}
+  .case{display:none;border-top:1px solid var(--line);margin-top:18px;padding-top:16px}
+  .case.open{display:block}
+  .case dl{margin:0;display:grid;gap:12px}
+  .case dt{font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ochre);margin-bottom:2px}
+  .case dd{margin:0;color:var(--ink-2);font-size:.96rem}
+  .hidden-card{display:none}
+
+  /* ---------- Operating record ---------- */
+  .ops{display:grid;grid-template-columns:1.25fr .85fr;gap:18px;margin-top:22px}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+  .panel h3{font-family:"Newsreader",Georgia,serif;font-size:1.45rem;font-weight:600;margin:0 0 6px;line-height:1.2}
+  .panel p{color:var(--ink-2);margin:0 0 12px}
+  .panel p:last-child{margin-bottom:0}
+  .chart{margin:18px 0 6px}
+  .chart figcaption{font-size:.85rem;color:var(--muted);margin-top:8px}
+  .phase{border-left:3px solid var(--accent);padding:2px 0 2px 14px;margin:14px 0}
+  .phase .when{font-family:"IBM Plex Mono",monospace;font-size:.76rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+  .phase p{margin:3px 0 0;font-size:.96rem}
+  .big-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+  .big-stats .b{background:var(--surface-2);border-radius:10px;padding:14px}
+  .big-stats .n{font-family:"Newsreader",Georgia,serif;font-size:1.8rem;font-weight:700;line-height:1;display:block;margin-bottom:5px}
+  .big-stats .t{font-size:.84rem;color:var(--muted);line-height:1.4;display:block}
+
+  /* ---------- Timeline / how I work ---------- */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
+  .timeline{list-style:none;margin:6px 0 0;padding:0}
+  .timeline li{display:grid;grid-template-columns:118px 1fr;gap:14px;padding:13px 0;border-top:1px solid var(--line)}
+  .timeline li:first-child{border-top:none}
+  .timeline .y{font-family:"IBM Plex Mono",monospace;font-size:.8rem;font-weight:600;color:var(--accent);padding-top:2px}
+  .timeline .r{font-weight:700}
+  .timeline .d{color:var(--muted);font-size:.92rem;display:block;margin-top:1px}
+  .steps{list-style:none;margin:6px 0 0;padding:0;counter-reset:step}
+  .steps li{padding:13px 0 13px 46px;position:relative;border-top:1px solid var(--line)}
+  .steps li:first-child{border-top:none}
+  .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:12px;width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+  .steps .r{font-weight:700}
+  .steps .d{color:var(--muted);font-size:.92rem;display:block;margin-top:1px}
+  .services{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;padding:0;list-style:none}
+  .services li{background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:.86rem;border-radius:999px;padding:7px 13px}
+
+  /* ---------- Footer CTA ---------- */
+  .cta{margin-top:56px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:28px;display:grid;grid-template-columns:1.4fr .8fr;gap:24px;align-items:center}
+  .cta h2{font-family:"Newsreader",Georgia,serif;font-size:1.7rem;font-weight:600;margin:0 0 8px;line-height:1.15}
+  .cta p{color:var(--ink-2);margin:0}
+  .cta .box{background:var(--surface-2);border-radius:10px;padding:16px 18px}
+  .cta .box .k{font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+  .cta .box .v{font-weight:700;display:block;margin-bottom:10px}
+  .cta .box .v:last-child{margin-bottom:0}
+  footer{margin-top:28px;color:var(--muted);font-size:.86rem;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+  @media (max-width:860px){
+    .hero{grid-template-columns:1fr;gap:24px;padding-top:30px}
+    .proof{grid-template-columns:repeat(2,1fr)}
+    .proof .stat:last-child{grid-column:1 / -1}
+    .grid,.ops,.two-col,.cta{grid-template-columns:1fr}
+    .timeline li{grid-template-columns:96px 1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= HERO ================= -->
+  <header class="hero">
+    <div>
+      <p class="role-line">Director of Analytics · Head of AI / Automation</p>
+      <h1>Ankit Patel</h1>
+      <p class="lede">I turn complex problems into working solutions — from advising Fortune 500s to owning the P&amp;L. Thirteen years leading analytics and compliance work at Big Four firms, eight years owning two retail stores, and now <strong>independent building and consulting</strong>: P&amp;L, inventory, and academy operations tools for small businesses that can&rsquo;t justify enterprise software fees.</p>
+      <ul class="hero-tags">
+        <li>Process improvement first</li>
+        <li>AI applied, not AI hype</li>
+        <li>East Windsor, NJ</li>
+        <li>Remote preferred · Hybrid OK</li>
+      </ul>
+    </div>
+    <aside class="glance" aria-label="At a glance">
+      <h2>At a glance</h2>
+      <dl>
+        <div class="row"><dt>Background</dt><dd>EY &amp; PwC — 13 years</dd></div>
+        <div class="row"><dt>Owned</dt><dd>2 Edible Arrangements stores</dd></div>
+        <div class="row"><dt>Now</dt><dd>Independent builder / consultant</dd></div>
+        <div class="row"><dt>Consulting rate</dt><dd>$75–$100 / hr</dd></div>
+        <div class="row"><dt>Demos</dt><dd>Live, on request</dd></div>
+      </dl>
+      <p class="note">This page is the short list on purpose: the business builds and engagements I can stand behind with a result. Live demos are shown on request, in conversation — not via an open link.</p>
+    </aside>
+  </header>
+
+  <!-- ================= PROOF STRIP ================= -->
+  <div class="proof" role="list" aria-label="Career proof points">
+    <div class="stat" role="listitem"><span class="num">$4M+</span><span class="lbl">recovered on a PBM rebate review</span></div>
+    <div class="stat" role="listitem"><span class="num">$1M+</span><span class="lbl">recouped on a 340B pricing error</span></div>
+    <div class="stat" role="listitem"><span class="num">200TB</span><span class="lbl">of data led on an opioid litigation matter</span></div>
+    <div class="stat" role="listitem"><span class="num">53</span><span class="lbl">NJ locations led as Co-op President</span></div>
+    <div class="stat" role="listitem"><span class="num">4.5&times;</span><span class="lbl">return on holiday marketing spend, NJ Co-op</span></div>
+  </div>
+
+  <!-- ================= SELECTED WORK ================= -->
+  <section aria-labelledby="work-h">
+    <div class="sec-head">
+      <h2 class="sec" id="work-h">Selected work</h2>
+    </div>
+    <p class="sec-sub">Four business builds and engagements — each started as someone&rsquo;s operational problem, not a technology idea. Open a case study for the problem, what was built, and what it changed.</p>
+
+    <div class="filters" role="group" aria-label="Filter selected work">
+      <button type="button" data-filter="all" aria-pressed="true">All work</button>
+      <button type="button" data-filter="smallbiz" aria-pressed="false">Small-business tools</button>
+      <button type="button" data-filter="analytics" aria-pressed="false">Analytics platforms</button>
+      <button type="button" data-filter="consulting" aria-pressed="false">Consulting &amp; QA</button>
+    </div>
+
+    <div class="grid" id="work-grid">
+
+      <!-- P&L Dashboard -->
+      <article class="card" data-cat="smallbiz">
+        <div class="card-top"><span class="cat">Small-business tool</span><span class="status">Live</span></div>
+        <h3>P&amp;L Dashboard</h3>
+        <p class="one">A profit-and-loss dashboard for small-business owners who shouldn&rsquo;t have to pay hefty monthly fees — or hand their financials to someone else&rsquo;s database — to see how the business is doing.</p>
+        <div class="outcome"><span class="k">In use</span><span class="v">3 small-business owners run their books on it</span></div>
+        <ul class="stack"><li>JavaScript</li><li>Google Sheets as the data store</li><li>Supabase auth</li><li>License-key Pro tier</li></ul>
+        <div class="card-foot">
+          <span class="demo">Live demo on request</span>
+          <button type="button" class="case-btn" aria-expanded="false">Case study</button>
+        </div>
+        <div class="case">
+          <dl>
+            <div><dt>Problem</dt><dd>Small owners either overpay for accounting dashboards or track profit in scattered spreadsheets. Either way, their financial data ends up stored by a vendor.</dd></div>
+            <div><dt>Built</dt><dd>A dashboard that runs on the owner&rsquo;s own Google Sheet — their sheet is the database, so they keep their data. Free tier covers one business; Pro is a $79 one-time license, not a subscription.</dd></div>
+            <div><dt>Result</dt><dd>In use by 3 business owners (friends and family businesses). No paid users yet — stated plainly, because the honest version is the one that holds up in an interview.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <!-- Inventory / CricMax -->
+      <article class="card" data-cat="smallbiz consulting">
+        <div class="card-top"><span class="cat">Consulting build</span><span class="status consult">Engagement · Mar–Jun 2026</span></div>
+        <h3>Inventory Tracking — CricMax</h3>
+        <p class="one">A sporting-goods and academy business losing track of stock got an inventory system built around how they actually work — plus a website and marketing audit with a fix plan.</p>
+        <div class="outcome"><span class="k">In use</span><span class="v">Inventory system used by 3 staff; audit findings turned into an optimisation plan</span></div>
+        <ul class="stack"><li>Process diagnosis</li><li>Inventory system</li><li>Website audit</li><li>Marketing fix plan</li></ul>
+        <div class="card-foot">
+          <span class="demo">Walkthrough on request</span>
+          <button type="button" class="case-btn" aria-expanded="false">Case study</button>
+        </div>
+        <div class="case">
+          <dl>
+            <div><dt>Problem</dt><dd>Inventory issues at a sporting-goods retailer and cricket academy: no reliable view of what was in stock, where, and what was moving.</dd></div>
+            <div><dt>Built</dt><dd>A Mar–Jun 2026 consulting engagement: mapped the process first, built the inventory tracking system to fit it, then audited the website and marketing and delivered a concrete plan to fix and optimise both.</dd></div>
+            <div><dt>Result</dt><dd>System in day-to-day use by 3 users, and a prioritised fix plan the business can execute against — process first, tool second.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <!-- CricMax Connect -->
+      <article class="card" data-cat="consulting">
+        <div class="card-top"><span class="cat">Consulting &amp; QA</span><span class="status">Live</span></div>
+        <h3>CricMax Connect</h3>
+        <p class="one">The working tools behind a youth sports academy platform (Quixera): a shared task tracker for the team, a dashboard that tracks UAT testing carried out by AI agents, and a browser app that lets real users flag an issue with a screenshot or video — saved straight into that dashboard.</p>
+        <div class="outcome"><span class="k">Role</span><span class="v">UAT testing, design &amp; usability guidance, path-to-market advice</span></div>
+        <ul class="stack"><li>Supabase auth &amp; sync</li><li>Works offline</li><li>UAT dashboard</li><li>Browser capture app</li><li>Marketing storyboard &amp; automation</li></ul>
+        <div class="card-foot">
+          <span class="demo">Live demo on request</span>
+          <button type="button" class="case-btn" aria-expanded="false">Case study</button>
+        </div>
+        <div class="case">
+          <dl>
+            <div><dt>Problem</dt><dd>An academy SaaS team coordinating work across spreadsheets and chat, testing scattered across people and agents, bugs reported as vague messages nobody could reproduce — and marketing planned ad hoc, post by post.</dd></div>
+            <div><dt>Built</dt><dd>CricMax Connect: a synced task tracker (Google + email sign-in, offline-capable). A UAT dashboard that tracks testing run by AI agents — what was tested, what passed or failed, and the evidence captured for each step. For actual users, a QA Capture app that integrates into the browser: flag an issue in the moment with a screenshot or screen recording plus a short description, and it is saved into the dashboard for the team to work from. And a marketing storyboard with automation for planning posts, scheduling them, and tracking what went out.</dd></div>
+            <div><dt>Result</dt><dd>My role is the operator&rsquo;s one: hands-on UAT, design and usability direction, and guidance on the path to bring the product to market — plus a marketing approach drawn from running Edible&rsquo;s campaigns, with the storyboard and automation doing the repetitive posting and tracking work.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <!-- TradeDesk -->
+      <article class="card" data-cat="analytics">
+        <div class="card-top"><span class="cat">Analytics platform</span><span class="status">Live</span></div>
+        <h3>TradeDesk</h3>
+        <p class="one">A market workstation I built for my own personal finances and investing — it pulls a live broker feed, earnings, news, and congressional activity into one daily brief, so I can spot opportunities against my investment goals and read it in minutes.</p>
+        <div class="outcome"><span class="k">Scale</span><span class="v">~518 S&amp;P 500 / Nasdaq-100 tickers, live Schwab quotes &amp; options chains</span></div>
+        <ul class="stack"><li>Schwab API</li><li>Supabase</li><li>GitHub Actions pipelines</li><li>Backtest harness</li></ul>
+        <div class="card-foot">
+          <span class="demo">Live demo on request</span>
+          <button type="button" class="case-btn" aria-expanded="false">Case study</button>
+        </div>
+        <div class="case">
+          <dl>
+            <div><dt>Problem</dt><dd>For my own investing, market information was scattered across a broker terminal, news feeds, and filings — hard to pull together into a view of where the opportunities were, with scoring ideas everywhere and no discipline about which ones actually work.</dd></div>
+            <div><dt>Built</dt><dd>A tabbed workstation — Daily Brief, Options, Signals, Earnings, Congress &amp; Gov, Research, Deep Dive, Performance — fed by a read-only Schwab proxy (equities, ETFs, stock and index options, Greeks included), refreshed on a schedule, invite-only for a small group of users.</dd></div>
+            <div><dt>Result</dt><dd>Every scoring module runs through a backtest harness before it is trusted, and ideas that don&rsquo;t hold up out-of-sample don&rsquo;t make the screen. That restraint is the feature.</dd></div>
+          </dl>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= OPERATING RECORD ================= -->
+  <section aria-labelledby="ops-h">
+    <h2 class="sec" id="ops-h">The operating record behind the builds</h2>
+    <p class="sec-sub">The tools above come from having run the businesses myself. This is that record, with the numbers I can stand behind.</p>
+
+    <div class="ops">
+      <div class="panel">
+        <h3>Edible Arrangements — Owner, 2 locations</h3>
+        <p><strong>Sep 2017 – Jan 2026.</strong> Bought the first store in Sep 2017 and the second in Mar 2018. Throughout, both stores ran through their store managers — my job was execution, product quality, and customer satisfaction at the highest quality and the most efficient operation, plus marketing, admin, hiring, staffing, and payroll.</p>
+        <div class="phase">
+          <span class="when">2017 – Oct 2020 · alongside full-time EY</span>
+          <p>An oversight role: managing store managers and teams remotely, focused on execution, product quality, and customer satisfaction.</p>
+        </div>
+        <div class="phase">
+          <span class="when">Nov 2020 – Jan 2026 · after EY</span>
+          <p>More involved — in store a few days a week, still running both locations through their managers, holding quality and efficiency, and owning the growth strategy, including B2B.</p>
+        </div>
+        <figure class="chart">
+          <svg viewBox="0 0 520 190" width="100%" role="img" aria-label="Combined revenue bar chart: $850 thousand at purchase in 2017, $1.4 million at the Covid-era peak, $1 million in the final year before the January 2026 sale.">
+            <line x1="40" y1="150" x2="500" y2="150" stroke="var(--line)" stroke-width="2"/>
+            <rect x="70" y="65" width="90" height="85" rx="6" fill="var(--accent)" opacity="0.55"/>
+            <rect x="215" y="10" width="90" height="140" rx="6" fill="var(--accent)"/>
+            <rect x="360" y="50" width="90" height="100" rx="6" fill="var(--accent)" opacity="0.8"/>
+            <text x="115" y="52" text-anchor="middle" font-family="Public Sans,sans-serif" font-weight="800" font-size="17" fill="var(--ink)">$850K</text>
+            <text x="260" y="30" text-anchor="middle" font-family="Public Sans,sans-serif" font-weight="800" font-size="15" fill="#ffffff">$1.4M</text>
+            <text x="405" y="37" text-anchor="middle" font-family="Public Sans,sans-serif" font-weight="800" font-size="17" fill="var(--ink)">$1.0M</text>
+            <text x="115" y="170" text-anchor="middle" font-family="Public Sans,sans-serif" font-size="12.5" fill="var(--muted)">At purchase · 2017</text>
+            <text x="260" y="170" text-anchor="middle" font-family="Public Sans,sans-serif" font-size="12.5" fill="var(--muted)">Peak · Covid era</text>
+            <text x="405" y="170" text-anchor="middle" font-family="Public Sans,sans-serif" font-size="12.5" fill="var(--muted)">Final year · to Jan 2026</text>
+          </svg>
+          <figcaption>Combined revenue of both stores. The stores grew through Covid while other businesses struggled. <strong>$1.0M was revenue in the final year — not a sale price; no sale price is stated here.</strong></figcaption>
+        </figure>
+        <div class="big-stats">
+          <div class="b"><span class="n">3 &rarr; 10</span><span class="t">B2B business accounts grown under my ownership</span></div>
+          <div class="b"><span class="n">2 stores</span><span class="t">run through store managers, never as a one-person operation</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>NJ Edible Arrangements Co-op — President</h3>
+        <p><strong>2019 – 2021.</strong> President of the New Jersey co-op — <strong>53 locations</strong> at the start of my term and the <strong>2nd-largest co-op in the US</strong>. My remit was co-op-wide marketing to lift overall sales across all 53 stores, not just my own two.</p>
+        <div class="big-stats">
+          <div class="b"><span class="n">4.5&times;</span><span class="t">return on marketing spend from the holiday campaigns I led</span></div>
+          <div class="b"><span class="n">53</span><span class="t">locations covered by the co-op marketing programme</span></div>
+        </div>
+        <p style="margin-top:16px">The goal was awareness across the NJ market, and we hit it — through mailers, radio, and free giveaways, timed to the holiday peaks when the return is highest.</p>
+        <p>That experience — making 53 independent owners&rsquo; marketing work as one programme — is the same job as making a tool work for a whole team instead of one person.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TIMELINE + HOW I WORK ================= -->
+  <section aria-labelledby="path-h">
+    <h2 class="sec" id="path-h">Path &amp; how I work</h2>
+    <div class="two-col">
+      <div class="panel">
+        <h3>Path</h3>
+        <ul class="timeline">
+          <li><span class="y">2007 – 2012</span><span><span class="r">PwC — Senior Associate</span><span class="d">Forensics and analytics, Jun 2007 – Nov 2012.</span></span></li>
+          <li><span class="y">2012 – 2020</span><span><span class="r">EY — Senior Director, Analytics &amp; Compliance</span><span class="d">Built the NJ Life Sciences Forensics team (20+ people); led 50+ resources on a COVID response; PBM, 340B, and litigation analytics.</span></span></li>
+          <li><span class="y">2017 – 2026</span><span><span class="r">Edible Arrangements — Owner, 2 locations</span><span class="d">Oversight alongside EY to 2020, then more involved through store managers. Stores sold Jan 2026.</span></span></li>
+          <li><span class="y">2019 – 2021</span><span><span class="r">NJ Co-op — President</span><span class="d">53 locations; holiday campaigns returned 4.5&times; marketing spend.</span></span></li>
+          <li><span class="y">2026 – now</span><span><span class="r">Independent Builder / AI Consultant</span><span class="d">CricMax engagement Mar–Jun 2026; P&amp;L, inventory, and analytics tools for small businesses.</span></span></li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>How I work</h3>
+        <ol class="steps">
+          <li><span class="r">Find the real bottleneck</span><span class="d">Sit with the process first. Most &ldquo;software problems&rdquo; are process problems wearing a costume.</span></li>
+          <li><span class="r">Build the solution that fits</span><span class="d">Applied AI, automation, and plain software, chosen for the problem, not the trend — and if a better process fixes it, that&rsquo;s the build.</span></li>
+          <li><span class="r">Check it against real use</span><span class="d">Put it in front of the people who do the work, see where it helps and where it doesn&rsquo;t, and adjust until it holds up in the day-to-day.</span></li>
+        </ol>
+        <ul class="services" aria-label="Consulting services">
+          <li>Process improvement</li>
+          <li>P&amp;L &amp; inventory tools</li>
+          <li>Analytics &amp; compliance</li>
+          <li>AI workflow &amp; prompt optimisation</li>
+          <li>UAT &amp; usability</li>
+        </ul>
+        <p style="margin-top:16px;font-size:.94rem">Stack I work in: SQL, Python, JavaScript, Supabase / Postgres, GitHub Pages &amp; Actions, Alteryx, Tableau, Spotfire — plus AI prompting and workflow optimisation across the tools above.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CTA ================= -->
+  <div class="cta">
+    <div>
+      <h2>Two ways to work with me</h2>
+      <p>I&rsquo;m preparing for Director of Analytics and Head of AI / Automation roles, and I take on select consulting engagements where a process is costing a small business real money. Either way, the next step is a conversation — and a live demo of anything on this page.</p>
+    </div>
+    <div class="box">
+      <span class="k">Roles</span>
+      <span class="v">Director of Analytics · Head of AI / Automation — remote preferred, hybrid OK</span>
+      <span class="k">Consulting</span>
+      <span class="v">$75–$100 / hr, or fixed scope per engagement</span>
+      <span class="k">Demos</span>
+      <span class="v">Live, on request</span>
+    </div>
+  </div>
+
+  <footer>
+    <span>Ankit Patel · East Windsor, NJ</span>
+    <span>Selected work only — business builds &amp; engagements.</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  // Filter chips
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('.filters button'));
+  var cards = Array.prototype.slice.call(document.querySelectorAll('#work-grid .card'));
+  buttons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      buttons.forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+      btn.setAttribute('aria-pressed','true');
+      var f = btn.getAttribute('data-filter');
+      cards.forEach(function(card){
+        var cats = (card.getAttribute('data-cat') || '').split(' ');
+        var show = (f === 'all') || cats.indexOf(f) !== -1;
+        card.classList.toggle('hidden-card', !show);
+      });
+    });
+  });
+
+  // Case-study expanders
+  var toggles = Array.prototype.slice.call(document.querySelectorAll('.case-btn'));
+  toggles.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var card = btn.closest('.card');
+      var panel = card.querySelector('.case');
+      var open = panel.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.textContent = open ? 'Close case study' : 'Case study';
+    });
+  });
+})();
+</script>
+</body>
+</html>
