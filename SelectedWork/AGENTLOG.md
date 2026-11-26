@@ -1,5 +1,10 @@
 # AGENTLOG — Selected Work (Portfolio)
 
+## 2026-11-26 — v1.0.3 — "Bought" → "Acquired" + store towns added
+- **Request:** Ankit: change "Bought" to "Acquired" on the portfolio page (same wording fix as the resumes + LinkedIn); stores are in Milltown and Somerset, NJ.
+- **Change:** Edible entry: "Bought the first store in Sep 2017 and the second in Mar 2018" → "Acquired the first store…"; panel heading and timeline row "Owner, 2 locations" → "Owner, Milltown & Somerset, NJ". No other facts or numbers touched.
+- **Verification:** Live Pages URL fetched after push — "Bought" no longer present.
+
 ## 2026-11-25 — v1.0.2 — Consulting rate removed from the page
 - **Request:** Ankit: the resumes now point to this page instead of the old Muse snapshot, and the rate shown here ($75–$100 / hr) was not updated — remove it.
 - **Change:** Removed the "Consulting rate" row from the sidebar facts and replaced the Consulting value in the closing box with "Hourly or fixed scope, priced after a short diagnostic" — same wording as the freelance resume. No other numbers touched ($79 Pro license, $4M+ / $1M+ results, revenue chart unchanged).
