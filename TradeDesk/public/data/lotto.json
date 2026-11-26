@@ -1,9 +1,9 @@
 {
- "generated_at": "2026-11-25T15:27:00.372Z",
+ "generated_at": "2026-11-26T00:52:19.856Z",
  "as_of": "2026-11-25",
  "is_friday": false,
- "universe_scanned": 99,
- "candidates_considered": 98,
+ "universe_scanned": 98,
+ "candidates_considered": 97,
  "validation_summary": {
   "S1_IGNITION": {
    "validated": true,
@@ -33,402 +33,247 @@
  "candidates": [
   {
    "ticker": "MU",
-   "spot": 565.75,
+   "spot": 601.25,
    "direction": "PUT",
    "setup": "IGNITION-WATCH",
    "setup_validated": true,
-   "score": 61,
-   "trigger_level": 557.34,
-   "entry_trigger": "Buy put on break below $557.34 with expanding volume",
-   "invalidation": "reclaims above $560.13",
+   "score": 72,
+   "trigger_level": 598.24,
+   "entry_trigger": "Buy put on break below $598.24 with expanding volume",
+   "invalidation": "reclaims above $601.23",
    "targets": [
-    560,
-    565
+    600,
+    548.13
    ],
-   "expected_move_pct": 6.38,
+   "expected_move_pct": 5.45,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.29,
+    "vol_oi_ratio": 1.29,
     "hot_strikes": [
+     {
+      "strike": 540,
+      "side": "call",
+      "volume": 149,
+      "oi": 29
+     },
+     {
+      "strike": 545,
+      "side": "call",
+      "volume": 161,
+      "oi": 5
+     },
      {
       "strike": 550,
       "side": "call",
-      "volume": 217,
+      "volume": 1385,
       "oi": 105
      },
      {
-      "strike": 560,
+      "strike": 552.5,
       "side": "call",
-      "volume": 905,
-      "oi": 60
+      "volume": 512,
+      "oi": 13
      },
      {
-      "strike": 562.5,
+      "strike": 555,
       "side": "call",
-      "volume": 284,
-      "oi": 2
-     },
-     {
-      "strike": 567.5,
-      "side": "call",
-      "volume": 327,
-      "oi": 2
-     },
-     {
-      "strike": 570,
-      "side": "call",
-      "volume": 1123,
-      "oi": 93
+      "volume": 1175,
+      "oi": 22
      }
     ],
-    "call_vol": 34090,
-    "put_vol": 29893
+    "call_vol": 163158,
+    "put_vol": 126886
    },
-   "iv_pct": 106.8,
-   "rv20_pct": 133.3,
+   "iv_pct": 90.5,
+   "rv20_pct": 130.4,
    "gamma_regime": "SHORT/firm",
-   "gamma_0dte": "0DTE dealer gamma SHORT $34M/1%: no clean flip nearby — moves can extend past the flip | put wall $550",
+   "gamma_0dte": "0DTE dealer gamma SHORT $41M/1%: no clean flip nearby — moves can extend past the flip | put wall $600",
    "suggested_ticket": {
-    "strike": 547.5,
-    "premium": 9.52,
-    "delta": -0.3,
-    "breakeven": 537.98,
-    "breakeven_pct": 4.91,
-    "target": 529.65,
+    "strike": 585,
+    "premium": 9.95,
+    "delta": -0.33,
+    "breakeven": 575.05,
+    "breakeven_pct": 4.36,
+    "target": 568.5,
     "target_source": "expected-move edge",
-    "value_at_target": 17.85,
-    "multiple_at_target": 1.9,
-    "move_for_2x_pct": 6.59
+    "value_at_target": 16.5,
+    "multiple_at_target": 1.7,
+    "move_for_2x_pct": 6.01
    },
    "friday_pin": null,
    "notes": [
+    "unusual activity: day vol 1.3× open interest",
     "8 strikes trading >2× their open interest",
-    "0DTE expected move ±6.38%",
-    "gap -10.2%",
-    "breaking 20-day low",
+    "0DTE expected move ±5.45%",
+    "gap -4.5%",
+    "dealer gamma SHORT — moves can extend (favorable for long premium)"
+   ]
+  },
+  {
+   "ticker": "QQQ",
+   "spot": 633.93,
+   "direction": "BOTH",
+   "setup": "UNUSUAL-FLOW",
+   "setup_validated": null,
+   "score": 66,
+   "trigger_level": null,
+   "entry_trigger": "Break of opening range with volume decides direction",
+   "invalidation": "no follow-through within 30 min of trigger",
+   "targets": [
+    640,
+    650,
+    607.76,
+    630
+   ],
+   "expected_move_pct": 2.1,
+   "expiry_0dte": null,
+   "expiry_1dte": "2026-11-26",
+   "unusual": {
+    "vol_oi_ratio": 2.32,
+    "hot_strikes": [
+     {
+      "strike": 590,
+      "side": "call",
+      "volume": 245,
+      "oi": 110
+     },
+     {
+      "strike": 595,
+      "side": "call",
+      "volume": 449,
+      "oi": 147
+     },
+     {
+      "strike": 600,
+      "side": "call",
+      "volume": 1491,
+      "oi": 511
+     },
+     {
+      "strike": 604,
+      "side": "call",
+      "volume": 515,
+      "oi": 19
+     },
+     {
+      "strike": 605,
+      "side": "call",
+      "volume": 1168,
+      "oi": 120
+     }
+    ],
+    "call_vol": 601307,
+    "put_vol": 686656
+   },
+   "iv_pct": 35.8,
+   "rv20_pct": 46.6,
+   "gamma_regime": "SHORT/firm",
+   "gamma_0dte": "0DTE dealer gamma SHORT $303M/1%: no clean flip nearby — moves can extend past the flip | call wall $650 | put wall $640",
+   "suggested_ticket": null,
+   "friday_pin": null,
+   "notes": [
+    "unusual activity: day vol 2.3× open interest",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±2.10%",
     "dealer gamma SHORT — moves can extend (favorable for long premium)"
    ]
   },
   {
    "ticker": "SNDK",
-   "spot": 68.74,
+   "spot": 73.61,
    "direction": "PUT",
    "setup": "IGNITION-WATCH",
    "setup_validated": true,
    "score": 61,
-   "trigger_level": 68.7,
-   "entry_trigger": "Buy put on break below $68.70 with expanding volume",
-   "invalidation": "reclaims above $69.04",
+   "trigger_level": 73.24,
+   "entry_trigger": "Buy put on break below $73.24 with expanding volume",
+   "invalidation": "reclaims above $73.61",
    "targets": [
-    68
+    67.02,
+    73
    ],
-   "expected_move_pct": 9.31,
+   "expected_move_pct": 6.55,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.17,
+    "vol_oi_ratio": 0.48,
     "hot_strikes": [
+     {
+      "strike": 55,
+      "side": "call",
+      "volume": 125,
+      "oi": 2
+     },
+     {
+      "strike": 63.13,
+      "side": "call",
+      "volume": 130,
+      "oi": 11
+     },
      {
       "strike": 65,
       "side": "call",
-      "volume": 197,
+      "volume": 2091,
       "oi": 16
      },
      {
-      "strike": 67.5,
+      "strike": 65.63,
       "side": "call",
-      "volume": 167,
-      "oi": 26
+      "volume": 375,
+      "oi": 3
      },
      {
-      "strike": 69.38,
+      "strike": 66.25,
       "side": "call",
-      "volume": 161,
-      "oi": 20
-     },
-     {
-      "strike": 70,
-      "side": "call",
-      "volume": 2502,
-      "oi": 181
-     },
-     {
-      "strike": 70.63,
-      "side": "call",
-      "volume": 1127,
+      "volume": 109,
       "oi": 17
      }
     ],
-    "call_vol": 45237,
-    "put_vol": 39579
+    "call_vol": 145132,
+    "put_vol": 88230
    },
-   "iv_pct": 169.3,
-   "rv20_pct": 163.8,
+   "iv_pct": 110.1,
+   "rv20_pct": 150.3,
    "gamma_regime": "SHORT/firm",
-   "gamma_0dte": "0DTE dealer gamma SHORT $7M/1%: no clean flip nearby — moves can extend past the flip | put wall $70",
+   "gamma_0dte": "0DTE dealer gamma SHORT $12M/1%: no clean flip nearby — moves can extend past the flip | put wall $75",
    "suggested_ticket": {
-    "strike": 65.63,
-    "premium": 1.23,
-    "delta": -0.26,
-    "breakeven": 64.41,
-    "breakeven_pct": 6.31,
-    "target": 62.34,
-    "target_source": "expected-move edge",
-    "value_at_target": 3.29,
-    "multiple_at_target": 2.7,
-    "move_for_2x_pct": 8.09
-   },
-   "friday_pin": null,
-   "notes": [
-    "8 strikes trading >2× their open interest",
-    "0DTE expected move ±9.31%",
-    "gap -27.2%",
-    "breaking 20-day low",
-    "dealer gamma SHORT — moves can extend (favorable for long premium)"
-   ]
-  },
-  {
-   "ticker": "GS",
-   "spot": 774.79,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 56,
-   "trigger_level": 772.74,
-   "entry_trigger": "Buy put on break below $772.74 with expanding volume",
-   "invalidation": "reclaims above $776.60",
-   "targets": [
-    772.74
-   ],
-   "expected_move_pct": 3.17,
-   "expiry_0dte": null,
-   "expiry_1dte": "2026-11-26",
-   "unusual": {
-    "vol_oi_ratio": 0.24,
-    "hot_strikes": [
-     {
-      "strike": 780,
-      "side": "call",
-      "volume": 119,
-      "oi": 26
-     },
-     {
-      "strike": 975,
-      "side": "put",
-      "volume": 184,
-      "oi": 0
-     },
-     {
-      "strike": 980,
-      "side": "put",
-      "volume": 114,
-      "oi": 0
-     },
-     {
-      "strike": 1145,
-      "side": "put",
-      "volume": 102,
-      "oi": 0
-     }
-    ],
-    "call_vol": 1726,
-    "put_vol": 2511
-   },
-   "iv_pct": 59.5,
-   "rv20_pct": 48.2,
-   "gamma_regime": "SHORT/firm",
-   "gamma_0dte": "0DTE dealer gamma SHORT $20M/1%: no clean flip nearby — moves can extend past the flip | call wall $795 | put wall $780",
-   "suggested_ticket": {
-    "strike": 765,
-    "premium": 5.35,
-    "delta": -0.32,
-    "breakeven": 759.65,
-    "breakeven_pct": 1.95,
-    "target": 750.21,
-    "target_source": "expected-move edge",
-    "value_at_target": 14.79,
-    "multiple_at_target": 2.8,
-    "move_for_2x_pct": 2.64
-   },
-   "friday_pin": null,
-   "notes": [
-    "4 strikes trading >2× their open interest",
-    "0DTE expected move ±3.17%",
-    "gap -3.9%",
-    "breaking 20-day low",
-    "dealer gamma SHORT — moves can extend (favorable for long premium)"
-   ]
-  },
-  {
-   "ticker": "NVDA",
-   "spot": 144.54,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 53,
-   "trigger_level": 141.17,
-   "entry_trigger": "Buy put on break below $141.17 with expanding volume",
-   "invalidation": "reclaims above $141.88",
-   "targets": [
-    124.5,
-    140
-   ],
-   "expected_move_pct": 5.38,
-   "expiry_0dte": null,
-   "expiry_1dte": "2026-11-26",
-   "unusual": {
-    "vol_oi_ratio": 0.25,
-    "hot_strikes": [
-     {
-      "strike": 113,
-      "side": "put",
-      "volume": 128,
-      "oi": 45
-     },
-     {
-      "strike": 114,
-      "side": "put",
-      "volume": 390,
-      "oi": 66
-     },
-     {
-      "strike": 139,
-      "side": "put",
-      "volume": 2649,
-      "oi": 1291
-     },
-     {
-      "strike": 141,
-      "side": "put",
-      "volume": 4721,
-      "oi": 1100
-     },
-     {
-      "strike": 192.5,
-      "side": "put",
-      "volume": 110,
-      "oi": 0
-     }
-    ],
-    "call_vol": 149296,
-    "put_vol": 110162
-   },
-   "iv_pct": 74.3,
-   "rv20_pct": 125.2,
-   "gamma_regime": "SHORT/contested",
-   "gamma_0dte": "0DTE dealer gamma LONG +$6M/1%: no clean flip nearby — expect pinning near walls | call wall $146 | put wall $145",
-   "suggested_ticket": {
-    "strike": 141,
-    "premium": 2.45,
+    "strike": 71.25,
+    "premium": 1.42,
     "delta": -0.33,
-    "breakeven": 138.56,
-    "breakeven_pct": 4.14,
-    "target": 136.76,
+    "breakeven": 69.83,
+    "breakeven_pct": 5.14,
+    "target": 68.78,
     "target_source": "expected-move edge",
-    "value_at_target": 4.24,
+    "value_at_target": 2.47,
     "multiple_at_target": 1.7,
-    "move_for_2x_pct": 5.83
+    "move_for_2x_pct": 7.08
    },
    "friday_pin": null,
    "notes": [
-    "6 strikes trading >2× their open interest",
-    "0DTE expected move ±5.38%",
-    "gap -7.0%",
-    "dealer gamma SHORT — moves can extend (favorable for long premium)"
-   ]
-  },
-  {
-   "ticker": "AVGO",
-   "spot": 283.52,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 51,
-   "trigger_level": 278,
-   "entry_trigger": "Buy put on break below $278.00 with expanding volume",
-   "invalidation": "reclaims above $279.39",
-   "targets": [],
-   "expected_move_pct": 5.21,
-   "expiry_0dte": null,
-   "expiry_1dte": "2026-11-26",
-   "unusual": {
-    "vol_oi_ratio": 0.13,
-    "hot_strikes": [
-     {
-      "strike": 282.5,
-      "side": "call",
-      "volume": 145,
-      "oi": 32
-     },
-     {
-      "strike": 285,
-      "side": "call",
-      "volume": 369,
-      "oi": 116
-     },
-     {
-      "strike": 292.5,
-      "side": "call",
-      "volume": 159,
-      "oi": 74
-     },
-     {
-      "strike": 355,
-      "side": "put",
-      "volume": 890,
-      "oi": 5
-     },
-     {
-      "strike": 370,
-      "side": "put",
-      "volume": 227,
-      "oi": 2
-     }
-    ],
-    "call_vol": 7167,
-    "put_vol": 5565
-   },
-   "iv_pct": 88.5,
-   "rv20_pct": 84.9,
-   "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $11M/1%: no clean flip nearby — moves can extend past the flip | put wall $290",
-   "suggested_ticket": {
-    "strike": 275,
-    "premium": 3.05,
-    "delta": -0.26,
-    "breakeven": 271.94,
-    "breakeven_pct": 4.08,
-    "target": 268.75,
-    "target_source": "expected-move edge",
-    "value_at_target": 6.25,
-    "multiple_at_target": 2,
-    "move_for_2x_pct": 5.16
-   },
-   "friday_pin": null,
-   "notes": [
-    "5 strikes trading >2× their open interest",
-    "0DTE expected move ±5.21%",
-    "gap -5.8%",
+    "call volume dominates",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±6.55%",
+    "gap -22.0%",
     "breaking 20-day low"
    ]
   },
   {
    "ticker": "AMD",
-   "spot": 375.38,
+   "spot": 406.03,
    "direction": "PUT",
    "setup": "IGNITION-WATCH",
    "setup_validated": true,
-   "score": 51,
-   "trigger_level": 371.5,
-   "entry_trigger": "Buy put on break below $371.50 with expanding volume",
-   "invalidation": "reclaims above $373.36",
+   "score": 60,
+   "trigger_level": 404,
+   "entry_trigger": "Buy put on break below $404.00 with expanding volume",
+   "invalidation": "reclaims above $406.02",
    "targets": [],
-   "expected_move_pct": 7.18,
+   "expected_move_pct": 5.19,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.34,
+    "vol_oi_ratio": 1.13,
     "hot_strikes": [
      {
       "strike": 80,
@@ -437,1312 +282,1565 @@
       "oi": 17
      },
      {
-      "strike": 372.5,
+      "strike": 362.5,
       "side": "call",
-      "volume": 178,
-      "oi": 2
-     },
-     {
-      "strike": 375,
-      "side": "call",
-      "volume": 535,
-      "oi": 69
-     },
-     {
-      "strike": 377.5,
-      "side": "call",
-      "volume": 386,
-      "oi": 46
-     },
-     {
-      "strike": 380,
-      "side": "call",
-      "volume": 635,
-      "oi": 96
-     }
-    ],
-    "call_vol": 30268,
-    "put_vol": 25579
-   },
-   "iv_pct": 123.9,
-   "rv20_pct": 135.6,
-   "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $23M/1%: no clean flip nearby — moves can extend past the flip | put wall $380",
-   "suggested_ticket": {
-    "strike": 362.5,
-    "premium": 5.75,
-    "delta": -0.28,
-    "breakeven": 356.75,
-    "breakeven_pct": 4.96,
-    "target": 348.43,
-    "target_source": "expected-move edge",
-    "value_at_target": 14.07,
-    "multiple_at_target": 2.4,
-    "move_for_2x_pct": 6.49
-   },
-   "friday_pin": null,
-   "notes": [
-    "8 strikes trading >2× their open interest",
-    "0DTE expected move ±7.18%",
-    "gap -9.2%",
-    "breaking 20-day low"
-   ]
-  },
-  {
-   "ticker": "COIN",
-   "spot": 96.1,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 51,
-   "trigger_level": 94.88,
-   "entry_trigger": "Buy put on break below $94.88 with expanding volume",
-   "invalidation": "reclaims above $95.35",
-   "targets": [],
-   "expected_move_pct": 5.78,
-   "expiry_0dte": null,
-   "expiry_1dte": "2026-11-26",
-   "unusual": {
-    "vol_oi_ratio": 0.27,
-    "hot_strikes": [
-     {
-      "strike": 97,
-      "side": "call",
-      "volume": 406,
-      "oi": 11
-     },
-     {
-      "strike": 98,
-      "side": "call",
-      "volume": 887,
-      "oi": 2
-     },
-     {
-      "strike": 99,
-      "side": "call",
-      "volume": 164,
+      "volume": 134,
       "oi": 29
      },
      {
-      "strike": 100,
+      "strike": 365,
       "side": "call",
-      "volume": 956,
-      "oi": 268
+      "volume": 123,
+      "oi": 19
      },
      {
-      "strike": 102,
+      "strike": 370,
       "side": "call",
-      "volume": 651,
-      "oi": 139
-     }
-    ],
-    "call_vol": 23270,
-    "put_vol": 4775
-   },
-   "iv_pct": 106.5,
-   "rv20_pct": 74.2,
-   "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $3M/1%: no clean flip nearby — moves can extend past the flip | put wall $95",
-   "suggested_ticket": {
-    "strike": 93,
-    "premium": 0.92,
-    "delta": -0.24,
-    "breakeven": 92.08,
-    "breakeven_pct": 4.18,
-    "target": 90.55,
-    "target_source": "expected-move edge",
-    "value_at_target": 2.45,
-    "multiple_at_target": 2.7,
-    "move_for_2x_pct": 5.14
-   },
-   "friday_pin": null,
-   "notes": [
-    "call volume dominates",
-    "8 strikes trading >2× their open interest",
-    "0DTE expected move ±5.78%",
-    "gap -6.1%",
-    "breaking 20-day low"
-   ]
-  },
-  {
-   "ticker": "MSTR",
-   "spot": 71.05,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 51,
-   "trigger_level": 70.37,
-   "entry_trigger": "Buy put on break below $70.37 with expanding volume",
-   "invalidation": "reclaims above $70.72",
-   "targets": [],
-   "expected_move_pct": 7.88,
-   "expiry_0dte": null,
-   "expiry_1dte": "2026-11-26",
-   "unusual": {
-    "vol_oi_ratio": 0.18,
-    "hot_strikes": [
-     {
-      "strike": 69,
-      "side": "call",
-      "volume": 136,
-      "oi": 16
-     },
-     {
-      "strike": 72,
-      "side": "call",
-      "volume": 1082,
-      "oi": 193
-     },
-     {
-      "strike": 73,
-      "side": "call",
-      "volume": 384,
-      "oi": 189
-     },
-     {
-      "strike": 74,
-      "side": "call",
-      "volume": 477,
-      "oi": 80
-     },
-     {
-      "strike": 75,
-      "side": "call",
-      "volume": 1205,
-      "oi": 345
-     }
-    ],
-    "call_vol": 31308,
-    "put_vol": 41744
-   },
-   "iv_pct": 139.3,
-   "rv20_pct": 80.5,
-   "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $4M/1%: no clean flip nearby — moves can extend past the flip | put wall $70",
-   "suggested_ticket": {
-    "strike": 68,
-    "premium": 1.1,
-    "delta": -0.26,
-    "breakeven": 66.9,
-    "breakeven_pct": 5.84,
-    "target": 65.45,
-    "target_source": "expected-move edge",
-    "value_at_target": 2.55,
-    "multiple_at_target": 2.3,
-    "move_for_2x_pct": 7.39
-   },
-   "friday_pin": null,
-   "notes": [
-    "8 strikes trading >2× their open interest",
-    "0DTE expected move ±7.88%",
-    "gap -8.4%",
-    "breaking 20-day low"
-   ]
-  },
-  {
-   "ticker": "INTC",
-   "spot": 50.15,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 51,
-   "trigger_level": 49.88,
-   "entry_trigger": "Buy put on break below $49.88 with expanding volume",
-   "invalidation": "reclaims above $50.13",
-   "targets": [],
-   "expected_move_pct": 6.62,
-   "expiry_0dte": null,
-   "expiry_1dte": "2026-11-26",
-   "unusual": {
-    "vol_oi_ratio": 0.16,
-    "hot_strikes": [
-     {
-      "strike": 48,
-      "side": "call",
-      "volume": 2087,
-      "oi": 38
-     },
-     {
-      "strike": 49,
-      "side": "call",
-      "volume": 235,
+      "volume": 610,
       "oi": 52
      },
      {
-      "strike": 50,
+      "strike": 372.5,
       "side": "call",
-      "volume": 5746,
-      "oi": 406
-     },
-     {
-      "strike": 51,
-      "side": "call",
-      "volume": 2047,
-      "oi": 262
-     },
-     {
-      "strike": 52,
-      "side": "call",
-      "volume": 1649,
-      "oi": 349
+      "volume": 678,
+      "oi": 2
      }
     ],
-    "call_vol": 30324,
-    "put_vol": 21098
+    "call_vol": 102098,
+    "put_vol": 86831
    },
-   "iv_pct": 108.2,
-   "rv20_pct": 151.3,
+   "iv_pct": 84.6,
+   "rv20_pct": 132.8,
    "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $3M/1%: no clean flip nearby — moves can extend past the flip | put wall $50",
+   "gamma_0dte": "0DTE dealer gamma SHORT $21M/1%: no clean flip nearby — moves can extend past the flip | call wall $412.5 | put wall $400",
    "suggested_ticket": {
-    "strike": 48,
-    "premium": 0.58,
-    "delta": -0.23,
-    "breakeven": 47.42,
-    "breakeven_pct": 5.44,
-    "target": 46.83,
+    "strike": 395,
+    "premium": 6.38,
+    "delta": -0.32,
+    "breakeven": 388.63,
+    "breakeven_pct": 4.29,
+    "target": 384.95,
     "target_source": "expected-move edge",
-    "value_at_target": 1.17,
-    "multiple_at_target": 2,
-    "move_for_2x_pct": 6.6
+    "value_at_target": 10.05,
+    "multiple_at_target": 1.6,
+    "move_for_2x_pct": 5.86
    },
    "friday_pin": null,
    "notes": [
-    "6 strikes trading >2× their open interest",
-    "0DTE expected move ±6.62%",
-    "gap -8.5%",
-    "breaking 20-day low"
+    "unusual activity: day vol 1.1× open interest",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±5.19%",
+    "gap -1.8%"
    ]
   },
   {
-   "ticker": "LRCX",
-   "spot": 175.78,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 51,
-   "trigger_level": 175.28,
-   "entry_trigger": "Buy put on break below $175.28 with expanding volume",
-   "invalidation": "reclaims above $176.16",
+   "ticker": "SPY",
+   "spot": 716.7,
+   "direction": "BOTH",
+   "setup": "UNUSUAL-FLOW",
+   "setup_validated": null,
+   "score": 54,
+   "trigger_level": null,
+   "entry_trigger": "Break of opening range with volume decides direction",
+   "invalidation": "no follow-through within 30 min of trigger",
    "targets": [],
-   "expected_move_pct": 6.64,
+   "expected_move_pct": 1.37,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.2,
+    "vol_oi_ratio": 2.89,
     "hot_strikes": [
      {
-      "strike": 180,
+      "strike": 550,
       "side": "call",
-      "volume": 293,
-      "oi": 34
+      "volume": 1157,
+      "oi": 569
      },
      {
-      "strike": 182.5,
+      "strike": 575,
       "side": "call",
-      "volume": 199,
-      "oi": 45
+      "volume": 158,
+      "oi": 1
      },
      {
-      "strike": 185,
+      "strike": 678,
       "side": "call",
-      "volume": 323,
-      "oi": 85
+      "volume": 145,
+      "oi": 20
+     },
+     {
+      "strike": 682,
+      "side": "call",
+      "volume": 131,
+      "oi": 21
+     },
+     {
+      "strike": 696,
+      "side": "call",
+      "volume": 2443,
+      "oi": 384
      }
     ],
-    "call_vol": 7192,
-    "put_vol": 806
+    "call_vol": 1197496,
+    "put_vol": 1262278
    },
-   "iv_pct": 110.8,
-   "rv20_pct": 115.8,
+   "iv_pct": 24.2,
+   "rv20_pct": 30.9,
    "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $2M/1%: no clean flip nearby — moves can extend past the flip | put wall $180",
-   "suggested_ticket": {
-    "strike": 170,
-    "premium": 2.58,
-    "delta": -0.28,
-    "breakeven": 167.43,
-    "breakeven_pct": 4.75,
-    "target": 164.1,
-    "target_source": "expected-move edge",
-    "value_at_target": 5.9,
-    "multiple_at_target": 2.3,
-    "move_for_2x_pct": 6.22
-   },
+   "gamma_0dte": "0DTE dealer gamma SHORT $255M/1%: no clean flip nearby — moves can extend past the flip | call wall $735 | put wall $700",
+   "suggested_ticket": null,
    "friday_pin": null,
    "notes": [
-    "call volume dominates",
-    "3 strikes trading >2× their open interest",
-    "0DTE expected move ±6.64%",
-    "gap -10.4%",
-    "breaking 20-day low"
+    "unusual activity: day vol 2.9× open interest",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±1.37%"
    ]
   },
   {
-   "ticker": "ARM",
-   "spot": 146.78,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 51,
-   "trigger_level": 143.59,
-   "entry_trigger": "Buy put on break below $143.59 with expanding volume",
-   "invalidation": "reclaims above $144.31",
-   "targets": [],
-   "expected_move_pct": 6.9,
-   "expiry_0dte": null,
-   "expiry_1dte": "2026-11-26",
-   "unusual": {
-    "vol_oi_ratio": 0.16,
-    "hot_strikes": [
-     {
-      "strike": 143,
-      "side": "call",
-      "volume": 102,
-      "oi": 7
-     },
-     {
-      "strike": 135,
-      "side": "put",
-      "volume": 510,
-      "oi": 249
-     },
-     {
-      "strike": 148,
-      "side": "put",
-      "volume": 544,
-      "oi": 56
-     }
-    ],
-    "call_vol": 2268,
-    "put_vol": 3560
-   },
-   "iv_pct": 117.9,
-   "rv20_pct": 123.7,
-   "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $4M/1%: no clean flip nearby — moves can extend past the flip | put wall $145",
-   "suggested_ticket": {
-    "strike": 142,
-    "premium": 2.46,
-    "delta": -0.3,
-    "breakeven": 139.54,
-    "breakeven_pct": 4.93,
-    "target": 136.65,
-    "target_source": "expected-move edge",
-    "value_at_target": 5.35,
-    "multiple_at_target": 2.2,
-    "move_for_2x_pct": 6.61
-   },
-   "friday_pin": null,
-   "notes": [
-    "put volume dominates",
-    "3 strikes trading >2× their open interest",
-    "0DTE expected move ±6.90%",
-    "gap -9.1%",
-    "breaking 20-day low"
-   ]
-  },
-  {
-   "ticker": "GOOG",
-   "spot": 263.63,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 48,
-   "trigger_level": 260.69,
-   "entry_trigger": "Buy put on break below $260.69 with expanding volume",
-   "invalidation": "reclaims above $262.00",
+   "ticker": "^SPX",
+   "spot": 7182.78,
+   "direction": "BOTH",
+   "setup": "UNUSUAL-FLOW",
+   "setup_validated": null,
+   "score": 54,
+   "trigger_level": null,
+   "entry_trigger": "Break of opening range with volume decides direction",
+   "invalidation": "no follow-through within 30 min of trigger",
    "targets": [
-    260.69,
-    250
+    8125,
+    7612.07,
+    6882.66,
+    7100
    ],
-   "expected_move_pct": 3.18,
+   "expected_move_pct": 1.38,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.23,
+    "vol_oi_ratio": 545455,
     "hot_strikes": [
      {
-      "strike": 262.5,
+      "strike": 6870,
       "side": "call",
-      "volume": 568,
-      "oi": 44
+      "volume": 599,
+      "oi": 0
      },
      {
-      "strike": 265,
+      "strike": 6875,
       "side": "call",
-      "volume": 2393,
-      "oi": 308
+      "volume": 519,
+      "oi": 0
      },
      {
-      "strike": 267.5,
+      "strike": 6880,
       "side": "call",
-      "volume": 1832,
-      "oi": 152
+      "volume": 290,
+      "oi": 0
      },
      {
-      "strike": 270,
+      "strike": 6900,
       "side": "call",
-      "volume": 4328,
-      "oi": 552
+      "volume": 211,
+      "oi": 0
      },
      {
-      "strike": 272.5,
+      "strike": 6905,
       "side": "call",
-      "volume": 3247,
-      "oi": 358
+      "volume": 124,
+      "oi": 0
      }
     ],
-    "call_vol": 20074,
-    "put_vol": 5064
+    "call_vol": 244795,
+    "put_vol": 300660
    },
-   "iv_pct": 55.8,
-   "rv20_pct": 58,
-   "gamma_regime": "SHORT/firm",
-   "gamma_0dte": "0DTE dealer gamma SHORT $18M/1%: no clean flip nearby — moves can extend past the flip | call wall $270 | put wall $260",
+   "iv_pct": null,
+   "rv20_pct": 30.9,
+   "gamma_regime": "NEUTRAL/low",
+   "gamma_0dte": "0DTE dealer gamma LONG +$0M/1%: no clean flip nearby — expect pinning near walls",
+   "suggested_ticket": null,
+   "friday_pin": null,
+   "notes": [
+    "unusual activity: day vol 545455.0× open interest",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±1.38%"
+   ]
+  },
+  {
+   "ticker": "TSLA",
+   "spot": 380.14,
+   "direction": "BOTH",
+   "setup": "UNUSUAL-FLOW",
+   "setup_validated": null,
+   "score": 52,
+   "trigger_level": null,
+   "entry_trigger": "Break of opening range with volume decides direction",
+   "invalidation": "no follow-through within 30 min of trigger",
+   "targets": [],
+   "expected_move_pct": 2.93,
+   "expiry_0dte": null,
+   "expiry_1dte": "2026-11-26",
+   "unusual": {
+    "vol_oi_ratio": 1,
+    "hot_strikes": [
+     {
+      "strike": 352.5,
+      "side": "call",
+      "volume": 1297,
+      "oi": 384
+     },
+     {
+      "strike": 360,
+      "side": "call",
+      "volume": 4419,
+      "oi": 743
+     },
+     {
+      "strike": 362.5,
+      "side": "call",
+      "volume": 5502,
+      "oi": 520
+     },
+     {
+      "strike": 365,
+      "side": "call",
+      "volume": 6879,
+      "oi": 2507
+     },
+     {
+      "strike": 370,
+      "side": "call",
+      "volume": 10717,
+      "oi": 2268
+     }
+    ],
+    "call_vol": 186890,
+    "put_vol": 183125
+   },
+   "iv_pct": 50.2,
+   "rv20_pct": 71,
+   "gamma_regime": null,
+   "gamma_0dte": "0DTE dealer gamma LONG +$124M/1%: flip $367.5 (-3.33%) — expect pinning near walls | call wall $390 | put wall $370",
+   "suggested_ticket": null,
+   "friday_pin": null,
+   "notes": [
+    "unusual activity: day vol 1.0× open interest",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±2.93%",
+    "gap -1.2%"
+   ]
+  },
+  {
+   "ticker": "NVDA",
+   "spot": 149.3,
+   "direction": "PUT",
+   "setup": "IGNITION-WATCH",
+   "setup_validated": true,
+   "score": 50,
+   "trigger_level": 148.55,
+   "entry_trigger": "Buy put on break below $148.55 with expanding volume",
+   "invalidation": "reclaims above $149.30",
+   "targets": [
+    145,
+    148.8
+   ],
+   "expected_move_pct": 4.3,
+   "expiry_0dte": null,
+   "expiry_1dte": "2026-11-26",
+   "unusual": {
+    "vol_oi_ratio": 1.11,
+    "hot_strikes": [
+     {
+      "strike": 117,
+      "side": "call",
+      "volume": 170,
+      "oi": 3
+     },
+     {
+      "strike": 126,
+      "side": "call",
+      "volume": 411,
+      "oi": 156
+     },
+     {
+      "strike": 132,
+      "side": "call",
+      "volume": 5320,
+      "oi": 1184
+     },
+     {
+      "strike": 133,
+      "side": "call",
+      "volume": 1992,
+      "oi": 777
+     },
+     {
+      "strike": 134,
+      "side": "call",
+      "volume": 8071,
+      "oi": 442
+     }
+    ],
+    "call_vol": 729084,
+    "put_vol": 422413
+   },
+   "iv_pct": 73.7,
+   "rv20_pct": 124,
+   "gamma_regime": "LONG/firm",
+   "gamma_0dte": "0DTE dealer gamma LONG +$38M/1%: flip $150 (+0.47%) — expect pinning near walls | call wall $146 | put wall $145",
    "suggested_ticket": {
-    "strike": 260,
-    "premium": 1.7,
-    "delta": -0.29,
-    "breakeven": 258.3,
-    "breakeven_pct": 2.02,
-    "target": 255.24,
-    "target_source": "expected-move edge",
-    "value_at_target": 4.76,
-    "multiple_at_target": 2.8,
-    "move_for_2x_pct": 2.67
+    "strike": 146,
+    "premium": 1.83,
+    "delta": -0.32,
+    "breakeven": 144.16,
+    "breakeven_pct": 3.44,
+    "target": 145,
+    "target_source": "gamma wall",
+    "value_at_target": 1,
+    "multiple_at_target": 0.5,
+    "move_for_2x_pct": 4.67
    },
    "friday_pin": null,
    "notes": [
     "call volume dominates",
-    "6 strikes trading >2× their open interest",
-    "0DTE expected move ±3.18%",
-    "gap -4.7%",
-    "dealer gamma SHORT — moves can extend (favorable for long premium)"
+    "unusual activity: day vol 1.1× open interest",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±4.30%",
+    "gap -3.9%"
    ]
   },
   {
    "ticker": "AMZN",
-   "spot": 238.94,
+   "spot": 244.43,
    "direction": "PUT",
    "setup": "IGNITION-WATCH",
    "setup_validated": true,
-   "score": 47,
-   "trigger_level": 237.61,
-   "entry_trigger": "Buy put on break below $237.61 with expanding volume",
-   "invalidation": "reclaims above $238.80",
+   "score": 45,
+   "trigger_level": 243.21,
+   "entry_trigger": "Buy put on break below $243.21 with expanding volume",
+   "invalidation": "reclaims above $244.42",
    "targets": [
-    235,
-    229.36
+    229.36,
+    240
    ],
-   "expected_move_pct": 3,
+   "expected_move_pct": 2.28,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.21,
+    "vol_oi_ratio": 0.97,
     "hot_strikes": [
      {
-      "strike": 222.5,
+      "strike": 210,
       "side": "call",
-      "volume": 142,
-      "oi": 13
+      "volume": 224,
+      "oi": 58
      },
      {
-      "strike": 237.5,
+      "strike": 215,
       "side": "call",
-      "volume": 472,
-      "oi": 40
+      "volume": 134,
+      "oi": 31
      },
      {
-      "strike": 237.5,
-      "side": "put",
-      "volume": 1351,
-      "oi": 589
+      "strike": 227.5,
+      "side": "call",
+      "volume": 407,
+      "oi": 15
      },
      {
-      "strike": 280,
-      "side": "put",
-      "volume": 118,
-      "oi": 6
+      "strike": 230,
+      "side": "call",
+      "volume": 3439,
+      "oi": 121
+     },
+     {
+      "strike": 232.5,
+      "side": "call",
+      "volume": 3822,
+      "oi": 5
      }
     ],
-    "call_vol": 22970,
-    "put_vol": 14219
+    "call_vol": 113354,
+    "put_vol": 56727
    },
-   "iv_pct": 58.2,
-   "rv20_pct": 48.1,
-   "gamma_regime": "SHORT/firm",
-   "gamma_0dte": "0DTE dealer gamma SHORT $22M/1%: no clean flip nearby — moves can extend past the flip | call wall $245 | put wall $240",
+   "iv_pct": 39.9,
+   "rv20_pct": 45.6,
+   "gamma_regime": "SHORT/leaning",
+   "gamma_0dte": "0DTE dealer gamma SHORT $7M/1%: no clean flip nearby — moves can extend past the flip | call wall $250 | put wall $245",
    "suggested_ticket": {
-    "strike": 235,
-    "premium": 1.26,
-    "delta": -0.25,
-    "breakeven": 233.74,
-    "breakeven_pct": 2.18,
-    "target": 231.78,
+    "strike": 242.5,
+    "premium": 2.01,
+    "delta": -0.38,
+    "breakeven": 240.49,
+    "breakeven_pct": 1.61,
+    "target": 238.84,
     "target_source": "expected-move edge",
-    "value_at_target": 3.22,
-    "multiple_at_target": 2.6,
-    "move_for_2x_pct": 2.7
+    "value_at_target": 3.66,
+    "multiple_at_target": 1.8,
+    "move_for_2x_pct": 2.43
    },
    "friday_pin": null,
    "notes": [
     "call volume dominates",
-    "4 strikes trading >2× their open interest",
-    "0DTE expected move ±3.00%",
-    "gap -5.3%",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±2.28%",
+    "gap -3.1%",
     "dealer gamma SHORT — moves can extend (favorable for long premium)"
    ]
   },
   {
    "ticker": "GOOGL",
-   "spot": 266.22,
+   "spot": 273.1,
    "direction": "PUT",
    "setup": "IGNITION-WATCH",
    "setup_validated": true,
-   "score": 47,
-   "trigger_level": 262.73,
-   "entry_trigger": "Buy put on break below $262.73 with expanding volume",
-   "invalidation": "reclaims above $264.04",
+   "score": 45,
+   "trigger_level": 271.73,
+   "entry_trigger": "Buy put on break below $271.73 with expanding volume",
+   "invalidation": "reclaims above $273.09",
    "targets": [
-    260,
-    262.73
+    262.73,
+    270
    ],
-   "expected_move_pct": 3.14,
+   "expected_move_pct": 2.21,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.24,
+    "vol_oi_ratio": 0.7,
     "hot_strikes": [
      {
       "strike": 260,
       "side": "call",
-      "volume": 182,
+      "volume": 472,
       "oi": 54
+     },
+     {
+      "strike": 262.5,
+      "side": "call",
+      "volume": 212,
+      "oi": 56
      },
      {
       "strike": 265,
       "side": "call",
-      "volume": 642,
+      "volume": 1458,
       "oi": 85
      },
      {
       "strike": 270,
       "side": "call",
-      "volume": 1121,
+      "volume": 4691,
       "oi": 498
      },
      {
       "strike": 272.5,
       "side": "call",
-      "volume": 2620,
+      "volume": 5364,
       "oi": 207
      }
     ],
-    "call_vol": 27098,
-    "put_vol": 7338
+    "call_vol": 74912,
+    "put_vol": 26419
    },
-   "iv_pct": 54.1,
-   "rv20_pct": 60.5,
+   "iv_pct": 42.1,
+   "rv20_pct": 59.2,
    "gamma_regime": "SHORT/firm",
-   "gamma_0dte": "0DTE dealer gamma SHORT $13M/1%: no clean flip nearby — moves can extend past the flip | call wall $267.5 | put wall $270",
+   "gamma_0dte": "0DTE dealer gamma SHORT $13M/1%: no clean flip nearby — moves can extend past the flip | call wall $280 | put wall $275",
    "suggested_ticket": {
-    "strike": 262.5,
-    "premium": 1.79,
-    "delta": -0.3,
-    "breakeven": 260.71,
-    "breakeven_pct": 2.07,
-    "target": 257.87,
+    "strike": 270,
+    "premium": 1.73,
+    "delta": -0.33,
+    "breakeven": 268.26,
+    "breakeven_pct": 1.77,
+    "target": 267.06,
     "target_source": "expected-move edge",
-    "value_at_target": 4.63,
-    "multiple_at_target": 2.6,
-    "move_for_2x_pct": 2.74
+    "value_at_target": 2.94,
+    "multiple_at_target": 1.7,
+    "move_for_2x_pct": 2.41
    },
    "friday_pin": null,
    "notes": [
     "call volume dominates",
-    "4 strikes trading >2× their open interest",
-    "0DTE expected move ±3.14%",
-    "gap -4.6%",
-    "dealer gamma SHORT — moves can extend (favorable for long premium)"
-   ]
-  },
-  {
-   "ticker": "QQQ",
-   "spot": 611.67,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 46,
-   "trigger_level": 607.76,
-   "entry_trigger": "Buy put on break below $607.76 with expanding volume",
-   "invalidation": "reclaims above $610.80",
-   "targets": [
-    610,
-    606.23
-   ],
-   "expected_move_pct": 2.82,
-   "expiry_0dte": null,
-   "expiry_1dte": "2026-11-26",
-   "unusual": {
-    "vol_oi_ratio": 0.38,
-    "hot_strikes": [
-     {
-      "strike": 595,
-      "side": "call",
-      "volume": 404,
-      "oi": 147
-     },
-     {
-      "strike": 605,
-      "side": "call",
-      "volume": 308,
-      "oi": 120
-     },
-     {
-      "strike": 606,
-      "side": "call",
-      "volume": 223,
-      "oi": 19
-     },
-     {
-      "strike": 608,
-      "side": "call",
-      "volume": 342,
-      "oi": 31
-     },
-     {
-      "strike": 609,
-      "side": "call",
-      "volume": 750,
-      "oi": 65
-     }
-    ],
-    "call_vol": 87653,
-    "put_vol": 124905
-   },
-   "iv_pct": 51.6,
-   "rv20_pct": 48.2,
-   "gamma_regime": "SHORT/firm",
-   "gamma_0dte": "0DTE dealer gamma SHORT $413M/1%: no clean flip nearby — moves can extend past the flip | call wall $625 | put wall $600",
-   "suggested_ticket": {
-    "strike": 603,
-    "premium": 3.43,
-    "delta": -0.27,
-    "breakeven": 599.57,
-    "breakeven_pct": 1.98,
-    "target": 600,
-    "target_source": "gamma wall",
-    "value_at_target": 3,
-    "multiple_at_target": 0.9,
-    "move_for_2x_pct": 2.54
-   },
-   "friday_pin": null,
-   "notes": [
     "8 strikes trading >2× their open interest",
-    "0DTE expected move ±2.82%",
-    "gap -4.1%",
+    "0DTE expected move ±2.21%",
+    "gap -2.1%",
     "dealer gamma SHORT — moves can extend (favorable for long premium)"
    ]
   },
   {
-   "ticker": "MS",
-   "spot": 163.13,
+   "ticker": "GOOG",
+   "spot": 270.98,
    "direction": "PUT",
    "setup": "IGNITION-WATCH",
    "setup_validated": true,
-   "score": 46,
-   "trigger_level": 162.61,
-   "entry_trigger": "Buy put on break below $162.61 with expanding volume",
-   "invalidation": "reclaims above $163.42",
-   "targets": [],
-   "expected_move_pct": 3.19,
+   "score": 45,
+   "trigger_level": 269.63,
+   "entry_trigger": "Buy put on break below $269.63 with expanding volume",
+   "invalidation": "reclaims above $270.97",
+   "targets": [
+    270,
+    260.69
+   ],
+   "expected_move_pct": 2.17,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.13,
+    "vol_oi_ratio": 0.71,
     "hot_strikes": [
      {
-      "strike": 200,
-      "side": "put",
-      "volume": 172,
-      "oi": 0
+      "strike": 260,
+      "side": "call",
+      "volume": 261,
+      "oi": 83
      },
      {
-      "strike": 245,
-      "side": "put",
-      "volume": 106,
-      "oi": 0
+      "strike": 262.5,
+      "side": "call",
+      "volume": 794,
+      "oi": 44
      },
      {
-      "strike": 250,
-      "side": "put",
-      "volume": 122,
-      "oi": 0
+      "strike": 265,
+      "side": "call",
+      "volume": 4107,
+      "oi": 308
      },
      {
-      "strike": 275,
-      "side": "put",
-      "volume": 264,
-      "oi": 0
+      "strike": 267.5,
+      "side": "call",
+      "volume": 3448,
+      "oi": 152
      },
      {
-      "strike": 280,
-      "side": "put",
-      "volume": 232,
-      "oi": 0
+      "strike": 270,
+      "side": "call",
+      "volume": 9194,
+      "oi": 552
      }
     ],
-    "call_vol": 350,
-    "put_vol": 1670
+    "call_vol": 51949,
+    "put_vol": 24056
    },
-   "iv_pct": 50.9,
-   "rv20_pct": 43.8,
-   "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $9M/1%: no clean flip nearby — moves can extend past the flip | put wall $160",
+   "iv_pct": 37.4,
+   "rv20_pct": 56.5,
+   "gamma_regime": "SHORT/leaning",
+   "gamma_0dte": "0DTE dealer gamma SHORT $23M/1%: no clean flip nearby — moves can extend past the flip | call wall $277.5 | put wall $270",
    "suggested_ticket": {
-    "strike": 160,
-    "premium": 1.04,
-    "delta": -0.28,
-    "breakeven": 158.96,
-    "breakeven_pct": 2.56,
-    "target": 157.92,
+    "strike": 267.5,
+    "premium": 1.61,
+    "delta": -0.31,
+    "breakeven": 265.89,
+    "breakeven_pct": 1.88,
+    "target": 265.1,
     "target_source": "expected-move edge",
-    "value_at_target": 2.08,
-    "multiple_at_target": 2,
-    "move_for_2x_pct": 3.2
+    "value_at_target": 2.4,
+    "multiple_at_target": 1.5,
+    "move_for_2x_pct": 2.47
    },
    "friday_pin": null,
    "notes": [
-    "put volume dominates",
-    "5 strikes trading >2× their open interest",
-    "0DTE expected move ±3.19%",
-    "gap -3.4%",
-    "breaking 20-day low"
+    "call volume dominates",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±2.17%",
+    "gap -2.0%",
+    "dealer gamma SHORT — moves can extend (favorable for long premium)"
    ]
   },
   {
    "ticker": "MSFT",
-   "spot": 479.77,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
+   "spot": 489.93,
+   "direction": "BOTH",
+   "setup": "MOMENTUM-WATCH",
+   "setup_validated": null,
    "score": 44,
-   "trigger_level": 477.39,
-   "entry_trigger": "Buy put on break below $477.39 with expanding volume",
-   "invalidation": "reclaims above $479.78",
+   "trigger_level": null,
+   "entry_trigger": "Break of opening range with volume decides direction",
+   "invalidation": "no follow-through within 30 min of trigger",
    "targets": [
-    470,
-    475
+    490,
+    495,
+    477.39,
+    486
    ],
-   "expected_move_pct": 2.73,
+   "expected_move_pct": 1.94,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.15,
+    "vol_oi_ratio": 0.61,
     "hot_strikes": [
      {
-      "strike": 487.5,
+      "strike": 442.5,
       "side": "call",
-      "volume": 306,
-      "oi": 68
+      "volume": 192,
+      "oi": 7
+     },
+     {
+      "strike": 470,
+      "side": "call",
+      "volume": 232,
+      "oi": 101
+     },
+     {
+      "strike": 475,
+      "side": "call",
+      "volume": 172,
+      "oi": 75
+     },
+     {
+      "strike": 477.5,
+      "side": "call",
+      "volume": 205,
+      "oi": 12
+     },
+     {
+      "strike": 480,
+      "side": "call",
+      "volume": 836,
+      "oi": 188
      }
     ],
-    "call_vol": 6542,
-    "put_vol": 9240
+    "call_vol": 32721,
+    "put_vol": 31226
    },
-   "iv_pct": 53.4,
-   "rv20_pct": 38.8,
-   "gamma_regime": "SHORT/firm",
-   "gamma_0dte": "0DTE dealer gamma SHORT $52M/1%: no clean flip nearby — moves can extend past the flip | call wall $490 | put wall $485",
-   "suggested_ticket": {
-    "strike": 472.5,
-    "premium": 1.98,
-    "delta": -0.23,
-    "breakeven": 470.52,
-    "breakeven_pct": 1.93,
-    "target": 466.69,
-    "target_source": "expected-move edge",
-    "value_at_target": 5.81,
-    "multiple_at_target": 2.9,
-    "move_for_2x_pct": 2.34
-   },
+   "iv_pct": 35.5,
+   "rv20_pct": 37.5,
+   "gamma_regime": "SHORT/leaning",
+   "gamma_0dte": "0DTE dealer gamma SHORT $51M/1%: no clean flip nearby — moves can extend past the flip | call wall $495 | put wall $490",
+   "suggested_ticket": null,
    "friday_pin": null,
    "notes": [
-    "0DTE expected move ±2.73%",
-    "gap -3.3%",
-    "breaking 20-day low",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±1.94%",
+    "gap -1.2%",
     "dealer gamma SHORT — moves can extend (favorable for long premium)"
    ]
   },
   {
-   "ticker": "^SPX",
-   "spot": 7034.89,
-   "direction": "PUT",
+   "ticker": "MSTR",
+   "spot": 79.96,
+   "direction": "CALL",
    "setup": "IGNITION-WATCH",
    "setup_validated": true,
-   "score": 44,
-   "trigger_level": 6970.11,
-   "entry_trigger": "Buy put on break below $6970.11 with expanding volume",
-   "invalidation": "reclaims above $7004.96",
-   "targets": [
-    7000,
-    6882.66
-   ],
-   "expected_move_pct": 1.88,
+   "score": 43,
+   "trigger_level": 81.02,
+   "entry_trigger": "Buy call on break above $81.02 with expanding volume",
+   "invalidation": "fails back below $80.61",
+   "targets": [],
+   "expected_move_pct": 6.32,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.18,
+    "vol_oi_ratio": 0.75,
     "hot_strikes": [
      {
-      "strike": 6995,
+      "strike": 60,
       "side": "call",
-      "volume": 135,
-      "oi": 49
+      "volume": 242,
+      "oi": 89
      },
      {
-      "strike": 7005,
+      "strike": 69,
       "side": "call",
-      "volume": 137,
-      "oi": 67
+      "volume": 230,
+      "oi": 16
      },
      {
-      "strike": 7015,
+      "strike": 70,
       "side": "call",
-      "volume": 157,
-      "oi": 24
+      "volume": 2219,
+      "oi": 557
      },
      {
-      "strike": 7025,
+      "strike": 71,
       "side": "call",
-      "volume": 743,
-      "oi": 85
+      "volume": 1346,
+      "oi": 287
      },
      {
-      "strike": 7030,
+      "strike": 72,
       "side": "call",
-      "volume": 143,
-      "oi": 67
+      "volume": 4789,
+      "oi": 193
      }
     ],
-    "call_vol": 47761,
-    "put_vol": 49355
+    "call_vol": 158593,
+    "put_vol": 149089
    },
-   "iv_pct": 26.2,
-   "rv20_pct": 31.6,
-   "gamma_regime": "SHORT/firm",
-   "gamma_0dte": "0DTE dealer gamma SHORT $8274M/1%: no clean flip nearby — moves can extend past the flip | call wall $7200 | put wall $7000",
+   "iv_pct": 111.1,
+   "rv20_pct": 81.3,
+   "gamma_regime": null,
+   "gamma_0dte": "0DTE dealer gamma LONG +$9M/1%: no clean flip nearby — expect pinning near walls | put wall $80",
    "suggested_ticket": {
-    "strike": 6970,
-    "premium": 41.2,
-    "delta": -0.32,
-    "breakeven": 6928.8,
-    "breakeven_pct": 1.51,
-    "target": 6902.89,
+    "strike": 82,
+    "premium": 1.72,
+    "delta": 0.39,
+    "breakeven": 83.72,
+    "breakeven_pct": 4.7,
+    "target": 85.01,
     "target_source": "expected-move edge",
-    "value_at_target": 67.11,
-    "multiple_at_target": 1.6,
-    "move_for_2x_pct": 2.09
+    "value_at_target": 3.01,
+    "multiple_at_target": 1.8,
+    "move_for_2x_pct": 6.85
    },
    "friday_pin": null,
    "notes": [
     "8 strikes trading >2× their open interest",
-    "0DTE expected move ±1.88%",
-    "gap -2.3%",
-    "dealer gamma SHORT — moves can extend (favorable for long premium)"
+    "0DTE expected move ±6.32%",
+    "gap +3.1%"
    ]
   },
   {
-   "ticker": "SMH",
-   "spot": 399.02,
+   "ticker": "SMCI",
+   "spot": 23.31,
+   "direction": "CALL",
+   "setup": "IGNITION-WATCH",
+   "setup_validated": true,
+   "score": 43,
+   "trigger_level": 23.35,
+   "entry_trigger": "Buy call on break above $23.35 with expanding volume",
+   "invalidation": "fails back below $23.23",
+   "targets": [],
+   "expected_move_pct": 5.08,
+   "expiry_0dte": null,
+   "expiry_1dte": "2026-11-26",
+   "unusual": {
+    "vol_oi_ratio": 0.51,
+    "hot_strikes": [
+     {
+      "strike": 20.5,
+      "side": "call",
+      "volume": 270,
+      "oi": 3
+     },
+     {
+      "strike": 23,
+      "side": "call",
+      "volume": 6201,
+      "oi": 1421
+     },
+     {
+      "strike": 33.5,
+      "side": "call",
+      "volume": 908,
+      "oi": 440
+     },
+     {
+      "strike": 16,
+      "side": "put",
+      "volume": 528,
+      "oi": 41
+     },
+     {
+      "strike": 19.5,
+      "side": "put",
+      "volume": 418,
+      "oi": 164
+     }
+    ],
+    "call_vol": 94083,
+    "put_vol": 19421
+   },
+   "iv_pct": 83.2,
+   "rv20_pct": 99.9,
+   "gamma_regime": null,
+   "gamma_0dte": "0DTE dealer gamma LONG +$5M/1%: flip $23.5 (+0.82%) — expect pinning near walls | call wall $23.5",
+   "suggested_ticket": {
+    "strike": 24,
+    "premium": 0.29,
+    "delta": 0.31,
+    "breakeven": 24.29,
+    "breakeven_pct": 4.18,
+    "target": 24.49,
+    "target_source": "expected-move edge",
+    "value_at_target": 0.49,
+    "multiple_at_target": 1.7,
+    "move_for_2x_pct": 5.41
+   },
+   "friday_pin": null,
+   "notes": [
+    "call volume dominates",
+    "6 strikes trading >2× their open interest",
+    "0DTE expected move ±5.08%",
+    "gap +3.1%"
+   ]
+  },
+  {
+   "ticker": "AMAT",
+   "spot": 311.18,
    "direction": "PUT",
    "setup": "IGNITION-WATCH",
    "setup_validated": true,
    "score": 43,
-   "trigger_level": 394.83,
-   "entry_trigger": "Buy put on break below $394.83 with expanding volume",
-   "invalidation": "reclaims above $396.80",
+   "trigger_level": 309.62,
+   "entry_trigger": "Buy put on break below $309.62 with expanding volume",
+   "invalidation": "reclaims above $311.17",
    "targets": [],
    "expected_move_pct": 5.02,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.08,
+    "vol_oi_ratio": 0.45,
     "hot_strikes": [
      {
-      "strike": 397.5,
+      "strike": 295,
       "side": "call",
-      "volume": 114,
-      "oi": 33
+      "volume": 110,
+      "oi": 5
      },
      {
-      "strike": 402.5,
+      "strike": 300,
       "side": "call",
-      "volume": 350,
-      "oi": 53
+      "volume": 387,
+      "oi": 77
      },
      {
-      "strike": 405,
+      "strike": 302.5,
       "side": "call",
-      "volume": 166,
-      "oi": 35
+      "volume": 670,
+      "oi": 13
      },
      {
-      "strike": 415,
+      "strike": 305,
       "side": "call",
-      "volume": 741,
-      "oi": 233
+      "volume": 289,
+      "oi": 19
      },
      {
-      "strike": 575,
-      "side": "put",
-      "volume": 101,
-      "oi": 0
+      "strike": 315,
+      "side": "call",
+      "volume": 472,
+      "oi": 46
      }
     ],
-    "call_vol": 4904,
-    "put_vol": 15332
+    "call_vol": 5887,
+    "put_vol": 4912
    },
-   "iv_pct": 85.4,
-   "rv20_pct": 92.6,
+   "iv_pct": 83.4,
+   "rv20_pct": 105.2,
    "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $74M/1%: no clean flip nearby — moves can extend past the flip | put wall $400",
+   "gamma_0dte": "0DTE dealer gamma LONG +$1M/1%: no clean flip nearby — expect pinning near walls | call wall $320 | put wall $315",
    "suggested_ticket": {
-    "strike": 390,
-    "premium": 5.13,
-    "delta": -0.31,
-    "breakeven": 384.88,
-    "breakeven_pct": 3.54,
-    "target": 378.97,
+    "strike": 302.5,
+    "premium": 5.45,
+    "delta": -0.33,
+    "breakeven": 297.05,
+    "breakeven_pct": 4.54,
+    "target": 295.56,
     "target_source": "expected-move edge",
-    "value_at_target": 11.03,
-    "multiple_at_target": 2.2,
-    "move_for_2x_pct": 4.83
+    "value_at_target": 6.94,
+    "multiple_at_target": 1.3,
+    "move_for_2x_pct": 6.29
    },
    "friday_pin": null,
    "notes": [
-    "put volume dominates",
-    "5 strikes trading >2× their open interest",
+    "8 strikes trading >2× their open interest",
     "0DTE expected move ±5.02%",
-    "gap -6.5%"
+    "gap -3.9%"
    ]
   },
   {
-   "ticker": "HOOD",
-   "spot": 62.11,
+   "ticker": "LRCX",
+   "spot": 185.01,
    "direction": "PUT",
    "setup": "IGNITION-WATCH",
    "setup_validated": true,
    "score": 43,
-   "trigger_level": 61.26,
-   "entry_trigger": "Buy put on break below $61.26 with expanding volume",
-   "invalidation": "reclaims above $61.57",
+   "trigger_level": 184.08,
+   "entry_trigger": "Buy put on break below $184.08 with expanding volume",
+   "invalidation": "reclaims above $185.01",
    "targets": [],
-   "expected_move_pct": 5.31,
+   "expected_move_pct": 5.09,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.23,
+    "vol_oi_ratio": 0.41,
     "hot_strikes": [
      {
-      "strike": 48,
+      "strike": 175,
       "side": "call",
-      "volume": 647,
-      "oi": 201
+      "volume": 256,
+      "oi": 20
      },
      {
-      "strike": 51,
+      "strike": 177.5,
       "side": "call",
-      "volume": 600,
-      "oi": 17
+      "volume": 232,
+      "oi": 36
      },
      {
-      "strike": 52,
+      "strike": 180,
       "side": "call",
-      "volume": 550,
-      "oi": 52
+      "volume": 533,
+      "oi": 34
      },
      {
-      "strike": 62,
+      "strike": 182.5,
       "side": "call",
-      "volume": 565,
-      "oi": 154
+      "volume": 335,
+      "oi": 45
      },
      {
-      "strike": 86,
-      "side": "put",
-      "volume": 160,
-      "oi": 0
+      "strike": 185,
+      "side": "call",
+      "volume": 791,
+      "oi": 85
      }
     ],
-    "call_vol": 25531,
-    "put_vol": 6158
+    "call_vol": 12507,
+    "put_vol": 3724
    },
-   "iv_pct": 84.2,
-   "rv20_pct": 76.3,
+   "iv_pct": 85.5,
+   "rv20_pct": 112,
    "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $2M/1%: no clean flip nearby — moves can extend past the flip | put wall $61",
+   "gamma_0dte": "0DTE dealer gamma SHORT $3M/1%: no clean flip nearby — moves can extend past the flip | put wall $180",
    "suggested_ticket": {
-    "strike": 60,
-    "premium": 0.71,
-    "delta": -0.25,
-    "breakeven": 59.3,
-    "breakeven_pct": 4.53,
-    "target": 58.81,
+    "strike": 180,
+    "premium": 2.67,
+    "delta": -0.32,
+    "breakeven": 177.34,
+    "breakeven_pct": 4.15,
+    "target": 175.58,
     "target_source": "expected-move edge",
-    "value_at_target": 1.19,
+    "value_at_target": 4.42,
     "multiple_at_target": 1.7,
-    "move_for_2x_pct": 5.67
+    "move_for_2x_pct": 5.59
    },
    "friday_pin": null,
    "notes": [
     "call volume dominates",
-    "5 strikes trading >2× their open interest",
-    "0DTE expected move ±5.31%",
-    "gap -5.4%"
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±5.09%",
+    "gap -5.7%"
    ]
   },
   {
-   "ticker": "TSM",
-   "spot": 324.47,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 42,
-   "trigger_level": 323.77,
-   "entry_trigger": "Buy put on break below $323.77 with expanding volume",
-   "invalidation": "reclaims above $325.39",
+   "ticker": "COIN",
+   "spot": 103.72,
+   "direction": "CALL",
+   "setup": "MOMENTUM-WATCH",
+   "setup_validated": null,
+   "score": 41,
+   "trigger_level": 104.31,
+   "entry_trigger": "Buy call on break above $104.31 with expanding volume",
+   "invalidation": "fails back below $103.79",
    "targets": [],
-   "expected_move_pct": 4.71,
+   "expected_move_pct": 4.25,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.17,
+    "vol_oi_ratio": 0.65,
     "hot_strikes": [
      {
-      "strike": 335,
+      "strike": 95,
       "side": "call",
-      "volume": 718,
-      "oi": 146
+      "volume": 294,
+      "oi": 13
      },
      {
-      "strike": 432.5,
+      "strike": 96,
       "side": "call",
-      "volume": 132,
-      "oi": 59
+      "volume": 131,
+      "oi": 6
      },
      {
-      "strike": 297.5,
-      "side": "put",
-      "volume": 1499,
-      "oi": 113
+      "strike": 97,
+      "side": "call",
+      "volume": 604,
+      "oi": 11
+     },
+     {
+      "strike": 98,
+      "side": "call",
+      "volume": 1105,
+      "oi": 2
+     },
+     {
+      "strike": 99,
+      "side": "call",
+      "volume": 327,
+      "oi": 29
      }
     ],
-    "call_vol": 8683,
-    "put_vol": 4226
+    "call_vol": 51969,
+    "put_vol": 16311
    },
-   "iv_pct": 73.6,
-   "rv20_pct": 88.6,
+   "iv_pct": 71.3,
+   "rv20_pct": 74.1,
    "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $5M/1%: no clean flip nearby — moves can extend past the flip | call wall $332.5 | put wall $320",
+   "gamma_0dte": "0DTE dealer gamma SHORT $5M/1%: no clean flip nearby — moves can extend past the flip | put wall $101",
    "suggested_ticket": {
-    "strike": 317.5,
-    "premium": 3.9,
-    "delta": -0.31,
-    "breakeven": 313.6,
-    "breakeven_pct": 3.35,
-    "target": 309.19,
+    "strike": 106,
+    "premium": 1.23,
+    "delta": 0.34,
+    "breakeven": 107.22,
+    "breakeven_pct": 3.38,
+    "target": 108.13,
     "target_source": "expected-move edge",
-    "value_at_target": 8.31,
-    "multiple_at_target": 2.1,
-    "move_for_2x_pct": 4.55
+    "value_at_target": 2.13,
+    "multiple_at_target": 1.7,
+    "move_for_2x_pct": 4.56
+   },
+   "friday_pin": null,
+   "notes": [
+    "call volume dominates",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±4.25%",
+    "gap +1.3%"
+   ]
+  },
+  {
+   "ticker": "MRSH",
+   "spot": 216.66,
+   "direction": "CALL",
+   "setup": "IGNITION-WATCH",
+   "setup_validated": true,
+   "score": 41,
+   "trigger_level": 218.99,
+   "entry_trigger": "Buy call on break above $218.99 with expanding volume",
+   "invalidation": "fails back below $217.90",
+   "targets": [],
+   "expected_move_pct": 5.01,
+   "expiry_0dte": null,
+   "expiry_1dte": "2026-12-17",
+   "unusual": {
+    "vol_oi_ratio": 0.47,
+    "hot_strikes": [
+     {
+      "strike": 210,
+      "side": "put",
+      "volume": 798,
+      "oi": 350
+     }
+    ],
+    "call_vol": 48,
+    "put_vol": 1284
+   },
+   "iv_pct": 29.9,
+   "rv20_pct": 23.5,
+   "gamma_regime": null,
+   "gamma_0dte": "0DTE dealer gamma LONG +$0M/1%: flip $220 (+1.54%) — expect pinning near walls | call wall $220",
+   "suggested_ticket": {
+    "strike": 220,
+    "premium": 4.35,
+    "delta": 0.45,
+    "breakeven": 224.35,
+    "breakeven_pct": 3.55,
+    "target": 227.51,
+    "target_source": "expected-move edge",
+    "value_at_target": 7.51,
+    "multiple_at_target": 1.7,
+    "move_for_2x_pct": 5.56
+   },
+   "friday_pin": null,
+   "notes": [
+    "put volume dominates",
+    "0DTE expected move ±5.01%",
+    "gap +1.6%",
+    "breaking 20-day high"
+   ]
+  },
+  {
+   "ticker": "MRNA",
+   "spot": 220.84,
+   "direction": "PUT",
+   "setup": "IGNITION-WATCH",
+   "setup_validated": true,
+   "score": 40,
+   "trigger_level": 219.74,
+   "entry_trigger": "Buy put on break below $219.74 with expanding volume",
+   "invalidation": "reclaims above $220.83",
+   "targets": [],
+   "expected_move_pct": 3.96,
+   "expiry_0dte": null,
+   "expiry_1dte": "2026-11-26",
+   "unusual": {
+    "vol_oi_ratio": 0.52,
+    "hot_strikes": [
+     {
+      "strike": 182.5,
+      "side": "call",
+      "volume": 176,
+      "oi": 29
+     },
+     {
+      "strike": 185,
+      "side": "call",
+      "volume": 385,
+      "oi": 186
+     },
+     {
+      "strike": 232.5,
+      "side": "call",
+      "volume": 868,
+      "oi": 175
+     },
+     {
+      "strike": 240,
+      "side": "call",
+      "volume": 1164,
+      "oi": 505
+     },
+     {
+      "strike": 205,
+      "side": "put",
+      "volume": 1717,
+      "oi": 765
+     }
+    ],
+    "call_vol": 16349,
+    "put_vol": 12716
+   },
+   "iv_pct": 67.1,
+   "rv20_pct": 85.9,
+   "gamma_regime": null,
+   "gamma_0dte": "0DTE dealer gamma LONG +$33M/1%: no clean flip nearby — expect pinning near walls | call wall $222.5",
+   "suggested_ticket": {
+    "strike": 217.5,
+    "premium": 3,
+    "delta": -0.37,
+    "breakeven": 214.5,
+    "breakeven_pct": 2.87,
+    "target": 212.09,
+    "target_source": "expected-move edge",
+    "value_at_target": 5.41,
+    "multiple_at_target": 1.8,
+    "move_for_2x_pct": 4.23
+   },
+   "friday_pin": null,
+   "notes": [
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±3.96%",
+    "gap -2.9%"
+   ]
+  },
+  {
+   "ticker": "ORCL",
+   "spot": 103.88,
+   "direction": "PUT",
+   "setup": "IGNITION-WATCH",
+   "setup_validated": true,
+   "score": 40,
+   "trigger_level": 103.36,
+   "entry_trigger": "Buy put on break below $103.36 with expanding volume",
+   "invalidation": "reclaims above $103.88",
+   "targets": [],
+   "expected_move_pct": 3.88,
+   "expiry_0dte": null,
+   "expiry_1dte": "2026-11-26",
+   "unusual": {
+    "vol_oi_ratio": 0.54,
+    "hot_strikes": [
+     {
+      "strike": 95,
+      "side": "call",
+      "volume": 747,
+      "oi": 77
+     },
+     {
+      "strike": 99,
+      "side": "call",
+      "volume": 143,
+      "oi": 3
+     },
+     {
+      "strike": 100,
+      "side": "call",
+      "volume": 1304,
+      "oi": 442
+     },
+     {
+      "strike": 101,
+      "side": "call",
+      "volume": 1181,
+      "oi": 284
+     },
+     {
+      "strike": 102,
+      "side": "call",
+      "volume": 1046,
+      "oi": 257
+     }
+    ],
+    "call_vol": 39317,
+    "put_vol": 26792
+   },
+   "iv_pct": 66.8,
+   "rv20_pct": 84.3,
+   "gamma_regime": null,
+   "gamma_0dte": "0DTE dealer gamma SHORT $11M/1%: no clean flip nearby — moves can extend past the flip | put wall $102",
+   "suggested_ticket": {
+    "strike": 102,
+    "premium": 1.2,
+    "delta": -0.34,
+    "breakeven": 100.8,
+    "breakeven_pct": 2.96,
+    "target": 99.84,
+    "target_source": "expected-move edge",
+    "value_at_target": 2.16,
+    "multiple_at_target": 1.8,
+    "move_for_2x_pct": 4.12
+   },
+   "friday_pin": null,
+   "notes": [
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±3.88%",
+    "gap -5.1%"
+   ]
+  },
+  {
+   "ticker": "DIS",
+   "spot": 125.6,
+   "direction": "CALL",
+   "setup": "IGNITION-WATCH",
+   "setup_validated": true,
+   "score": 40,
+   "trigger_level": 126.28,
+   "entry_trigger": "Buy call on break above $126.28 with expanding volume",
+   "invalidation": "fails back below $125.65",
+   "targets": [],
+   "expected_move_pct": 1.42,
+   "expiry_0dte": null,
+   "expiry_1dte": "2026-11-26",
+   "unusual": {
+    "vol_oi_ratio": 0.37,
+    "hot_strikes": [
+     {
+      "strike": 123,
+      "side": "put",
+      "volume": 401,
+      "oi": 106
+     },
+     {
+      "strike": 124,
+      "side": "put",
+      "volume": 335,
+      "oi": 12
+     },
+     {
+      "strike": 125,
+      "side": "put",
+      "volume": 229,
+      "oi": 6
+     }
+    ],
+    "call_vol": 5898,
+    "put_vol": 3417
+   },
+   "iv_pct": 26.9,
+   "rv20_pct": 28.7,
+   "gamma_regime": null,
+   "gamma_0dte": "0DTE dealer gamma LONG +$15M/1%: flip $120 (-4.46%) — expect pinning near walls | call wall $125",
+   "suggested_ticket": {
+    "strike": 126,
+    "premium": 0.71,
+    "delta": 0.44,
+    "breakeven": 126.7,
+    "breakeven_pct": 0.88,
+    "target": 127.38,
+    "target_source": "expected-move edge",
+    "value_at_target": 1.38,
+    "multiple_at_target": 2,
+    "move_for_2x_pct": 1.44
    },
    "friday_pin": null,
    "notes": [
     "call volume dominates",
     "3 strikes trading >2× their open interest",
-    "0DTE expected move ±4.71%",
-    "gap -7.1%"
+    "0DTE expected move ±1.42%",
+    "gap +2.5%",
+    "breaking 20-day high"
    ]
   },
   {
-   "ticker": "AMAT",
-   "spot": 294.65,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 41,
-   "trigger_level": 293.58,
-   "entry_trigger": "Buy put on break below $293.58 with expanding volume",
-   "invalidation": "reclaims above $295.05",
+   "ticker": "UPS",
+   "spot": 111.47,
+   "direction": "CALL",
+   "setup": "UNUSUAL-FLOW",
+   "setup_validated": null,
+   "score": 40,
+   "trigger_level": 112.19,
+   "entry_trigger": "Buy call on break above $112.19 with expanding volume",
+   "invalidation": "fails back below $111.63",
    "targets": [],
-   "expected_move_pct": 6.47,
+   "expected_move_pct": 1.47,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.17,
-    "hot_strikes": [],
-    "call_vol": 2264,
-    "put_vol": 1782
-   },
-   "iv_pct": 111.4,
-   "rv20_pct": 108.5,
-   "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $2M/1%: no clean flip nearby — moves can extend past the flip | put wall $290",
-   "suggested_ticket": {
-    "strike": 285,
-    "premium": 3.9,
-    "delta": -0.27,
-    "breakeven": 281.1,
-    "breakeven_pct": 4.6,
-    "target": 275.57,
-    "target_source": "expected-move edge",
-    "value_at_target": 9.43,
-    "multiple_at_target": 2.4,
-    "move_for_2x_pct": 5.92
-   },
-   "friday_pin": null,
-   "notes": [
-    "0DTE expected move ±6.47%",
-    "gap -9.0%",
-    "breaking 20-day low"
-   ]
-  },
-  {
-   "ticker": "ORCL",
-   "spot": 99.89,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 41,
-   "trigger_level": 99.34,
-   "entry_trigger": "Buy put on break below $99.34 with expanding volume",
-   "invalidation": "reclaims above $99.84",
-   "targets": [],
-   "expected_move_pct": 5.35,
-   "expiry_0dte": null,
-   "expiry_1dte": "2026-11-26",
-   "unusual": {
-    "vol_oi_ratio": 0.16,
-    "hot_strikes": [],
-    "call_vol": 9978,
-    "put_vol": 9593
-   },
-   "iv_pct": 90.1,
-   "rv20_pct": 87.4,
-   "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $11M/1%: no clean flip nearby — moves can extend past the flip | put wall $100",
-   "suggested_ticket": {
-    "strike": 97,
-    "premium": 1.12,
-    "delta": -0.27,
-    "breakeven": 95.88,
-    "breakeven_pct": 4.01,
-    "target": 94.55,
-    "target_source": "expected-move edge",
-    "value_at_target": 2.45,
-    "multiple_at_target": 2.2,
-    "move_for_2x_pct": 5.13
-   },
-   "friday_pin": null,
-   "notes": [
-    "0DTE expected move ±5.35%",
-    "gap -8.8%",
-    "breaking 20-day low"
-   ]
-  },
-  {
-   "ticker": "DDOG",
-   "spot": 152.92,
-   "direction": "PUT",
-   "setup": "IGNITION-WATCH",
-   "setup_validated": true,
-   "score": 41,
-   "trigger_level": 152.13,
-   "entry_trigger": "Buy put on break below $152.13 with expanding volume",
-   "invalidation": "reclaims above $152.89",
-   "targets": [],
-   "expected_move_pct": 5.15,
-   "expiry_0dte": null,
-   "expiry_1dte": "2026-11-26",
-   "unusual": {
-    "vol_oi_ratio": 0.25,
+    "vol_oi_ratio": 1.04,
     "hot_strikes": [
      {
-      "strike": 305,
+      "strike": 100,
       "side": "call",
-      "volume": 172,
-      "oi": 48
+      "volume": 776,
+      "oi": 1
+     },
+     {
+      "strike": 101,
+      "side": "call",
+      "volume": 155,
+      "oi": 0
+     },
+     {
+      "strike": 102,
+      "side": "call",
+      "volume": 155,
+      "oi": 0
+     },
+     {
+      "strike": 114,
+      "side": "call",
+      "volume": 7372,
+      "oi": 303
      }
     ],
-    "call_vol": 1256,
-    "put_vol": 1136
+    "call_vol": 11017,
+    "put_vol": 1738
    },
-   "iv_pct": 103.9,
-   "rv20_pct": 86.9,
+   "iv_pct": 32.5,
+   "rv20_pct": 31,
    "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $1M/1%: no clean flip nearby — moves can extend past the flip | put wall $150",
+   "gamma_0dte": "0DTE dealer gamma LONG +$6M/1%: flip $112 (+0.48%) — expect pinning near walls | call wall $113 | put wall $110",
    "suggested_ticket": {
-    "strike": 149,
-    "premium": 1.25,
-    "delta": -0.25,
-    "breakeven": 147.75,
-    "breakeven_pct": 3.38,
-    "target": 145.05,
-    "target_source": "expected-move edge",
-    "value_at_target": 3.95,
-    "multiple_at_target": 3.1,
-    "move_for_2x_pct": 4.2
+    "strike": 112,
+    "premium": 0.52,
+    "delta": 0.41,
+    "breakeven": 112.52,
+    "breakeven_pct": 0.94,
+    "target": 113,
+    "target_source": "gamma wall",
+    "value_at_target": 1,
+    "multiple_at_target": 1.9,
+    "move_for_2x_pct": 1.4
    },
    "friday_pin": null,
    "notes": [
-    "0DTE expected move ±5.15%",
-    "gap -7.5%",
-    "breaking 20-day low"
+    "call volume dominates",
+    "unusual activity: day vol 1.0× open interest",
+    "4 strikes trading >2× their open interest",
+    "0DTE expected move ±1.47%"
    ]
   },
   {
-   "ticker": "CRWD",
-   "spot": 196.15,
+   "ticker": "TSM",
+   "spot": 342.34,
    "direction": "PUT",
    "setup": "IGNITION-WATCH",
    "setup_validated": true,
-   "score": 41,
-   "trigger_level": 194.7,
-   "entry_trigger": "Buy put on break below $194.70 with expanding volume",
-   "invalidation": "reclaims above $195.67",
+   "score": 40,
+   "trigger_level": 340.63,
+   "entry_trigger": "Buy put on break below $340.63 with expanding volume",
+   "invalidation": "reclaims above $342.33",
    "targets": [],
-   "expected_move_pct": 5.43,
+   "expected_move_pct": 3.83,
    "expiry_0dte": null,
    "expiry_1dte": "2026-11-26",
    "unusual": {
-    "vol_oi_ratio": 0.19,
-    "hot_strikes": [],
-    "call_vol": 5560,
-    "put_vol": 7315
+    "vol_oi_ratio": 0.52,
+    "hot_strikes": [
+     {
+      "strike": 325,
+      "side": "call",
+      "volume": 394,
+      "oi": 123
+     },
+     {
+      "strike": 327.5,
+      "side": "call",
+      "volume": 378,
+      "oi": 179
+     },
+     {
+      "strike": 330,
+      "side": "call",
+      "volume": 2473,
+      "oi": 1017
+     },
+     {
+      "strike": 335,
+      "side": "call",
+      "volume": 1359,
+      "oi": 146
+     },
+     {
+      "strike": 342.5,
+      "side": "call",
+      "volume": 411,
+      "oi": 163
+     }
+    ],
+    "call_vol": 27575,
+    "put_vol": 12951
    },
-   "iv_pct": 101.3,
-   "rv20_pct": 69.1,
+   "iv_pct": 65.6,
+   "rv20_pct": 86,
    "gamma_regime": null,
-   "gamma_0dte": "0DTE dealer gamma SHORT $8M/1%: no clean flip nearby — moves can extend past the flip | put wall $200",
+   "gamma_0dte": "0DTE dealer gamma LONG +$9M/1%: flip $340 (-0.68%) — expect pinning near walls | call wall $340 | put wall $350",
    "suggested_ticket": {
-    "strike": 190,
-    "premium": 1.5,
-    "delta": -0.22,
-    "breakeven": 188.5,
-    "breakeven_pct": 3.9,
-    "target": 185.5,
+    "strike": 335,
+    "premium": 3.58,
+    "delta": -0.31,
+    "breakeven": 331.43,
+    "breakeven_pct": 3.19,
+    "target": 329.21,
     "target_source": "expected-move edge",
-    "value_at_target": 4.5,
-    "multiple_at_target": 3,
-    "move_for_2x_pct": 4.66
+    "value_at_target": 5.79,
+    "multiple_at_target": 1.6,
+    "move_for_2x_pct": 4.23
    },
    "friday_pin": null,
    "notes": [
-    "0DTE expected move ±5.43%",
-    "gap -7.0%",
-    "breaking 20-day low"
+    "call volume dominates",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±3.83%",
+    "gap -2.0%"
+   ]
+  },
+  {
+   "ticker": "SMH",
+   "spot": 422.46,
+   "direction": "PUT",
+   "setup": "MOMENTUM-WATCH",
+   "setup_validated": null,
+   "score": 39,
+   "trigger_level": 420.35,
+   "entry_trigger": "Buy put on break below $420.35 with expanding volume",
+   "invalidation": "reclaims above $422.45",
+   "targets": [],
+   "expected_move_pct": 3.82,
+   "expiry_0dte": null,
+   "expiry_1dte": "2026-11-26",
+   "unusual": {
+    "vol_oi_ratio": 0.34,
+    "hot_strikes": [
+     {
+      "strike": 395,
+      "side": "call",
+      "volume": 165,
+      "oi": 29
+     },
+     {
+      "strike": 397.5,
+      "side": "call",
+      "volume": 136,
+      "oi": 33
+     },
+     {
+      "strike": 400,
+      "side": "call",
+      "volume": 415,
+      "oi": 150
+     },
+     {
+      "strike": 402.5,
+      "side": "call",
+      "volume": 419,
+      "oi": 53
+     },
+     {
+      "strike": 405,
+      "side": "call",
+      "volume": 266,
+      "oi": 35
+     }
+    ],
+    "call_vol": 19201,
+    "put_vol": 68076
+   },
+   "iv_pct": 65.5,
+   "rv20_pct": 90.8,
+   "gamma_regime": null,
+   "gamma_0dte": "0DTE dealer gamma SHORT $75M/1%: no clean flip nearby — moves can extend past the flip | put wall $420",
+   "suggested_ticket": {
+    "strike": 415,
+    "premium": 4.95,
+    "delta": -0.34,
+    "breakeven": 410.05,
+    "breakeven_pct": 2.94,
+    "target": 406.31,
+    "target_source": "expected-move edge",
+    "value_at_target": 8.69,
+    "multiple_at_target": 1.8,
+    "move_for_2x_pct": 4.11
+   },
+   "friday_pin": null,
+   "notes": [
+    "put volume dominates",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±3.82%",
+    "gap -1.0%"
+   ]
+  },
+  {
+   "ticker": "ASML",
+   "spot": 1303.08,
+   "direction": "PUT",
+   "setup": "IGNITION-WATCH",
+   "setup_validated": true,
+   "score": 39,
+   "trigger_level": 1296.56,
+   "entry_trigger": "Buy put on break below $1296.56 with expanding volume",
+   "invalidation": "reclaims above $1303.05",
+   "targets": [],
+   "expected_move_pct": 3.6,
+   "expiry_0dte": null,
+   "expiry_1dte": "2026-11-26",
+   "unusual": {
+    "vol_oi_ratio": 0.69,
+    "hot_strikes": [
+     {
+      "strike": 1300,
+      "side": "call",
+      "volume": 748,
+      "oi": 346
+     },
+     {
+      "strike": 1320,
+      "side": "call",
+      "volume": 622,
+      "oi": 25
+     },
+     {
+      "strike": 1330,
+      "side": "call",
+      "volume": 543,
+      "oi": 9
+     },
+     {
+      "strike": 1350,
+      "side": "call",
+      "volume": 605,
+      "oi": 57
+     },
+     {
+      "strike": 1430,
+      "side": "call",
+      "volume": 170,
+      "oi": 81
+     }
+    ],
+    "call_vol": 7014,
+    "put_vol": 4613
+   },
+   "iv_pct": 59.6,
+   "rv20_pct": 70.9,
+   "gamma_regime": null,
+   "gamma_0dte": "0DTE dealer gamma SHORT $16M/1%: no clean flip nearby — moves can extend past the flip | call wall $1310 | put wall $1275",
+   "suggested_ticket": {
+    "strike": 1280,
+    "premium": 16.45,
+    "delta": -0.35,
+    "breakeven": 1263.55,
+    "breakeven_pct": 3.03,
+    "target": 1275,
+    "target_source": "gamma wall",
+    "value_at_target": 5,
+    "multiple_at_target": 0.3,
+    "move_for_2x_pct": 4.3
+   },
+   "friday_pin": null,
+   "notes": [
+    "call volume dominates",
+    "8 strikes trading >2× their open interest",
+    "0DTE expected move ±3.60%",
+    "gap -2.5%"
    ]
   }
  ]
