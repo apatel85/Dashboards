@@ -17,4 +17,4 @@ Static site, no backend, no secrets, no Supabase. Data lives in `deals.json` (18
 Edit `deals.json` (price, list_price, history_note, verdict, stack, url) and republish. Keep `last_verified` current. Prices change during BFCM — re-verify on the retailer page before calling anything a deal.
 
 ## Version
-v1.0.0 — Nov 27, 2026. 18 deals, 11 true deals >=10% (excluding XM4, which is beaten by the cheaper XM5).
+v1.1.0 — Nov 28, 2026. 19 deals, 12 true deals >=10% (excluding XM4, which is beaten by the cheaper XM5). Best Buy Black Friday sale ends Nov 28, 11:59 p.m. CT; added MacBook Air M5 1TB at Amazon $1,199.99 ($100 less than Best Buy's $1,299).

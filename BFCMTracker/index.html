@@ -66,7 +66,8 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);border-top:1px solid va
 <div class="wrap" style="padding-bottom:0">
 <h1>BFCM Deal Tracker 2026</h1>
 <p>Black Friday / Cyber Monday &middot; Nov 27&ndash;30, 2026 &middot; East Windsor, NJ 08520</p>
-<p>Verified live Nov 27, 2026 at 07:51 ET &middot; Chewy + Best Buy pages, with 30- and 90-day price history where available.</p>
+<p><b>Best Buy Black Friday sale ends Sat Nov 28, 11:59 p.m. CT.</b> Its Cyber Sunday &amp; Monday sale (Nov 29&ndash;30) follows — prices not verified.</p>
+<p>Verified live Nov 27, 2026 at 07:51 ET &middot; Chewy + Best Buy pages, with 30- and 90-day price history where available. MacBook 1TB price re-checked Nov 28.</p>
 </div>
 </header>
 <main class="wrap">
@@ -125,7 +126,7 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);border-top:1px solid va
 
 <footer>
 <p><b>Sources:</b> live Chewy and Best Buy product pages, Nov 27, 2026; CamelCamelCamel, PriceWatchPro and pricehistory.app for 30- and 90-day history. Target could not be checked — its bot challenge reset server-side. Prices may change; always check the retailer page before buying. Research only — nothing here was purchased.</p>
-<p>Data file: <a href="deals.json">deals.json</a> &middot; v1.0.0 &middot; Last verified Nov 27, 2026 07:51 ET.</p>
+<p>Data file: <a href="deals.json">deals.json</a> &middot; v1.1.0 &middot; Last verified Nov 28, 2026 10:30 ET.</p>
 </footer>
 </main>
 <script>
@@ -157,7 +158,7 @@ function render(){
   $('#empty').hidden=list.length>0;
   const trueDeals=DEALS.filter(d=>pct(d)>=10 && d.verdict!=='Skip').length;
   const best=DEALS.reduce((a,b)=>pct(b)>pct(a)?b:a,DEALS[0]);
-  $('#stats').innerHTML=`<div class="stat"><b>${DEALS.length}</b><span>items checked</span></div><div class="stat"><b>${trueDeals}</b><span>true deals &ge;10%</span></div><div class="stat"><b>${pct(best)}%</b><span>best discount — ${best.name.split(',')[0]}</span></div><div class="stat"><b>Nov 27&ndash;30</b><span>BFCM sale window</span></div>`;
+  $('#stats').innerHTML=`<div class="stat"><b>${DEALS.length}</b><span>items checked</span></div><div class="stat"><b>${trueDeals}</b><span>true deals &ge;10%</span></div><div class="stat"><b>${pct(best)}%</b><span>best discount — ${best.name.split(',')[0]}</span></div><div class="stat"><b>Best Buy ends Nov 28</b><span>11:59 p.m. CT</span></div>`;
 }
 fetch('deals.json').then(r=>r.json()).then(j=>{
   DEALS=j.deals; CODES=j.codes;
